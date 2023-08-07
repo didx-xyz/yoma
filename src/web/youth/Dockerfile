@@ -1,6 +1,6 @@
 ##### DEPENDENCIES
 
-FROM --platform=linux/amd64 node:16-alpine AS deps
+FROM node:16-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
@@ -16,7 +16,7 @@ RUN \
 
 ##### BUILDER
 
-FROM --platform=linux/amd64 node:16-alpine AS builder
+FROM node:16-alpine AS builder
 # ARG DATABASE_URL
 # ARG NEXT_PUBLIC_CLIENTVAR
 ARG NEXTAUTH_SECRET
