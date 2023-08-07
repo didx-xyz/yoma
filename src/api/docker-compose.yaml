@@ -197,17 +197,11 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Local
       ASPNETCORE_URLS: "http://+:5000"
-      ConnectionStrings__CoreApplicationContext: "Data Source=sqlserver,1433;Initial Catalog=yoma-dev;MultipleActiveResultSets=true;User ID=sa;Password=Password1;;TrustServerCertificate=True;Encrypt=False"
-      ConnectionStrings__BaseAPIURL: "http://localhost:5000"
-      ConnectionStrings__BaseAPPURL: "http://localhost:3000"
-      ConnectionStrings__OldBaseAPPURL: "http://localhost:3000"
+      ConnectionStrings__SQLConnection: "Data Source=sqlserver,1433;Initial Catalog=yoma-dev;MultipleActiveResultSets=true;User ID=sa;Password=Password1;;TrustServerCertificate=True;Encrypt=False"
       Logging__LogLevel__Default: "Debug"
       Logging__LogLevel__Microsoft: "Debug"
       Logging__LogLevel__Microsoft.Hosting.Lifetime: "Information"
       Logging__LogLevel__Microsoft.EntityFrameworkCore: "Error"
-      Hosts__Api: "http://localhost:5000"
-      Hosts__Auth: "http://localhost:5000"
-      AllowedHosts__0: "http://localhost:3000" # can be set to wildcard * to allow all hosts
     ports:
       - "0.0.0.0:5000:5000"
     volumes:
