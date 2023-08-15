@@ -165,9 +165,9 @@ export const Navbar: React.FC = () => {
             )} */}
           </ul>
         </div>
-        {/* <div 
+        {/* <div
             className="navbar-center hidden md:flex"
-          > 
+          >
           </div> */}
         <div className="navbar-end gap-5">
           {/* SEARCH */}

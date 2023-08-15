@@ -56,4 +56,3 @@ namespace Yoma.Core.Domain.Entity.Validators
     #endregion
   }
 }
-

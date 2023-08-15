@@ -97,7 +97,7 @@ export const UserMenu: React.FC = () => {
                 </a>
               </Link> */}
 
-          {/* <Link href="/user/notifications"> 
+          {/* <Link href="/user/notifications">
               <button className={`${styles.userMenuLink} rounded-none`}>
                 Inbox
                 {alertCount !== null && alertCount > 0 && (
@@ -105,7 +105,7 @@ export const UserMenu: React.FC = () => {
                     {alertCount}
                   </div>
                 )}
-              </button> 
+              </button>
           </Link> */}
 
           <Link href="/user/emailSettings">

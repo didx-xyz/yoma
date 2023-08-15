@@ -133,7 +133,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         // update user details
         await userApi.PutUsersByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), request);
 
-        // send verify email 
+        // send verify email
         if (!user.EmailVerified)
           await userApi.PutUsersSendVerifyEmailByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString());
 

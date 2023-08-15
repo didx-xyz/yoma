@@ -48,4 +48,3 @@ namespace Yoma.Core.Domain.Entity.Models
     #endregion
   }
 }
-
