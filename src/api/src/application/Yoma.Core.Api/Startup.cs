@@ -128,21 +128,21 @@ namespace Yoma.Core.Api
         DarkModeEnabled = true,
         Authorization = new IDashboardAuthorizationFilter[]
           {
-                    new BasicAuthAuthorizationFilter(
-                        new BasicAuthAuthorizationFilterOptions
-                        {
-                            RequireSsl = _environment != Domain.Core.Environment.Local,
-                            SslRedirect = _environment != Domain.Core.Environment.Local,
-                            LoginCaseSensitive = true,
-                            Users = new[]
-                            {
-                                new BasicAuthAuthorizationUser
-                                {
-                                    Login = _appSettings.Hangfire.Username,
-                                    PasswordClear = _appSettings.Hangfire.Password
-                                }
-                            }
-                        })
+            new BasicAuthAuthorizationFilter(
+              new BasicAuthAuthorizationFilterOptions
+              {
+                RequireSsl = _environment != Domain.Core.Environment.Local,
+                SslRedirect = _environment != Domain.Core.Environment.Local,
+                LoginCaseSensitive = true,
+                Users = new[]
+                {
+                  new BasicAuthAuthorizationUser
+                  {
+                    Login = _appSettings.Hangfire.Username,
+                    PasswordClear = _appSettings.Hangfire.Password
+                  }
+                }
+              })
           }
       });
 
@@ -172,15 +172,14 @@ namespace Yoma.Core.Api
 
       services.AddCors(options =>
       {
-        options.AddDefaultPolicy(
-                        builder =>
-                        {
-                      builder
-                          .WithOrigins(values)
-                          .AllowAnyHeader()
-                          .AllowCredentials()
-                          .AllowAnyMethod();
-                    });
+        options.AddDefaultPolicy(builder =>
+        {
+          builder
+            .WithOrigins(values)
+            .AllowAnyHeader()
+            .AllowCredentials()
+            .AllowAnyMethod();
+        });
       });
     }
 
@@ -189,11 +188,11 @@ namespace Yoma.Core.Api
       services.AddAuthorization(options =>
       {
         options.AddPolicy(Common.Constants.Authorization_Policy, policy =>
-              {
-            policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-            policy.RequireAuthenticatedUser();
-            policy.Requirements.Add(new RequireClaimAuthorizationRequirement());
-          });
+        {
+          policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+          policy.RequireAuthenticatedUser();
+          policy.Requirements.Add(new RequireClaimAuthorizationRequirement());
+        });
       });
       services.AddSingleton<IAuthorizationHandler, RequiredClaimAuthorizationHandler>();
       services.ConfigureServices_AuthorizationIdentityProvider(configuration);
@@ -244,30 +243,30 @@ namespace Yoma.Core.Api
         });
         c.AddSecurityRequirement(new OpenApiSecurityRequirement
           {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = JwtBearerDefaults.AuthenticationScheme }
-                        },
-                        new[] { string.Join(_oAuth_Scope_Separator, scopes) }
-                    }
+            {
+              new OpenApiSecurityScheme
+              {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = JwtBearerDefaults.AuthenticationScheme }
+              },
+              new[] { string.Join(_oAuth_Scope_Separator, scopes) }
+            }
           });
         c.AddSecurityRequirement(new OpenApiSecurityRequirement()
           {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = JwtBearerDefaults.AuthenticationScheme
-                            },
-                            Scheme = SecuritySchemeType.OAuth2.ToString(),
-                            Name = JwtBearerDefaults.AuthenticationScheme,
-                            In = ParameterLocation.Header,
-                        },
-                        new List<string>()
-                    }
+            {
+              new OpenApiSecurityScheme
+              {
+                Reference = new OpenApiReference
+                {
+                  Type = ReferenceType.SecurityScheme,
+                  Id = JwtBearerDefaults.AuthenticationScheme
+                },
+                Scheme = SecuritySchemeType.OAuth2.ToString(),
+                Name = JwtBearerDefaults.AuthenticationScheme,
+                In = ParameterLocation.Header,
+              },
+              new List<string>()
+            }
           });
       });
       services.AddSwaggerGenNewtonsoftSupport();
