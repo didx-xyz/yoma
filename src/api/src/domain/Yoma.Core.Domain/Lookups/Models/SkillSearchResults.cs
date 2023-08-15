@@ -1,9 +1,9 @@
-﻿namespace Yoma.Core.Domain.Lookups.Models
+namespace Yoma.Core.Domain.Lookups.Models
 {
-    public class SkillSearchResults
-    {
-        public int? TotalCount { get; set; }
+  public class SkillSearchResults
+  {
+    public int? TotalCount { get; set; }
 
-        public List<Skill> Items { get; set; }
-    }
+    public List<Skill> Items { get; set; }
+  }
 }

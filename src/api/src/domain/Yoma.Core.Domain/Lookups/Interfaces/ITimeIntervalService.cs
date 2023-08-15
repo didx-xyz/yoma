@@ -1,17 +1,17 @@
-﻿using Yoma.Core.Domain.Lookups.Models;
+using Yoma.Core.Domain.Lookups.Models;
 
 namespace Yoma.Core.Domain.Lookups.Interfaces
 {
-    public interface ITimeIntervalService
-    {
-        TimeInterval GetByName(string name);
+  public interface ITimeIntervalService
+  {
+    TimeInterval GetByName(string name);
 
-        TimeInterval? GetByNameOrNull(string name);
+    TimeInterval? GetByNameOrNull(string name);
 
-        TimeInterval GetById(Guid id);
+    TimeInterval GetById(Guid id);
 
-        TimeInterval? GetByIdOrNull(Guid id);
+    TimeInterval? GetByIdOrNull(Guid id);
 
-        List<TimeInterval> List();
-    }
+    List<TimeInterval> List();
+  }
 }

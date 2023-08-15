@@ -1,7 +1,7 @@
-﻿namespace Yoma.Core.Domain.BlobProvider.Interfaces
+namespace Yoma.Core.Domain.BlobProvider.Interfaces
 {
-    public interface IBlobProviderClientFactory
-    {
-        IBlobProviderClient CreateClient();
-    }
+  public interface IBlobProviderClientFactory
+  {
+    IBlobProviderClient CreateClient();
+  }
 }

@@ -1,6 +1,6 @@
-﻿namespace Yoma.Core.Domain.Entity.Interfaces
+namespace Yoma.Core.Domain.Entity.Interfaces
 {
-    public interface IUserProfile
-    {
-    }
+  public interface IUserProfile
+  {
+  }
 }

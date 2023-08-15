@@ -1,6 +1,6 @@
-﻿namespace Yoma.Core.Domain.EmailProvider.Models
+namespace Yoma.Core.Domain.EmailProvider.Models
 {
-    public class EmailOrganizationRequestApprovalData : EmailDataBase
-    {
-    }
+  public class EmailOrganizationRequestApprovalData : EmailDataBase
+  {
+  }
 }

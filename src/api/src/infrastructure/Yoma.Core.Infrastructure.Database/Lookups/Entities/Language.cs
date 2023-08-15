@@ -1,22 +1,22 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Entities
 {
-    [Table("Language", Schema = "lookup")]
-    [Index(nameof(Name), IsUnique = true)]
-    [Index(nameof(CodeAlpha2), IsUnique = true)]
-    public class Language : BaseEntity<Guid>
-    {
-        [Column(TypeName = "varchar(125)")]
-        public string Name { get; set; }
+  [Table("Language", Schema = "lookup")]
+  [Index(nameof(Name), IsUnique = true)]
+  [Index(nameof(CodeAlpha2), IsUnique = true)]
+  public class Language : BaseEntity<Guid>
+  {
+    [Column(TypeName = "varchar(125)")]
+    public string Name { get; set; }
 
-        [Column(TypeName = "varchar(2)")]
-        public string CodeAlpha2 { get; set; }
+    [Column(TypeName = "varchar(2)")]
+    public string CodeAlpha2 { get; set; }
 
-        [Required]
-        public DateTimeOffset DateCreated { get; set; }
-    }
+    [Required]
+    public DateTimeOffset DateCreated { get; set; }
+  }
 }

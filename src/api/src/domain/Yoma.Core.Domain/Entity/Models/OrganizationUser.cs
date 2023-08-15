@@ -1,13 +1,13 @@
-﻿namespace Yoma.Core.Domain.Entity.Models
+namespace Yoma.Core.Domain.Entity.Models
 {
-    public class OrganizationUser
-    {
-        public Guid Id { get; set; }
+  public class OrganizationUser
+  {
+    public Guid Id { get; set; }
 
-        public Guid OrganizationId { get; set; }
+    public Guid OrganizationId { get; set; }
 
-        public Guid UserId { get; set; }
+    public Guid UserId { get; set; }
 
-        public DateTimeOffset DateCreated { get; set; }
-    }
+    public DateTimeOffset DateCreated { get; set; }
+  }
 }
