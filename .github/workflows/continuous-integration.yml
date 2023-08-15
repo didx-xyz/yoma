@@ -1,0 +1,98 @@
+name: Continuous Integration
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "master"
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - "master"
+
+jobs:
+  lint:
+    name: Lint
+    permissions:
+      checks: write
+      contents: write
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - api
+          - youth
+        include:
+          - project: api
+            dir: ./src/api
+            lang: cs
+            config:
+              continue_on_error: false
+              check_name: 'Dotnet Format (${dir})'
+              dotnet_format: true
+              dotnet_format_dir: ./src/api
+            env: {}
+          - project: youth
+            dir: ./src/web/youth
+            lang: js
+            config:
+              continue_on_error: false
+              check_name: '${linter} (${dir})'
+              # ESLint
+              eslint: true
+              eslint_dir: ./src/web/youth
+              eslint_extensions: js,ts,tsx
+              eslint_args: --ignore-path ../../../.gitignore --config .eslintrc.cjs
+              # Prettier
+              prettier: true
+              prettier_dir: ./src/web/youth
+              prettier_extensions: js,ts,tsx
+              prettier_args: --ignore-path ../../../.gitignore --config prettier.config.cjs
+            env:
+              NEXTAUTH_SECRET: superSecretNextAuthSecret
+              NEXTAUTH_URL: http://localhost:3000
+              KEYCLOAK_ISSUER: http://keycloak:8080/realms/yoma
+              KEYCLOAK_CLIENT_ID: yoma-web-youth
+              KEYCLOAK_CLIENT_SECRET: superSecretKeycloakClientSecret
+              NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER: keycloak
+              API_BASE_URL: http://localhost:5000/api/v3
+              NEXT_PUBLIC_API_BASE_URL: http://localhost:5000/api/v3
+              NEXT_PUBLIC_ENVIRONMENT: local
+
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          base: master
+          filters: |-
+            changes:
+              - '${{ matrix.dir }}/**'
+            web:
+              - './src/web/**'
+
+      - uses: actions/setup-node@v3
+        if: (steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+        with:
+          node-version: '18'
+      - run: npm install -g yarn eslint prettier
+        if: (steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+      - run: yarn install --frozen-lockfile
+        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+        working-directory: ${{ matrix.dir }}
+
+      - uses: actions/setup-dotnet@v3
+        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
+        with:
+          dotnet-version: 7.x
+
+      - uses: wearerequired/lint-action@v2
+        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
+        with: ${{ matrix.config }}
+        env: ${{ matrix.env }}

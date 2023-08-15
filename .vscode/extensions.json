@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "signageos.signageos-vscode-sops",
+    "amazonwebservices.aws-toolkit-vscode",
+    "editorconfig.editorconfig",
+    "ms-dotnettools.csharp",
+    "esbenp.prettier-vscode",
+    "tilt-dev.tiltfile",
+    "tchoupinax.tilt"
+  ]
+}

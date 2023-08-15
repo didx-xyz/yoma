@@ -1,4 +1,49 @@
-﻿[*.cs]
+﻿# http://editorconfig.org
+root = false
 
+# https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/csharp-formatting-options
+# CSharp formatting rules
+[*.cs]
 # CS8618: Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 dotnet_diagnostic.CS8618.severity = none
+# New-line options
+csharp_new_line_before_open_brace = all # default: all
+csharp_new_line_before_else = true # default: true
+csharp_new_line_before_catch = true # default: true
+csharp_new_line_before_finally = true # default: true
+csharp_new_line_before_members_in_object_initializers = true # default: true
+csharp_new_line_before_members_in_anonymous_types = true # default: true
+csharp_new_line_between_query_expression_clauses = true # default: true
+# Indentation options
+csharp_indent_case_contents = true # default: true
+csharp_indent_switch_labels = true # default: true
+csharp_indent_labels = one_less_than_current # default: one_less_than_current
+csharp_indent_block_contents = true # default: true
+csharp_indent_braces = false # default: false
+csharp_indent_case_contents_when_block = true # default: true
+# Spacing options
+csharp_space_after_cast = true # default: false
+csharp_space_after_keywords_in_control_flow_statements = true # default: false
+csharp_space_between_parentheses = false # default: false
+csharp_space_before_colon_in_inheritance_clause = true # default: true
+csharp_space_after_colon_in_inheritance_clause = true # default: true
+csharp_space_around_binary_operators = before_and_after # default: before_and_after
+csharp_space_between_method_declaration_parameter_list_parentheses = false # default: false
+csharp_space_between_method_declaration_empty_parameter_list_parentheses = false # default: false
+csharp_space_between_method_declaration_name_and_open_parenthesis = false # default: false
+csharp_space_between_method_call_parameter_list_parentheses = false # default: false
+csharp_space_between_method_call_empty_parameter_list_parentheses = false # default: false
+csharp_space_between_method_call_name_and_opening_parenthesis = false # default: false
+csharp_space_after_comma = true # default: true
+csharp_space_before_comma = false # default: false
+csharp_space_after_dot = false # default: false
+csharp_space_before_dot = false # default: false
+csharp_space_after_semicolon_in_for_statement = true # default: true
+csharp_space_before_semicolon_in_for_statement = false # default: false
+csharp_space_around_declaration_statements = false # default: false
+csharp_space_before_open_square_brackets = false # default: false
+csharp_space_between_empty_square_brackets = false # default: false
+csharp_space_between_square_brackets = false # default: false
+# Wrap options
+csharp_preserve_single_line_statements = true # default: true
+csharp_preserve_single_line_blocks = true # default: true

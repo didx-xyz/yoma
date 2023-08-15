@@ -1,7 +1,8 @@
 version: "3.8"
 services:
   sqlserver: # Local MSSQL server
-    image: ghcr.io/didx-xyz/mssql-server:2022-fts
+    platform: linux/amd64
+    image: ghcr.io/didx-xyz/mssql-server:2022-latest
     container_name: sqlserver
     restart: always
     environment:

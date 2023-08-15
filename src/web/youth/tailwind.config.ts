@@ -7,5 +7,7 @@ export default {
   },
   darkMode: "class",
   plugins: [require("daisyui"), require("tailwindcss-animate")],
-  daisyui: {},
+  daisyui: {
+    logs: false,
+  },
 } satisfies Config;

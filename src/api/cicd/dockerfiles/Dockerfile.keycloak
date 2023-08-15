@@ -1,6 +1,0 @@
-FROM quay.io/keycloak/keycloak:21.0.2
-
-# https://github.com/leroyguillaume/keycloak-bcrypt
-ADD --chown=keycloak:keycloak https://github.com/leroyguillaume/keycloak-bcrypt/releases/download/1.5.3/keycloak-bcrypt-1.5.3.jar /opt/keycloak/providers/keycloak-bcrypt-1.5.3.jar
-
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]

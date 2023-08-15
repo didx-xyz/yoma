@@ -1,0 +1,6 @@
+# https://github.com/jdxcode/rtx
+[env]
+RTX_FETCH_REMOTE_VERSIONS_TIMEOUT="30s" # Because azure is slow
+
+[tools]
+dotnet = "7.0"
