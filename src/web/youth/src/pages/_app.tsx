@@ -35,7 +35,7 @@ const MyApp: AppType<object> = ({ Component, pageProps }: AppPropsWithLayout) =>
           <ToastContainer containerId="toastContainer" className="mt-16 w-full md:mt-10 md:w-[340px]" />
         </Hydrate>
       </QueryClientProvider>
-    </ThemeProvider>
+    </ThemeProvider>,
   );
 };
 

@@ -135,7 +135,7 @@ const Settings: NextPageWithLayout = () => {
         toastId: "patchUserProfile",
       });
     },
-    [update, session]
+    [update, session],
   );
 
   return (
