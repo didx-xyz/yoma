@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+set -e
+
+git fetch origin master
+
+# Function to check if a file path matches a pattern
+match_pattern() {
+  [[ $1 == $2 ]] && return 0
+  [[ $1 == $2/* ]] && return 0
+  return 1
+}
+
+# Function to run a command in a directory if changes match a pattern
+run_command_for_changes() {
+  local directory="$1"
+  local command="$2"
+
+  # Get the list of changed files
+  changed_files=$(git diff --name-only origin/master)
+
+  # Iterate through changed files and run the command if a match is found
+  for file in $changed_files; do
+    if match_pattern "$file" "$directory"; then
+      (cd "$directory" && eval "$command")
+      break
+    fi
+  done
+}
+
+# Check for changes in src/api and run dotnet format command
+run_command_for_changes "src/api" "dotnet format --verify-no-changes"
+
+# Check for changes in src/web/youth and run yarn lint command
+run_command_for_changes "src/web/youth" "yarn lint"
+
+# Exit with success
+exit 0

@@ -5,8 +5,20 @@ updates:
     directory: /
     schedule:
       interval: weekly
-  # Maintain dependencies for Node
+  # Maintain NPM dependencies for `/`
   - package-ecosystem: npm
-    directory: /src/web
+    directory: /
     schedule:
       interval: weekly
+    labels:
+      - npm
+      - dependencies
+  # Maintain NPM dependencies for `web/youth`
+  - package-ecosystem: npm
+    directory: /src/web/youth
+    schedule:
+      interval: weekly
+    labels:
+      - npm
+      - dependencies
+      - web/youth
