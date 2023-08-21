@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Models
@@ -13,5 +14,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public List<Guid>? CountryIds { get; set; }
 
         public string? ValueContains { get; set; }
+
+        [JsonIgnore]
+        internal bool? ValueContainsActiveMatchesOnly { get; set; }
     }
 }

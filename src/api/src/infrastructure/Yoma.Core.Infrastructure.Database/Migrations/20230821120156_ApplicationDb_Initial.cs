@@ -154,18 +154,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OrganizationStatus",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_OrganizationStatus", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "OrganizationStatus",
                 schema: "entity",
                 columns: table => new
                 {
@@ -321,6 +309,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_Organization_OrganizationStatus_StatusId",
                         column: x => x.StatusId,
+                        principalSchema: "entity",
                         principalTable: "OrganizationStatus",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -950,10 +939,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "entity");
 
             migrationBuilder.DropTable(
-                name: "OrganizationStatus",
-                schema: "entity");
-
-            migrationBuilder.DropTable(
                 name: "OrganizationUsers",
                 schema: "entity");
 
@@ -1018,7 +1003,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "lookup");
 
             migrationBuilder.DropTable(
-                name: "OrganizationStatus");
+                name: "OrganizationStatus",
+                schema: "entity");
         }
     }
 }

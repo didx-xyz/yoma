@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
-using Yoma.Core.Domain.Entity.Models.Lookups;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 {
@@ -62,7 +61,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
         [Required]
         [ForeignKey("StatusId")]
         public Guid StatusId { get; set; }
-        public OrganizationStatus Status { get; set; }
+        public Lookups.OrganizationStatus Status { get; set; }
 
         public DateTimeOffset? DateStatusModified { get; set; }
 

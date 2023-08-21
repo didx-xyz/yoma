@@ -22,21 +22,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Yoma.Core.Domain.Entity.Models.Lookups.OrganizationStatus", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("OrganizationStatus");
-                });
-
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", b =>
                 {
                     b.Property<Guid>("Id")
@@ -794,7 +779,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .WithMany()
                         .HasForeignKey("LogoId");
 
-                    b.HasOne("Yoma.Core.Domain.Entity.Models.Lookups.OrganizationStatus", "Status")
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups.OrganizationStatus", "Status")
                         .WithMany()
                         .HasForeignKey("StatusId")
                         .OnDelete(DeleteBehavior.Cascade)

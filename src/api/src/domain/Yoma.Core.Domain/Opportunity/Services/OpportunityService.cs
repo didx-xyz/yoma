@@ -149,7 +149,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 CategoryIds = filter.CategoryIds,
                 LanguageIds = filter.LanguageIds,
                 CountryIds = filter.CountryIds,
-                ValueContains = filter.ValueContains
+                ValueContains = filter.ValueContains,
+                ValueContainsActiveMatchesOnly = true
             };
 
             var searchResult = Search(filterInternal, false);
@@ -267,7 +268,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 var predicate = PredicateBuilder.False<Models.Opportunity>();
 
                 //organizations
-                var matchedOrganizationIds = _organizationService.Contains(filter.ValueContains).Select(o => o.Id).ToList();
+                var matchedOrganizations = _organizationService.Contains(filter.ValueContains);
+                var activeOrgsOnly = filter.ValueContainsActiveMatchesOnly.HasValue && filter.ValueContainsActiveMatchesOnly.Value;
+                var matchedOrganizationIds = activeOrgsOnly
+                    ? matchedOrganizations.Where(o => o.Status == Entity.OrganizationStatus.Active).Select(o => o.Id).ToList() : matchedOrganizations.Select(o => o.Id).ToList();
+
                 if (ensureOrganizationAuthorization)
                 {
                     organizationIds = organizationIds.Intersect(matchedOrganizationIds).ToList(); //organizationIds == authorized organizations; only include matched authorized organizations
