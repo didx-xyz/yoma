@@ -38,7 +38,7 @@
     "@types/prettier": "^2.7.2",
     "@types/react": "^18.2.6",
     "@types/react-dom": "^18.2.4",
-    "@typescript-eslint/eslint-plugin": "6.0.0",
+    "@typescript-eslint/eslint-plugin": "6.4.0",
     "@typescript-eslint/parser": "6.0.0",
     "autoprefixer": "^10.4.14",
     "cross-env": "^7.0.3",
