@@ -13,7 +13,7 @@
     "@hookform/resolvers": "^3.1.1",
     "@sentry/nextjs": "^7.61.1",
     "@t3-oss/env-nextjs": "^0.3.1",
-    "@tanstack/react-query": "^4.32.0",
+    "@tanstack/react-query": "^4.33.0",
     "@types/react-modal": "^3.16.0",
     "axios": "^1.4.0",
     "daisyui": "^3.5.0",
