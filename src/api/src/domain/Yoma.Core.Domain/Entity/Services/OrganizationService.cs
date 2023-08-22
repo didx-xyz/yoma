@@ -449,7 +449,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             OrganizationUser? orgUser = null;
             var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
-            if(!isAdmin) orgUser = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == org.Id && o.UserId == user.Id);
+            if (!isAdmin) orgUser = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == org.Id && o.UserId == user.Id);
 
             if (!isAdmin && orgUser == null && throwUnauthorized)
                 throw new SecurityException("Unauthorized");
