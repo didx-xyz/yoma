@@ -1,0 +1,120 @@
+import React, { useContext, useRef, useState } from "react";
+import ReactModal from "react-modal";
+
+interface UseModalShowReturnType {
+  show: boolean;
+  setShow: (value: boolean) => void;
+  onHide: () => void;
+}
+
+const useModalShow = (): UseModalShowReturnType => {
+  const [show, setShow] = useState(false);
+
+  const handleOnHide = () => {
+    setShow(false);
+  };
+
+  return {
+    show,
+    setShow,
+    onHide: handleOnHide,
+  };
+};
+
+interface ModalContextType {
+  showConfirmation: (
+    title: string,
+    message: string | JSX.Element,
+  ) => Promise<boolean>;
+}
+
+interface ConfirmationModalContextProviderProps {
+  children: React.ReactNode;
+}
+
+const ConfirmationModalContext = React.createContext<ModalContextType>(
+  {} as ModalContextType,
+);
+
+const ConfirmationModalContextProvider: React.FC<
+  ConfirmationModalContextProviderProps
+> = (props) => {
+  const { setShow, show, onHide } = useModalShow();
+  const [content, setContent] = useState<{
+    title: string;
+    message: string | JSX.Element;
+  } | null>();
+  //eslint-disable-next-line @typescript-eslint/ban-types
+  const resolver = useRef<Function>();
+
+  const handleShow = (
+    title: string,
+    message: string | JSX.Element,
+  ): Promise<boolean> => {
+    setContent({
+      title,
+      message,
+    });
+    setShow(true);
+    return new Promise(function (resolve) {
+      resolver.current = resolve;
+    });
+  };
+
+  const modalContext: ModalContextType = {
+    showConfirmation: handleShow,
+  };
+
+  const handleOk = () => {
+    // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+    resolver.current && resolver.current(true);
+    onHide();
+  };
+
+  const handleCancel = () => {
+    // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+    resolver.current && resolver.current(false);
+    onHide();
+  };
+
+  return (
+    <ConfirmationModalContext.Provider value={modalContext}>
+      {props.children}
+
+      {content && (
+        <ReactModal
+          isOpen={show}
+          shouldCloseOnOverlayClick={true}
+          onRequestClose={onHide}
+          className="fixed inset-0 z-50 m-auto h-[170px] w-[380px] rounded-lg bg-white p-4 duration-100  animate-in zoom-in md:mt-[10%]"
+          overlayClassName="fixed inset-0 bg-transparent z-50"
+        >
+          <div className="flex h-full flex-col space-y-2">
+            {/* TITLE */}
+            {content.title && <p className="text-lg">{content.title}</p>}
+
+            {/* MESSAGE BODY */}
+            {content.message}
+
+            {/* BUTTONS */}
+            <div className="mt-10 flex h-full flex-row place-items-center justify-center space-x-2">
+              <button className="btn-default btn btn-sm" onClick={handleCancel}>
+                Cancel
+              </button>
+              <button className="btn btn-primary btn-sm" onClick={handleOk}>
+                OK
+              </button>
+            </div>
+          </div>
+        </ReactModal>
+      )}
+    </ConfirmationModalContext.Provider>
+  );
+};
+
+const useConfirmationModalContext = (): ModalContextType =>
+  useContext(ConfirmationModalContext);
+
+export { useConfirmationModalContext, useModalShow };
+
+export default ConfirmationModalContextProvider;

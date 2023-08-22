@@ -1,26 +1,44 @@
-import { withSentryConfig } from "@sentry/nextjs";
-/**
- * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially useful
- * for Docker builds.
- */
 import withBundleAnalyzer from "@next/bundle-analyzer";
+import { withSentryConfig } from "@sentry/nextjs";
 import withPWA from "next-pwa";
-await import("./src/env.mjs");
 
-const bundleAnalyzer = withBundleAnalyzer({
-  enabled: process.env.ANALYZE === "true",
-});
-
+/** next-pwa config */
+//  replace the default workbox strategy for nextjs to NetworkFirst
+//  see https://github.com/vercel/next.js/discussions/42405
 const pwa = withPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
 });
 
+/** bundleAnalyzer config */
+const bundleAnalyzer = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
+
+/** nextjs config */
 /** @type {import("next").NextConfig} */
 const config = {
   reactStrictMode: true,
   output: "standalone",
+
+  /**NB: for docker-compose, this section is needed in order to pass the server environment variables
+   * to nextjs (without using a .env file in the container)
+   */
+  env: {
+    // @ts-ignore
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    // @ts-ignore
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    // @ts-ignore
+    KEYCLOAK_ISSUER: process.env.KEYCLOAK_ISSUER,
+    // @ts-ignore
+    KEYCLOAK_CLIENT_ID: process.env.KEYCLOAK_CLIENT_ID,
+    // @ts-ignore
+    KEYCLOAK_CLIENT_SECRET: process.env.KEYCLOAK_CLIENT_SECRET,
+    // @ts-ignore
+    API_BASE_URL: process.env.API_BASE_URL,
+  },
 
   /**
    * If you have `experimental: { appDir: true }` set, then you must comment the below `i18n` config
@@ -34,7 +52,9 @@ const config = {
   },
 };
 
+/** sentry config */
 export default withSentryConfig(
+  // @ts-ignore
   bundleAnalyzer(pwa(config)),
   {
     // For all available options, see:
@@ -64,5 +84,5 @@ export default withSentryConfig(
 
     // Automatically tree-shake Sentry logger statements to reduce bundle size
     disableLogger: true,
-  }
+  },
 );

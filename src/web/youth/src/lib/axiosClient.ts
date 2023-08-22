@@ -3,6 +3,7 @@ import { type Session } from "next-auth";
 import { getSession } from "next-auth/react";
 import { env } from "~/env.mjs";
 
+// Axios instance for client-side requests
 const ApiClient = () => {
   const instance = axios.create({
     baseURL: env.NEXT_PUBLIC_API_BASE_URL,

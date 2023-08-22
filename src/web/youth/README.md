@@ -1,28 +1,60 @@
-# Create T3 App
+<p align="center">
+<img src="assets/preview.png" width="650" />
+</p>
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+<h1 align="center" style="border-bottom: none !important; margin-bottom: 5px !important;">Yoma Web</h1>
 
-## What's next? How do I make an app with this?
+<br />
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+> ✨ **Note:** This repo will be moved to the DiDx git in the future
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+<br />
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+### Quick Start
 
-## Learn More
+* Install dependencies by running `yarn` or `npm install`.
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+* Run `yarn start` or `npm run start` to start the local development server...
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+* 😎 **That's it!** You're ready to go....
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+<br />
 
-## How do I deploy this?
+### Project Structure
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+- This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+- **Flux** is used for state management and all Flux specific files are located inside `src/flux`. Transitioning to a more robust solution such as Redux is also fairly simple.
+- All primary templates are located inside `src/views`.
+- There is only one single layout defined (Default) inside `src/layouts`, however, the current structure provides an easy way of extending the UI kit. 
+- The `src/components` directory hosts all template-specific subcomponents in their own subdirectory.
+
+- Other extra styles specific to the libraries used are located inside `src/assets`....
+- The `src/utils` directory contains generic utilities.
+
+
+<br />
+
+### Available Scripts
+
+### `npm start`
+
+Runs the app in the development mode.
+
+### `npm test`
+
+Launches the test runner in the interactive watch mode.
+
+### `npm run build`
+
+Builds the app for production to the `build` folder.
+
+### Virtual Environment
+
+Create isolated node.js environments and integrate with python virtual env. This will allow you to install packages without affecting your system's installation.
+
+```bash
+python3.9 -m venv venv
+source ./venv/bin/activate
+pip install nodeenv
+nodeenv -p --node=16.15.0
+```

@@ -1,39 +1,17 @@
 import Head from "next/head";
 import type { ReactElement } from "react";
 import { NextAuthProvider } from "~/core/authProvider";
-import { Footer } from "../Footer/Footer";
 import { NavbarBackButton } from "../NavBar/NavbarBackButton";
 
 export type LayoutProps = ({
   children,
   rightMenuChildren,
-}: // title,
-// backUrl,
-// hideBackButton,
-// maxWidth,
-// darkBackground,
-// classNames,
-{
+}: {
   children: ReactElement;
   rightMenuChildren?: ReactElement;
-  // title?: string;
-  // backUrl?: string;
-  // hideBackButton?: boolean;
-  // maxWidth?: string;
-  // darkBackground?: boolean;
-  // classNames?: string;
 }) => ReactElement;
 
-const MainBackButtonLayout: LayoutProps = ({
-  children,
-  rightMenuChildren,
-  // title,
-  // backUrl,
-  // hideBackButton,
-  // maxWidth,
-  // darkBackground,
-  // classNames,
-}) => {
+const MainBackButtonLayout: LayoutProps = ({ children, rightMenuChildren }) => {
   return (
     <>
       <NextAuthProvider>
@@ -47,9 +25,8 @@ const MainBackButtonLayout: LayoutProps = ({
           <link rel="icon" href="/favicon.ico" />
         </Head>
         <NavbarBackButton rightMenuChildren={rightMenuChildren} />
-        {/* items-center justify-center */}
-        <main className="flex min-h-screen flex-col items-center bg-white dark:bg-slate-800">{children}</main>
-        <Footer />
+        <main className="flex min-h-screen justify-center bg-gray-light p-4 pt-20 xl:pt-32">{children}</main>
+        {/* <Footer /> */}
       </NextAuthProvider>
     </>
   );

@@ -18,7 +18,7 @@ declare module "next-auth" {
     error: unknown;
   }
 }
-interface User extends DefaultUser {
+export interface User extends DefaultUser {
   // ...other properties
   roles: string[];
   profile: YomaUserProfile;

@@ -2,7 +2,11 @@ import { useRouter } from "next/router";
 import type { ReactElement } from "react";
 import { IoMdArrowBack } from "react-icons/io";
 
-export type Props = ({ rightMenuChildren }: { rightMenuChildren?: ReactElement }) => ReactElement;
+export type Props = ({
+  rightMenuChildren,
+}: {
+  rightMenuChildren?: ReactElement;
+}) => ReactElement;
 
 export const NavbarBackButton: Props = ({ rightMenuChildren }) => {
   const router = useRouter();
