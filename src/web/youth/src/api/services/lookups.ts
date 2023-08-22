@@ -1,5 +1,5 @@
-import ApiClient from "~/lib/axios";
-import type { Country, Gender } from "./models/lookups";
+import ApiClient from "~/lib/axiosClient";
+import type { Country, Gender } from "../models/lookups";
 
 export const getGenders = async (): Promise<Gender[]> => {
   const { data } = await ApiClient.get<Gender[]>("/lookup/gender");

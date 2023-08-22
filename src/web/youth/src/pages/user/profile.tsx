@@ -1,28 +1,31 @@
-import { signIn, useSession } from "next-auth/react";
+import { type GetServerSidePropsContext } from "next";
+import { getServerSession } from "next-auth";
 import { useRouter } from "next/router";
 import { useCallback, type ReactElement } from "react";
 import { IoMdPerson, IoMdSettings } from "react-icons/io";
 import MainBackButton from "~/components/Layout/MainBackButton";
-import { env } from "~/env.mjs";
+import withAuth from "~/core/withAuth";
+import { authOptions } from "~/server/auth";
 import type { NextPageWithLayout } from "../_app";
 
-const UserProfile: NextPageWithLayout = () => {
-  const { data: session } = useSession({
-    required: true,
-    onUnauthenticated() {
-      // user is not authenticated, redirect to sign-in page
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      signIn(env.NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER);
-    },
-  });
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const session = await getServerSession(context.req, context.res, authOptions);
 
+  return {
+    props: {
+      user: session?.user ?? null, // (required for 'withAuth' HOC component)
+    },
+  };
+}
+
+const UserProfile: NextPageWithLayout = () => {
   return (
     <>
       <div className="container-centered">
         <div className="container-content">
           <div className="flex flex-col items-center">
             <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full border-2 hover:border-white">
-              <IoMdPerson className="absolute -left-1 h-12 w-12 text-gray-400 animate-in slide-in-from-top-4" />
+              <IoMdPerson className="text-gray-400 absolute -left-1 h-12 w-12 animate-in slide-in-from-top-4" />
             </div>
             <h1>Sam Henderson</h1>
             <h2>South Africa</h2>
@@ -92,4 +95,4 @@ UserProfile.getLayout = function getLayout(page: ReactElement) {
   return <MainBackButton rightMenuChildren={<Settings />}>{page}</MainBackButton>;
 };
 
-export default UserProfile;
+export default withAuth(UserProfile);

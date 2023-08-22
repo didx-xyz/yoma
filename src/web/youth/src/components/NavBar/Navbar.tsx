@@ -1,16 +1,11 @@
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
 import { IoMdMenu } from "react-icons/io";
 import ReactModal from "react-modal";
-// import { LogoImage } from "../LogoImage";
-// import { CartComponent } from "./Cart";
-// import { SearchComponent } from "./Search";
-// import { SignInButton } from "./SignInButton";
-// import { UserMenu } from "./UserMenu";
-import { useSession } from "next-auth/react";
-import styles from "./Navbar.module.scss";
+import { LogoImage } from "./LogoImage";
 import { SignInButton } from "./SignInButton";
-import { UserMenu } from "./UserMenu/UserMenu";
+import { UserMenu } from "./UserMenu";
 
 export const Navbar: React.FC = () => {
   const [menuVisible, setMenuVisible] = useState(false);
@@ -18,159 +13,100 @@ export const Navbar: React.FC = () => {
 
   return (
     <div id="topNav" className="fixed left-0 right-0 top-0 z-40">
-      <div className="bg-base-100x navbar z-40">
-        <div className="navbar-start">
-          {/* HAMBURGER MENU */}
+      <div className="navbar z-40 bg-purple">
+        <div className="navbar-start w-full">
           <button
             type="button"
             aria-label="Navigation Menu"
-            className="btn-hover-grow btn btn-square w-[100px] gap-2 border-none bg-transparent hover:border-none hover:bg-transparent lg:hidden"
+            className="ml-1 text-white  lg:hidden"
             onClick={() => setMenuVisible(!menuVisible)}
           >
             <IoMdMenu className="h-8 w-8" />
           </button>
-
-          {/* MODAL MENU */}
           <ReactModal
             isOpen={menuVisible}
             shouldCloseOnOverlayClick={true}
             onRequestClose={() => {
               setMenuVisible(false);
             }}
-            className={
-              "fadeIn fixed left-0 right-0 top-16 flex-grow items-center rounded-none bg-white md:left-6 md:right-auto md:top-20 md:w-56 md:rounded-2xl"
-            }
+            className={"fixed left-0 right-0 top-16 flex-grow items-center bg-purple animate-in fade-in"}
             portalClassName={"fixed z-50"}
-            overlayClassName="fixed inset-0 bg-transparent"
+            overlayClassName="fixed inset-0"
           >
-            <div>
-              <Link href="/">
-                <button
-                  className={`${styles.borderDarkButton} rounded-l-2xl rounded-r-2xl rounded-bl-none rounded-br-none`}
-                >
-                  Home
-                </button>
+            <div className="flex flex-col">
+              <Link href="/" className="px-7 py-3 text-white hover:brightness-50">
+                Home
               </Link>
 
-              <Link href="/opportunities">
-                <button className={`${styles.borderDarkButton} rounded-none`}>Opportunities</button>
+              <Link href="/opportunities" className="px-7 py-3 text-white hover:brightness-50">
+                Opportunities
               </Link>
 
-              <Link href="/marketplace">
-                <button className={`${styles.borderDarkButton} rounded-none rounded-bl-2xl rounded-br-2xl`}>
-                  Marketplace
-                </button>
+              <Link href="/marketplace" className="px-7 py-3 text-white hover:brightness-50">
+                Marketplace
               </Link>
 
-              <Link href="/faq">
-                <button className={`${styles.borderDarkButton} rounded-none rounded-bl-2xl rounded-br-2xl`}>FAQ</button>
+              <Link href="/faq" className="px-7 py-3 text-white hover:brightness-50">
+                FAQ
               </Link>
 
-              <Link href="/howToYoma">
-                <button className={`${styles.borderDarkButton} rounded-none rounded-bl-2xl rounded-br-2xl`}>
-                  How to Yoma
-                </button>
+              <Link href="/howToYoma" className="px-7 py-3 text-white hover:brightness-50">
+                How to Yoma
               </Link>
 
-              <Link href="/feedback">
-                <button className={`${styles.borderDarkButton} rounded-none rounded-bl-2xl rounded-br-2xl`}>
-                  Feedback
-                </button>
+              <Link href="/feedback" className="px-7 py-3 text-white hover:brightness-50">
+                Feedback
               </Link>
 
-              <Link href="/localisation">
-                <button className={`${styles.borderDarkButton} rounded-none rounded-bl-2xl rounded-br-2xl`}>
-                  Localisation
-                </button>
+              <Link href="/localisation" className="px-7 py-3 text-white hover:brightness-50">
+                Localisation
               </Link>
-
-              {/* {process.env.NEXT_PUBLIC_ALT_WEB_BASE_URI && (
-                <Link href={process.env.NEXT_PUBLIC_ALT_WEB_BASE_URI}>
-                  <a>
-                    <button className="gl-border-dark-button rounded-none rounded-bl-2xl rounded-br-2xl">
-                      {process.env.NEXT_PUBLIC_ALT_WEB_BASE_LABEL}
-                    </button>
-                  </a>
-                </Link>
-              )} */}
             </div>
           </ReactModal>
-
-          {/* LOGO */}
-          <div className="pr-4">{/* <LogoImage /> */}</div>
-
-          {/* MENU ITEMS */}
-          <ul className="plx-16 menu menu-horizontal hidden p-0 lg:flex">
+          <div className="ml-8">
+            <LogoImage />
+          </div>
+          <ul className="hidden w-full flex-row items-center justify-center gap-16 p-0 lg:flex">
             <li tabIndex={0}>
-              <Link href="/" legacyBehavior>
-                <a className={`${styles.topNavMenuItem}`}>Home</a>
+              <Link href="/" className="text-white hover:brightness-50">
+                Home
               </Link>
             </li>
             <li tabIndex={1}>
-              <Link href="/opportunities" legacyBehavior>
-                <a className={`${styles.topNavMenuItem}`}>Opportunities</a>
+              <Link href="/opportunities" className="text-white hover:brightness-50">
+                Opportunities
               </Link>
             </li>
             <li tabIndex={2}>
-              <Link href="/marketplace" legacyBehavior>
-                <a className={`${styles.topNavMenuItem}`}>Marketplace</a>
-              </Link>
-            </li>
-            <li tabIndex={4}>
-              <Link href="/faq" legacyBehavior>
-                <a className={`${styles.topNavMenuItem}`}>FAQ</a>
-              </Link>
-            </li>
-            <li tabIndex={5}>
-              <Link href="/howToYoma" legacyBehavior>
-                <a className={`${styles.topNavMenuItem}`}>How to Yoma</a>
-              </Link>
-            </li>
-            <li tabIndex={6}>
-              <Link href="/feedback" legacyBehavior>
-                <a className={`${styles.topNavMenuItem}`}>Feedback</a>
+              <Link href="/marketplace" className="text-white hover:brightness-50">
+                Marketplace
               </Link>
             </li>
             <li tabIndex={3}>
-              <Link href="/localisation" legacyBehavior>
-                <a className={`${styles.topNavMenuItem}`}>Localisation</a>
+              <Link href="/faq" className="text-white hover:brightness-50">
+                FAQ
               </Link>
             </li>
-
-            {/* {process.env.NEXT_PUBLIC_ALT_WEB_BASE_URI && (
-              <li tabIndex={2}>
-                <Link
-                  href={process.env.NEXT_PUBLIC_ALT_WEB_BASE_URI}
-                  legacyBehavior
-                >
-                  <a className={`${styles.topNavMenuItem}`}>
-                    {process.env.NEXT_PUBLIC_ALT_WEB_BASE_LABEL}
-                  </a>
-                </Link>
-              </li>
-            )} */}
+            <li tabIndex={3}>
+              <Link href="/howToYoma" className="text-white hover:brightness-50">
+                How to Yoma
+              </Link>
+            </li>
+            <li tabIndex={3}>
+              <Link href="/feedback" className="text-white hover:brightness-50">
+                Feedback
+              </Link>
+            </li>
+            <li tabIndex={3}>
+              <Link href="/localisation" className="text-white hover:brightness-50">
+                Localisation
+              </Link>
+            </li>
           </ul>
         </div>
-        {/* <div
-            className="navbar-center hidden md:flex"
-          >
-          </div> */}
-        <div className="navbar-end gap-5">
-          {/* SEARCH */}
-          {/* <div className="absolute left-2 right-2 top-[4.5rem] md:static md:w-96">
-            <SearchComponent />
-          </div> */}
-
-          {/* CART */}
-          {/* <div>
-            <CartComponent />
-          </div> */}
-
+        <div className="navbar-end w-[150px] justify-center">
           <div>
-            {/* SIGN IN BUTTON */}
             {!session && <SignInButton></SignInButton>}
-
-            {/* USER BUTTON */}
             {session && <UserMenu />}
           </div>
         </div>

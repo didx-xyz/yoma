@@ -16,7 +16,7 @@ export const ApiErrors: Props = ({ error }) => {
             return (
               <>
                 <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                  <IoMdAlert className="mr-2 text-xl text-yellow-400" /> Access Denied
+                  <IoMdAlert className="text-yellow-400 mr-2 text-xl" /> Access Denied
                 </div>
                 <p className="text-sm">Your session has expired. Please sign-in and try again.</p>
               </>
@@ -25,7 +25,7 @@ export const ApiErrors: Props = ({ error }) => {
             return (
               <>
                 <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                  <IoMdAlert className="mr-2 text-xl text-yellow-400" /> Access Denied
+                  <IoMdAlert className="text-yellow-400 mr-2 text-xl" /> Access Denied
                 </div>
                 <p className="text-sm">
                   You don&apos;t have access to perform this action. Please contact us to request access.
