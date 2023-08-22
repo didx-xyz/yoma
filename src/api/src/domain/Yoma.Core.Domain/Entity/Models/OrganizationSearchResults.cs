@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.Entity.Models
     {
         public int? TotalCount { get; set; }
 
-        public List<OrganizationInfo> Items { get; set;}
+        public List<OrganizationInfo> Items { get; set; }
     }
 }

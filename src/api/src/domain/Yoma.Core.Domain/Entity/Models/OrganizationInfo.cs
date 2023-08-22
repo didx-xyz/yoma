@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Entity.Models
 {
-    public  class OrganizationInfo
+    public class OrganizationInfo
     {
         public Guid Id { get; set; }
 
