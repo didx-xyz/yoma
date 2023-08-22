@@ -22,23 +22,16 @@ const useModalShow = (): UseModalShowReturnType => {
 };
 
 interface ModalContextType {
-  showConfirmation: (
-    title: string,
-    message: string | JSX.Element,
-  ) => Promise<boolean>;
+  showConfirmation: (title: string, message: string | JSX.Element) => Promise<boolean>;
 }
 
 interface ConfirmationModalContextProviderProps {
   children: React.ReactNode;
 }
 
-const ConfirmationModalContext = React.createContext<ModalContextType>(
-  {} as ModalContextType,
-);
+const ConfirmationModalContext = React.createContext<ModalContextType>({} as ModalContextType);
 
-const ConfirmationModalContextProvider: React.FC<
-  ConfirmationModalContextProviderProps
-> = (props) => {
+const ConfirmationModalContextProvider: React.FC<ConfirmationModalContextProviderProps> = (props) => {
   const { setShow, show, onHide } = useModalShow();
   const [content, setContent] = useState<{
     title: string;
@@ -47,10 +40,7 @@ const ConfirmationModalContextProvider: React.FC<
   //eslint-disable-next-line @typescript-eslint/ban-types
   const resolver = useRef<Function>();
 
-  const handleShow = (
-    title: string,
-    message: string | JSX.Element,
-  ): Promise<boolean> => {
+  const handleShow = (title: string, message: string | JSX.Element): Promise<boolean> => {
     setContent({
       title,
       message,
@@ -112,8 +102,7 @@ const ConfirmationModalContextProvider: React.FC<
   );
 };
 
-const useConfirmationModalContext = (): ModalContextType =>
-  useContext(ConfirmationModalContext);
+const useConfirmationModalContext = (): ModalContextType => useContext(ConfirmationModalContext);
 
 export { useConfirmationModalContext, useModalShow };
 

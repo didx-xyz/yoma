@@ -1,4 +1,4 @@
-import {type GetServerSidePropsContext } from "next";
+import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { useRouter } from "next/router";
 import { useCallback, type ReactElement } from "react";

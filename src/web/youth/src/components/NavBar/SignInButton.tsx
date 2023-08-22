@@ -18,9 +18,7 @@ export const SignInButton: React.FC = () => {
       onClick={handleLogin}
       disabled={isButtonLoading}
     >
-      {isButtonLoading && (
-        <div className="lds-dual-ring lds-dual-ring-white h-8 w-8"></div>
-      )}
+      {isButtonLoading && <div className="lds-dual-ring lds-dual-ring-white h-8 w-8"></div>}
       {!isButtonLoading && <IoMdFingerPrint className="h-8 w-8 text-white" />}
       Sign In
     </button>

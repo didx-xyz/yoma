@@ -24,7 +24,7 @@ export const UserMenu: React.FC = () => {
         <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full border-2 hover:border-white">
           {/* NO IMAGE */}
           {/* {!userCompanyImageUrl && ( */}
-          <IoMdPerson className="absolute -left-1 h-12 w-12 text-gray-400 animate-in slide-in-from-top-4" />
+          <IoMdPerson className="text-gray-400 absolute -left-1 h-12 w-12 animate-in slide-in-from-top-4" />
           {/* )} */}
 
           {/* EXISTING IMAGE */}
@@ -61,32 +61,23 @@ export const UserMenu: React.FC = () => {
           setUserMenuVisible(false);
         }}
         className={
-          "bg-purple fixed left-0 right-0 top-16 flex-grow animate-in fade-in md:left-auto md:right-0 md:top-[66px] md:w-64"
+          "fixed left-0 right-0 top-16 flex-grow bg-purple animate-in fade-in md:left-auto md:right-0 md:top-[66px] md:w-64"
         }
         portalClassName={"fixed z-50"}
         overlayClassName="fixed inset-0"
       >
         <div className="flex flex-col">
-          <Link
-            href="/user/settings"
-            className="px-7 py-3 text-white hover:brightness-50"
-          >
+          <Link href="/user/settings" className="px-7 py-3 text-white hover:brightness-50">
             User settings
           </Link>
 
-          <Link
-            href="/organisation/settings"
-            className="px-7 py-3 text-white hover:brightness-50"
-          >
+          <Link href="/organisation/settings" className="px-7 py-3 text-white hover:brightness-50">
             Organisation settings
           </Link>
 
           <div className="divider m-0" />
 
-          <button
-            className="px-7 py-3 text-left text-white hover:brightness-50"
-            onClick={handleLogout}
-          >
+          <button className="px-7 py-3 text-left text-white hover:brightness-50" onClick={handleLogout}>
             Logout
           </button>
         </div>

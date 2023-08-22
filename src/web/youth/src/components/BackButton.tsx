@@ -21,12 +21,7 @@ export const BackButton: React.FC<InputProps> = ({ url }) => {
   };
 
   return (
-    <button
-      type="button"
-      aria-label="Close"
-      className="mr-2"
-      onClick={handleClick}
-    >
+    <button type="button" aria-label="Close" className="mr-2" onClick={handleClick}>
       <IoMdArrowBack className="h-6 w-6" />
     </button>
   );

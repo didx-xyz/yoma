@@ -15,11 +15,7 @@ const ApiServer = (context: GetServerSidePropsContext) => {
   instance.interceptors.request.use(
     async (request) => {
       if (lastSession == null || Date.now() > Date.parse(lastSession.expires)) {
-        const session = await getServerSession(
-          context.req,
-          context.res,
-          authOptions,
-        );
+        const session = await getServerSession(context.req, context.res, authOptions);
         lastSession = session;
       }
 
