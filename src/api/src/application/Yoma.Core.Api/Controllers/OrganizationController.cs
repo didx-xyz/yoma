@@ -173,29 +173,29 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Assign the specified user as organization administrator")]
         [HttpPut("{id}/admin/{userId}/assign")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        public IActionResult AssignAdmin([FromRoute] Guid id, [FromRoute] Guid userId)
+        public async Task<IActionResult> AssignAdmin([FromRoute] Guid id, [FromRoute] Guid userId)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignAdmin));
 
-            var result = _organizationService.AssignAdmin(id, userId, true);
+            await _organizationService.AssignAdmin(id, userId, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(AssignAdmin));
 
-            return StatusCode((int)HttpStatusCode.OK, result);
+            return StatusCode((int)HttpStatusCode.OK);
         }
 
         [SwaggerOperation(Summary = "Remove the specified user as organization administrator")]
         [HttpDelete("{id}/admin/{userId}/remove")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        public IActionResult RemoveAdmin([FromRoute] Guid id, [FromRoute] Guid userId)
+        public async Task<IActionResult> RemoveAdmin([FromRoute] Guid id, [FromRoute] Guid userId)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(RemoveAdmin));
 
-            var result = _organizationService.RemoveAdmin(id, userId, true);
+            await _organizationService.RemoveAdmin(id, userId, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(RemoveAdmin));
 
-            return StatusCode((int)HttpStatusCode.OK, result);
+            return StatusCode((int)HttpStatusCode.OK);
         }
 
         [SwaggerOperation(Summary = "Return a list of administrators for the specified organization")]
@@ -216,7 +216,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpGet("admin")]
         [ProducesResponseType(typeof(List<Domain.Entity.Models.Lookups.OrganizationProviderType>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = Constants.Role_OrganizationAdmin)]
-        public IActionResult ListAdminsOf([FromRoute] Guid id)
+        public IActionResult ListAdminsOf()
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListAdminsOf));
 

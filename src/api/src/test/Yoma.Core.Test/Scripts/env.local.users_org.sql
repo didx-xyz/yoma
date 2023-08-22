@@ -26,22 +26,28 @@ DECLARE @Words VARCHAR(500) = 'The,A,An,Awesome,Incredible,Fantastic,Amazing,Won
 DECLARE @RandomLengthName INT = ABS(CHECKSUM(NEWID()) % 10) + 5;
 DECLARE @RandomLengthOther INT = ABS(CHECKSUM(NEWID()) % 101) + 100;
 
---organizations
-INSERT INTO [entity].[Organization]([Id],
-			[Name],
-			[WebsiteURL],[PrimaryContactName],[PrimaryContactEmail],[PrimaryContactPhone],[VATIN],[TaxNumber],[RegistrationNumber],
-			[City],[CountryId],[StreetAddress],[Province],[PostalCode],
-			[Tagline],
-			[Biography],
-			[StatusId],[DateStatusModified],[LogoId],[CompanyRegistrationDocumentId],[DateCreated],[DateModified])
-SELECT TOP 10 NEWID(),
-        (SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthName) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) + ' ' + CAST(ABS(CHECKSUM(NEWID())) % 2147483647 AS VARCHAR(10)),
-		'https://www.google.com/','Primary Contact','primarycontact@gmail.com','+275555555', 'GB123456789', '0123456789', '12345/28/14', 
-		'My City',(SELECT TOP 1 [Id] FROM [lookup].[Country] ORDER BY NEWID()),'My Street Address 1000', 'My Province', '12345-1234', 
-		(SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthOther) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords),
-		(SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthOther) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords),
-		(SELECT [Id] FROM [entity].[OrganizationStatus] WHERE [Name] = 'Active'), GETDATE(), NULL,NULL,GETDATE(),GETDATE()
-FROM sys.all_columns
+DECLARE @RowCount INT = 0;
+
+WHILE @RowCount < 10
+BEGIN
+    --organizations
+    INSERT INTO [entity].[Organization]([Id],
+			    [Name],
+			    [WebsiteURL],[PrimaryContactName],[PrimaryContactEmail],[PrimaryContactPhone],[VATIN],[TaxNumber],[RegistrationNumber],
+			    [City],[CountryId],[StreetAddress],[Province],[PostalCode],
+			    [Tagline],
+			    [Biography],
+			    [StatusId],[DateStatusModified],[LogoId],[CompanyRegistrationDocumentId],[DateCreated],[DateModified])
+    SELECT TOP 1 NEWID(),
+            (SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthName) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) + ' ' + CAST(ABS(CHECKSUM(NEWID())) % 2147483647 AS VARCHAR(10)),
+		    'https://www.google.com/','Primary Contact','primarycontact@gmail.com','+275555555', 'GB123456789', '0123456789', '12345/28/14', 
+		    'My City',(SELECT TOP 1 [Id] FROM [lookup].[Country] ORDER BY NEWID()),'My Street Address 1000', 'My Province', '12345-1234', 
+		    (SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthOther) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords),
+		    (SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthOther) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords),
+		    (SELECT [Id] FROM [entity].[OrganizationStatus] WHERE [Name] = 'Active'), GETDATE(), NULL,NULL,GETDATE(),GETDATE()
+    FROM sys.all_columns
+  	SET @RowCount = @RowCount + 1;
+END;
 GO
 
 --organization admins

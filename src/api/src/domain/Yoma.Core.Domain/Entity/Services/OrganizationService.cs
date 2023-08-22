@@ -447,10 +447,13 @@ namespace Yoma.Core.Domain.Entity.Services
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
             var org = GetById(id, false, false);
 
-            var result = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == org.Id && o.UserId == user.Id) != null;
-            if (!result && throwUnauthorized)
+            OrganizationUser? orgUser = null;
+            var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
+            if(!isAdmin) orgUser = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == org.Id && o.UserId == user.Id);
+
+            if (!isAdmin && orgUser == null && throwUnauthorized)
                 throw new SecurityException("Unauthorized");
-            return result;
+            return true;
         }
 
         public bool IsAdminsOf(List<Guid> ids, bool throwUnauthorized)

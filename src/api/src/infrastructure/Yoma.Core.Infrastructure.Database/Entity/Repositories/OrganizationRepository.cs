@@ -47,7 +47,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 DateCreated = entity.DateCreated,
                 DateModified = entity.DateModified,
                 ProviderTypes = includeChildItems ?
-                    entity.ProviderTypes.Select(o => new Domain.Entity.Models.Lookups.OrganizationProviderType { Id = o.Id, Name = o.ProviderType.Name }).ToList() : null
+                    entity.ProviderTypes.Select(o => new Domain.Entity.Models.Lookups.OrganizationProviderType { Id = o.ProviderTypeId, Name = o.ProviderType.Name }).ToList() : null
             });
         }
 

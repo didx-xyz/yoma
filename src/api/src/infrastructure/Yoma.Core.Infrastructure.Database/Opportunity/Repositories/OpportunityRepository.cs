@@ -55,14 +55,14 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 DateModified = entity.DateModified,
                 ModifiedBy = entity.ModifiedBy,
                 Categories = includeChildItems ?
-                    entity.Categories.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityCategory { Id = o.Id, Name = o.Category.Name }).ToList() : null,
+                    entity.Categories.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityCategory { Id = o.CategoryId, Name = o.Category.Name }).ToList() : null,
                 Countries = includeChildItems ?
                     entity.Countries.Select(o => new Domain.Lookups.Models.Country
-                    { Id = o.Id, Name = o.Country.Name, CodeAlpha2 = o.Country.CodeAlpha2, CodeAlpha3 = o.Country.CodeAlpha3, CodeNumeric = o.Country.CodeNumeric }).ToList() : null,
+                    { Id = o.CountryId, Name = o.Country.Name, CodeAlpha2 = o.Country.CodeAlpha2, CodeAlpha3 = o.Country.CodeAlpha3, CodeNumeric = o.Country.CodeNumeric }).ToList() : null,
                 Languages = includeChildItems ?
-                    entity.Languages.Select(o => new Domain.Lookups.Models.Language { Id = o.Id, Name = o.Language.Name, CodeAlpha2 = o.Language.CodeAlpha2 }).ToList() : null,
+                    entity.Languages.Select(o => new Domain.Lookups.Models.Language { Id = o.LanguageId, Name = o.Language.Name, CodeAlpha2 = o.Language.CodeAlpha2 }).ToList() : null,
                 Skills = includeChildItems ?
-                    entity.Skills.Select(o => new Domain.Lookups.Models.Skill { Id = o.Id, Name = o.Skill.Name, InfoURL = o.Skill.InfoURL }).ToList() : null
+                    entity.Skills.Select(o => new Domain.Lookups.Models.Skill { Id = o.SkillId, Name = o.Skill.Name, InfoURL = o.Skill.InfoURL }).ToList() : null
 
             });
         }
