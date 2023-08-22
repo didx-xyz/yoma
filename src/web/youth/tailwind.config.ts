@@ -44,7 +44,7 @@ export default {
       {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         light: {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access @typescript-eslint/no-var-requires
+          // eslint-disable-next-line
           ...require("daisyui/src/theming/themes")["[data-theme=light]"],
           primary: "#41204B",
           "primary-focus": "#33193b",
