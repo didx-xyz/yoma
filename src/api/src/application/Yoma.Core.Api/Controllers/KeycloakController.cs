@@ -127,7 +127,7 @@ namespace Yoma.Core.Api.Controllers
                     {
                         if (type == WebhookRequestEventType.UpdateProfile)
                         {
-                            _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, payload?.details.username);
+                            _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
                             return;
                         }
                         userRequest = new UserRequest();
@@ -188,7 +188,7 @@ namespace Yoma.Core.Api.Controllers
                 case WebhookRequestEventType.Login:
                     if (userRequest == null)
                     {
-                        _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, payload?.details.username);
+                        _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
                         return;
                     }
 
@@ -199,7 +199,7 @@ namespace Yoma.Core.Api.Controllers
                     break;
 
                 default: //event not supported
-                    _logger.LogError("Failed to retrieve the Keycloak user with username '{username}'", payload?.details.username);
+                    _logger.LogError("{type}: Event not supported", type);
                     return;
             }
 
