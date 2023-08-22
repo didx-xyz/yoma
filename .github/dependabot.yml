@@ -11,7 +11,7 @@ updates:
     schedule:
       interval: weekly
     labels:
-      - npm
+      - javascript
       - dependencies
   # Maintain NPM dependencies for `web/youth`
   - package-ecosystem: npm
@@ -19,6 +19,6 @@ updates:
     schedule:
       interval: weekly
     labels:
-      - npm
+      - javascript
       - dependencies
       - web/youth
