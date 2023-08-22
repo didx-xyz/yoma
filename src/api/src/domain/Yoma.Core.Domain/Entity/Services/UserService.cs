@@ -12,6 +12,7 @@ using Yoma.Core.Domain.Core;
 using User = Yoma.Core.Domain.Entity.Models.User;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Entity.Helpers;
+using Yoma.Core.Domain.Core.Extensions;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -204,7 +205,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 result.CountryId = request.CountryId;
                 result.CountryOfResidenceId = request.CountryOfResidenceId;
                 result.GenderId = request.GenderId;
-                result.DateOfBirth = request.DateOfBirth;
+                result.DateOfBirth = request.DateOfBirth.RemoveTime();
             }
 
             result.EmailConfirmed = request.EmailConfirmed;

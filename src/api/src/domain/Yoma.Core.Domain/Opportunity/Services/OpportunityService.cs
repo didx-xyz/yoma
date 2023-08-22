@@ -150,7 +150,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 LanguageIds = filter.LanguageIds,
                 CountryIds = filter.CountryIds,
                 ValueContains = filter.ValueContains,
-                ValueContainsActiveMatchesOnly = true
+                ValueContainsActiveMatchesOnly = true,
+                PageNumber = filter.PageNumber,
+                PageSize = filter.PageSize
             };
 
             var searchResult = Search(filterInternal, false);
