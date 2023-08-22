@@ -144,7 +144,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             var filterInternal = new OpportunitySearchFilter
             {
                 // active only
-                StatusIds = new List<Guid> { _opportunityStatusService.GetByName(Status.Active.ToString()).Id },
+                Statuses = new List<Status> { Status.Active },
                 TypeIds = filter.TypeIds,
                 CategoryIds = filter.CategoryIds,
                 LanguageIds = filter.LanguageIds,
@@ -255,11 +255,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
             }
 
             //statuses
-            if (filter.StatusIds != null)
+            if (filter.Statuses != null)
             {
-                filter.StatusIds = filter.StatusIds.Distinct().ToList();
-                if (filter.StatusIds.Any())
-                    query = query.Where(o => filter.StatusIds.Contains(o.StatusId));
+                filter.Statuses = filter.Statuses.Distinct().ToList();
+                if (filter.Statuses.Any())
+                {
+                    var statusIds = filter.Statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+                    query = query.Where(o => statusIds.Contains(o.StatusId));
+                }
             }
 
             //valueContains (includes organizations, types, categories, opportunities and skills)

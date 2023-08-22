@@ -55,6 +55,21 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
+        [SwaggerOperation(Summary = "Search for organizations based on the supplied filter (Admin role required)")]
+        [HttpPost("search")]
+        [ProducesResponseType(typeof(List<OrganizationSearchResults>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = Constants.Role_Admin)]
+        public IActionResult Search([FromBody] OrganizationSearchFilter filter)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(Search));
+
+            var result = _organizationService.Search(filter);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(Search));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
         [SwaggerOperation(Summary = "Insert or update an organization (User, Admin or Organization Admin role required)",
             Description = "The newly created organization defaults to an unapproved (unverified) state. When the authenticated user solely holds the 'User' role, an organization can be created, and the user is automatically designated the role of an 'Organization Admin'.")]
         [HttpPost()]

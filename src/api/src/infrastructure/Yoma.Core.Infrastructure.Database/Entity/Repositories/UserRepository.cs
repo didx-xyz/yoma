@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
@@ -5,7 +7,7 @@ using Yoma.Core.Infrastructure.Database.Entity.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 {
-    public class UserRepository : BaseRepository<User>, IRepositoryWithNavigation<Domain.Entity.Models.User>
+    public class UserRepository : BaseRepository<User>, IRepositoryValueContainsWithNavigation<Domain.Entity.Models.User>
     {
         #region Constructor
         public UserRepository(ApplicationDbContext context) : base(context) { }
@@ -42,6 +44,16 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 DateCreated = entity.DateCreated,
                 DateModified = entity.DateModified
             });
+        }
+
+        public Expression<Func<Domain.Entity.Models.User, bool>> Contains(Expression<Func<Domain.Entity.Models.User, bool>> predicate, string value)
+        {
+            return predicate.Or(o => o.FirstName.Contains(value) || o.Surname.Contains(value) || o.Email.Contains(value) || (!string.IsNullOrEmpty(o.DisplayName) && o.DisplayName.Contains(value)));
+        }
+
+        public IQueryable<Domain.Entity.Models.User> Contains(IQueryable<Domain.Entity.Models.User> query, string value)
+        {
+            return query.Where(o => o.FirstName.Contains(value) || o.Surname.Contains(value) || o.Email.Contains(value) || (!string.IsNullOrEmpty(o.DisplayName) && o.DisplayName.Contains(value)));
         }
 
         public async Task<Domain.Entity.Models.User> Create(Domain.Entity.Models.User item)

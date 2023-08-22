@@ -8,7 +8,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 {
     [Table("User", Schema = "entity")]
     [Index(nameof(Email), IsUnique = true)]
-    [Index(nameof(FirstName), nameof(Surname), nameof(PhoneNumber), nameof(ExternalId), nameof(DateCreated), nameof(DateModified))]
+    [Index(nameof(FirstName), nameof(Surname), nameof(EmailConfirmed), nameof(PhoneNumber), nameof(ExternalId), nameof(DateCreated), nameof(DateModified))]
     public class User : BaseEntity<Guid>
     {
         [Required]

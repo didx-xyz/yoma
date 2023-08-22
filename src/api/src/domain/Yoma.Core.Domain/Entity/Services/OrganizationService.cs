@@ -12,6 +12,7 @@ using Yoma.Core.Domain.Entity.Validators;
 using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Opportunity;
+using Yoma.Core.Domain.Entity.Helpers;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -26,6 +27,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IOrganizationProviderTypeService _providerTypeService;
         private readonly IBlobService _blobService;
         private readonly OrganizationRequestValidator _organizationRequestValidator;
+        private readonly OrganizationSearchFilterValidator _organizationSearchFilterValidator;
         private readonly IRepositoryValueContainsWithNavigation<Organization> _organizationRepository;
         private readonly IRepository<OrganizationUser> _organizationUserRepository;
         private readonly IRepository<OrganizationProviderType> _organizationProviderTypeRepository;
@@ -45,6 +47,7 @@ namespace Yoma.Core.Domain.Entity.Services
             IOrganizationProviderTypeService providerTypeService,
             IBlobService blobService,
             OrganizationRequestValidator organizationRequestValidator,
+            OrganizationSearchFilterValidator organizationSearchFilterValidator,
             IRepositoryValueContainsWithNavigation<Organization> organizationRepository,
             IRepository<OrganizationUser> organizationUserRepository,
             IRepository<OrganizationProviderType> organizationProviderTypeRepository)
@@ -56,6 +59,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _providerTypeService = providerTypeService;
             _blobService = blobService;
             _organizationRequestValidator = organizationRequestValidator;
+            _organizationSearchFilterValidator = organizationSearchFilterValidator;
             _organizationRepository = organizationRepository;
             _organizationUserRepository = organizationUserRepository;
             _organizationProviderTypeRepository = organizationProviderTypeRepository;
@@ -115,6 +119,38 @@ namespace Yoma.Core.Domain.Entity.Services
             return _organizationRepository.Contains(_organizationRepository.Query(), value).ToList();
         }
 
+        public OrganizationSearchResults Search(OrganizationSearchFilter filter)
+        {
+            if (filter == null)
+                throw new ArgumentNullException(nameof(filter));
+
+            _organizationSearchFilterValidator.ValidateAndThrow(filter);
+
+            var query = _organizationRepository.Query();
+
+            if (filter.Statuses != null)
+            {
+                filter.Statuses = filter.Statuses.Distinct().ToList();
+                var statusIds = filter.Statuses.Select(o => _organizationStatusService.GetByName(o.ToString())).Select(o => o.Id).ToList();
+                query = query.Where(o => statusIds.Contains(o.StatusId));
+            }
+
+            if (!string.IsNullOrEmpty(filter.ValueContains))
+                query = _organizationRepository.Contains(query, filter.ValueContains);
+
+            var results = new OrganizationSearchResults();
+            query = query.OrderBy(o => o.Name);
+
+            if (filter.PaginationEnabled)
+            {
+                results.TotalCount = query.Count();
+                query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+            }
+            results.Items = query.ToList().Select(o => o.ToInfo()).ToList();
+
+            return results;
+        }
+
         public async Task<Organization> Upsert(OrganizationRequest request, bool ensureOrganizationAuthorization)
         {
             if (request == null)
@@ -155,6 +191,7 @@ namespace Yoma.Core.Domain.Entity.Services
             {
                 var statusInactive = _organizationStatusService.GetByName(OrganizationStatus.Inactive.ToString());
                 result.StatusId = statusInactive.Id; //new organization defaults to inactive / unapproved
+                //TODO: Send email to SAP admins
 
                 using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
                 result = await _organizationRepository.Create(result);
@@ -189,20 +226,21 @@ namespace Yoma.Core.Domain.Entity.Services
                     if (org.Status == OrganizationStatus.Active) return;
                     if (!Statuses_Activatable.Contains(org.Status))
                         throw new InvalidOperationException($"{nameof(Organization)} can not be activated (current status '{org.Status}')");
-                    //TODO: Send email
+                    //TODO: Send email to org admins
                     break;
 
                 case OrganizationStatus.Inactive:
                     if (org.Status == OrganizationStatus.Inactive) return;
                     if (!Statuses_DeActivatable.Contains(org.Status))
                         throw new InvalidOperationException($"{nameof(Organization)} can not be deactivated (current status '{org.Status}')");
+                    //TODO: Send email to SAP admins
                     break;
 
                 case OrganizationStatus.Declined:
                     if (org.Status == OrganizationStatus.Deleted) return;
                     if (!Statuses_Declinable.Contains(org.Status))
                         throw new InvalidOperationException($"{nameof(Organization)} can not be deleted (current status '{org.Status}')");
-                    //TODO: Send email
+                    //TODO: Send email to org admins
                     break;
 
                 case OrganizationStatus.Deleted:
@@ -219,7 +257,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             org.StatusId = statusId;
             org.Status = status;
-           
+
             await _organizationRepository.Update(org);
         }
 

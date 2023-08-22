@@ -235,7 +235,7 @@ namespace Yoma.Core.Api
                 c.EnableAnnotations();
                 c.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
                 {
-                    Description = $"Keycloak JWT Authorization header using the {JwtBearerDefaults.AuthenticationScheme} scheme. Example: Authorization: {JwtBearerDefaults.AuthenticationScheme} {{token}}",
+                    Description = $"JWT Authorization header using the {JwtBearerDefaults.AuthenticationScheme} scheme. Example: Authorization: {JwtBearerDefaults.AuthenticationScheme} {{token}}",
                     Name = "Authorization",
                     Type = SecuritySchemeType.OAuth2,
                     Flows = new OpenApiOAuthFlows

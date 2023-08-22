@@ -94,6 +94,21 @@ namespace Yoma.Core.Api.Controllers
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
+
+        [SwaggerOperation(Summary = "Search for users based on the supplied filter (Admin or Organization Admin roles required)")]
+        [HttpPost("search")]
+        [ProducesResponseType(typeof(List<UserSearchResults>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult Search([FromBody] UserSearchFilter filter)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(Search));
+
+            var result = _userService.Search(filter);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(Search));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
         #endregion Authenticated User Based Actions
         #endregion
     }

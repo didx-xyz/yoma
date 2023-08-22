@@ -8,6 +8,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public List<Guid>? OrganizationIds { get; set; }
 
-        public List<Guid>? StatusIds { get; set; }
+        public List<Status>? Statuses { get; set; }
     }
 }

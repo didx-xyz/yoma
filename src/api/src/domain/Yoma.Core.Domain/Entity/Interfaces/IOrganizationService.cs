@@ -13,6 +13,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         List<Organization> Contains(string value);
 
+        OrganizationSearchResults Search(OrganizationSearchFilter filter);
+
         Task<Organization> Upsert(OrganizationRequest request, bool ensureOrganizationAuthorization);
 
         Task UpdateStatus(Guid id, OrganizationStatus status, bool ensureOrganizationAuthorization);

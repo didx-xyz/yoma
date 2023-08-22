@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Core;
 using User = Yoma.Core.Domain.Entity.Models.User;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
+using Yoma.Core.Domain.Entity.Helpers;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -23,7 +24,8 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly ICountryService _countryService;
         private readonly UserRequestValidator _userValidator;
         private readonly UserProfileRequestValidator _userProfileRequestValidator;
-        private readonly IRepositoryWithNavigation<User> _userRepository;
+        private readonly UserSearchFilterValidator _userSearchFilterValidator;
+        private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
         #endregion
 
         #region Constructor
@@ -34,7 +36,8 @@ namespace Yoma.Core.Domain.Entity.Services
             ICountryService countryService,
             UserRequestValidator userValidator,
             UserProfileRequestValidator userProfileRequestValidator,
-            IRepositoryWithNavigation<User> userRepository)
+            UserSearchFilterValidator userSearchFilterValidator,
+            IRepositoryValueContainsWithNavigation<User> userRepository)
         {
             _identityProviderClient = identityProviderClientFactory.CreateClient();
             _blobService = blobService;
@@ -42,6 +45,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _countryService = countryService;
             _userValidator = userValidator;
             _userProfileRequestValidator = userProfileRequestValidator;
+            _userSearchFilterValidator = userSearchFilterValidator;
             _userRepository = userRepository;
         }
         #endregion
@@ -83,6 +87,34 @@ namespace Yoma.Core.Domain.Entity.Services
             result.PhotoURL = GetS3ObjectURL(result.PhotoId);
 
             return result;
+        }
+
+        public UserSearchResults Search(UserSearchFilter filter)
+        {
+            if (filter == null)
+                throw new ArgumentNullException(nameof(filter));
+
+            _userSearchFilterValidator.ValidateAndThrow(filter);
+
+            var query = _userRepository.Query();
+
+            //only includes users which email has been confirmed (implies linked to identity provider)
+            query = query.Where(o => o.EmailConfirmed);
+
+            if (!string.IsNullOrEmpty(filter.ValueContains))
+                query = _userRepository.Contains(query, filter.ValueContains);
+
+            var results = new UserSearchResults();
+            query = query.OrderBy(o => o.DisplayName);
+
+            if (filter.PaginationEnabled)
+            {
+                results.TotalCount = query.Count();
+                query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+            }
+            results.Items = query.ToList().Select(o => o.ToInfo()).ToList();
+
+            return results;
         }
 
         public async Task<User> UpdateProfile(string? email, UserProfileRequest request)
