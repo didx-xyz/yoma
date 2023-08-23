@@ -11,6 +11,9 @@ using Yoma.Core.Domain.Entity.Services;
 using Yoma.Core.Domain.Entity.Services.Lookups;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Services;
+using Yoma.Core.Domain.MyOpportunity.Interfaces;
+using Yoma.Core.Domain.MyOpportunity.Services;
+using Yoma.Core.Domain.MyOpportunity.Services.Lookups;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
@@ -35,6 +38,7 @@ namespace Yoma.Core.Domain
             services.AddScoped<IOrganizationStatusService, OrganizationStatusService>();
             services.AddScoped<IOrganizationProviderTypeService, OrganizationProviderTypeService>();
             #endregion Lookups
+
             services.AddScoped<IOrganizationService, OrganizationService>();
             services.AddScoped<IUserService, UserService>();
             #endregion Entity
@@ -47,6 +51,15 @@ namespace Yoma.Core.Domain
             services.AddScoped<ITimeIntervalService, TimeIntervalService>();
             #endregion Lookups
 
+            #region My Opportunity
+            #region Lookups
+            services.AddScoped<IMyOpportunityActionService, MyOpportunityActionService>();
+            services.AddScoped<IMyOpportunityVerificationStatusService, MyOpportunityVerificationStatusService>();
+            #endregion Lookups
+
+            services.AddScoped<IMyOpportunityService, MyOpportunityService>();
+            #endregion My Opportunity
+
             #region Opportunity
             #region Lookups
             services.AddScoped<IOpportunityCategoryService, OpportunityCategoryService>();
@@ -54,6 +67,7 @@ namespace Yoma.Core.Domain
             services.AddScoped<IOpportunityStatusService, OpportunityStatusService>();
             services.AddScoped<IOpportunityTypeService, OpportunityTypeService>();
             #endregion Lookups
+
             services.AddScoped<IOpportunityService, OpportunityService>();
             services.AddScoped<IOpportunityBackgroundService, OpportunityBackgroundService>();
             #endregion Opportunity

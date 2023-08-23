@@ -9,10 +9,6 @@ using Yoma.Core.Domain.Entity.Models;
 
 namespace Yoma.Core.Api.Controllers
 {
-    /* TODO:
-        - Search
-    */
-
     [Route("api/v3/user")]
     [ApiController]
     [Authorize(Policy = Common.Constants.Authorization_Policy, Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
@@ -68,7 +64,7 @@ namespace Yoma.Core.Api.Controllers
         }
 
         [SwaggerOperation(Summary = "Update the user's profile, within Yoma and the identity provider, optionally requesting a email verification and/or password reset (Authenticated User)")]
-        [HttpPatch()]
+        [HttpPut()]
         [ProducesResponseType(typeof(User), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> UpdateProfile([FromBody] UserProfileRequest profile)
         {

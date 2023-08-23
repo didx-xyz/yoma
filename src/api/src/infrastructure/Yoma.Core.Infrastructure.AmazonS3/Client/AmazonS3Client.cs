@@ -26,7 +26,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
         {
             if (string.IsNullOrWhiteSpace(key))
                 throw new ArgumentNullException(nameof(key));
-            key = key.Trim();
+            key = key.Trim().ToLower();
 
             if (string.IsNullOrWhiteSpace(contentType))
                 throw new ArgumentNullException(nameof(contentType));
@@ -59,12 +59,13 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
         {
             if (string.IsNullOrWhiteSpace(key))
                 throw new ArgumentNullException(nameof(key));
-            key = key.Trim();
+            key = key.Trim().ToLower();
 
             var request = new GetPreSignedUrlRequest
             {
                 BucketName = _options.BucketName,
                 Key = key,
+                Verb = HttpVerb.GET,
                 Expires = DateTime.UtcNow.AddMinutes(_options.URLExpirationInMinutes)
             };
 
@@ -82,7 +83,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
         {
             if (string.IsNullOrWhiteSpace(key))
                 throw new ArgumentNullException(nameof(key));
-            key = key.Trim();
+            key = key.Trim().ToLower();
 
             var deleteRequest = new DeleteObjectRequest
             {

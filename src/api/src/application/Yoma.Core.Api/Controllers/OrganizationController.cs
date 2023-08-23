@@ -11,10 +11,6 @@ using Yoma.Core.Domain.Entity.Models;
 
 namespace Yoma.Core.Api.Controllers
 {
-    /* TODO:
-        - Search
-    */
-
     [Route("api/v3/organization")]
     [ApiController]
     [Authorize(Policy = Common.Constants.Authorization_Policy, Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]

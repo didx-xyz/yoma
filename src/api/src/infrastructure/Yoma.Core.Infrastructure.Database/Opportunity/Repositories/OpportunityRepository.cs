@@ -63,7 +63,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                     entity.Languages.Select(o => new Domain.Lookups.Models.Language { Id = o.LanguageId, Name = o.Language.Name, CodeAlpha2 = o.Language.CodeAlpha2 }).ToList() : null,
                 Skills = includeChildItems ?
                     entity.Skills.Select(o => new Domain.Lookups.Models.Skill { Id = o.SkillId, Name = o.Skill.Name, InfoURL = o.Skill.InfoURL }).ToList() : null
-
             });
         }
 
@@ -121,7 +120,9 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 
         public async Task Update(Domain.Opportunity.Models.Opportunity item)
         {
-            var entity = _context.Opportunity.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.Opportunity)} with id '{item.Id}' does not exist");
+            var entity = _context.Opportunity.Where(o => o.Id == item.Id).SingleOrDefault()
+                ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.Opportunity)} with id '{item.Id}' does not exist");
+
             entity.Title = item.Title;
             entity.Description = item.Description;
             entity.TypeId = item.TypeId;

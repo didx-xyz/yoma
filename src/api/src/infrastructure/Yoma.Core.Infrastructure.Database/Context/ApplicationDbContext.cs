@@ -47,6 +47,16 @@ namespace Yoma.Core.Infrastructure.Database.Context
         public DbSet<TimeInterval> TimeInterval { get; set; }
         #endregion
 
+        #region MyOpportunity
+        #region Lookups
+        public DbSet<MyOpportunity.Entities.Lookups.MyOpportunityAction> MyOpportunityAction { get; set; }
+
+        public DbSet<MyOpportunity.Entities.Lookups.MyOpportunityVerificationStatus> MyOpportunityVerificationStatus { get; set; }
+        #endregion Lookups
+
+        public DbSet<MyOpportunity.Entities.MyOpportunity> MyOpportunity { get; set; }
+        #endregion MyOpportunity
+
         #region Opportunity
         #region Lookups
         public DbSet<Opportunity.Entities.Lookups.OpportunityCategory> OpportunityCategory { get; set; }

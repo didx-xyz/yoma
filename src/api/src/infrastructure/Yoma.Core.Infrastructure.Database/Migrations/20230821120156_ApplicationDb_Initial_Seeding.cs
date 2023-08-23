@@ -35,11 +35,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             columns: new[] { "Id", "Name", "DateCreated" },
             values: new object[,]
             {
-                    {"A3BCAA03-B31C-4830-AAE8-06BBA701D3F0","Opportunity",DateTimeOffset.Now}
+                    {"A3BCAA03-B31C-4830-AAE8-06BBA701D3F0","Education",DateTimeOffset.Now}
                     ,
-                    {"6FB02F6F-34FE-4E6E-9094-2E3B54115235","Educational",DateTimeOffset.Now}
+                    {"6FB02F6F-34FE-4E6E-9094-2E3B54115235","Task",DateTimeOffset.Now}
                     ,
-                    {"D2987F9F-8CC8-4576-AF09-C01213A1435E","Marketplace",DateTimeOffset.Now}
+                    {"D2987F9F-8CC8-4576-AF09-C01213A1435E","Employment",DateTimeOffset.Now}
+                    ,
+                    {"41690ADD-B95C-44C3-AD3B-8E02E5890FD4","Marketplace",DateTimeOffset.Now}
             },
             schema: "entity");
             #endregion Entity
@@ -1010,15 +1012,28 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             schema: "opportunity");
 
             migrationBuilder.InsertData(
-            table: "OpportunityType",
+            table: "MyOpportunityAction",
             columns: new[] { "Id", "Name", "DateCreated" },
             values: new object[,]
             {
-                    {"E2DDDE38-9790-4DE8-A5D0-0167199BD86B","Impact",DateTimeOffset.Now}
+                    {"7C57B803-6EAD-445E-B27B-19A79B72D0F2","Viewed",DateTimeOffset.Now}
                     ,
-                    {"6267069F-0DE7-4AA9-9D75-542FF7C97512","Learning",DateTimeOffset.Now}
+                    {"B2CC677B-4704-4F90-A1F7-3CD92D2485E0","Saved",DateTimeOffset.Now}
                     ,
-                    {"F18F0FF6-E6D8-4526-ACF4-0F9CB1C4B54F","Task",DateTimeOffset.Now}
+                    {"CB1B8F0F-7BB2-473E-8F20-CA54F0BB8D7E","Verification",DateTimeOffset.Now}
+            },
+            schema: "opportunity");
+
+            migrationBuilder.InsertData(
+            table: "MyOpportunityVerificationStatus",
+            columns: new[] { "Id", "Name", "DateCreated" },
+            values: new object[,]
+            {
+                    {"B57ED2D6-04B6-4C2C-BED9-A1C0BD98F468","Pending",DateTimeOffset.Now}
+                    ,
+                    {"FB203E32-C1D9-4200-A085-E18DEDADEFB2","Rejected",DateTimeOffset.Now}
+                    ,
+                    {"4BECE37C-BD3D-40E2-A7C5-2FF2D4A3C802","Completed",DateTimeOffset.Now}
             },
             schema: "opportunity");
             #endregion Opportunity
