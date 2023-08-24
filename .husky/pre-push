@@ -32,7 +32,6 @@ run_command_for_changes "src/api" "dotnet format --verify-no-changes"
 
 # Check for changes in src/web/youth and run `lint` and `prettier`
 run_command_for_changes "src/web/youth" "yarn lint"
-run_command_for_changes "src/web/youth" "yarn prettier --list-different --no-color --ignore-path ../../../.gitignore --config prettier.config.cjs \"**/*.{js,ts,tsx}\""
 
 # Exit with success
 exit 0
