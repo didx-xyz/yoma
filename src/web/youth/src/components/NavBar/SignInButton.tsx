@@ -1,6 +1,7 @@
 import { signIn } from "next-auth/react";
 import React, { useState } from "react";
 import { IoMdFingerPrint } from "react-icons/io";
+import { env } from "~/env.mjs";
 
 export const SignInButton: React.FC = () => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
@@ -8,21 +9,21 @@ export const SignInButton: React.FC = () => {
   const handleLogin = () => {
     setIsButtonLoading(true);
 
-    signIn("keycloak"); // eslint-disable-line @typescript-eslint/no-floating-promises
+    signIn(env.NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER); // eslint-disable-line @typescript-eslint/no-floating-promises
   };
 
   return (
     <button
       type="button"
-      className="btn-hover-glow btn btn-primary w-[120px] gap-2 px-2"
+      className="btn  btn-primary w-[120px] gap-2 px-2  disabled:bg-current disabled:brightness-50"
       onClick={handleLogin}
       disabled={isButtonLoading}
     >
       {isButtonLoading && (
-        <div className="lds-dual-ring lds-dual-ring-white h-8 w-8"></div>
+        <span className="loading loading-spinner loading-md mr-2 text-warning"></span>
       )}
       {!isButtonLoading && <IoMdFingerPrint className="h-8 w-8 text-white" />}
-      Sign In
+      <p className="text-white">Sign In</p>
     </button>
   );
 };

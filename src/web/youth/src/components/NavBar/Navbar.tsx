@@ -42,47 +42,20 @@ export const Navbar: React.FC = () => {
               >
                 Home
               </Link>
-
-              <Link
-                href="/opportunities"
-                className="px-7 py-3 text-white hover:brightness-50"
-              >
-                Opportunities
+              <Link href="/about" className="px-7 py-3 text-white hover:brightness-50">
+                About
               </Link>
-
-              <Link
-                href="/marketplace"
-                className="px-7 py-3 text-white hover:brightness-50"
-              >
+              <Link href="/learning" className="px-7 py-3 text-white hover:brightness-50">
+                Learning
+              </Link>
+              <Link href="/tasks" className="px-7 py-3 text-white hover:brightness-50">
+                Tasks
+              </Link>
+              <Link href="/jobs" className="px-7 py-3 text-white hover:brightness-50">
+                Jobs
+              </Link>
+              <Link href="/marketplace" className="px-7 py-3 text-white hover:brightness-50">
                 Marketplace
-              </Link>
-
-              <Link
-                href="/faq"
-                className="px-7 py-3 text-white hover:brightness-50"
-              >
-                FAQ
-              </Link>
-
-              <Link
-                href="/howToYoma"
-                className="px-7 py-3 text-white hover:brightness-50"
-              >
-                How to Yoma
-              </Link>
-
-              <Link
-                href="/feedback"
-                className="px-7 py-3 text-white hover:brightness-50"
-              >
-                Feedback
-              </Link>
-
-              <Link
-                href="/localisation"
-                className="px-7 py-3 text-white hover:brightness-50"
-              >
-                Localisation
               </Link>
             </div>
           </ReactModal>
@@ -96,45 +69,28 @@ export const Navbar: React.FC = () => {
               </Link>
             </li>
             <li tabIndex={1}>
-              <Link
-                href="/opportunities"
-                className="text-white hover:brightness-50"
-              >
-                Opportunities
+              <Link href="/about" className="text-white hover:brightness-50">
+                About
               </Link>
             </li>
             <li tabIndex={2}>
-              <Link
-                href="/marketplace"
-                className="text-white hover:brightness-50"
-              >
+              <Link href="/learning" className="text-white hover:brightness-50">
+                Learning
+              </Link>
+            </li>
+            <li tabIndex={3}>
+              <Link href="/tasks" className="text-white hover:brightness-50">
+                Tasks
+              </Link>
+            </li>
+            <li tabIndex={4}>
+              <Link href="/jobs" className="text-white hover:brightness-50">
+                Jobs
+              </Link>
+            </li>
+            <li tabIndex={5}>
+              <Link href="/marketplace" className="text-white hover:brightness-50">
                 Marketplace
-              </Link>
-            </li>
-            <li tabIndex={3}>
-              <Link href="/faq" className="text-white hover:brightness-50">
-                FAQ
-              </Link>
-            </li>
-            <li tabIndex={3}>
-              <Link
-                href="/howToYoma"
-                className="text-white hover:brightness-50"
-              >
-                How to Yoma
-              </Link>
-            </li>
-            <li tabIndex={3}>
-              <Link href="/feedback" className="text-white hover:brightness-50">
-                Feedback
-              </Link>
-            </li>
-            <li tabIndex={3}>
-              <Link
-                href="/localisation"
-                className="text-white hover:brightness-50"
-              >
-                Localisation
               </Link>
             </li>
           </ul>
