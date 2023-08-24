@@ -12,11 +12,11 @@ import { toast } from "react-toastify";
 import zod from "zod";
 import { OrganizationProviderType, type OrganizationRequest } from "~/api/models/organisation";
 import { getOrganisationProviderTypes, postOrganisation } from "~/api/services/organisations";
-import MainBackButtonLayout from "~/components/Layout/MainBackButton";
+import MainLayout from "~/components/Layout/Main";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
-import { ACCEPTED_DOC_TYPES, ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from "~/core/constants";
-import withAuth from "~/core/withAuth";
+import { ACCEPTED_DOC_TYPES, ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from "~/lib/constants";
+import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../_app";
 
@@ -633,7 +633,7 @@ const RegisterOrganisation: NextPageWithLayout = () => {
 };
 
 RegisterOrganisation.getLayout = function getLayout(page: ReactElement) {
-  return <MainBackButtonLayout>{page}</MainBackButtonLayout>;
+  return <MainLayout>{page}</MainLayout>;
 };
 
 export default withAuth(RegisterOrganisation);

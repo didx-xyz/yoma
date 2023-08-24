@@ -3,13 +3,13 @@ import { type Session } from "next-auth";
 import { getSession } from "next-auth/react";
 import { env } from "~/env.mjs";
 
-let lastSession: Session | null = null;
-
 // Axios instance for client-side requests
 const ApiClient = () => {
   const instance = axios.create({
     baseURL: env.NEXT_PUBLIC_API_BASE_URL,
   });
+
+  let lastSession: Session | null = null;
 
   instance.interceptors.request.use(
     async (request) => {
@@ -29,7 +29,7 @@ const ApiClient = () => {
     (error) => {
       console.error(`API Error: `, error);
       throw error;
-    },
+    }
   );
 
   return instance;

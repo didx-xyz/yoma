@@ -6,14 +6,17 @@ import ReactModal from "react-modal";
 import { LogoImage } from "./LogoImage";
 import { SignInButton } from "./SignInButton";
 import { UserMenu } from "./UserMenu";
+import { useAtomValue } from "jotai";
+import { navbarColorAtom } from "~/lib/store";
 
 export const Navbar: React.FC = () => {
+  const navbarColor = useAtomValue(navbarColorAtom);
   const [menuVisible, setMenuVisible] = useState(false);
   const { data: session } = useSession();
 
   return (
     <div id="topNav" className="fixed left-0 right-0 top-0 z-40">
-      <div className="navbar z-40 bg-purple">
+      <div className={`${navbarColor} navbar z-40`}>
         <div className="navbar-start w-full">
           <button
             type="button"
@@ -29,9 +32,7 @@ export const Navbar: React.FC = () => {
             onRequestClose={() => {
               setMenuVisible(false);
             }}
-            className={
-              "fixed left-0 right-0 top-16 flex-grow items-center bg-purple animate-in fade-in"
-            }
+            className={`${navbarColor} fixed left-0 right-0 top-16 flex-grow items-center animate-in fade-in`}
             portalClassName={"fixed z-50"}
             overlayClassName="fixed inset-0"
           >

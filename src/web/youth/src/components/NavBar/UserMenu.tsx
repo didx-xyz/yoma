@@ -1,11 +1,17 @@
-import { signOut } from "next-auth/react";
+import { useAtomValue } from "jotai";
+import { signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { IoMdPerson } from "react-icons/io";
 import ReactModal from "react-modal";
+import { shimmer, toBase64 } from "~/lib/image";
+import { navbarColorAtom } from "~/lib/store";
 
 export const UserMenu: React.FC = () => {
+  const navbarColor = useAtomValue(navbarColorAtom);
   const [userMenuVisible, setUserMenuVisible] = useState(false);
+  const { data: session } = useSession();
 
   const handleLogout = () => {
     signOut(); // eslint-disable-line @typescript-eslint/no-floating-promises
@@ -28,10 +34,10 @@ export const UserMenu: React.FC = () => {
           {/* )} */}
 
           {/* EXISTING IMAGE */}
-          {/* {userCompanyImageUrl && (
+          {session?.user?.profile.photoURL && (
             <>
               <Image
-                src={userCompanyImageUrl}
+                src={session?.user?.profile.photoURL}
                 alt="User Logo"
                 width={44}
                 height={44}
@@ -39,7 +45,7 @@ export const UserMenu: React.FC = () => {
                 priority={true}
                 placeholder="blur"
                 blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                  shimmer(44, 44)
+                  shimmer(44, 44),
                 )}`}
                 style={{
                   width: "100%",
@@ -49,7 +55,7 @@ export const UserMenu: React.FC = () => {
                 }}
               />
             </>
-          )} */}
+          )}
         </div>
       </button>
 
@@ -60,9 +66,7 @@ export const UserMenu: React.FC = () => {
         onRequestClose={() => {
           setUserMenuVisible(false);
         }}
-        className={
-          "fixed left-0 right-0 top-16 flex-grow bg-purple animate-in fade-in md:left-auto md:right-0 md:top-[66px] md:w-64"
-        }
+        className={`${navbarColor} fixed left-0 right-0 top-16 flex-grow animate-in fade-in md:left-auto md:right-0 md:top-[66px] md:w-64`}
         portalClassName={"fixed z-50"}
         overlayClassName="fixed inset-0"
       >

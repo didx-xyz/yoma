@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useMemo, useRef, useState } from "react";
 import ReactModal from "react-modal";
 
 interface UseModalShowReturnType {
@@ -47,33 +47,37 @@ const ConfirmationModalContextProvider: React.FC<
   //eslint-disable-next-line @typescript-eslint/ban-types
   const resolver = useRef<Function>();
 
-  const handleShow = (
-    title: string,
-    message: string | JSX.Element,
-  ): Promise<boolean> => {
-    setContent({
-      title,
-      message,
-    });
-    setShow(true);
-    return new Promise(function (resolve) {
-      resolver.current = resolve;
-    });
-  };
+  const handleShow = useMemo(
+    () =>
+      (title: string, message: string | JSX.Element): Promise<boolean> => {
+        setContent({
+          title,
+          message,
+        });
+        setShow(true);
+        return new Promise(function (resolve) {
+          resolver.current = resolve;
+        });
+      },
+    [setContent, setShow],
+  );
 
-  const modalContext: ModalContextType = {
-    showConfirmation: handleShow,
-  };
+  const modalContext = useMemo<ModalContextType>(
+    () => ({
+      showConfirmation: handleShow,
+    }),
+    [handleShow],
+  );
 
   const handleOk = () => {
     // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-    resolver.current && resolver.current(true);
+    if (resolver?.current) resolver.current(true);
     onHide();
   };
 
   const handleCancel = () => {
     // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-    resolver.current && resolver.current(false);
+    if (resolver?.current) resolver.current(false);
     onHide();
   };
 
@@ -86,7 +90,7 @@ const ConfirmationModalContextProvider: React.FC<
           isOpen={show}
           shouldCloseOnOverlayClick={true}
           onRequestClose={onHide}
-          className="fixed inset-0 z-50 m-auto h-[170px] w-[380px] rounded-lg bg-white p-4 duration-100  animate-in zoom-in md:mt-[10%]"
+          className="fixed inset-0 z-50 m-auto h-[170px] w-[380px] rounded-lg bg-white p-4 font-openSans duration-100 animate-in zoom-in md:mt-[10%]"
           overlayClassName="fixed inset-0 bg-transparent z-50"
         >
           <div className="flex h-full flex-col space-y-2">

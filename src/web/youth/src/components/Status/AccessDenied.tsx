@@ -1,6 +1,11 @@
+import Head from "next/head";
 import { FaExclamationTriangle } from "react-icons/fa";
 
 export const AccessDenied = () => (
+  <>
+    <Head>
+      <title>Yoma Partner | Access Denied</title>
+    </Head>
   <div className="container max-w-md">
     <div className="flex flex-col place-items-center justify-center rounded-xl bg-white p-4">
       <h4>403 - Not authorized</h4>
@@ -13,4 +18,5 @@ export const AccessDenied = () => (
       </p>
     </div>
   </div>
+  </>
 );

@@ -15,7 +15,7 @@ export const SignInButton: React.FC = () => {
   return (
     <button
       type="button"
-      className="btn  btn-primary w-[120px] gap-2 px-2  disabled:bg-current disabled:brightness-50"
+      className="btn w-[120px] gap-2 border-0 bg-transparent px-2 hover:bg-transparent hover:brightness-50 disabled:bg-current disabled:brightness-50"
       onClick={handleLogin}
       disabled={isButtonLoading}
     >

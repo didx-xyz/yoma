@@ -13,10 +13,10 @@ import zod from "zod";
 import { type UserProfileRequest } from "~/api/models/user";
 import { getCountries, getGenders } from "~/api/services/lookups";
 import { patchUser } from "~/api/services/user";
-import MainBackButtonLayout from "~/components/Layout/MainBackButton";
+import MainLayout from "~/components/Layout/Main";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
-import withAuth from "~/core/withAuth";
+import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
 import { type NextPageWithLayout } from "../_app";
 
@@ -55,28 +55,24 @@ const Settings: NextPageWithLayout<{
   const { update } = useSession();
 
   const schema = zod.object({
-    email: zod.string().email().min(1, "Email is required"),
-    firstName: zod.string().min(1, "First name is required"),
-    surname: zod.string().min(1, "Last name is required"),
+    email: zod.string().email().min(1, "Email is required."),
+    firstName: zod.string().min(1, "First name is required."),
+    surname: zod.string().min(1, "Last name is required."),
     displayName: zod.string().min(1, "Display name is required"),
     phoneNumber: zod
       .string()
-      .min(1, "Phone number is required")
-      .regex(
-        /^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$/,
-        "Phone number is invalid",
-      ),
-    countryId: zod.string().min(1, "Country is required"),
-    countryOfResidenceId: zod
-      .string()
-      .min(1, "Country of residence is required"),
-    genderId: zod.string().min(1, "Gender is required"),
+      .min(1, "Phone number is required.")
+      .regex(/^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$/, "Phone number is invalid"),
+    countryId: zod.string().min(1, "Country is required."),
+    countryOfResidenceId: zod.string().min(1, "Country of residence is required."),
+    genderId: zod.string().min(1, "Gender is required."),
     dateOfBirth: zod.coerce
       .date({
-        required_error: "Please select a date and time",
-        invalid_type_error: "That's not a date!",
+        required_error: "Date of Birth is required.",
+        invalid_type_error: "Date of Birth is required.",
       })
-      .max(new Date(), { message: "Date of birth cannot be in the future" }),
+      .min(new Date("1900/01/01"), { message: "Date of Birth cannot be that far back in the past." })
+      .max(new Date(), { message: "Date of Birth cannot be in the future." }),
     resetPassword: zod.boolean(),
   });
 
@@ -101,9 +97,10 @@ const Settings: NextPageWithLayout<{
       user.profile.dateOfBirth = date.toISOString().slice(0, 10);
     }
     //HACK: 'expected string, received null' form validation error
-    if (!user?.profile.phoneNumber) {
-      user.profile.phoneNumber = "";
-    }
+    if (!user?.profile.phoneNumber) user.profile.phoneNumber = "";
+    if (!user?.profile.countryId) user.profile.countryId = "";
+    if (!user?.profile.countryOfResidenceId) user.profile.countryOfResidenceId = "";
+    if (!user?.profile.genderId) user.profile.genderId = "";
 
     // reset form
     // setTimeout is needed to prevent the form from being reset before the default values are set
@@ -158,13 +155,13 @@ const Settings: NextPageWithLayout<{
   return (
     <div className="container max-w-md">
       {isLoading && <Loading />}
-      <h1 className="bold text-2xl underline">Settings</h1>
+      <h1 className="bold text-center text-2xl">User Settings</h1>
       <form
         onSubmit={handleSubmit(onSubmit)} // eslint-disable-line @typescript-eslint/no-misused-promises
         className="gap-2x flex flex-col"
       >
         <div className="form-control">
-          <label className="label">
+          <label className="label font-bold">
             <span className="label-text">Email</span>
           </label>
           <input
@@ -173,7 +170,7 @@ const Settings: NextPageWithLayout<{
             {...register("email")}
           />
           {errors.email && (
-            <label className="label">
+            <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${errors.email.message}`}
@@ -183,7 +180,7 @@ const Settings: NextPageWithLayout<{
         </div>
 
         <div className="form-control">
-          <label className="label">
+          <label className="label font-bold">
             <span className="label-text">First name</span>
           </label>
           <input
@@ -192,7 +189,7 @@ const Settings: NextPageWithLayout<{
             {...register("firstName")}
           />
           {errors.firstName && (
-            <label className="label">
+            <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${errors.firstName.message}`}
@@ -202,7 +199,7 @@ const Settings: NextPageWithLayout<{
         </div>
 
         <div className="form-control">
-          <label className="label">
+          <label className="label font-bold">
             <span className="label-text">Last name</span>
           </label>
           <input
@@ -211,7 +208,7 @@ const Settings: NextPageWithLayout<{
             {...register("surname")}
           />
           {errors.surname && (
-            <label className="label">
+            <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${errors.surname.message}`}
@@ -221,7 +218,7 @@ const Settings: NextPageWithLayout<{
         </div>
 
         <div className="form-control">
-          <label className="label">
+          <label className="label font-bold">
             <span className="label-text">Display name</span>
           </label>
           <input
@@ -230,7 +227,7 @@ const Settings: NextPageWithLayout<{
             {...register("displayName")}
           />
           {errors.displayName && (
-            <label className="label">
+            <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${errors.displayName.message}`}
@@ -240,7 +237,7 @@ const Settings: NextPageWithLayout<{
         </div>
 
         <div className="form-control">
-          <label className="label">
+          <label className="label font-bold">
             <span className="label-text">Phone Number</span>
           </label>
           <input
@@ -249,7 +246,7 @@ const Settings: NextPageWithLayout<{
             {...register("phoneNumber")}
           />
           {errors.phoneNumber && (
-            <label className="label">
+            <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${errors.phoneNumber.message}`}
@@ -259,7 +256,7 @@ const Settings: NextPageWithLayout<{
         </div>
 
         <div className="form-control">
-          <label className="label">
+          <label className="label font-bold">
             <span className="label-text">Country</span>
           </label>
           <select className="select select-bordered" {...register("countryId")}>
@@ -271,7 +268,7 @@ const Settings: NextPageWithLayout<{
             ))}
           </select>
           {errors.countryId && (
-            <label className="label">
+            <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${errors.countryId.message}`}
@@ -281,7 +278,7 @@ const Settings: NextPageWithLayout<{
         </div>
 
         <div className="form-control">
-          <label className="label">
+          <label className="label font-bold">
             <span className="label-text">Country Of Residence</span>
           </label>
           <select
@@ -296,7 +293,7 @@ const Settings: NextPageWithLayout<{
             ))}
           </select>
           {errors.countryOfResidenceId && (
-            <label className="label">
+            <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${errors.countryOfResidenceId.message}`}
@@ -306,7 +303,7 @@ const Settings: NextPageWithLayout<{
         </div>
 
         <div className="form-control">
-          <label className="label">
+          <label className="label font-bold">
             <span className="label-text">Gender</span>
           </label>
           <select className="select select-bordered" {...register("genderId")}>
@@ -318,7 +315,7 @@ const Settings: NextPageWithLayout<{
             ))}
           </select>
           {errors.genderId && (
-            <label className="label">
+            <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${errors.genderId.message}`}
@@ -328,8 +325,8 @@ const Settings: NextPageWithLayout<{
         </div>
 
         <div className="form-control">
-          <label className="label">
-            <span className="label-text">Date Of Birth</span>
+          <label className="label font-bold">
+            <span className="label-text">Date of Birth</span>
           </label>
           <input
             type="date"
@@ -337,7 +334,7 @@ const Settings: NextPageWithLayout<{
             {...register("dateOfBirth")}
           />
           {errors.dateOfBirth && (
-            <label className="label">
+            <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${errors.dateOfBirth.message}`}
@@ -356,7 +353,7 @@ const Settings: NextPageWithLayout<{
             />
           </label>
           {errors.resetPassword && (
-            <label className="label">
+            <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${errors.resetPassword.message}`}
@@ -366,14 +363,10 @@ const Settings: NextPageWithLayout<{
         </div>
 
         <div className="my-4 flex items-center justify-center gap-2">
-          <button
-            type="button"
-            className="btn btn-warning btn-sm"
-            onClick={handleCancel}
-          >
+          <button type="button" className="btn btn-warning btn-sm flex-grow" onClick={handleCancel}>
             Cancel
           </button>
-          <button type="submit" className="btn btn-success btn-sm">
+          <button type="submit" className="btn btn-success btn-sm flex-grow">
             Submit
           </button>
         </div>
@@ -383,7 +376,7 @@ const Settings: NextPageWithLayout<{
 };
 
 Settings.getLayout = function getLayout(page: ReactElement) {
-  return <MainBackButtonLayout>{page}</MainBackButtonLayout>;
+  return <MainLayout>{page}</MainLayout>;
 };
 
 export default withAuth(Settings);
