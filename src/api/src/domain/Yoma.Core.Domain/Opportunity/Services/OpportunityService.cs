@@ -405,26 +405,43 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return result;
         }
 
-        public async Task IncrementParticipantCount(Guid id, int increment = 1)
+        public async Task<(decimal? ZltoReward, decimal? YomaReward)> ProcessVerificationCompletion(Guid id, bool ensureOrganizationAuthorization)
         {
-            if (increment <= 0)
-                throw new ArgumentOutOfRangeException(nameof(increment));
+            var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
-            var opportunity = GetById(id, false, false);
             if (opportunity.Status != Status.Active)
                 throw new InvalidOperationException($"{nameof(Models.Opportunity)} must be active (current status '{opportunity.Status}')");
 
             if (opportunity.DateStart > DateTimeOffset.Now)
                 throw new InvalidOperationException($"{nameof(Models.Opportunity)} is active but has not started (start date '{opportunity.DateStart}')");
 
-            var count = opportunity.ParticipantCount += increment;
-            if (opportunity.ParticipantLimit.HasValue && count > opportunity.ParticipantLimit)
-                throw new InvalidOperationException($"Increment will exceed limit (current count '{opportunity.ParticipantCount ?? 0}' vs current limit '{opportunity.ParticipantLimit}')");
-
+            var count = (opportunity.ParticipantCount ?? 0) + 1;
+            if (opportunity.ParticipantLimit.HasValue && count > opportunity.ParticipantLimit.Value)
+                throw new InvalidOperationException($"Increment will exceed limit (current count '{opportunity.ParticipantCount ?? 0}' vs current limit '{opportunity.ParticipantLimit.Value}')");
             opportunity.ParticipantCount = count;
-            //modifiedBy preserved
 
+            var zltoReward = opportunity.ZltoReward;
+            if (zltoReward.HasValue)
+            {
+                if (opportunity.ZltoRewardPool.HasValue)
+                    zltoReward = Math.Max(opportunity.ZltoRewardPool.Value - (opportunity.ZltoRewardCumulative ?? 0 + zltoReward.Value), 0);
+
+                opportunity.ZltoRewardCumulative = opportunity.ZltoRewardCumulative ?? 0 + zltoReward;
+            }
+
+            var yomaReward = opportunity.YomaReward;
+            if (yomaReward.HasValue)
+            {
+                if (opportunity.YomaRewardPool.HasValue)
+                    yomaReward = Math.Max(opportunity.YomaRewardPool.Value - (opportunity.YomaRewardCumulative ?? 0 + yomaReward.Value), 0);
+
+                opportunity.YomaRewardCumulative = opportunity.YomaRewardCumulative ?? 0 + yomaReward;
+            }
+
+            //modifiedBy preserved
             await _opportunityRepository.Update(opportunity);
+
+            return (zltoReward, yomaReward);
         }
 
         public async Task UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization)

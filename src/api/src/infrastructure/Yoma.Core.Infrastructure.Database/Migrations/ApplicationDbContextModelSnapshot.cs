@@ -22,6 +22,80 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Yoma.Core.Domain.Entity.Models.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CountryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CountryOfResidenceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DateLastLogin")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("DateModified")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DateOfBirth")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("ExternalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("GenderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("PhotoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PhotoURL")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Surname")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ZltoWalletCountryCodeAlpha2")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("ZltoWalletCountryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ZltoWalletId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("User");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", b =>
                 {
                     b.Property<Guid>("Id")
@@ -299,7 +373,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("ZltoWalletCountryId");
 
-                    b.HasIndex("FirstName", "Surname", "PhoneNumber", "ExternalId", "DateCreated", "DateModified");
+                    b.HasIndex("FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "DateCreated", "DateModified");
 
                     b.ToTable("User", "entity");
                 });
@@ -475,6 +549,106 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.ToTable("TimeInterval", "lookup");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups.MyOpportunityAction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(125)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("MyOpportunityAction", "opportunity");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups.MyOpportunityVerificationStatus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(125)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("MyOpportunityVerificationStatus", "opportunity");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ActionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CertificateId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("DateCompleted")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DateEnd")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("DateModified")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DateStart")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("OpportunityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("VerificationStatusId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("YomaReward")
+                        .HasColumnType("decimal(8,2)");
+
+                    b.Property<decimal?>("ZltoReward")
+                        .HasColumnType("decimal(8,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActionId");
+
+                    b.HasIndex("CertificateId");
+
+                    b.HasIndex("OpportunityId");
+
+                    b.HasIndex("UserId", "OpportunityId", "ActionId")
+                        .IsUnique();
+
+                    b.HasIndex("VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified");
+
+                    b.ToTable("MyOpportunity", "opportunity");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityCategory", b =>
                 {
                     b.Property<Guid>("Id")
@@ -633,19 +807,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("decimal(8,2)");
 
                     b.Property<decimal?>("YomaRewardCumulative")
-                        .HasColumnType("decimal(8,2)");
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<decimal?>("YomaRewardPool")
-                        .HasColumnType("decimal(8,2)");
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<decimal?>("ZltoReward")
                         .HasColumnType("decimal(8,2)");
 
                     b.Property<decimal?>("ZltoRewardCumulative")
-                        .HasColumnType("decimal(8,2)");
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<decimal?>("ZltoRewardPool")
-                        .HasColumnType("decimal(8,2)");
+                        .HasColumnType("decimal(12,2)");
 
                     b.HasKey("Id");
 
@@ -882,6 +1056,45 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Navigation("Skill");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunity", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups.MyOpportunityAction", "Action")
+                        .WithMany()
+                        .HasForeignKey("ActionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", "Certificate")
+                        .WithMany()
+                        .HasForeignKey("CertificateId");
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
+                        .WithMany()
+                        .HasForeignKey("OpportunityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Domain.Entity.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups.MyOpportunityVerificationStatus", "VerificationStatus")
+                        .WithMany()
+                        .HasForeignKey("VerificationStatusId");
+
+                    b.Navigation("Action");
+
+                    b.Navigation("Certificate");
+
+                    b.Navigation("Opportunity");
+
+                    b.Navigation("User");
+
+                    b.Navigation("VerificationStatus");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", b =>

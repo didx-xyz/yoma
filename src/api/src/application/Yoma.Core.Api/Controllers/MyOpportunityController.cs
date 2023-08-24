@@ -32,10 +32,11 @@ namespace Yoma.Core.Api.Controllers
 
         #region Public Members
         #region Administrative Actions
-        [SwaggerOperation(Summary = "Update verification status for the specified user and opportunity (Admin or Organization Admin roles required)")]
+        [SwaggerOperation(Summary = "Reject or complete verification for the specified 'my' opportunity (Admin or Organization Admin roles required)")]
         [HttpPut("verification/{userId}/{opportunityId}/update/{status}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        //
         public async Task<IActionResult> UpdateVerificationStatus([FromRoute] Guid userId, [FromRoute] Guid opportunityId, [FromRoute] VerificationStatus status)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(UpdateVerificationStatus));

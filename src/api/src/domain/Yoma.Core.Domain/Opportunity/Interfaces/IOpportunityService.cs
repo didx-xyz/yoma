@@ -18,7 +18,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
         Task<Models.Opportunity> Upsert(OpportunityRequest request, bool ensureOrganizationAuthorization);
 
-        Task IncrementParticipantCount(Guid id, int increment = 1);
+        Task<(decimal? ZltoReward, decimal? YomaReward)> ProcessVerificationCompletion(Guid id, bool ensureOrganizationAuthorization);
 
         Task UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization);
 

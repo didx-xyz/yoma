@@ -41,19 +41,19 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
         [Column(TypeName = "decimal(8,2)")]
         public decimal? ZltoReward { get; set; }
 
-        [Column(TypeName = "decimal(8,2)")]
+        [Column(TypeName = "decimal(12,2)")]
         public decimal? ZltoRewardPool { get; set; }
 
-        [Column(TypeName = "decimal(8,2)")]
+        [Column(TypeName = "decimal(12,2)")]
         public decimal? ZltoRewardCumulative { get; set; }
 
         [Column(TypeName = "decimal(8,2)")]
         public decimal? YomaReward { get; set; }
 
-        [Column(TypeName = "decimal(8,2)")]
+        [Column(TypeName = "decimal(12,2)")]
         public decimal? YomaRewardPool { get; set; }
 
-        [Column(TypeName = "decimal(8,2)")]
+        [Column(TypeName = "decimal(12,2)")]
         public decimal? YomaRewardCumulative { get; set; }
 
         [Required]

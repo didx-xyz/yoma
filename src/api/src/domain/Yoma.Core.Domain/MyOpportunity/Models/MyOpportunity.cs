@@ -12,9 +12,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public Action Action { get; set; }
 
-        public Guid VerificationStatusId { get; set; }
+        public Guid? VerificationStatusId { get; set; }
 
-        public VerificationStatus VerificationStatus { get; set; }
+        public VerificationStatus? VerificationStatus { get; set; }
 
         public Guid? CertificateId { get; set; }
 

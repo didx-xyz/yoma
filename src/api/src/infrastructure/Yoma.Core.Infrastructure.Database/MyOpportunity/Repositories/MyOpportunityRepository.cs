@@ -22,7 +22,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 ActionId = entity.ActionId,
                 Action = Enum.Parse<Domain.MyOpportunity.Action>(entity.Action.Name, true),
                 VerificationStatusId = entity.VerificationStatusId,
-                VerificationStatus = Enum.Parse<VerificationStatus>(entity.VerificationStatus.Name, true),
+                VerificationStatus = entity.VerificationStatus != null ? Enum.Parse<VerificationStatus>(entity.VerificationStatus.Name, true) : null,
                 CertificateId = entity.CertificateId,
                 DateStart = entity.DateStart,
                 DateEnd = entity.DateEnd,

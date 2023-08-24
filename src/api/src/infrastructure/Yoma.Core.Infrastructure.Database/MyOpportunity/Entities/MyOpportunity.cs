@@ -28,8 +28,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
         public MyOpportunityAction Action { get; set; }
 
         [ForeignKey("VerificationStatusId")]
-        public Guid VerificationStatusId { get; set; }
-        public MyOpportunityVerificationStatus VerificationStatus { get; set; }
+        public Guid? VerificationStatusId { get; set; }
+        public MyOpportunityVerificationStatus? VerificationStatus { get; set; }
 
         [ForeignKey(nameof(CertificateId))]
         public Guid? CertificateId { get; set; }
@@ -41,8 +41,10 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
 
         public DateTimeOffset? DateCompleted { get; set; }
 
+        [Column(TypeName = "decimal(8,2)")]
         public decimal? ZltoReward { get; set; }
 
+        [Column(TypeName = "decimal(8,2)")]
         public decimal? YomaReward { get; set; }
 
         [Required]
