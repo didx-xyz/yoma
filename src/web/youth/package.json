@@ -8,8 +8,7 @@
     "lint": "next lint && prettier --check --ignore-path ../../../.gitignore --ignore-path .prettierignore .",
     "format": "prettier --write --ignore-path ../../../.gitignore --ignore-path .prettierignore .",
     "start": "next start",
-    "analyze": "cross-env ANALYZE=true next build",
-    "cypress:open": "cypress open"
+    "analyze": "cross-env ANALYZE=true next build"
   },
   "dependencies": {
     "@fontsource/open-sans": "^5.0.9",
@@ -19,7 +18,6 @@
     "@tanstack/react-query": "^4.33.0",
     "@types/react-modal": "^3.16.0",
     "axios": "^1.4.0",
-    "cypress": "^12.17.4",
     "daisyui": "^3.6.1",
     "jotai": "^2.4.0",
     "moment": "^2.29.4",
