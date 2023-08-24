@@ -10,12 +10,22 @@ import { useForm, type FieldValues } from "react-hook-form";
 import { IoMdImage } from "react-icons/io";
 import { toast } from "react-toastify";
 import zod from "zod";
-import { OrganizationProviderType, type OrganizationRequest } from "~/api/models/organisation";
-import { getOrganisationProviderTypes, postOrganisation } from "~/api/services/organisations";
+import {
+  OrganizationProviderType,
+  type OrganizationRequest,
+} from "~/api/models/organisation";
+import {
+  getOrganisationProviderTypes,
+  postOrganisation,
+} from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
-import { ACCEPTED_DOC_TYPES, ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from "~/lib/constants";
+import {
+  ACCEPTED_DOC_TYPES,
+  ACCEPTED_IMAGE_TYPES,
+  MAX_FILE_SIZE,
+} from "~/lib/constants";
 import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../_app";
@@ -26,7 +36,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
   if (session) {
     // 👇 prefetch queries (on server)
-    await queryClient.prefetchQuery(["organisationProviderTypes"], () => getOrganisationProviderTypes(context));
+    await queryClient.prefetchQuery(["organisationProviderTypes"], () =>
+      getOrganisationProviderTypes(context),
+    );
   }
 
   return {
@@ -42,13 +54,18 @@ const RegisterOrganisation: NextPageWithLayout = () => {
   const [step, setStep] = useState(1);
 
   // 👇 use prefetched queries (from server)
-  const { data: organisationProviderTypes } = useQuery<OrganizationProviderType[]>({
+  const { data: organisationProviderTypes } = useQuery<
+    OrganizationProviderType[]
+  >({
     queryKey: ["organisationProviderTypes"],
     queryFn: () => getOrganisationProviderTypes(),
   });
 
   const schemaStep1 = zod.object({
-    name: zod.string().min(1, "Organisation name is required.").max(80, "Maximum of 80 characters allowed."),
+    name: zod
+      .string()
+      .min(1, "Organisation name is required.")
+      .max(80, "Maximum of 80 characters allowed."),
     streetAddress: zod.string().min(1, "Street address is required."),
     province: zod.string().min(1, "Province is required."),
     city: zod.string().min(1, "City is required."),
@@ -61,13 +78,24 @@ const RegisterOrganisation: NextPageWithLayout = () => {
     logo: zod
       .any()
       .refine((files) => files?.length == 1, "Logo is required.")
-      .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+      .refine(
+        (files) => files?.[0]?.size <= MAX_FILE_SIZE,
+        `Max file size is 5MB.`,
+      )
       .refine(
         (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
         ".jpg, .jpeg, .png and .webp files are accepted.",
       ),
-    tagline: zod.string().max(160, "Maximum of 160 characters allowed.").nullish().optional(),
-    biography: zod.string().max(480, "Maximum of 480 characters allowed.").nullish().optional(),
+    tagline: zod
+      .string()
+      .max(160, "Maximum of 160 characters allowed.")
+      .nullish()
+      .optional(),
+    biography: zod
+      .string()
+      .max(480, "Maximum of 480 characters allowed.")
+      .nullish()
+      .optional(),
   });
 
   /*  name: string;
@@ -86,22 +114,51 @@ const RegisterOrganisation: NextPageWithLayout = () => {
   tagline: string | null;
   biography: string | null;*/
   const schemaStep2 = zod.object({
-    providerTypes: zod.array(zod.string()).min(1, "Please select at least one option."),
+    providerTypes: zod
+      .array(zod.string())
+      .min(1, "Please select at least one option."),
     registrationDocument: zod
       .any()
-      .refine((files) => files?.length == 1, "Registration document is required.")
-      .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
-      .refine((files) => ACCEPTED_DOC_TYPES.includes(files?.[0]?.type), ".pdf, .doc and .docx files are accepted."),
+      .refine(
+        (files) => files?.length == 1,
+        "Registration document is required.",
+      )
+      .refine(
+        (files) => files?.[0]?.size <= MAX_FILE_SIZE,
+        `Max file size is 5MB.`,
+      )
+      .refine(
+        (files) => ACCEPTED_DOC_TYPES.includes(files?.[0]?.type),
+        ".pdf, .doc and .docx files are accepted.",
+      ),
     educationProviderDocument: zod
       .any()
-      .refine((files) => files?.length == 1, "Education provider document is required.")
-      .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
-      .refine((files) => ACCEPTED_DOC_TYPES.includes(files?.[0]?.type), ".pdf, .doc and .docx files are accepted."),
+      .refine(
+        (files) => files?.length == 1,
+        "Education provider document is required.",
+      )
+      .refine(
+        (files) => files?.[0]?.size <= MAX_FILE_SIZE,
+        `Max file size is 5MB.`,
+      )
+      .refine(
+        (files) => ACCEPTED_DOC_TYPES.includes(files?.[0]?.type),
+        ".pdf, .doc and .docx files are accepted.",
+      ),
     vatBusinessDocument: zod
       .any()
-      .refine((files) => files?.length == 1, "VAT/Business document is required.")
-      .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
-      .refine((files) => ACCEPTED_DOC_TYPES.includes(files?.[0]?.type), ".pdf, .doc and .docx files are accepted."),
+      .refine(
+        (files) => files?.length == 1,
+        "VAT/Business document is required.",
+      )
+      .refine(
+        (files) => files?.[0]?.size <= MAX_FILE_SIZE,
+        `Max file size is 5MB.`,
+      )
+      .refine(
+        (files) => ACCEPTED_DOC_TYPES.includes(files?.[0]?.type),
+        ".pdf, .doc and .docx files are accepted.",
+      ),
   });
 
   const schemaStep3 = zod.object({
@@ -372,7 +429,9 @@ const RegisterOrganisation: NextPageWithLayout = () => {
               <div className="flex items-center justify-center pb-4">
                 {/* NO IMAGE */}
                 {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
-                {!createObjectURLLogo && <IoMdImage className="h-12 w-12 rounded-lg" />}
+                {!createObjectURLLogo && (
+                  <IoMdImage className="h-12 w-12 rounded-lg" />
+                )}
 
                 {/* UPLOADED IMAGE */}
                 {createObjectURLLogo && (
@@ -449,10 +508,17 @@ const RegisterOrganisation: NextPageWithLayout = () => {
 
             {/* BUTTONS */}
             <div className="my-4 flex items-center justify-center gap-2">
-              <button type="button" className="btn btn-warning btn-sm flex-grow" onClick={handleCancel}>
+              <button
+                type="button"
+                className="btn btn-warning btn-sm flex-grow"
+                onClick={handleCancel}
+              >
                 Cancel
               </button>
-              <button type="submit" className="btn btn-success btn-sm flex-grow">
+              <button
+                type="submit"
+                className="btn btn-success btn-sm flex-grow"
+              >
                 Next
               </button>
             </div>
@@ -478,10 +544,15 @@ const RegisterOrganisation: NextPageWithLayout = () => {
           >
             <div className="form-control">
               <label className="label font-bold">
-                <span className="label-text">What role will your organisation play within Yoma?</span>
+                <span className="label-text">
+                  What role will your organisation play within Yoma?
+                </span>
               </label>
               {organisationProviderTypes?.map((item) => (
-                <label htmlFor={item.id} className="label cursor-pointer justify-normal">
+                <label
+                  htmlFor={item.id}
+                  className="label cursor-pointer justify-normal"
+                >
                   <input
                     {...registerStep2("providerTypes")}
                     type="checkbox"
@@ -506,7 +577,9 @@ const RegisterOrganisation: NextPageWithLayout = () => {
 
             <div className="form-control">
               <label className="label font-bold">
-                <span className="label-text">Organisation registration document</span>
+                <span className="label-text">
+                  Organisation registration document
+                </span>
               </label>
               {/* <textarea
                 className="textarea textarea-bordered w-full"
@@ -582,7 +655,11 @@ const RegisterOrganisation: NextPageWithLayout = () => {
 
             {/* BUTTONS */}
             <div className="my-4 flex items-center justify-center gap-2">
-              <button type="button" className="btn btn-warning btn-sm" onClick={() => setStep(1)}>
+              <button
+                type="button"
+                className="btn btn-warning btn-sm"
+                onClick={() => setStep(1)}
+              >
                 Back
               </button>
               <button type="submit" className="btn btn-success btn-sm">
@@ -611,7 +688,11 @@ const RegisterOrganisation: NextPageWithLayout = () => {
           >
             {/* BUTTONS */}
             <div className="my-4 flex items-center justify-center gap-2">
-              <button type="button" className="btn btn-warning btn-sm" onClick={() => setStep(2)}>
+              <button
+                type="button"
+                className="btn btn-warning btn-sm"
+                onClick={() => setStep(2)}
+              >
                 Back
               </button>
               <button type="submit" className="btn btn-success btn-sm w-full">

@@ -43,19 +43,34 @@ export const Navbar: React.FC = () => {
               >
                 Home
               </Link>
-              <Link href="/about" className="px-7 py-3 text-white hover:brightness-50">
+              <Link
+                href="/about"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
                 About
               </Link>
-              <Link href="/learning" className="px-7 py-3 text-white hover:brightness-50">
+              <Link
+                href="/learning"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
                 Learning
               </Link>
-              <Link href="/tasks" className="px-7 py-3 text-white hover:brightness-50">
+              <Link
+                href="/tasks"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
                 Tasks
               </Link>
-              <Link href="/jobs" className="px-7 py-3 text-white hover:brightness-50">
+              <Link
+                href="/jobs"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
                 Jobs
               </Link>
-              <Link href="/marketplace" className="px-7 py-3 text-white hover:brightness-50">
+              <Link
+                href="/marketplace"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
                 Marketplace
               </Link>
             </div>
@@ -90,7 +105,10 @@ export const Navbar: React.FC = () => {
               </Link>
             </li>
             <li tabIndex={5}>
-              <Link href="/marketplace" className="text-white hover:brightness-50">
+              <Link
+                href="/marketplace"
+                className="text-white hover:brightness-50"
+              >
                 Marketplace
               </Link>
             </li>

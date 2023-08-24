@@ -78,7 +78,10 @@ export const UserMenu: React.FC = () => {
             User settings
           </Link>
 
-          <Link href="/partner" className="px-7 py-3 text-white hover:brightness-50">
+          <Link
+            href="/partner"
+            className="px-7 py-3 text-white hover:brightness-50"
+          >
             Register Organisation
           </Link>
 

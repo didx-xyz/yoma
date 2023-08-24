@@ -29,7 +29,7 @@ const ApiClient = () => {
     (error) => {
       console.error(`API Error: `, error);
       throw error;
-    }
+    },
   );
 
   return instance;

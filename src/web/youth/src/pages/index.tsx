@@ -12,15 +12,22 @@ const Home: NextPageWithLayout = () => {
       </Head>
       <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
         <h1 className="text-center">
-          Welcome to the <span className="text-warning">Yoma</span> <span className="text-info">Youth Portal</span>
+          Welcome to the <span className="text-warning">Yoma</span>{" "}
+          <span className="text-info">Youth Portal</span>
         </h1>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-          <Link className="flex max-w-xs flex-col gap-4 rounded-xl bg-white p-4" href="/user/settings">
+          <Link
+            className="flex max-w-xs flex-col gap-4 rounded-xl bg-white p-4"
+            href="/user/settings"
+          >
             <h3 className="font-bold">User Settings →</h3>
             <div className="text-lgx">Update your user profile.</div>
           </Link>
 
-          <Link className="flex max-w-xs flex-col gap-4 rounded-xl bg-white p-4" href="/partner">
+          <Link
+            className="flex max-w-xs flex-col gap-4 rounded-xl bg-white p-4"
+            href="/partner"
+          >
             <h3 className="font-bold">Register Organisation →</h3>
             <div className="text-lgx">Register your organisation here.</div>
           </Link>

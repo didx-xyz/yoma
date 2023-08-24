@@ -1,4 +1,8 @@
-import { Hydrate, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  Hydrate,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { Provider } from "jotai";
 import type { NextPage } from "next";
 import { type Session } from "next-auth";
@@ -38,7 +42,10 @@ type AppPropsWithLayout<P> = AppProps<P> & {
   Component: NextPageWithLayout<P>;
 };
 
-const MyApp = ({ Component, pageProps }: AppPropsWithLayout<{ session: Session; dehydratedState: object }>) => {
+const MyApp = ({
+  Component,
+  pageProps,
+}: AppPropsWithLayout<{ session: Session; dehydratedState: object }>) => {
   // This ensures that data is not shared
   // between different users and requests
   const [queryClient] = useState(() => new QueryClient(config));
@@ -49,18 +56,28 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout<{ session: Session; 
   return (
     <Provider>
       <SessionProvider session={pageProps.session}>
-        <ThemeProvider attribute="class" enableSystem={false} forcedTheme="light">
+        <ThemeProvider
+          attribute="class"
+          enableSystem={false}
+          forcedTheme="light"
+        >
           <QueryClientProvider client={queryClient}>
             {/* eslint-disable-next-line */}
             <Hydrate state={pageProps.dehydratedState}>
-              <div id="mainContent" className={`${openSans.variable} font-openSans`}>
+              <div
+                id="mainContent"
+                className={`${openSans.variable} font-openSans`}
+              >
                 <ConfirmationModalContextProvider>
                   <Global />
                   <Navbar />
 
                   {getLayout(<Component {...pageProps} />)}
 
-                  <ToastContainer containerId="toastContainer" className="mt-16 w-full md:mt-10 md:w-[340px]" />
+                  <ToastContainer
+                    containerId="toastContainer"
+                    className="mt-16 w-full md:mt-10 md:w-[340px]"
+                  />
                 </ConfirmationModalContextProvider>
               </div>
             </Hydrate>

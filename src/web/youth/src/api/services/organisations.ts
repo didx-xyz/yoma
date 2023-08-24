@@ -1,18 +1,28 @@
 import { type GetServerSidePropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
-import { type Organization, type OrganizationProviderType, type OrganizationRequest } from "../models/organisation";
+import {
+  type Organization,
+  type OrganizationProviderType,
+  type OrganizationRequest,
+} from "../models/organisation";
 
 export const getOrganisationProviderTypes = async (
   context?: GetServerSidePropsContext,
 ): Promise<OrganizationProviderType[]> => {
   const { data } = context
-    ? await ApiServer(context).get<OrganizationProviderType[]>("/organization/lookup/providerType")
-    : await ApiClient.get<OrganizationProviderType[]>("/organization/lookup/providerType");
+    ? await ApiServer(context).get<OrganizationProviderType[]>(
+        "/organization/lookup/providerType",
+      )
+    : await ApiClient.get<OrganizationProviderType[]>(
+        "/organization/lookup/providerType",
+      );
   return data;
 };
 
-export const postOrganisation = async (model: OrganizationRequest): Promise<Organization> => {
+export const postOrganisation = async (
+  model: OrganizationRequest,
+): Promise<Organization> => {
   const { data } = await ApiClient.post<Organization>("/organization", model);
   return data;
 };

@@ -13,11 +13,11 @@ export const Unauthorized: React.FC = () => {
       <Head>
         <title>Yoma Partner | Unauthorized</title>
       </Head>
-  <div className="container max-w-md">
-    <div className="flex flex-col place-items-center justify-center rounded-xl bg-white p-4">
+      <div className="container max-w-md">
+        <div className="flex flex-col place-items-center justify-center rounded-xl bg-white p-4">
           <h4>401 - Unauthorized</h4>
 
-      <FaExclamationTriangle size={100} className="my-10 text-yellow" />
+          <FaExclamationTriangle size={100} className="my-10 text-yellow" />
 
           <p className="p-4 text-sm">
             Please
@@ -30,8 +30,8 @@ export const Unauthorized: React.FC = () => {
             </button>
             to view this page.
           </p>
-    </div>
-  </div>
+        </div>
+      </div>
     </>
-);
+  );
 };

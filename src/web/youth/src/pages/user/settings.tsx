@@ -62,16 +62,23 @@ const Settings: NextPageWithLayout<{
     phoneNumber: zod
       .string()
       .min(1, "Phone number is required.")
-      .regex(/^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$/, "Phone number is invalid"),
+      .regex(
+        /^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$/,
+        "Phone number is invalid",
+      ),
     countryId: zod.string().min(1, "Country is required."),
-    countryOfResidenceId: zod.string().min(1, "Country of residence is required."),
+    countryOfResidenceId: zod
+      .string()
+      .min(1, "Country of residence is required."),
     genderId: zod.string().min(1, "Gender is required."),
     dateOfBirth: zod.coerce
       .date({
         required_error: "Date of Birth is required.",
         invalid_type_error: "Date of Birth is required.",
       })
-      .min(new Date("1900/01/01"), { message: "Date of Birth cannot be that far back in the past." })
+      .min(new Date("1900/01/01"), {
+        message: "Date of Birth cannot be that far back in the past.",
+      })
       .max(new Date(), { message: "Date of Birth cannot be in the future." }),
     resetPassword: zod.boolean(),
   });
@@ -99,7 +106,8 @@ const Settings: NextPageWithLayout<{
     //HACK: 'expected string, received null' form validation error
     if (!user?.profile.phoneNumber) user.profile.phoneNumber = "";
     if (!user?.profile.countryId) user.profile.countryId = "";
-    if (!user?.profile.countryOfResidenceId) user.profile.countryOfResidenceId = "";
+    if (!user?.profile.countryOfResidenceId)
+      user.profile.countryOfResidenceId = "";
     if (!user?.profile.genderId) user.profile.genderId = "";
 
     // reset form
@@ -363,7 +371,11 @@ const Settings: NextPageWithLayout<{
         </div>
 
         <div className="my-4 flex items-center justify-center gap-2">
-          <button type="button" className="btn btn-warning btn-sm flex-grow" onClick={handleCancel}>
+          <button
+            type="button"
+            className="btn btn-warning btn-sm flex-grow"
+            onClick={handleCancel}
+          >
             Cancel
           </button>
           <button type="submit" className="btn btn-success btn-sm flex-grow">
