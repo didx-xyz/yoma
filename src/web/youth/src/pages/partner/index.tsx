@@ -11,7 +11,7 @@ import { IoMdImage } from "react-icons/io";
 import { toast } from "react-toastify";
 import zod from "zod";
 import {
-  OrganizationProviderType,
+  type OrganizationProviderType,
   type OrganizationRequest,
 } from "~/api/models/organisation";
 import {
@@ -77,12 +77,14 @@ const RegisterOrganisation: NextPageWithLayout = () => {
       .max(2083, "Organisation website URL cannot exceed 2083 characters."),
     logo: zod
       .any()
-      .refine((files) => files?.length == 1, "Logo is required.")
+      .refine((files: File[]) => files?.length == 1, "Logo is required.")
       .refine(
+        // eslint-disable-next-line
         (files) => files?.[0]?.size <= MAX_FILE_SIZE,
         `Max file size is 5MB.`,
       )
       .refine(
+        // eslint-disable-next-line
         (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
         ".jpg, .jpeg, .png and .webp files are accepted.",
       ),
@@ -120,42 +122,48 @@ const RegisterOrganisation: NextPageWithLayout = () => {
     registrationDocument: zod
       .any()
       .refine(
-        (files) => files?.length == 1,
+        (files: File[]) => files?.length == 1,
         "Registration document is required.",
       )
       .refine(
+        // eslint-disable-next-line
         (files) => files?.[0]?.size <= MAX_FILE_SIZE,
         `Max file size is 5MB.`,
       )
       .refine(
+        // eslint-disable-next-line
         (files) => ACCEPTED_DOC_TYPES.includes(files?.[0]?.type),
         ".pdf, .doc and .docx files are accepted.",
       ),
     educationProviderDocument: zod
       .any()
       .refine(
-        (files) => files?.length == 1,
+        (files: File[]) => files?.length == 1,
         "Education provider document is required.",
       )
       .refine(
+        // eslint-disable-next-line
         (files) => files?.[0]?.size <= MAX_FILE_SIZE,
         `Max file size is 5MB.`,
       )
       .refine(
+        // eslint-disable-next-line
         (files) => ACCEPTED_DOC_TYPES.includes(files?.[0]?.type),
         ".pdf, .doc and .docx files are accepted.",
       ),
     vatBusinessDocument: zod
       .any()
       .refine(
-        (files) => files?.length == 1,
+        (files: File[]) => files?.length == 1,
         "VAT/Business document is required.",
       )
       .refine(
+        // eslint-disable-next-line
         (files) => files?.[0]?.size <= MAX_FILE_SIZE,
         `Max file size is 5MB.`,
       )
       .refine(
+        // eslint-disable-next-line
         (files) => ACCEPTED_DOC_TYPES.includes(files?.[0]?.type),
         ".pdf, .doc and .docx files are accepted.",
       ),
@@ -215,19 +223,19 @@ const RegisterOrganisation: NextPageWithLayout = () => {
 
   // form submission handler
   const onSubmitStep1 = useCallback(
-    async (data: FieldValues) => {
+    (data: FieldValues) => {
       setStep(2);
     },
     [setStep],
   );
   const onSubmitStep2 = useCallback(
-    async (data: FieldValues) => {
+    (data: FieldValues) => {
       setStep(2);
     },
     [setStep],
   );
   const onSubmitStep3 = useCallback(
-    async (data: FieldValues) => {
+    (data: FieldValues) => {
       setStep(2);
     },
     [setStep],
@@ -552,6 +560,7 @@ const RegisterOrganisation: NextPageWithLayout = () => {
                 <label
                   htmlFor={item.id}
                   className="label cursor-pointer justify-normal"
+                  key={item.id}
                 >
                   <input
                     {...registerStep2("providerTypes")}

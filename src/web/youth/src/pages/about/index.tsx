@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
-import { NextPageWithLayout } from "../_app";
+import { type NextPageWithLayout } from "../_app";
 
 const About: NextPageWithLayout = () => {
   return (
@@ -14,7 +14,7 @@ const About: NextPageWithLayout = () => {
         >
           <h3 className="font-bold">Register Organisation →</h3>
           <div className="text-lgx">
-            Register your organisation and Be a part of Yoma's global
+            Register your organisation and Be a part of Yoma&apos;s global
             collaborative marketplace focussed on closing the skills gap for the
             youth across the Globe now!
           </div>
