@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
 {
     [Table("MyOpportunity", Schema = "opportunity")]
-    [Index(nameof(UserId),nameof(OpportunityId), nameof(ActionId), IsUnique = true)]
+    [Index(nameof(UserId), nameof(OpportunityId), nameof(ActionId), IsUnique = true)]
     [Index(nameof(VerificationStatusId), nameof(DateCompleted), nameof(ZltoReward), nameof(YomaReward), nameof(DateCreated), nameof(DateModified))]
     public class MyOpportunity : BaseEntity<Guid>
     {
