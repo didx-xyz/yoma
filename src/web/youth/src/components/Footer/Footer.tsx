@@ -6,7 +6,9 @@ export const Footer: React.FC = () => {
     <footer className="flex w-full place-items-center px-4 pt-2 align-middle">
       <div className="flex-grow">
         {/* LOGO */}
-        <div className="  z-40 mr-6 cursor-pointer text-white">{/* <LogoImage /> */}</div>
+        <div className="  z-40 mr-6 cursor-pointer text-white">
+          {/* <LogoImage /> */}
+        </div>
       </div>
       <div className="flex-none">
         {/* LINKS */}

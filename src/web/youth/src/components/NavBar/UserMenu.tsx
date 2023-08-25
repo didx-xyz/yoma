@@ -67,17 +67,26 @@ export const UserMenu: React.FC = () => {
         overlayClassName="fixed inset-0"
       >
         <div className="flex flex-col">
-          <Link href="/user/settings" className="px-7 py-3 text-white hover:brightness-50">
+          <Link
+            href="/user/settings"
+            className="px-7 py-3 text-white hover:brightness-50"
+          >
             User settings
           </Link>
 
-          <Link href="/organisation/settings" className="px-7 py-3 text-white hover:brightness-50">
+          <Link
+            href="/organisation/settings"
+            className="px-7 py-3 text-white hover:brightness-50"
+          >
             Organisation settings
           </Link>
 
           <div className="divider m-0" />
 
-          <button className="px-7 py-3 text-left text-white hover:brightness-50" onClick={handleLogout}>
+          <button
+            className="px-7 py-3 text-left text-white hover:brightness-50"
+            onClick={handleLogout}
+          >
             Logout
           </button>
         </div>

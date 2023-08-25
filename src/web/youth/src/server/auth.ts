@@ -1,5 +1,10 @@
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession, type DefaultSession, type DefaultUser, type NextAuthOptions } from "next-auth";
+import {
+  getServerSession,
+  type DefaultSession,
+  type DefaultUser,
+  type NextAuthOptions,
+} from "next-auth";
 import { type DefaultJWT } from "next-auth/jwt";
 import KeycloakProvider from "next-auth/providers/keycloak";
 import { type User as YomaUserProfile } from "~/api/models/user";
@@ -123,7 +128,9 @@ async function getYomaUserProfile(access_token: string): Promise<User | null> {
   });
 
   if (!response.ok) {
-    console.error("Failed to get user profile from yoma-api: " + response.statusText);
+    console.error(
+      "Failed to get user profile from yoma-api: " + response.statusText,
+    );
     return null;
   }
 

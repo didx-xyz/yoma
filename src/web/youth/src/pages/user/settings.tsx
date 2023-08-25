@@ -62,9 +62,14 @@ const Settings: NextPageWithLayout<{
     phoneNumber: zod
       .string()
       .min(1, "Phone number is required")
-      .regex(/^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$/, "Phone number is invalid"),
+      .regex(
+        /^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$/,
+        "Phone number is invalid",
+      ),
     countryId: zod.string().min(1, "Country is required"),
-    countryOfResidenceId: zod.string().min(1, "Country of residence is required"),
+    countryOfResidenceId: zod
+      .string()
+      .min(1, "Country of residence is required"),
     genderId: zod.string().min(1, "Gender is required"),
     dateOfBirth: zod.coerce
       .date({
@@ -162,7 +167,11 @@ const Settings: NextPageWithLayout<{
           <label className="label">
             <span className="label-text">Email</span>
           </label>
-          <input type="text" className="input input-bordered w-full" {...register("email")} />
+          <input
+            type="text"
+            className="input input-bordered w-full"
+            {...register("email")}
+          />
           {errors.email && (
             <label className="label">
               <span className="label-text-alt italic text-red-500">
@@ -177,7 +186,11 @@ const Settings: NextPageWithLayout<{
           <label className="label">
             <span className="label-text">First name</span>
           </label>
-          <input type="text" className="input input-bordered" {...register("firstName")} />
+          <input
+            type="text"
+            className="input input-bordered"
+            {...register("firstName")}
+          />
           {errors.firstName && (
             <label className="label">
               <span className="label-text-alt italic text-red-500">
@@ -192,7 +205,11 @@ const Settings: NextPageWithLayout<{
           <label className="label">
             <span className="label-text">Last name</span>
           </label>
-          <input type="text" className="input input-bordered" {...register("surname")} />
+          <input
+            type="text"
+            className="input input-bordered"
+            {...register("surname")}
+          />
           {errors.surname && (
             <label className="label">
               <span className="label-text-alt italic text-red-500">
@@ -207,7 +224,11 @@ const Settings: NextPageWithLayout<{
           <label className="label">
             <span className="label-text">Display name</span>
           </label>
-          <input type="text" className="input input-bordered" {...register("displayName")} />
+          <input
+            type="text"
+            className="input input-bordered"
+            {...register("displayName")}
+          />
           {errors.displayName && (
             <label className="label">
               <span className="label-text-alt italic text-red-500">
@@ -222,7 +243,11 @@ const Settings: NextPageWithLayout<{
           <label className="label">
             <span className="label-text">Phone Number</span>
           </label>
-          <input type="text" className="input input-bordered" {...register("phoneNumber")} />
+          <input
+            type="text"
+            className="input input-bordered"
+            {...register("phoneNumber")}
+          />
           {errors.phoneNumber && (
             <label className="label">
               <span className="label-text-alt italic text-red-500">
@@ -259,7 +284,10 @@ const Settings: NextPageWithLayout<{
           <label className="label">
             <span className="label-text">Country Of Residence</span>
           </label>
-          <select className="select select-bordered" {...register("countryOfResidenceId")}>
+          <select
+            className="select select-bordered"
+            {...register("countryOfResidenceId")}
+          >
             <option value="">Please select</option>
             {countries?.map((country) => (
               <option key={country.id} value={country.id}>
@@ -303,7 +331,11 @@ const Settings: NextPageWithLayout<{
           <label className="label">
             <span className="label-text">Date Of Birth</span>
           </label>
-          <input type="date" className="input input-bordered" {...register("dateOfBirth")} />
+          <input
+            type="date"
+            className="input input-bordered"
+            {...register("dateOfBirth")}
+          />
           {errors.dateOfBirth && (
             <label className="label">
               <span className="label-text-alt italic text-red-500">
@@ -317,7 +349,11 @@ const Settings: NextPageWithLayout<{
         <div className="form-control">
           <label className="label cursor-pointer">
             <span className="label-text">Reset Password</span>
-            <input type="checkbox" className="checkbox mr-2" {...register("resetPassword")} />
+            <input
+              type="checkbox"
+              className="checkbox mr-2"
+              {...register("resetPassword")}
+            />
           </label>
           {errors.resetPassword && (
             <label className="label">
@@ -330,7 +366,11 @@ const Settings: NextPageWithLayout<{
         </div>
 
         <div className="my-4 flex items-center justify-center gap-2">
-          <button type="button" className="btn btn-warning btn-sm" onClick={handleCancel}>
+          <button
+            type="button"
+            className="btn btn-warning btn-sm"
+            onClick={handleCancel}
+          >
             Cancel
           </button>
           <button type="submit" className="btn btn-success btn-sm">

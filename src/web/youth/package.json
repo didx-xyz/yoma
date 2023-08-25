@@ -5,7 +5,8 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "lint": "next lint",
+    "lint": "next lint && prettier --check --ignore-path ../../../.gitignore --ignore-path .prettierignore .",
+    "format": "prettier --write --ignore-path ../../../.gitignore --ignore-path .prettierignore .",
     "start": "next start",
     "analyze": "cross-env ANALYZE=true next build"
   },

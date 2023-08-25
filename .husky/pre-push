@@ -2,8 +2,6 @@
 
 set -e
 
-git fetch origin master
-
 # Function to check if a file path matches a pattern
 match_pattern() {
   [[ $1 == $2 ]] && return 0
@@ -22,6 +20,7 @@ run_command_for_changes() {
   # Iterate through changed files and run the command if a match is found
   for file in $changed_files; do
     if match_pattern "$file" "$directory"; then
+      echo "Running command '$command' in directory '$directory'"
       (cd "$directory" && eval "$command")
       break
     fi
@@ -31,7 +30,7 @@ run_command_for_changes() {
 # Check for changes in src/api and run dotnet format command
 run_command_for_changes "src/api" "dotnet format --verify-no-changes"
 
-# Check for changes in src/web/youth and run yarn lint command
+# Check for changes in src/web/youth and run `lint` and `prettier`
 run_command_for_changes "src/web/youth" "yarn lint"
 
 # Exit with success

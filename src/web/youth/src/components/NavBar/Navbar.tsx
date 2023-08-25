@@ -29,36 +29,59 @@ export const Navbar: React.FC = () => {
             onRequestClose={() => {
               setMenuVisible(false);
             }}
-            className={"fixed left-0 right-0 top-16 flex-grow items-center bg-purple animate-in fade-in"}
+            className={
+              "fixed left-0 right-0 top-16 flex-grow items-center bg-purple animate-in fade-in"
+            }
             portalClassName={"fixed z-50"}
             overlayClassName="fixed inset-0"
           >
             <div className="flex flex-col">
-              <Link href="/" className="px-7 py-3 text-white hover:brightness-50">
+              <Link
+                href="/"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
                 Home
               </Link>
 
-              <Link href="/opportunities" className="px-7 py-3 text-white hover:brightness-50">
+              <Link
+                href="/opportunities"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
                 Opportunities
               </Link>
 
-              <Link href="/marketplace" className="px-7 py-3 text-white hover:brightness-50">
+              <Link
+                href="/marketplace"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
                 Marketplace
               </Link>
 
-              <Link href="/faq" className="px-7 py-3 text-white hover:brightness-50">
+              <Link
+                href="/faq"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
                 FAQ
               </Link>
 
-              <Link href="/howToYoma" className="px-7 py-3 text-white hover:brightness-50">
+              <Link
+                href="/howToYoma"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
                 How to Yoma
               </Link>
 
-              <Link href="/feedback" className="px-7 py-3 text-white hover:brightness-50">
+              <Link
+                href="/feedback"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
                 Feedback
               </Link>
 
-              <Link href="/localisation" className="px-7 py-3 text-white hover:brightness-50">
+              <Link
+                href="/localisation"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
                 Localisation
               </Link>
             </div>
@@ -73,12 +96,18 @@ export const Navbar: React.FC = () => {
               </Link>
             </li>
             <li tabIndex={1}>
-              <Link href="/opportunities" className="text-white hover:brightness-50">
+              <Link
+                href="/opportunities"
+                className="text-white hover:brightness-50"
+              >
                 Opportunities
               </Link>
             </li>
             <li tabIndex={2}>
-              <Link href="/marketplace" className="text-white hover:brightness-50">
+              <Link
+                href="/marketplace"
+                className="text-white hover:brightness-50"
+              >
                 Marketplace
               </Link>
             </li>
@@ -88,7 +117,10 @@ export const Navbar: React.FC = () => {
               </Link>
             </li>
             <li tabIndex={3}>
-              <Link href="/howToYoma" className="text-white hover:brightness-50">
+              <Link
+                href="/howToYoma"
+                className="text-white hover:brightness-50"
+              >
                 How to Yoma
               </Link>
             </li>
@@ -98,7 +130,10 @@ export const Navbar: React.FC = () => {
               </Link>
             </li>
             <li tabIndex={3}>
-              <Link href="/localisation" className="text-white hover:brightness-50">
+              <Link
+                href="/localisation"
+                className="text-white hover:brightness-50"
+              >
                 Localisation
               </Link>
             </li>

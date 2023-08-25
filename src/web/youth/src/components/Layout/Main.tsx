@@ -3,7 +3,11 @@ import type { ReactElement } from "react";
 import { NextAuthProvider } from "~/core/authProvider";
 import { Navbar } from "../NavBar/Navbar";
 
-export type LayoutProps = ({ children }: { children: ReactElement }) => ReactElement;
+export type LayoutProps = ({
+  children,
+}: {
+  children: ReactElement;
+}) => ReactElement;
 
 const MainLayout: LayoutProps = ({ children }) => {
   return (
@@ -19,7 +23,9 @@ const MainLayout: LayoutProps = ({ children }) => {
           <link rel="icon" href="/favicon.ico" />
         </Head>
         <Navbar />
-        <main className="flex min-h-screen justify-center bg-gray-light p-4 pt-20 xl:pt-32">{children}</main>
+        <main className="flex min-h-screen justify-center bg-gray-light p-4 pt-20 xl:pt-32">
+          {children}
+        </main>
         {/* <Footer /> */}
       </NextAuthProvider>
     </>

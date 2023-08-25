@@ -25,7 +25,9 @@ const MainBackButtonLayout: LayoutProps = ({ children, rightMenuChildren }) => {
           <link rel="icon" href="/favicon.ico" />
         </Head>
         <NavbarBackButton rightMenuChildren={rightMenuChildren} />
-        <main className="flex min-h-screen justify-center bg-gray-light p-4 pt-20 xl:pt-32">{children}</main>
+        <main className="flex min-h-screen justify-center bg-gray-light p-4 pt-20 xl:pt-32">
+          {children}
+        </main>
         {/* <Footer /> */}
       </NextAuthProvider>
     </>
