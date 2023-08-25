@@ -1,5 +1,6 @@
 import { type Config } from "tailwindcss";
 
+// eslint-disable
 export default {
   content: ["./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
@@ -29,9 +30,7 @@ export default {
     logs: false,
     themes: [
       {
-        // eslint-disable-next-lint @typescript-eslint/no-unsafe-assignment
         light: {
-          // eslint-disable-next-lint @typescript-eslint/no-var-requires @typescript-eslint/no-unsafe-member-access
           ...require("daisyui/src/theming/themes")["[data-theme=light]"],
           primary: "#41204B",
           "primary-focus": "#33193b",
@@ -58,3 +57,4 @@ export default {
     ],
   },
 } satisfies Config;
+// eslint-enable
