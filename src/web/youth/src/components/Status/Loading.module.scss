@@ -12,7 +12,8 @@
 
   border-radius: 50%;
   border: 3px solid theme("colors.gray-dark");
-  border-color: theme("colors.gray-dark") transparent theme("colors.gray-dark") transparent;
+  border-color: theme("colors.gray-dark") transparent theme("colors.gray-dark")
+    transparent;
   animation: lds-dual-ring 1.2s linear infinite;
 }
 @keyframes lds-dual-ring {
@@ -37,7 +38,8 @@
 
   border-radius: 50%;
   border: 3px solid theme("colors.gray-dark");
-  border-color: theme("colors.gray-dark") transparent theme("colors.gray-dark") transparent;
+  border-color: theme("colors.gray-dark") transparent theme("colors.gray-dark")
+    transparent;
   animation: lds-dual-ring 1.2s linear infinite;
 }
 

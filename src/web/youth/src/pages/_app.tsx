@@ -1,7 +1,11 @@
 import "@fontsource/open-sans"; // Defaults to weight 400
 import "@fontsource/open-sans/400-italic.css"; // Specify weight and style
 import "@fontsource/open-sans/400.css"; // Specify weight
-import { Hydrate, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  Hydrate,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import type { NextPage } from "next";
 import { ThemeProvider } from "next-themes";
 import type { AppProps } from "next/app";
@@ -29,7 +33,10 @@ type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout;
 };
 
-const MyApp: AppType<object> = ({ Component, pageProps }: AppPropsWithLayout) => {
+const MyApp: AppType<object> = ({
+  Component,
+  pageProps,
+}: AppPropsWithLayout) => {
   // This ensures that data is not shared
   // between different users and requests
   const [queryClient] = useState(() => new QueryClient(config));
@@ -46,7 +53,10 @@ const MyApp: AppType<object> = ({ Component, pageProps }: AppPropsWithLayout) =>
             <div id="mainContent">
               <Component {...pageProps} />
             </div>
-            <ToastContainer containerId="toastContainer" className="mt-16 w-full md:mt-10 md:w-[340px]" />
+            <ToastContainer
+              containerId="toastContainer"
+              className="mt-16 w-full md:mt-10 md:w-[340px]"
+            />
           </ConfirmationModalContextProvider>
         </Hydrate>
       </QueryClientProvider>

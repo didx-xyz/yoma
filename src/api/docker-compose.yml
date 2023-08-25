@@ -201,7 +201,7 @@ services:
     container_name: yoma-api
     build:
       context: .
-      dockerfile: ./cicd/dockerfiles/Dockerfile.yoma-api
+      dockerfile: ./Dockerfile
     restart: always
     environment:
       ASPNETCORE_ENVIRONMENT: Local

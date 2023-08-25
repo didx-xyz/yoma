@@ -22,14 +22,24 @@ const Status500: NextPageWithLayout = () => {
 
         <FaExclamationTriangle size={100} className="my-10 text-red-700" />
 
-        <p className="p-4 text-sm">There was an unexpected error. Please try again later.</p>
+        <p className="p-4 text-sm">
+          There was an unexpected error. Please try again later.
+        </p>
 
         {/* buttons */}
         <div className="my-5 flex place-items-center space-x-2">
-          <button type="button" className="btn-hover-glow btn btn-warning btn-sm gap-2" onClick={handleBack}>
+          <button
+            type="button"
+            className="btn-hover-glow btn btn-warning btn-sm gap-2"
+            onClick={handleBack}
+          >
             Try again
           </button>
-          <button type="button" className="btn-hover-glow btn btn-success btn-sm gap-2" onClick={handleHome}>
+          <button
+            type="button"
+            className="btn-hover-glow btn btn-success btn-sm gap-2"
+            onClick={handleHome}
+          >
             Return to home
           </button>
         </div>

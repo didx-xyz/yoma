@@ -7,7 +7,10 @@ export const AccessDenied = () => (
 
       <FaExclamationTriangle size={100} className="my-10 text-yellow" />
 
-      <p className="p-4 text-sm">You do not have permissions to view this page. Please contact us for support.</p>
+      <p className="p-4 text-sm">
+        You do not have permissions to view this page. Please contact us for
+        support.
+      </p>
     </div>
   </div>
 );
