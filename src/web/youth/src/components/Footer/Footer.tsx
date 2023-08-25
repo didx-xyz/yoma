@@ -1,5 +1,5 @@
 import Link from "next/link";
-// import { LogoImage } from "./LogoImage";
+import { LogoImage } from "../NavBar/LogoImage";
 
 export const Footer: React.FC = () => {
   return (
@@ -7,7 +7,7 @@ export const Footer: React.FC = () => {
       <div className="flex-grow">
         {/* LOGO */}
         <div className="  z-40 mr-6 cursor-pointer text-white">
-          {/* <LogoImage /> */}
+          <LogoImage />
         </div>
       </div>
       <div className="flex-none">

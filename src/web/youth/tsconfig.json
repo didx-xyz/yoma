@@ -29,9 +29,7 @@
     "**/*.cjs",
     "**/*.mjs",
     "next.config.js",
-    "next.config.mjs",
-    "src/hooks/api/lookups.remts",
-    "src/components/NavBar/Navbar - Copy.remtsx"
+    "next.config.mjs"
   ],
   "exclude": ["node_modules"]
 }

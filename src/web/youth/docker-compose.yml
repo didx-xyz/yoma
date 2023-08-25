@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.9"
 name: yoma-v3
 services:
   yoma-web-youth:
@@ -8,17 +8,19 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # SERVER VARIABLES
-        - NEXTAUTH_SECRET=0vpMHSn0ufXwrEr1NKn6u1m+BKryJct5Cj7Jwt9mSSU=
-        - NEXTAUTH_URL=http://localhost:3000
-        - KEYCLOAK_CLIENT_ID=yoma-web-youth
-        - KEYCLOAK_CLIENT_SECRET=secret
-        - API_BASE_URL=http://yoma-api:5000/api/v1
-        - KEYCLOAK_ISSUER=http://keycloak:8080/realms/yoma
         # CLIENT VARIABLES
         - NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER=keycloak
-        - NEXT_PUBLIC_API_BASE_URL=http://yoma-api:5000/api/v3
+        - NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api/v3
         - NEXT_PUBLIC_ENVIRONMENT=local
     working_dir: /app
     ports:
       - "3000:3000"
+    environment:
+      # SERVER VARIABLES
+      # KEYCLOAK_CLIENT_SECRET is a placeholder for future functionality, but is required by the app to run.
+      - NEXTAUTH_SECRET=0vpMHSn0ufXwrEr1NKn6u1m+BKryJct5Cj7Jwt9mSSU=
+      - KEYCLOAK_CLIENT_ID=yoma-web-youth
+      - KEYCLOAK_CLIENT_SECRET=secret
+      - NEXTAUTH_URL=http://localhost:3000
+      - API_BASE_URL=http://yoma-api:5000/api/v3
+      - KEYCLOAK_ISSUER=http://keycloak:8080/realms/yoma

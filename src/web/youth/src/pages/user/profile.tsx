@@ -1,10 +1,9 @@
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
-import { useRouter } from "next/router";
-import { useCallback, type ReactElement } from "react";
-import { IoMdPerson, IoMdSettings } from "react-icons/io";
-import MainBackButton from "~/components/Layout/MainBackButton";
-import withAuth from "~/core/withAuth";
+import { type ReactElement } from "react";
+import { IoMdPerson } from "react-icons/io";
+import MainLayout from "~/components/Layout/Main";
+import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
 import type { NextPageWithLayout } from "../_app";
 
@@ -72,29 +71,8 @@ const UserProfile: NextPageWithLayout = () => {
   );
 };
 
-const Settings: NextPageWithLayout = () => {
-  const router = useRouter();
-
-  const handleClick = useCallback(async () => {
-    await router.push("/user/settings");
-  }, [router]);
-
-  return (
-    <button
-      type="button"
-      aria-label="Close"
-      className="btn-hover-grow btn btn-square gap-2 border-none bg-transparent hover:border-none hover:bg-transparent"
-      onClick={handleClick} // eslint-disable-line @typescript-eslint/no-misused-promises
-    >
-      <IoMdSettings className="h-6 w-6" />
-    </button>
-  );
-};
-
 UserProfile.getLayout = function getLayout(page: ReactElement) {
-  return (
-    <MainBackButton rightMenuChildren={<Settings />}>{page}</MainBackButton>
-  );
+  return <MainLayout>{page}</MainLayout>;
 };
 
 export default withAuth(UserProfile);

@@ -7,8 +7,9 @@ import {
 } from "next-auth";
 import { type DefaultJWT } from "next-auth/jwt";
 import KeycloakProvider from "next-auth/providers/keycloak";
+import { env } from "process";
 import { type User as YomaUserProfile } from "~/api/models/user";
-import { env } from "~/env.mjs";
+// import { env } from "~/env.mjs";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -96,8 +97,8 @@ export const authOptions: NextAuthOptions = {
   },
   providers: [
     KeycloakProvider({
-      clientId: env.KEYCLOAK_CLIENT_ID,
-      clientSecret: env.KEYCLOAK_CLIENT_SECRET,
+      clientId: env.KEYCLOAK_CLIENT_ID!,
+      clientSecret: env.KEYCLOAK_CLIENT_SECRET!,
       issuer: env.KEYCLOAK_ISSUER,
     }),
     /**

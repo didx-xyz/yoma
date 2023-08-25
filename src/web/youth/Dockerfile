@@ -23,21 +23,9 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED 1
 
-# Both client & server environment variables must be present at build time
-ARG NEXTAUTH_SECRET
-ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-ARG NEXTAUTH_URL
-ENV NEXTAUTH_URL=${NEXTAUTH_URL}
-ARG KEYCLOAK_ISSUER
-ENV KEYCLOAK_ISSUER=${KEYCLOAK_ISSUER}
-ARG KEYCLOAK_CLIENT_ID
-ENV KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID}
-ARG KEYCLOAK_CLIENT_SECRET
-ENV KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+# Server environment variables don't appear to be needed at build time
 ARG NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER
 ENV NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER=${NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER}
-ARG API_BASE_URL
-ENV API_BASE_URL=${API_BASE_URL}
 ARG NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 ARG NEXT_PUBLIC_ENVIRONMENT
@@ -49,6 +37,10 @@ RUN \
  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && SKIP_ENV_VALIDATION=1 pnpm run build; \
  else echo "Lockfile not found." && exit 1; \
  fi
+
+# Set read-only permissions for the build assets
+RUN chmod -R a-w /app/.next/standalone
+RUN chmod -R a-w /app/.next/static
 
 ##### RUNNER
 
@@ -65,27 +57,14 @@ COPY --from=builder /app/next.config.mjs ./
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./package.json
 
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Fix for https://sonarcloud.io/organizations/didx-xyz/rules?open=docker%3AS6504&rule_key=docker%3AS6504
+# Copy files without changing ownership to nextjs
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
 USER nextjs
 EXPOSE 3000
-#ENV PORT 3000
-#ENV HOSTNAME localhost
-
-# Server environment variables must be redefined at run time
-# the nextjs configuration will expose these variables to the application (see next.config.mjs)
-ARG NEXTAUTH_SECRET
-ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-ARG NEXTAUTH_URL
-ENV NEXTAUTH_URL=${NEXTAUTH_URL}
-ARG KEYCLOAK_ISSUER
-ENV KEYCLOAK_ISSUER=${KEYCLOAK_ISSUER}
-ARG KEYCLOAK_CLIENT_ID
-ENV KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID}
-ARG KEYCLOAK_CLIENT_SECRET
-ENV KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
-ARG API_BASE_URL
-ENV API_BASE_URL=${API_BASE_URL}
+ENV PORT 3000
+ENV HOSTNAME 0.0.0.0
 
 CMD ["node", "server.js"]

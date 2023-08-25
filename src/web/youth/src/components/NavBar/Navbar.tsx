@@ -6,14 +6,17 @@ import ReactModal from "react-modal";
 import { LogoImage } from "./LogoImage";
 import { SignInButton } from "./SignInButton";
 import { UserMenu } from "./UserMenu";
+import { useAtomValue } from "jotai";
+import { navbarColorAtom } from "~/lib/store";
 
 export const Navbar: React.FC = () => {
+  const navbarColor = useAtomValue(navbarColorAtom);
   const [menuVisible, setMenuVisible] = useState(false);
   const { data: session } = useSession();
 
   return (
     <div id="topNav" className="fixed left-0 right-0 top-0 z-40">
-      <div className="navbar z-40 bg-purple">
+      <div className={`${navbarColor} navbar z-40`}>
         <div className="navbar-start w-full">
           <button
             type="button"
@@ -29,9 +32,7 @@ export const Navbar: React.FC = () => {
             onRequestClose={() => {
               setMenuVisible(false);
             }}
-            className={
-              "fixed left-0 right-0 top-16 flex-grow items-center bg-purple animate-in fade-in"
-            }
+            className={`${navbarColor} fixed left-0 right-0 top-16 flex-grow items-center animate-in fade-in`}
             portalClassName={"fixed z-50"}
             overlayClassName="fixed inset-0"
           >
@@ -42,47 +43,35 @@ export const Navbar: React.FC = () => {
               >
                 Home
               </Link>
-
               <Link
-                href="/opportunities"
+                href="/about"
                 className="px-7 py-3 text-white hover:brightness-50"
               >
-                Opportunities
+                About
               </Link>
-
+              <Link
+                href="/learning"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
+                Learning
+              </Link>
+              <Link
+                href="/tasks"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
+                Tasks
+              </Link>
+              <Link
+                href="/jobs"
+                className="px-7 py-3 text-white hover:brightness-50"
+              >
+                Jobs
+              </Link>
               <Link
                 href="/marketplace"
                 className="px-7 py-3 text-white hover:brightness-50"
               >
                 Marketplace
-              </Link>
-
-              <Link
-                href="/faq"
-                className="px-7 py-3 text-white hover:brightness-50"
-              >
-                FAQ
-              </Link>
-
-              <Link
-                href="/howToYoma"
-                className="px-7 py-3 text-white hover:brightness-50"
-              >
-                How to Yoma
-              </Link>
-
-              <Link
-                href="/feedback"
-                className="px-7 py-3 text-white hover:brightness-50"
-              >
-                Feedback
-              </Link>
-
-              <Link
-                href="/localisation"
-                className="px-7 py-3 text-white hover:brightness-50"
-              >
-                Localisation
               </Link>
             </div>
           </ReactModal>
@@ -96,45 +85,31 @@ export const Navbar: React.FC = () => {
               </Link>
             </li>
             <li tabIndex={1}>
-              <Link
-                href="/opportunities"
-                className="text-white hover:brightness-50"
-              >
-                Opportunities
+              <Link href="/about" className="text-white hover:brightness-50">
+                About
               </Link>
             </li>
             <li tabIndex={2}>
+              <Link href="/learning" className="text-white hover:brightness-50">
+                Learning
+              </Link>
+            </li>
+            <li tabIndex={3}>
+              <Link href="/tasks" className="text-white hover:brightness-50">
+                Tasks
+              </Link>
+            </li>
+            <li tabIndex={4}>
+              <Link href="/jobs" className="text-white hover:brightness-50">
+                Jobs
+              </Link>
+            </li>
+            <li tabIndex={5}>
               <Link
                 href="/marketplace"
                 className="text-white hover:brightness-50"
               >
                 Marketplace
-              </Link>
-            </li>
-            <li tabIndex={3}>
-              <Link href="/faq" className="text-white hover:brightness-50">
-                FAQ
-              </Link>
-            </li>
-            <li tabIndex={3}>
-              <Link
-                href="/howToYoma"
-                className="text-white hover:brightness-50"
-              >
-                How to Yoma
-              </Link>
-            </li>
-            <li tabIndex={3}>
-              <Link href="/feedback" className="text-white hover:brightness-50">
-                Feedback
-              </Link>
-            </li>
-            <li tabIndex={3}>
-              <Link
-                href="/localisation"
-                className="text-white hover:brightness-50"
-              >
-                Localisation
               </Link>
             </li>
           </ul>
