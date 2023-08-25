@@ -1,6 +1,6 @@
 import { type Config } from "tailwindcss";
 
-// eslint-disable
+/* eslint-disable */
 export default {
   content: ["./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
@@ -57,4 +57,4 @@ export default {
     ],
   },
 } satisfies Config;
-// eslint-enable
+/* eslint-enable */
