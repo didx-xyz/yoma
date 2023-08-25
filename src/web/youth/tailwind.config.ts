@@ -29,7 +29,9 @@ export default {
     logs: false,
     themes: [
       {
+        // eslint-disable-next-lint @typescript-eslint/no-unsafe-assignment
         light: {
+          // eslint-disable-next-lint @typescript-eslint/no-var-requires @typescript-eslint/no-unsafe-member-access
           ...require("daisyui/src/theming/themes")["[data-theme=light]"],
           primary: "#41204B",
           "primary-focus": "#33193b",
