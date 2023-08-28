@@ -36,7 +36,7 @@ namespace Yoma.Core.Domain.Core.Services
             return result ?? throw new ArgumentOutOfRangeException(nameof(id), $"Blob with id '{id}' does not exist");
         }
 
-        public async Task<BlobObject> Create(IFormFile file, FileTypeEnum type)
+        public async Task<BlobObject> Create(IFormFile file, FileType type)
         {
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
@@ -44,13 +44,14 @@ namespace Yoma.Core.Domain.Core.Services
             new FileValidator(type).Validate(file);
 
             var id = Guid.NewGuid();
-            var key = $"{_environmentProvider.Environment}/{type}/{id}";
+            var key = $"{_environmentProvider.Environment}/{type}/{id}{file.GetExtension()}";
 
             var result = new BlobObject
             {
                 Id = id,
                 Key = key,
-                DateCreated = DateTimeOffset.Now
+                ContentType = file.ContentType,
+                OriginalFileName = file.FileName
             };
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
@@ -61,6 +62,15 @@ namespace Yoma.Core.Domain.Core.Services
             scope.Complete();
 
             return result;
+        }
+
+        public async Task<IFormFile> Download(Guid id)
+        {
+            var item = GetById(id);
+
+            var file = await _blobProviderClient.Download(item.Key);
+
+            return FileHelper.FromByteArray(item.OriginalFileName, file.ContentType, file.Data);
         }
 
         public string GetURL(Guid id)

@@ -11,6 +11,12 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
         [Column(TypeName = "varchar(125)")]
         public string Key { get; set; }
 
+        [Column(TypeName = "varchar(127)")]
+        public string ContentType { get; set; }
+
+        [Column(TypeName = "varchar(255)")]
+        public string OriginalFileName { get; set; }
+
         [Required]
         public DateTimeOffset DateCreated { get; set; }
     }

@@ -6,24 +6,27 @@ namespace Yoma.Core.Domain.Core.Validators
 {
     public class FileValidator
     {
-        private string[] extensions;
-        private int maxSizeBytes;
+        #region Class Variables
+        private readonly string[] extensions;
+        private readonly int maxSizeBytes;
+        #endregion
 
-        public FileValidator(FileTypeEnum type)
+        #region Public Members
+        public FileValidator(FileType type)
         {
             switch (type)
             {
-                case FileTypeEnum.Photos:
+                case FileType.Photos:
                     extensions = new[] { ".png", ".jpg", ".jpeg", ".svg", ".webp" };
                     maxSizeBytes = 5000000;
                     break;
 
-                case FileTypeEnum.Certificates:
+                case FileType.Certificates:
                     extensions = new[] { ".pdf" };
                     maxSizeBytes = 25000000;
                     break;
 
-                case FileTypeEnum.Documents:
+                case FileType.Documents:
                     extensions = new[] { ".pdf" };
                     maxSizeBytes = 25000000;
                     break;
@@ -44,5 +47,6 @@ namespace Yoma.Core.Domain.Core.Validators
             if (file.Length > maxSizeBytes)
                 throw new BusinessException($"Only supports file size smaller or equal to '{Math.Round((decimal)maxSizeBytes / 1000000, 2)}MB'");
         }
+        #endregion
     }
 }

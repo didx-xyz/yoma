@@ -1,9 +1,10 @@
+using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
+
 namespace Yoma.Core.Domain.Entity.Models
 {
-    public class Organization
+    public class OrganizationCreateRequest
     {
-        public Guid Id { get; set; }
-
         public string Name { get; set; }
 
         public string? WebsiteURL { get; set; }
@@ -34,22 +35,18 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public string? Biography { get; set; }
 
-        public Guid StatusId { get; set; }
+        public List<Guid> ProviderTypeIds { get; set; }
 
-        public OrganizationStatus Status { get; set; }
+        public IFormFile Logo { get; set; }
 
-        public DateTimeOffset DateStatusModified { get; set; }
+        public bool AddCurrentUserAsAdmin { get; set; }
 
-        public Guid? LogoId { get; set; }
+        public List<string>? AdminAdditionalEmails { get; set; }
 
-        public string? LogoURL { get; set; }
+        public List<IFormFile> RegistrationDocuments { get; set; }
 
-        public List<OrganizationDocument>? Documents { get; set; }
+        public List<IFormFile>? EducationProviderDocuments { get; set; }
 
-        public DateTimeOffset DateCreated { get; set; }
-
-        public DateTimeOffset DateModified { get; set; }
-
-        public List<Lookups.OrganizationProviderType>? ProviderTypes { get; set; }
+        public List<IFormFile>? BusinessDocuments { get; set; }
     }
 }

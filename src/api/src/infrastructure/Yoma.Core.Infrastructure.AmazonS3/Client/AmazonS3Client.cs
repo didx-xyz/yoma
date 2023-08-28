@@ -55,6 +55,31 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
             }
         }
 
+        public async Task<(string ContentType, byte[] Data)> Download(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                throw new ArgumentNullException(nameof(key));
+            key = key.Trim().ToLower();
+
+            var request = new GetObjectRequest
+            {
+                BucketName = _options.BucketName,
+                Key = key
+            };
+
+            try
+            {
+                using var response = await _client.GetObjectAsync(request);
+                using var memoryStream = new MemoryStream();
+                await response.ResponseStream.CopyToAsync(memoryStream);
+                return (response.Headers.ContentType, memoryStream.ToArray());
+            }
+            catch (AmazonS3Exception ex)
+            {
+                throw new HttpClientException(ex.StatusCode, $"Failed to download S3 object with key '{key}': {ex.Message}");
+            }
+        }
+
         public string GetUrl(string key)
         {
             if (string.IsNullOrWhiteSpace(key))

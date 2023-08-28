@@ -43,11 +43,19 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 StatusId = entity.StatusId,
                 Status = Enum.Parse<OrganizationStatus>(entity.Status.Name, true),
                 LogoId = entity.LogoId,
-                CompanyRegistrationDocumentId = entity.CompanyRegistrationDocumentId,
                 DateCreated = entity.DateCreated,
                 DateModified = entity.DateModified,
                 ProviderTypes = includeChildItems ?
-                    entity.ProviderTypes.Select(o => new Domain.Entity.Models.Lookups.OrganizationProviderType { Id = o.ProviderTypeId, Name = o.ProviderType.Name }).ToList() : null
+                    entity.ProviderTypes.Select(o => new Domain.Entity.Models.Lookups.OrganizationProviderType { Id = o.ProviderTypeId, Name = o.ProviderType.Name }).ToList() : null,
+                Documents = includeChildItems ?
+                    entity.Documents.Select(o => new Domain.Entity.Models.OrganizationDocument
+                    {
+                        Id = o.Id,
+                        OrganizationId = o.OrganizationId,
+                        FileId = o.FileId,
+                        Type = o.Type,
+                        DateCreated = o.DateCreated
+                    }).OrderBy(o => o.DateCreated).ToList() : null
             });
         }
 
@@ -88,7 +96,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 StatusId = item.StatusId,
                 DateStatusModified = item.DateStatusModified,
                 LogoId = item.LogoId,
-                CompanyRegistrationDocumentId = item.CompanyRegistrationDocumentId,
                 DateCreated = item.DateCreated,
                 DateModified = item.DateModified
             };
@@ -119,11 +126,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             entity.PostalCode = item.PostalCode;
             entity.Tagline = item.Tagline;
             entity.Biography = item.Biography;
-            if (entity.StatusId != item.StatusId)
-                entity.DateStatusModified = DateTimeOffset.Now;
+            if (entity.StatusId != item.StatusId) entity.DateStatusModified = DateTimeOffset.Now;
             entity.StatusId = item.StatusId;
             entity.LogoId = item.LogoId;
-            entity.CompanyRegistrationDocumentId = item.CompanyRegistrationDocumentId;
             entity.DateModified = DateTimeOffset.Now;
 
             await _context.SaveChangesAsync();

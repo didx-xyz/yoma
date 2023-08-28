@@ -8,11 +8,11 @@ using Yoma.Core.Domain.Entity.Validators;
 using FluentValidation;
 using System.Transactions;
 using Microsoft.AspNetCore.Http;
-using Yoma.Core.Domain.Core;
 using User = Yoma.Core.Domain.Entity.Models.User;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -234,25 +234,33 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new ArgumentNullException(nameof(file));
 
             var currentPhotoId = result.PhotoId;
+            IFormFile? currentPhoto = null;
 
             using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
             {
                 BlobObject? s3Object = null;
                 try
                 {
-                    s3Object = await _blobService.Create(file, FileTypeEnum.Photos);
+                    s3Object = await _blobService.Create(file, FileType.Photos);
                     result.PhotoId = s3Object.Id;
                     await _userRepository.Update(result);
 
                     if (currentPhotoId.HasValue)
+                    {
+                        currentPhoto = await _blobService.Download(currentPhotoId.Value);
                         await _blobService.Delete(currentPhotoId.Value);
+                    }
 
                     scope.Complete();
                 }
                 catch
                 {
+                    //roll back
                     if (s3Object != null)
                         await _blobService.Delete(s3Object.Id);
+
+                    if (currentPhoto != null)
+                        await _blobService.Create(currentPhoto, FileType.Photos);
 
                     throw;
                 }

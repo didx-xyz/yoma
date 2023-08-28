@@ -145,7 +145,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             BlobObject? s3Object = null;
             try
             {
-                s3Object = await _blobService.Create(request.Certificate, FileTypeEnum.Photos);
+                s3Object = await _blobService.Create(request.Certificate, FileType.Photos);
                 item.CertificateId = s3Object.Id;
 
                 if (isNew)

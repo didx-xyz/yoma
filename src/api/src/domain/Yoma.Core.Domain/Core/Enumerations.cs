@@ -22,10 +22,16 @@ namespace Yoma.Core.Domain.Core
         Lookups //lookup entities i.e. countries; reference data store in lookup db namespace
     }
 
-    public enum FileTypeEnum
+    public enum FileType
     {
         Photos, //logo and profile photo
         Certificates,
         Documents
+    }
+
+    public enum Country
+    {
+        [Description("WW")]
+        Worldwide
     }
 }

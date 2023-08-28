@@ -426,7 +426,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 if (opportunity.ZltoRewardPool.HasValue)
                     zltoReward = Math.Max(opportunity.ZltoRewardPool.Value - (opportunity.ZltoRewardCumulative ?? 0 + zltoReward.Value), 0);
 
-                opportunity.ZltoRewardCumulative = opportunity.ZltoRewardCumulative ?? 0 + zltoReward;
+                opportunity.ZltoRewardCumulative ??= 0 + zltoReward;
             }
 
             var yomaReward = opportunity.YomaReward;
@@ -435,7 +435,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 if (opportunity.YomaRewardPool.HasValue)
                     yomaReward = Math.Max(opportunity.YomaRewardPool.Value - (opportunity.YomaRewardCumulative ?? 0 + yomaReward.Value), 0);
 
-                opportunity.YomaRewardCumulative = opportunity.YomaRewardCumulative ?? 0 + yomaReward;
+                opportunity.YomaRewardCumulative ??= 0 + yomaReward;
             }
 
             //modifiedBy preserved

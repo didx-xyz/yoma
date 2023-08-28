@@ -1,8 +1,8 @@
 namespace Yoma.Core.Domain.Entity.Models
 {
-    public class OrganizationRequest
+    public class OrganizationUpdateRequest
     {
-        public Guid? Id { get; set; }
+        public Guid Id { get; set; }
 
         public string Name { get; set; }
 

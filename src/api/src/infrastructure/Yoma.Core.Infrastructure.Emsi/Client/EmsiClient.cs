@@ -61,9 +61,9 @@ namespace Yoma.Core.Infrastructure.Emsi.Client
             var data = new Dictionary<string, string>
             {
                 { "client_id", _options.ClientId },
-                {"client_secret", _options.ClientSecret },
+                { "client_secret", _options.ClientSecret },
                 { "grant_type", "client_credentials"},
-                {"scope", scope.ToDescription() }
+                { "scope", scope.ToDescription() }
             };
 
             _accessToken = await _options.AuthUrl

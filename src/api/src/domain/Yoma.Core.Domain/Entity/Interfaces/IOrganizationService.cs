@@ -15,7 +15,9 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         OrganizationSearchResults Search(OrganizationSearchFilter filter);
 
-        Task<Organization> Upsert(OrganizationRequest request, bool ensureOrganizationAuthorization);
+        Task<Organization> Create(OrganizationCreateRequest request);
+
+        Task<Organization> Update(OrganizationUpdateRequest request, bool ensureOrganizationAuthorization);
 
         Task UpdateStatus(Guid id, OrganizationStatus status, bool ensureOrganizationAuthorization);
 
@@ -25,7 +27,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         Task<Organization> UpsertLogo(Guid id, IFormFile? file, bool ensureOrganizationAuthorization);
 
-        Task<Organization> UpsertRegistrationDocument(Guid id, IFormFile? file, bool ensureOrganizationAuthorization);
+        Task <Organization> UpsertDocuments(Guid id, OrganizationDocumentType type, List<IFormFile> documents, bool ensureOrganizationAuthorization);
 
         bool IsAdmin(Guid id, bool throwUnauthorized);
 
@@ -35,8 +37,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         List<Organization> ListAdminsOf();
 
-        Task AssignAdmin(Guid id, Guid userId, bool ensureOrganizationAuthorization);
+        Task AssignAdmin(Guid id, string email, bool ensureOrganizationAuthorization);
 
-        Task RemoveAdmin(Guid id, Guid userId, bool ensureOrganizationAuthorization);
+        Task RemoveAdmin(Guid id, string email, bool ensureOrganizationAuthorization);
     }
 }

@@ -66,21 +66,35 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Insert or update an organization (User, Admin or Organization Admin role required)",
-            Description = "The newly created organization defaults to an unapproved (unverified) state. When the authenticated user solely holds the 'User' role, an organization can be created, and the user is automatically designated the role of an 'Organization Admin'.")]
-        [HttpPost()]
+        [SwaggerOperation(Summary = "Create a new organization (User, Admin or Organization Admin role required)")]
+        [HttpPost("create")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> Upsert([FromBody] OrganizationRequest request)
+        public async Task<IActionResult> Create([FromForm] OrganizationCreateRequest request)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(Upsert));
+            _logger.LogInformation("Handling request {requestName}", nameof(Update));
 
-            var result = await _organizationService.Upsert(request, true);
+            var result = await _organizationService.Create(request);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(Upsert));
+            _logger.LogInformation("Request {requestName} handled", nameof(Update));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
+
+        [SwaggerOperation(Summary = "Update the specified organization's details")]
+        [HttpPost("update")]
+        [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+        public async Task<IActionResult> Update([FromBody] OrganizationUpdateRequest request)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(Update));
+
+            var result = await _organizationService.Update(request, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(Update));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
 
         [SwaggerOperation(Summary = "Update organization status (Active / Inactive / Declined / Deleted)")]
         [HttpPut("{id}/{status}")]
@@ -96,9 +110,10 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK);
         }
 
-        [SwaggerOperation(Summary = "Return a list of provider types")]
+        [SwaggerOperation(Summary = "Return a list of provider types (User, Admin or Organization Admin role required)")]
         [HttpGet("lookup/providerType")]
         [ProducesResponseType(typeof(List<Domain.Entity.Models.Lookups.OrganizationProviderType>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult ListProviderTypes()
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListProviderTypes));
@@ -152,28 +167,28 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Insert or update the organization's registration document")]
-        [HttpPost("{id}/registrationDocument")]
+        [SwaggerOperation(Summary = "Insert or update the organization's documents")]
+        [HttpPost("{id}/documents/{type}")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
-        public async Task<IActionResult> UpsertRegistrationDocument([FromRoute] Guid id, [Required] IFormFile file)
+        public async Task<IActionResult> UpsertDocuments([FromRoute] Guid id, [FromRoute] OrganizationDocumentType type, [Required] List<IFormFile> documents)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(UpsertRegistrationDocument));
+            _logger.LogInformation("Handling request {requestName}", nameof(UpsertDocuments));
 
-            var result = await _organizationService.UpsertRegistrationDocument(id, file, true);
+            var result = await _organizationService.UpsertDocuments(id, type, documents, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(UpsertRegistrationDocument));
+            _logger.LogInformation("Request {requestName} handled", nameof(UpsertDocuments));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Assign the specified user as organization administrator")]
-        [HttpPut("{id}/admin/{userId}/assign")]
+        [HttpPut("{id}/admin/{email}/assign")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        public async Task<IActionResult> AssignAdmin([FromRoute] Guid id, [FromRoute] Guid userId)
+        public async Task<IActionResult> AssignAdmin([FromRoute] Guid id, [FromBody] string email)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignAdmin));
 
-            await _organizationService.AssignAdmin(id, userId, true);
+            await _organizationService.AssignAdmin(id, email, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(AssignAdmin));
 
@@ -181,13 +196,13 @@ namespace Yoma.Core.Api.Controllers
         }
 
         [SwaggerOperation(Summary = "Remove the specified user as organization administrator")]
-        [HttpDelete("{id}/admin/{userId}/remove")]
+        [HttpDelete("{id}/admin/{email}/remove")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        public async Task<IActionResult> RemoveAdmin([FromRoute] Guid id, [FromRoute] Guid userId)
+        public async Task<IActionResult> RemoveAdmin([FromRoute] Guid id, [FromRoute] string email)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(RemoveAdmin));
 
-            await _organizationService.RemoveAdmin(id, userId, true);
+            await _organizationService.RemoveAdmin(id, email, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(RemoveAdmin));
 

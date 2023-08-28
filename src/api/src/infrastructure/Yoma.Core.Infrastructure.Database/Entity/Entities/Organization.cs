@@ -69,10 +69,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
         public Guid? LogoId { get; set; }
         public BlobObject? Logo { get; set; }
 
-        [ForeignKey(nameof(CompanyRegistrationDocumentId))]
-        public Guid? CompanyRegistrationDocumentId { get; set; }
-        public BlobObject? CompanyRegistrationDocument { get; set; }
-
         [Required]
         public DateTimeOffset DateCreated { get; set; }
 
@@ -80,5 +76,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
         public DateTimeOffset DateModified { get; set; }
 
         public ICollection<OrganizationProviderType> ProviderTypes { get; set; }
+
+        public ICollection<OrganizationDocument> Documents { get; set; }
     }
 }

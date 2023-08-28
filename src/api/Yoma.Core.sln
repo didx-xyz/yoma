@@ -34,6 +34,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.Se
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.AmazonS3", "src\infrastructure\Yoma.Core.Infrastructure.AmazonS3\Yoma.Core.Infrastructure.AmazonS3.csproj", "{5CE5D944-3FBF-4AA6-BFFD-D9D55B211AD4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.Zlto", "src\infrastructure\Yoma.Core.Infrastructure.Zlto\Yoma.Core.Infrastructure.Zlto.csproj", "{17BCA099-6C01-49D5-BBC7-FFA77F42DCCD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,6 +74,10 @@ Global
 		{5CE5D944-3FBF-4AA6-BFFD-D9D55B211AD4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CE5D944-3FBF-4AA6-BFFD-D9D55B211AD4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5CE5D944-3FBF-4AA6-BFFD-D9D55B211AD4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17BCA099-6C01-49D5-BBC7-FFA77F42DCCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17BCA099-6C01-49D5-BBC7-FFA77F42DCCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17BCA099-6C01-49D5-BBC7-FFA77F42DCCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17BCA099-6C01-49D5-BBC7-FFA77F42DCCD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -89,6 +95,7 @@ Global
 		{67DD7172-D371-4B2B-9136-DAC70682247F} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{346D59AB-480A-4F52-9E32-0C7ABD15581C} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{5CE5D944-3FBF-4AA6-BFFD-D9D55B211AD4} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
+		{17BCA099-6C01-49D5-BBC7-FFA77F42DCCD} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D658A68F-8A10-4EF2-B8C9-F1350399BF58}

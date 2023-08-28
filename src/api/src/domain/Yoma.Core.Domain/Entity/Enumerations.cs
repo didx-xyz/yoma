@@ -7,4 +7,11 @@ namespace Yoma.Core.Domain.Entity
         Declined, //flagged as deleted with x days
         Deleted //permanently deleted if not referenced else flagged as deleted
     }
+
+    public enum OrganizationDocumentType
+    {
+        Registration,
+        EducationProvider,
+        Business
+    }
 }

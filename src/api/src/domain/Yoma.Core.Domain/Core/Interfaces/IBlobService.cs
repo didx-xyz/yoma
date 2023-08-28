@@ -7,7 +7,9 @@ namespace Yoma.Core.Domain.Core.Interfaces
     {
         BlobObject GetById(Guid id);
 
-        Task<BlobObject> Create(IFormFile file, FileTypeEnum type);
+        Task<BlobObject> Create(IFormFile file, FileType type);
+
+        Task<IFormFile> Download(Guid id);
 
         string GetURL(Guid id);
 
