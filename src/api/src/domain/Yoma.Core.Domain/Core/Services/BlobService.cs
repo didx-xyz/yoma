@@ -68,9 +68,9 @@ namespace Yoma.Core.Domain.Core.Services
         {
             var item = GetById(id);
 
-            var file = await _blobProviderClient.Download(item.Key);
+            var (ContentType, Data) = await _blobProviderClient.Download(item.Key);
 
-            return FileHelper.FromByteArray(item.OriginalFileName, file.ContentType, file.Data);
+            return FileHelper.FromByteArray(item.OriginalFileName, ContentType, Data);
         }
 
         public string GetURL(Guid id)

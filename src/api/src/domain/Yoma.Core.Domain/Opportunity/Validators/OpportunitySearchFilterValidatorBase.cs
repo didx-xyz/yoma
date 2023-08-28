@@ -4,7 +4,7 @@ using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Validators
 {
-    public class OpportunitySearchFilterValidatorBase<TFilter> : PaginationFilterValidator<TFilter>
+    public abstract class OpportunitySearchFilterValidatorBase<TFilter> : PaginationFilterValidator<TFilter>
         where TFilter : OpportunitySearchFilterBase
     {
         #region Constructor

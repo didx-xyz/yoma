@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230824043829_ApplicationDb_Initial")]
+    [Migration("20230828074606_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -105,12 +105,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("varchar(127)");
+
                     b.Property<DateTimeOffset>("DateCreated")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Key")
                         .IsRequired()
                         .HasColumnType("varchar(125)");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
 
@@ -174,9 +182,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<string>("City")
                         .HasColumnType("varchar(50)");
 
-                    b.Property<Guid?>("CompanyRegistrationDocumentId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid?>("CountryId")
                         .HasColumnType("uniqueidentifier");
 
@@ -234,8 +239,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CompanyRegistrationDocumentId");
-
                     b.HasIndex("CountryId");
 
                     b.HasIndex("LogoId");
@@ -246,6 +249,35 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("StatusId", "DateStatusModified", "DateModified", "DateCreated");
 
                     b.ToTable("Organization", "entity");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.OrganizationDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("FileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FileId")
+                        .IsUnique();
+
+                    b.HasIndex("OrganizationId", "Type", "DateCreated");
+
+                    b.ToTable("OrganizationDocuments", "entity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.OrganizationProviderType", b =>
@@ -944,10 +976,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>
                 {
-                    b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", "CompanyRegistrationDocument")
-                        .WithMany()
-                        .HasForeignKey("CompanyRegistrationDocumentId");
-
                     b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "Country")
                         .WithMany()
                         .HasForeignKey("CountryId");
@@ -962,13 +990,30 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("CompanyRegistrationDocument");
-
                     b.Navigation("Country");
 
                     b.Navigation("Logo");
 
                     b.Navigation("Status");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.OrganizationDocument", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", "File")
+                        .WithMany()
+                        .HasForeignKey("FileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
+                        .WithMany("Documents")
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("File");
+
+                    b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.OrganizationProviderType", b =>
@@ -1221,6 +1266,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>
                 {
+                    b.Navigation("Documents");
+
                     b.Navigation("ProviderTypes");
                 });
 

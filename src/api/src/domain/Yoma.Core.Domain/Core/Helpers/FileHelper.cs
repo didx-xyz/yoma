@@ -6,10 +6,8 @@ namespace Yoma.Core.Domain.Core.Helpers
     {
         public static byte[] ToBinary(this IFormFile file)
         {
-            using (var binaryReader = new BinaryReader(file.OpenReadStream()))
-            {
-                return binaryReader.ReadBytes((int)file.Length);
-            }
+            using var binaryReader = new BinaryReader(file.OpenReadStream());
+            return binaryReader.ReadBytes((int)file.Length);
         }
 
         public static string GetExtension(this IFormFile file)
@@ -29,9 +27,9 @@ namespace Yoma.Core.Domain.Core.Helpers
             var result = new FormFile(new MemoryStream(data), 0, data.Length, Path.GetFileNameWithoutExtension(fileName), fileName)
             {
                 Headers = new HeaderDictionary(),
-                ContentType = contentType
+                ContentType = contentType,
+                ContentDisposition = new System.Net.Mime.ContentDisposition() { FileName = fileName }.ToString()
             };
-            result.ContentDisposition = new System.Net.Mime.ContentDisposition() { FileName = fileName }.ToString();
 
             return result;
         }

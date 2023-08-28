@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -29,6 +30,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Key = table.Column<string>(type: "varchar(125)", nullable: false),
+                    ContentType = table.Column<string>(type: "varchar(127)", nullable: false),
+                    OriginalFileName = table.Column<string>(type: "varchar(255)", nullable: false),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
                 constraints: table =>
@@ -340,19 +343,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     DateStatusModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     LogoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CompanyRegistrationDocumentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Organization", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Organization_Blob_CompanyRegistrationDocumentId",
-                        column: x => x.CompanyRegistrationDocumentId,
-                        principalSchema: "object",
-                        principalTable: "Blob",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Organization_Blob_LogoId",
                         column: x => x.LogoId,
@@ -472,6 +468,36 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         column: x => x.CommitmentIntervalId,
                         principalSchema: "lookup",
                         principalTable: "TimeInterval",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OrganizationDocuments",
+                schema: "entity",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FileId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Type = table.Column<string>(type: "varchar(50)", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrganizationDocuments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OrganizationDocuments_Blob_FileId",
+                        column: x => x.FileId,
+                        principalSchema: "object",
+                        principalTable: "Blob",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OrganizationDocuments_Organization_OrganizationId",
+                        column: x => x.OrganizationId,
+                        principalSchema: "entity",
+                        principalTable: "Organization",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -925,12 +951,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Organization_CompanyRegistrationDocumentId",
-                schema: "entity",
-                table: "Organization",
-                column: "CompanyRegistrationDocumentId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Organization_CountryId",
                 schema: "entity",
                 table: "Organization",
@@ -954,6 +974,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "entity",
                 table: "Organization",
                 columns: new[] { "StatusId", "DateStatusModified", "DateModified", "DateCreated" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrganizationDocuments_FileId",
+                schema: "entity",
+                table: "OrganizationDocuments",
+                column: "FileId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrganizationDocuments_OrganizationId_Type_DateCreated",
+                schema: "entity",
+                table: "OrganizationDocuments",
+                columns: new[] { "OrganizationId", "Type", "DateCreated" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrganizationProviderType_Name",
@@ -1097,6 +1130,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             migrationBuilder.DropTable(
                 name: "OpportunitySkill",
                 schema: "opportunity");
+
+            migrationBuilder.DropTable(
+                name: "OrganizationDocuments",
+                schema: "entity");
 
             migrationBuilder.DropTable(
                 name: "OrganizationProviderTypes",

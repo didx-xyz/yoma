@@ -127,30 +127,30 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Assign provider type(s) to the specified organization")]
         [HttpPut("{id}/providerTypes/assign")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> AssignProviderTypes([FromRoute] Guid id, [FromBody] List<Guid> providerTypeIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignProviderTypes));
 
-            await _organizationService.AssignProviderTypes(id, providerTypeIds, true);
+            var result = await _organizationService.AssignProviderTypes(id, providerTypeIds, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(AssignProviderTypes));
 
-            return StatusCode((int)HttpStatusCode.OK);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Remove provider type(s) from the specified organization")]
         [HttpDelete("{id}/providerTypes/remove")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> DeleteProviderType([FromRoute] Guid id, [FromBody] List<Guid> providerTypeIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(DeleteProviderType));
 
-            await _organizationService.DeleteProviderTypes(id, providerTypeIds, true);
+            var result = await _organizationService.DeleteProviderTypes(id, providerTypeIds, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(DeleteProviderType));
 
-            return StatusCode((int)HttpStatusCode.OK);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Insert or update the organization's logo")]

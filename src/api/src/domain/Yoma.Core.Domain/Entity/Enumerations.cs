@@ -14,4 +14,10 @@ namespace Yoma.Core.Domain.Entity
         EducationProvider,
         Business
     }
+
+    public enum OrganizationProviderType
+    {
+        Education,
+        Marketplace
+    }
 }

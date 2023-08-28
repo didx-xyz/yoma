@@ -23,12 +23,12 @@ namespace Yoma.Core.Domain.Core.Validators
 
                 case FileType.Certificates:
                     extensions = new[] { ".pdf" };
-                    maxSizeBytes = 25000000;
+                    maxSizeBytes = 10000000;
                     break;
 
                 case FileType.Documents:
-                    extensions = new[] { ".pdf" };
-                    maxSizeBytes = 25000000;
+                    extensions = new[] { ".pdf", ".doc", ".docx", ".pptx" };
+                    maxSizeBytes = 10000000;
                     break;
 
                 default:
