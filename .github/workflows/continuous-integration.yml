@@ -11,6 +11,9 @@ on:
     branches:
       - "master"
 
+env:
+  REGISTRY: ghcr.io/${{ github.repository_owner }}
+
 jobs:
   lint:
     name: Lint
@@ -157,7 +160,7 @@ jobs:
       - uses: docker/metadata-action@v4
         id: meta
         with:
-          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          images: ${{ env.REGISTRY }}/${{ matrix.image }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
             type=sha,prefix={{branch}}-,priority=601,enable=${{ github.event_name != 'pull_request' }}
@@ -199,15 +202,31 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ github.token }}
 
-      - run: docker compose pull
+      - uses: dorny/paths-filter@v2 # https://github.com/actions/runner/pull/2477
+        id: filter
+        with:
+          base: master
+          filters: |-
+            api:
+              - './src/api/**'
+            web-youth:
+              - './src/web/youth/**'
+
+      - name: Pre-pull images
+        run: |-
+          docker compose -f ./src/api/docker-compose.yml pull
+          docker compose -f ./src/web/youth/docker-compose.yml pull
         env:
-          REGISTRY: ghcr.io/${{ github.repository_owner }}
-          IMAGE_TAG: ${{ needs.build.outputs.image_version }}
+          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
+          YOUTH_TAG: ${{ steps.filter.outputs.web-youth == 'true' && needs.build.outputs.image_version || 'latest' }}
         continue-on-error: true
-      - run: docker compose up -d
+      - name: Start services
+        run: |-
+          docker compose -f ./src/api/docker-compose.yml up -d
+          docker compose -f ./src/web/youth/docker-compose.yml up -d
         env:
-          REGISTRY: ghcr.io/${{ github.repository_owner }}
-          IMAGE_TAG: ${{ needs.build.outputs.image_version }}
+          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
+          YOUTH_TAG: ${{ steps.filter.outputs.web-youth == 'true' && needs.build.outputs.image_version || 'latest' }}
 
       - uses: actions/setup-node@v3
         with:

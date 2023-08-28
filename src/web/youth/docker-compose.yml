@@ -1,8 +1,8 @@
-version: "3.9"
+version: "3"
 name: yoma-v3
 services:
   yoma-web-youth:
-    image: ${REGISTRY:-local}/yoma-web-youth:${IMAGE_TAG:-latest}
+    image: ${REGISTRY:-local}/yoma-web-youth:${YOUTH_TAG:-latest}
     container_name: yoma-web-youth
     build:
       context: .
