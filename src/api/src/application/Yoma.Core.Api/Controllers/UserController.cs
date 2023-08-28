@@ -11,7 +11,7 @@ namespace Yoma.Core.Api.Controllers
 {
     [Route("api/v3/user")]
     [ApiController]
-    [Authorize(Policy = Common.Constants.Authorization_Policy, Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    [Authorize(Policy = Common.Constants.Authorization_Policy)]
     [SwaggerTag("(by default, User, Admin or Organization Admin roles required)")]
     public class UserController : Controller
     {
@@ -52,6 +52,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Get the user (Authenticated User)")]
         [HttpGet("")]
         [ProducesResponseType(typeof(User), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult Get()
         {
             _logger.LogInformation("Handling request {requestName}", nameof(Get));
@@ -66,6 +67,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Update the user's profile, within Yoma and the identity provider, optionally requesting a email verification and/or password reset (Authenticated User)")]
         [HttpPut()]
         [ProducesResponseType(typeof(User), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> UpdateProfile([FromBody] UserProfileRequest profile)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(UpdateProfile));
@@ -80,6 +82,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Insert or update the user's profile photo (Authenticated User)")]
         [HttpPost("photo")]
         [ProducesResponseType(typeof(User), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> UpsertPhoto([Required] IFormFile file)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(UpsertPhoto));
