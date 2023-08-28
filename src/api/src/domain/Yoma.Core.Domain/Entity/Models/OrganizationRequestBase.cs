@@ -1,7 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Yoma.Core.Domain.Entity.Models
 {
     public abstract class OrganizationRequestBase
     {
+        [Required]
         public string Name { get; set; }
 
         public string? WebsiteURL { get; set; }

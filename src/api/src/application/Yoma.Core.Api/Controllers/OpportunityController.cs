@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Opportunity;
@@ -185,7 +186,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpPut("{id}/assign/categories")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> AssignCategories([FromRoute] Guid id, [FromBody] List<Guid> categoryIds)
+        public async Task<IActionResult> AssignCategories([FromRoute] Guid id, [Required][FromBody] List<Guid> categoryIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignCategories));
 
@@ -200,7 +201,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpDelete("{id}/remove/categories")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> DeleteCategories([FromRoute] Guid id, [FromBody] List<Guid> categoryIds)
+        public async Task<IActionResult> DeleteCategories([FromRoute] Guid id, [Required][FromBody] List<Guid> categoryIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(DeleteCategories));
 
@@ -215,7 +216,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpPut("{id}/assign/countries")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> AssignCountries([FromRoute] Guid id, [FromBody] List<Guid> countryIds)
+        public async Task<IActionResult> AssignCountries([FromRoute] Guid id, [Required][FromBody] List<Guid> countryIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignCountries));
 
@@ -230,7 +231,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpDelete("{id}/remove/countries")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> DeleteCountries([FromRoute] Guid id, [FromBody] List<Guid> countryIds)
+        public async Task<IActionResult> DeleteCountries([FromRoute] Guid id, [Required][FromBody] List<Guid> countryIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(DeleteCountries));
 
@@ -245,7 +246,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpPut("{id}/assign/languages")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> AssignLanguages([FromRoute] Guid id, [FromBody] List<Guid> languageIds)
+        public async Task<IActionResult> AssignLanguages([FromRoute] Guid id, [Required][FromBody] List<Guid> languageIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignLanguages));
 
@@ -260,7 +261,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpDelete("{id}/remove/languages")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> DeleteLanguages([FromRoute] Guid id, [FromBody] List<Guid> languageIds)
+        public async Task<IActionResult> DeleteLanguages([FromRoute] Guid id, [Required][FromBody] List<Guid> languageIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(DeleteLanguages));
 
@@ -275,7 +276,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpPut("{id}/assign/skills")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> AssignSkills([FromRoute] Guid id, [FromBody] List<Guid> skillIds)
+        public async Task<IActionResult> AssignSkills([FromRoute] Guid id, [Required][FromBody] List<Guid> skillIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignSkills));
 
@@ -290,7 +291,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpDelete("{id}/remove/skills")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> DeleteSkills([FromRoute] Guid id, [FromBody] List<Guid> skillIds)
+        public async Task<IActionResult> DeleteSkills([FromRoute] Guid id, [Required][FromBody] List<Guid> skillIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(DeleteSkills));
 

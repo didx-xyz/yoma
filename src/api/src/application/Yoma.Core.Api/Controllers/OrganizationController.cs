@@ -132,7 +132,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpPut("{id}/providerTypes/assign")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> AssignProviderTypes([FromRoute] Guid id, [FromBody] List<Guid> providerTypeIds)
+        public async Task<IActionResult> AssignProviderTypes([FromRoute] Guid id, [Required][FromBody] List<Guid> providerTypeIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignProviderTypes));
 
@@ -147,7 +147,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpDelete("{id}/providerTypes/remove")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> DeleteProviderType([FromRoute] Guid id, [FromBody] List<Guid> providerTypeIds)
+        public async Task<IActionResult> DeleteProviderType([FromRoute] Guid id, [Required][FromBody] List<Guid> providerTypeIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(DeleteProviderType));
 

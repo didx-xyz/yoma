@@ -480,6 +480,8 @@ namespace Yoma.Core.Domain.Entity.Services
             }
 
             return org;
+
+            //TODO: Re-approvals
         }
 
         private async Task<Organization> UpsertLogo(Organization org, IFormFile? file)

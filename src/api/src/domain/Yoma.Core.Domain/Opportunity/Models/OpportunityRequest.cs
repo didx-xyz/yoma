@@ -1,15 +1,21 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Yoma.Core.Domain.Opportunity.Models
 {
     public class OpportunityRequest
     {
         public Guid? Id { get; set; }
 
+        [Required]
         public string Title { get; set; }
 
+        [Required]
         public string Description { get; set; }
 
+        [Required]
         public Guid TypeId { get; set; }
 
+        [Required]
         public Guid OrganizationId { get; set; }
 
         public string? Instructions { get; set; }
@@ -24,10 +30,13 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public decimal? YomaRewardPool { get; set; }
 
+        [Required]
         public bool VerificationSupported { get; set; }
 
+        [Required]
         public Guid DifficultyId { get; set; }
 
+        [Required]
         public Guid CommitmentIntervalId { get; set; }
 
         public short? CommitmentIntervalCount { get; set; }
@@ -36,10 +45,12 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public List<string>? Keywords { get; set; }
 
+        [Required]
         public DateTimeOffset DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }
 
+        [Required]
         public bool PostAsActive { get; set; }
     }
 }
