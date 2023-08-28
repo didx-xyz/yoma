@@ -621,7 +621,8 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw;
             }
 
-            org.Documents = itemsNew;
+            org.Documents ??= new List<OrganizationDocument>();
+            org.Documents.AddRange(itemsNew);
             org.Documents?.ForEach(o => o.Url = _blobService.GetURL(o.FileId));
 
             return org;
