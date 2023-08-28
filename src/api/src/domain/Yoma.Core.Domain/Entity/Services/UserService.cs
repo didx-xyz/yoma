@@ -72,7 +72,7 @@ namespace Yoma.Core.Domain.Entity.Services
             var result = _userRepository.Query(false).SingleOrDefault(o => o.Email == email);
             if (result == null) return null;
 
-            result.PhotoURL = GetS3ObjectURL(result.PhotoId);
+            result.PhotoURL = GetBlobObjectURL(result.PhotoId);
 
             return result;
         }
@@ -85,7 +85,7 @@ namespace Yoma.Core.Domain.Entity.Services
             var result = _userRepository.Query(false).SingleOrDefault(o => o.Id == id)
                 ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(User)} with id '{id}' does not exist");
 
-            result.PhotoURL = GetS3ObjectURL(result.PhotoId);
+            result.PhotoURL = GetBlobObjectURL(result.PhotoId);
 
             return result;
         }
@@ -233,47 +233,43 @@ namespace Yoma.Core.Domain.Entity.Services
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
 
-            var currentPhotoId = result.PhotoId;
-            IFormFile? currentPhoto = null;
+            var currentPhoto = result.PhotoId.HasValue ? new { Id = result.PhotoId.Value, File = await _blobService.Download(result.PhotoId.Value) } : null;
 
             using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
             {
-                BlobObject? s3Object = null;
+                BlobObject? blobObject = null;
                 try
                 {
-                    s3Object = await _blobService.Create(file, FileType.Photos);
-                    result.PhotoId = s3Object.Id;
+                    blobObject = await _blobService.Create(file, FileType.Photos);
+                    result.PhotoId = blobObject.Id;
                     await _userRepository.Update(result);
 
-                    if (currentPhotoId.HasValue)
-                    {
-                        currentPhoto = await _blobService.Download(currentPhotoId.Value);
-                        await _blobService.Delete(currentPhotoId.Value);
-                    }
+                    if (currentPhoto != null)
+                        await _blobService.Delete(currentPhoto.Id);
 
                     scope.Complete();
                 }
                 catch
                 {
                     //roll back
-                    if (s3Object != null)
-                        await _blobService.Delete(s3Object.Id);
+                    if (blobObject != null)
+                        await _blobService.Delete(blobObject.Key);
 
                     if (currentPhoto != null)
-                        await _blobService.Create(currentPhoto, FileType.Photos);
+                        await _blobService.Create(currentPhoto.Id, currentPhoto.File, FileType.Photos);
 
                     throw;
                 }
             }
 
-            result.PhotoURL = GetS3ObjectURL(result.PhotoId);
+            result.PhotoURL = GetBlobObjectURL(result.PhotoId);
 
             return result;
         }
         #endregion
 
         #region Private Members
-        private string? GetS3ObjectURL(Guid? id)
+        private string? GetBlobObjectURL(Guid? id)
         {
             if (!id.HasValue) return null;
             return _blobService.GetURL(id.Value);

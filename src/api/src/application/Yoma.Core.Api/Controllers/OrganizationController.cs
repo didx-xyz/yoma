@@ -184,7 +184,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Assign the specified user as organization administrator")]
         [HttpPut("{id}/admin/{email}/assign")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        public async Task<IActionResult> AssignAdmin([FromRoute] Guid id, [FromBody] string email)
+        public async Task<IActionResult> AssignAdmin([FromRoute] Guid id, [FromRoute] string email)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignAdmin));
 
@@ -211,7 +211,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Return a list of administrators for the specified organization")]
         [HttpGet("{id}/admin")]
-        [ProducesResponseType(typeof(List<Domain.Entity.Models.Lookups.OrganizationProviderType>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(List<UserInfo>), (int)HttpStatusCode.OK)]
         public IActionResult ListAdmins([FromRoute] Guid id)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListAdmins));
@@ -225,7 +225,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Return a list of organizations the authenticated user administrates (Organization Admin role required)")]
         [HttpGet("admin")]
-        [ProducesResponseType(typeof(List<Domain.Entity.Models.Lookups.OrganizationProviderType>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(List<OrganizationInfo>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = Constants.Role_OrganizationAdmin)]
         public IActionResult ListAdminsOf()
         {

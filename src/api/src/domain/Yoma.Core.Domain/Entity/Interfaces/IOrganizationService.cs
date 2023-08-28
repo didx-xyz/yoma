@@ -33,9 +33,9 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         bool IsAdminsOf(List<Guid> ids, bool throwUnauthorized);
 
-        List<User> ListAdmins(Guid id, bool ensureOrganizationAuthorization);
+        List<UserInfo> ListAdmins(Guid id, bool ensureOrganizationAuthorization);
 
-        List<Organization> ListAdminsOf();
+        List<OrganizationInfo> ListAdminsOf();
 
         Task AssignAdmin(Guid id, string email, bool ensureOrganizationAuthorization);
 

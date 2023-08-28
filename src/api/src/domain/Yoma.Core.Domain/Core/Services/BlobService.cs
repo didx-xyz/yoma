@@ -36,6 +36,21 @@ namespace Yoma.Core.Domain.Core.Services
             return result ?? throw new ArgumentOutOfRangeException(nameof(id), $"Blob with id '{id}' does not exist");
         }
 
+        // Create the blob object only, preserving the tracking record; used for rollbacks
+        public async Task<BlobObject> Create(Guid id, IFormFile file, FileType type)
+        {
+            var result = GetById(id);
+            
+            if (file == null)
+                throw new ArgumentNullException(nameof(file));
+
+            new FileValidator(type).Validate(file);
+            
+            await _blobProviderClient.Create(result.Key, file.ContentType, file.ToBinary());
+
+            return result;
+        }
+
         public async Task<BlobObject> Create(IFormFile file, FileType type)
         {
             if (file == null)
@@ -54,7 +69,7 @@ namespace Yoma.Core.Domain.Core.Services
                 OriginalFileName = file.FileName
             };
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
             await _blobObjectRepository.Create(result);
             await _blobProviderClient.Create(key, file.ContentType, file.ToBinary());
@@ -90,6 +105,15 @@ namespace Yoma.Core.Domain.Core.Services
             await _blobProviderClient.Delete(item.Key);
 
             scope.Complete();
+        }
+
+        // Delete the blob object only; used for rollbacks
+        public async Task Delete(string key)
+        {
+            if(string.IsNullOrWhiteSpace(key))
+                throw new ArgumentNullException(nameof(key));
+
+            await _blobProviderClient.Delete(key);
         }
         #endregion
     }

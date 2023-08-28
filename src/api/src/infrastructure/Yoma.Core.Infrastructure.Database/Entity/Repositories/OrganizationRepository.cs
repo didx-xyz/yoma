@@ -54,6 +54,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                         OrganizationId = o.OrganizationId,
                         FileId = o.FileId,
                         Type = o.Type,
+                        ContentType = o.File.ContentType,
+                        OriginalFileName = o.File.OriginalFileName,
                         DateCreated = o.DateCreated
                     }).OrderBy(o => o.DateCreated).ToList() : null
             });

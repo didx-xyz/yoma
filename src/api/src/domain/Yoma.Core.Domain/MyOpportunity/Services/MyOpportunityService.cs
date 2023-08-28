@@ -139,29 +139,32 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             item.DateStart = request.DateStart;
             item.DateEnd = request.DateEnd;
 
-            var currentCertId = item.CertificateId;
+            var currentCertificate = item.CertificateId.HasValue ? new { Id = item.CertificateId.Value, File = await _blobService.Download(item.CertificateId.Value) } : null;
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            BlobObject? s3Object = null;
+            BlobObject? blobObject = null;
             try
             {
-                s3Object = await _blobService.Create(request.Certificate, FileType.Photos);
-                item.CertificateId = s3Object.Id;
+                blobObject = await _blobService.Create(request.Certificate, FileType.Photos);
+                item.CertificateId = blobObject.Id;
 
                 if (isNew)
                     await _myOpportunityRepository.Create(item);
                 else
                     await _myOpportunityRepository.Update(item);
 
-                if (currentCertId.HasValue)
-                    await _blobService.Delete(currentCertId.Value);
+                if (currentCertificate != null)
+                    await _blobService.Delete(currentCertificate.Id);
 
                 scope.Complete();
             }
             catch
             {
-                if (s3Object != null)
-                    await _blobService.Delete(s3Object.Id);
+                if (blobObject != null)
+                    await _blobService.Delete(blobObject.Key);
+
+                 if (currentCertificate != null)
+                    await _blobService.Create(currentCertificate.Id, currentCertificate.File, FileType.Photos);
 
                 throw;
             }
