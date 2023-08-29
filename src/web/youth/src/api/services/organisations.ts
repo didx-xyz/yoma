@@ -23,6 +23,7 @@ export const getOrganisationProviderTypes = async (
 export const postOrganisation = async (
   model: OrganizationCreateRequest,
 ): Promise<Organization> => {
+  /* eslint-disable */
   // convert model to form data
   const formData = new FormData();
   for (const property in model) {
@@ -42,7 +43,7 @@ export const postOrganisation = async (
       }
     } else formData.append(property, (model as any)[property]);
   }
-  console.log("formData", formData);
+  /* eslint-enable */
 
   const { data } = await ApiClient.post<Organization>(
     "/organization/create",

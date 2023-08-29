@@ -71,30 +71,11 @@ const RegisterOrganisation: NextPageWithLayout = () => {
       businessDocuments: [],
     });
 
-  // form submission handler
-  const onSubmitStep = useCallback(
-    (step: number, data: FieldValues) => {
-      const model = {
-        ...organizationCreateRequest,
-        ...(data as OrganizationCreateRequest),
-      };
-
-      setOrganizationCreateRequest(model);
-      if (step === 4) {
-        onSubmit(model);
-        return;
-      }
-      setStep(step);
-    },
-    [setStep, organizationCreateRequest, setOrganizationCreateRequest],
-  );
-
   const onSubmit = useCallback(
-    async (data: FieldValues) => {
+    async (/*data: FieldValues*/) => {
       setIsLoading(true);
 
       try {
-        debugger;
         // update api
         await postOrganisation(organizationCreateRequest);
       } catch (error) {
@@ -117,7 +98,25 @@ const RegisterOrganisation: NextPageWithLayout = () => {
       });
       setIsLoading(false);
     },
-    [organizationCreateRequest, setIsLoading, setOrganizationCreateRequest],
+    [organizationCreateRequest, setIsLoading],
+  );
+
+  // form submission handler
+  const onSubmitStep = useCallback(
+    async (step: number, data: FieldValues) => {
+      const model = {
+        ...organizationCreateRequest,
+        ...(data as OrganizationCreateRequest),
+      };
+
+      setOrganizationCreateRequest(model);
+      if (step === 4) {
+        await onSubmit(/*model*/);
+        return;
+      }
+      setStep(step);
+    },
+    [setStep, organizationCreateRequest, onSubmit],
   );
 
   const handleCancel = () => {
@@ -163,7 +162,7 @@ const RegisterOrganisation: NextPageWithLayout = () => {
 
           <OrgRolesEdit
             organisation={organizationCreateRequest}
-            onCancel={(data) => {
+            onCancel={() => {
               setStep(1);
             }}
             onSubmit={(data) => onSubmitStep(3, data)}
