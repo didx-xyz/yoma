@@ -51,6 +51,7 @@ const config = {
 
 /** sentry config */
 export default withSentryConfig(
+  // @ts-ignore
   bundleAnalyzer(pwa(config)),
   {
     // For all available options, see:
