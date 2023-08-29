@@ -33,16 +33,16 @@ namespace Yoma.Core.Api.Controllers
         #region Public Members
         #region Administrative Actions
         [SwaggerOperation(Summary = "Reject or complete verification for the specified 'my' opportunity (Admin or Organization Admin roles required)")]
-        [HttpPut("verification/{userId}/{opportunityId}/update/{status}")]
+        [HttpPut("verification/{userId}/{opportunityId}/finalize")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> CompleteVerification([FromRoute] Guid userId, [FromRoute] Guid opportunityId, [FromRoute] VerificationStatus status)
+        public async Task<IActionResult> FinalizeVerification([FromRoute] Guid userId, [FromRoute] Guid opportunityId, [FromRoute] VerificationStatus status)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(CompleteVerification));
+            _logger.LogInformation("Handling request {requestName}", nameof(FinalizeVerification));
 
-            await _myOpportunityService.CompleteVerification(userId, opportunityId, status);
+            await _myOpportunityService.FinalizeVerification(userId, opportunityId, status);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(CompleteVerification));
+            _logger.LogInformation("Request {requestName} handled", nameof(FinalizeVerification));
 
             return StatusCode((int)HttpStatusCode.OK);
         }

@@ -435,7 +435,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return result;
         }
 
-        public async Task<(decimal? ZltoReward, decimal? YomaReward)> CompletedVerification(Guid id, bool completed, bool ensureOrganizationAuthorization)
+        public async Task<(decimal? ZltoReward, decimal? YomaReward)> FinalizeVerification(Guid id, bool completed, bool ensureOrganizationAuthorization)
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 

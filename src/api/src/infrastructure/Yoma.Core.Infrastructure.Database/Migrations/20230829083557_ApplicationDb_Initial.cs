@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -225,37 +226,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TimeInterval", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "User",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Surname = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CountryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CountryOfResidenceId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    GenderId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    DateOfBirth = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    PhotoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    PhotoURL = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DateLastLogin = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    ExternalId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ZltoWalletId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ZltoWalletCountryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ZltoWalletCountryCodeAlpha2 = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_User", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -610,6 +580,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_MyOpportunity_User_UserId",
                         column: x => x.UserId,
+                        principalSchema: "entity",
                         principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -1104,6 +1075,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 columns: new[] { "UserId", "SkillId" },
                 unique: true);
 
+
             ApplicationDb_Initial_Seeding.Seed(migrationBuilder);
         }
 
@@ -1153,9 +1125,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             migrationBuilder.DropTable(
                 name: "MyOpportunityVerificationStatus",
                 schema: "opportunity");
-
-            migrationBuilder.DropTable(
-                name: "User");
 
             migrationBuilder.DropTable(
                 name: "OpportunityCategory",

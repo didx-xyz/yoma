@@ -171,7 +171,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         }
 
         //supported statuses: Rejected or Completed
-        public async Task CompleteVerification(Guid userId, Guid opportunityId, VerificationStatus status)
+        public async Task FinalizeVerification(Guid userId, Guid opportunityId, VerificationStatus status)
         {
             var user = _userService.GetById(userId);
             var opportunity = _opportunityService.GetById(opportunityId, false, false);
@@ -191,7 +191,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             item.VerificationStatusId = statusId;
 
-            var (zltoReward, yomaReward) = await _opportunityService.CompletedVerification(opportunity.Id, status == VerificationStatus.Completed, true);
+            var (zltoReward, yomaReward) = await _opportunityService.FinalizeVerification(opportunity.Id, status == VerificationStatus.Completed, true);
             if (status == VerificationStatus.Completed)
             {
                 item.ZltoReward = zltoReward;
