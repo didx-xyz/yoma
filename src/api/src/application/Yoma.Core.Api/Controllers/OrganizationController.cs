@@ -73,11 +73,11 @@ namespace Yoma.Core.Api.Controllers
         [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> Create([FromForm] OrganizationCreateRequest request)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(Update));
+            _logger.LogInformation("Handling request {requestName}", nameof(Create));
 
             var result = await _organizationService.Create(request);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(Update));
+            _logger.LogInformation("Request {requestName} handled", nameof(Create));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

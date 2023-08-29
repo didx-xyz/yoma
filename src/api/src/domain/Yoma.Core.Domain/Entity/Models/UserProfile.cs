@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Entity.Models
 {
-    public class User
+    public class UserProfile
     {
         public Guid Id { get; set; }
 
@@ -30,18 +30,14 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public DateTimeOffset? DateLastLogin { get; set; }
 
-        public Guid? ExternalId { get; set; }
+        public List<OrganizationInfo> AdminsOf { get; set; }
 
-        public Guid? ZltoWalletId { get; set; }
+        public decimal ZltoBalance { get; set; }
 
-        public Guid? ZltoWalletCountryId { get; set; }
+        public int OpportunityCountSaved { get; set; }
 
-        public string? ZltoWalletCountryCodeAlpha2 { get; set; }
+        public int OpportunityCountPending { get; set; }
 
-        public Guid? TenantId { get; set; }
-
-        public DateTimeOffset DateCreated { get; set; }
-
-        public DateTimeOffset DateModified { get; set; }
+        public int OpportunityCountCompleted { get; set; }
     }
 }

@@ -18,15 +18,18 @@ namespace Yoma.Core.Api.Controllers
         #region Class Variables
         private readonly ILogger<UserController> _logger;
         private readonly IUserService _userService;
+        private readonly IUserProfileService _userProfileService;
         #endregion
 
         #region Constructor
         public UserController(
             ILogger<UserController> logger,
-            IUserService userService)
+            IUserService userService,
+            IUserProfileService userProfileService)
         {
             _logger = logger;
             _userService = userService;
+            _userProfileService = userProfileService;
         }
         #endregion
 
@@ -51,13 +54,13 @@ namespace Yoma.Core.Api.Controllers
         #region Authenticated User Based Actions
         [SwaggerOperation(Summary = "Get the user (Authenticated User)")]
         [HttpGet("")]
-        [ProducesResponseType(typeof(User), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult Get()
         {
             _logger.LogInformation("Handling request {requestName}", nameof(Get));
 
-            var result = _userService.GetByEmail(User.Identity?.Name);
+            var result = _userProfileService.Get();
 
             _logger.LogInformation("Request {requestName} handled", nameof(Get));
 
@@ -81,13 +84,13 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Insert or update the user's profile photo (Authenticated User)")]
         [HttpPost("photo")]
-        [ProducesResponseType(typeof(User), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> UpsertPhoto([Required] IFormFile file)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(UpsertPhoto));
 
-            var result = await _userService.UpsertPhoto(User.Identity?.Name, file);
+            var result = await _userProfileService.UpsertPhoto(file);
 
             _logger.LogInformation("Request {requestName} handled", nameof(UpsertPhoto));
 

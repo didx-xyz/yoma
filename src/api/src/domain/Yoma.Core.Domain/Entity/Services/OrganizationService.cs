@@ -205,47 +205,71 @@ namespace Yoma.Core.Domain.Entity.Services
                 Status = OrganizationStatus.Inactive
             };
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            //create org
-            result = await _organizationRepository.Create(result);
+            var blobObjects = new List<BlobObject>();
 
-            //assign provider types
-            result = await AssignProviderTypes(result, request.ProviderTypeIds, false);
-
-            //insert logo
-            result = await UpsertLogo(result, request.Logo);
-
-            //assign admins
-            if (request.AddCurrentUserAsAdmin)
+            try
             {
-                var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-                await AssignAdmin(result, username);
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                //create org
+                result = await _organizationRepository.Create(result);
+
+                //assign provider types
+                result = await AssignProviderTypes(result, request.ProviderTypeIds, false);
+
+                //insert logo
+                var resultLogo = await UpsertLogo(result, request.Logo);
+                result = resultLogo.Organization;
+                blobObjects.Add(resultLogo.BlobOject);
+
+                //assign admins
+                if (request.AddCurrentUserAsAdmin)
+                {
+                    var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+                    await AssignAdmin(result, username);
+                }
+
+                if (request.AdminAdditionalEmails != null && request.AdminAdditionalEmails.Any())
+                    foreach (var item in request.AdminAdditionalEmails)
+                        await AssignAdmin(result, item);
+
+                //upload documents
+                var resultDocuments = await UpsertDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocuments);
+                result = resultDocuments.Organization;
+                blobObjects.AddRange(resultDocuments.BlobObjects);
+
+                var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+                if (isProviderTypeEducation && (request.EducationProviderDocuments == null || !request.EducationProviderDocuments.Any()))
+                    throw new ValidationException($"Education provider type documents are required");
+
+                if (request.EducationProviderDocuments != null && request.EducationProviderDocuments.Any())
+                {
+                    resultDocuments = await UpsertDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocuments);
+                    result = resultDocuments.Organization;
+                    blobObjects.AddRange(resultDocuments.BlobObjects);
+                }
+
+                var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+                if (isProviderTypeMarketplace && (request.BusinessDocuments == null || !request.BusinessDocuments.Any()))
+                    throw new ValidationException($"Business documents are required");
+
+                if (request.BusinessDocuments != null && request.BusinessDocuments.Any())
+                {
+                    resultDocuments = await UpsertDocuments(result, OrganizationDocumentType.Business, request.BusinessDocuments);
+                    result = resultDocuments.Organization;
+                    blobObjects.AddRange(resultDocuments.BlobObjects);
+                }
+
+                //TODO: Send email to SAP admins
+
+                scope.Complete();
             }
-
-            if (request.AdminAdditionalEmails != null && request.AdminAdditionalEmails.Any())
-                foreach (var item in request.AdminAdditionalEmails)
-                    await AssignAdmin(result, item);
-
-            //upload documents
-            result = await UpsertDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocuments);
-
-            var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
-            if (isProviderTypeEducation && (request.EducationProviderDocuments == null || !request.EducationProviderDocuments.Any()))
-                throw new ValidationException($"Education provider type documents are required");
-
-            if (request.EducationProviderDocuments != null && request.EducationProviderDocuments.Any())
-                result = await UpsertDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocuments);
-
-            var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
-            if (isProviderTypeMarketplace && (request.BusinessDocuments == null || !request.BusinessDocuments.Any()))
-                throw new ValidationException($"Business documents are required");
-
-            if (request.BusinessDocuments != null && request.BusinessDocuments.Any())
-                result = await UpsertDocuments(result, OrganizationDocumentType.EducationProvider, request.BusinessDocuments);
-
-            //TODO: Send email to SAP admins
-
-            scope.Complete();
+            catch
+            {
+                //rollback created blobs
+                if (blobObjects.Any())
+                    foreach (var blob in blobObjects)
+                        await _blobService.Delete(blob.Key);
+            }
 
             return result;
         }
@@ -373,14 +397,17 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             var result = GetById(id, true, ensureOrganizationAuthorization);
 
-            return await UpsertLogo(result, file);
+            var resultLogo = await UpsertLogo(result, file);
+
+            return resultLogo.Organization;
         }
 
         public async Task<Organization> UpsertDocuments(Guid id, OrganizationDocumentType type, List<IFormFile> documents, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, true, ensureOrganizationAuthorization);
 
-            return await UpsertDocuments(result, type, documents);
+            var resultDocuments = await UpsertDocuments(result, type, documents);
+            return resultDocuments.Organization;
         }
 
         public async Task AssignAdmin(Guid id, string email, bool ensureOrganizationAuthorization)
@@ -513,7 +540,7 @@ namespace Yoma.Core.Domain.Entity.Services
             return org;
         }
 
-        private async Task<Organization> UpsertLogo(Organization org, IFormFile? file)
+        private async Task<(Organization Organization, BlobObject BlobOject)> UpsertLogo(Organization org, IFormFile? file)
         {
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
@@ -549,7 +576,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             org.LogoURL = GetBlobObjectURL(org.LogoId);
 
-            return org;
+            return (org, blobObject);
         }
 
         private async Task AssignAdmin(Organization org, string email)
@@ -578,7 +605,7 @@ namespace Yoma.Core.Domain.Entity.Services
             scope.Complete();
         }
 
-        private async Task<Organization> UpsertDocuments(Organization org, OrganizationDocumentType type, List<IFormFile> documents)
+        private async Task<(Organization Organization, List<BlobObject> BlobObjects)> UpsertDocuments(Organization org, OrganizationDocumentType type, List<IFormFile> documents)
         {
             if (documents == null || !documents.Any())
                 throw new ArgumentNullException(nameof(documents));
@@ -654,7 +681,7 @@ namespace Yoma.Core.Domain.Entity.Services
             org.Documents.AddRange(itemsNew);
             org.Documents?.ForEach(o => o.Url = _blobService.GetURL(o.FileId));
 
-            return org;
+            return (org, itemsNewBlobs);
         }
 
         private string? GetBlobObjectURL(Guid? id)
