@@ -141,10 +141,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             var currentCertificate = item.CertificateId.HasValue ? new { Id = item.CertificateId.Value, File = await _blobService.Download(item.CertificateId.Value) } : null;
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             BlobObject? blobObject = null;
             try
             {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
                 blobObject = await _blobService.Create(request.Certificate, FileType.Photos);
                 item.CertificateId = blobObject.Id;
 
@@ -157,6 +157,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     await _blobService.Delete(currentCertificate.Id);
 
                 scope.Complete();
+
+                //TODO: Send email (youth and OP)
             }
             catch
             {
@@ -168,10 +170,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
                 throw;
             }
-
-            //TODO: Send email (youth and OP)
         }
-
 
         //supported statuses: Rejected or Completed
         public async Task UpdateVerificationStatus(Guid userId, Guid opportunityId, VerificationStatus status)

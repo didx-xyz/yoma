@@ -168,7 +168,7 @@ namespace Yoma.Core.Domain.Entity.Services
             if (existingByName != null)
                 throw new ValidationException($"{nameof(Organization)} with the specified name '{request.Name}' already exists");
 
-            var statusInactive = _organizationStatusService.GetByName(OrganizationStatus.Inactive.ToString());
+            var statusInactiveId = _organizationStatusService.GetByName(OrganizationStatus.Inactive.ToString()).Id;
 
             var result = new Organization
             {
@@ -187,7 +187,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 PostalCode = request.PostalCode,
                 Tagline = request.Tagline,
                 Biography = request.Biography,
-                StatusId = statusInactive.Id, //new organization defaults to inactive / unapproved
+                StatusId = statusInactiveId, //new organization defaults to inactive / unapproved
                 Status = OrganizationStatus.Inactive
             };
 
@@ -196,7 +196,7 @@ namespace Yoma.Core.Domain.Entity.Services
             result = await _organizationRepository.Create(result);
 
             //assign provider types
-            result = await AssignProviderTypes(result, request.ProviderTypeIds);
+            result = await AssignProviderTypes(result, request.ProviderTypeIds, false);
 
             //insert logo
             result = await UpsertLogo(result, request.Logo);
@@ -325,7 +325,7 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             var result = GetById(id, true, ensureOrganizationAuthorization);
 
-            return await AssignProviderTypes(result, providerTypeIds);
+            return await AssignProviderTypes(result, providerTypeIds, true);
         }
 
         public async Task<Organization> DeleteProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization)
@@ -452,7 +452,7 @@ namespace Yoma.Core.Domain.Entity.Services
             return true;
         }
 
-        private async Task<Organization> AssignProviderTypes(Organization org, List<Guid> providerTypeIds)
+        private async Task<Organization> AssignProviderTypes(Organization org, List<Guid> providerTypeIds, bool sendForReapproval)
         {
             if (providerTypeIds == null || !providerTypeIds.Any())
                 throw new ArgumentNullException(nameof(providerTypeIds));
@@ -460,6 +460,8 @@ namespace Yoma.Core.Domain.Entity.Services
             if (!Statuses_Updatable.Contains(org.Status))
                 throw new InvalidOperationException($"{nameof(Organization)} can no longer be updated (current status '{org.Status}')");
 
+            var typesAdded = false;
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var typeId in providerTypeIds)
             {
                 var type = _providerTypeService.GetById(typeId);
@@ -477,11 +479,24 @@ namespace Yoma.Core.Domain.Entity.Services
 
                 org.ProviderTypes ??= new List<Models.Lookups.OrganizationProviderType>();
                 org.ProviderTypes.Add(new Models.Lookups.OrganizationProviderType { Id = type.Id, Name = type.Name });
+
+                typesAdded = true;
             }
 
-            return org;
+            if (sendForReapproval && typesAdded)
+            {
+                //with type addition organization is send for re-approval; all related opportunities will temporarily disappear from the listings
+                var statusInactiveId = _organizationStatusService.GetByName(OrganizationStatus.Inactive.ToString()).Id;
+                org.StatusId = statusInactiveId;
+                org.Status = OrganizationStatus.Inactive;
+                await _organizationRepository.Update(org);
 
-            //TODO: Re-approvals
+                //TODO: Send email to SAP admins
+            }
+
+            scope.Complete();
+
+            return org;
         }
 
         private async Task<Organization> UpsertLogo(Organization org, IFormFile? file)
@@ -494,30 +509,28 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var currentLogo = org.LogoId.HasValue ? new { Id = org.LogoId.Value, File = await _blobService.Download(org.LogoId.Value) } : null;
 
-            using (var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            BlobObject? blobObject = null;
+            try
             {
-                BlobObject? blobObject = null;
-                try
-                {
-                    blobObject = await _blobService.Create(file, FileType.Photos);
-                    org.LogoId = blobObject.Id;
-                    await _organizationRepository.Update(org);
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                blobObject = await _blobService.Create(file, FileType.Photos);
+                org.LogoId = blobObject.Id;
+                await _organizationRepository.Update(org);
 
-                    if (currentLogo != null)
-                        await _blobService.Delete(currentLogo.Id);
+                if (currentLogo != null)
+                    await _blobService.Delete(currentLogo.Id);
 
-                    scope.Complete();
-                }
-                catch
-                {
-                    if (blobObject != null)
-                        await _blobService.Delete(blobObject.Key);
+                scope.Complete();
+            }
+            catch
+            {
+                if (blobObject != null)
+                    await _blobService.Delete(blobObject.Key);
 
-                    if (currentLogo != null)
-                        await _blobService.Create(currentLogo.Id, currentLogo.File, FileType.Photos);
+                if (currentLogo != null)
+                    await _blobService.Create(currentLogo.Id, currentLogo.File, FileType.Photos);
 
-                    throw;
-                }
+                throw;
             }
 
             org.LogoURL = GetBlobObjectURL(org.LogoId);

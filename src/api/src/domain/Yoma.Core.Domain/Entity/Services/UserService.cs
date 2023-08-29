@@ -235,32 +235,31 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var currentPhoto = result.PhotoId.HasValue ? new { Id = result.PhotoId.Value, File = await _blobService.Download(result.PhotoId.Value) } : null;
 
-            using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+            BlobObject? blobObject = null;
+            try
             {
-                BlobObject? blobObject = null;
-                try
-                {
-                    blobObject = await _blobService.Create(file, FileType.Photos);
-                    result.PhotoId = blobObject.Id;
-                    await _userRepository.Update(result);
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                blobObject = await _blobService.Create(file, FileType.Photos);
+                result.PhotoId = blobObject.Id;
+                await _userRepository.Update(result);
 
-                    if (currentPhoto != null)
-                        await _blobService.Delete(currentPhoto.Id);
+                if (currentPhoto != null)
+                    await _blobService.Delete(currentPhoto.Id);
 
-                    scope.Complete();
-                }
-                catch
-                {
-                    //roll back
-                    if (blobObject != null)
-                        await _blobService.Delete(blobObject.Key);
-
-                    if (currentPhoto != null)
-                        await _blobService.Create(currentPhoto.Id, currentPhoto.File, FileType.Photos);
-
-                    throw;
-                }
+                scope.Complete();
             }
+            catch
+            {
+                //roll back
+                if (blobObject != null)
+                    await _blobService.Delete(blobObject.Key);
+
+                if (currentPhoto != null)
+                    await _blobService.Create(currentPhoto.Id, currentPhoto.File, FileType.Photos);
+
+                throw;
+            }
+
 
             result.PhotoURL = GetBlobObjectURL(result.PhotoId);
 
