@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Yoma.Core.Domain.Entity.Models
 {
     public class User

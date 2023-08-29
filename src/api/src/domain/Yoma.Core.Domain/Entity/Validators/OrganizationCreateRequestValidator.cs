@@ -15,7 +15,7 @@ namespace Yoma.Core.Domain.Entity.Validators
         #region Constructor
         public OrganizationCreateRequestValidator(ICountryService countryService, IOrganizationProviderTypeService organizationProviderTypeService) : base(countryService)
         {
-            _organizationProviderTypeService = organizationProviderTypeService; 
+            _organizationProviderTypeService = organizationProviderTypeService;
 
             RuleFor(x => x.ProviderTypeIds).Must(ids => ids != null && ids.Any() && ids.All(id => id != Guid.Empty && ProviderTypeExist(id)))
                 .WithMessage("Provider types contains items which are either invalid or do not exist");
