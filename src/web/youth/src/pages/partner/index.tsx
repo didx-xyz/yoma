@@ -21,7 +21,6 @@ import { Loading } from "~/components/Status/Loading";
 import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../_app";
-import { FaThumbsUp } from "react-icons/fa";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -99,7 +98,7 @@ const RegisterOrganisation: NextPageWithLayout = () => {
       });
       setIsLoading(false);
 
-      router.push("/partner/success");
+      void router.push("/partner/success");
     },
     [organizationCreateRequest, setIsLoading],
   );

@@ -1,7 +1,7 @@
 import { type ReactElement } from "react";
 import { FaThumbsUp } from "react-icons/fa";
 import MainLayout from "~/components/Layout/Main";
-import { NextPageWithLayout } from "../_app";
+import { type NextPageWithLayout } from "../_app";
 
 const Success: NextPageWithLayout = () => {
   return (
