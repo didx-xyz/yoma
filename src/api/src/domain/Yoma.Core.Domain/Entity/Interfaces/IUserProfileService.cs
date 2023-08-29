@@ -8,5 +8,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
         UserProfile Get();
 
         Task<UserProfile> UpsertPhoto(IFormFile file);
+
+        Task<UserProfile> Update(UserProfileRequest request);
     }
 }

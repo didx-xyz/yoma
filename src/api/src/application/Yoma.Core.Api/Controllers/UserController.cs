@@ -69,13 +69,13 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Update the user's profile, within Yoma and the identity provider, optionally requesting a email verification and/or password reset (Authenticated User)")]
         [HttpPut()]
-        [ProducesResponseType(typeof(User), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> UpdateProfile([FromBody] UserProfileRequest profile)
+        public async Task<IActionResult> UpdateProfile([FromBody] UserProfileRequest request)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(UpdateProfile));
 
-            var result = await _userService.UpdateProfile(User.Identity?.Name, profile);
+            var result = await _userProfileService.Update(request);
 
             _logger.LogInformation("Request {requestName} handled", nameof(UpdateProfile));
 

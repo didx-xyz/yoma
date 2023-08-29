@@ -1,28 +1,13 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Yoma.Core.Domain.Entity.Models
 {
-    public class UserRequest
+    public class UserRequest : UserRequestBase
     {
         public Guid? Id { get; set; }
 
-        public string Email { get; set; }
-
+        [Required]
         public bool EmailConfirmed { get; set; }
-
-        public string FirstName { get; set; }
-
-        public string Surname { get; set; }
-
-        public string? DisplayName { get; set; }
-
-        public string? PhoneNumber { get; set; }
-
-        public Guid? CountryId { get; set; }
-
-        public Guid? CountryOfResidenceId { get; set; }
-
-        public Guid? GenderId { get; set; }
-
-        public DateTimeOffset? DateOfBirth { get; set; }
 
         public DateTimeOffset? DateLastLogin { get; set; }
 
@@ -33,6 +18,5 @@ namespace Yoma.Core.Domain.Entity.Models
         public Guid? ZltoWalletCountryId { get; set; }
 
         public Guid? TenantId { get; set; }
-
     }
 }

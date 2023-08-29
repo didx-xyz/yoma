@@ -32,7 +32,7 @@ namespace Yoma.Core.Domain.Entity.Helpers
                 FirstName = value.FirstName,
                 Surname = value.Surname,
                 DisplayName = value.DisplayName,
-                PhoneNumber = value.DisplayName,
+                PhoneNumber = value.PhoneNumber,
                 CountryId = value.CountryId,
                 CountryOfResidenceId = value.CountryOfResidenceId,
                 GenderId = value.GenderId,
