@@ -40,12 +40,12 @@ namespace Yoma.Core.Domain.Core.Services
         public async Task<BlobObject> Create(Guid id, IFormFile file, FileType type)
         {
             var result = GetById(id);
-            
+
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
 
             new FileValidator(type).Validate(file);
-            
+
             await _blobProviderClient.Create(result.Key, file.ContentType, file.ToBinary());
 
             return result;
@@ -110,7 +110,7 @@ namespace Yoma.Core.Domain.Core.Services
         // Delete the blob object only; used for rollbacks
         public async Task Delete(string key)
         {
-            if(string.IsNullOrWhiteSpace(key))
+            if (string.IsNullOrWhiteSpace(key))
                 throw new ArgumentNullException(nameof(key));
 
             await _blobProviderClient.Delete(key);

@@ -31,7 +31,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         Task<Organization> UpsertLogo(Guid id, IFormFile? file, bool ensureOrganizationAuthorization);
 
-        Task <Organization> UpsertDocuments(Guid id, OrganizationDocumentType type, List<IFormFile> documents, bool ensureOrganizationAuthorization);
+        Task<Organization> UpsertDocuments(Guid id, OrganizationDocumentType type, List<IFormFile> documents, bool ensureOrganizationAuthorization);
 
         bool IsAdmin(Guid id, bool throwUnauthorized);
 
