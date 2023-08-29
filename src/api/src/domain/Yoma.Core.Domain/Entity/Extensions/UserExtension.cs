@@ -14,6 +14,16 @@ namespace Yoma.Core.Domain.Entity.Extensions
             if (string.IsNullOrEmpty(user.DisplayName)) user.DisplayName = null;
         }
 
+        public static void SetDisplayName(this UserRequest user)
+        {
+            if (user == null)
+                throw new ArgumentNullException(nameof(user));
+
+            if (!string.IsNullOrEmpty(user.DisplayName)) return;
+            user.DisplayName = string.Join(' ', new[] { user.FirstName, user.Surname }.Where(o => !string.IsNullOrEmpty(o)));
+            if (string.IsNullOrEmpty(user.DisplayName)) user.DisplayName = null;
+        }
+
         public static UserRequest ToUserRequest(this User user)
         {
             if (user == null)

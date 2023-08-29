@@ -1,4 +1,3 @@
-using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Interfaces

@@ -40,6 +40,7 @@ namespace Yoma.Core.Domain
             #endregion Lookups
 
             services.AddScoped<IOrganizationService, OrganizationService>();
+            services.AddScoped<IUserProfileService, UserProfileService>();
             services.AddScoped<IUserService, UserService>();
             #endregion Entity
 
