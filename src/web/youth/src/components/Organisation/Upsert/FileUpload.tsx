@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState } from "react";
 import { FilePond, registerPlugin } from "react-filepond";
 //import FilePondPluginFileValidateSize from "filepond-plugin-file-validate-size";
@@ -30,7 +31,6 @@ export interface InputProps {
   onUploadComplete?: (data: any[]) => void;
 }
 
-// export const FileUploader = (props: FileUploaderProps) => {
 export const FileUploader: React.FC<InputProps> = ({
   files,
   fileTypes,
@@ -61,3 +61,4 @@ export const FileUploader: React.FC<InputProps> = ({
     </div>
   );
 };
+/* eslint-enable */

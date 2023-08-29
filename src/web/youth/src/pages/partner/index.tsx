@@ -21,6 +21,7 @@ import { Loading } from "~/components/Status/Loading";
 import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../_app";
+import { FaThumbsUp } from "react-icons/fa";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -112,6 +113,7 @@ const RegisterOrganisation: NextPageWithLayout = () => {
       setOrganizationCreateRequest(model);
       if (step === 4) {
         await onSubmit(/*model*/);
+        setStep(step);
         return;
       }
       setStep(step);
@@ -190,7 +192,16 @@ const RegisterOrganisation: NextPageWithLayout = () => {
         </>
       )}
 
-      {step == 4 && <>{JSON.stringify(organizationCreateRequest)}</>}
+      {step == 4 && (
+        <div className="flex flex-col place-items-center justify-center rounded-xl bg-white p-4">
+          <h4>Success</h4>
+          <FaThumbsUp size={100} className="my-10 text-green" />
+          <p className="p-4 text-sm">
+            Your organisation has been created. Please check your email for more
+            details.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

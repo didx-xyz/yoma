@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
@@ -268,3 +269,4 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
     </>
   );
 };
+/* eslint-enable */

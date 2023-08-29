@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useState } from "react";
 import { FieldValues, useForm } from "react-hook-form";
@@ -328,3 +329,4 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
     </>
   );
 };
+/* eslint-enable */
