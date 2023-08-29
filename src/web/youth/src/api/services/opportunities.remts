@@ -43,11 +43,10 @@ export const getOpportunityById_Client = async (
 };
 
 export const createOpportunities = async (
-  id: string,
   model: Opportunity
 ): Promise<FullOpportunityResponseDto> => {
   const { data } = await ApiClient.post<ApiResponse<FullOpportunityResponseDto>>(
-    `/opportunities/YomaCreateOpportunity/`,
+    `/opportunities/`,
     model,
   );
 

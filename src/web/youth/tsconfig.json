@@ -30,8 +30,7 @@
     "**/*.mjs",
     "next.config.js",
     "next.config.mjs",
-    "src/hooks/api/lookups.remts",
-    "src/components/NavBar/Navbar - Copy.remtsx"
+    "src/components/Organisation/Upsert/OrgRolesEdit.tsx"
   ],
   "exclude": ["node_modules"]
 }
