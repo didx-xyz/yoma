@@ -98,6 +98,8 @@ const RegisterOrganisation: NextPageWithLayout = () => {
         toastId: "patchUserProfile",
       });
       setIsLoading(false);
+
+      router.push("/partner/success");
     },
     [organizationCreateRequest, setIsLoading],
   );
@@ -190,17 +192,6 @@ const RegisterOrganisation: NextPageWithLayout = () => {
             onSubmit={(data) => onSubmitStep(4, data)}
           />
         </>
-      )}
-
-      {step == 4 && (
-        <div className="flex flex-col place-items-center justify-center rounded-xl bg-white p-4">
-          <h4>Success</h4>
-          <FaThumbsUp size={100} className="my-10 text-green" />
-          <p className="p-4 text-sm">
-            Your organisation has been created. Please check your email for more
-            details.
-          </p>
-        </div>
       )}
     </div>
   );
