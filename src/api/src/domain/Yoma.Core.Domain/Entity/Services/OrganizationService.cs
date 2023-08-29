@@ -34,9 +34,9 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IRepository<Models.OrganizationProviderType> _organizationProviderTypeRepository;
         private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
 
-        public static readonly OrganizationStatus[] Statuses_Updatable = { OrganizationStatus.Active, OrganizationStatus.Inactive };
+        private static readonly OrganizationStatus[] Statuses_Updatable = { OrganizationStatus.Active, OrganizationStatus.Inactive };
         private static readonly OrganizationStatus[] Statuses_Activatable = { OrganizationStatus.Inactive };
-        private static readonly OrganizationStatus[] Statuses_Deletable = { OrganizationStatus.Active, OrganizationStatus.Inactive, OrganizationStatus.Declined };
+        private static readonly OrganizationStatus[] Statuses_CanDelete = { OrganizationStatus.Active, OrganizationStatus.Inactive, OrganizationStatus.Declined };
         private static readonly OrganizationStatus[] Statuses_DeActivatable = { OrganizationStatus.Active, OrganizationStatus.Declined };
         private static readonly OrganizationStatus[] Statuses_Declinable = { OrganizationStatus.Inactive };
         #endregion
@@ -73,6 +73,20 @@ namespace Yoma.Core.Domain.Entity.Services
         #endregion
 
         #region Public Members
+        public bool Active(Guid id, bool throwNotFound)
+        {
+            var org = throwNotFound ? GetById(id, false, false) : GetByIdOrNull(id, false);
+            if (org == null) return false;
+            return org.Status != OrganizationStatus.Active;
+        }
+
+        public bool Updatable(Guid id, bool throwNotFound)
+        {
+            var org = throwNotFound ? GetById(id, false, false) : GetByIdOrNull(id, false);
+            if (org == null) return false;
+            return Statuses_Updatable.Contains(org.Status);
+        }
+
         public Organization GetById(Guid id, bool includeChildItems, bool ensureOrganizationAuthorization)
         {
             if (id == Guid.Empty)
@@ -305,7 +319,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
                 case OrganizationStatus.Deleted:
                     if (org.Status == OrganizationStatus.Deleted) return;
-                    if (!Statuses_Deletable.Contains(org.Status))
+                    if (!Statuses_CanDelete.Contains(org.Status))
                         throw new InvalidOperationException($"{nameof(Organization)} can not be deleted (current status '{org.Status}')");
                     break;
 

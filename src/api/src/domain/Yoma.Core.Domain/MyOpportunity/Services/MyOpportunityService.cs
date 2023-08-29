@@ -12,6 +12,7 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
+    //TODO: Background status change
     public class MyOpportunityService : IMyOpportunityService
     {
         #region Class Variables
@@ -22,9 +23,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         private readonly IMyOpportunityVerificationStatusService _myOpportunityVerificationStatusService;
         private readonly IBlobService _blobService;
         private readonly IRepository<Models.MyOpportunity> _myOpportunityRepository;
-
-        private static readonly Opportunity.Status[] Opportunity_Statuses_Actionable = { Opportunity.Status.Active };
-        private static readonly Opportunity.Status[] Opportunity_Statuses_Verifyable = { Opportunity.Status.Active, Opportunity.Status.Expired };
         #endregion
 
         #region Constructor
@@ -49,7 +47,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         #region Public Members
         public async Task PerformActionViewed(Guid opportunityId)
         {
-            var opportunity = GetOpportunityByIdAndValidateStatus(opportunityId, Opportunity_Statuses_Actionable);
+            var opportunity = GetOpportunityByIdActive(opportunityId);
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
 
             var actionViewedId = _myOpportunityActionService.GetByName(Action.Viewed.ToString()).Id;
@@ -71,7 +69,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public async Task PerformActionSaved(Guid opportunityId)
         {
-            var opportunity = GetOpportunityByIdAndValidateStatus(opportunityId, Opportunity_Statuses_Actionable);
+            var opportunity = GetOpportunityByIdActive(opportunityId);
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
 
             var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
@@ -91,7 +89,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public async Task PerformActionSavedRemove(Guid opportunityId)
         {
-            var opportunity = GetOpportunityByIdAndValidateStatus(opportunityId, Opportunity_Statuses_Actionable);
+            var opportunity = GetOpportunityByIdActive(opportunityId);
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
 
             var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
@@ -104,7 +102,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public async Task PerformActionSendForVerification(Guid opportunityId, MyOpportunityVerifyRequest request)
         {
-            var opportunity = GetOpportunityByIdAndValidateStatus(opportunityId, Opportunity_Statuses_Actionable);
+            var opportunity = GetOpportunityByIdActive(opportunityId);
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
 
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
@@ -165,7 +163,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 if (blobObject != null)
                     await _blobService.Delete(blobObject.Key);
 
-                 if (currentCertificate != null)
+                if (currentCertificate != null)
                     await _blobService.Create(currentCertificate.Id, currentCertificate.File, FileType.Photos);
 
                 throw;
@@ -173,10 +171,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         }
 
         //supported statuses: Rejected or Completed
-        public async Task UpdateVerificationStatus(Guid userId, Guid opportunityId, VerificationStatus status)
+        public async Task CompleteVerification(Guid userId, Guid opportunityId, VerificationStatus status)
         {
-            var opportunity = GetOpportunityByIdAndValidateStatus(opportunityId, Opportunity_Statuses_Verifyable);
             var user = _userService.GetById(userId);
+            var opportunity = _opportunityService.GetById(opportunityId, false, false);
 
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
             var item = _myOpportunityRepository.Query().SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
@@ -192,10 +190,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
             item.VerificationStatusId = statusId;
+
+            var (zltoReward, yomaReward) = await _opportunityService.CompletedVerification(opportunity.Id, status == VerificationStatus.Completed, true);
             if (status == VerificationStatus.Completed)
             {
-                var (zltoReward, yomaReward) = await _opportunityService.ProcessVerificationCompletion(opportunity.Id, true);
-
                 item.ZltoReward = zltoReward;
                 item.YomaReward = yomaReward;
                 item.DateCompleted = DateTimeOffset.Now;
@@ -208,15 +206,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         #endregion
 
         #region Private Members
-        private Opportunity.Models.Opportunity GetOpportunityByIdAndValidateStatus(Guid opportunityId, Opportunity.Status[] statuses)
+        private Opportunity.Models.Opportunity GetOpportunityByIdActive(Guid opportunityId)
         {
             var opportunity = _opportunityService.GetById(opportunityId, false, false);
-            if (!statuses.Contains(opportunity.Status))
-                throw new ArgumentException($"Opportunity can no longer be verified (current status '{opportunity.Status}')", nameof(opportunityId));
-
-            if (opportunity.DateStart > DateTimeOffset.Now)
-                throw new InvalidOperationException($"Opportunity is active but has not started (start date '{opportunity.DateStart}')");
-
+            if (!_opportunityService.Active(opportunity, true))
+                throw new ArgumentException($"Opportunity can not be actioned (current status '{opportunity.Status}')", nameof(opportunityId));
             return opportunity;
         }
         #endregion

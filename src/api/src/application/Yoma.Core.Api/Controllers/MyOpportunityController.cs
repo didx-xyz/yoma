@@ -36,13 +36,13 @@ namespace Yoma.Core.Api.Controllers
         [HttpPut("verification/{userId}/{opportunityId}/update/{status}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> UpdateVerificationStatus([FromRoute] Guid userId, [FromRoute] Guid opportunityId, [FromRoute] VerificationStatus status)
+        public async Task<IActionResult> CompleteVerification([FromRoute] Guid userId, [FromRoute] Guid opportunityId, [FromRoute] VerificationStatus status)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(UpdateVerificationStatus));
+            _logger.LogInformation("Handling request {requestName}", nameof(CompleteVerification));
 
-            await _myOpportunityService.UpdateVerificationStatus(userId, opportunityId, status);
+            await _myOpportunityService.CompleteVerification(userId, opportunityId, status);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(UpdateVerificationStatus));
+            _logger.LogInformation("Request {requestName} handled", nameof(CompleteVerification));
 
             return StatusCode((int)HttpStatusCode.OK);
         }

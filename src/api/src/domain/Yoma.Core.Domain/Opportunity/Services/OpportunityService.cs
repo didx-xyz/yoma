@@ -6,6 +6,7 @@ using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.Opportunity.Helpers;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
@@ -41,10 +42,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly IRepository<OpportunitySkill> _opportunitySkillRepository;
 
         public const string Keywords_Separator = ",";
-        public const int Keywords_CombinedMaxLenght = 500;
+        public const int Keywords_CombinedMaxLength = 500;
         private static readonly Status[] Statuses_Updatable = { Status.Active, Status.Inactive };
         private static readonly Status[] Statuses_Activatable = { Status.Inactive };
-        private static readonly Status[] Statuses_Deletable = { Status.Active, Status.Inactive };
+        private static readonly Status[] Statuses_CanDelete = { Status.Active, Status.Inactive };
         private static readonly Status[] Statuses_DeActivatable = { Status.Active };
         #endregion
 
@@ -93,16 +94,46 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Public Members
+        public bool Active(Guid id, bool checkStarted, bool throwNotFound)
+        {
+            var opportunity = throwNotFound ? GetById(id, false, false) : GetByIdOrNull(id, false);
+            if (opportunity == null) return false;
+            return Active(opportunity, checkStarted);
+        }
+
+        public bool Active(Models.Opportunity opportunity, bool checkStarted)
+        {
+            if (opportunity == null)
+                throw new ArgumentNullException(nameof(opportunity));
+
+            if (checkStarted && opportunity.DateStart > DateTimeOffset.Now) return false;
+
+            if (!_organizationService.Active(opportunity.OrganizationId, true)) return false;
+
+            return opportunity.Status == Status.Active;
+        }
+
         public Models.Opportunity GetById(Guid id, bool includeChildren, bool ensureOrganizationAuthorization)
         {
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
 
-            var result = _opportunityRepository.Query(includeChildren).SingleOrDefault(o => o.Id == id)
+            var result = GetByIdOrNull(id, includeChildren)
                 ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(Models.Opportunity)} with id '{id}' does not exist");
 
             if (ensureOrganizationAuthorization)
                 _organizationService.IsAdmin(result.OrganizationId, true);
+
+            return result;
+        }
+
+        public Models.Opportunity? GetByIdOrNull(Guid id, bool includeChildItems)
+        {
+            if (id == Guid.Empty)
+                throw new ArgumentNullException(nameof(id));
+
+            var result = _opportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
+            if (result == null) return null;
 
             return result;
         }
@@ -405,15 +436,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return result;
         }
 
-        public async Task<(decimal? ZltoReward, decimal? YomaReward)> ProcessVerificationCompletion(Guid id, bool ensureOrganizationAuthorization)
+        public async Task<(decimal? ZltoReward, decimal? YomaReward)> CompletedVerification(Guid id, bool completed, bool ensureOrganizationAuthorization)
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
-            if (opportunity.Status != Status.Active)
-                throw new InvalidOperationException($"{nameof(Models.Opportunity)} must be active (current status '{opportunity.Status}')");
+            //can complete, provided active (and started) or expired; action prior to expiration
+            if (!Active(opportunity, true) && opportunity.Status != Status.Expired)
+                new InvalidOperationException($"{nameof(Models.Opportunity)} verification can no longer be completed (current status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
-            if (opportunity.DateStart > DateTimeOffset.Now)
-                throw new InvalidOperationException($"{nameof(Models.Opportunity)} is active but has not started (start date '{opportunity.DateStart}')");
+            if (!completed) return (null, null);
 
             var count = (opportunity.ParticipantCount ?? 0) + 1;
             if (opportunity.ParticipantLimit.HasValue && count > opportunity.ParticipantLimit.Value)
@@ -466,7 +497,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
                 case Status.Deleted:
                     if (opportunity.Status == Status.Deleted) return;
-                    if (!Statuses_Deletable.Contains(opportunity.Status))
+                    if (!Statuses_CanDelete.Contains(opportunity.Status))
                         throw new InvalidOperationException($"{nameof(Models.Opportunity)} can not be deleted (current status '{opportunity.Status}')");
 
                     break;

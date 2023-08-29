@@ -5,6 +5,10 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 {
     public interface IOrganizationService
     {
+        bool Active(Guid id, bool throwNotFound);
+
+        bool Updatable(Guid id, bool throwNotFound);
+
         Organization GetById(Guid id, bool includeChildItems, bool ensureOrganizationAuthorization);
 
         Organization? GetByIdOrNull(Guid id, bool includeChildItems);

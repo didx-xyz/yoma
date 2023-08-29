@@ -1,10 +1,17 @@
+using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Interfaces
 {
     public interface IOpportunityService
     {
+        bool Active(Guid id, bool checkStarted, bool throwNotFound);
+
+        bool Active(Models.Opportunity opportunity, bool checkStarted);
+
         Models.Opportunity GetById(Guid id, bool includeChildren, bool ensureOrganizationAuthorization);
+
+        Models.Opportunity? GetByIdOrNull(Guid id, bool includeChildItems);
 
         OpportunityInfo GetInfoById(Guid id, bool includeChildren);
 
@@ -18,7 +25,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
         Task<Models.Opportunity> Upsert(OpportunityRequest request, bool ensureOrganizationAuthorization);
 
-        Task<(decimal? ZltoReward, decimal? YomaReward)> ProcessVerificationCompletion(Guid id, bool ensureOrganizationAuthorization);
+        Task<(decimal? ZltoReward, decimal? YomaReward)> CompletedVerification(Guid id, bool completed, bool ensureOrganizationAuthorization);
 
         Task UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization);
 

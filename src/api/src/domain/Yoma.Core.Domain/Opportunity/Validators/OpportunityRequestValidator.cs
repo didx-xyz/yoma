@@ -1,6 +1,5 @@
 using FluentValidation;
 using Yoma.Core.Domain.Entity.Interfaces;
-using Yoma.Core.Domain.Entity.Services;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
@@ -32,7 +31,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             RuleFor(x => x.Title).NotEmpty().Length(1, 255);
             RuleFor(x => x.Description).NotEmpty();
             RuleFor(x => x.TypeId).NotEmpty().Must(TypeExists).WithMessage($"Specified type is invalid / does not exist.");
-            RuleFor(x => x.OrganizationId).NotEmpty().Must(OrganizationExistsAndUpdatable).WithMessage($"Specified organization has been declined / deleted or does not exist.");
+            RuleFor(x => x.OrganizationId).NotEmpty().Must(OrganizationUpdatable).WithMessage($"Specified organization has been declined / deleted or does not exist.");
             //instructions (varchar(max); auto trimmed
             RuleFor(x => x.URL).Length(1, 2048).Must(ValidURL).When(x => string.IsNullOrEmpty(x.URL)).WithMessage("'{PropertyName}' is invalid.");
             RuleFor(x => x.ZltoReward).GreaterThan(0).When(x => x.ZltoReward.HasValue).WithMessage("'{PropertyName}' must be greater than 0");
@@ -46,7 +45,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             RuleFor(x => x.CommitmentIntervalCount).Must(x => x.HasValue && x > 0).When(x => x.CommitmentIntervalCount.HasValue).WithMessage("'{PropertyName}' must be greater than 0");
             RuleFor(x => x.ParticipantLimit).Must(x => x.HasValue && x > 0).When(x => x.ParticipantLimit.HasValue).WithMessage("'{PropertyName}' must be greater than 0");
             RuleFor(x => x.Keywords).Must(keywords => keywords == null || keywords.All(x => !string.IsNullOrWhiteSpace(x) && !x.Contains(OpportunityService.Keywords_Separator))).WithMessage("{PropertyName} contains empty value(s) or keywords with ',' character.");
-            RuleFor(model => model.Keywords).Must(list => list == null || CalculateCombinedLength(list) >= 1 && CalculateCombinedLength(list) <= OpportunityService.Keywords_CombinedMaxLenght).WithMessage("The combined length of keywords must be between 1 and 500 characters.");
+            RuleFor(model => model.Keywords).Must(list => list == null || CalculateCombinedLength(list) >= 1 && CalculateCombinedLength(list) <= OpportunityService.Keywords_CombinedMaxLength).WithMessage("The combined length of keywords must be between 1 and 500 characters.");
             RuleFor(x => x.DateStart).NotEmpty();
             RuleFor(model => model.DateEnd).GreaterThanOrEqualTo(model => model.DateStart).When(model => model.DateEnd.HasValue).WithMessage("{PropertyName} is earlier than the Start Date.");
         }
@@ -68,11 +67,9 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             return _timeIntervalService.GetByIdOrNull(typeId) != null;
         }
 
-        private bool OrganizationExistsAndUpdatable(Guid organizationId)
+        private bool OrganizationUpdatable(Guid organizationId)
         {
-            var org = _organizationService.GetByIdOrNull(organizationId, false);
-            if (org == null) return false;
-            return OrganizationService.Statuses_Updatable.Contains(org.Status);
+            return _organizationService.Updatable(organizationId, false);
         }
 
         private bool ValidURL(string? url)
