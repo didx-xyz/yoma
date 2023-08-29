@@ -269,6 +269,8 @@ namespace Yoma.Core.Domain.Entity.Services
                 if (blobObjects.Any())
                     foreach (var blob in blobObjects)
                         await _blobService.Delete(blob.Key);
+
+                throw;
             }
 
             return result;
