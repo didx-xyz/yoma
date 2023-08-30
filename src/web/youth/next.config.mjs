@@ -2,9 +2,6 @@ import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
 import withPWA from "next-pwa";
 
-/** next-pwa config */
-//  replace the default workbox strategy for nextjs to NetworkFirst
-//  see https://github.com/vercel/next.js/discussions/42405
 const pwa = withPWA({
   dest: "public",
   register: true,

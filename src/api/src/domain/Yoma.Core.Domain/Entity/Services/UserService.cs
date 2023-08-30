@@ -8,7 +8,6 @@ using Yoma.Core.Domain.Entity.Validators;
 using FluentValidation;
 using System.Transactions;
 using Microsoft.AspNetCore.Http;
-using User = Yoma.Core.Domain.Entity.Models.User;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Core.Extensions;
@@ -23,8 +22,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IBlobService _blobService;
         private readonly IGenderService _genderService;
         private readonly ICountryService _countryService;
-        private readonly UserRequestValidator _userValidator;
-        private readonly UserProfileRequestValidator _userProfileRequestValidator;
+        private readonly UserRequestValidator _userRequestValidator;
         private readonly UserSearchFilterValidator _userSearchFilterValidator;
         private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
         #endregion
@@ -36,7 +34,6 @@ namespace Yoma.Core.Domain.Entity.Services
             IGenderService genderService,
             ICountryService countryService,
             UserRequestValidator userValidator,
-            UserProfileRequestValidator userProfileRequestValidator,
             UserSearchFilterValidator userSearchFilterValidator,
             IRepositoryValueContainsWithNavigation<User> userRepository)
         {
@@ -44,8 +41,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _blobService = blobService;
             _genderService = genderService;
             _countryService = countryService;
-            _userValidator = userValidator;
-            _userProfileRequestValidator = userProfileRequestValidator;
+            _userRequestValidator = userValidator;
             _userSearchFilterValidator = userSearchFilterValidator;
             _userRepository = userRepository;
         }
@@ -118,71 +114,12 @@ namespace Yoma.Core.Domain.Entity.Services
             return results;
         }
 
-        public async Task<User> UpdateProfile(string? email, UserProfileRequest request)
-        {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
-            await _userProfileRequestValidator.ValidateAndThrowAsync(request);
-
-            if (string.IsNullOrEmpty(request.PhoneNumber)) request.PhoneNumber = null;
-
-            var result = GetByEmail(email);
-
-            if (!result.ExternalId.HasValue)
-                throw new InvalidOperationException($"External id expected for user with id '{result.Id}'");
-
-            var emailUpdated = !string.Equals(result.Email, request.Email, StringComparison.CurrentCultureIgnoreCase);
-            if (emailUpdated)
-                if (GetByEmailOrNull(request.Email) != null)
-                    throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
-
-            result.Email = request.Email;
-            if (emailUpdated) result.EmailConfirmed = false;
-            result.FirstName = request.FirstName;
-            result.Surname = request.Surname;
-            result.DisplayName = request.DisplayName;
-            result.SetDisplayName();
-            result.PhoneNumber = request.PhoneNumber;
-            result.CountryId = request.CountryId;
-            result.CountryOfResidenceId = request.CountryOfResidenceId;
-            result.GenderId = request.GenderId;
-            result.DateOfBirth = request.DateOfBirth;
-
-            using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
-            {
-                await _userRepository.Update(result);
-                result.DateModified = DateTimeOffset.Now;
-
-                var user = new IdentityProvider.Models.User
-                {
-                    Id = result.ExternalId.Value,
-                    FirstName = result.FirstName,
-                    LastName = result.Surname,
-                    Username = result.Email,
-                    Email = result.Email,
-                    EmailVerified = result.EmailConfirmed,
-                    PhoneNumber = result.PhoneNumber,
-                    Gender = result.GenderId.HasValue ? _genderService.GetById(result.GenderId.Value).Name : null,
-                    CountryOfOrigin = result.CountryId.HasValue ? _countryService.GetById(result.CountryId.Value).Name : null,
-                    CountryOfResidence = result.CountryOfResidenceId.HasValue ? _countryService.GetById(result.CountryOfResidenceId.Value).Name : null,
-                    DateOfBirth = result.DateOfBirth.HasValue ? result.DateOfBirth.Value.ToString("yyyy/MM/dd") : null
-                };
-
-                await _identityProviderClient.UpdateUser(user, request.ResetPassword);
-
-                scope.Complete();
-            }
-
-            return result;
-        }
-
         public async Task<User> Upsert(UserRequest request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            await _userValidator.ValidateAndThrowAsync(request);
+            await _userRequestValidator.ValidateAndThrowAsync(request);
 
             // check if user exists
             var isNew = !request.Id.HasValue;
@@ -192,10 +129,11 @@ namespace Yoma.Core.Domain.Entity.Services
             if (existingByEmail != null && (isNew || result.Id != existingByEmail.Id))
                 throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
 
-            //profile fields updatable via UpdateProfile; Identity provider is source of truth
+            // profile fields updatable via UserProfileService.Update; identity provider is source of truth
             if (isNew)
             {
-                var kcUser = await _identityProviderClient.GetUser(result.Email) ?? throw new InvalidOperationException($"{nameof(User)} with email '{result.Email}' does not exist");
+                var kcUser = await _identityProviderClient.GetUser(result.Email)
+                    ?? throw new InvalidOperationException($"{nameof(User)} with email '{result.Email}' does not exist");
                 result.Email = request.Email;
                 result.FirstName = request.FirstName;
                 result.Surname = request.Surname;

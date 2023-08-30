@@ -13,8 +13,6 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         Task<User> Upsert(UserRequest request);
 
-        Task<User> UpdateProfile(string? email, UserProfileRequest request);
-
         Task<User> UpsertPhoto(string? email, IFormFile? file);
 
         UserSearchResults Search(UserSearchFilter filter);
