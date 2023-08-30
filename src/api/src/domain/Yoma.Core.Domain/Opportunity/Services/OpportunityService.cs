@@ -176,6 +176,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results;
         }
 
+        //TODO: Implicit status
         public OpportunitySearchResults Search(OpportunitySearchFilter filter, bool ensureOrganizationAuthorization)
         {
             if (filter == null)

@@ -201,7 +201,7 @@ SELECT
 FROM [opportunity].[Opportunity] O
 WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active')
 ORDER BY [DateCreated]
-OFFSET 31 ROWS
+OFFSET 30 ROWS
 FETCH NEXT 30 ROWS ONLY;
 GO
 
@@ -225,7 +225,7 @@ SELECT
 FROM [opportunity].[Opportunity] O
 WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active') AND O.[DateStart] <= GETDATE()
 ORDER BY [DateCreated]
-OFFSET 62 ROWS
+OFFSET 60 ROWS
 FETCH NEXT 30 ROWS ONLY;
 GO
 
@@ -249,7 +249,7 @@ SELECT
 FROM [opportunity].[Opportunity] O
 WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active') AND O.[DateStart] <= GETDATE()
 ORDER BY [DateCreated]
-OFFSET 93 ROWS
+OFFSET 90 ROWS
 FETCH NEXT 30 ROWS ONLY;
 GO
 
@@ -261,7 +261,7 @@ SELECT
 	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
 	O.[Id],
 	(SELECT [Id] FROM [opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification'),
-	(SELECT [Id] FROM [opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Rejected'),
+	(SELECT [Id] FROM [opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Completed'),
 	NULL,
 	CAST(DATEADD(DAY, 1, O.[DateStart]) AS DATE),
 	CAST(DATEADD(DAY, 2, O.[DateStart]) AS DATE),
@@ -273,6 +273,28 @@ SELECT
 FROM [opportunity].[Opportunity] O
 WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active') AND O.[DateStart] <= GETDATE()
 ORDER BY [DateCreated]
-OFFSET 124 ROWS
+OFFSET 120 ROWS
 FETCH NEXT 30 ROWS ONLY;
+GO
+
+--opporutnity: update running totals
+WITH AggregatedData AS (
+    SELECT
+        O.[Id] AS OpportunityId,
+        COUNT(MO.[Id]) AS [Count],
+        SUM(MO.[ZltoReward]) AS [ZltoRewardTotal],
+        SUM(MO.[YomaReward]) AS [YomaRewardTotal]
+    FROM [opportunity].[Opportunity] O
+    LEFT JOIN [opportunity].[MyOpportunity] MO ON O.[Id] = MO.[OpportunityId]
+    WHERE MO.[ActionId] = (SELECT [Id] FROM [opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification')
+        AND MO.[VerificationStatusId] = (SELECT [Id] FROM [opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Completed')
+    GROUP BY O.[Id]
+)
+UPDATE O
+SET
+    O.[ParticipantCount] = A.[Count],
+    O.[ZltoRewardCumulative] = A.[ZltoRewardTotal],
+    O.[YomaRewardCumulative] = A.[YomaRewardTotal]
+FROM [opportunity].[Opportunity] O
+INNER JOIN AggregatedData A ON O.[Id] = A.OpportunityId;
 GO

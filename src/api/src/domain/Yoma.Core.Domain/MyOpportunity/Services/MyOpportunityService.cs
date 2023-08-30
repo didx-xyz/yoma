@@ -197,6 +197,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             await _myOpportunityRepository.Delete(item);
         }
 
+
+        //TODO: VerificationSupported
         public async Task PerformActionSendForVerification(Guid opportunityId, MyOpportunityVerifyRequest request)
         {
             var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active });
