@@ -74,21 +74,6 @@ namespace Yoma.Core.Api.Controllers
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
-
-        [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter")]
-        [HttpPost("search")]
-        [ProducesResponseType(typeof(List<OpportunitySearchResults>), (int)HttpStatusCode.OK)]
-        [AllowAnonymous]
-        public IActionResult Search([FromBody] OpportunitySearchFilter filter)
-        {
-            _logger.LogInformation("Handling request {requestName}", nameof(SearchInfo));
-
-            var result = _opportunityService.Search(filter, true);
-
-            _logger.LogInformation("Request {requestName} handled", nameof(SearchInfo));
-
-            return StatusCode((int)HttpStatusCode.OK, result);
-        }
         #endregion
 
         #region Administrative Actions
@@ -133,6 +118,21 @@ namespace Yoma.Core.Api.Controllers
             var result = _opportunityTypeService.List();
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityTypes));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter")]
+        [HttpPost("search")]
+        [ProducesResponseType(typeof(List<OpportunitySearchResults>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult Search([FromBody] OpportunitySearchFilter filter)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(Search));
+
+            var result = _opportunityService.Search(filter, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(Search));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

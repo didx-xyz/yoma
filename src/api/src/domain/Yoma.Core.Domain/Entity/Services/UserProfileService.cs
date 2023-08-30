@@ -10,6 +10,8 @@ using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Entity.Validators;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.MyOpportunity.Interfaces;
+using Yoma.Core.Domain.MyOpportunity.Models;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -22,6 +24,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IGenderService _genderService;
         private readonly ICountryService _countryService;
         private readonly IOrganizationService _organizationService;
+        private readonly IMyOpportunityService _myOpportunityService;
         private readonly UserProfileRequestValidator _userProfileRequestValidator;
         private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
         #endregion
@@ -33,6 +36,7 @@ namespace Yoma.Core.Domain.Entity.Services
             IGenderService genderService,
             ICountryService countryService,
             IOrganizationService organizationService,
+            IMyOpportunityService myOpportunityService,
             UserProfileRequestValidator userProfileRequestValidator,
             IRepositoryValueContainsWithNavigation<User> userRepository)
         {
@@ -42,6 +46,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _genderService = genderService;
             _countryService = countryService;
             _organizationService = organizationService;
+            _myOpportunityService = myOpportunityService;
             _userProfileRequestValidator = userProfileRequestValidator;
             _userRepository = userRepository;
         }
@@ -51,27 +56,15 @@ namespace Yoma.Core.Domain.Entity.Services
         public UserProfile Get()
         {
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-
             var user = _userService.GetByEmail(username);
-
-            var result = user.ToProfile();
-
-            result.AdminsOf = _organizationService.ListAdminsOf();
-
-            return result;
+            return ToProfile(user);
         }
 
         public async Task<UserProfile> UpsertPhoto(IFormFile file)
         {
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-
             var user = await _userService.UpsertPhoto(username, file);
-
-            var result = user.ToProfile();
-
-            result.AdminsOf = _organizationService.ListAdminsOf();
-
-            return result;
+            return ToProfile(user);
         }
 
         public async Task<UserProfile> Update(UserProfileRequest request)
@@ -130,8 +123,30 @@ namespace Yoma.Core.Domain.Entity.Services
                 scope.Complete();
             }
 
+            return ToProfile(user);
+        }
+        #endregion
+
+        #region Private Members
+        private UserProfile ToProfile(User user)
+        {
             var result = user.ToProfile();
             result.AdminsOf = _organizationService.ListAdminsOf();
+
+            var filter = new MyOpportunitySearchFilter
+            {
+                TotalCountOnly = true,
+                Action = MyOpportunity.Action.Saved
+            };
+            result.OpportunityCountSaved = _myOpportunityService.Search(filter).TotalCount ?? default;
+
+            filter.Action = MyOpportunity.Action.Verification;
+            filter.VerificationStatus = MyOpportunity.VerificationStatus.Pending;
+            result.OpportunityCountPending = _myOpportunityService.Search(filter).TotalCount ?? default;
+
+            filter.VerificationStatus = MyOpportunity.VerificationStatus.Completed;
+            result.OpportunityCountCompleted = _myOpportunityService.Search(filter).TotalCount ?? default;
+
             return result;
         }
         #endregion

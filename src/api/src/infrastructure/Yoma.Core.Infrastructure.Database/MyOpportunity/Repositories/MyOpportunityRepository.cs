@@ -1,4 +1,5 @@
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
@@ -19,6 +20,14 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 Id = entity.Id,
                 UserId = entity.UserId,
                 OpportunityId = entity.OpportunityId,
+                OpportunityTitle = entity.Opportunity.Title,
+                OpportunityType = entity.Opportunity.Type.Name,
+                OpportunityStatusId = entity.Opportunity.StatusId,
+                OpportunityStatus = Enum.Parse<Domain.Opportunity.Status>(entity.Opportunity.Status.Name, true),
+                OpportunityDateStart = entity.Opportunity.DateStart,
+                OrganizationId = entity.Opportunity.OrganizationId,
+                OrganizationStatusId = entity.Opportunity.Organization.StatusId,
+                OrganizationStatus = Enum.Parse<OrganizationStatus>(entity.Opportunity.Organization.Status.Name, true),
                 ActionId = entity.ActionId,
                 Action = Enum.Parse<Domain.MyOpportunity.Action>(entity.Action.Name, true),
                 VerificationStatusId = entity.VerificationStatusId,

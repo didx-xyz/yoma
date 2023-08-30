@@ -1012,6 +1012,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             schema: "opportunity");
 
             migrationBuilder.InsertData(
+            table: "OpportunityType",
+            columns: new[] { "Id", "Name", "DateCreated" },
+            values: new object[,]
+{
+                    {"25F5A835-C3F7-43CA-9840-D372A1D26694","Learning",DateTimeOffset.Now}
+                    ,
+                    {"F12A9D90-A8F6-4914-8CA5-6ACF209F7312","Task",DateTimeOffset.Now}
+            },
+            schema: "opportunity");
+
+            migrationBuilder.InsertData(
             table: "MyOpportunityAction",
             columns: new[] { "Id", "Name", "DateCreated" },
             values: new object[,]

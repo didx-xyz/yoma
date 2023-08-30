@@ -93,25 +93,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Public Members
-        public bool Active(Guid id, bool checkStarted, bool throwNotFound)
-        {
-            var opportunity = throwNotFound ? GetById(id, false, false) : GetByIdOrNull(id, false);
-            if (opportunity == null) return false;
-            return Active(opportunity, checkStarted);
-        }
-
-        public bool Active(Models.Opportunity opportunity, bool checkStarted)
-        {
-            if (opportunity == null)
-                throw new ArgumentNullException(nameof(opportunity));
-
-            if (checkStarted && opportunity.DateStart > DateTimeOffset.Now) return false;
-
-            if (!_organizationService.Active(opportunity.OrganizationId, true)) return false;
-
-            return opportunity.Status == Status.Active;
-        }
-
         public Models.Opportunity GetById(Guid id, bool includeChildren, bool ensureOrganizationAuthorization)
         {
             if (id == Guid.Empty)
@@ -395,7 +376,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.Description = request.Description;
             result.TypeId = request.TypeId;
             result.Type = _opportunityTypeService.GetById(request.TypeId).Name;
-            result.OrganizationId = request.OrganizationId;
+            result.OrganizationId = request.OrganizationId; //TODO: Only admin role
             result.Organization = _organizationService.GetById(request.OrganizationId, false, false).Name;
             result.Instructions = request.Instructions;
             result.URL = request.URL;
@@ -435,15 +416,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return result;
         }
 
-        public async Task<(decimal? ZltoReward, decimal? YomaReward)> FinalizeVerification(Guid id, bool completed, bool ensureOrganizationAuthorization)
+        public async Task<(decimal? ZltoReward, decimal? YomaReward)> AllocateRewards(Guid id, bool ensureOrganizationAuthorization)
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
             //can complete, provided active (and started) or expired; action prior to expiration
-            if (!Active(opportunity, true) && opportunity.Status != Status.Expired)
-                new InvalidOperationException($"{nameof(Models.Opportunity)} verification can no longer be completed (current status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
-
-            if (!completed) return (null, null);
+            if (!Active(opportunity) && opportunity.Status != Status.Expired)
+               throw new InvalidOperationException($"{nameof(Models.Opportunity)} rewards can no longer be allocated (current status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
             var count = (opportunity.ParticipantCount ?? 0) + 1;
             if (opportunity.ParticipantLimit.HasValue && count > opportunity.ParticipantLimit.Value)
@@ -722,5 +701,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
             }
         }
         #endregion
+
+        #region Private Members
+        private static bool Active(Models.Opportunity opportunity)
+        {
+            if (opportunity == null)
+                throw new ArgumentNullException(nameof(opportunity));
+
+            if (opportunity.Status != Status.Active) return false;
+            if (opportunity.DateStart > DateTimeOffset.Now) return false;
+            if (opportunity.OrganizationStatus != Entity.OrganizationStatus.Active) return false;
+            return true;
+        }
+        #endregion
+
     }
 }
