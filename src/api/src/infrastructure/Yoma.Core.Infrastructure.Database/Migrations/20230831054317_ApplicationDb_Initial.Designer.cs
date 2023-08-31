@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230829083557_ApplicationDb_Initial")]
+    [Migration("20230831054317_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -897,7 +897,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("OpportunityId", "SkillId")
                         .IsUnique();
 
-                    b.ToTable("OpportunitySkill", "opportunity");
+                    b.ToTable("OpportunitySkills", "opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>

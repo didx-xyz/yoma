@@ -156,6 +156,17 @@ CROSS JOIN (
 ) AS R;
 GO
 
+--skills
+INSERT INTO [opportunity].[OpportunitySkills]([Id],[OpportunityId],[SkillId],[DateCreated])
+SELECT NEWID(), O.[Id] AS [OpportunityId], R.SkillId, GETDATE()
+FROM [opportunity].[Opportunity] O
+CROSS JOIN (
+    SELECT TOP 10 [Id] AS SkillId
+    FROM [lookup].[Skill]
+    ORDER BY NEWID()
+) AS R;
+GO
+
 /****myOpportunities****/
 --viewed
 INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CertificateId],[DateStart]
