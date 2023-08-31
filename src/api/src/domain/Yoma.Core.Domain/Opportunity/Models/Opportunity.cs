@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Lookups.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Models
@@ -17,6 +18,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public Guid OrganizationId { get; set; }
 
         public string Organization { get; set; }
+
+        public Guid OrganizationStatusId { get; set; }
+
+        public OrganizationStatus OrganizationStatus { get; set; }
 
         public string? Instructions { get; set; }
 

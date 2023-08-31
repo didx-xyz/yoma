@@ -1,6 +1,8 @@
 USE [yoma-dev]
 GO
 
+/****users & organizations****/
+
 --testuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO [entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
 			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[ZltoWalletCountryId],[TenantId],[DateCreated],[DateModified])
@@ -27,10 +29,9 @@ DECLARE @RandomLengthName INT = ABS(CHECKSUM(NEWID()) % 5) + 5;
 DECLARE @RandomLengthOther INT = ABS(CHECKSUM(NEWID()) % 101) + 100;
 
 DECLARE @RowCount INT = 0;
-
+--organizations
 WHILE @RowCount < 10
 BEGIN
-    --organizations
     INSERT INTO [entity].[Organization]([Id],
 			    [Name],
 			    [WebsiteURL],[PrimaryContactName],[PrimaryContactEmail],[PrimaryContactPhone],[VATIN],[TaxNumber],[RegistrationNumber],
@@ -61,13 +62,15 @@ INSERT INTO [entity].[OrganizationProviderTypes]([Id],[OrganizationId],[Provider
 SELECT NEWID(),O.[Id] AS [OrganizationId],PT.[Id] AS [ProviderTypeId],GETDATE() FROM [entity].[Organization] O CROSS JOIN [entity].[OrganizationProviderType] PT
 GO
 
+/****opportunities****/
 DECLARE @Words VARCHAR(500) = 'The,A,An,Awesome,Incredible,Fantastic,Amazing,Wonderful,Exciting,Unbelievable,Great,Marvelous,Stunning,Impressive,Captivating,Extraordinary,Superb,Epic,Spectacular,Magnificent,Phenomenal,Outstanding,Brilliant,Enthralling,Enchanting,Mesmerizing,Riveting,Spellbinding,Unforgettable,Sublime';
-
 DECLARE @RowCount INT = 0;
 
+--opportunities
 WHILE @RowCount < 5000
 BEGIN
-  --opportunities
+  DECLARE @DateStart DateTimeOffSet(7) = (SELECT DATEADD(DAY, -ABS(CHECKSUM(NEWID()) % (5 * 365)) + 365, GETDATE()))
+
   INSERT INTO [opportunity].[Opportunity]([Id],
 		[Title],
 		[Description],
@@ -116,8 +119,8 @@ BEGIN
 		NULL,
 		(SELECT TOP 1 [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] in ('Active','Inactive') ORDER BY NEWID()) as [StatusId],
 		(SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (ABS(CHECKSUM(NEWID()) % 101) + 100) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) as [Keywords],
-		GETDATE(),
-		(SELECT DATEADD(DAY, ABS(CHECKSUM(NEWID()) % (5 * 365)) + 365, GETDATE())) as [DateEnd],
+		@DateStart,
+		CAST(DATEADD(DAY, 2, @DateStart) AS DATE),
 		GETDATE(),
 		'testuser@gmail.com',
 		GETDATE(),
@@ -151,4 +154,158 @@ CROSS JOIN (
     FROM [lookup].[Language]
     ORDER BY NEWID()
 ) AS R;
+GO
+
+--skills
+INSERT INTO [opportunity].[OpportunitySkills]([Id],[OpportunityId],[SkillId],[DateCreated])
+SELECT NEWID(), O.[Id] AS [OpportunityId], R.SkillId, GETDATE()
+FROM [opportunity].[Opportunity] O
+CROSS JOIN (
+    SELECT TOP 10 [Id] AS SkillId
+    FROM [lookup].[Skill]
+    ORDER BY NEWID()
+) AS R;
+GO
+
+/****myOpportunities****/
+--viewed
+INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CertificateId],[DateStart]
+           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+SELECT
+	NEWID() ,
+	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
+	O.[Id],
+	(SELECT [Id] FROM [opportunity].[MyOpportunityAction] WHERE [Name] = 'Viewed'),
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	GETDATE(),
+	GETDATE()
+FROM [opportunity].[Opportunity] O
+WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active')
+ORDER BY [DateCreated]
+OFFSET 0 ROWS
+FETCH NEXT 30 ROWS ONLY;
+GO
+
+--saved
+INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CertificateId],[DateStart]
+           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+SELECT
+	NEWID() ,
+	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
+	O.[Id],
+	(SELECT [Id] FROM [opportunity].[MyOpportunityAction] WHERE [Name] = 'Saved'),
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	GETDATE(),
+	GETDATE()
+FROM [opportunity].[Opportunity] O
+WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active')
+ORDER BY [DateCreated]
+OFFSET 30 ROWS
+FETCH NEXT 30 ROWS ONLY;
+GO
+
+--verification (pending)
+INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CertificateId],[DateStart]
+           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+SELECT
+	NEWID() ,
+	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
+	O.[Id],
+	(SELECT [Id] FROM [opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification'),
+	(SELECT [Id] FROM [opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Pending'),
+	NULL,
+	CAST(DATEADD(DAY, 1, O.[DateStart]) AS DATE),
+	CAST(DATEADD(DAY, 2, O.[DateStart]) AS DATE),
+	NULL,
+	NULL,
+	NULL,
+	GETDATE(),
+	GETDATE()
+FROM [opportunity].[Opportunity] O
+WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active') AND O.[DateStart] <= GETDATE()
+ORDER BY [DateCreated]
+OFFSET 60 ROWS
+FETCH NEXT 30 ROWS ONLY;
+GO
+
+--verification (rejected)
+INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CertificateId],[DateStart]
+           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+SELECT
+	NEWID() ,
+	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
+	O.[Id],
+	(SELECT [Id] FROM [opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification'),
+	(SELECT [Id] FROM [opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Rejected'),
+	NULL,
+	CAST(DATEADD(DAY, 1, O.[DateStart]) AS DATE),
+	CAST(DATEADD(DAY, 2, O.[DateStart]) AS DATE),
+	NULL,
+	NULL,
+	NULL,
+	GETDATE(),
+	GETDATE()
+FROM [opportunity].[Opportunity] O
+WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active') AND O.[DateStart] <= GETDATE()
+ORDER BY [DateCreated]
+OFFSET 90 ROWS
+FETCH NEXT 30 ROWS ONLY;
+GO
+
+--verification (completed)
+INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CertificateId],[DateStart]
+           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+SELECT
+	NEWID() ,
+	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
+	O.[Id],
+	(SELECT [Id] FROM [opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification'),
+	(SELECT [Id] FROM [opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Completed'),
+	NULL,
+	CAST(DATEADD(DAY, 1, O.[DateStart]) AS DATE),
+	CAST(DATEADD(DAY, 2, O.[DateStart]) AS DATE),
+	GETDATE(),
+	O.[ZltoReward],
+	O.[YomaReward],
+	GETDATE(),
+	GETDATE()
+FROM [opportunity].[Opportunity] O
+WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active') AND O.[DateStart] <= GETDATE()
+ORDER BY [DateCreated]
+OFFSET 120 ROWS
+FETCH NEXT 30 ROWS ONLY;
+GO
+
+--opporutnity: update running totals
+WITH AggregatedData AS (
+    SELECT
+        O.[Id] AS OpportunityId,
+        COUNT(MO.[Id]) AS [Count],
+        SUM(MO.[ZltoReward]) AS [ZltoRewardTotal],
+        SUM(MO.[YomaReward]) AS [YomaRewardTotal]
+    FROM [opportunity].[Opportunity] O
+    LEFT JOIN [opportunity].[MyOpportunity] MO ON O.[Id] = MO.[OpportunityId]
+    WHERE MO.[ActionId] = (SELECT [Id] FROM [opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification')
+        AND MO.[VerificationStatusId] = (SELECT [Id] FROM [opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Completed')
+    GROUP BY O.[Id]
+)
+UPDATE O
+SET
+    O.[ParticipantCount] = A.[Count],
+    O.[ZltoRewardCumulative] = A.[ZltoRewardTotal],
+    O.[YomaRewardCumulative] = A.[YomaRewardTotal]
+FROM [opportunity].[Opportunity] O
+INNER JOIN AggregatedData A ON O.[Id] = A.OpportunityId;
 GO

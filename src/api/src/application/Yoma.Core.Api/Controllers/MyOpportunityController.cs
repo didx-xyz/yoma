@@ -9,7 +9,7 @@ using Yoma.Core.Domain.MyOpportunity.Models;
 
 namespace Yoma.Core.Api.Controllers
 {
-    [Route("api/v3/user")]
+    [Route("api/v3/myopportunity")]
     [ApiController]
     [Authorize(Policy = Common.Constants.Authorization_Policy)]
     [SwaggerTag("(by default, User role required)")]
@@ -49,6 +49,21 @@ namespace Yoma.Core.Api.Controllers
         #endregion Administrative Actions
 
         #region Authenticated User Based Actions
+        [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter")]
+        [HttpPost("search")]
+        [ProducesResponseType(typeof(List<MyOpportunitySearchResults>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_User}")]
+        public IActionResult Search([FromBody] MyOpportunitySearchFilter filter)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(Search));
+
+            var result = _myOpportunityService.Search(filter);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(Search));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
         [SwaggerOperation(Summary = "Save an opportunity (Authenticated User)")]
         [HttpPut("action/{opportunityId}/save")]
         [ProducesResponseType((int)HttpStatusCode.OK)]

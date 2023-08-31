@@ -5,6 +5,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Opportunity;
+using Yoma.Core.Domain.Entity;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 {
@@ -31,6 +32,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 Type = entity.Type.Name,
                 OrganizationId = entity.OrganizationId,
                 Organization = entity.Organization.Name,
+                OrganizationStatusId = entity.Organization.StatusId,
+                OrganizationStatus = Enum.Parse<OrganizationStatus>(entity.Organization.Status.Name, true),
                 Instructions = entity.Instructions,
                 URL = entity.URL,
                 ZltoReward = entity.ZltoReward,

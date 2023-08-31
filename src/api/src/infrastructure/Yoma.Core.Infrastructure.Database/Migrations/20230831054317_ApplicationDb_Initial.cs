@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -673,7 +674,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "OpportunitySkill",
+                name: "OpportunitySkills",
                 schema: "opportunity",
                 columns: table => new
                 {
@@ -684,16 +685,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_OpportunitySkill", x => x.Id);
+                    table.PrimaryKey("PK_OpportunitySkills", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_OpportunitySkill_Opportunity_OpportunityId",
+                        name: "FK_OpportunitySkills_Opportunity_OpportunityId",
                         column: x => x.OpportunityId,
                         principalSchema: "opportunity",
                         principalTable: "Opportunity",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_OpportunitySkill_Skill_SkillId",
+                        name: "FK_OpportunitySkills_Skill_SkillId",
                         column: x => x.SkillId,
                         principalSchema: "lookup",
                         principalTable: "Skill",
@@ -893,16 +894,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_OpportunitySkill_OpportunityId_SkillId",
+                name: "IX_OpportunitySkills_OpportunityId_SkillId",
                 schema: "opportunity",
-                table: "OpportunitySkill",
+                table: "OpportunitySkills",
                 columns: new[] { "OpportunityId", "SkillId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_OpportunitySkill_SkillId",
+                name: "IX_OpportunitySkills_SkillId",
                 schema: "opportunity",
-                table: "OpportunitySkill",
+                table: "OpportunitySkills",
                 column: "SkillId");
 
             migrationBuilder.CreateIndex(
@@ -1074,7 +1075,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 columns: new[] { "UserId", "SkillId" },
                 unique: true);
 
-
             ApplicationDb_Initial_Seeding.Seed(migrationBuilder);
         }
 
@@ -1098,7 +1098,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "opportunity");
 
             migrationBuilder.DropTable(
-                name: "OpportunitySkill",
+                name: "OpportunitySkills",
                 schema: "opportunity");
 
             migrationBuilder.DropTable(

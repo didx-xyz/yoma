@@ -1,30 +1,14 @@
-using Yoma.Core.Domain.Entity;
-
 namespace Yoma.Core.Domain.MyOpportunity.Models
 {
-    public class MyOpportunity
+    public class MyOpportunityInfo
     {
         public Guid Id { get; set; }
-
-        public Guid UserId { get; set; }
 
         public Guid OpportunityId { get; set; }
 
         public string OpportunityTitle { get; set; }
 
         public string OpportunityType { get; set; }
-
-        public Guid OpportunityStatusId { get; set; }
-
-        public Opportunity.Status OpportunityStatus { get; set; }
-
-        public DateTimeOffset OpportunityDateStart { get; set; }
-
-        public Guid OrganizationId { get; set; }
-
-        public Guid OrganizationStatusId { get; set; }
-
-        public OrganizationStatus OrganizationStatus { get; set; }
 
         public Guid ActionId { get; set; }
 
@@ -36,6 +20,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public Guid? CertificateId { get; set; }
 
+        public string? CertificateURL { get; set; }
+
         public DateTimeOffset? DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }
@@ -45,9 +31,5 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
         public decimal? ZltoReward { get; set; }
 
         public decimal? YomaReward { get; set; }
-
-        public DateTimeOffset DateCreated { get; set; }
-
-        public DateTimeOffset DateModified { get; set; }
     }
 }

@@ -80,6 +80,7 @@ namespace Yoma.Core.Domain
 
             using var scope = serviceProvider.CreateScope();
             var skillService = scope.ServiceProvider.GetRequiredService<ISkillService>();
+            BackgroundJob.Enqueue(() => skillService.SeedSkills()); //execute on startup
             RecurringJob.AddOrUpdate("Skill Reference Seeding", () => skillService.SeedSkills(), options.SeedSkillsSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
             var opportunityBackgroundService = scope.ServiceProvider.GetRequiredService<IOpportunityBackgroundService>();

@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 {
     public interface IMyOpportunityService
     {
+        MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter);
+
         Task PerformActionViewed(Guid opportunityId);
 
         Task PerformActionSaved(Guid opportunityId);

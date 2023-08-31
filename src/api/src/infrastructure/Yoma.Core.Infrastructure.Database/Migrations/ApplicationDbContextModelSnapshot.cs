@@ -894,7 +894,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("OpportunityId", "SkillId")
                         .IsUnique();
 
-                    b.ToTable("OpportunitySkill", "opportunity");
+                    b.ToTable("OpportunitySkills", "opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>

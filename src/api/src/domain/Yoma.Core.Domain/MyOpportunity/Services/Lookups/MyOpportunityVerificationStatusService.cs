@@ -62,7 +62,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services.Lookups
             if (!_appSettings.CacheEnabledByReferenceDataTypes.HasFlag(Core.ReferenceDataType.Lookups))
                 return _myOpportunityVerificationStatusRepository.Query().ToList();
 
-            var result = _memoryCache.GetOrCreate(nameof(OpportunityStatus), entry =>
+            var result = _memoryCache.GetOrCreate(nameof(MyOpportunityVerificationStatus), entry =>
             {
                 entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationLookupInHours);
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowLookupInDays);

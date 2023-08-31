@@ -73,13 +73,6 @@ namespace Yoma.Core.Domain.Entity.Services
         #endregion
 
         #region Public Members
-        public bool Active(Guid id, bool throwNotFound)
-        {
-            var org = throwNotFound ? GetById(id, false, false) : GetByIdOrNull(id, false);
-            if (org == null) return false;
-            return org.Status != OrganizationStatus.Active;
-        }
-
         public bool Updatable(Guid id, bool throwNotFound)
         {
             var org = throwNotFound ? GetById(id, false, false) : GetByIdOrNull(id, false);
@@ -621,50 +614,48 @@ namespace Yoma.Core.Domain.Entity.Services
             var itemsNewBlobs = new List<BlobObject>();
             try
             {
-                using (var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                var itemsExistingByType = org.Documents?.Where(o => o.Type == type.ToString()).ToList();
+
+                //track existing (to be deleted)
+                if (itemsExistingByType != null && itemsExistingByType.Any())
                 {
-                    var itemsExistingByType = org.Documents?.Where(o => o.Type == type.ToString()).ToList();
-
-                    //track existing (to be deleted)
-                    if (itemsExistingByType != null && itemsExistingByType.Any())
-                    {
-                        foreach (var item in itemsExistingByType)
-                            item.File = await _blobService.Download(item.FileId);
-                        itemsExisting.AddRange(itemsExistingByType);
-                    }
-
-                    //new items
-                    foreach (var file in documents)
-                    {
-                        //upload new item to blob storage
-                        var blobObject = await _blobService.Create(file, FileType.Documents);
-                        itemsNewBlobs.Add(blobObject);
-
-                        var item = new OrganizationDocument
-                        {
-                            OrganizationId = org.Id,
-                            FileId = blobObject.Id,
-                            Type = type.ToString(),
-                            ContentType = file.ContentType,
-                            OriginalFileName = file.FileName,
-                            DateCreated = DateTimeOffset.Now
-                        };
-
-                        //create new item in db
-                        await _organizationDocumentRepository.Create(item);
-                        itemsNew.Add(item);
-                    }
-
-                    //delete existing items in blob storage and db
-                    foreach (var item in itemsExisting)
-                    {
-                        await _organizationDocumentRepository.Delete(item);
-                        await _blobService.Delete(item.FileId);
-                        itemsExistingDeleted.Add(item);
-                    }
-
-                    scope.Complete();
+                    foreach (var item in itemsExistingByType)
+                        item.File = await _blobService.Download(item.FileId);
+                    itemsExisting.AddRange(itemsExistingByType);
                 }
+
+                //new items
+                foreach (var file in documents)
+                {
+                    //upload new item to blob storage
+                    var blobObject = await _blobService.Create(file, FileType.Documents);
+                    itemsNewBlobs.Add(blobObject);
+
+                    var item = new OrganizationDocument
+                    {
+                        OrganizationId = org.Id,
+                        FileId = blobObject.Id,
+                        Type = type.ToString(),
+                        ContentType = file.ContentType,
+                        OriginalFileName = file.FileName,
+                        DateCreated = DateTimeOffset.Now
+                    };
+
+                    //create new item in db
+                    await _organizationDocumentRepository.Create(item);
+                    itemsNew.Add(item);
+                }
+
+                //delete existing items in blob storage and db
+                foreach (var item in itemsExisting)
+                {
+                    await _organizationDocumentRepository.Delete(item);
+                    await _blobService.Delete(item.FileId);
+                    itemsExistingDeleted.Add(item);
+                }
+
+                scope.Complete();
             }
             catch //roll back
             {
