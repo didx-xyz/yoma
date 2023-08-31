@@ -37,7 +37,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private static readonly OrganizationStatus[] Statuses_Updatable = { OrganizationStatus.Active, OrganizationStatus.Inactive };
         private static readonly OrganizationStatus[] Statuses_Activatable = { OrganizationStatus.Inactive };
         private static readonly OrganizationStatus[] Statuses_CanDelete = { OrganizationStatus.Active, OrganizationStatus.Inactive, OrganizationStatus.Declined };
-        private static readonly OrganizationStatus[] Statuses_DeActivatable = { OrganizationStatus.Active, OrganizationStatus.Declined };
+        private static readonly OrganizationStatus[] Statuses_DeActivatable = { OrganizationStatus.Active, OrganizationStatus.Declined, OrganizationStatus.Deleted };
         private static readonly OrganizationStatus[] Statuses_Declinable = { OrganizationStatus.Inactive };
         #endregion
 
@@ -299,7 +299,7 @@ namespace Yoma.Core.Domain.Entity.Services
             result.Biography = request.Biography;
 
             if (!Statuses_Updatable.Contains(result.Status))
-                throw new InvalidOperationException($"{nameof(Organization)} can no longer be updated (current status '{result.Status}')");
+                throw new ValidationException($"The {nameof(Organization)} cannot be updated in its current state, namely '{result.Status}' .Please change the status to one of the following: {string.Join(" / ", Statuses_Updatable)} before performing the update.");
 
             await _organizationRepository.Update(result);
             result.DateModified = DateTimeOffset.Now;
@@ -318,28 +318,28 @@ namespace Yoma.Core.Domain.Entity.Services
                 case OrganizationStatus.Active:
                     if (org.Status == OrganizationStatus.Active) return;
                     if (!Statuses_Activatable.Contains(org.Status))
-                        throw new InvalidOperationException($"{nameof(Organization)} can not be activated (current status '{org.Status}')");
+                        throw new ValidationException($"{nameof(Organization)} can not be activated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
                     //TODO: Send email to org admins
                     break;
 
                 case OrganizationStatus.Inactive:
                     if (org.Status == OrganizationStatus.Inactive) return;
                     if (!Statuses_DeActivatable.Contains(org.Status))
-                        throw new InvalidOperationException($"{nameof(Organization)} can not be deactivated (current status '{org.Status}')");
+                        throw new ValidationException($"{nameof(Organization)} can not be deactivated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
                     //TODO: Send email to SAP admins
                     break;
 
                 case OrganizationStatus.Declined:
-                    if (org.Status == OrganizationStatus.Deleted) return;
+                    if (org.Status == OrganizationStatus.Declined) return;
                     if (!Statuses_Declinable.Contains(org.Status))
-                        throw new InvalidOperationException($"{nameof(Organization)} can not be deleted (current status '{org.Status}')");
+                        throw new ValidationException($"{nameof(Organization)} can not be declined (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Declinable)}'");
                     //TODO: Send email to org admins
                     break;
 
                 case OrganizationStatus.Deleted:
                     if (org.Status == OrganizationStatus.Deleted) return;
                     if (!Statuses_CanDelete.Contains(org.Status))
-                        throw new InvalidOperationException($"{nameof(Organization)} can not be deleted (current status '{org.Status}')");
+                        throw new ValidationException($"{nameof(Organization)} can not be deleted (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
                     break;
 
                 default:
@@ -369,7 +369,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new ArgumentNullException(nameof(providerTypeIds));
 
             if (!Statuses_Updatable.Contains(result.Status))
-                throw new InvalidOperationException($"{nameof(Organization)} can no longer be updated (current status '{result.Status}')");
+                throw new ValidationException($"{nameof(Organization)} '{result.Name}' can no longer be updated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             foreach (var typeId in providerTypeIds)
             {
@@ -421,7 +421,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
             if (!Statuses_Updatable.Contains(org.Status))
-                throw new InvalidOperationException($"{nameof(Organization)} can no longer be updated (current status '{org.Status}')");
+                throw new ValidationException($"{nameof(Organization)} '{org.Name}' can no longer be updated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             var item = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == id && o.UserId == user.Id);
             if (item == null) return;
@@ -494,7 +494,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new ArgumentNullException(nameof(providerTypeIds));
 
             if (!Statuses_Updatable.Contains(org.Status))
-                throw new InvalidOperationException($"{nameof(Organization)} can no longer be updated (current status '{org.Status}')");
+                throw new ValidationException($"{nameof(Organization)} '{org.Name}' can no longer be updated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             var typesAdded = false;
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
@@ -541,7 +541,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new ArgumentNullException(nameof(file));
 
             if (!Statuses_Updatable.Contains(org.Status))
-                throw new InvalidOperationException($"{nameof(Organization)} can no longer be updated (current status '{org.Status}')");
+                throw new ValidationException($"{nameof(Organization)} '{org.Name}' can no longer be updated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             var currentLogo = org.LogoId.HasValue ? new { Id = org.LogoId.Value, File = await _blobService.Download(org.LogoId.Value) } : null;
 
@@ -581,7 +581,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
             if (!Statuses_Updatable.Contains(org.Status))
-                throw new InvalidOperationException($"{nameof(Organization)} can no longer be updated (current status '{org.Status}')");
+                throw new ValidationException($"{nameof(Organization)} '{org.Name}' can no longer be updated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             var item = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == org.Id && o.UserId == user.Id);
             if (item != null) return;
@@ -606,7 +606,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new ArgumentNullException(nameof(documents));
 
             if (!Statuses_Updatable.Contains(org.Status))
-                throw new InvalidOperationException($"{nameof(Organization)} can no longer be updated (current status '{org.Status}')");
+                throw new ValidationException($"{nameof(Organization)} '{org.Name}' can no longer be updated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             var itemsNew = new List<OrganizationDocument>();
             var itemsExisting = new List<OrganizationDocument>();

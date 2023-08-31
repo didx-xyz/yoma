@@ -4,7 +4,9 @@ using System.Transactions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Helpers;
 using Yoma.Core.Domain.Opportunity.Interfaces;
@@ -24,6 +26,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly IOpportunityCategoryService _opportunityCategoryService;
         private readonly ICountryService _countryService;
         private readonly IOrganizationService _organizationService;
+        private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IOpportunityTypeService _opportunityTypeService;
         private readonly ILanguageService _languageService;
         private readonly ISkillService _skillService;
@@ -45,7 +48,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private static readonly Status[] Statuses_Updatable = { Status.Active, Status.Inactive };
         private static readonly Status[] Statuses_Activatable = { Status.Inactive };
         private static readonly Status[] Statuses_CanDelete = { Status.Active, Status.Inactive };
-        private static readonly Status[] Statuses_DeActivatable = { Status.Active };
+        private static readonly Status[] Statuses_DeActivatable = { Status.Active, Status.Deleted, Status.Expired };
         #endregion
 
         #region Constructor
@@ -54,6 +57,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             IOpportunityCategoryService opportunityCategoryService,
             ICountryService countryService,
             IOrganizationService organizationService,
+            IOrganizationStatusService organizationStatusService,
             IOpportunityTypeService opportunityTypeService,
             ILanguageService languageService,
             ISkillService skillService,
@@ -74,6 +78,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             _opportunityCategoryService = opportunityCategoryService;
             _countryService = countryService;
             _organizationService = organizationService;
+            _organizationStatusService = organizationStatusService;
             _opportunityTypeService = opportunityTypeService;
             _languageService = languageService;
             _skillService = skillService;
@@ -154,8 +159,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var filterInternal = new OpportunitySearchFilter
             {
-                // active only
-                Statuses = new List<Status> { Status.Active },
+                ImplicitlyActive = true, //active and relating to active organization, irrespective of started
                 TypeIds = filter.TypeIds,
                 CategoryIds = filter.CategoryIds,
                 LanguageIds = filter.LanguageIds,
@@ -176,7 +180,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results;
         }
 
-        //TODO: Implicit status
         public OpportunitySearchResults Search(OpportunitySearchFilter filter, bool ensureOrganizationAuthorization)
         {
             if (filter == null)
@@ -268,14 +271,24 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 }
             }
 
-            //statuses
-            if (filter.Statuses != null)
+            if (filter.ImplicitlyActive)
             {
-                filter.Statuses = filter.Statuses.Distinct().ToList();
-                if (filter.Statuses.Any())
+                var opportunityStatusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+                var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+
+                query = query.Where(o => o.StatusId == opportunityStatusActiveId && o.OrganizationStatusId == organizationStatusActiveId);
+            }
+            else
+            {
+                //statuses
+                if (filter.Statuses != null)
                 {
-                    var statusIds = filter.Statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
-                    query = query.Where(o => statusIds.Contains(o.StatusId));
+                    filter.Statuses = filter.Statuses.Distinct().ToList();
+                    if (filter.Statuses.Any())
+                    {
+                        var statusIds = filter.Statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+                        query = query.Where(o => statusIds.Contains(o.StatusId));
+                    }
                 }
             }
 
@@ -407,7 +420,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             else
             {
                 if (!Statuses_Updatable.Contains(result.Status))
-                    throw new InvalidOperationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{result.Status}')");
+                    throw new ValidationException($"The {nameof(Models.Opportunity)} cannot be updated in its current state, namely '{result.Status}' .Please change the status to one of the following: {string.Join(" / ", Statuses_Updatable)} before performing the update.");
 
                 result.ModifiedBy = username;
                 await _opportunityRepository.Update(result);
@@ -423,11 +436,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             //can complete, provided active (and started) or expired; action prior to expiration
             if (!Active(opportunity) && opportunity.Status != Status.Expired)
-                throw new InvalidOperationException($"{nameof(Models.Opportunity)} rewards can no longer be allocated (current status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+                throw new ValidationException($"{nameof(Models.Opportunity)} rewards can no longer be allocated (current status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
             var count = (opportunity.ParticipantCount ?? 0) + 1;
             if (opportunity.ParticipantLimit.HasValue && count > opportunity.ParticipantLimit.Value)
-                throw new InvalidOperationException($"Increment will exceed limit (current count '{opportunity.ParticipantCount ?? 0}' vs current limit '{opportunity.ParticipantLimit.Value}')");
+                throw new ValidationException($"Increment will exceed limit (current count '{opportunity.ParticipantCount ?? 0}' vs current limit '{opportunity.ParticipantLimit.Value}')");
             opportunity.ParticipantCount = count;
 
             var zltoReward = opportunity.ZltoReward;
@@ -465,19 +478,24 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 case Status.Active:
                     if (opportunity.Status == Status.Active) return;
                     if (!Statuses_Activatable.Contains(opportunity.Status))
-                        throw new InvalidOperationException($"{nameof(Models.Opportunity)} can not be activated (current status '{opportunity.Status}')");
+                        throw new ValidationException($"{nameof(Models.Opportunity)} can not be activated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
+
+                    //ensure DateEnd was updated for re-activation of previously expired opportunities
+                    if (opportunity.DateEnd.HasValue && opportunity.DateEnd <= DateTimeOffset.Now)
+                        throw new ValidationException($"The {nameof(Models.Opportunity)} '{opportunity.Title}' cannot be activated because its end date ('{opportunity.DateEnd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation.");
+
                     break;
 
                 case Status.Inactive:
                     if (opportunity.Status == Status.Inactive) return;
                     if (!Statuses_DeActivatable.Contains(opportunity.Status))
-                        throw new InvalidOperationException($"{nameof(Models.Opportunity)} can not be deactivated (current status '{opportunity.Status}')");
+                        throw new ValidationException($"{nameof(Models.Opportunity)} can not be deactivated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
                     break;
 
                 case Status.Deleted:
                     if (opportunity.Status == Status.Deleted) return;
                     if (!Statuses_CanDelete.Contains(opportunity.Status))
-                        throw new InvalidOperationException($"{nameof(Models.Opportunity)} can not be deleted (current status '{opportunity.Status}')");
+                        throw new ValidationException($"{nameof(Models.Opportunity)} can not be deleted (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
 
                     break;
 
@@ -502,7 +520,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(categoryIds));
 
             if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new InvalidOperationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}')");
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var categoryId in categoryIds)
@@ -532,7 +550,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(categoryIds));
 
             if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new InvalidOperationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}')");
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var categoryId in categoryIds)
@@ -554,7 +572,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(countryIds));
 
             if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new InvalidOperationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}')");
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var countryId in countryIds)
@@ -584,7 +602,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(countryIds));
 
             if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new InvalidOperationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}')");
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var countryId in countryIds)
@@ -606,7 +624,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(languageIds));
 
             if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new InvalidOperationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}')");
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var languageId in languageIds)
@@ -636,7 +654,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(languageIds));
 
             if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new InvalidOperationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}')");
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var languageId in languageIds)
@@ -658,7 +676,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(skillIds));
 
             if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new InvalidOperationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}')");
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var skillId in skillIds)
@@ -688,7 +706,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(skillIds));
 
             if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new InvalidOperationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}')");
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var skillId in skillIds)
