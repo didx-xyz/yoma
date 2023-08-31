@@ -13,6 +13,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly IOpportunityStatusService _opportunityStatusService;
         private readonly IRepositoryValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
         private static readonly Status[] Statuses_Expirable = { Status.Active, Status.Inactive };
+        private static readonly Status[] Statuses_Deletion = { Status.Inactive, Status.Expired };
         #endregion
 
         #region Constructor
@@ -47,7 +48,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
             } while (true);
         }
 
-        public async Task ExpirationNotifications()
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously; To be removed with email hookup
+        public async Task ProcessExpirationNotifications()
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously; To be removed with email hookup
         {
             var datetimeFrom = new DateTimeOffset(DateTime.Today);
             var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.OpportunityExpirationNotificationIntervalInDays);
@@ -56,10 +59,32 @@ namespace Yoma.Core.Domain.Opportunity.Services
             do
             {
                 var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-                    o.DateEnd.HasValue && o.DateEnd.Value >= datetimeFrom && o.DateEnd.Value <= datetimeTo).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
+                    o.DateEnd.HasValue && o.DateEnd.Value >= datetimeFrom && o.DateEnd.Value <= datetimeTo)
+                    .OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
                 if (!items.Any()) break;
 
                 //TODO: email notification to provider
+
+            } while (true);
+        }
+
+        public async Task ProcessDeletion()
+        {
+            var statusDeletionIds = Statuses_Deletion.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+            var statusDeletedId = _opportunityStatusService.GetByName(Status.Deleted.ToString()).Id;
+
+            do
+            {
+                var items = _opportunityRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
+                    o.DateModified <= DateTimeOffset.Now.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
+                    .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
+                if (!items.Any()) break;
+
+                foreach (var item in items)
+                {
+                    item.StatusId = statusDeletedId;
+                    await _opportunityRepository.Update(item);
+                }
 
             } while (true);
         }

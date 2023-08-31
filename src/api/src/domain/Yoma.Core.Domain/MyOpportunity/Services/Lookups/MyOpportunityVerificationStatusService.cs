@@ -4,7 +4,6 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models.Lookups;
-using Yoma.Core.Domain.Opportunity.Models.Lookups;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services.Lookups
 {
