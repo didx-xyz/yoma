@@ -5,7 +5,7 @@ namespace Yoma.Core.Domain.Entity
         Inactive, //flagged as declined if inactive for x days
         Active,
         Declined, //flagged as deleted if declined for x days
-        Deleted 
+        Deleted
     }
 
     public enum OrganizationDocumentType
