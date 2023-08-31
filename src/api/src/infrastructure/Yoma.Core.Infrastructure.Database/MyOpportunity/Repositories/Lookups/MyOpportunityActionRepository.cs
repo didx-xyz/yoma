@@ -16,7 +16,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories.Lookups
         #region Public Members
         public IQueryable<MyOpportunityAction> Query()
         {
-            return _context.OpportunityCategory.Select(entity => new MyOpportunityAction
+            return _context.MyOpportunityAction.Select(entity => new MyOpportunityAction
             {
                 Id = entity.Id,
                 Name = entity.Name

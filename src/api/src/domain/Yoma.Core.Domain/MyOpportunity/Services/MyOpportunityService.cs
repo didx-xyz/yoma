@@ -87,8 +87,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             {
                 case Action.Saved:
                 case Action.Viewed:
-                    // relating to active opportunities that relates to active organizations
-                    query = query.Where(o => o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.Now);
+                    // relating to active opportunities (irrespective of started) that relates to active organizations
+                    query = query.Where(o => o.OpportunityStatusId == opportunityStatusActiveId);
                     query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
                     query.OrderByDescending(o => o.DateModified);
                     break;
@@ -96,6 +96,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 case Action.Verification:
                     if (!filter.VerificationStatus.HasValue)
                         throw new ArgumentNullException(nameof(filter), "Verification status required");
+
+                    var verificationStatusId = _myOpportunityVerificationStatusService.GetByName(filter.VerificationStatus.Value.ToString()).Id;
+                    query = query.Where(o => o.VerificationStatusId == verificationStatusId);
 
                     switch (filter.VerificationStatus.Value)
                     {
@@ -142,7 +145,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public async Task PerformActionViewed(Guid opportunityId)
         {
-            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active });
+            //can view non-started active opportunities
+            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active }, false);
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
 
             var actionViewedId = _myOpportunityActionService.GetByName(Action.Viewed.ToString()).Id;
@@ -164,7 +168,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public async Task PerformActionSaved(Guid opportunityId)
         {
-            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active });
+            //can save non-started active opportunities
+            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active }, false);
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
 
             var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
@@ -186,7 +191,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public async Task PerformActionSavedRemove(Guid opportunityId)
         {
-            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active });
+            //can remnove saved non-started active opportunities
+            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active }, false);
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
 
             var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
@@ -201,7 +207,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         //TODO: VerificationSupported
         public async Task PerformActionSendForVerification(Guid opportunityId, MyOpportunityVerifyRequest request)
         {
-            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active });
+            //opportunity must be active and started
+            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active }, true);
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
 
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
@@ -275,7 +282,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var user = _userService.GetById(userId);
 
             //can complete, provided opportunity is active (and started) or expired (actioned prior to expiration)
-            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active, Opportunity.Status.Expired });
+            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active, Opportunity.Status.Expired }, true);
 
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
             var item = _myOpportunityRepository.Query().SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
@@ -318,11 +325,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             return _blobService.GetURL(id.Value);
         }
 
-        private Opportunity.Models.Opportunity GetOpportunityByIdAndCheckStatus(Guid opportunityId, List<Opportunity.Status> statuses)
+        private Opportunity.Models.Opportunity GetOpportunityByIdAndCheckStatus(Guid opportunityId, List<Opportunity.Status> statuses, bool checkStartDate)
         {
             var opportunity = _opportunityService.GetById(opportunityId, false, false);
 
-            var active = statuses.Contains(opportunity.Status) && opportunity.DateStart <= DateTimeOffset.Now;
+            var active = statuses.Contains(opportunity.Status);
+            if (!active && checkStartDate) active = opportunity.DateStart <= DateTimeOffset.Now;
             if (!active) active = opportunity.OrganizationStatus == OrganizationStatus.Active;
 
             if (!active)
