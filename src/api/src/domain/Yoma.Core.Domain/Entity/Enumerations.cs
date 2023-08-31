@@ -2,10 +2,10 @@ namespace Yoma.Core.Domain.Entity
 {
     public enum OrganizationStatus
     {
-        Inactive, //flagged as declined with x days
+        Inactive, //flagged as declined if inactive for x days
         Active,
-        Declined, //flagged as deleted with x days
-        Deleted //permanently deleted if not referenced else flagged as deleted
+        Declined, //flagged as deleted if declined for x days
+        Deleted 
     }
 
     public enum OrganizationDocumentType

@@ -69,7 +69,12 @@ DECLARE @RowCount INT = 0;
 --opportunities
 WHILE @RowCount < 5000
 BEGIN
-  DECLARE @DateStart DateTimeOffSet(7) = (SELECT DATEADD(DAY, -ABS(CHECKSUM(NEWID()) % (5 * 365)) + 365, GETDATE()))
+  DECLARE @DateStart DateTimeOffset(7) =
+    CASE
+        WHEN ABS(CHECKSUM(NEWID()) % 10) >= 2 -- Adjust the threshold (e.g., 2 out of 10)
+        THEN DATEADD(DAY, ABS(CHECKSUM(NEWID()) % (5 * 365)) + 365, GETDATE())
+        ELSE DATEADD(DAY, -ABS(CHECKSUM(NEWID()) % (5 * 365)), GETDATE())
+    END;
 
   INSERT INTO [opportunity].[Opportunity]([Id],
 		[Title],
@@ -234,7 +239,7 @@ SELECT
 	GETDATE(),
 	GETDATE()
 FROM [opportunity].[Opportunity] O
-WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active') AND O.[DateStart] <= GETDATE()
+WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active') AND O.[DateStart] <= GETDATE() AND O.[DateEnd] > GETDATE()
 ORDER BY [DateCreated]
 OFFSET 60 ROWS
 FETCH NEXT 30 ROWS ONLY;
@@ -258,7 +263,7 @@ SELECT
 	GETDATE(),
 	GETDATE()
 FROM [opportunity].[Opportunity] O
-WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active') AND O.[DateStart] <= GETDATE()
+WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active') AND O.[DateStart] <= GETDATE() AND O.[DateEnd] > GETDATE()
 ORDER BY [DateCreated]
 OFFSET 90 ROWS
 FETCH NEXT 30 ROWS ONLY;
@@ -282,7 +287,7 @@ SELECT
 	GETDATE(),
 	GETDATE()
 FROM [opportunity].[Opportunity] O
-WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active') AND O.[DateStart] <= GETDATE()
+WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] = 'Active') AND O.[DateStart] <= GETDATE() AND O.[DateEnd] > GETDATE()
 ORDER BY [DateCreated]
 OFFSET 120 ROWS
 FETCH NEXT 30 ROWS ONLY;
