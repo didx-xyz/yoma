@@ -423,7 +423,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             //can complete, provided active (and started) or expired; action prior to expiration
             if (!Active(opportunity) && opportunity.Status != Status.Expired)
-               throw new InvalidOperationException($"{nameof(Models.Opportunity)} rewards can no longer be allocated (current status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+                throw new InvalidOperationException($"{nameof(Models.Opportunity)} rewards can no longer be allocated (current status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
             var count = (opportunity.ParticipantCount ?? 0) + 1;
             if (opportunity.ParticipantLimit.HasValue && count > opportunity.ParticipantLimit.Value)
