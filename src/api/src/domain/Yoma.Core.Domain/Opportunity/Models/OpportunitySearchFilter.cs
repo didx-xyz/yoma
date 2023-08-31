@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Yoma.Core.Domain.Opportunity.Models
 {
     public class OpportunitySearchFilter : OpportunitySearchFilterBase
@@ -9,5 +11,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public List<Guid>? OrganizationIds { get; set; }
 
         public List<Status>? Statuses { get; set; }
+
+        [JsonIgnore]
+        //used by info search to only return implicitly active opportunities, thus active and relating to an active organization, irrespective of started
+        public bool ImplicitlyActive { get; set; }
     }
 }

@@ -119,8 +119,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                             // all, irrespective of related opportunity and organization status
                             query.OrderByDescending(o => o.DateModified);
                             break;
+
+                        default:
+                            throw new InvalidOperationException($"Unknown / unsupported '{nameof(filter.VerificationStatus)}' of '{filter.VerificationStatus.Value}'");
                     }
                     break;
+
+                default:
+                    throw new InvalidOperationException($"Unknown / unsupported '{nameof(filter.Action)}' of '{filter.Action}'");
             }
 
             var result = new MyOpportunitySearchResults();
@@ -191,7 +197,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public async Task PerformActionSavedRemove(Guid opportunityId)
         {
-            //can remnove saved non-started active opportunities
+            //can remove saved non-started active opportunities
             var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active }, false);
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
 
@@ -203,12 +209,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             await _myOpportunityRepository.Delete(item);
         }
 
-
-        //TODO: VerificationSupported
         public async Task PerformActionSendForVerification(Guid opportunityId, MyOpportunityVerifyRequest request)
         {
             //opportunity must be active and started
             var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active }, true);
+
+            if (!opportunity.VerificationSupported)
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed /  does not support verification");
+
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
 
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
