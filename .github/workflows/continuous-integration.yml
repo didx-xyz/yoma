@@ -129,9 +129,13 @@ jobs:
           - image: yoma-api
             context: ./src/api
             file: ./src/api/Dockerfile
+            buildArgs: ""
           - image: yoma-web-youth
             context: ./src/web/youth
             file: ./src/web/youth/Dockerfile
+            buildArgs: |-
+              NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER=keycloak
+              NEXT_PUBLIC_ENVIRONMENT=production
 
     steps:
       - uses: actions/checkout@v4
@@ -151,7 +155,6 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ github.token }}
       - uses: docker/metadata-action@v4
-        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
         id: meta
         with:
           images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
@@ -173,3 +176,68 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=build-${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=build-${{ matrix.image }}
+          build-args: ${{ matrix.buildArgs }}
+
+  test-e2e:
+    name: Test (e2e)
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+    needs: build
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: ${{ github.workflow }}-e2e-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ github.token }}
+
+      - run: docker compose pull
+        env:
+          REGISTRY: ghcr.io/${{ github.repository_owner }}
+          IMAGE_TAG: ${{ needs.build.outputs.image_version }}
+        continue-on-error: true
+      - run: docker compose up -d
+        env:
+          REGISTRY: ghcr.io/${{ github.repository_owner }}
+          IMAGE_TAG: ${{ needs.build.outputs.image_version }}
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - uses: cypress-io/github-action@v6
+        with:
+          browser: chromium
+      - name: Upload Cypress Screenshots
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          if-no-files-found: ignore
+      - name: Upload Cypress Recording
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: cypress-videos
+          path: cypress/videos
+          if-no-files-found: ignore
+
+      - name: Keycloak logs
+        if: always()
+        run: docker logs keycloak
+      - name: Yoma API logs
+        if: always()
+        run: docker logs yoma-api
+      - name: Yoma Web Youth logs
+        if: always()
+        run: docker logs yoma-web-youth
+
+      - run: docker compose down -v
