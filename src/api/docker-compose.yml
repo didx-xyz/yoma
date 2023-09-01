@@ -198,6 +198,7 @@ services:
         condition: service_completed_successfully
 
   yoma-api: # Local Yoma API server
+    platform: linux/amd64 # Until we get multi-arch docker images
     image: ${REGISTRY:-local}/yoma-api:${API_TAG:-latest}
     container_name: yoma-api
     build:

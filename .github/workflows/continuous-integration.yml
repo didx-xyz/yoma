@@ -171,7 +171,7 @@ jobs:
       - uses: docker/build-push-action@v4
         if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
         with:
-          platforms: linux/amd64 # linux/arm64 is a little too slow right now
+          platforms: linux/amd64 # linux/arm64/v8 is a little too slow right now
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
           push: true
