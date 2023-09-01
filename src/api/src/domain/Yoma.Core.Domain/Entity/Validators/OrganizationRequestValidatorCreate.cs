@@ -6,20 +6,20 @@ using Yoma.Core.Domain.Lookups.Interfaces;
 
 namespace Yoma.Core.Domain.Entity.Validators
 {
-    public class OrganizationCreateRequestValidator : OrganizationRequestValidatorBase<OrganizationCreateRequest>
+    public class OrganizationRequestValidatorCreate : OrganizationRequestValidatorBase<OrganizationRequestCreate>
     {
         #region Class Variables
         private readonly IOrganizationProviderTypeService _organizationProviderTypeService;
         #endregion
 
         #region Constructor
-        public OrganizationCreateRequestValidator(ICountryService countryService, IOrganizationProviderTypeService organizationProviderTypeService) : base(countryService)
+        public OrganizationRequestValidatorCreate(ICountryService countryService, IOrganizationProviderTypeService organizationProviderTypeService) : base(countryService)
         {
             _organizationProviderTypeService = organizationProviderTypeService;
 
-            RuleFor(x => x.ProviderTypeIds).Must(ids => ids != null && ids.Any() && ids.All(id => id != Guid.Empty && ProviderTypeExist(id)))
-                .WithMessage("Provider types contains items which are either invalid or do not exist");
-            RuleFor(x => x.Logo).Must(file => file != null && file.Length > 0).WithMessage("Logo is required");
+            RuleFor(x => x.ProviderTypes).Must(providerTypes => providerTypes != null && providerTypes.Any() && providerTypes.All(id => id != Guid.Empty && ProviderTypeExist(id)))
+                .WithMessage("Provider types is are required and must exist.");
+            RuleFor(x => x.Logo).Must(file => file != null && file.Length > 0).WithMessage("Logo is required.");
             RuleFor(x => x.AdminAdditionalEmails).Must(emails => emails == null || emails.All(email => !string.IsNullOrEmpty(email) && new EmailAddressAttribute().IsValid(email)))
                 .WithMessage("Additional administrative emails contain invalid addresses.")
                 .When(x => x.AdminAdditionalEmails != null && x.AdminAdditionalEmails.Any());

@@ -3,7 +3,7 @@ using Yoma.Core.Domain.Lookups.Interfaces;
 
 namespace Yoma.Core.Domain.Entity.Validators
 {
-    public class UserProfileRequestValidator : UserRequestValidatorBase<UserProfileRequest>
+    public class UserProfileRequestValidator : UserRequestValidatorBase<UserRequestProfile>
     {
         #region Class Variables
         #endregion

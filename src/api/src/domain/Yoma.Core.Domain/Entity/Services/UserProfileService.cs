@@ -67,7 +67,7 @@ namespace Yoma.Core.Domain.Entity.Services
             return ToProfile(user);
         }
 
-        public async Task<UserProfile> Update(UserProfileRequest request)
+        public async Task<UserProfile> Update(UserRequestProfile request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));

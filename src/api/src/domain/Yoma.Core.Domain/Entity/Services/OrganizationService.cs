@@ -26,8 +26,8 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IOrganizationProviderTypeService _providerTypeService;
         private readonly IBlobService _blobService;
-        private readonly OrganizationCreateRequestValidator _organizationCreateRequestValidator;
-        private readonly OrganizationUpdateRequestValidator _organizationUpdateRequestValidator;
+        private readonly OrganizationRequestValidatorCreate _organizationCreateRequestValidator;
+        private readonly OrganizationRequestValidatorUpdate _organizationUpdateRequestValidator;
         private readonly OrganizationSearchFilterValidator _organizationSearchFilterValidator;
         private readonly IRepositoryValueContainsWithNavigation<Organization> _organizationRepository;
         private readonly IRepository<OrganizationUser> _organizationUserRepository;
@@ -48,8 +48,8 @@ namespace Yoma.Core.Domain.Entity.Services
             IOrganizationStatusService organizationStatusService,
             IOrganizationProviderTypeService providerTypeService,
             IBlobService blobService,
-            OrganizationCreateRequestValidator organizationCreateRequestValidator,
-            OrganizationUpdateRequestValidator organizationUpdateRequestValidator,
+            OrganizationRequestValidatorCreate organizationCreateRequestValidator,
+            OrganizationRequestValidatorUpdate organizationUpdateRequestValidator,
             OrganizationSearchFilterValidator organizationSearchFilterValidator,
             IRepositoryValueContainsWithNavigation<Organization> organizationRepository,
             IRepository<OrganizationUser> organizationUserRepository,
@@ -164,7 +164,7 @@ namespace Yoma.Core.Domain.Entity.Services
             return results;
         }
 
-        public async Task<Organization> Create(OrganizationCreateRequest request)
+        public async Task<Organization> Create(OrganizationRequestCreate request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -207,7 +207,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 result = await _organizationRepository.Create(result);
 
                 //assign provider types
-                result = await AssignProviderTypes(result, request.ProviderTypeIds, false);
+                result = await AssignProviderTypes(result, request.ProviderTypes, false);
 
                 //insert logo
                 var resultLogo = await UpsertLogo(result, request.Logo);
@@ -269,7 +269,7 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
-        public async Task<Organization> Update(OrganizationUpdateRequest request, bool ensureOrganizationAuthorization)
+        public async Task<Organization> Update(OrganizationRequestUpdate request, bool ensureOrganizationAuthorization)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -299,7 +299,7 @@ namespace Yoma.Core.Domain.Entity.Services
             result.Biography = request.Biography;
 
             if (!Statuses_Updatable.Contains(result.Status))
-                throw new ValidationException($"The {nameof(Organization)} cannot be updated in its current state, namely '{result.Status}' .Please change the status to one of the following: {string.Join(" / ", Statuses_Updatable)} before performing the update.");
+                throw new ValidationException($"The {nameof(Organization)} cannot be updated in its current state, namely '{result.Status}'. Please change the status to one of the following: {string.Join(" / ", Statuses_Updatable)} before performing the update.");
 
             await _organizationRepository.Update(result);
             result.DateModified = DateTimeOffset.Now;

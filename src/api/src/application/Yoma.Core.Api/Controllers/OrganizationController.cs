@@ -68,10 +68,10 @@ namespace Yoma.Core.Api.Controllers
         }
 
         [SwaggerOperation(Summary = "Create a new organization (User, Admin or Organization Admin role required)")]
-        [HttpPost("create")]
+        [HttpPost()]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> Create([FromForm] OrganizationCreateRequest request)
+        public async Task<IActionResult> Create([FromForm] OrganizationRequestCreate request)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(Create));
 
@@ -83,10 +83,10 @@ namespace Yoma.Core.Api.Controllers
         }
 
         [SwaggerOperation(Summary = "Update the specified organization's details")]
-        [HttpPost("update")]
+        [HttpPatch()]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> Update([FromBody] OrganizationUpdateRequest request)
+        public async Task<IActionResult> Update([FromBody] OrganizationRequestUpdate request)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(Update));
 

@@ -152,23 +152,38 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Insert or update an opportunity")]
+        [SwaggerOperation(Summary = "Create a new opportunity")]
         [HttpPost()]
         [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> Upsert([FromBody] OpportunityRequest request)
+        public async Task<IActionResult> Create([FromBody] OpportunityRequestCreate request)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(Upsert));
+            _logger.LogInformation("Handling request {requestName}", nameof(Create));
 
-            var result = await _opportunityService.Upsert(request, true);
+            var result = await _opportunityService.Create(request, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(Upsert));
+            _logger.LogInformation("Request {requestName} handled", nameof(Create));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Update the specified opportunity details")]
+        [HttpPatch()]
+        [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public async Task<IActionResult> Update([FromBody] OpportunityRequestUpdate request)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(Update));
+
+            var result = await _opportunityService.Update(request, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(Update));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Update opportunity status (Active / Inactive / Deleted)")]
-        [HttpPut("{id}/{status}")]
+        [HttpPatch("{id}/{status}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> UpdateStatus([FromRoute] Guid id, [FromRoute] Status status)
@@ -183,7 +198,7 @@ namespace Yoma.Core.Api.Controllers
         }
 
         [SwaggerOperation(Summary = "Assign category(ies) to the specified opportunity")]
-        [HttpPut("{id}/assign/categories")]
+        [HttpPatch("{id}/assign/categories")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignCategories([FromRoute] Guid id, [Required][FromBody] List<Guid> categoryIds)
@@ -213,7 +228,7 @@ namespace Yoma.Core.Api.Controllers
         }
 
         [SwaggerOperation(Summary = "Assign country(ies) to the specified opportunity")]
-        [HttpPut("{id}/assign/countries")]
+        [HttpPatch("{id}/assign/countries")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignCountries([FromRoute] Guid id, [Required][FromBody] List<Guid> countryIds)
@@ -243,7 +258,7 @@ namespace Yoma.Core.Api.Controllers
         }
 
         [SwaggerOperation(Summary = "Assign language(s) to the specified opportunity")]
-        [HttpPut("{id}/assign/languages")]
+        [HttpPatch("{id}/assign/languages")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignLanguages([FromRoute] Guid id, [Required][FromBody] List<Guid> languageIds)
@@ -273,7 +288,7 @@ namespace Yoma.Core.Api.Controllers
         }
 
         [SwaggerOperation(Summary = "Assign skill(s) to the specified opportunity")]
-        [HttpPut("{id}/assign/skills")]
+        [HttpPatch("{id}/assign/skills")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignSkills([FromRoute] Guid id, [Required][FromBody] List<Guid> skillIds)

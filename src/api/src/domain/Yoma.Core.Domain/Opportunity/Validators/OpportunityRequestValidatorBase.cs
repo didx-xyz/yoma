@@ -2,12 +2,12 @@ using FluentValidation;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
-using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Services;
 
 namespace Yoma.Core.Domain.Opportunity.Validators
 {
-    public class OpportunityRequestValidator : AbstractValidator<OpportunityRequest>
+    public class OpportunityRequestValidatorBase<TRequest> : AbstractValidator<TRequest>
+        where TRequest : Models.OpportunityRequestBase
     {
         #region Class Variables
         private readonly IOpportunityTypeService _opportunityTypeService;
@@ -17,7 +17,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         #endregion
 
         #region Public Members
-        public OpportunityRequestValidator(IOpportunityTypeService opportunityTypeService,
+        public OpportunityRequestValidatorBase(IOpportunityTypeService opportunityTypeService,
             IOrganizationService organizationService,
             IOpportunityDifficultyService opportunityDifficultyService,
             ITimeIntervalService timeIntervalService)
@@ -27,7 +27,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             _opportunityDifficultyService = opportunityDifficultyService;
             _timeIntervalService = timeIntervalService;
 
-            RuleFor(x => x.Id).NotEmpty().When(x => x.Id.HasValue).WithMessage("{PropertyName} contains empty value.");
             RuleFor(x => x.Title).NotEmpty().Length(1, 255);
             RuleFor(x => x.Description).NotEmpty();
             RuleFor(x => x.TypeId).NotEmpty().Must(TypeExists).WithMessage($"Specified type is invalid / does not exist.");

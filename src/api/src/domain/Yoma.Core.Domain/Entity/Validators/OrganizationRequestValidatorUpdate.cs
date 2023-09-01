@@ -4,13 +4,13 @@ using Yoma.Core.Domain.Lookups.Interfaces;
 
 namespace Yoma.Core.Domain.Entity.Validators
 {
-    public class OrganizationUpdateRequestValidator : OrganizationRequestValidatorBase<OrganizationUpdateRequest>
+    public class OrganizationRequestValidatorUpdate : OrganizationRequestValidatorBase<OrganizationRequestUpdate>
     {
         #region Class Variables
         #endregion
 
         #region Constructor
-        public OrganizationUpdateRequestValidator(ICountryService countryService) : base(countryService)
+        public OrganizationRequestValidatorUpdate(ICountryService countryService) : base(countryService)
         {
             RuleFor(x => x.Id).NotEmpty();
         }
