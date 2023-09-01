@@ -18,7 +18,9 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
         OpportunitySearchResults Search(OpportunitySearchFilter filter, bool ensureOrganizationAuthorization);
 
-        Task<Models.Opportunity> Upsert(OpportunityRequest request, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization);
+
+        Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization);
 
         Task<(decimal? ZltoReward, decimal? YomaReward)> AllocateRewards(Guid id, bool ensureOrganizationAuthorization);
 

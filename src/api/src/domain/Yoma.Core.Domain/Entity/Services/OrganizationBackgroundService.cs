@@ -5,7 +5,6 @@ using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Opportunity;
-using Hangfire;
 
 namespace Yoma.Core.Domain.Entity.Services
 {

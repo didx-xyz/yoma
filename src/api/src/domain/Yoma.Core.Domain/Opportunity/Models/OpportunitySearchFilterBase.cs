@@ -5,13 +5,13 @@ namespace Yoma.Core.Domain.Opportunity.Models
 {
     public abstract class OpportunitySearchFilterBase : PaginationFilter
     {
-        public List<Guid>? TypeIds { get; set; }
+        public List<Guid>? Types { get; set; }
 
-        public List<Guid>? CategoryIds { get; set; }
+        public List<Guid>? Categories { get; set; }
 
-        public List<Guid>? LanguageIds { get; set; }
+        public List<Guid>? Languages { get; set; }
 
-        public List<Guid>? CountryIds { get; set; }
+        public List<Guid>? Countries { get; set; }
 
         public string? ValueContains { get; set; }
 

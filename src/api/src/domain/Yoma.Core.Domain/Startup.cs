@@ -1,7 +1,5 @@
 using FluentValidation;
 using Hangfire;
-using Hangfire.Common;
-using Hangfire.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Yoma.Core.Domain.Core.Interfaces;

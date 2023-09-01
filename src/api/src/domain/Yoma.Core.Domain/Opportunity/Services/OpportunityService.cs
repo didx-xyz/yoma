@@ -33,8 +33,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly IOpportunityDifficultyService _opportunityDifficultyService;
         private readonly ITimeIntervalService _timeIntervalService;
 
-        private readonly OpportunityRequestValidator _opportunityRequestValidator;
-        private readonly OpportunitySearchFilterInfoValidator _searchFilterInfoValidator;
+        private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
+        private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
+        private readonly OpportunitySearchFilterValidatorInfo _searchFilterInfoValidator;
         private readonly OpportunitySearchFilterValidator _searchFilterValidator;
 
         private readonly IRepositoryValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
@@ -63,8 +64,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
             ISkillService skillService,
             IOpportunityDifficultyService opportunityDifficultyService,
             ITimeIntervalService timeIntervalService,
-            OpportunityRequestValidator opportunityRequestValidator,
-            OpportunitySearchFilterInfoValidator searchFilterInfoValidator,
+            OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
+            OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
+            OpportunitySearchFilterValidatorInfo searchFilterInfoValidator,
             OpportunitySearchFilterValidator searchFilterValidator,
             IRepositoryValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
             IRepository<OpportunityCategory> opportunityCategoryRepository,
@@ -85,7 +87,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             _opportunityDifficultyService = opportunityDifficultyService;
             _timeIntervalService = timeIntervalService;
 
-            _opportunityRequestValidator = opportunityRequestValidator;
+            _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate;
+            _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate;
             _searchFilterInfoValidator = searchFilterInfoValidator;
             _searchFilterValidator = searchFilterValidator;
 
@@ -160,10 +163,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
             var filterInternal = new OpportunitySearchFilter
             {
                 ImplicitlyActive = true, //active and relating to active organization, irrespective of started
-                TypeIds = filter.TypeIds,
-                CategoryIds = filter.CategoryIds,
-                LanguageIds = filter.LanguageIds,
-                CountryIds = filter.CountryIds,
+                Types = filter.Types,
+                Categories = filter.Categories,
+                Languages = filter.Languages,
+                Countries = filter.Countries,
                 ValueContains = filter.ValueContains,
                 ValueContainsActiveMatchesOnly = true,
                 PageNumber = filter.PageNumber,
@@ -189,10 +192,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             if (ensureOrganizationAuthorization)
             {
-                if (filter.OrganizationIds != null) //specified; ensure authorized
-                    _organizationService.IsAdminsOf(filter.OrganizationIds, true);
+                if (filter.Organizations != null) //specified; ensure authorized
+                    _organizationService.IsAdminsOf(filter.Organizations, true);
                 else //none specified; ensure search only spans authorized organizations
-                    filter.OrganizationIds = _organizationService.ListAdminsOf().Select(o => o.Id).ToList();
+                    filter.Organizations = _organizationService.ListAdminsOf().Select(o => o.Id).ToList();
             }
 
             var query = _opportunityRepository.Query(true);
@@ -213,60 +216,60 @@ namespace Yoma.Core.Domain.Opportunity.Services
             //organization (explicitly specified)
             var filterByOrganization = false;
             var organizationIds = new List<Guid>();
-            if (filter.OrganizationIds != null)
+            if (filter.Organizations != null)
             {
-                filter.OrganizationIds = filter.OrganizationIds.Distinct().ToList();
-                if (filter.OrganizationIds.Any())
+                filter.Organizations = filter.Organizations.Distinct().ToList();
+                if (filter.Organizations.Any())
                 {
                     filterByOrganization = true;
-                    organizationIds.AddRange(filter.OrganizationIds);
+                    organizationIds.AddRange(filter.Organizations);
                 }
             }
 
             //types (explicitly specified)
             var filterByType = false;
             var typeIds = new List<Guid>();
-            if (filter.TypeIds != null)
+            if (filter.Types != null)
             {
-                filter.TypeIds = filter.TypeIds.Distinct().ToList();
-                if (filter.TypeIds.Any())
+                filter.Types = filter.Types.Distinct().ToList();
+                if (filter.Types.Any())
                 {
                     filterByType = true;
-                    typeIds.AddRange(filter.TypeIds);
+                    typeIds.AddRange(filter.Types);
                 }
             }
 
             //categories (explicitly specified)
             var filterByCategories = false;
             var categoryIds = new List<Guid>();
-            if (filter.CategoryIds != null)
+            if (filter.Categories != null)
             {
-                filter.CategoryIds = filter.CategoryIds.Distinct().ToList();
-                if (filter.CategoryIds.Any())
+                filter.Categories = filter.Categories.Distinct().ToList();
+                if (filter.Categories.Any())
                 {
                     filterByCategories = true;
-                    categoryIds.AddRange(filter.CategoryIds);
+                    categoryIds.AddRange(filter.Categories);
                 }
             }
 
             //languages
-            if (filter.LanguageIds != null)
+            if (filter.Languages != null)
             {
-                filter.LanguageIds = filter.LanguageIds.Distinct().ToList();
-                if (filter.LanguageIds.Any())
+                filter.Languages = filter.Languages.Distinct().ToList();
+                if (filter.Languages.Any())
                 {
-                    var matchedOpportunityIds = _opportunityLanguageRepository.Query().Where(o => filter.LanguageIds.Contains(o.LanguageId)).Select(o => o.OpportunityId).ToList();
+                    var matchedOpportunityIds = _opportunityLanguageRepository.Query().Where(o => filter.Languages.Contains(o.LanguageId)).Select(o => o.OpportunityId).ToList();
                     query = query.Where(o => matchedOpportunityIds.Contains(o.Id));
                 }
             }
 
             //countries
-            if (filter.CountryIds != null)
+            if (filter.Countries != null)
             {
-                filter.CountryIds = filter.CountryIds.Distinct().ToList();
-                if (filter.CountryIds.Any())
+                filter.Countries = filter.Countries.Distinct().ToList();
+                if (filter.Countries.Any())
                 {
-                    var matchedOpportunityIds = _opportunityCountryRepository.Query().Where(o => filter.CountryIds.Contains(o.CountryId)).Select(o => o.OpportunityId).ToList();
+                    var matchedOpportunityIds = _opportunityCountryRepository.Query().Where(o => filter.Countries.Contains(o.CountryId)).Select(o => o.OpportunityId).ToList();
                     query = query.Where(o => matchedOpportunityIds.Contains(o.Id));
                 }
             }
@@ -365,32 +368,99 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results;
         }
 
-        public async Task<Models.Opportunity> Upsert(OpportunityRequest request, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
+            _opportunityRequestValidatorCreate.ValidateAndThrow(request);
+
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
 
-            _opportunityRequestValidator.ValidateAndThrow(request);
-
-            // check if user exists
-            var isNew = !request.Id.HasValue;
-
-            if (!isNew && ensureOrganizationAuthorization)
+            if (ensureOrganizationAuthorization)
                 _organizationService.IsAdmin(request.OrganizationId, true);
 
-            var result = !request.Id.HasValue ? new Models.Opportunity { Id = Guid.NewGuid() } : GetById(request.Id.Value, true, false);
+            var existingByTitle = GetByTitleOrNull(request.Title, false);
+            if (existingByTitle != null)
+                throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' already exists");
+
+            var status = request.PostAsActive ? Status.Active : Status.Inactive;
+
+            var result = new Models.Opportunity
+            {
+                Title = request.Title,
+                Description = request.Description,
+                TypeId = request.TypeId,
+                Type = _opportunityTypeService.GetById(request.TypeId).Name,
+                OrganizationId = request.OrganizationId,
+                Organization = _organizationService.GetById(request.OrganizationId, false, false).Name,
+                Instructions = request.Instructions,
+                URL = request.URL,
+                ZltoReward = request.ZltoReward,
+                YomaReward = request.YomaReward,
+                ZltoRewardPool = request.ZltoRewardPool,
+                YomaRewardPool = request.YomaRewardPool,
+                VerificationSupported = request.VerificationSupported,
+                DifficultyId = request.DifficultyId,
+                Difficulty = _opportunityDifficultyService.GetById(request.DifficultyId).Name,
+                CommitmentIntervalId = request.CommitmentIntervalId,
+                CommitmentInterval = _timeIntervalService.GetById(request.CommitmentIntervalId).Name,
+                CommitmentIntervalCount = request.CommitmentIntervalCount,
+                ParticipantLimit = request.ParticipantLimit,
+                Keywords = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords),
+                DateStart = request.DateStart.RemoveTime(),
+                DateEnd = !request.DateEnd.HasValue ? null : request.DateEnd.Value.ToEndOfDay(),
+                StatusId = _opportunityStatusService.GetByName(status.ToString()).Id,
+                Status = status,
+                CreatedBy = username
+            };
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            result = await _opportunityRepository.Create(result);
+
+            // categories
+            result.Categories = await AssignCategories(result, request.Categories);
+
+            // countries
+            result.Countries = await AssignCountries(result, request.Countries);
+
+            // languages
+            result.Languages = await AssignLanguages(result, request.Languages);
+
+            // skills
+            result.Skills = await AssignSkills(result, request.Skills);
+
+            scope.Complete();
+
+            return result;
+        }
+
+        public async Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            _opportunityRequestValidatorUpdate.ValidateAndThrow(request);
+
+            var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
+
+            if (ensureOrganizationAuthorization)
+                _organizationService.IsAdmin(request.OrganizationId, true);
+
+            var result = GetById(request.Id, true, false);
+
+            if (!Statuses_Updatable.Contains(result.Status))
+                throw new ValidationException($"The {nameof(Models.Opportunity)} cannot be updated in its current state, namely '{result.Status}'. Please change the status to one of the following: {string.Join(" / ", Statuses_Updatable)} before performing the update.");
 
             var existingByTitle = GetByTitleOrNull(request.Title, false);
-            if (existingByTitle != null && (isNew || result.Id != existingByTitle.Id))
+            if (existingByTitle != null && result.Id != existingByTitle.Id)
                 throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' already exists");
 
             result.Title = request.Title;
             result.Description = request.Description;
             result.TypeId = request.TypeId;
             result.Type = _opportunityTypeService.GetById(request.TypeId).Name;
-            result.OrganizationId = request.OrganizationId; //TODO: Only admin role
+            result.OrganizationId = request.OrganizationId;
             result.Organization = _organizationService.GetById(request.OrganizationId, false, false).Name;
             result.Instructions = request.Instructions;
             result.URL = request.URL;
@@ -408,24 +478,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.Keywords = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords);
             result.DateStart = request.DateStart.RemoveTime();
             result.DateEnd = !request.DateEnd.HasValue ? null : request.DateEnd.Value.ToEndOfDay();
+            result.ModifiedBy = username;
 
-            if (isNew)
-            {
-                var status = request.PostAsActive ? Status.Active : Status.Inactive;
-                result.StatusId = _opportunityStatusService.GetByName(status.ToString()).Id;
-                result.Status = status;
-                result.CreatedBy = username;
-                result = await _opportunityRepository.Create(result);
-            }
-            else
-            {
-                if (!Statuses_Updatable.Contains(result.Status))
-                    throw new ValidationException($"The {nameof(Models.Opportunity)} cannot be updated in its current state, namely '{result.Status}' .Please change the status to one of the following: {string.Join(" / ", Statuses_Updatable)} before performing the update.");
-
-                result.ModifiedBy = username;
-                await _opportunityRepository.Update(result);
-                result.DateModified = DateTimeOffset.Now;
-            }
+            await _opportunityRepository.Update(result);
+            result.DateModified = DateTimeOffset.Now;
 
             return result;
         }
@@ -516,30 +572,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
-            if (categoryIds == null || !categoryIds.Any())
-                throw new ArgumentNullException(nameof(categoryIds));
-
-            if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
-
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var categoryId in categoryIds)
-            {
-                var category = _opportunityCategoryService.GetById(categoryId);
-
-                var item = _opportunityCategoryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CategoryId == category.Id);
-                if (item != null) return;
-
-                item = new OpportunityCategory
-                {
-                    OpportunityId = opportunity.Id,
-                    CategoryId = category.Id
-                };
-
-                await _opportunityCategoryRepository.Create(item);
-            }
-
-            scope.Complete();
+            await AssignCategories(opportunity, categoryIds);
         }
 
         public async Task DeleteCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization)
@@ -568,30 +601,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
-            if (countryIds == null || !countryIds.Any())
-                throw new ArgumentNullException(nameof(countryIds));
-
-            if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
-
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var countryId in countryIds)
-            {
-                var country = _countryService.GetById(countryId);
-
-                var item = _opportunityCountryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CountryId == country.Id);
-                if (item != null) return;
-
-                item = new OpportunityCountry
-                {
-                    OpportunityId = opportunity.Id,
-                    CountryId = country.Id
-                };
-
-                await _opportunityCountryRepository.Create(item);
-            }
-
-            scope.Complete();
+            await AssignCountries(opportunity, countryIds);
         }
 
         public async Task DeleteCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization)
@@ -620,30 +630,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
-            if (languageIds == null || !languageIds.Any())
-                throw new ArgumentNullException(nameof(languageIds));
-
-            if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
-
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var languageId in languageIds)
-            {
-                var language = _languageService.GetById(languageId);
-
-                var item = _opportunityLanguageRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.LanguageId == language.Id);
-                if (item != null) return;
-
-                item = new OpportunityLanguage
-                {
-                    OpportunityId = opportunity.Id,
-                    LanguageId = language.Id
-                };
-
-                await _opportunityLanguageRepository.Create(item);
-            }
-
-            scope.Complete();
+            await AssignLanguages(opportunity, languageIds);
         }
 
         public async Task DeleteLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization)
@@ -672,30 +659,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
-            if (skillIds == null || !skillIds.Any())
-                throw new ArgumentNullException(nameof(skillIds));
-
-            if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
-
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var skillId in skillIds)
-            {
-                var skill = _skillService.GetById(skillId);
-
-                var item = _opportunitySkillRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.SkillId == skill.Id);
-                if (item != null) return;
-
-                item = new OpportunitySkill
-                {
-                    OpportunityId = opportunity.Id,
-                    SkillId = skill.Id
-                };
-
-                await _opportunitySkillRepository.Create(item);
-            }
-
-            scope.Complete();
+            await AssignSkills(opportunity, skillIds);
         }
 
         public async Task DeleteSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization)
@@ -732,7 +696,146 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (opportunity.OrganizationStatus != Entity.OrganizationStatus.Active) return false;
             return true;
         }
-        #endregion
 
+        private async Task<List<Domain.Lookups.Models.Country>> AssignCountries(Models.Opportunity opportunity, List<Guid> countryIds)
+        {
+            if (countryIds == null || !countryIds.Any())
+                throw new ArgumentNullException(nameof(countryIds));
+
+            countryIds = countryIds.Distinct().ToList();
+
+            if (!Statuses_Updatable.Contains(opportunity.Status))
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+
+            var results = new List<Domain.Lookups.Models.Country>();
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            foreach (var countryId in countryIds)
+            {
+                var country = _countryService.GetById(countryId);
+                results.Add(country);
+
+                var item = _opportunityCountryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CountryId == country.Id);
+
+                if (item != null) continue;
+                item = new OpportunityCountry
+                {
+                    OpportunityId = opportunity.Id,
+                    CountryId = country.Id
+                };
+
+                await _opportunityCountryRepository.Create(item);
+            }
+
+            scope.Complete();
+
+            return results;
+        }
+
+        private async Task<List<Models.Lookups.OpportunityCategory>> AssignCategories(Models.Opportunity opportunity, List<Guid> categoryIds)
+        {
+            if (categoryIds == null || !categoryIds.Any())
+                throw new ArgumentNullException(nameof(categoryIds));
+
+            categoryIds = categoryIds.Distinct().ToList();
+
+            if (!Statuses_Updatable.Contains(opportunity.Status))
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+
+            var results = new List<Models.Lookups.OpportunityCategory>();
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            foreach (var categoryId in categoryIds)
+            {
+                var category = _opportunityCategoryService.GetById(categoryId);
+                results.Add(category);
+
+                var item = _opportunityCategoryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CategoryId == category.Id);
+                if (item != null) continue;
+
+                item = new OpportunityCategory
+                {
+                    OpportunityId = opportunity.Id,
+                    CategoryId = category.Id
+                };
+
+                await _opportunityCategoryRepository.Create(item);
+            }
+
+            scope.Complete();
+
+            return results;
+        }
+
+        private async Task<List<Domain.Lookups.Models.Language>> AssignLanguages(Models.Opportunity opportunity, List<Guid> languageIds)
+        {
+            if (languageIds == null || !languageIds.Any())
+                throw new ArgumentNullException(nameof(languageIds));
+
+            languageIds = languageIds.Distinct().ToList();
+
+            if (!Statuses_Updatable.Contains(opportunity.Status))
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+
+            var results = new List<Domain.Lookups.Models.Language>();
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            foreach (var languageId in languageIds)
+            {
+                var language = _languageService.GetById(languageId);
+                results.Add(language);
+
+                var item = _opportunityLanguageRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.LanguageId == language.Id);
+                if (item != null) continue;
+
+                item = new OpportunityLanguage
+                {
+                    OpportunityId = opportunity.Id,
+                    LanguageId = language.Id
+                };
+
+                await _opportunityLanguageRepository.Create(item);
+            }
+
+            scope.Complete();
+
+            return results;
+        }
+
+        private async Task<List<Domain.Lookups.Models.Skill>> AssignSkills(Models.Opportunity opportunity, List<Guid> skillIds)
+        {
+            if (skillIds == null || !skillIds.Any())
+                throw new ArgumentNullException(nameof(skillIds));
+
+            skillIds = skillIds.Distinct().ToList();
+
+            if (!Statuses_Updatable.Contains(opportunity.Status))
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+
+            var results = new List<Domain.Lookups.Models.Skill>();
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            foreach (var skillId in skillIds)
+            {
+                var skill = _skillService.GetById(skillId);
+                results.Add(skill);
+
+                var item = _opportunitySkillRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.SkillId == skill.Id);
+                if (item != null) continue;
+
+                item = new OpportunitySkill
+                {
+                    OpportunityId = opportunity.Id,
+                    SkillId = skill.Id
+                };
+
+                await _opportunitySkillRepository.Create(item);
+            }
+
+            scope.Complete();
+
+            return results;
+        }
+        #endregion
     }
 }

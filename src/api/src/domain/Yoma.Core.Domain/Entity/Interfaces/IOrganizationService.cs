@@ -17,9 +17,9 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         OrganizationSearchResults Search(OrganizationSearchFilter filter);
 
-        Task<Organization> Create(OrganizationCreateRequest request);
+        Task<Organization> Create(OrganizationRequestCreate request);
 
-        Task<Organization> Update(OrganizationUpdateRequest request, bool ensureOrganizationAuthorization);
+        Task<Organization> Update(OrganizationRequestUpdate request, bool ensureOrganizationAuthorization);
 
         Task UpdateStatus(Guid id, OrganizationStatus status, bool ensureOrganizationAuthorization);
 

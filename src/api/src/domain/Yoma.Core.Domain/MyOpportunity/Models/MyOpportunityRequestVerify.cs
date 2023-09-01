@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Yoma.Core.Domain.MyOpportunity.Models
 {
-    public class MyOpportunityVerifyRequest
+    public class MyOpportunityRequestVerify
     {
         [Required]
         public IFormFile Certificate { get; set; }

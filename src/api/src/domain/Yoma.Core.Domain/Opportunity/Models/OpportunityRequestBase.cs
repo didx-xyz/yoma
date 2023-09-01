@@ -2,10 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
-    public class OpportunityRequest
+    public abstract class OpportunityRequestBase
     {
-        public Guid? Id { get; set; }
-
         [Required]
         public string Title { get; set; }
 
@@ -49,8 +47,5 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public DateTimeOffset DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }
-
-        [Required]
-        public bool PostAsActive { get; set; }
     }
 }

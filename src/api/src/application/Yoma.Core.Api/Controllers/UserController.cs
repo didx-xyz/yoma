@@ -68,10 +68,10 @@ namespace Yoma.Core.Api.Controllers
         }
 
         [SwaggerOperation(Summary = "Update the user's profile, within Yoma and the identity provider, optionally requesting a email verification and/or password reset (Authenticated User)")]
-        [HttpPut()]
+        [HttpPatch()]
         [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> UpdateProfile([FromBody] UserProfileRequest request)
+        public async Task<IActionResult> UpdateProfile([FromBody] UserRequestProfile request)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(UpdateProfile));
 
@@ -83,7 +83,7 @@ namespace Yoma.Core.Api.Controllers
         }
 
         [SwaggerOperation(Summary = "Insert or update the user's profile photo (Authenticated User)")]
-        [HttpPost("photo")]
+        [HttpPatch("photo")]
         [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> UpsertPhoto([Required] IFormFile file)

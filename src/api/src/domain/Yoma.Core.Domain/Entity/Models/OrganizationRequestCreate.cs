@@ -3,10 +3,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Yoma.Core.Domain.Entity.Models
 {
-    public class OrganizationCreateRequest : OrganizationRequestBase
+    public class OrganizationRequestCreate : OrganizationRequestBase
     {
         [Required]
-        public List<Guid> ProviderTypeIds { get; set; }
+        public List<Guid> ProviderTypes { get; set; }
 
         [Required]
         public IFormFile Logo { get; set; }
