@@ -5,6 +5,7 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Entity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 {
@@ -58,7 +59,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                         OriginalFileName = o.File.OriginalFileName,
                         DateCreated = o.DateCreated
                     }).OrderBy(o => o.DateCreated).ToList() : null
-            });
+            }).AsSplitQuery();
         }
 
         public Expression<Func<Domain.Entity.Models.Organization, bool>> Contains(Expression<Func<Domain.Entity.Models.Organization, bool>> predicate, string value)

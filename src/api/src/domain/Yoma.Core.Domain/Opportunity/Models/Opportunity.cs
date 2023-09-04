@@ -73,6 +73,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public string ModifiedBy { get; set; }
 
+        public bool Published { get; set; }
+
         public List<Lookups.OpportunityCategory>? Categories { get; set; }
 
         public List<Country>? Countries { get; set; }

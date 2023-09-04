@@ -47,5 +47,17 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public DateTimeOffset DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }
+
+        [Required]
+        public List<Guid> Categories { get; set; }
+
+        [Required]
+        public List<Guid> Countries { get; set; }
+
+        [Required]
+        public List<Guid> Languages { get; set; }
+
+        [Required]
+        public List<Guid> Skills { get; set; }
     }
 }

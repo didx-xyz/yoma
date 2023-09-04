@@ -11,7 +11,13 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         public OpportunityRequestValidatorUpdate(IOpportunityTypeService opportunityTypeService,
             IOrganizationService organizationService,
             IOpportunityDifficultyService opportunityDifficultyService,
-            ITimeIntervalService timeIntervalService) : base(opportunityTypeService, organizationService, opportunityDifficultyService, timeIntervalService)
+            ITimeIntervalService timeIntervalService,
+            IOpportunityCategoryService opportunityCategoryService,
+            ICountryService countryService,
+            ILanguageService languageService,
+            ISkillService skillService)
+            : base(opportunityTypeService, organizationService, opportunityDifficultyService, timeIntervalService,
+                  opportunityCategoryService, countryService, languageService, skillService)
         {
             RuleFor(x => x.Id).NotEmpty();
         }

@@ -24,6 +24,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E7BFE753-E55E-411C-8C02-9D1AEBBABE60}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		src\scripts\index_fragmentation.sql = src\scripts\index_fragmentation.sql
+		src\scripts\index_rebuild_reorganize.sql = src\scripts\index_rebuild_reorganize.sql
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.Keycloak", "src\infrastructure\Yoma.Core.Infrastructure.Keycloak\Yoma.Core.Infrastructure.Keycloak.csproj", "{CDD4E64E-0B96-4AB6-A6D6-4BC4FB29D169}"
@@ -34,7 +36,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.Se
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.AmazonS3", "src\infrastructure\Yoma.Core.Infrastructure.AmazonS3\Yoma.Core.Infrastructure.AmazonS3.csproj", "{5CE5D944-3FBF-4AA6-BFFD-D9D55B211AD4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.Zlto", "src\infrastructure\Yoma.Core.Infrastructure.Zlto\Yoma.Core.Infrastructure.Zlto.csproj", "{17BCA099-6C01-49D5-BBC7-FFA77F42DCCD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.Zlto", "src\infrastructure\Yoma.Core.Infrastructure.Zlto\Yoma.Core.Infrastructure.Zlto.csproj", "{17BCA099-6C01-49D5-BBC7-FFA77F42DCCD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

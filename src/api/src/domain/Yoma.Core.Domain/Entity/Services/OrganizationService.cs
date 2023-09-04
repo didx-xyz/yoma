@@ -16,7 +16,6 @@ using Yoma.Core.Domain.Entity.Helpers;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
-    //TODO: Background status changes
     public class OrganizationService : IOrganizationService
     {
         #region Class Variables
