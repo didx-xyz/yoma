@@ -304,7 +304,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var opportunity = _opportunityService.GetById(opportunityId, false, false);
             var canFinalize = opportunity.Status == Opportunity.Status.Expired;
             if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
-            if(!canFinalize)
+            if (!canFinalize)
                 throw new ValidationException($"Verification for opportunity '{opportunity.Title}' can no longer be finalized (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
