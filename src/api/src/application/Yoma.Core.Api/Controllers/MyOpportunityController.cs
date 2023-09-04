@@ -48,7 +48,7 @@ namespace Yoma.Core.Api.Controllers
         #endregion Administrative Actions
 
         #region Authenticated User Based Actions
-        [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter")]
+        [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter (Authenticated User)")]
         [HttpPost("search")]
         [ProducesResponseType(typeof(List<MyOpportunitySearchResults>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_User}")]
