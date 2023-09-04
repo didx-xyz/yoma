@@ -342,7 +342,7 @@ namespace Yoma.Core.Domain.Entity.Services
                     break;
 
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status}' not supported. Only statuses '{Status.Inactive} and {Status.Deleted} can be explicitly set");
+                    throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status}' not supported");
             }
 
             var statusId = _organizationStatusService.GetByName(status.ToString()).Id;
@@ -415,7 +415,7 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             var org = GetById(id, false, ensureOrganizationAuthorization);
 
-            var user = _userService.GetByEmail(email);
+            var user = _userService.GetByEmail(email, false);
             if (!user.ExternalId.HasValue)
                 throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
@@ -443,7 +443,7 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             if (!ids.Any()) throw new ArgumentNullException(nameof(ids));
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
             var orgIds = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).Select(o => o.OrganizationId).ToList();
 
             var result = !ids.Except(orgIds).Any();
@@ -459,13 +459,13 @@ namespace Yoma.Core.Domain.Entity.Services
             var adminIds = _organizationUserRepository.Query().Where(o => o.OrganizationId == org.Id).Select(o => o.UserId).ToList();
 
             var results = new List<User>();
-            adminIds.ForEach(o => results.Add(_userService.GetById(o)));
+            adminIds.ForEach(o => results.Add(_userService.GetById(o, false)));
             return results.Select(o => o.ToInfo()).ToList();
         }
 
         public List<OrganizationInfo> ListAdminsOf()
         {
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
             var orgIds = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).Select(o => o.OrganizationId).ToList();
 
             var results = _organizationRepository.Query().Where(o => orgIds.Contains(o.Id)).ToList();
@@ -476,7 +476,7 @@ namespace Yoma.Core.Domain.Entity.Services
         #region Private Members
         private bool IsAdmin(Organization org, bool throwUnauthorized)
         {
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
 
             OrganizationUser? orgUser = null;
             var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
@@ -575,7 +575,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         private async Task AssignAdmin(Organization org, string email)
         {
-            var user = _userService.GetByEmail(email);
+            var user = _userService.GetByEmail(email, false);
             if (!user.ExternalId.HasValue)
                 throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 

@@ -40,6 +40,7 @@ namespace Yoma.Core.Domain.Entity.Helpers
                 PhotoId = value.PhotoId,
                 PhotoURL = value.PhotoURL,
                 DateLastLogin = value.DateLastLogin,
+                Skills = value.Skills
             };
         }
     }

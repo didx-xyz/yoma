@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net;
 using Yoma.Core.Domain.Core;
-using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 
@@ -33,14 +32,14 @@ namespace Yoma.Core.Api.Controllers
         #region Public Members
         #region Administrative Actions
         [SwaggerOperation(Summary = "Reject or complete verification for the specified 'my' opportunity (Admin or Organization Admin roles required)")]
-        [HttpPatch("verification/{userId}/{opportunityId}/finalize")]
+        [HttpPatch("verification/{opportunityId}/finalize")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> FinalizeVerification([FromRoute] Guid userId, [FromRoute] Guid opportunityId, [FromRoute] VerificationStatus status)
+        public async Task<IActionResult> FinalizeVerification([FromRoute] Guid opportunityId, [FromBody] MyOpportunityRequestVerifyFinalize request)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(FinalizeVerification));
 
-            await _myOpportunityService.FinalizeVerification(userId, opportunityId, status);
+            await _myOpportunityService.FinalizeVerification(opportunityId, request);
 
             _logger.LogInformation("Request {requestName} handled", nameof(FinalizeVerification));
 
@@ -98,7 +97,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpPut("action/{opportunityId}/verify")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_User}")]
-        public async Task<IActionResult> PerformActionSendForVerification([FromRoute] Guid opportunityId, [FromBody] MyOpportunityRequestVerify request)
+        public async Task<IActionResult> PerformActionSendForVerification([FromRoute] Guid opportunityId, [FromForm] MyOpportunityRequestVerify request)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSendForVerification));
 

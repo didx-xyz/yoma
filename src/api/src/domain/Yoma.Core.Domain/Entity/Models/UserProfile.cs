@@ -1,3 +1,5 @@
+using Yoma.Core.Domain.Lookups.Models;
+
 namespace Yoma.Core.Domain.Entity.Models
 {
     public class UserProfile
@@ -29,6 +31,8 @@ namespace Yoma.Core.Domain.Entity.Models
         public string? PhotoURL { get; set; }
 
         public DateTimeOffset? DateLastLogin { get; set; }
+
+        public List<Skill>? Skills { get; set; }
 
         public List<OrganizationInfo> AdminsOf { get; set; }
 

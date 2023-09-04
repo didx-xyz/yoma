@@ -5,16 +5,15 @@ GO
 DECLARE @Words VARCHAR(500) = 'The,A,An,Awesome,Incredible,Fantastic,Amazing,Wonderful,Exciting,Unbelievable,Great,Marvelous,Stunning,Impressive,Captivating,Extraordinary,Superb,Epic,Spectacular,Magnificent,Phenomenal,Outstanding,Brilliant,Enthralling,Enchanting,Mesmerizing,Riveting,Spellbinding,Unforgettable,Sublime';
 DECLARE @RowCount INT = 0;
 
---opportunities
-WHILE @RowCount < 5000
-BEGIN
-  DECLARE @DateStart DateTimeOffset(7) =
-    CASE
-        WHEN ABS(CHECKSUM(NEWID()) % 10) >= 2 -- Adjust the threshold (e.g., 2 out of 10)
-        THEN DATEADD(DAY, ABS(CHECKSUM(NEWID()) % (5 * 365)) + 365, GETDATE())
-        ELSE DATEADD(DAY, -ABS(CHECKSUM(NEWID()) % (5 * 365)), GETDATE())
-    END;
+DECLARE @DateCreated DATETIMEOFFSET(7) = DATEADD(MONTH, -1 , GETDATE())
+DECLARE @DateStart DATETIMEOFFSET(7) = DATEADD(MONTH, -2 , GETDATE())
+DECLARE @TotalSecondsIn2Months BIGINT = 2 * 30.44 * 24 * 60 * 60
+DECLARE @Iterations INT = 5000
+DECLARE @SecondsPerIteration BIGINT = @TotalSecondsIn2Months / @Iterations
 
+--opportunities
+WHILE @RowCount < @Iterations
+BEGIN
   INSERT INTO [opportunity].[Opportunity]([Id],
 		[Title],
 		[Description],
@@ -63,14 +62,17 @@ BEGIN
 		NULL,
 		(SELECT TOP 1 [Id] FROM [opportunity].[OpportunityStatus] WHERE [Name] in ('Active','Inactive') ORDER BY NEWID()) as [StatusId],
 		(SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (ABS(CHECKSUM(NEWID()) % 101) + 100) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) as [Keywords],
-		@DateStart,
-		CAST(DATEADD(DAY, 2, @DateStart) AS DATE),
-		GETDATE(),
+		CAST(@DateStart AS DATE),
+		CAST(DATEADD(DAY, 7, @DateStart) AS DATE),
+		@DateCreated,
 		'testuser@gmail.com',
 		GETDATE(),
 		'testuser@gmail.com'
   FROM sys.all_columns
-	SET @RowCount = @RowCount + 1;
+
+  SET @RowCount = @RowCount + 1;
+  SET @DateCreated = DATEADD(SECOND, 1, @DateCreated)
+  SET @DateStart = DATEADD(SECOND, @SecondsPerIteration, @DateStart)
 END;
 
 --categories
@@ -230,6 +232,21 @@ WHERE O.StatusId = (SELECT [Id] FROM [opportunity].[OpportunityStatus] WHERE [Na
 ORDER BY [DateCreated]
 OFFSET 120 ROWS
 FETCH NEXT 30 ROWS ONLY;
+GO
+
+--verification (completed): assing user skills
+INSERT INTO [entity].[UserSkills]([Id],[UserId],[SkillId],[DateCreated])
+SELECT NEWID(),
+	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
+	[Skills].[SkillId],
+	GETDATE()
+FROM
+	(SELECT DISTINCT(OS.[SkillId])
+	FROM [opportunity].[MyOpportunity] MO
+	INNER JOIN [opportunity].[OpportunitySkills] OS
+	ON MO.[OpportunityId] = OS.[opportunityId]
+	WHERE MO.[ActionId] = (SELECT [Id] FROM [opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification')
+		AND MO.[VerificationStatusId] = (SELECT [Id] FROM [opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Completed')) AS [Skills]
 GO
 
 --opporutnity: update running totals

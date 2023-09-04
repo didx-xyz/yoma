@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using System.Linq.Expressions;
 using System.Transactions;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
@@ -9,6 +10,8 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
+using Yoma.Core.Domain.Exceptions;
+using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.MyOpportunity.Helpers;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
@@ -30,6 +33,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IBlobService _blobService;
         private readonly MyOpportunitySearchFilterValidator _myOpportunitySearchFilterValidator;
+        private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
+        private readonly MyOpportunityRequestValidatorVerifyFinalize _myOpportunityRequestValidatorVerifyFinalize;
         private readonly IRepository<Models.MyOpportunity> _myOpportunityRepository;
         #endregion
 
@@ -42,6 +47,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             IOpportunityStatusService opportunityStatusService,
             IOrganizationStatusService organizationStatusService,
             MyOpportunitySearchFilterValidator myOpportunitySearchFilterValidator,
+            MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
+            MyOpportunityRequestValidatorVerifyFinalize myOpportunityRequestValidatorVerifyFinalize,
             IBlobService blobService,
 
             IRepository<Models.MyOpportunity> myOpportunityRepository)
@@ -51,6 +58,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             _opportunityService = opportunityService;
             _myOpportunityActionService = myOpportunityActionService;
             _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService;
+            _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify;
+            _myOpportunityRequestValidatorVerifyFinalize = myOpportunityRequestValidatorVerifyFinalize;
             _opportunityStatusService = opportunityStatusService;
             _organizationStatusService = organizationStatusService;
             _blobService = blobService;
@@ -67,7 +76,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             _myOpportunitySearchFilterValidator.ValidateAndThrow(filter);
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
 
             var actionId = _myOpportunityActionService.GetByName(filter.Action.ToString()).Id;
             var opportunityStatusActiveId = _opportunityStatusService.GetByName(Opportunity.Status.Active.ToString()).Id;
@@ -155,7 +164,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (!opportunity.Published)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
 
             var actionViewedId = _myOpportunityActionService.GetByName(Action.Viewed.ToString()).Id;
 
@@ -181,7 +190,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (!opportunity.Published)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
 
             var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
 
@@ -207,7 +216,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (!opportunity.Published)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
 
             var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
             var item = _myOpportunityRepository.Query().SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionSavedId);
@@ -225,9 +234,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
             if (!opportunity.VerificationSupported)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed /  does not support verification");
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / does not support verification");
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
+            if (request.DateStart.HasValue && request.DateStart.Value < opportunity.DateStart)
+                throw new ValidationException($"Start date can not be earlier than the opportunity stated date of '{opportunity.DateStart}'");
+
+            if (request.DateEnd.HasValue && opportunity.DateEnd.HasValue && request.DateEnd.Value > opportunity.DateEnd.Value)
+                throw new ValidationException($"End date can not be later than the opportunity end date of '{opportunity.DateEnd}'");
+
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
 
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
             var verificationStatusPendingId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
@@ -248,12 +263,18 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             {
                 switch (item.VerificationStatus)
                 {
+                    case null:
+                        throw new DataInconsistencyException($"{nameof(item.VerificationStatus)} expected with action '{Action.Verification}'");
+
                     case VerificationStatus.Pending:
                     case VerificationStatus.Completed:
                         throw new ValidationException($"Verification is {item.VerificationStatus?.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
 
                     case VerificationStatus.Rejected: //can be re-send for verification
                         break;
+
+                    default:
+                        throw new InvalidOperationException($"Unknown / unsupported '{nameof(item.VerificationStatus)}' of '{item.VerificationStatus.Value}'");
                 }
             }
 
@@ -295,9 +316,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         }
 
         //supported statuses: Rejected or Completed
-        public async Task FinalizeVerification(Guid userId, Guid opportunityId, VerificationStatus status)
+        public async Task FinalizeVerification(Guid opportunityId, MyOpportunityRequestVerifyFinalize request)
         {
-            var user = _userService.GetById(userId);
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            var user = _userService.GetById(request.UserId, false);
 
             //can complete, provided opportunity is active (and started) or expired (actioned prior to expiration)
             var opportunity = _opportunityService.GetById(opportunityId, false, false);
@@ -313,25 +337,38 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (item.VerificationStatus != VerificationStatus.Pending)
                 throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
 
-            if (item.VerificationStatus == status) return;
+            if (item.VerificationStatus == request.Status) return;
 
-            var statusId = _myOpportunityVerificationStatusService.GetByName(status.ToString()).Id;
+            var statusId = _myOpportunityVerificationStatusService.GetByName(request.Status.ToString()).Id;
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
             item.VerificationStatusId = statusId;
+            item.VerificationComment = request.Comment;
 
-            if (status == VerificationStatus.Completed)
+            switch (request.Status)
             {
-                var dateCompleted = DateTimeOffset.Now;
+                case VerificationStatus.Rejected:
+                    break;
 
-                if (item.DateEnd.HasValue && item.DateEnd.Value > dateCompleted)
-                    throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd}')");
+                case VerificationStatus.Completed:
+                    var dateCompleted = DateTimeOffset.Now;
 
-                var (zltoReward, yomaReward) = await _opportunityService.AllocateRewards(opportunity.Id, true);
-                item.ZltoReward = zltoReward;
-                item.YomaReward = yomaReward;
-                item.DateCompleted = DateTimeOffset.Now;
+                    if (item.DateEnd.HasValue && item.DateEnd.Value > dateCompleted)
+                        throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd}')");
+
+                    var (zltoReward, yomaReward) = await _opportunityService.AllocateRewards(opportunity.Id, true);
+                    item.ZltoReward = zltoReward;
+                    item.YomaReward = yomaReward;
+                    item.DateCompleted = DateTimeOffset.Now;
+
+                    var skillIds = opportunity.Skills?.Select(o => o.Id).ToList();
+                    if (skillIds != null && skillIds.Any())
+                        await _userService.AssignSkills(user.Id, skillIds);
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(request), $"{nameof(request.Status)} of '{request.Status}' not supported");
             }
 
             await _myOpportunityRepository.Update(item);

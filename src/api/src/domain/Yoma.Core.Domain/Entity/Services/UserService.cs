@@ -22,9 +22,11 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IBlobService _blobService;
         private readonly IGenderService _genderService;
         private readonly ICountryService _countryService;
+        private readonly ISkillService _skillService;
         private readonly UserRequestValidator _userRequestValidator;
         private readonly UserSearchFilterValidator _userSearchFilterValidator;
         private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
+        private readonly IRepository<UserSkill> _userSkillRepository;
         #endregion
 
         #region Constructor
@@ -33,39 +35,43 @@ namespace Yoma.Core.Domain.Entity.Services
             IBlobService blobService,
             IGenderService genderService,
             ICountryService countryService,
+            ISkillService skillService,
             UserRequestValidator userValidator,
             UserSearchFilterValidator userSearchFilterValidator,
-            IRepositoryValueContainsWithNavigation<User> userRepository)
+            IRepositoryValueContainsWithNavigation<User> userRepository,
+            IRepository<UserSkill> userSkillRepository)
         {
             _identityProviderClient = identityProviderClientFactory.CreateClient();
             _blobService = blobService;
             _genderService = genderService;
             _countryService = countryService;
+            _skillService = skillService;
             _userRequestValidator = userValidator;
             _userSearchFilterValidator = userSearchFilterValidator;
             _userRepository = userRepository;
+            _userSkillRepository = userSkillRepository;
         }
         #endregion
 
         #region Public Members
-        public User GetByEmail(string? email)
+        public User GetByEmail(string? email, bool includeChildItems)
         {
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentNullException(nameof(email));
 
-            var result = GetByEmailOrNull(email)
+            var result = GetByEmailOrNull(email, includeChildItems)
                 ?? throw new ValidationException($"User with email '{email}' does not exist");
 
             return result;
         }
 
-        public User? GetByEmailOrNull(string email)
+        public User? GetByEmailOrNull(string email, bool includeChildItems)
         {
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentNullException(nameof(email));
             email = email.Trim();
 
-            var result = _userRepository.Query(false).SingleOrDefault(o => o.Email == email);
+            var result = _userRepository.Query(includeChildItems).SingleOrDefault(o => o.Email == email);
             if (result == null) return null;
 
             result.PhotoURL = GetBlobObjectURL(result.PhotoId);
@@ -73,13 +79,26 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
-        public User GetById(Guid id)
+        public User GetById(Guid id, bool includeChildItems)
         {
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
 
-            var result = _userRepository.Query(false).SingleOrDefault(o => o.Id == id)
+            var result = GetByIdOrNull(id, includeChildItems)
                 ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(User)} with id '{id}' does not exist");
+
+            result.PhotoURL = GetBlobObjectURL(result.PhotoId);
+
+            return result;
+        }
+
+        public User? GetByIdOrNull(Guid id, bool includeChildItems)
+        {
+            if (id == Guid.Empty)
+                throw new ArgumentNullException(nameof(id));
+
+            var result = _userRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
+            if (result == null) return null;
 
             result.PhotoURL = GetBlobObjectURL(result.PhotoId);
 
@@ -123,9 +142,9 @@ namespace Yoma.Core.Domain.Entity.Services
 
             // check if user exists
             var isNew = !request.Id.HasValue;
-            var result = !request.Id.HasValue ? new User { Id = Guid.NewGuid() } : GetById(request.Id.Value);
+            var result = !request.Id.HasValue ? new User { Id = Guid.NewGuid() } : GetById(request.Id.Value, true);
 
-            var existingByEmail = GetByEmailOrNull(request.Email);
+            var existingByEmail = GetByEmailOrNull(request.Email, false);
             if (existingByEmail != null && (isNew || result.Id != existingByEmail.Id))
                 throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
 
@@ -166,7 +185,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         public async Task<User> UpsertPhoto(string? email, IFormFile? file)
         {
-            var result = GetByEmail(email);
+            var result = GetByEmail(email, true);
 
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
@@ -202,6 +221,38 @@ namespace Yoma.Core.Domain.Entity.Services
             result.PhotoURL = GetBlobObjectURL(result.PhotoId);
 
             return result;
+        }
+
+        public async Task AssignSkills(Guid id, List<Guid> skillIds)
+        {
+            var user = GetById(id, false);
+
+            if (skillIds == null || !skillIds.Any())
+                throw new ArgumentNullException(nameof(skillIds));
+
+            skillIds = skillIds.Distinct().ToList();
+
+            var results = new List<Domain.Lookups.Models.Skill>();
+
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+            foreach (var skillId in skillIds)
+            {
+                var skill = _skillService.GetById(skillId);
+                results.Add(skill);
+
+                var item = _userSkillRepository.Query().SingleOrDefault(o => o.UserId == user.Id && o.SkillId == skill.Id);
+                if (item != null) continue;
+
+                item = new UserSkill
+                {
+                    UserId = user.Id,
+                    SkillId = skill.Id
+                };
+
+                await _userSkillRepository.Create(item);
+            }
+
+            scope.Complete();
         }
         #endregion
 
