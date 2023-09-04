@@ -87,7 +87,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             {
                 case Action.Saved:
                 case Action.Viewed:
-                    // relating to active opportunities (irrespective of started) that relates to active organizations
+                    // published: relating to active opportunities (irrespective of started) that relates to active organizations
                     query = query.Where(o => o.OpportunityStatusId == opportunityStatusActiveId);
                     query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
                     query.OrderByDescending(o => o.DateModified);
@@ -103,7 +103,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     switch (filter.VerificationStatus.Value)
                     {
                         case VerificationStatus.Pending:
-                            // items that can be completed, thus relating to active or expired opportunities that relates to active organizations
+                            // items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
                             query = query.Where(o => (o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.Now)
                                 || o.OpportunityStatusId == opportunityStatusExpiredId);
                             query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
@@ -151,8 +151,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public async Task PerformActionViewed(Guid opportunityId)
         {
-            //can view non-started active opportunities
-            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active }, false);
+            //published opportunities (irrespective of started)
+            var opportunity = _opportunityService.GetById(opportunityId, false, false);
+            if (!opportunity.Published)
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
 
             var actionViewedId = _myOpportunityActionService.GetByName(Action.Viewed.ToString()).Id;
@@ -174,8 +177,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public async Task PerformActionSaved(Guid opportunityId)
         {
-            //can save non-started active opportunities
-            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active }, false);
+            //published opportunities (irrespective of started)
+            var opportunity = _opportunityService.GetById(opportunityId, false, false);
+            if (!opportunity.Published)
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
 
             var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
@@ -197,8 +203,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public async Task PerformActionSavedRemove(Guid opportunityId)
         {
-            //can remove saved non-started active opportunities
-            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active }, false);
+            //published opportunities (irrespective of started)
+            var opportunity = _opportunityService.GetById(opportunityId, false, false);
+            if (!opportunity.Published)
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false));
 
             var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
@@ -211,8 +220,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public async Task PerformActionSendForVerification(Guid opportunityId, MyOpportunityRequestVerify request)
         {
-            //opportunity must be active and started
-            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active }, true);
+            //published and started opportunities
+            var opportunity = _opportunityService.GetById(opportunityId, false, false);
+            if (!opportunity.Published || opportunity.DateStart > DateTimeOffset.Now)
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
             if (!opportunity.VerificationSupported)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed /  does not support verification");
@@ -290,7 +301,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var user = _userService.GetById(userId);
 
             //can complete, provided opportunity is active (and started) or expired (actioned prior to expiration)
-            var opportunity = GetOpportunityByIdAndCheckStatus(opportunityId, new List<Opportunity.Status> { Opportunity.Status.Active, Opportunity.Status.Expired }, true);
+            var opportunity = _opportunityService.GetById(opportunityId, false, false);
+            var canFinalize = opportunity.Status == Opportunity.Status.Expired;
+            if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
+            if(!canFinalize)
+                throw new ValidationException($"Verification for opportunity '{opportunity.Title}' can no longer be finalized (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
             var item = _myOpportunityRepository.Query().SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
@@ -331,19 +346,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
             if (!id.HasValue) return null;
             return _blobService.GetURL(id.Value);
-        }
-
-        private Opportunity.Models.Opportunity GetOpportunityByIdAndCheckStatus(Guid opportunityId, List<Opportunity.Status> statuses, bool checkStartDate)
-        {
-            var opportunity = _opportunityService.GetById(opportunityId, false, false);
-
-            var active = statuses.Contains(opportunity.Status);
-            if (!active && checkStartDate) active = opportunity.DateStart <= DateTimeOffset.Now;
-            if (!active) active = opportunity.OrganizationStatus == OrganizationStatus.Active;
-
-            if (!active)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (current status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
-            return opportunity;
         }
         #endregion
     }

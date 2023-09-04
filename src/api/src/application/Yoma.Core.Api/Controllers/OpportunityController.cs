@@ -167,7 +167,7 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Update the specified opportunity details")]
+        [SwaggerOperation(Summary = "Update the specified opportunity")]
         [HttpPatch()]
         [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]

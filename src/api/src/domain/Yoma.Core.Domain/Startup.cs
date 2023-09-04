@@ -12,6 +12,7 @@ using Yoma.Core.Domain.Entity.Services;
 using Yoma.Core.Domain.Entity.Services.Lookups;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Services;
+using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Services;
 using Yoma.Core.Domain.MyOpportunity.Services.Lookups;
@@ -62,6 +63,7 @@ namespace Yoma.Core.Domain
             #endregion Lookups
 
             services.AddScoped<IMyOpportunityService, MyOpportunityService>();
+            services.AddScoped<IMyOpportunityBackgroundService, MyOpportunityBackgroundService>();
             #endregion My Opportunity
 
             #region Opportunity
@@ -96,6 +98,11 @@ namespace Yoma.Core.Domain
                 () => opportunityBackgroundService.ProcessExpirationNotifications(), options.OpportunityExpirationNotificationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
             RecurringJob.AddOrUpdate($"Opportunity Deletion ({Status.Inactive} or {Status.Expired} for more than {options.OpportunityDeletionIntervalInDays} days)",
                 () => opportunityBackgroundService.ProcessDeletion(), options.OpportunityDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+            //my opportunity
+            var myOpportunityBackgroundService = scope.ServiceProvider.GetRequiredService<IMyOpportunityBackgroundService>();
+            RecurringJob.AddOrUpdate($"'My' Opportunity Verification Rejection ({VerificationStatus.Pending} for more than {options.MyOpportunityRejectionIntervalInDays} days)",
+               () => myOpportunityBackgroundService.ProcessVerificationRejection(), options.MyOpportunityRejectionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
             //organization
             var organizationBackgroundService = scope.ServiceProvider.GetRequiredService<IOrganizationBackgroundService>();

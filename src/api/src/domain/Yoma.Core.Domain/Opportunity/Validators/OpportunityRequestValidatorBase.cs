@@ -14,18 +14,31 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         private readonly IOrganizationService _organizationService;
         private readonly IOpportunityDifficultyService _opportunityDifficultyService;
         private readonly ITimeIntervalService _timeIntervalService;
+        private readonly IOpportunityCategoryService _opportunityCategoryService;
+        private readonly ICountryService _countryService;
+        private readonly ILanguageService _languageService;
+        private readonly ISkillService _skillService;
         #endregion
 
         #region Public Members
         public OpportunityRequestValidatorBase(IOpportunityTypeService opportunityTypeService,
             IOrganizationService organizationService,
             IOpportunityDifficultyService opportunityDifficultyService,
-            ITimeIntervalService timeIntervalService)
+            ITimeIntervalService timeIntervalService,
+            IOpportunityCategoryService opportunityCategoryService,
+            ICountryService countryService,
+            ILanguageService languageService,
+            ISkillService skillService
+            )
         {
             _opportunityTypeService = opportunityTypeService;
             _organizationService = organizationService;
             _opportunityDifficultyService = opportunityDifficultyService;
             _timeIntervalService = timeIntervalService;
+            _opportunityCategoryService = opportunityCategoryService;
+            _countryService = countryService;
+            _languageService = languageService;
+            _skillService = skillService;
 
             RuleFor(x => x.Title).NotEmpty().Length(1, 255);
             RuleFor(x => x.Description).NotEmpty();
@@ -53,6 +66,14 @@ namespace Yoma.Core.Domain.Opportunity.Validators
                 .GreaterThanOrEqualTo(model => model.DateStart)
                 .When(model => model.DateEnd.HasValue)
                 .WithMessage("{PropertyName} is earlier than the Start Date.");
+            RuleFor(x => x.Categories).Must(categories => categories != null && categories.Any() && categories.All(id => id != Guid.Empty && CategoryExist(id)))
+              .WithMessage("Categories are required and must exist");
+            RuleFor(x => x.Countries).Must(countries => countries != null && countries.Any() && countries.All(id => id != Guid.Empty && CountryExist(id)))
+                .WithMessage("Countries are required and must exist");
+            RuleFor(x => x.Languages).Must(languages => languages != null && languages.Any() && languages.All(id => id != Guid.Empty && LanguageExist(id)))
+                .WithMessage("Languages are required and must exist");
+            RuleFor(x => x.Skills).Must(skills => skills != null && skills.Any() && skills.All(id => id != Guid.Empty && SkillExist(id)))
+                .WithMessage("Skills are required and must exist");
         }
         #endregion
 
@@ -88,6 +109,30 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             if (list == null) return 0;
 
             return string.Join(OpportunityService.Keywords_Separator, list).Length;
+        }
+
+        private bool CategoryExist(Guid? id)
+        {
+            if (!id.HasValue) return true;
+            return _opportunityCategoryService.GetByIdOrNull(id.Value) != null;
+        }
+
+        private bool CountryExist(Guid? id)
+        {
+            if (!id.HasValue) return true;
+            return _countryService.GetByIdOrNull(id.Value) != null;
+        }
+
+        private bool LanguageExist(Guid? id)
+        {
+            if (!id.HasValue) return true;
+            return _languageService.GetByIdOrNull(id.Value) != null;
+        }
+
+        private bool SkillExist(Guid? id)
+        {
+            if (!id.HasValue) return true;
+            return _skillService.GetByIdOrNull(id.Value) != null;
         }
         #endregion
     }

@@ -37,5 +37,11 @@ namespace Yoma.Core.Domain.Core.Models
         public int OrganizationDeletionBatchSize { get; set; }
 
         public int OrganizationDeletionIntervalInDays { get; set; }
+
+        public string MyOpportunityRejectionSchedule { get; set; }
+
+        public int MyOpportunityRejectionBatchSize { get; set; }
+
+        public int MyOpportunityRejectionIntervalInDays { get; set; }
     }
 }

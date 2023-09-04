@@ -28,6 +28,7 @@ namespace Yoma.Core.Domain.Opportunity.Helpers
                 Keywords = value.Keywords,
                 DateStart = value.DateStart,
                 DateEnd = value.DateEnd,
+                Published = value.Published,
                 Categories = value.Categories,
                 Countries = value.Countries,
                 Languages = value.Languages,

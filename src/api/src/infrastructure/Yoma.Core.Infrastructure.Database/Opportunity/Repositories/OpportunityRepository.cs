@@ -66,7 +66,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                     entity.Languages.Select(o => new Domain.Lookups.Models.Language { Id = o.LanguageId, Name = o.Language.Name, CodeAlpha2 = o.Language.CodeAlpha2 }).ToList() : null,
                 Skills = includeChildItems ?
                     entity.Skills.Select(o => new Domain.Lookups.Models.Skill { Id = o.SkillId, Name = o.Skill.Name, InfoURL = o.Skill.InfoURL }).ToList() : null
-            });
+            }).AsSplitQuery();
         }
 
         public Expression<Func<Domain.Opportunity.Models.Opportunity, bool>> Contains(Expression<Func<Domain.Opportunity.Models.Opportunity, bool>> predicate, string value)
