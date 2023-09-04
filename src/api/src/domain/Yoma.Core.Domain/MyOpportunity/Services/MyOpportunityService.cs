@@ -18,7 +18,6 @@ using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
-    //TODO: Background status change
     public class MyOpportunityService : IMyOpportunityService
     {
         #region Class Variables
