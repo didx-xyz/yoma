@@ -61,15 +61,7 @@ jobs:
               prettier_extensions: js,ts,tsx
               prettier_args: --ignore-path ../../../.gitignore --config prettier.config.cjs
             env:
-              NEXTAUTH_SECRET: superSecretNextAuthSecret
-              NEXTAUTH_URL: http://localhost:3000
-              KEYCLOAK_ISSUER: http://keycloak:8080/realms/yoma
-              KEYCLOAK_CLIENT_ID: yoma-web-youth
-              KEYCLOAK_CLIENT_SECRET: superSecretKeycloakClientSecret
-              NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER: keycloak
-              API_BASE_URL: http://localhost:5000/api/v3
-              NEXT_PUBLIC_API_BASE_URL: http://localhost:5000/api/v3
-              NEXT_PUBLIC_ENVIRONMENT: local
+              SKIP_ENV_VALIDATION: true
 
     # outputs: # https://github.com/actions/runner/pull/2477
     #   ${{ matrix.project }}-changes: ${{ steps.filter.outputs.changes }}
