@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230831054317_ApplicationDb_Initial")]
+    [Migration("20230904132115_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -585,6 +585,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("VerificationComment")
+                        .HasColumnType("varchar(500)");
+
                     b.Property<Guid?>("VerificationStatusId")
                         .HasColumnType("uniqueidentifier");
 
@@ -1022,7 +1025,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsRequired();
 
                     b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
-                        .WithMany()
+                        .WithMany("Skills")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1195,6 +1198,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Navigation("Documents");
 
                     b.Navigation("ProviderTypes");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.User", b =>
+                {
+                    b.Navigation("Skills");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", b =>

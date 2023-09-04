@@ -9,6 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups
     [Index(nameof(Name), IsUnique = true)]
     public class OpportunityCategory : BaseEntity<Guid>
     {
+        [Required]
         [Column(TypeName = "varchar(125)")]
         public string Name { get; set; }
 

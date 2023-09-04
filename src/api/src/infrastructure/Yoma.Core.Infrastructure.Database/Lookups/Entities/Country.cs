@@ -12,15 +12,19 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Entities
     [Index(nameof(CodeNumeric), IsUnique = true)]
     public class Country : BaseEntity<Guid>
     {
+        [Required]
         [Column(TypeName = "varchar(125)")]
         public string Name { get; set; }
 
+        [Required]
         [Column(TypeName = "varchar(2)")]
         public string CodeAlpha2 { get; set; }
 
+        [Required]
         [Column(TypeName = "varchar(3)")]
         public string CodeAlpha3 { get; set; }
 
+        [Required]
         [Column(TypeName = "varchar(3)")]
         public string CodeNumeric { get; set; }
 

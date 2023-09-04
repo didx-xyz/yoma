@@ -8,12 +8,15 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
     [Index(nameof(Key), IsUnique = true)]
     public class BlobObject : BaseEntity<Guid>
     {
+        [Required]
         [Column(TypeName = "varchar(125)")]
         public string Key { get; set; }
 
+        [Required]
         [Column(TypeName = "varchar(127)")]
         public string ContentType { get; set; }
 
+        [Required]
         [Column(TypeName = "varchar(255)")]
         public string OriginalFileName { get; set; }
 
