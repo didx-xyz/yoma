@@ -14,6 +14,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
         Task PerformActionSendForVerification(Guid opportunityId, MyOpportunityRequestVerify request);
 
-        Task FinalizeVerification(Guid userId, Guid opportunityId, VerificationStatus status);
+        Task FinalizeVerification(Guid opportunityId, MyOpportunityRequestVerifyFinalize request);
     }
 }

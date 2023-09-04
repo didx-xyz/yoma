@@ -586,7 +586,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                     break;
 
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status}' not supported. Only statuses '{Status.Inactive} and {Status.Deleted} can be explicitly set");
+                    throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status}' not supported");
             }
 
             var statusId = _opportunityStatusService.GetByName(status.ToString()).Id;
@@ -680,7 +680,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var results = new List<Domain.Lookups.Models.Country>();
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var countryId in countryIds)
             {
                 var country = _countryService.GetById(countryId);
@@ -710,7 +710,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (!Statuses_Updatable.Contains(opportunity.Status))
                 throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var countryId in countryIds)
             {
                 var country = _countryService.GetById(countryId);
@@ -734,7 +734,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var results = new List<Models.Lookups.OpportunityCategory>();
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var categoryId in categoryIds)
             {
                 var category = _opportunityCategoryService.GetById(categoryId);
@@ -764,7 +764,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (!Statuses_Updatable.Contains(opportunity.Status))
                 throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var categoryId in categoryIds)
             {
                 var category = _opportunityCategoryService.GetById(categoryId);
@@ -788,7 +788,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var results = new List<Domain.Lookups.Models.Language>();
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var languageId in languageIds)
             {
                 var language = _languageService.GetById(languageId);
@@ -818,7 +818,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (!Statuses_Updatable.Contains(opportunity.Status))
                 throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var languageId in languageIds)
             {
                 var language = _languageService.GetById(languageId);
@@ -842,7 +842,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var results = new List<Domain.Lookups.Models.Skill>();
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var skillId in skillIds)
             {
                 var skill = _skillService.GetById(skillId);
@@ -872,7 +872,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (!Statuses_Updatable.Contains(opportunity.Status))
                 throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var skillId in skillIds)
             {
                 var skill = _skillService.GetById(skillId);

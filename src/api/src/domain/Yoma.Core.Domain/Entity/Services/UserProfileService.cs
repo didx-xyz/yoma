@@ -56,7 +56,7 @@ namespace Yoma.Core.Domain.Entity.Services
         public UserProfile Get()
         {
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-            var user = _userService.GetByEmail(username);
+            var user = _userService.GetByEmail(username, true);
             return ToProfile(user);
         }
 
@@ -76,14 +76,14 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
 
-            var user = _userService.GetByEmail(username);
+            var user = _userService.GetByEmail(username, true);
 
             if (!user.ExternalId.HasValue)
                 throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
             var emailUpdated = !string.Equals(user.Email, request.Email, StringComparison.CurrentCultureIgnoreCase);
             if (emailUpdated)
-                if (_userService.GetByEmailOrNull(request.Email) != null)
+                if (_userService.GetByEmailOrNull(request.Email, false) != null)
                     throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
 
             user.Email = request.Email;

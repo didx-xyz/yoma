@@ -31,6 +31,9 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
         public Guid? VerificationStatusId { get; set; }
         public MyOpportunityVerificationStatus? VerificationStatus { get; set; }
 
+        [Column(TypeName = "varchar(500)")]
+        public string? VerificationComment { get; set; }
+
         [ForeignKey(nameof(CertificateId))]
         public Guid? CertificateId { get; set; }
         public BlobObject? Certificate { get; set; }

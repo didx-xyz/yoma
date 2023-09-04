@@ -9,6 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Entities
     [Index(nameof(Name), IsUnique = true)]
     public class Gender : BaseEntity<Guid>
     {
+        [Required]
         [Column(TypeName = "varchar(20)")]
         public string Name { get; set; }
 

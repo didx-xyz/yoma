@@ -66,5 +66,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 
         [Required]
         public DateTimeOffset DateModified { get; set; }
+
+        public ICollection<UserSkill> Skills { get; set; }
     }
 }

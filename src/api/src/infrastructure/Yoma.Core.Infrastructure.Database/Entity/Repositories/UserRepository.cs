@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -42,8 +43,10 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 ZltoWalletCountryCodeAlpha2 = entity.Country.CodeAlpha2,
                 TenantId = entity.TenantId,
                 DateCreated = entity.DateCreated,
-                DateModified = entity.DateModified
-            });
+                DateModified = entity.DateModified,
+                Skills = includeChildItems ?
+                    entity.Skills.Select(o => new Domain.Lookups.Models.Skill { Id = o.SkillId, Name = o.Skill.Name, InfoURL = o.Skill.InfoURL }).ToList() : null
+            }).AsSplitQuery();
         }
 
         public Expression<Func<Domain.Entity.Models.User, bool>> Contains(Expression<Func<Domain.Entity.Models.User, bool>> predicate, string value)
