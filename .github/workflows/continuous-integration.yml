@@ -129,7 +129,6 @@ jobs:
             context: ./src/web/youth
             file: ./src/web/youth/Dockerfile
             buildArgs: |-
-              NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER=keycloak
               NEXT_PUBLIC_ENVIRONMENT=production
 
     steps:
