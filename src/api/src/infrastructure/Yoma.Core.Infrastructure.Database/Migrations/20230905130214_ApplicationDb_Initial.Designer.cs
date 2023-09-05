@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230904132115_ApplicationDb_Initial")]
+    [Migration("20230905130214_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -313,11 +313,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("ZltoWalletCountryId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("ZltoWalletId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("ZltoWalletId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -331,8 +328,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("GenderId");
 
                     b.HasIndex("PhotoId");
-
-                    b.HasIndex("ZltoWalletCountryId");
 
                     b.HasIndex("FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "DateCreated", "DateModified");
 
@@ -1001,10 +996,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .WithMany()
                         .HasForeignKey("PhotoId");
 
-                    b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "ZltoWalletCountry")
-                        .WithMany()
-                        .HasForeignKey("ZltoWalletCountryId");
-
                     b.Navigation("Country");
 
                     b.Navigation("CountryOfResidence");
@@ -1012,8 +1003,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Navigation("Gender");
 
                     b.Navigation("Photo");
-
-                    b.Navigation("ZltoWalletCountry");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserSkill", b =>

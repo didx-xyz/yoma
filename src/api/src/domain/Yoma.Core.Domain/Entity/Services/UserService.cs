@@ -169,7 +169,6 @@ namespace Yoma.Core.Domain.Entity.Services
             result.DateLastLogin = request.DateLastLogin;
             result.ExternalId = request.ExternalId;
             result.ZltoWalletId = request.ZltoWalletId;
-            result.ZltoWalletCountryId = request.ZltoWalletCountryId;
             result.TenantId = request.TenantId;
 
             if (isNew)

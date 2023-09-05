@@ -39,8 +39,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 DateLastLogin = entity.DateLastLogin,
                 ExternalId = entity.ExternalId,
                 ZltoWalletId = entity.ZltoWalletId,
-                ZltoWalletCountryId = entity.ZltoWalletCountryId,
-                ZltoWalletCountryCodeAlpha2 = entity.Country.CodeAlpha2,
                 TenantId = entity.TenantId,
                 DateCreated = entity.DateCreated,
                 DateModified = entity.DateModified,
@@ -84,7 +82,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 DateLastLogin = item.DateLastLogin,
                 ExternalId = item.ExternalId,
                 ZltoWalletId = item.ZltoWalletId,
-                ZltoWalletCountryId = item.ZltoWalletCountryId,
                 TenantId = item.TenantId,
                 DateCreated = item.DateCreated,
                 DateModified = item.DateModified
@@ -116,7 +113,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             entity.DateLastLogin = item.DateLastLogin;
             entity.ExternalId = item.ExternalId;
             entity.ZltoWalletId = item.ZltoWalletId;
-            entity.ZltoWalletCountryId = item.ZltoWalletCountryId;
             entity.TenantId = item.TenantId;
             entity.DateModified = DateTimeOffset.Now;
 

@@ -247,8 +247,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     DateOfBirth = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateLastLogin = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     ExternalId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ZltoWalletId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ZltoWalletCountryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ZltoWalletId = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
@@ -271,12 +270,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_User_Country_CountryOfResidenceId",
                         column: x => x.CountryOfResidenceId,
-                        principalSchema: "lookup",
-                        principalTable: "Country",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_User_Country_ZltoWalletCountryId",
-                        column: x => x.ZltoWalletCountryId,
                         principalSchema: "lookup",
                         principalTable: "Country",
                         principalColumn: "Id");
@@ -1056,12 +1049,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "entity",
                 table: "User",
                 column: "PhotoId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_User_ZltoWalletCountryId",
-                schema: "entity",
-                table: "User",
-                column: "ZltoWalletCountryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserSkills_SkillId",

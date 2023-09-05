@@ -8,12 +8,12 @@ namespace Yoma.Core.Infrastructure.Zlto
 {
     public static class Startup
     {
-        public static void ConfigureServices_RewardsProvider(this IServiceCollection services, IConfiguration configuration)
+        public static void ConfigureServicesRewardsProvider(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<ZltoOptions>(options => configuration.GetSection(ZltoOptions.Section).Bind(options));
         }
 
-        public static void ConfigureServices_InfrastructureRewardsProvider(this IServiceCollection services)
+        public static void ConfigureServicesInfrastructureRewardsProvider(this IServiceCollection services)
         {
             services.AddScoped<IRewardsProviderClientFactory, ZltoClientFactory>();
         }

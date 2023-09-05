@@ -45,7 +45,6 @@ namespace Yoma.Core.Domain.Entity.Extensions
                 DateLastLogin = user.DateLastLogin,
                 ExternalId = user.ExternalId,
                 ZltoWalletId = user.ZltoWalletId,
-                ZltoWalletCountryId = user.ZltoWalletCountryId,
                 TenantId = user.TenantId
             };
         }
