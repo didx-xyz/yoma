@@ -34,11 +34,7 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public Guid? ExternalId { get; set; }
 
-        public Guid? ZltoWalletId { get; set; }
-
-        public Guid? ZltoWalletCountryId { get; set; }
-
-        public string? ZltoWalletCountryCodeAlpha2 { get; set; }
+        public string? ZltoWalletId { get; set; }
 
         public Guid? TenantId { get; set; }
 

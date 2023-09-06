@@ -5,23 +5,23 @@ GO
 
 --testuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO [entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
-			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[ZltoWalletCountryId],[TenantId],[DateCreated],[DateModified])
+			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[TenantId],[DateCreated],[DateModified])
 VALUES(NEWID(),'testuser@gmail.com',1,'Test','User','Test User','+27125555555',(SELECT TOP 1 [Id] FROM [lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [lookup].[Country] ORDER BY NEWID()),
-		NULL,(SELECT TOP 1 [Id] FROM [lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -20, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,NULL,GETDATE(),GETDATE())
+		NULL,(SELECT TOP 1 [Id] FROM [lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -20, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,GETDATE(),GETDATE())
 GO
 
 --testadminuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO [entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
-			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[ZltoWalletCountryId],[TenantId],[DateCreated],[DateModified])
+			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[TenantId],[DateCreated],[DateModified])
 VALUES(NEWID(),'testadminuser@gmail.com',1,'Test Admin','User','Test Admin User','+27125555555',(SELECT TOP 1 [Id] FROM [lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [lookup].[Country] ORDER BY NEWID()),
-		NULL,(SELECT TOP 1 [Id] FROM [lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -21, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,NULL,GETDATE(),GETDATE())
+		NULL,(SELECT TOP 1 [Id] FROM [lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -21, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,GETDATE(),GETDATE())
 GO
 
 --testorgadminuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO [entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
-			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[ZltoWalletCountryId],[TenantId],[DateCreated],[DateModified])
+			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[TenantId],[DateCreated],[DateModified])
 VALUES(NEWID(),'testorgadminuser@gmail.com',1,'Test Organization Admin','User','Test Organization Admin User','+27125555555',(SELECT TOP 1 [Id] FROM [lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [lookup].[Country] ORDER BY NEWID()),
-		NULL,(SELECT TOP 1 [Id] FROM [lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -22, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,NULL,GETDATE(),GETDATE())
+		NULL,(SELECT TOP 1 [Id] FROM [lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -22, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,GETDATE(),GETDATE())
 GO
 
 DECLARE @Words VARCHAR(500) = 'The,A,An,Awesome,Incredible,Fantastic,Amazing,Wonderful,Exciting,Unbelievable,Great,Marvelous,Stunning,Impressive,Captivating,Extraordinary,Superb,Epic,Spectacular,Magnificent,Phenomenal,Outstanding,Brilliant,Enthralling,Enchanting,Mesmerizing,Riveting,Spellbinding,Unforgettable,Sublime';

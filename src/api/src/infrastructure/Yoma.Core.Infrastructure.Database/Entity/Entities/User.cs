@@ -53,11 +53,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 
         public Guid? ExternalId { get; set; }
 
-        public Guid? ZltoWalletId { get; set; }
-
-        [ForeignKey("ZltoWalletCountryId")]
-        public Guid? ZltoWalletCountryId { get; set; }
-        public Country ZltoWalletCountry { get; set; }
+        public string? ZltoWalletId { get; set; }
 
         public Guid? TenantId { get; set; }
 

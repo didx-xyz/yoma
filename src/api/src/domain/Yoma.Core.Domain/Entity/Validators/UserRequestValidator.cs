@@ -17,7 +17,6 @@ namespace Yoma.Core.Domain.Entity.Validators
             RuleFor(x => x.DateLastLogin).Must(NotInFuture).WithMessage("'{PropertyName}' is in the future.");
             //TODO: ExternalId
             //TODO: ZltoWalletId
-            //TODO: ZltoWalletCountryId
             //TODO: TenantId
         }
         #endregion
