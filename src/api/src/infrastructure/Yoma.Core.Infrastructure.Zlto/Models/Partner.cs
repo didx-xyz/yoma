@@ -6,7 +6,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
 {
     public class PartnerResponseLogin
     {
-        [JsonProperty("account_info")]
+        [JsonProperty("access_token")]
         public string AccessToken { get; set; }
 
         [JsonProperty("account_info")]

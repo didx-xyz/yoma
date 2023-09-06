@@ -65,8 +65,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
             var httpResponse = await _options.Wallet.BaseUrl
                  .AppendPathSegment("get_wallet_balance")
-                 .WithAuthHeaders(await GetAuthHeaders())
                  .AppendPathSegment(walletId)
+                 .WithAuthHeaders(await GetAuthHeaders())
                  .GetAsync()
                  .EnsureSuccessStatusCodeAsync();
 
@@ -81,8 +81,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
             var query = _options.Wallet.BaseUrl
              .AppendPathSegment("get_transactions_by_wallet")
-             .WithAuthHeaders(await GetAuthHeaders())
-             .AppendPathSegment(filter.WalletId);
+             .AppendPathSegment(filter.WalletId)
+             .WithAuthHeaders(await GetAuthHeaders());
 
             if (filter.PaginationEnabled)
             {
@@ -92,8 +92,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 if (!filter.PageSize.HasValue || filter.PageSize.Value <= default(int))
                     throw new ArgumentNullException(nameof(filter.PageSize), $"{nameof(filter.PageSize)} required");
 
-                query = query.AppendPathSegment(filter.PageSize);
-                query = query.AppendPathSegment(filter.PageNumber);
+                query = query.SetQueryParam("limit", filter.PageSize);
+                query = query.SetQueryParam("offset", filter.PageNumber - 1);
             }
 
             var httpResponse = await query.GetAsync()
@@ -126,7 +126,6 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
             var response = await _options.Partner.BaseUrl
                .AppendPathSegment("external_partner_login")
-               .WithAuthHeaders(await GetAuthHeaders())
                .PostJsonAsync(request)
                .EnsureSuccessStatusCodeAsync()
                .ReceiveJson<PartnerResponseLogin>();
