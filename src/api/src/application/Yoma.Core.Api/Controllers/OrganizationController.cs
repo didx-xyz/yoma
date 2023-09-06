@@ -98,15 +98,16 @@ namespace Yoma.Core.Api.Controllers
         }
 
 
-        [SwaggerOperation(Summary = "Update organization status (Active / Inactive / Declined / Deleted)")]
-        [HttpPut("{id}/{status}")]
+        [SwaggerOperation(Summary = "Update organization status",
+            Description = $"An Admin have the power to activate, deactivate, decline or delete an organization, whilst an Organization Admin can only delete. With a decline, an approval comment is required")]
+        [HttpPut("{id}/status")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> UpdateStatus([FromRoute] Guid id, [FromRoute] OrganizationStatus status)
+        public async Task<IActionResult> UpdateStatus([FromRoute] Guid id, [FromBody] OrganizationRequestUpdateStatus request)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatus));
 
-            await _organizationService.UpdateStatus(id, status, true);
+            await _organizationService.UpdateStatus(id, request, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
 

@@ -378,7 +378,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            _opportunityRequestValidatorCreate.ValidateAndThrow(request);
+            await _opportunityRequestValidatorCreate.ValidateAndThrowAsync(request);
 
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
 
@@ -446,7 +446,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            _opportunityRequestValidatorUpdate.ValidateAndThrow(request);
+            await _opportunityRequestValidatorUpdate.ValidateAndThrowAsync(request);
 
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
 

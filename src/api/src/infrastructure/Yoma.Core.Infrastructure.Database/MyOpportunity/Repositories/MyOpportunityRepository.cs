@@ -32,7 +32,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 Action = Enum.Parse<Domain.MyOpportunity.Action>(entity.Action.Name, true),
                 VerificationStatusId = entity.VerificationStatusId,
                 VerificationStatus = entity.VerificationStatus != null ? Enum.Parse<VerificationStatus>(entity.VerificationStatus.Name, true) : null,
-                VerificationComment = entity.VerificationComment,
+                CommentVerification = entity.CommentVerification,
                 CertificateId = entity.CertificateId,
                 DateStart = entity.DateStart,
                 DateEnd = entity.DateEnd,
@@ -56,7 +56,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 OpportunityId = item.OpportunityId,
                 ActionId = item.ActionId,
                 VerificationStatusId = item.VerificationStatusId,
-                VerificationComment = item.VerificationComment,
+                CommentVerification = item.CommentVerification,
                 CertificateId = item.CertificateId,
                 DateStart = item.DateStart,
                 DateEnd = item.DateEnd,
@@ -82,7 +82,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
 
             entity.ActionId = item.ActionId;
             entity.VerificationStatusId = item.VerificationStatusId;
-            entity.VerificationComment = item.VerificationComment;
+            entity.CommentVerification = item.CommentVerification;
             entity.CertificateId = item.CertificateId;
             entity.DateStart = item.DateStart;
             entity.DateEnd = item.DateEnd;

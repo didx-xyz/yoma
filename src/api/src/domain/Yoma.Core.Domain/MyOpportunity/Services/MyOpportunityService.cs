@@ -342,7 +342,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
             item.VerificationStatusId = statusId;
-            item.VerificationComment = request.Comment;
+            item.CommentVerification = request.Comment;
 
             switch (request.Status)
             {

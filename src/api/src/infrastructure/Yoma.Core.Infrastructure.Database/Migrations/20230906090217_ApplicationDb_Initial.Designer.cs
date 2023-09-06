@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230905130214_ApplicationDb_Initial")]
+    [Migration("20230906090217_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -107,6 +107,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Property<string>("City")
                         .HasColumnType("varchar(50)");
+
+                    b.Property<string>("CommentApproval")
+                        .HasColumnType("varchar(500)");
 
                     b.Property<Guid?>("CountryId")
                         .HasColumnType("uniqueidentifier");
@@ -559,6 +562,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<Guid?>("CertificateId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("CommentVerification")
+                        .HasColumnType("varchar(500)");
+
                     b.Property<DateTimeOffset?>("DateCompleted")
                         .HasColumnType("datetimeoffset");
 
@@ -579,9 +585,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("VerificationComment")
-                        .HasColumnType("varchar(500)");
 
                     b.Property<Guid?>("VerificationStatusId")
                         .HasColumnType("uniqueidentifier");

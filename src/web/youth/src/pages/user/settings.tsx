@@ -12,7 +12,7 @@ import { toast } from "react-toastify";
 import zod from "zod";
 import { type UserProfileRequest } from "~/api/models/user";
 import { getCountries, getGenders } from "~/api/services/lookups";
-import { patchUser } from "~/api/services/user";
+import { getUserProfile, patchUser } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
@@ -50,6 +50,10 @@ const Settings: NextPageWithLayout<{
   const { data: countries } = useQuery({
     queryKey: ["countries"],
     queryFn: getCountries,
+  });
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile"],
+    queryFn: () => getUserProfile(),
   });
 
   const { update } = useSession();
@@ -94,28 +98,30 @@ const Settings: NextPageWithLayout<{
 
   // set default values (from user session)
   useEffect(() => {
+    if (!userProfile) return;
+
     //HACK: no validation on date if value is null
-    if (!user?.profile.dateOfBirth) {
-      user.profile.dateOfBirth = "";
+    if (!userProfile?.dateOfBirth) {
+      userProfile.dateOfBirth = "";
     }
     //HACK: ISO 8601 date needs to in the YYYY-MM-DD format for the input(type=date) to display correctly
-    else if (user?.profile.dateOfBirth != null) {
-      const date = new Date(user.profile.dateOfBirth);
-      user.profile.dateOfBirth = date.toISOString().slice(0, 10);
+    else if (userProfile.dateOfBirth != null) {
+      const date = new Date(userProfile.dateOfBirth);
+      userProfile.dateOfBirth = date.toISOString().slice(0, 10);
     }
     //HACK: 'expected string, received null' form validation error
-    if (!user?.profile.phoneNumber) user.profile.phoneNumber = "";
-    if (!user?.profile.countryId) user.profile.countryId = "";
-    if (!user?.profile.countryOfResidenceId)
-      user.profile.countryOfResidenceId = "";
-    if (!user?.profile.genderId) user.profile.genderId = "";
+    if (!userProfile.phoneNumber) userProfile.phoneNumber = "";
+    if (!userProfile.countryId) userProfile.countryId = "";
+    if (!userProfile.countryOfResidenceId)
+      userProfile.countryOfResidenceId = "";
+    if (!userProfile.genderId) userProfile.genderId = "";
 
     // reset form
     // setTimeout is needed to prevent the form from being reset before the default values are set
     setTimeout(() => {
-      reset(user.profile);
+      reset(userProfile);
     }, 100);
-  }, [user, reset]);
+  }, [user, reset, userProfile]);
 
   // form submission handler
   const onSubmit = useCallback(
