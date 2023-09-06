@@ -34,10 +34,10 @@ export const UserMenu: React.FC = () => {
           {/* )} */}
 
           {/* EXISTING IMAGE */}
-          {session?.user?.profile.photoURL && (
+          {session?.user?.photoURL && (
             <>
               <Image
-                src={session?.user?.profile.photoURL}
+                src={session?.user?.photoURL}
                 alt="User Logo"
                 width={44}
                 height={44}

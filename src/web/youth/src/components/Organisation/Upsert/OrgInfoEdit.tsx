@@ -10,7 +10,6 @@ import {
   MAX_IMAGE_SIZE_LABEL,
 } from "~/lib/constants";
 import { FileUploader } from "./FileUpload";
-// import { ImageUpload } from "./ImageUpload";
 
 export interface InputProps {
   organisation: OrganizationCreateRequest | null;
@@ -37,11 +36,9 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
     postalCode: zod.string().min(1, "Postal code is required."),
     websiteURL: zod
       .string()
-      .url("Organisation website URL is invalid.")
-      //.min(2, "Organisation website URL is required.")
-      .max(2083, "Organisation website URL cannot exceed 2083 characters.")
+      .url("Please enter a valid URL (e.g. http://www.example.com)")
       .optional()
-      .nullish(),
+      .or(zod.literal("")),
     logo: zod
       .any()
       .refine((files: File[]) => files?.length == 1, "Logo is required.")
@@ -68,6 +65,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
   });
 
   const form = useForm({
+    mode: "all",
     resolver: zodResolver(schema),
   });
   const {
@@ -97,20 +95,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
     },
     [onSubmit],
   );
-
-  // const handleCancel = () => {
-  //   onCancel();
-  // };
-  // const onLogoUpload = useCallback(
-  //   (file: File) => {
-  //     //organisation?.logo
-  //     //setModel();
-
-  //     debugger;
-  //     model.logo = file;
-  //   },
-  //   [model, setModel],
-  // );
 
   return (
     <>
@@ -247,9 +231,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           <label className="label font-bold">
             <span className="label-text">Logo</span>
           </label>
-          {/* <div className="flex items-center justify-center pb-4"> */}
-          {/* <ImageUpload name="logo" files={[organisation?.logo]} form={form} /> */}
-          "logo" : {logoFiles?.length}
+
           <FileUploader
             files={logoFiles as any}
             allowMultiple={false}
@@ -262,7 +244,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
               );
             }}
           />
-          {/* </div> */}
+
           {errors.logo && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">

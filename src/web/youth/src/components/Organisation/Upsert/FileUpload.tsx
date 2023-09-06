@@ -19,12 +19,7 @@ registerPlugin(
   FilePondPluginImagePreview,
 );
 
-//import "filepond/dist/filepond.min.css";
-
 export interface InputProps {
-  //organisation: OrganizationCreateRequest | null;
-  // onSubmit: (fieldValues: FieldValues) => void;
-  // onCancel: (fieldValues: FieldValues) => void;
   files: any[];
   fileTypes: string[];
   allowMultiple: boolean;
@@ -40,10 +35,7 @@ export const FileUploader: React.FC<InputProps> = ({
   const [data, setFiles] = useState<any[]>(files);
 
   return (
-    <div
-    //className={styles.wrapper}
-    >
-      files: {files?.length}
+    <div>
       <FilePond
         files={data}
         onupdatefiles={(data) => {

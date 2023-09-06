@@ -11,6 +11,7 @@ import {
 import { getOrganisationProviderTypes } from "~/api/services/organisations";
 import {
   ACCEPTED_DOC_TYPES,
+  ACCEPTED_DOC_TYPES_LABEL,
   MAX_DOC_SIZE,
   MAX_DOC_SIZE_LABEL,
 } from "~/lib/constants";
@@ -45,61 +46,121 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
     queryFn: () => getOrganisationProviderTypes(),
   });
 
-  const schema = zod.object({
-    providerTypeIds: zod
-      .array(zod.string().uuid())
-      .min(1, "Please select at least one option."),
-    registrationDocuments: zod
-      .any()
-      .refine(
-        (files: File[]) => files?.length == 1,
-        "Registration document is required.",
-      )
-      .refine(
-        // eslint-disable-next-line
-        (files) => files?.[0]?.size <= MAX_DOC_SIZE,
-        `Maximum file size is ${MAX_DOC_SIZE_LABEL}.`,
-      )
-      .refine(
-        // eslint-disable-next-line
-        (files) => ACCEPTED_DOC_TYPES.includes(files?.[0]?.type),
-        "${ACCEPTED_DOC_TYPES_LABEL} files are accepted.",
-      ),
-    educationProviderDocuments: zod
-      .any()
-      .refine(
-        (files: File[]) => files?.length == 1,
-        "Education provider document is required.",
-      )
-      .refine(
-        // eslint-disable-next-line
-        (files) => files?.[0]?.size <= MAX_DOC_SIZE,
-        `Maximum file size is ${MAX_DOC_SIZE_LABEL}.`,
-      )
-      .refine(
-        // eslint-disable-next-line
-        (files) => ACCEPTED_DOC_TYPES.includes(files?.[0]?.type),
-        "${ACCEPTED_DOC_TYPES_LABEL} files are accepted.",
-      ),
-    businessDocuments: zod
-      .any()
-      .refine(
-        (files: File[]) => files?.length == 1,
-        "VAT/Business document is required.",
-      )
-      .refine(
-        // eslint-disable-next-line
-        (files) => files?.[0]?.size <= MAX_DOC_SIZE,
-        `Maximum file size is ${MAX_DOC_SIZE_LABEL}.`,
-      )
-      .refine(
-        // eslint-disable-next-line
-        (files) => ACCEPTED_DOC_TYPES.includes(files?.[0]?.type),
-        "${ACCEPTED_DOC_TYPES_LABEL} files are accepted.",
-      ),
-  });
+  const schema = zod
+    .object({
+      providerTypeIds: zod
+        .array(zod.string().uuid())
+        .min(1, "Please select at least one option."),
+      registrationDocuments: zod
+        .any()
+        .refine(
+          (files: File[]) => files?.length == 1,
+          "At least one registration document is required.",
+        )
+        .refine(
+          // eslint-disable-next-line
+          (files) => files?.[0]?.size <= MAX_DOC_SIZE,
+          `Maximum file size is ${MAX_DOC_SIZE_LABEL}.`,
+        )
+        .refine(
+          // eslint-disable-next-line
+          (files) => ACCEPTED_DOC_TYPES.includes(files?.[0]?.type),
+          "${ACCEPTED_DOC_TYPES_LABEL} files are accepted.",
+        ),
+      educationProviderDocuments: zod.array(zod.any()).optional(),
+      businessDocuments: zod.array(zod.any()).optional(),
+    })
+    .superRefine((values, ctx) => {
+      // if education is selected, education provider documents are required
+      const educationPT = organisationProviderTypes?.find(
+        (x) => x.name == "Education",
+      );
+
+      if (
+        values.providerTypeIds?.findIndex((x: string) => x == educationPT?.id) >
+        -1
+      ) {
+        if (
+          values.educationProviderDocuments == null ||
+          values.educationProviderDocuments?.length < 1
+        ) {
+          ctx.addIssue({
+            message: "At least one education provider document is required.",
+            code: zod.ZodIssueCode.custom,
+            path: ["educationProviderDocuments"],
+          });
+        }
+      }
+
+      // if marketplace is selected, business documents are required
+      const marketplacePT = organisationProviderTypes?.find(
+        (x) => x.name == "Marketplace",
+      );
+
+      if (
+        values.providerTypeIds?.findIndex(
+          (x: string) => x == marketplacePT?.id,
+        ) > -1
+      ) {
+        if (
+          values.businessDocuments == null ||
+          values.businessDocuments?.length < 1
+        ) {
+          ctx.addIssue({
+            message: "At least one VAT/business document is required.",
+            code: zod.ZodIssueCode.custom,
+            path: ["businessDocuments"],
+          });
+        }
+      }
+    })
+    .refine(
+      (data) => {
+        return data.educationProviderDocuments?.every(
+          (file) => file && file.size <= MAX_DOC_SIZE,
+        );
+      },
+      {
+        message: `Maximum file size is ${MAX_DOC_SIZE_LABEL}.`,
+        path: ["educationProviderDocuments"],
+      },
+    )
+    .refine(
+      (data) => {
+        return data.educationProviderDocuments?.every(
+          (file) => file && ACCEPTED_DOC_TYPES.includes(file?.type),
+        );
+      },
+      {
+        message: `${ACCEPTED_DOC_TYPES_LABEL} files are accepted.`,
+        path: ["educationProviderDocuments"],
+      },
+    )
+    .refine(
+      (data) => {
+        return data.businessDocuments?.every(
+          (file) => file && file.size <= MAX_DOC_SIZE,
+        );
+      },
+      {
+        message: `Maximum file size is ${MAX_DOC_SIZE_LABEL}.`,
+        path: ["businessDocuments"],
+      },
+    )
+    .refine(
+      (data) => {
+        return data.businessDocuments?.every(
+          (file) => file && ACCEPTED_DOC_TYPES.includes(file?.type),
+        );
+      },
+      {
+        message: `${ACCEPTED_DOC_TYPES_LABEL} files are accepted.`,
+        path: ["businessDocuments"],
+      },
+    );
 
   const form = useForm({
+    mode: "all",
     resolver: zodResolver(schema),
   });
   const {

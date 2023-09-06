@@ -37,6 +37,11 @@ const config = {
     API_BASE_URL: process.env.API_BASE_URL,
   },
 
+  // allow certificate images to be loaded from https
+  images: {
+    domains: ["yoma-test-file-storage.s3.eu-west-1.amazonaws.com"],
+  },
+
   /**
    * If you have `experimental: { appDir: true }` set, then you must comment the below `i18n` config
    * out.
