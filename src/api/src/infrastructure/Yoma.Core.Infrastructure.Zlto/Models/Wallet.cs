@@ -155,7 +155,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
         public int Offset { get; set; }
 
         [JsonProperty("data")]
-        public ICollection<WalletTransaction>? Items { get; set; } 
+        public ICollection<WalletTransaction>? Items { get; set; }
     }
 
     public partial class WalletTransaction

@@ -2,7 +2,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
 {
     public class ZltoOptions
     {
-        public const string Section = "Zlto";   
+        public const string Section = "Zlto";
 
         public string Username { get; set; }
 
