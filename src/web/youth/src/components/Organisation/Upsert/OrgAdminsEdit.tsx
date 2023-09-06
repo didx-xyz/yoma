@@ -1,9 +1,10 @@
 /* eslint-disable */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
-import { FieldValues, useForm } from "react-hook-form";
+import { Controller, FieldValues, useForm } from "react-hook-form";
+import CreatableSelect from "react-select/creatable";
 import zod from "zod";
-import { OrganizationCreateRequest } from "~/api/models/organisation";
+import { type OrganizationCreateRequest } from "~/api/models/organisation";
 
 export interface InputProps {
   organisation: OrganizationCreateRequest | null;
@@ -11,17 +12,54 @@ export interface InputProps {
   onCancel: (fieldValues: FieldValues) => void;
 }
 
+function validateEmail(email: string) {
+  const re = /\S+@\S+\.\S+/;
+  return re.test(email);
+}
+
 export const OrgAdminsEdit: React.FC<InputProps> = ({
   organisation,
   onSubmit,
   onCancel,
 }) => {
-  const schema = zod.object({
-    addCurrentUserAsAdmin: zod.boolean(),
-    adminAdditionalEmails: zod.array(zod.string().email()),
-  });
+  const schema = zod
+    .object({
+      addCurrentUserAsAdmin: zod.boolean().optional(),
+      adminAdditionalEmails: zod.array(zod.string().email()).optional(),
+    })
+    .nonstrict()
+
+    .superRefine((values, ctx) => {
+      // adminAdditionalEmails is required if addCurrentUserAsAdmin is false
+      if (
+        !values.addCurrentUserAsAdmin &&
+        (values.adminAdditionalEmails == null ||
+          values.adminAdditionalEmails?.length < 1)
+      ) {
+        ctx.addIssue({
+          message:
+            "At least one Admin Additional Email is required if you are not the organisation admin.",
+          code: zod.ZodIssueCode.custom,
+          path: ["adminAdditionalEmails"],
+        });
+      }
+    })
+    .refine(
+      (data) => {
+        // validate all items are valid email addresses
+        return data.adminAdditionalEmails?.every((email) =>
+          validateEmail(email),
+        );
+      },
+      {
+        message:
+          "Please enter valid email addresses e.g. name@gmail.com. One or more email address are wrong.",
+        path: ["adminAdditionalEmails"],
+      },
+    );
 
   const form = useForm({
+    mode: "all",
     resolver: zodResolver(schema),
   });
   const {
@@ -79,12 +117,30 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
         <div className="form-control">
           <label className="label font-bold">
             <span className="label-text">Add additional admins</span>
-            {/* <input
-                  type="checkbox"
-                  className="checkbox mr-2"
-                  {...registerStep3("adminAdditionalEmails")}
-                /> */}
           </label>
+
+          <Controller
+            name="adminAdditionalEmails"
+            control={form.control}
+            defaultValue={organisation?.adminAdditionalEmails}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            render={({ field: { onChange, value } }) => (
+              <CreatableSelect
+                options={organisation?.adminAdditionalEmails?.map((val) => ({
+                  label: val,
+                  value: val,
+                }))}
+                isMulti
+                className="form-control w-full"
+                // eslint-disable-next-line
+                onChange={(val) => onChange(val.map((c) => c.value))}
+                value={value?.map((val: any) => ({
+                  label: val,
+                  value: val,
+                }))}
+              />
+            )}
+          />
           {errors.adminAdditionalEmails && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
@@ -105,7 +161,7 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
             Back
           </button>
           <button type="submit" className="btn btn-success btn-sm flex-grow">
-            Next
+            Submit
           </button>
         </div>
       </form>

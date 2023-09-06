@@ -71,50 +71,48 @@ const RegisterOrganisation: NextPageWithLayout = () => {
       businessDocuments: [],
     });
 
-  const onSubmit = useCallback(
-    async (/*data: FieldValues*/) => {
-      setIsLoading(true);
+  const onSubmit = useCallback(async () => {
+    setIsLoading(true);
 
-      try {
-        // update api
-        await postOrganisation(organizationCreateRequest);
-      } catch (error) {
-        toast(<ApiErrors error={error as AxiosError} />, {
-          type: "error",
-          toastId: "patchUserProfileError",
-          autoClose: false,
-          icon: false,
-        });
-
-        captureException(error);
-        setIsLoading(false);
-
-        return;
-      }
+    try {
+      // update api
+      await postOrganisation(organizationCreateRequest);
 
       toast("Your organisation has been updated", {
         type: "success",
-        toastId: "patchUserProfile",
+        toastId: "organisationRegistration",
       });
       setIsLoading(false);
 
       void router.push("/partner/success");
-    },
-    [organizationCreateRequest, setIsLoading],
-  );
+    } catch (error) {
+      toast(<ApiErrors error={error as AxiosError} />, {
+        type: "error",
+        toastId: "organisationRegistration",
+        autoClose: false,
+        icon: false,
+      });
+
+      captureException(error);
+      setIsLoading(false);
+
+      return;
+    }
+  }, [organizationCreateRequest, setIsLoading]);
 
   // form submission handler
   const onSubmitStep = useCallback(
     async (step: number, data: FieldValues) => {
+      // set form data
       const model = {
         ...organizationCreateRequest,
         ...(data as OrganizationCreateRequest),
       };
 
       setOrganizationCreateRequest(model);
+
       if (step === 4) {
-        await onSubmit(/*model*/);
-        setStep(step);
+        await onSubmit();
         return;
       }
       setStep(step);
