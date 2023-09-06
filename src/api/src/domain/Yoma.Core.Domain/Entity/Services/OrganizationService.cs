@@ -340,7 +340,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
                     if (!Statuses_DeActivatable.Contains(org.Status))
                         throw new ValidationException($"{nameof(Organization)} can not be deactivated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
-                    
+
                     if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
                     //TODO: Send email to SAP admins

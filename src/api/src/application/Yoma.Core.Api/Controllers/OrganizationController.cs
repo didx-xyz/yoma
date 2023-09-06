@@ -99,7 +99,7 @@ namespace Yoma.Core.Api.Controllers
 
 
         [SwaggerOperation(Summary = "Update organization status",
-            Description  = $"An Admin have the power to activate, deactivate, decline or delete an organization, whilst an Organization Admin can only delete. With a decline, an approval comment is required")]
+            Description = $"An Admin have the power to activate, deactivate, decline or delete an organization, whilst an Organization Admin can only delete. With a decline, an approval comment is required")]
         [HttpPut("{id}/status")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
