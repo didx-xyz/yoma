@@ -72,7 +72,7 @@ jobs:
     #   ${{ matrix.project }}-changes: ${{ steps.filter.outputs.changes }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v2
         id: filter
         with:
@@ -134,7 +134,7 @@ jobs:
             file: ./src/web/youth/Dockerfile
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v2 # https://github.com/actions/runner/pull/2477
         id: filter
         with:
