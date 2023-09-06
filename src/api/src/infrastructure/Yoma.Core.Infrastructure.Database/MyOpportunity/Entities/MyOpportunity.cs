@@ -32,7 +32,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
         public MyOpportunityVerificationStatus? VerificationStatus { get; set; }
 
         [Column(TypeName = "varchar(500)")]
-        public string? VerificationComment { get; set; }
+        public string? CommentVerification { get; set; }
 
         [ForeignKey(nameof(CertificateId))]
         public Guid? CertificateId { get; set; }

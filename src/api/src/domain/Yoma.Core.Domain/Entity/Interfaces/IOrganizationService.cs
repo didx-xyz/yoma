@@ -21,7 +21,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         Task<Organization> Update(OrganizationRequestUpdate request, bool ensureOrganizationAuthorization);
 
-        Task UpdateStatus(Guid id, OrganizationStatus status, bool ensureOrganizationAuthorization);
+        Task UpdateStatus(Guid id, OrganizationRequestUpdateStatus request, bool ensureOrganizationAuthorization);
 
         Task<Organization> AssignProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization);
 

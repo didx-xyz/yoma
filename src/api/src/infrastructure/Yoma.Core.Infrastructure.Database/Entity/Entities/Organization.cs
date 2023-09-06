@@ -63,6 +63,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
         public Guid StatusId { get; set; }
         public Lookups.OrganizationStatus Status { get; set; }
 
+        [Column(TypeName = "varchar(500)")]
+        public string? CommentApproval { get; set; }
+
         public DateTimeOffset? DateStatusModified { get; set; }
 
         [ForeignKey(nameof(LogoId))]

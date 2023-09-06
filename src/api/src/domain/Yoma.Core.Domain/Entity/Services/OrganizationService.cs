@@ -28,6 +28,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly OrganizationRequestValidatorCreate _organizationCreateRequestValidator;
         private readonly OrganizationRequestValidatorUpdate _organizationUpdateRequestValidator;
         private readonly OrganizationSearchFilterValidator _organizationSearchFilterValidator;
+        private readonly OrganizationRequestUpdateStatusValidator _organizationRequestUpdateStatusValidator;
         private readonly IRepositoryValueContainsWithNavigation<Organization> _organizationRepository;
         private readonly IRepository<OrganizationUser> _organizationUserRepository;
         private readonly IRepository<Models.OrganizationProviderType> _organizationProviderTypeRepository;
@@ -50,6 +51,7 @@ namespace Yoma.Core.Domain.Entity.Services
             OrganizationRequestValidatorCreate organizationCreateRequestValidator,
             OrganizationRequestValidatorUpdate organizationUpdateRequestValidator,
             OrganizationSearchFilterValidator organizationSearchFilterValidator,
+            OrganizationRequestUpdateStatusValidator organizationRequestUpdateStatusValidator,
             IRepositoryValueContainsWithNavigation<Organization> organizationRepository,
             IRepository<OrganizationUser> organizationUserRepository,
             IRepository<Models.OrganizationProviderType> organizationProviderTypeRepository,
@@ -64,6 +66,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _organizationCreateRequestValidator = organizationCreateRequestValidator;
             _organizationUpdateRequestValidator = organizationUpdateRequestValidator;
             _organizationSearchFilterValidator = organizationSearchFilterValidator;
+            _organizationRequestUpdateStatusValidator = organizationRequestUpdateStatusValidator;
             _organizationRepository = organizationRepository;
             _organizationUserRepository = organizationUserRepository;
             _organizationProviderTypeRepository = organizationProviderTypeRepository;
@@ -306,49 +309,71 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
-        public async Task UpdateStatus(Guid id, OrganizationStatus status, bool ensureOrganizationAuthorization)
+        public async Task UpdateStatus(Guid id, OrganizationRequestUpdateStatus request, bool ensureOrganizationAuthorization)
         {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            await _organizationRequestUpdateStatusValidator.ValidateAndThrowAsync(request);
+
             var org = GetById(id, false, ensureOrganizationAuthorization);
 
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
 
-            switch (status)
+            switch (request.Status)
             {
                 case OrganizationStatus.Active:
                     if (org.Status == OrganizationStatus.Active) return;
+
                     if (!Statuses_Activatable.Contains(org.Status))
                         throw new ValidationException($"{nameof(Organization)} can not be activated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
+
+                    if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
+
                     //TODO: Send email to org admins
+
+                    org.CommentApproval = request.Comment;
                     break;
 
                 case OrganizationStatus.Inactive:
                     if (org.Status == OrganizationStatus.Inactive) return;
+
                     if (!Statuses_DeActivatable.Contains(org.Status))
                         throw new ValidationException($"{nameof(Organization)} can not be deactivated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
+                    
+                    if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
+
                     //TODO: Send email to SAP admins
                     break;
 
                 case OrganizationStatus.Declined:
                     if (org.Status == OrganizationStatus.Declined) return;
+
                     if (!Statuses_Declinable.Contains(org.Status))
                         throw new ValidationException($"{nameof(Organization)} can not be declined (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Declinable)}'");
+
+                    if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
+
                     //TODO: Send email to org admins
+
+                    org.CommentApproval = request.Comment;
                     break;
 
                 case OrganizationStatus.Deleted:
                     if (org.Status == OrganizationStatus.Deleted) return;
+
                     if (!Statuses_CanDelete.Contains(org.Status))
                         throw new ValidationException($"{nameof(Organization)} can not be deleted (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
                     break;
 
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status}' not supported");
+                    throw new ArgumentOutOfRangeException(nameof(request.Status), $"{nameof(Status)} of '{request.Status}' not supported");
             }
 
-            var statusId = _organizationStatusService.GetByName(status.ToString()).Id;
+            var statusId = _organizationStatusService.GetByName(request.Status.ToString()).Id;
 
             org.StatusId = statusId;
-            org.Status = status;
+            org.Status = request.Status;
 
             await _organizationRepository.Update(org);
         }

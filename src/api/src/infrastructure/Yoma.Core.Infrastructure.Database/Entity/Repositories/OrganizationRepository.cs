@@ -43,6 +43,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 Biography = entity.Biography,
                 StatusId = entity.StatusId,
                 Status = Enum.Parse<OrganizationStatus>(entity.Status.Name, true),
+                CommentApproval = entity.CommentApproval,
                 LogoId = entity.LogoId,
                 DateCreated = entity.DateCreated,
                 DateModified = entity.DateModified,
@@ -97,6 +98,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 Tagline = item.Tagline,
                 Biography = item.Biography,
                 StatusId = item.StatusId,
+                CommentApproval = item.CommentApproval,
                 DateStatusModified = item.DateStatusModified,
                 LogoId = item.LogoId,
                 DateCreated = item.DateCreated,
@@ -131,6 +133,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             entity.Biography = item.Biography;
             if (entity.StatusId != item.StatusId) entity.DateStatusModified = DateTimeOffset.Now;
             entity.StatusId = item.StatusId;
+            entity.CommentApproval = item.CommentApproval;
             entity.LogoId = item.LogoId;
             entity.DateModified = DateTimeOffset.Now;
 

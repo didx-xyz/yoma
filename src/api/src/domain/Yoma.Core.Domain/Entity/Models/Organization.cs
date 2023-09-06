@@ -38,6 +38,8 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public OrganizationStatus Status { get; set; }
 
+        public string? CommentApproval { get; set; }
+
         public DateTimeOffset DateStatusModified { get; set; }
 
         public Guid? LogoId { get; set; }

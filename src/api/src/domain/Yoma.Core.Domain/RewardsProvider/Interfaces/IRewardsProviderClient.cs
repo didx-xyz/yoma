@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Yoma.Core.Domain.RewardsProvider.Models;
 
 namespace Yoma.Core.Domain.RewardsProvider.Interfaces

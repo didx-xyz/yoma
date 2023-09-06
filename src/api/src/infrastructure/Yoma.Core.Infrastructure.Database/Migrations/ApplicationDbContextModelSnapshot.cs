@@ -105,6 +105,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<string>("City")
                         .HasColumnType("varchar(50)");
 
+                    b.Property<string>("CommentApproval")
+                        .HasColumnType("varchar(500)");
+
                     b.Property<Guid?>("CountryId")
                         .HasColumnType("uniqueidentifier");
 
@@ -556,6 +559,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<Guid?>("CertificateId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("CommentVerification")
+                        .HasColumnType("varchar(500)");
+
                     b.Property<DateTimeOffset?>("DateCompleted")
                         .HasColumnType("datetimeoffset");
 
@@ -576,9 +582,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("VerificationComment")
-                        .HasColumnType("varchar(500)");
 
                     b.Property<Guid?>("VerificationStatusId")
                         .HasColumnType("uniqueidentifier");

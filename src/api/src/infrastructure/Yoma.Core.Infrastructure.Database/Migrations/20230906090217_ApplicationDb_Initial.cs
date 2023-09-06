@@ -1,4 +1,3 @@
-using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -303,6 +302,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     Tagline = table.Column<string>(type: "varchar(MAX)", nullable: true),
                     Biography = table.Column<string>(type: "varchar(MAX)", nullable: true),
                     StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CommentApproval = table.Column<string>(type: "varchar(500)", nullable: true),
                     DateStatusModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     LogoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
@@ -532,7 +532,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     OpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ActionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     VerificationStatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    VerificationComment = table.Column<string>(type: "varchar(500)", nullable: true),
+                    CommentVerification = table.Column<string>(type: "varchar(500)", nullable: true),
                     CertificateId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     DateStart = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
