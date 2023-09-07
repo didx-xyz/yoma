@@ -14,9 +14,9 @@ export const getOrganisationProviderTypes = async (
     ? await ApiServer(context).get<OrganizationProviderType[]>(
         "/organization/lookup/providerType",
       )
-    : await ApiClient.get<OrganizationProviderType[]>(
-        "/organization/lookup/providerType",
-      );
+    : await (
+        await ApiClient
+      ).get<OrganizationProviderType[]>("/organization/lookup/providerType");
   return data;
 };
 
@@ -45,13 +45,11 @@ export const postOrganisation = async (
   }
   /* eslint-enable */
 
-  const { data } = await ApiClient.post<Organization>(
-    "/organization",
-    formData,
-    {
-      headers: { "Content-Type": "multipart/form-data" },
-    },
-  );
+  const { data } = await (
+    await ApiClient
+  ).post<Organization>("/organization", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return data;
 };
 
