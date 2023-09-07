@@ -58,13 +58,7 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const {
-    register: register,
-    handleSubmit: handleSubmit,
-    formState: { errors: errors },
-    getValues: getValues,
-    reset: reset,
-  } = form;
+  const { register, handleSubmit, formState, reset } = form;
 
   // set default values
   useEffect(() => {
@@ -100,11 +94,11 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
               {...register("addCurrentUserAsAdmin")}
             />
           </label>
-          {errors.addCurrentUserAsAdmin && (
+          {formState.errors.addCurrentUserAsAdmin && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.addCurrentUserAsAdmin.message}`}
+                {`${formState.errors.addCurrentUserAsAdmin.message}`}
               </span>
             </label>
           )}
@@ -137,11 +131,11 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
               />
             )}
           />
-          {errors.adminAdditionalEmails && (
+          {formState.errors.adminAdditionalEmails && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.adminAdditionalEmails.message}`}
+                {`${formState.errors.adminAdditionalEmails.message}`}
               </span>
             </label>
           )}

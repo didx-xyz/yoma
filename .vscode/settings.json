@@ -2,5 +2,9 @@
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   "files.eol": "\n",
-  "files.trimTrailingWhitespace": true
+  "files.trimTrailingWhitespace": true,
+  "sonarlint.connectedMode.project": {
+    "connectionId": "didx-xyz",
+    "projectKey": "didx-xyz_yoma"
+  }
 }

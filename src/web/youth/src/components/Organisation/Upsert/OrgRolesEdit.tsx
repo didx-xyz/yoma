@@ -162,14 +162,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const {
-    register: register,
-    handleSubmit: handleSubmit,
-    formState: { errors: errors },
-    getValues: getValues,
-    setValue: setValue,
-    reset: reset,
-  } = form;
+  const { register, handleSubmit, formState, setValue, reset } = form;
 
   // set default values
   useEffect(() => {
@@ -219,11 +212,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
             </label>
           ))}
 
-          {errors.providerTypes && (
+          {formState.errors.providerTypes && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.providerTypes.message}`}
+                {`${formState.errors.providerTypes.message}`}
               </span>
             </label>
           )}
@@ -248,11 +241,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
             }}
           />
 
-          {errors.registrationDocuments && (
+          {formState.errors.registrationDocuments && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.registrationDocuments.message}`}
+                {`${formState.errors.registrationDocuments.message}`}
               </span>
             </label>
           )}
@@ -275,11 +268,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
             }}
           />
 
-          {errors.educationProviderDocuments && (
+          {formState.errors.educationProviderDocuments && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.educationProviderDocuments.message}`}
+                {`${formState.errors.educationProviderDocuments.message}`}
               </span>
             </label>
           )}
@@ -302,11 +295,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
             }}
           />
 
-          {errors.businessDocuments && (
+          {formState.errors.businessDocuments && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.businessDocuments.message}`}
+                {`${formState.errors.businessDocuments.message}`}
               </span>
             </label>
           )}

@@ -72,17 +72,3 @@ export const getOrganisations = async (
       );
   return data;
 };
-
-// export const uploadOrganisationImage = async (
-//   organisationId: string,
-//   model: ImageRequestDto,
-// ): Promise<OrganisationResponseDto> => {
-//   const { data } = await ApiClient.post<ApiResponse<OrganisationResponseDto>>(
-//     `/organisations/${organisationId}/logo`,
-//     model,
-//     { headers: { "Content-Type": "multipart/form-data" } },
-//   );
-
-//   if (!data.meta.success) throw new Error(data.meta.message);
-//   return data.data;
-// };
