@@ -126,13 +126,13 @@ namespace Yoma.Core.Api.Controllers
         [HttpPost("search/admin")]
         [ProducesResponseType(typeof(List<OpportunitySearchResults>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public IActionResult SearchAdmin([FromBody] OpportunitySearchFilterAdmin filter)
+        public IActionResult Search([FromBody] OpportunitySearchFilterAdmin filter)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(SearchAdmin));
+            _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
-            var result = _opportunityService.SearchAdmin(filter, true);
+            var result = _opportunityService.Search(filter, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(SearchAdmin));
+            _logger.LogInformation("Request {requestName} handled", nameof(Search));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

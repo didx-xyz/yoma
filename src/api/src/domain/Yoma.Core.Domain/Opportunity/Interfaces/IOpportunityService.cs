@@ -18,7 +18,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
         OpportunitySearchResultsInfo Search(OpportunitySearchFilter filter);
 
-        OpportunitySearchResults SearchAdmin(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
+        OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
         Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization);
 

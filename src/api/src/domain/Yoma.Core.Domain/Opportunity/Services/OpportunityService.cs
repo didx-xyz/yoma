@@ -183,7 +183,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 PageSize = filter.PageSize
             };
 
-            var searchResult = SearchAdmin(filterInternal, false);
+            var searchResult = Search(filterInternal, false);
             var results = new OpportunitySearchResultsInfo
             {
                 TotalCount = searchResult.TotalCount,
@@ -193,7 +193,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results;
         }
 
-        public OpportunitySearchResults SearchAdmin(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
+        public OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
         {
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
