@@ -35,7 +35,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
         private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
-        private readonly OpportunitySearchFilterValidatorInfo _searchFilterInfoValidator;
         private readonly OpportunitySearchFilterValidator _searchFilterValidator;
 
         private readonly IRepositoryValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
@@ -66,7 +65,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
             ITimeIntervalService timeIntervalService,
             OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
             OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
-            OpportunitySearchFilterValidatorInfo searchFilterInfoValidator,
             OpportunitySearchFilterValidator searchFilterValidator,
             IRepositoryValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
             IRepository<OpportunityCategory> opportunityCategoryRepository,
@@ -89,7 +87,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate;
             _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate;
-            _searchFilterInfoValidator = searchFilterInfoValidator;
             _searchFilterValidator = searchFilterValidator;
 
             _opportunityRepository = opportunityRepository;
@@ -157,14 +154,23 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return result.ToOpportunityInfo();
         }
 
-        public OpportunitySearchResultsInfo SearchInfo(OpportunitySearchFilterInfo filter)
+        public List<Models.Opportunity> Contains(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentNullException(nameof(value));
+            value = value.Trim();
+
+            return _opportunityRepository.Contains(_opportunityRepository.Query(), value).ToList();
+        }
+
+        public OpportunitySearchResultsInfo Search(OpportunitySearchFilter filter)
         {
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
 
-            _searchFilterInfoValidator.ValidateAndThrow(filter);
+            //filter validated by SearchAdmin
 
-            var filterInternal = new OpportunitySearchFilter
+            var filterInternal = new OpportunitySearchFilterAdmin
             {
                 PublishedOnly = true, //active and relating to active organization, irrespective of started
                 Types = filter.Types,
@@ -177,7 +183,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 PageSize = filter.PageSize
             };
 
-            var searchResult = Search(filterInternal, false);
+            var searchResult = SearchAdmin(filterInternal, false);
             var results = new OpportunitySearchResultsInfo
             {
                 TotalCount = searchResult.TotalCount,
@@ -187,7 +193,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results;
         }
 
-        public OpportunitySearchResults Search(OpportunitySearchFilter filter, bool ensureOrganizationAuthorization)
+        public OpportunitySearchResults SearchAdmin(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
         {
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));

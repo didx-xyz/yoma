@@ -13,11 +13,13 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         User? GetByIdOrNull(Guid id, bool includeChildItems);
 
+        List<User> Contains(string value);
+
+        UserSearchResults Search(UserSearchFilter filter);
+
         Task<User> Upsert(UserRequest request);
 
         Task<User> UpsertPhoto(string? email, IFormFile? file);
-
-        UserSearchResults Search(UserSearchFilter filter);
 
         Task AssignSkills(Guid id, List<Guid> skillIds);
     }

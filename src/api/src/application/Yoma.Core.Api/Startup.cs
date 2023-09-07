@@ -59,7 +59,7 @@ namespace Yoma.Core.Api
                 _configuration.GetSection(ScheduleJobOptions.Section).Bind(options));
             services.ConfigureServices_IdentityProvider(_configuration);
             services.ConfigureServices_LaborMarketProvider(_configuration);
-            services.ConfigureServicesRewardsProvider(_configuration);
+            services.ConfigureServices_RewardsProvider(_configuration);
             services.AddSingleton<IEnvironmentProvider>(p => ActivatorUtilities.CreateInstance<EnvironmentProvider>(p, _webHostEnvironment.EnvironmentName));
             services.ConfigureServices_EmailProvider(_configuration);
             services.ConfigureServices_BlobProvider(_configuration);
@@ -92,7 +92,7 @@ namespace Yoma.Core.Api
             services.ConfigureServices_InfrastructureIdentityProvider();
             services.ConfigureServices_InfrastructureLaborMarketProvider();
             services.ConfigureServices_InfrastructureEmailProvider(_configuration);
-            services.ConfigureServicesInfrastructureRewardsProvider();
+            services.ConfigureServices_InfrastructureRewardsProvider();
             services.ConfigureServices_InfrastructureDatabase(_configuration);
             #endregion Services & Infrastructure
 

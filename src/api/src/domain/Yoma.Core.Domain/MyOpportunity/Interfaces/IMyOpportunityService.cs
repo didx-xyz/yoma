@@ -6,6 +6,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
     {
         MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter);
 
+        MyOpportunitySearchResults SearchAdmin(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
+
         Task PerformActionViewed(Guid opportunityId);
 
         Task PerformActionSaved(Guid opportunityId);
