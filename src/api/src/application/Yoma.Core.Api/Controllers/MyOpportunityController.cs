@@ -31,6 +31,21 @@ namespace Yoma.Core.Api.Controllers
 
         #region Public Members
         #region Administrative Actions
+        [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter (Admin or Organization Admin roles required)")]
+        [HttpPost("search/admin")]
+        [ProducesResponseType(typeof(List<MyOpportunitySearchResults>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult SearchAdmin([FromBody] MyOpportunitySearchFilterAdmin filter)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(SearchAdmin));
+
+            var result = _myOpportunityService.SearchAdmin(filter, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(SearchAdmin));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
         [SwaggerOperation(Summary = "Reject or complete verification for the specified 'my' opportunity (Admin or Organization Admin roles required)")]
         [HttpPatch("verification/{opportunityId}/finalize")]
         [ProducesResponseType((int)HttpStatusCode.OK)]

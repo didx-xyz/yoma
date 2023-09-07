@@ -46,7 +46,7 @@ namespace Yoma.Core.Api.Controllers
         #region Public Members
         #region Anonymous Actions
         [SwaggerOperation(Summary = "Get the specified opportunity by id (Anonymous)")]
-        [HttpGet("{id}/info")]
+        [HttpGet("{id}")]
         [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
         public IActionResult GetInfoById([FromRoute] Guid id)
@@ -61,16 +61,16 @@ namespace Yoma.Core.Api.Controllers
         }
 
         [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter (Anonymous)")]
-        [HttpPost("info/search")]
+        [HttpPost("search")]
         [ProducesResponseType(typeof(List<OpportunitySearchResultsInfo>), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
-        public IActionResult SearchInfo([FromBody] OpportunitySearchFilterInfo filter)
+        public IActionResult Search([FromBody] OpportunitySearchFilter filter)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(SearchInfo));
+            _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
-            var result = _opportunityService.SearchInfo(filter);
+            var result = _opportunityService.Search(filter);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(SearchInfo));
+            _logger.LogInformation("Request {requestName} handled", nameof(Search));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
@@ -123,22 +123,22 @@ namespace Yoma.Core.Api.Controllers
         }
 
         [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter")]
-        [HttpPost("search")]
+        [HttpPost("search/admin")]
         [ProducesResponseType(typeof(List<OpportunitySearchResults>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public IActionResult Search([FromBody] OpportunitySearchFilter filter)
+        public IActionResult SearchAdmin([FromBody] OpportunitySearchFilterAdmin filter)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(Search));
+            _logger.LogInformation("Handling request {requestName}", nameof(SearchAdmin));
 
-            var result = _opportunityService.Search(filter, true);
+            var result = _opportunityService.SearchAdmin(filter, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(Search));
+            _logger.LogInformation("Request {requestName} handled", nameof(SearchAdmin));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Get the specified opportunity by id")]
-        [HttpGet("{id}")]
+        [HttpGet("{id}/admin")]
         [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult GetById([FromRoute] Guid id)

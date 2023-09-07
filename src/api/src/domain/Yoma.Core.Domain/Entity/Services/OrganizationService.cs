@@ -161,8 +161,11 @@ namespace Yoma.Core.Domain.Entity.Services
                 results.TotalCount = query.Count();
                 query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
             }
-            results.Items = query.ToList().Select(o => o.ToInfo()).ToList();
 
+            var resultsInternal = query.ToList();
+            resultsInternal.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId));
+
+            results.Items = resultsInternal.Select(o => o.ToInfo()).ToList();
             return results;
         }
 

@@ -24,6 +24,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         #region Class Variables
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUserService _userService;
+        private readonly IOrganizationService _organizationService;
         private readonly IOpportunityService _opportunityService;
         private readonly IMyOpportunityActionService _myOpportunityActionService;
         private readonly IMyOpportunityVerificationStatusService _myOpportunityVerificationStatusService;
@@ -39,6 +40,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         #region Constructor
         public MyOpportunityService(IHttpContextAccessor httpContextAccessor,
             IUserService userService,
+            IOrganizationService organizationService,
             IOpportunityService opportunityService,
             IMyOpportunityActionService myOpportunityActionService,
             IMyOpportunityVerificationStatusService myOpportunityVerificationStatusService,
@@ -53,6 +55,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
             _httpContextAccessor = httpContextAccessor;
             _userService = userService;
+            _organizationService = organizationService;
             _opportunityService = opportunityService;
             _myOpportunityActionService = myOpportunityActionService;
             _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService;
@@ -72,9 +75,29 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
 
-            _myOpportunitySearchFilterValidator.ValidateAndThrow(filter);
+            //filter validated by SearchAdmin
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
+
+            var filterInternal = new MyOpportunitySearchFilterAdmin
+            {
+                UserId = user.Id,
+                Action = filter.Action,
+                VerificationStatus = filter.VerificationStatus,
+                TotalCountOnly = filter.TotalCountOnly,
+                PageNumber = filter.PageNumber,
+                PageSize = filter.PageSize
+            };
+
+            return SearchAdmin(filterInternal, false);
+        }
+
+        public MyOpportunitySearchResults SearchAdmin(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
+        {
+            if (filter == null)
+                throw new ArgumentNullException(nameof(filter));
+
+            _myOpportunitySearchFilterValidator.ValidateAndThrow(filter);
 
             var actionId = _myOpportunityActionService.GetByName(filter.Action.ToString()).Id;
             var opportunityStatusActiveId = _opportunityStatusService.GetByName(Opportunity.Status.Active.ToString()).Id;
@@ -83,17 +106,57 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             var query = _myOpportunityRepository.Query();
 
-            // action
+            //ensureOrganizationAuthorization (ensure search only spans authorized organizations)
+            if (ensureOrganizationAuthorization)
+            {
+                var organizationIds = _organizationService.ListAdminsOf().Select(o => o.Id).ToList();
+                query = query.Where(o => organizationIds.Contains(o.OrganizationId));
+            }
+
+            //action (required)
             query = query.Where(o => o.ActionId == actionId);
 
-            // authenticated user
-            query = query.Where(o => o.UserId == user.Id);
+            //userId
+            var filterByUsers = filter.UserId.HasValue;
+            var userIds = new List<Guid>();
+            if (filter.UserId.HasValue)
+                userIds.Add(filter.UserId.Value);
+
+            //opportunity
+            var filterOpportunities = filter.OpportunityId.HasValue;
+            var opportunityIds = new List<Guid>();
+            if (filter.OpportunityId.HasValue)
+                opportunityIds.Add(filter.OpportunityId.Value);
+
+            //valueContains (opportunities and users) 
+            if (!string.IsNullOrEmpty(filter.ValueContains))
+            {
+                var predicate = PredicateBuilder.False<Models.MyOpportunity>();
+
+                var matchedOpportunityIds = _opportunityService.Contains(filter.ValueContains).Select(o => o.Id).ToList();
+                opportunityIds.AddRange(matchedOpportunityIds.Except(opportunityIds));
+                predicate = predicate.Or(o => opportunityIds.Contains(o.OpportunityId));
+
+                var matchedUserIds = _userService.Contains(filter.ValueContains).Select(o => o.Id).ToList();
+                userIds.AddRange(matchedUserIds.Except(userIds));
+                predicate = predicate.Or(o => userIds.Contains(o.UserId));
+
+                query = query.Where(predicate);
+            }
+            else
+            {
+                if (filterByUsers)
+                    query = query.Where(o => userIds.Contains(o.UserId));
+
+                if (filterOpportunities)
+                    query = query.Where(o => opportunityIds.Contains(o.OpportunityId));
+            }
 
             switch (filter.Action)
             {
                 case Action.Saved:
                 case Action.Viewed:
-                    // published: relating to active opportunities (irrespective of started) that relates to active organizations
+                    //published: relating to active opportunities (irrespective of started) that relates to active organizations
                     query = query.Where(o => o.OpportunityStatusId == opportunityStatusActiveId);
                     query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
                     query.OrderByDescending(o => o.DateModified);
@@ -109,7 +172,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     switch (filter.VerificationStatus.Value)
                     {
                         case VerificationStatus.Pending:
-                            // items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
+                            //items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
                             query = query.Where(o => (o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.Now)
                                 || o.OpportunityStatusId == opportunityStatusExpiredId);
                             query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
@@ -117,12 +180,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                             break;
 
                         case VerificationStatus.Completed:
-                            // all, irrespective of related opportunity and organization status
+                            //all, irrespective of related opportunity and organization status
                             query.OrderByDescending(o => o.DateCompleted);
                             break;
 
                         case VerificationStatus.Rejected:
-                            // all, irrespective of related opportunity and organization status
+                            //all, irrespective of related opportunity and organization status
                             query.OrderByDescending(o => o.DateModified);
                             break;
 
@@ -226,6 +289,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public async Task PerformActionSendForVerification(Guid opportunityId, MyOpportunityRequestVerify request)
         {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            await _myOpportunityRequestValidatorVerify.ValidateAndThrowAsync(request);
+
             //published and started opportunities
             var opportunity = _opportunityService.GetById(opportunityId, false, false);
             if (!opportunity.Published || opportunity.DateStart > DateTimeOffset.Now)
@@ -318,6 +386,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
+
+            await _myOpportunityRequestValidatorVerifyFinalize.ValidateAndThrowAsync(request);
 
             var user = _userService.GetById(request.UserId, false);
 

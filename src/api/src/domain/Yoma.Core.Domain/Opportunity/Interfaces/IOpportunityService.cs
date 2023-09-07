@@ -14,9 +14,11 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
         OpportunityInfo? GetInfoByTitleOrNull(string title, bool includeChildItems);
 
-        OpportunitySearchResultsInfo SearchInfo(OpportunitySearchFilterInfo filter);
+        List<Models.Opportunity> Contains(string value);
 
-        OpportunitySearchResults Search(OpportunitySearchFilter filter, bool ensureOrganizationAuthorization);
+        OpportunitySearchResultsInfo Search(OpportunitySearchFilter filter);
+
+        OpportunitySearchResults SearchAdmin(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
         Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization);
 

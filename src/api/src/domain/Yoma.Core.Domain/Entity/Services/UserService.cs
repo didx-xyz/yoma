@@ -105,6 +105,15 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
+        public List<User> Contains(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentNullException(nameof(value));
+            value = value.Trim();
+
+            return _userRepository.Contains(_userRepository.Query(), value).ToList();
+        }
+
         public UserSearchResults Search(UserSearchFilter filter)
         {
             if (filter == null)
