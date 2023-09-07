@@ -72,6 +72,7 @@ namespace Yoma.Core.Domain
             services.AddScoped<IOpportunityDifficultyService, OpportunityDifficultyService>();
             services.AddScoped<IOpportunityStatusService, OpportunityStatusService>();
             services.AddScoped<IOpportunityTypeService, OpportunityTypeService>();
+            services.AddScoped<IOpportunityVerificationTypeService, OpportunityVerificationTypeService>();
             #endregion Lookups
 
             services.AddScoped<IOpportunityService, OpportunityService>();

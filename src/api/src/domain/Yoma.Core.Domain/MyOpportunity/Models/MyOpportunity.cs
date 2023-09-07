@@ -34,7 +34,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public VerificationStatus? VerificationStatus { get; set; }
 
-        public string CommentVerification { get; set; }
+        public string? CommentVerification { get; set; }
 
         public Guid? CertificateId { get; set; }
 

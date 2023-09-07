@@ -370,7 +370,7 @@ namespace Yoma.Core.Domain.Entity.Services
                     break;
 
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(request.Status), $"{nameof(Status)} of '{request.Status}' not supported");
+                    throw new ArgumentOutOfRangeException(nameof(request), $"{nameof(Status)} of '{request.Status}' not supported");
             }
 
             var statusId = _organizationStatusService.GetByName(request.Status.ToString()).Id;

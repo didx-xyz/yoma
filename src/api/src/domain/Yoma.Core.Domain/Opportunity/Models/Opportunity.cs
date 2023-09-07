@@ -23,6 +23,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public OrganizationStatus OrganizationStatus { get; set; }
 
+        public string? Summary { get; set; }
+
         public string? Instructions { get; set; }
 
         public string? URL { get; set; }
@@ -40,6 +42,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public decimal? YomaRewardCumulative { get; set; }
 
         public bool VerificationSupported { get; set; }
+
+        public bool SSIIntegrated { get; set; }
 
         public Guid DifficultyId { get; set; }
 
@@ -82,5 +86,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public List<Language>? Languages { get; set; }
 
         public List<Skill>? Skills { get; set; }
+
+        public List<Lookups.OpportunityVerificationType>? VerificationTypes { get; set; }
     }
 }

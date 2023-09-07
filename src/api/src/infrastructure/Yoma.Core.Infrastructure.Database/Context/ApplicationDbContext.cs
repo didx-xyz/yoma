@@ -68,6 +68,8 @@ namespace Yoma.Core.Infrastructure.Database.Context
         public DbSet<Opportunity.Entities.Lookups.OpportunityStatus> OpportunityStatus { get; set; }
 
         public DbSet<Opportunity.Entities.Lookups.OpportunityType> OpportunityType { get; set; }
+
+        public DbSet<Opportunity.Entities.Lookups.OpportunityVerificationType> OpportunityVerificationType { get; set; }
         #endregion Lookups
 
         public DbSet<Opportunity.Entities.Opportunity> Opportunity { get; set; }
@@ -79,6 +81,8 @@ namespace Yoma.Core.Infrastructure.Database.Context
         public DbSet<OpportunityLanguage> OpportunityLanguages { get; set; }
 
         public DbSet<OpportunitySkill> OpportunitySkills { get; set; }
+
+        public DbSet<OpportunityVerificationType> OpportunityVerificationTypes { get; set; }
         #endregion Opportunity
 
         #endregion

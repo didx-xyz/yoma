@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -166,6 +167,21 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_OpportunityType", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OpportunityVerificationType",
+                schema: "opportunity",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "varchar(125)", nullable: false),
+                    Description = table.Column<string>(type: "varchar(255)", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OpportunityVerificationType", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -371,6 +387,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     Description = table.Column<string>(type: "varchar(MAX)", nullable: false),
                     TypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Summary = table.Column<string>(type: "varchar(500)", nullable: true),
                     Instructions = table.Column<string>(type: "varchar(MAX)", nullable: true),
                     URL = table.Column<string>(type: "varchar(2048)", nullable: true),
                     ZltoReward = table.Column<decimal>(type: "decimal(8,2)", nullable: true),
@@ -380,6 +397,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     YomaRewardPool = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
                     YomaRewardCumulative = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
                     VerificationSupported = table.Column<bool>(type: "bit", nullable: false),
+                    SSIIntegrated = table.Column<bool>(type: "bit", nullable: false),
                     DifficultyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CommitmentIntervalId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CommitmentIntervalCount = table.Column<short>(type: "smallint", nullable: true),
@@ -696,6 +714,35 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "OpportunityVerificationTypes",
+                schema: "opportunity",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    OpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    VerificationTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OpportunityVerificationTypes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OpportunityVerificationTypes_OpportunityVerificationType_VerificationTypeId",
+                        column: x => x.VerificationTypeId,
+                        principalSchema: "opportunity",
+                        principalTable: "OpportunityVerificationType",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OpportunityVerificationTypes_Opportunity_OpportunityId",
+                        column: x => x.OpportunityId,
+                        principalSchema: "opportunity",
+                        principalTable: "Opportunity",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Blob_Key",
                 schema: "object",
@@ -915,6 +962,26 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_OpportunityVerificationType_Name",
+                schema: "opportunity",
+                table: "OpportunityVerificationType",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OpportunityVerificationTypes_OpportunityId_VerificationTypeId",
+                schema: "opportunity",
+                table: "OpportunityVerificationTypes",
+                columns: new[] { "OpportunityId", "VerificationTypeId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OpportunityVerificationTypes_VerificationTypeId",
+                schema: "opportunity",
+                table: "OpportunityVerificationTypes",
+                column: "VerificationTypeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Organization_CountryId",
                 schema: "entity",
                 table: "Organization",
@@ -1090,6 +1157,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "opportunity");
 
             migrationBuilder.DropTable(
+                name: "OpportunityVerificationTypes",
+                schema: "opportunity");
+
+            migrationBuilder.DropTable(
                 name: "OrganizationDocuments",
                 schema: "entity");
 
@@ -1120,6 +1191,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             migrationBuilder.DropTable(
                 name: "Language",
                 schema: "lookup");
+
+            migrationBuilder.DropTable(
+                name: "OpportunityVerificationType",
+                schema: "opportunity");
 
             migrationBuilder.DropTable(
                 name: "Opportunity",

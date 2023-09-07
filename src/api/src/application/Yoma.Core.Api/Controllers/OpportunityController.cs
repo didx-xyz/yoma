@@ -24,6 +24,7 @@ namespace Yoma.Core.Api.Controllers
         private readonly IOpportunityCategoryService _opportunityCategoryService;
         private readonly IOpportunityDifficultyService _opportunityDifficultyService;
         private readonly IOpportunityTypeService _opportunityTypeService;
+        private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
         #endregion
 
         #region Constructor
@@ -32,14 +33,15 @@ namespace Yoma.Core.Api.Controllers
             IOpportunityService opportunityService,
             IOpportunityCategoryService opportunityCategoryService,
             IOpportunityDifficultyService opportunityDifficultyService,
-            IOpportunityTypeService opportunityTypeService
-            )
+            IOpportunityTypeService opportunityTypeService,
+            IOpportunityVerificationTypeService opportunityVerificationTypeService)
         {
             _logger = logger;
             _opportunityService = opportunityService;
             _opportunityCategoryService = opportunityCategoryService;
             _opportunityDifficultyService = opportunityDifficultyService;
             _opportunityTypeService = opportunityTypeService;
+            _opportunityVerificationTypeService = opportunityVerificationTypeService;
         }
         #endregion
 
@@ -118,6 +120,21 @@ namespace Yoma.Core.Api.Controllers
             var result = _opportunityTypeService.List();
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityTypes));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Return a list of opportunity verification types")]
+        [HttpGet("verificationType")]
+        [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityVerificationType>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult ListOpportunityVerificationTypes()
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityVerificationTypes));
+
+            var result = _opportunityVerificationTypeService.List();
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityVerificationTypes));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

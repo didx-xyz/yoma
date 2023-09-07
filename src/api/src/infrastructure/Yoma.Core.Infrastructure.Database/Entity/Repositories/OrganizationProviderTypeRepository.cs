@@ -19,7 +19,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 Id = entity.Id,
                 OrganizationId = entity.OrganizationId,
                 ProviderTypeId = entity.ProviderTypeId,
-                ProviderType = entity.ProviderType.Name,
                 DateCreated = entity.DateCreated
             });
         }

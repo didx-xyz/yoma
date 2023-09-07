@@ -19,7 +19,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 Id = entity.Id,
                 OpportunityId = entity.OpportunityId,
                 LanguageId = entity.LanguageId,
-                Language = entity.Language.Name,
                 DateCreated = entity.DateCreated
             });
         }
