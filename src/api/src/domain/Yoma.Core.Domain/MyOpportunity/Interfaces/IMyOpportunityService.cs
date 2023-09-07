@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
     {
         MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter);
 
-        MyOpportunitySearchResults SearchAdmin(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
+        MyOpportunitySearchResults Search(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
         Task PerformActionViewed(Guid opportunityId);
 
@@ -16,6 +16,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
         Task PerformActionSendForVerification(Guid opportunityId, MyOpportunityRequestVerify request);
 
-        Task FinalizeVerification(Guid opportunityId, MyOpportunityRequestVerifyFinalize request);
+        Task FinalizeVerification(MyOpportunityRequestVerifyFinalizeBatch request);
+
+        Task FinalizeVerification(MyOpportunityRequestVerifyFinalize request);
     }
 }

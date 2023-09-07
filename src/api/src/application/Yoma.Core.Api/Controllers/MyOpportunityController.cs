@@ -35,26 +35,42 @@ namespace Yoma.Core.Api.Controllers
         [HttpPost("search/admin")]
         [ProducesResponseType(typeof(List<MyOpportunitySearchResults>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public IActionResult SearchAdmin([FromBody] MyOpportunitySearchFilterAdmin filter)
+        public IActionResult Search([FromBody] MyOpportunitySearchFilterAdmin filter)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(SearchAdmin));
+            _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
-            var result = _myOpportunityService.SearchAdmin(filter, true);
+            var result = _myOpportunityService.Search(filter, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(SearchAdmin));
+            _logger.LogInformation("Request {requestName} handled", nameof(Search));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Reject or complete verification for the specified 'my' opportunity (Admin or Organization Admin roles required)")]
-        [HttpPatch("verification/{opportunityId}/finalize")]
+        [SwaggerOperation(Summary = "Reject or complete verification for the specified 'my' opportunity batch (Admin or Organization Admin roles required)")]
+        [HttpPatch("verification/finalize/batch")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> FinalizeVerification([FromRoute] Guid opportunityId, [FromBody] MyOpportunityRequestVerifyFinalize request)
+        public async Task<IActionResult> FinalizeVerification([FromBody] MyOpportunityRequestVerifyFinalizeBatch request)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(FinalizeVerification));
 
-            await _myOpportunityService.FinalizeVerification(opportunityId, request);
+            await _myOpportunityService.FinalizeVerification(request);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(FinalizeVerification));
+
+            return StatusCode((int)HttpStatusCode.OK);
+        }
+
+
+        [SwaggerOperation(Summary = "Reject or complete verification for the specified 'my' opportunity (Admin or Organization Admin roles required)")]
+        [HttpPatch("verification/finalize")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public async Task<IActionResult> FinalizeVerification([FromBody] MyOpportunityRequestVerifyFinalize request)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(FinalizeVerification));
+
+            await _myOpportunityService.FinalizeVerification(request);
 
             _logger.LogInformation("Request {requestName} handled", nameof(FinalizeVerification));
 

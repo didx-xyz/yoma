@@ -89,10 +89,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 PageSize = filter.PageSize
             };
 
-            return SearchAdmin(filterInternal, false);
+            return Search(filterInternal, false);
         }
 
-        public MyOpportunitySearchResults SearchAdmin(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
+        public MyOpportunitySearchResults Search(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
         {
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
@@ -381,8 +381,31 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             }
         }
 
+        public async Task FinalizeVerification(MyOpportunityRequestVerifyFinalizeBatch request)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            if (request.Items == null)
+                throw new ArgumentNullException(nameof(request), "No items specified");
+
+            // request validated by FinalizeVerification
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+            foreach (var item in request.Items)
+            {
+                await FinalizeVerification(new MyOpportunityRequestVerifyFinalize
+                {
+                    OpportunityId = item.OpportunityId,
+                    UserId = item.UserId,
+                    Status = request.Status,
+                    Comment = request.Comment
+                });
+            }
+        }
+
         //supported statuses: Rejected or Completed
-        public async Task FinalizeVerification(Guid opportunityId, MyOpportunityRequestVerifyFinalize request)
+        public async Task FinalizeVerification(MyOpportunityRequestVerifyFinalize request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -392,7 +415,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var user = _userService.GetById(request.UserId, false);
 
             //can complete, provided opportunity is active (and started) or expired (actioned prior to expiration)
-            var opportunity = _opportunityService.GetById(opportunityId, false, false);
+            var opportunity = _opportunityService.GetById(request.OpportunityId, false, false);
             var canFinalize = opportunity.Status == Opportunity.Status.Expired;
             if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
             if (!canFinalize)
@@ -409,7 +432,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             var statusId = _myOpportunityVerificationStatusService.GetByName(request.Status.ToString()).Id;
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
             item.VerificationStatusId = statusId;
             item.CommentVerification = request.Comment;
