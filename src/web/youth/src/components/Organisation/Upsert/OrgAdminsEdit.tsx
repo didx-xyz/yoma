@@ -5,16 +5,12 @@ import { Controller, FieldValues, useForm } from "react-hook-form";
 import CreatableSelect from "react-select/creatable";
 import zod from "zod";
 import { type OrganizationCreateRequest } from "~/api/models/organisation";
+import { validateEmail } from "~/lib/validate";
 
 export interface InputProps {
   organisation: OrganizationCreateRequest | null;
   onSubmit: (fieldValues: FieldValues) => void;
   onCancel: (fieldValues: FieldValues) => void;
-}
-
-function validateEmail(email: string) {
-  const re = /\S+@\S+\.\S+/;
-  return re.test(email);
 }
 
 export const OrgAdminsEdit: React.FC<InputProps> = ({

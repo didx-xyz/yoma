@@ -250,6 +250,9 @@ const Opportunities: NextPageWithLayout = () => {
       <div className="container">
         <div className="flex flex-row py-4">
           <h2 className="flex flex-grow">Organisations</h2>
+
+          <SearchComponent defaultValue={query as string} />
+
           <div className="flex justify-end">
             <button
               type="button"
@@ -260,8 +263,6 @@ const Opportunities: NextPageWithLayout = () => {
             </button>
           </div>
         </div>
-
-        <SearchComponent defaultValue={query as string} />
 
         <div className="rounded-lg bg-white p-4">
           <h4>Organisations for approval</h4>
