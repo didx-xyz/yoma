@@ -48,7 +48,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
 
   const schema = zod
     .object({
-      providerTypes: zod
+      providerTypeIds: zod
         .array(zod.string().uuid())
         .min(1, "Please select at least one option."),
       registrationDocuments: zod
@@ -77,7 +77,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
       );
 
       if (
-        values.providerTypes?.findIndex((x: string) => x == educationPT?.id) >
+        values.providerTypeIds?.findIndex((x: string) => x == educationPT?.id) >
         -1
       ) {
         if (
@@ -98,8 +98,9 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
       );
 
       if (
-        values.providerTypes?.findIndex((x: string) => x == marketplacePT?.id) >
-        -1
+        values.providerTypeIds?.findIndex(
+          (x: string) => x == marketplacePT?.id,
+        ) > -1
       ) {
         if (
           values.businessDocuments == null ||
@@ -209,7 +210,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
               key={item.id}
             >
               <input
-                {...register("providerTypes")}
+                {...register("providerTypeIds")}
                 type="checkbox"
                 value={item.id}
                 id={item.id}
@@ -219,11 +220,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
             </label>
           ))}
 
-          {errors.providerTypes && (
+          {errors.providerTypeIds && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.providerTypes.message}`}
+                {`${errors.providerTypeIds.message}`}
               </span>
             </label>
           )}

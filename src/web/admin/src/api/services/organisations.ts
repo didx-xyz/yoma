@@ -2,6 +2,8 @@ import { type GetServerSidePropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import {
+  OrganizationSearchFilter,
+  OrganizationSearchResults,
   type Organization,
   type OrganizationCreateRequest,
   type OrganizationProviderType,
@@ -34,7 +36,7 @@ export const postOrganisation = async (
       property === "registrationDocuments" ||
       property === "educationProviderDocuments" ||
       property === "businessDocuments" ||
-      property === "providerTypes" ||
+      property === "providerTypeIds" ||
       property === "adminAdditionalEmails"
     ) {
       // send as multiple items in form data
@@ -46,12 +48,28 @@ export const postOrganisation = async (
   /* eslint-enable */
 
   const { data } = await ApiClient.post<Organization>(
-    "/organization",
+    "/organization/create",
     formData,
     {
       headers: { "Content-Type": "multipart/form-data" },
     },
   );
+  return data;
+};
+
+export const getOrganisations = async (
+  filter: OrganizationSearchFilter,
+  context?: GetServerSidePropsContext,
+): Promise<OrganizationSearchResults> => {
+  const { data } = context
+    ? await ApiServer(context).post<OrganizationSearchResults>(
+        "/organization/search",
+        filter,
+      )
+    : await ApiClient.post<OrganizationSearchResults>(
+        "/organization/search",
+        filter,
+      );
   return data;
 };
 

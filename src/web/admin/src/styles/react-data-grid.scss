@@ -1,0 +1,47 @@
+@import "react-data-grid/lib/styles.css";
+
+// main grid
+.r104f42s7-0-0-beta-36:not(.rdg-light) {
+  background-color: theme("colors.white");
+}
+
+// row cell
+.rdg {
+  @apply rounded-lg border;
+  border-color: theme("colors.gray");
+}
+
+// row cell header
+.rdg-header-row > .rdg-cell {
+  color: theme("colors.black");
+  background-color: theme("colors.gray-light");
+}
+
+// row cell
+.rdg-row > .rdg-cell {
+  color: theme("colors.black");
+  background-color: theme("colors.white");
+}
+
+// override cell selection color
+.c1wupbe7-0-0-beta-36[aria-selected="true"] {
+  outline: 0px solid var(--rdg-selection-color);
+  outline-offset: -2px;
+}
+
+// row selection checkbox
+.rdg-header-row .rdg-checkbox {
+  background-color: theme("colors.white");
+}
+
+.rdg-row .rdg-checkbox {
+  background-color: theme("colors.gray-light");
+}
+.rdg-header-row .rdg-cell .rdg-checkbox {
+  outline-color: theme("colors.green");
+  outline-width: 6px;
+}
+.rdg-row[aria-selected="true"] .rdg-checkbox {
+  outline-color: theme("colors.green");
+  outline-width: 6px;
+}

@@ -14,7 +14,7 @@ export interface OrganizationCreateRequest {
   postalCode: string | null;
   tagline: string | null;
   biography: string | null;
-  providerTypes: string[];
+  providerTypeIds: string[];
   logo: FormFile | null;
   addCurrentUserAsAdmin: boolean;
   adminAdditionalEmails: string[] | null;
@@ -78,4 +78,34 @@ export interface FormFile {
   length: number;
   name: string;
   fileName: string;
+}
+
+export interface OrganizationSearchFilter extends PaginationFilter {
+  valueContains: string | null;
+  statuses: Status[] | null;
+}
+
+export interface PaginationFilter {
+  pageNumber: number | null;
+  pageSize: number | null;
+}
+
+export enum Status {
+  Active,
+  Deleted,
+  Expired,
+  Inactive,
+}
+
+export interface OrganizationSearchResults {
+  totalCount: number | null;
+  items: OrganizationInfo[];
+}
+
+export interface OrganizationInfo {
+  id: string;
+  name: string;
+  tagline: string | null;
+  status: OrganizationStatus;
+  logoURL: string | null;
 }

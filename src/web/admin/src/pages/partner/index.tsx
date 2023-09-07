@@ -62,7 +62,7 @@ const RegisterOrganisation: NextPageWithLayout = () => {
       postalCode: "",
       tagline: "",
       biography: "",
-      providerTypes: [],
+      providerTypeIds: [],
       logo: null,
       addCurrentUserAsAdmin: false,
       adminAdditionalEmails: [],
