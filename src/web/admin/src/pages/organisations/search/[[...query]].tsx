@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { ParsedUrlQuery } from "querystring";
+import { type ParsedUrlQuery } from "querystring";
 import React, { useState, type ReactElement } from "react";
 import { IoMdSearch, IoMdSquare } from "react-icons/io";
 import {
@@ -33,7 +33,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   if (session) {
     // 👇 prefetch queries (on server)
     await queryClient.prefetchQuery(
-      [`OrganisationsActive_${query}_${page}`],
+      [`OrganisationsActive_${query?.toString()}_${page?.toString()}`],
       () =>
         getOrganisations(
           {
@@ -46,7 +46,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         ),
     );
     await queryClient.prefetchQuery(
-      [`OrganisationsInactive_${query}_${page}`],
+      [`OrganisationsInactive_${query?.toString()}_${page?.toString()}`],
       () =>
         getOrganisations(
           {
@@ -76,17 +76,17 @@ export const SearchComponent: React.FC<{ defaultValue: string }> = (props) => {
     e.preventDefault(); // 👈️ prevent page refresh
 
     // trim whitespace
-    let searchValue = searchInputValue?.trim();
+    const searchValue = searchInputValue?.trim();
 
     if (searchValue) {
       // uri encode the search value
       const searchValueEncoded = encodeURIComponent(searchValue);
 
       // redirect to the search page
-      router.push(`/organisations/search?query=${searchValueEncoded}`);
+      void router.push(`/organisations/search?query=${searchValueEncoded}`);
     } else {
       // redirect to the search page
-      router.push("/organisations/search");
+      void router.push("/organisations/search");
     }
   };
 
@@ -169,7 +169,7 @@ const Opportunities: NextPageWithLayout = () => {
 
   // 👇 use prefetched queries (from server)
   const { data: organisationsActive } = useQuery<OrganizationSearchResults>({
-    queryKey: [`OrganisationsActive_${query}_${page}`],
+    queryKey: [`OrganisationsActive_${query?.toString()}_${page?.toString()}`],
     queryFn: () =>
       getOrganisations({
         pageNumber: page ? parseInt(page.toString()) : 1,
@@ -179,7 +179,9 @@ const Opportunities: NextPageWithLayout = () => {
       }),
   });
   const { data: organisationsInactive } = useQuery<OrganizationSearchResults>({
-    queryKey: [`OrganisationsInactive_${query}_${page}`],
+    queryKey: [
+      `OrganisationsInactive_${query?.toString()}_${page?.toString()}`,
+    ],
     queryFn: () =>
       getOrganisations({
         pageNumber: page ? parseInt(page.toString()) : 1,

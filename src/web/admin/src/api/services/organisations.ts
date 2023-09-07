@@ -2,8 +2,8 @@ import { type GetServerSidePropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import {
-  OrganizationSearchFilter,
-  OrganizationSearchResults,
+  type OrganizationSearchFilter,
+  type OrganizationSearchResults,
   type Organization,
   type OrganizationCreateRequest,
   type OrganizationProviderType,
