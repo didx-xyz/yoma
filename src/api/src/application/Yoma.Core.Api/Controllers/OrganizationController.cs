@@ -101,17 +101,17 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Update organization status",
             Description = $"An Admin have the power to activate, deactivate, decline or delete an organization, whilst an Organization Admin can only delete. With a decline, an approval comment is required")]
         [HttpPut("{id}/status")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> UpdateStatus([FromRoute] Guid id, [FromBody] OrganizationRequestUpdateStatus request)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatus));
 
-            await _organizationService.UpdateStatus(id, request, true);
+            var result = await _organizationService.UpdateStatus(id, request, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
 
-            return StatusCode((int)HttpStatusCode.OK);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Return a list of provider types (User, Admin or Organization Admin role required)")]
@@ -148,13 +148,13 @@ namespace Yoma.Core.Api.Controllers
         [HttpDelete("{id}/providerTypes/remove")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> DeleteProviderType([FromRoute] Guid id, [Required][FromBody] List<Guid> providerTypeIds)
+        public async Task<IActionResult> RemoveProviderType([FromRoute] Guid id, [Required][FromBody] List<Guid> providerTypeIds)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(DeleteProviderType));
+            _logger.LogInformation("Handling request {requestName}", nameof(RemoveProviderType));
 
-            var result = await _organizationService.DeleteProviderTypes(id, providerTypeIds, true);
+            var result = await _organizationService.RemoveProviderTypes(id, providerTypeIds, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(DeleteProviderType));
+            _logger.LogInformation("Request {requestName} handled", nameof(RemoveProviderType));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
@@ -191,32 +191,32 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Assign the specified user as organization administrator")]
         [HttpPut("{id}/admin/{email}/assign")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignAdmin([FromRoute] Guid id, [FromRoute] string email)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignAdmin));
 
-            await _organizationService.AssignAdmin(id, email, true);
+            var result = await _organizationService.AssignAdmin(id, email, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(AssignAdmin));
 
-            return StatusCode((int)HttpStatusCode.OK);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Remove the specified user as organization administrator")]
         [HttpDelete("{id}/admin/{email}/remove")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> RemoveAdmin([FromRoute] Guid id, [FromRoute] string email)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(RemoveAdmin));
 
-            await _organizationService.RemoveAdmin(id, email, true);
+            var result = await _organizationService.RemoveAdmin(id, email, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(RemoveAdmin));
 
-            return StatusCode((int)HttpStatusCode.OK);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Return a list of administrators for the specified organization")]

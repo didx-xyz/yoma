@@ -21,11 +21,11 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         Task<Organization> Update(OrganizationRequestUpdate request, bool ensureOrganizationAuthorization);
 
-        Task UpdateStatus(Guid id, OrganizationRequestUpdateStatus request, bool ensureOrganizationAuthorization);
+        Task<Organization> UpdateStatus(Guid id, OrganizationRequestUpdateStatus request, bool ensureOrganizationAuthorization);
 
         Task<Organization> AssignProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization);
 
-        Task<Organization> DeleteProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization);
+        Task<Organization> RemoveProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization);
 
         Task<Organization> UpsertLogo(Guid id, IFormFile? file, bool ensureOrganizationAuthorization);
 
@@ -39,8 +39,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         List<OrganizationInfo> ListAdminsOf();
 
-        Task AssignAdmin(Guid id, string email, bool ensureOrganizationAuthorization);
+        Task<Organization> AssignAdmin(Guid id, string email, bool ensureOrganizationAuthorization);
 
-        Task RemoveAdmin(Guid id, string email, bool ensureOrganizationAuthorization);
+        Task<Organization> RemoveAdmin(Guid id, string email, bool ensureOrganizationAuthorization);
     }
 }

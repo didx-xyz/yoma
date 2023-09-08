@@ -201,137 +201,167 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Update opportunity status (Active / Inactive / Deleted)")]
         [HttpPatch("{id}/{status}")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> UpdateStatus([FromRoute] Guid id, [FromRoute] Status status)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatus));
 
-            await _opportunityService.UpdateStatus(id, status, true);
+            var result = await _opportunityService.UpdateStatus(id, status, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
 
-            return StatusCode((int)HttpStatusCode.OK);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Assign category(ies) to the specified opportunity")]
         [HttpPatch("{id}/assign/categories")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignCategories([FromRoute] Guid id, [Required][FromBody] List<Guid> categoryIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignCategories));
 
-            await _opportunityService.AssignCategories(id, categoryIds, true);
+            var result = await _opportunityService.AssignCategories(id, categoryIds, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(AssignCategories));
 
-            return StatusCode((int)HttpStatusCode.OK);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Remove category(ies) from the specified opportunity")]
         [HttpDelete("{id}/remove/categories")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> DeleteCategories([FromRoute] Guid id, [Required][FromBody] List<Guid> categoryIds)
+        public async Task<IActionResult> RemoveCategories([FromRoute] Guid id, [Required][FromBody] List<Guid> categoryIds)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(DeleteCategories));
+            _logger.LogInformation("Handling request {requestName}", nameof(RemoveCategories));
 
-            await _opportunityService.DeleteCategories(id, categoryIds, true);
+            var result = await _opportunityService.RemoveCategories(id, categoryIds, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(DeleteCategories));
+            _logger.LogInformation("Request {requestName} handled", nameof(RemoveCategories));
 
-            return StatusCode((int)HttpStatusCode.OK);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Assign country(ies) to the specified opportunity")]
         [HttpPatch("{id}/assign/countries")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignCountries([FromRoute] Guid id, [Required][FromBody] List<Guid> countryIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignCountries));
 
-            await _opportunityService.AssignCountries(id, countryIds, true);
+            var result = await _opportunityService.AssignCountries(id, countryIds, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(AssignCountries));
 
-            return StatusCode((int)HttpStatusCode.OK);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Remove country(ies) from the specified opportunity")]
         [HttpDelete("{id}/remove/countries")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> DeleteCountries([FromRoute] Guid id, [Required][FromBody] List<Guid> countryIds)
+        public async Task<IActionResult> RemoveCountries([FromRoute] Guid id, [Required][FromBody] List<Guid> countryIds)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(DeleteCountries));
+            _logger.LogInformation("Handling request {requestName}", nameof(RemoveCountries));
 
-            await _opportunityService.DeleteCountries(id, countryIds, true);
+            var result = await _opportunityService.RemoveCountries(id, countryIds, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(DeleteCountries));
+            _logger.LogInformation("Request {requestName} handled", nameof(RemoveCountries));
 
-            return StatusCode((int)HttpStatusCode.OK);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Assign language(s) to the specified opportunity")]
         [HttpPatch("{id}/assign/languages")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignLanguages([FromRoute] Guid id, [Required][FromBody] List<Guid> languageIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignLanguages));
 
-            await _opportunityService.AssignLanguages(id, languageIds, true);
+            var result = await _opportunityService.AssignLanguages(id, languageIds, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(AssignLanguages));
 
-            return StatusCode((int)HttpStatusCode.OK);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Remove language(s) from the specified opportunity")]
         [HttpDelete("{id}/remove/languages")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> DeleteLanguages([FromRoute] Guid id, [Required][FromBody] List<Guid> languageIds)
+        public async Task<IActionResult> RemoveLanguages([FromRoute] Guid id, [Required][FromBody] List<Guid> languageIds)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(DeleteLanguages));
+            _logger.LogInformation("Handling request {requestName}", nameof(RemoveLanguages));
 
-            await _opportunityService.DeleteLanguages(id, languageIds, true);
+            var result = await _opportunityService.RemoveLanguages(id, languageIds, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(DeleteLanguages));
+            _logger.LogInformation("Request {requestName} handled", nameof(RemoveLanguages));
 
-            return StatusCode((int)HttpStatusCode.OK);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Assign skill(s) to the specified opportunity")]
         [HttpPatch("{id}/assign/skills")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignSkills([FromRoute] Guid id, [Required][FromBody] List<Guid> skillIds)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignSkills));
 
-            await _opportunityService.AssignSkills(id, skillIds, true);
+            var result = await _opportunityService.AssignSkills(id, skillIds, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(AssignSkills));
 
-            return StatusCode((int)HttpStatusCode.OK);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Remove skill(s) from the specified opportunity")]
         [HttpDelete("{id}/remove/skills")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> DeleteSkills([FromRoute] Guid id, [Required][FromBody] List<Guid> skillIds)
+        public async Task<IActionResult> RemoveSkills([FromRoute] Guid id, [Required][FromBody] List<Guid> skillIds)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(DeleteSkills));
+            _logger.LogInformation("Handling request {requestName}", nameof(RemoveSkills));
 
-            await _opportunityService.DeleteSkills(id, skillIds, true);
+            var result = await _opportunityService.RemoveSkills(id, skillIds, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(DeleteSkills));
+            _logger.LogInformation("Request {requestName} handled", nameof(RemoveSkills));
 
-            return StatusCode((int)HttpStatusCode.OK);
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Assign verification type(s) to the specified opportunity")]
+        [HttpPatch("{id}/assign/verificationTypes")]
+        [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public async Task<IActionResult> AssignVerificationTypes([FromRoute] Guid id, [Required][FromBody] List<Guid> verificationTypeIds)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(AssignVerificationTypes));
+
+            var result = await _opportunityService.AssignVerificationTypes(id, verificationTypeIds, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(AssignVerificationTypes));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Remove verification type(s) from the specified opportunity")]
+        [HttpDelete("{id}/remove/verificationTypes")]
+        [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public async Task<IActionResult> RemoveVerificationTypes([FromRoute] Guid id, [Required][FromBody] List<Guid> verificationTypeIds)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(RemoveVerificationTypes));
+
+            var result = await _opportunityService.RemoveVerificationTypes(id, verificationTypeIds, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(RemoveVerificationTypes));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
         #endregion Administrative Actions
         #endregion

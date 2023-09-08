@@ -65,7 +65,7 @@ namespace Yoma.Core.Domain.Opportunity.Services.Lookups
             {
                 entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationLookupInHours);
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowLookupInDays);
-                return _opportunityVerificationTypeRepository.Query().OrderBy(o => o.Name).ToList();
+                return _opportunityVerificationTypeRepository.Query().OrderBy(o => o.DisplayName).ToList();
             }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(OpportunityVerificationType)}s'");
             return result;
         }

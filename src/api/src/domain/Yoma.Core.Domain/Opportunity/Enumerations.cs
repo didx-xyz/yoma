@@ -7,4 +7,12 @@ namespace Yoma.Core.Domain.Opportunity
         Expired, //flagged as deleted if expired for x days
         Inactive, //flagged expired provided ended (notified), or as deleted if inactive for x days
     }
+
+    public enum VerificationType
+    {
+        FileUpload,
+        Picture,
+        Location,
+        VoiceNote
+    }
 }

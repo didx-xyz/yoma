@@ -26,12 +26,12 @@ namespace Yoma.Core.Domain.Entity.Validators
             RuleFor(x => x.RegistrationDocuments).NotEmpty().WithMessage("Registration documents are required.")
                 .ForEach(doc => doc.Must(file => file != null && file.Length > 0).WithMessage("Registration documents contains empty files."));
             RuleFor(x => x.EducationProviderDocuments)
-                .Must(docs => docs == null || docs.All(file => file != null && file.Length > 0))
-                .WithMessage("Education provider documents can be null but not empty.")
+                .Must(docs => docs != null && docs.All(file => file != null && file.Length > 0))
+                .WithMessage("Education provider documents is optional but can not be empty.")
                 .When(x => x.EducationProviderDocuments != null && x.EducationProviderDocuments.Any());
             RuleFor(x => x.BusinessDocuments)
-                .Must(docs => docs == null || docs.All(file => file != null && file.Length > 0))
-                .WithMessage("Business documents can be null but not empty.")
+                .Must(docs => docs != null && docs.All(file => file != null && file.Length > 0))
+                .WithMessage("Business documents is optional but can not be empty.")
                 .When(x => x.BusinessDocuments != null && x.BusinessDocuments.Any());
         }
         #endregion

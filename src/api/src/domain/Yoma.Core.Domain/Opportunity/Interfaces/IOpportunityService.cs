@@ -26,22 +26,26 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
         Task<(decimal? ZltoReward, decimal? YomaReward)> AllocateRewards(Guid id, bool ensureOrganizationAuthorization);
 
-        Task UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization);
 
-        Task AssignCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> AssignCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization);
 
-        Task DeleteCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> RemoveCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization);
 
-        Task AssignCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> AssignCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization);
 
-        Task DeleteCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> RemoveCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization);
 
-        Task AssignLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> AssignLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization);
 
-        Task DeleteLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> RemoveLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization);
 
-        Task AssignSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> AssignSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization);
 
-        Task DeleteSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> RemoveSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization);
+
+        Task<Models.Opportunity> AssignVerificationTypes(Guid id, List<Guid> verificationTypesId, bool ensureOrganizationAuthorization);
+
+        Task<Models.Opportunity> RemoveVerificationTypes(Guid id, List<Guid> verificationTypesId, bool ensureOrganizationAuthorization);
     }
 }

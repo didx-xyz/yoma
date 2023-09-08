@@ -176,6 +176,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "varchar(125)", nullable: false),
+                    DisplayName = table.Column<string>(type: "varchar(125)", nullable: false),
                     Description = table.Column<string>(type: "varchar(255)", nullable: false),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },

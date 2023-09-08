@@ -176,6 +176,18 @@ CROSS JOIN (
 ) AS R;
 GO
 
+--verification types
+INSERT INTO [opportunity].[OpportunityVerificationTypes]([Id],[OpportunityId],[VerificationTypeId],[DateCreated])
+SELECT NEWID(), O.[Id] AS [OpportunityId], R.[VerificationTypeId], GETDATE()
+FROM [opportunity].[Opportunity] O
+CROSS JOIN (
+    SELECT TOP 10 [Id] AS [VerificationTypeId]
+    FROM [opportunity].[OpportunityVerificationType]
+    ORDER BY NEWID()
+) AS R
+WHERE O.VerificationSupported = 1
+GO
+
 /****myOpportunities****/
 --viewed
 INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CertificateId],[DateStart]

@@ -14,9 +14,10 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             IOpportunityCategoryService opportunityCategoryService,
             ICountryService countryService,
             ILanguageService languageService,
-            ISkillService skillService)
+            ISkillService skillService,
+            IOpportunityVerificationTypeService opportunityVerificationTypeService)
             : base(opportunityTypeService, organizationService, opportunityDifficultyService, timeIntervalService,
-                  opportunityCategoryService, countryService, languageService, skillService)
+                  opportunityCategoryService, countryService, languageService, skillService, opportunityVerificationTypeService)
         { }
         #endregion
     }

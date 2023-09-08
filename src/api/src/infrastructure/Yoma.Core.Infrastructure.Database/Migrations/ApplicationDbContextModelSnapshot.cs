@@ -705,6 +705,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("varchar(125)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("varchar(125)");

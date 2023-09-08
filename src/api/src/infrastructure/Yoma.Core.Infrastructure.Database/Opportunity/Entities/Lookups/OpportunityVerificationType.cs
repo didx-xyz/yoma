@@ -14,6 +14,10 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups
         public string Name { get; set; }
 
         [Required]
+        [Column(TypeName = "varchar(125)")]
+        public string DisplayName { get; set; }
+
+        [Required]
         [Column(TypeName = "varchar(255)")]
         public string Description { get; set; }
 

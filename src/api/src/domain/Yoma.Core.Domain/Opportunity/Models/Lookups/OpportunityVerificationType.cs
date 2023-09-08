@@ -6,6 +6,8 @@ namespace Yoma.Core.Domain.Opportunity.Models.Lookups
 
         public string Name { get; set; }
 
+        public string DisplayName { get; set; }
+
         public string Description { get; set; }
     }
 }

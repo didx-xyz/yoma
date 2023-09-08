@@ -31,6 +31,11 @@ namespace Yoma.Core.Domain.Core.Validators
                     maxSizeBytes = 10000000;
                     break;
 
+                case FileType.VoiceNotes:
+                    extensions = new[] { ".wav", ".mp3", ".m4a", ".amr", ".ogg", ".3gp" };
+                    maxSizeBytes = 5000000;
+                    break;
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), $"Unsupported type of '{type}'");
             }

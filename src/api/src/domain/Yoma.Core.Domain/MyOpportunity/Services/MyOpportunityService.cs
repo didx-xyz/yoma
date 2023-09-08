@@ -348,14 +348,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             item.DateStart = request.DateStart.RemoveTime();
             item.DateEnd = request.DateEnd.ToEndOfDay();
 
+            //TODO: Support for all types
+
             var currentCertificate = item.CertificateId.HasValue ? new { Id = item.CertificateId.Value, File = await _blobService.Download(item.CertificateId.Value) } : null;
 
             BlobObject? blobObject = null;
             try
             {
                 using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-                blobObject = await _blobService.Create(request.Certificate, FileType.Photos);
-                item.CertificateId = blobObject.Id;
+                //blobObject = await _blobService.Create(null, FileType.Certificates);
+                //item.CertificateId = blobObject.Id;
 
                 if (isNew)
                     await _myOpportunityRepository.Create(item);

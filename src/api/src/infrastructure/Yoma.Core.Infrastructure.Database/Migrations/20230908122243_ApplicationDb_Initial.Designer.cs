@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230907123205_ApplicationDb_Initial")]
+    [Migration("20230908122243_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -707,6 +707,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("varchar(125)");
 
                     b.Property<string>("Name")
                         .IsRequired()

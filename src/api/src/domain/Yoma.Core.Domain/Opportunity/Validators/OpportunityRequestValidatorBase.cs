@@ -18,6 +18,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         private readonly ICountryService _countryService;
         private readonly ILanguageService _languageService;
         private readonly ISkillService _skillService;
+        private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
         #endregion
 
         #region Public Members
@@ -28,8 +29,8 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             IOpportunityCategoryService opportunityCategoryService,
             ICountryService countryService,
             ILanguageService languageService,
-            ISkillService skillService
-            )
+            ISkillService skillService,
+            IOpportunityVerificationTypeService opportunityVerificationTypeService)
         {
             _opportunityTypeService = opportunityTypeService;
             _organizationService = organizationService;
@@ -39,6 +40,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             _countryService = countryService;
             _languageService = languageService;
             _skillService = skillService;
+            _opportunityVerificationTypeService = opportunityVerificationTypeService;
 
             RuleFor(x => x.Title).NotEmpty().Length(1, 255);
             RuleFor(x => x.Description).NotEmpty();
@@ -74,6 +76,10 @@ namespace Yoma.Core.Domain.Opportunity.Validators
                 .WithMessage("Languages are required and must exist");
             RuleFor(x => x.Skills).Must(skills => skills != null && skills.Any() && skills.All(id => id != Guid.Empty && SkillExist(id)))
                 .WithMessage("Skills are required and must exist");
+            RuleFor(x => x.VerificationTypes)
+              .Must(types => types != null && types.All(id => id != Guid.Empty && VerificationTypeExist(id)))
+              .WithMessage("Verification types are optional, but must exist if specified.")
+              .When(x => x.VerificationTypes != null && x.VerificationTypes.Any());
         }
         #endregion
 
@@ -133,6 +139,12 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         {
             if (!id.HasValue) return true;
             return _skillService.GetByIdOrNull(id.Value) != null;
+        }
+
+        private bool VerificationTypeExist(Guid? id)
+        {
+            if (!id.HasValue) return true;
+            return _opportunityVerificationTypeService.GetByIdOrNull(id.Value) != null;
         }
         #endregion
     }

@@ -7,6 +7,7 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
+using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Helpers;
@@ -31,6 +32,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly ILanguageService _languageService;
         private readonly ISkillService _skillService;
         private readonly IOpportunityDifficultyService _opportunityDifficultyService;
+        private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
         private readonly ITimeIntervalService _timeIntervalService;
 
         private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
@@ -42,6 +44,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly IRepository<OpportunityCountry> _opportunityCountryRepository;
         private readonly IRepository<OpportunityLanguage> _opportunityLanguageRepository;
         private readonly IRepository<OpportunitySkill> _opportunitySkillRepository;
+        private readonly IRepository<OpportunityVerificationType> _opportunityVerificationTypeRepository;
 
         public const string Keywords_Separator = ",";
         public const int Keywords_CombinedMaxLength = 500;
@@ -62,6 +65,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             ILanguageService languageService,
             ISkillService skillService,
             IOpportunityDifficultyService opportunityDifficultyService,
+            IOpportunityVerificationTypeService opportunityVerificationTypeService,
             ITimeIntervalService timeIntervalService,
             OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
             OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
@@ -70,7 +74,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             IRepository<OpportunityCategory> opportunityCategoryRepository,
             IRepository<OpportunityCountry> opportunityCountryRepository,
             IRepository<OpportunityLanguage> opportunityLanguageRepository,
-            IRepository<OpportunitySkill> opportunitySkillRepository)
+            IRepository<OpportunitySkill> opportunitySkillRepository,
+            IRepository<OpportunityVerificationType> opportunityVerificationTypeRepository)
         {
             _httpContextAccessor = httpContextAccessor;
 
@@ -83,6 +88,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             _languageService = languageService;
             _skillService = skillService;
             _opportunityDifficultyService = opportunityDifficultyService;
+            _opportunityVerificationTypeService = opportunityVerificationTypeService;
             _timeIntervalService = timeIntervalService;
 
             _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate;
@@ -94,6 +100,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             _opportunityCountryRepository = opportunityCountryRepository;
             _opportunityLanguageRepository = opportunityLanguageRepository;
             _opportunitySkillRepository = opportunitySkillRepository;
+            _opportunityVerificationTypeRepository = opportunityVerificationTypeRepository;
         }
         #endregion
 
@@ -412,6 +419,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 ZltoRewardPool = request.ZltoRewardPool,
                 YomaRewardPool = request.YomaRewardPool,
                 VerificationSupported = request.VerificationSupported,
+                SSIIntegrated = request.SSIIntegrated,
                 DifficultyId = request.DifficultyId,
                 Difficulty = _opportunityDifficultyService.GetById(request.DifficultyId).Name,
                 CommitmentIntervalId = request.CommitmentIntervalId,
@@ -430,16 +438,23 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result = await _opportunityRepository.Create(result);
 
             // categories
-            result.Categories = await AssignCategories(result, request.Categories);
+            result = await AssignCategories(result, request.Categories);
 
             // countries
-            result.Countries = await AssignCountries(result, request.Countries);
+            result = await AssignCountries(result, request.Countries);
 
             // languages
-            result.Languages = await AssignLanguages(result, request.Languages);
+            result = await AssignLanguages(result, request.Languages);
 
             // skills
-            result.Skills = await AssignSkills(result, request.Skills);
+            result = await AssignSkills(result, request.Skills);
+
+            // verification types
+            if (request.VerificationSupported && (request.VerificationTypes == null || !request.VerificationTypes.Any()))
+                throw new ValidationException("One or more verification types are required when verification is supported");
+
+            if (request.VerificationTypes != null && request.VerificationTypes.Any())
+                result = await AssignVerificationTypes(result, request.VerificationTypes);
 
             scope.Complete();
 
@@ -482,6 +497,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.ZltoRewardPool = request.ZltoRewardPool;
             result.YomaRewardPool = request.YomaRewardPool;
             result.VerificationSupported = request.VerificationSupported;
+            result.SSIIntegrated = request.SSIIntegrated;
             result.DifficultyId = request.DifficultyId;
             result.Difficulty = _opportunityDifficultyService.GetById(request.DifficultyId).Name;
             result.CommitmentIntervalId = request.CommitmentIntervalId;
@@ -498,20 +514,28 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.DateModified = DateTimeOffset.Now;
 
             // categories
-            await DeleteCategories(result, result.Categories?.Where(o => !request.Categories.Contains(o.Id)).Select(o => o.Id).ToList());
-            result.Categories = await AssignCategories(result, request.Categories);
+            result = await RemoveCategories(result, result.Categories?.Where(o => !request.Categories.Contains(o.Id)).Select(o => o.Id).ToList());
+            result = await AssignCategories(result, request.Categories);
 
             // countries
-            await DeleteCountries(result, result.Countries?.Where(o => !request.Countries.Contains(o.Id)).Select(o => o.Id).ToList());
-            result.Countries = await AssignCountries(result, request.Countries);
+            result = await RemoveCountries(result, result.Countries?.Where(o => !request.Countries.Contains(o.Id)).Select(o => o.Id).ToList());
+            result = await AssignCountries(result, request.Countries);
 
             // languages
-            await DeleteLanguages(result, result.Languages?.Where(o => !request.Languages.Contains(o.Id)).Select(o => o.Id).ToList());
-            result.Languages = await AssignLanguages(result, request.Languages);
+            result = await RemoveLanguages(result, result.Languages?.Where(o => !request.Languages.Contains(o.Id)).Select(o => o.Id).ToList());
+            result = await AssignLanguages(result, request.Languages);
 
             // skills
-            await DeleteSkills(result, result.Skills?.Where(o => !request.Skills.Contains(o.Id)).Select(o => o.Id).ToList());
-            result.Skills = await AssignSkills(result, request.Skills);
+            result = await RemoveSkills(result, result.Skills?.Where(o => !request.Skills.Contains(o.Id)).Select(o => o.Id).ToList());
+            result = await AssignSkills(result, request.Skills);
+
+            if (request.VerificationSupported && (request.VerificationTypes == null || !request.VerificationTypes.Any()))
+                throw new ValidationException("One or more verification types are required when verification is supported");
+
+            // verification types
+            result = await RemoveVerificationTypes(result, result.VerificationTypes?.Where(o => request.VerificationTypes == null || !request.VerificationTypes.Contains(o.Id)).Select(o => o.Id).ToList());
+            if (request.VerificationTypes != null && request.VerificationTypes.Any())
+                result = await AssignVerificationTypes(result, request.VerificationTypes);
 
             scope.Complete();
 
@@ -559,35 +583,35 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return (zltoReward, yomaReward);
         }
 
-        public async Task UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization)
         {
-            var opportunity = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, false, ensureOrganizationAuthorization);
 
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
 
             switch (status)
             {
                 case Status.Active:
-                    if (opportunity.Status == Status.Active) return;
-                    if (!Statuses_Activatable.Contains(opportunity.Status))
-                        throw new ValidationException($"{nameof(Models.Opportunity)} can not be activated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
+                    if (result.Status == Status.Active) return result;
+                    if (!Statuses_Activatable.Contains(result.Status))
+                        throw new ValidationException($"{nameof(Models.Opportunity)} can not be activated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
 
                     //ensure DateEnd was updated for re-activation of previously expired opportunities
-                    if (opportunity.DateEnd.HasValue && opportunity.DateEnd <= DateTimeOffset.Now)
-                        throw new ValidationException($"The {nameof(Models.Opportunity)} '{opportunity.Title}' cannot be activated because its end date ('{opportunity.DateEnd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation.");
+                    if (result.DateEnd.HasValue && result.DateEnd <= DateTimeOffset.Now)
+                        throw new ValidationException($"The {nameof(Models.Opportunity)} '{result.Title}' cannot be activated because its end date ('{result.DateEnd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation.");
 
                     break;
 
                 case Status.Inactive:
-                    if (opportunity.Status == Status.Inactive) return;
-                    if (!Statuses_DeActivatable.Contains(opportunity.Status))
-                        throw new ValidationException($"{nameof(Models.Opportunity)} can not be deactivated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
+                    if (result.Status == Status.Inactive) return result;
+                    if (!Statuses_DeActivatable.Contains(result.Status))
+                        throw new ValidationException($"{nameof(Models.Opportunity)} can not be deactivated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
                     break;
 
                 case Status.Deleted:
-                    if (opportunity.Status == Status.Deleted) return;
-                    if (!Statuses_CanDelete.Contains(opportunity.Status))
-                        throw new ValidationException($"{nameof(Models.Opportunity)} can not be deleted (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
+                    if (result.Status == Status.Deleted) return result;
+                    if (!Statuses_CanDelete.Contains(result.Status))
+                        throw new ValidationException($"{nameof(Models.Opportunity)} can not be deleted (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
 
                     break;
 
@@ -597,84 +621,112 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var statusId = _opportunityStatusService.GetByName(status.ToString()).Id;
 
-            opportunity.StatusId = statusId;
-            opportunity.Status = status;
-            opportunity.ModifiedBy = username;
+            result.StatusId = statusId;
+            result.Status = status;
+            result.ModifiedBy = username;
 
-            await _opportunityRepository.Update(opportunity);
+            await _opportunityRepository.Update(result);
+
+            return result;
         }
 
-        public async Task AssignCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> AssignCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization)
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
-            await AssignCategories(opportunity, categoryIds);
+            return await AssignCategories(opportunity, categoryIds);
         }
 
-        public async Task DeleteCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> RemoveCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization)
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
             if (categoryIds == null || !categoryIds.Any())
                 throw new ArgumentNullException(nameof(categoryIds));
 
-            await DeleteCategories(opportunity, categoryIds);
+            return await RemoveCategories(opportunity, categoryIds);
         }
 
-        public async Task AssignCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> AssignCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization)
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
-            await AssignCountries(opportunity, countryIds);
+            return await AssignCountries(opportunity, countryIds);
         }
 
-        public async Task DeleteCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> RemoveCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization)
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
             if (countryIds == null || !countryIds.Any())
                 throw new ArgumentNullException(nameof(countryIds));
 
-            await DeleteCategories(opportunity, countryIds);
+            return await RemoveCategories(opportunity, countryIds);
         }
 
-        public async Task AssignLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> AssignLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization)
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
-            await AssignLanguages(opportunity, languageIds);
+            return await AssignLanguages(opportunity, languageIds);
         }
 
-        public async Task DeleteLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> RemoveLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization)
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
             if (languageIds == null || !languageIds.Any())
                 throw new ArgumentNullException(nameof(languageIds));
 
-            await DeleteLanguages(opportunity, languageIds);
+            return await RemoveLanguages(opportunity, languageIds);
         }
 
-        public async Task AssignSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> AssignSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization)
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
-            await AssignSkills(opportunity, skillIds);
+            return await AssignSkills(opportunity, skillIds);
         }
 
-        public async Task DeleteSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> RemoveSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization)
         {
             var opportunity = GetById(id, false, ensureOrganizationAuthorization);
 
             if (skillIds == null || !skillIds.Any())
                 throw new ArgumentNullException(nameof(skillIds));
 
-            await DeleteSkills(opportunity, skillIds);
+            return await RemoveSkills(opportunity, skillIds);
+        }
+
+        public async Task<Models.Opportunity> AssignVerificationTypes(Guid id, List<Guid> verificationTypesId, bool ensureOrganizationAuthorization)
+        {
+            var opportunity = GetById(id, false, ensureOrganizationAuthorization);
+
+            return await AssignVerificationTypes(opportunity, verificationTypesId);
+        }
+
+        public async Task<Models.Opportunity> RemoveVerificationTypes(Guid id, List<Guid> verificationTypesId, bool ensureOrganizationAuthorization)
+        {
+            var opportunity = GetById(id, false, ensureOrganizationAuthorization);
+
+            if (verificationTypesId == null || !verificationTypesId.Any())
+                throw new ArgumentNullException(nameof(verificationTypesId));
+
+            if (opportunity.VerificationSupported)
+            {
+                if (opportunity.VerificationTypes == null || !opportunity.VerificationTypes.Any())
+                    throw new DataInconsistencyException("Verification supported but opportunity has no mapped verification types");
+
+                if (opportunity.VerificationTypes.All(o => verificationTypesId.Contains(o.Id)))
+                    throw new ValidationException("One or more verification types are required when verification is supported");
+            }
+
+            return await RemoveVerificationTypes(opportunity, verificationTypesId);
         }
         #endregion
 
         #region Private Members
-        private async Task<List<Domain.Lookups.Models.Country>> AssignCountries(Models.Opportunity opportunity, List<Guid> countryIds)
+        private async Task<Models.Opportunity> AssignCountries(Models.Opportunity opportunity, List<Guid> countryIds)
         {
             if (countryIds == null || !countryIds.Any())
                 throw new ArgumentNullException(nameof(countryIds));
@@ -702,16 +754,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 };
 
                 await _opportunityCountryRepository.Create(item);
+
+                opportunity.Countries ??= new List<Domain.Lookups.Models.Country>();
+                opportunity.Countries.Add(new Domain.Lookups.Models.Country { Id = country.Id, Name = country.Name, CodeAlpha2 = country.CodeAlpha2, CodeAlpha3 = country.CodeAlpha3, CodeNumeric = country.CodeNumeric });
             }
 
             scope.Complete();
 
-            return results;
+            return opportunity;
         }
 
-        private async Task DeleteCountries(Models.Opportunity opportunity, List<Guid>? countryIds)
+        private async Task<Models.Opportunity> RemoveCountries(Models.Opportunity opportunity, List<Guid>? countryIds)
         {
-            if (countryIds == null || !countryIds.Any()) return;
+            if (countryIds == null || !countryIds.Any()) return opportunity;
 
             if (!Statuses_Updatable.Contains(opportunity.Status))
                 throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
@@ -722,13 +777,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 var country = _countryService.GetById(countryId);
 
                 var item = _opportunityCountryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CountryId == country.Id);
-                if (item == null) return;
+                if (item == null) continue;
 
                 await _opportunityCountryRepository.Delete(item);
+
+                opportunity.Countries?.Remove(opportunity.Countries.Single(o => o.Id == country.Id));
             }
+
+            scope.Complete();
+
+            return opportunity;
         }
 
-        private async Task<List<Models.Lookups.OpportunityCategory>> AssignCategories(Models.Opportunity opportunity, List<Guid> categoryIds)
+        private async Task<Models.Opportunity> AssignCategories(Models.Opportunity opportunity, List<Guid> categoryIds)
         {
             if (categoryIds == null || !categoryIds.Any())
                 throw new ArgumentNullException(nameof(categoryIds));
@@ -738,13 +799,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (!Statuses_Updatable.Contains(opportunity.Status))
                 throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
-            var results = new List<Models.Lookups.OpportunityCategory>();
-
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var categoryId in categoryIds)
             {
                 var category = _opportunityCategoryService.GetById(categoryId);
-                results.Add(category);
 
                 var item = _opportunityCategoryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CategoryId == category.Id);
                 if (item != null) continue;
@@ -756,16 +814,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 };
 
                 await _opportunityCategoryRepository.Create(item);
+
+                opportunity.Categories ??= new List<Models.Lookups.OpportunityCategory>();
+                opportunity.Categories.Add(new Models.Lookups.OpportunityCategory { Id = category.Id, Name = category.Name });
             }
 
             scope.Complete();
 
-            return results;
+            return opportunity;
         }
 
-        private async Task DeleteCategories(Models.Opportunity opportunity, List<Guid>? categoryIds)
+        private async Task<Models.Opportunity> RemoveCategories(Models.Opportunity opportunity, List<Guid>? categoryIds)
         {
-            if (categoryIds == null || !categoryIds.Any()) return;
+            if (categoryIds == null || !categoryIds.Any()) return opportunity;
 
             if (!Statuses_Updatable.Contains(opportunity.Status))
                 throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
@@ -776,13 +837,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 var category = _opportunityCategoryService.GetById(categoryId);
 
                 var item = _opportunityCategoryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CategoryId == category.Id);
-                if (item == null) return;
+                if (item == null) continue;
 
                 await _opportunityCategoryRepository.Delete(item);
+
+                opportunity.Categories?.Remove(opportunity.Categories.Single(o => o.Id == category.Id));
             }
+
+            scope.Complete();
+
+            return opportunity;
         }
 
-        private async Task<List<Domain.Lookups.Models.Language>> AssignLanguages(Models.Opportunity opportunity, List<Guid> languageIds)
+        private async Task<Models.Opportunity> AssignLanguages(Models.Opportunity opportunity, List<Guid> languageIds)
         {
             if (languageIds == null || !languageIds.Any())
                 throw new ArgumentNullException(nameof(languageIds));
@@ -810,16 +877,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 };
 
                 await _opportunityLanguageRepository.Create(item);
+
+                opportunity.Languages ??= new List<Domain.Lookups.Models.Language>();
+                opportunity.Languages.Add(new Domain.Lookups.Models.Language { Id = language.Id, Name = language.Name, CodeAlpha2 = language.CodeAlpha2 });
             }
 
             scope.Complete();
 
-            return results;
+            return opportunity;
         }
 
-        private async Task DeleteLanguages(Models.Opportunity opportunity, List<Guid>? languageIds)
+        private async Task<Models.Opportunity> RemoveLanguages(Models.Opportunity opportunity, List<Guid>? languageIds)
         {
-            if (languageIds == null || !languageIds.Any()) return;
+            if (languageIds == null || !languageIds.Any()) return opportunity;
 
             if (!Statuses_Updatable.Contains(opportunity.Status))
                 throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
@@ -830,13 +900,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 var language = _languageService.GetById(languageId);
 
                 var item = _opportunityLanguageRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.LanguageId == language.Id);
-                if (item == null) return;
+                if (item == null) continue;
 
                 await _opportunityLanguageRepository.Delete(item);
+
+                opportunity.Languages?.Remove(opportunity.Languages.Single(o => o.Id == language.Id));
             }
+
+            scope.Complete();
+
+            return opportunity;
         }
 
-        private async Task<List<Domain.Lookups.Models.Skill>> AssignSkills(Models.Opportunity opportunity, List<Guid> skillIds)
+        private async Task<Models.Opportunity> AssignSkills(Models.Opportunity opportunity, List<Guid> skillIds)
         {
             if (skillIds == null || !skillIds.Any())
                 throw new ArgumentNullException(nameof(skillIds));
@@ -864,16 +940,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 };
 
                 await _opportunitySkillRepository.Create(item);
+
+                opportunity.Skills ??= new List<Domain.Lookups.Models.Skill>();
+                opportunity.Skills.Add(new Domain.Lookups.Models.Skill { Id = skill.Id, Name = skill.Name, InfoURL = skill.InfoURL });
             }
 
             scope.Complete();
 
-            return results;
+            return opportunity;
         }
 
-        private async Task DeleteSkills(Models.Opportunity opportunity, List<Guid>? skillIds)
+        private async Task<Models.Opportunity> RemoveSkills(Models.Opportunity opportunity, List<Guid>? skillIds)
         {
-            if (skillIds == null || !skillIds.Any()) return;
+            if (skillIds == null || !skillIds.Any()) return opportunity;
 
             if (!Statuses_Updatable.Contains(opportunity.Status))
                 throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
@@ -884,10 +963,80 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 var skill = _skillService.GetById(skillId);
 
                 var item = _opportunitySkillRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.SkillId == skill.Id);
-                if (item == null) return;
+                if (item == null) continue;
 
                 await _opportunitySkillRepository.Delete(item);
+
+                opportunity.Skills?.Remove(opportunity.Skills.Single(o => o.Id == skill.Id));
             }
+
+            scope.Complete();
+
+            return opportunity;
+        }
+
+        private async Task<Models.Opportunity> AssignVerificationTypes(Models.Opportunity opportunity, List<Guid> verificationTypeIds)
+        {
+            if (verificationTypeIds == null || !verificationTypeIds.Any())
+                throw new ArgumentNullException(nameof(verificationTypeIds));
+
+            verificationTypeIds = verificationTypeIds.Distinct().ToList();
+
+            if (!Statuses_Updatable.Contains(opportunity.Status))
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+
+            var results = new List<Models.Lookups.OpportunityVerificationType>();
+
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+            foreach (var verificationTypeId in verificationTypeIds)
+            {
+                var verificationType = _opportunityVerificationTypeService.GetById(verificationTypeId);
+                results.Add(verificationType);
+
+                var item = _opportunityVerificationTypeRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.VerificationTypeId == verificationType.Id);
+                if (item != null) continue;
+
+                item = new OpportunityVerificationType
+                {
+                    OpportunityId = opportunity.Id,
+                    VerificationTypeId = verificationType.Id
+                };
+
+                await _opportunityVerificationTypeRepository.Create(item);
+
+                opportunity.VerificationTypes ??= new List<Models.Lookups.OpportunityVerificationType>();
+                opportunity.VerificationTypes.Add(new Models.Lookups.OpportunityVerificationType
+                { Id = verificationType.Id, Name = verificationType.Name, DisplayName = verificationType.DisplayName, Description = verificationType.Description });
+            }
+
+            scope.Complete();
+
+            return opportunity;
+        }
+
+        private async Task<Models.Opportunity> RemoveVerificationTypes(Models.Opportunity opportunity, List<Guid>? verificationTypeIds)
+        {
+            if (verificationTypeIds == null || !verificationTypeIds.Any()) return opportunity;
+
+            if (!Statuses_Updatable.Contains(opportunity.Status))
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+            foreach (var verificationTypeId in verificationTypeIds)
+            {
+                var verificationType = _opportunityVerificationTypeService.GetById(verificationTypeId);
+
+                var item = _opportunityVerificationTypeRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.VerificationTypeId == verificationType.Id);
+                if (item == null) continue;
+
+                await _opportunityVerificationTypeRepository.Delete(item);
+
+                opportunity.VerificationTypes?.Remove(opportunity.VerificationTypes.Single(o => o.Id == verificationType.Id));
+            }
+
+            scope.Complete();
+
+            return opportunity;
         }
         #endregion
     }

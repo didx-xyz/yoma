@@ -1024,16 +1024,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.InsertData(
             table: "OpportunityVerificationType",
-            columns: new[] { "Id", "Name", "Description", "DateCreated" },
+            columns: new[] { "Id", "Name", "DisplayName", "Description", "DateCreated" },
             values: new object[,]
             {
-                    {"AE4B5CA3-20CE-451A-944E-67EF24E455B6","File Upload","A file of your completion certificate in PDF format",DateTimeOffset.Now}
+                    {"AE4B5CA3-20CE-451A-944E-67EF24E455B6","FileUpload","File Upload","A file of your completion certificate in PDF format",DateTimeOffset.Now}
                     ,
-                    {"5DDA13B1-FFE6-4C19-8137-235C7429D54C","Picture","A selfie of you showcasing what you did",DateTimeOffset.Now}
+                    {"5DDA13B1-FFE6-4C19-8137-235C7429D54C","Picture","Picture","A selfie of you showcasing what you did",DateTimeOffset.Now}
                     ,
-                    {"29218322-68FC-4559-A807-61CC27F4E979","Location","A pin of where you where when you did this",DateTimeOffset.Now}
+                    {"29218322-68FC-4559-A807-61CC27F4E979","Location","Location","A pin of where you where when you did this",DateTimeOffset.Now}
                     ,
-                    {"43FB21C9-0ED7-46D4-A7D2-5E301881649C","Voice Note","Explain the difference this had on your life",DateTimeOffset.Now}
+                    {"43FB21C9-0ED7-46D4-A7D2-5E301881649C","VoiceNote","Voice Note","Explain the difference this had on your life",DateTimeOffset.Now}
             },
             schema: "opportunity");
 

@@ -19,8 +19,9 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories.Lookups
             return _context.OpportunityVerificationType.Select(entity => new OpportunityVerificationType
             {
                 Id = entity.Id,
-                Description = entity.Description,
-                Name = entity.Name
+                Name = entity.Name,
+                DisplayName = entity.DisplayName,
+                Description = entity.Description
             });
         }
 

@@ -69,7 +69,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 Skills = includeChildItems ?
                     entity.Skills.Select(o => new Domain.Lookups.Models.Skill { Id = o.SkillId, Name = o.Skill.Name, InfoURL = o.Skill.InfoURL }).ToList() : null,
                 VerificationTypes = includeChildItems ?
-                    entity.VerificationTypes.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityVerificationType { Id = o.VerificationTypeId, Name = o.VerificationType.Name, Description = o.VerificationType.Description }).ToList() : null,
+                    entity.VerificationTypes.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityVerificationType
+                    { Id = o.VerificationTypeId, Name = o.VerificationType.Name, DisplayName = o.VerificationType.DisplayName, Description = o.VerificationType.Description }).ToList() : null,
             }).AsSplitQuery();
         }
 
