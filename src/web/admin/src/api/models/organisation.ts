@@ -109,3 +109,8 @@ export interface OrganizationInfo {
   status: OrganizationStatus;
   logoURL: string | null;
 }
+
+export interface OrganizationRequestUpdateStatus {
+  status: OrganizationStatus;
+  comment: string | null;
+}

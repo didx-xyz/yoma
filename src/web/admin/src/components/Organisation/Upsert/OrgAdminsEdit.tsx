@@ -13,7 +13,7 @@ export interface InputProps {
   onCancel: (fieldValues: FieldValues) => void;
 }
 
-export const OrgAdminsEdit: React.FC<InputProps> = ({
+export const OrgAdmins : React.FC<InputProps> = ({
   organisation,
   onSubmit,
   onCancel,

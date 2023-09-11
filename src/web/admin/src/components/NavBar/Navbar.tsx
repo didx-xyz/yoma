@@ -1,13 +1,13 @@
+import { useAtomValue } from "jotai";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
 import { IoMdMenu } from "react-icons/io";
 import ReactModal from "react-modal";
+import { navbarColorAtom } from "~/lib/store";
 import { LogoImage } from "./LogoImage";
 import { SignInButton } from "./SignInButton";
 import { UserMenu } from "./UserMenu";
-import { useAtomValue } from "jotai";
-import { navbarColorAtom } from "~/lib/store";
 
 export const Navbar: React.FC = () => {
   const navbarColor = useAtomValue(navbarColorAtom);
@@ -44,34 +44,10 @@ export const Navbar: React.FC = () => {
                 Home
               </Link>
               <Link
-                href="/about"
+                href="/organisations/search"
                 className="px-7 py-3 text-white hover:brightness-50"
               >
-                About
-              </Link>
-              <Link
-                href="/learning"
-                className="px-7 py-3 text-white hover:brightness-50"
-              >
-                Learning
-              </Link>
-              <Link
-                href="/tasks"
-                className="px-7 py-3 text-white hover:brightness-50"
-              >
-                Tasks
-              </Link>
-              <Link
-                href="/jobs"
-                className="px-7 py-3 text-white hover:brightness-50"
-              >
-                Jobs
-              </Link>
-              <Link
-                href="/marketplace"
-                className="px-7 py-3 text-white hover:brightness-50"
-              >
-                Marketplace
+                Organisations
               </Link>
             </div>
           </ReactModal>
@@ -85,31 +61,11 @@ export const Navbar: React.FC = () => {
               </Link>
             </li>
             <li tabIndex={1}>
-              <Link href="/about" className="text-white hover:brightness-50">
-                About
-              </Link>
-            </li>
-            <li tabIndex={2}>
-              <Link href="/learning" className="text-white hover:brightness-50">
-                Learning
-              </Link>
-            </li>
-            <li tabIndex={3}>
-              <Link href="/tasks" className="text-white hover:brightness-50">
-                Tasks
-              </Link>
-            </li>
-            <li tabIndex={4}>
-              <Link href="/jobs" className="text-white hover:brightness-50">
-                Jobs
-              </Link>
-            </li>
-            <li tabIndex={5}>
               <Link
-                href="/marketplace"
+                href="/organisations/search"
                 className="text-white hover:brightness-50"
               >
-                Marketplace
+                Organisations
               </Link>
             </li>
           </ul>

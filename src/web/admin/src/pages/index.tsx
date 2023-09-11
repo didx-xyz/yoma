@@ -26,10 +26,10 @@ const Home: NextPageWithLayout = () => {
 
           <Link
             className="flex max-w-xs flex-col gap-4 rounded-xl bg-white p-4"
-            href="/organisations"
+            href="/organisations/search"
           >
-            <h3 className="font-bold">Verify Organisation →</h3>
-            <div className="text-lgx">Verify organisations here.</div>
+            <h3 className="font-bold">View Organisations →</h3>
+            <div className="text-lgx">View your organisations here.</div>
           </Link>
         </div>
       </div>

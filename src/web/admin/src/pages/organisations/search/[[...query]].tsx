@@ -3,19 +3,21 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import React, { useState, type ReactElement } from "react";
 import { IoMdSearch, IoMdSquare } from "react-icons/io";
 import {
+  OrganizationStatus,
   Status,
   type OrganizationInfo,
   type OrganizationSearchResults,
 } from "~/api/models/organisation";
 import { getOrganisations } from "~/api/services/organisations";
+import LeftNavLayout from "~/components/Layout/LeftNav";
 import MainLayout from "~/components/Layout/Main";
 import withAuth from "~/context/withAuth";
-import { shimmer, toBase64 } from "~/lib/image";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
@@ -97,7 +99,7 @@ export const SearchComponent: React.FC<{ defaultValue: string }> = (props) => {
           <input
             type="search"
             className="input input-bordered w-full rounded-br-none rounded-tr-none text-sm"
-            placeholder="Search certificates..."
+            placeholder="Search organisations..."
             autoComplete="off"
             value={searchInputValue}
             onChange={(e) => setSearchInputValue(e.target.value)}
@@ -122,40 +124,40 @@ export const SearchComponent: React.FC<{ defaultValue: string }> = (props) => {
 export const OrganisationCardComponent: React.FC<{
   item: OrganizationInfo;
 }> = (props) => {
+  const link =
+    props.item.status.toString() ===
+    OrganizationStatus[OrganizationStatus.Active]
+      ? `/organisations/${props.item.id}`
+      : `/organisations/${props.item.id}/verify`;
+
   return (
-    <div
-      key={props.item.id}
-      className="flex max-w-xs flex-col gap-4 rounded-xl bg-white p-4"
-    >
-      <div className="flex">
-        <div>
-          {!props.item.logoURL && <IoMdSquare className="h-28 w-28" />}
-          {props.item.logoURL && (
+    <div className="flex h-[100px] flex-col rounded-lg bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:bg-neutral-700 md:max-w-xl md:flex-row">
+      <div className="h-30 w-30 flex items-center justify-center p-4">
+        {!props.item.logoURL && <IoMdSquare className="-ml-4 h-28 w-28" />}
+
+        {props.item.logoURL && (
+          <Link href={link}>
             <Image
               src={props.item.logoURL}
               alt={props.item.name}
-              width={383}
-              height={188}
-              placeholder="blur"
-              blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                shimmer(383, 188),
-              )}`}
+              width={80}
+              height={80}
+              className="rounded-lg border border-primary pl-4 drop-shadow-lg"
             />
-          )}
-        </div>
+          </Link>
+        )}
+      </div>
 
-        <div className="flex flex-grow flex-col">
-          <div className="h-12 w-96 border px-5 py-1">
-            <h6 className="overflow-hidden truncate whitespace-nowrap">
-              {props.item.name}
-            </h6>
-          </div>
-          <div className="h-24 w-96 border px-5 py-1">
-            <p className="overflow-hidden truncate whitespace-nowrap text-xs">
-              {props.item.tagline}
-            </p>
-          </div>
-        </div>
+      <div className="flex w-[300px] flex-col justify-start p-1">
+        <h5 className="mb-2 truncate overflow-ellipsis whitespace-nowrap text-xl  font-medium text-neutral-800 dark:text-neutral-50">
+          <Link href={link}>{props.item.name}</Link>
+        </h5>
+        <p className="mb-4 truncate overflow-ellipsis whitespace-nowrap  text-base text-neutral-600 dark:text-neutral-200">
+          {props.item.tagline}
+        </p>
+        <p className="text-xs text-neutral-500 dark:text-neutral-300">
+          {props.item.status}
+        </p>
       </div>
     </div>
   );
@@ -264,7 +266,7 @@ const Opportunities: NextPageWithLayout = () => {
           </div>
         </div>
 
-        <div className="rounded-lg bg-white p-4">
+        <div className="rounded-lg p-4">
           <h4>Organisations for approval</h4>
           {/* GRID */}
           {organisationsInactive && organisationsInactive.items.length > 0 && (
@@ -318,7 +320,11 @@ const Opportunities: NextPageWithLayout = () => {
 };
 
 Opportunities.getLayout = function getLayout(page: ReactElement) {
-  return <MainLayout>{page}</MainLayout>;
+  return (
+    <MainLayout>
+      <LeftNavLayout>{page}</LeftNavLayout>
+    </MainLayout>
+  );
 };
 
 export default withAuth(Opportunities);

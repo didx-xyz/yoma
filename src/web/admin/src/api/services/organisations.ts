@@ -2,11 +2,12 @@ import { type GetServerSidePropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import {
-  type OrganizationSearchFilter,
-  type OrganizationSearchResults,
+  OrganizationRequestUpdateStatus,
   type Organization,
   type OrganizationCreateRequest,
   type OrganizationProviderType,
+  type OrganizationSearchFilter,
+  type OrganizationSearchResults,
 } from "../models/organisation";
 
 export const getOrganisationProviderTypes = async (
@@ -71,4 +72,21 @@ export const getOrganisations = async (
         filter,
       );
   return data;
+};
+
+export const getOrganisationById = async (
+  id: string,
+  context?: GetServerSidePropsContext,
+): Promise<Organization> => {
+  const { data } = context
+    ? await ApiServer(context).get<Organization>(`/organization/${id}`)
+    : await ApiClient.get<Organization>(`/organization/${id}`);
+  return data;
+};
+
+export const putOrganisationStatus = async (
+  id: string,
+  model: OrganizationRequestUpdateStatus,
+) => {
+  await ApiClient.put<Organization>(`/organization/${id}/status`, model);
 };
