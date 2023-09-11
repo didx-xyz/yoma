@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import React, { useState, type ReactElement } from "react";
-import { IoMdSearch, IoMdSquare } from "react-icons/io";
+import { IoMdAdd, IoMdSearch, IoMdSquare } from "react-icons/io";
 import {
   OrganizationStatus,
   Status,
@@ -98,7 +98,7 @@ export const SearchComponent: React.FC<{ defaultValue: string }> = (props) => {
         <div className="search flex">
           <input
             type="search"
-            className="input input-bordered w-full rounded-br-none rounded-tr-none text-sm"
+            className="input input-bordered input-sm w-full rounded-br-none rounded-tr-none text-sm"
             placeholder="Search organisations..."
             autoComplete="off"
             value={searchInputValue}
@@ -110,7 +110,7 @@ export const SearchComponent: React.FC<{ defaultValue: string }> = (props) => {
           <button
             type="button"
             aria-label="Search"
-            className="btn-search btn rounded-bl-none rounded-tl-none"
+            className="btn-search btn btn-sm rounded-bl-none rounded-tl-none border-gray"
             onClick={handleSubmit}
           >
             <IoMdSearch className="icon-search h-6 w-6" />
@@ -132,7 +132,7 @@ export const OrganisationCardComponent: React.FC<{
 
   return (
     <div className="flex h-[100px] flex-col rounded-lg bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:bg-neutral-700 md:max-w-xl md:flex-row">
-      <div className="h-30 w-30 flex items-center justify-center p-4">
+      <div className="flex items-center justify-center p-4">
         {!props.item.logoURL && <IoMdSquare className="-ml-4 h-28 w-28" />}
 
         {props.item.logoURL && (
@@ -142,7 +142,7 @@ export const OrganisationCardComponent: React.FC<{
               alt={props.item.name}
               width={80}
               height={80}
-              className="rounded-lg border border-primary pl-4 drop-shadow-lg"
+              className="h-20 w-20 rounded-lg object-cover pl-4 shadow-lg drop-shadow-lg"
             />
           </Link>
         )}
@@ -197,123 +197,84 @@ const Opportunities: NextPageWithLayout = () => {
     void router.push("/dashboard/opportunity/create");
   };
 
-  // const SkillsFormatter = useCallback(
-  //   (row: RenderCellProps<FullOpportunityResponseDto>) => {
-  //     return row.row.skills.join(", ");
-  //   },
-  //   [],
-  // );
-
-  // const StatusFormatter = useCallback(
-  //   (row: RenderCellProps<FullOpportunityResponseDto>) => {
-  //     return row.row.endTime && Date.parse(row.row.endTime) < Date.now()
-  //       ? "Expired"
-  //       : "Active";
-  //   },
-  //   [],
-  // );
-
-  // const UnverifiedCredentialsFormatter = useCallback(
-  //   (row: RenderCellProps<FullOpportunityResponseDto>) => {
-  //     return row.row.unverifiedCredentials ? (
-  //       <div className="grid grid-cols-2 items-center justify-center">
-  //         <div>{row.row.unverifiedCredentials}</div>
-  //         <Link
-  //           href={`/dashboard/verify/${row.row.id}`}
-  //           className="btn btn-warning btn-xs flex flex-row flex-nowrap"
-  //         >
-  //           <FaExclamationTriangle className="text-yellow-700 mr-2 h-4 w-4" />
-  //           Verify
-  //         </Link>
-  //       </div>
-  //     ) : (
-  //       "n/a"
-  //     );
-  //   },
-  //   [],
-  // );
-
-  // const ManageFormatter = useCallback(
-  //   (row: RenderCellProps<FullOpportunityResponseDto>) => {
-  //     return (
-  //       <Link href={`/dashboard/opportunity/${row.row.id}`}>
-  //         <IoMdSettings className="h-6 w-6" />
-  //       </Link>
-  //     );
-  //   },
-  //   [],
-  // );
-
   return (
     <>
       <Head>
         <title>Yoma Admin | Organisations</title>
       </Head>
-      <div className="container">
-        <div className="flex flex-row py-4">
-          <h2 className="flex flex-grow">Organisations</h2>
+      <div className="flex flex-col items-center justify-center pt-6">
+        <div className="container p-8">
+          <div className="flex flex-row items-center gap-2 pb-4">
+            <h2 className="flex flex-grow font-bold">Organisations</h2>
 
-          <SearchComponent defaultValue={query as string} />
+            <SearchComponent defaultValue={query as string} />
 
-          <div className="flex justify-end">
-            <button
-              type="button"
-              className="btn btn-success btn-sm"
-              onClick={handleAddOpportunity}
-            >
-              Create New
-            </button>
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                className="btn btn-success btn-sm normal-case"
+                onClick={handleAddOpportunity}
+              >
+                <IoMdAdd className="h-5 w-5" />
+                Organisation
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="rounded-lg p-4">
-          <h4>Organisations for approval</h4>
-          {/* GRID */}
-          {organisationsInactive && organisationsInactive.items.length > 0 && (
-            <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-                {organisationsInactive.items.map((item) => (
-                  <OrganisationCardComponent key={item.id} item={item} />
-                ))}
-              </div>
-            </>
-          )}
-          {/* NO ROWS */}
-          {!organisationsInactive ||
-            (organisationsInactive.items.length === 0 && (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "50px",
-                }}
-              >
-                <h6>No data to show</h6>
-              </div>
-            ))}
+          <div className="flex flex-col items-center pt-4">
+            <div className="flex w-full flex-col gap-2  lg:w-[1000px]">
+              <h4>Organisations for approval</h4>
 
-          <h4>Approved Organisations</h4>
-          {organisationsActive && organisationsActive.items.length > 0 && (
-            <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-                {organisationsActive.items.map((item) => (
-                  <OrganisationCardComponent key={item.id} item={item} />
+              {/* GRID */}
+              {organisationsInactive &&
+                organisationsInactive.items.length > 0 && (
+                  <>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
+                      {organisationsInactive.items.map((item) => (
+                        <OrganisationCardComponent key={item.id} item={item} />
+                      ))}
+                    </div>
+                  </>
+                )}
+              {/* NO ROWS */}
+              {!organisationsInactive ||
+                (organisationsInactive.items.length === 0 && (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "50px",
+                    }}
+                  >
+                    <h6>No data to show</h6>
+                  </div>
                 ))}
-              </div>
-            </>
-          )}
-          {/* NO ROWS */}
-          {!organisationsActive ||
-            (organisationsActive.items.length === 0 && (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "50px",
-                }}
-              >
-                <h6>No data to show</h6>
-              </div>
-            ))}
-        </div>
+
+              <h4>Approved Organisations</h4>
+
+              {organisationsActive && organisationsActive.items.length > 0 && (
+                <>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
+                    {organisationsActive.items.map((item) => (
+                      <OrganisationCardComponent key={item.id} item={item} />
+                    ))}
+                  </div>
+                </>
+              )}
+              {/* NO ROWS */}
+              {!organisationsActive ||
+                (organisationsActive.items.length === 0 && (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "50px",
+                    }}
+                  >
+                    <h6>No data to show</h6>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>{" "}
       </div>
     </>
   );

@@ -114,3 +114,11 @@ export interface OrganizationRequestUpdateStatus {
   status: OrganizationStatus;
   comment: string | null;
 }
+
+export interface UserInfo {
+  id: string;
+  email: string;
+  firstName: string;
+  surname: string;
+  displayName: string | null;
+}
