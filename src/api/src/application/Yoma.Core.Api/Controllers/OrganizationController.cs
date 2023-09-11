@@ -54,7 +54,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Search for organizations based on the supplied filter (Admin role required)")]
         [HttpPost("search")]
-        [ProducesResponseType(typeof(List<OrganizationSearchResults>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(OrganizationSearchResults), (int)HttpStatusCode.OK)]
         [Authorize(Roles = Constants.Role_Admin)]
         public IActionResult Search([FromBody] OrganizationSearchFilter filter)
         {

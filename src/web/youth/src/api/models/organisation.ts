@@ -14,7 +14,7 @@ export interface OrganizationCreateRequest {
   postalCode: string | null;
   tagline: string | null;
   biography: string | null;
-  providerTypeIds: string[];
+  providerTypes: string[];
   logo: FormFile | null;
   addCurrentUserAsAdmin: boolean;
   adminAdditionalEmails: string[] | null;

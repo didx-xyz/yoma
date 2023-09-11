@@ -5,16 +5,12 @@ import { Controller, FieldValues, useForm } from "react-hook-form";
 import CreatableSelect from "react-select/creatable";
 import zod from "zod";
 import { type OrganizationCreateRequest } from "~/api/models/organisation";
+import { validateEmail } from "~/lib/validate";
 
 export interface InputProps {
   organisation: OrganizationCreateRequest | null;
   onSubmit: (fieldValues: FieldValues) => void;
   onCancel: (fieldValues: FieldValues) => void;
-}
-
-function validateEmail(email: string) {
-  const re = /\S+@\S+\.\S+/;
-  return re.test(email);
 }
 
 export const OrgAdminsEdit: React.FC<InputProps> = ({
@@ -62,13 +58,7 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const {
-    register: register,
-    handleSubmit: handleSubmit,
-    formState: { errors: errors },
-    getValues: getValues,
-    reset: reset,
-  } = form;
+  const { register, handleSubmit, formState, reset } = form;
 
   // set default values
   useEffect(() => {
@@ -104,11 +94,11 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
               {...register("addCurrentUserAsAdmin")}
             />
           </label>
-          {errors.addCurrentUserAsAdmin && (
+          {formState.errors.addCurrentUserAsAdmin && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.addCurrentUserAsAdmin.message}`}
+                {`${formState.errors.addCurrentUserAsAdmin.message}`}
               </span>
             </label>
           )}
@@ -141,11 +131,11 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
               />
             )}
           />
-          {errors.adminAdditionalEmails && (
+          {formState.errors.adminAdditionalEmails && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.adminAdditionalEmails.message}`}
+                {`${formState.errors.adminAdditionalEmails.message}`}
               </span>
             </label>
           )}

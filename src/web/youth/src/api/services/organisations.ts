@@ -34,7 +34,7 @@ export const postOrganisation = async (
       property === "registrationDocuments" ||
       property === "educationProviderDocuments" ||
       property === "businessDocuments" ||
-      property === "providerTypeIds" ||
+      property === "providerTypes" ||
       property === "adminAdditionalEmails"
     ) {
       // send as multiple items in form data
@@ -46,7 +46,7 @@ export const postOrganisation = async (
   /* eslint-enable */
 
   const { data } = await ApiClient.post<Organization>(
-    "/organization/create",
+    "/organization",
     formData,
     {
       headers: { "Content-Type": "multipart/form-data" },

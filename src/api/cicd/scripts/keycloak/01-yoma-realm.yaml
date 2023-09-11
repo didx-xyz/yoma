@@ -924,6 +924,54 @@ clients:
       - address
       - phone
       - microprofile-jwt
+  - id:  9D68AFBD-B27A-49CD-9F9C-FFE08B11FABD
+    clientId: yoma-web-admin
+    name: yoma-web-admin
+    description: Yoma Opportunity Admin Portal (public client)
+    rootUrl: $(env:CLIENT_YOMA_ADMIN_URL)
+    adminUrl: $(env:CLIENT_YOMA_ADMIN_URL)
+    baseUrl: $(env:CLIENT_YOMA_ADMIN_URL)
+    surrogateAuthRequired: false
+    enabled: true
+    alwaysDisplayInConsole: false
+    clientAuthenticatorType: client-secret
+    redirectUris:
+      - "/*"
+    webOrigins:
+      - $(env:CLIENT_YOMA_ADMIN_URL)
+    notBefore: 0
+    bearerOnly: false
+    consentRequired: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    publicClient: true
+    frontchannelLogout: true
+    protocol: openid-connect
+    attributes:
+      oidc.ciba.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
+      post.logout.redirect.uris: $(env:CLIENT_YOMA_ADMIN_URL)/*
+      display.on.consent.screen: "false"
+      oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.revoke.offline.tokens: "false"
+    authenticationFlowBindingOverrides: {}
+    fullScopeAllowed: true
+    nodeReRegistrationTimeout: -1
+    defaultClientScopes:
+      - web-origins
+      - acr
+      - offline_access
+      - profile
+      - roles
+      - yoma-api
+      - email
+      - audience_scope
+    optionalClientScopes:
+      - address
+      - phone
+      - microprofile-jwt
 clientScopes:
   - id: ae0e217d-ecf2-4c4b-bfd8-1a564c182328
     name: email

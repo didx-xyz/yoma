@@ -24,7 +24,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
 }) => {
   const [logoFiles, setLogoFiles] = useState<File[]>(organisation?.logo as any);
 
-  const [model, setModel] = useState(organisation);
   const schema = zod.object({
     name: zod
       .string()
@@ -68,14 +67,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const {
-    register: register,
-    handleSubmit: handleSubmit,
-    formState: { errors: errors },
-    getValues: getValues,
-    setValue: setValue,
-    reset: reset,
-  } = form;
+  const { register, handleSubmit, formState, setValue, reset } = form;
 
   // set default values
   useEffect(() => {
@@ -113,11 +105,11 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
             {...register("name")}
             data-autocomplete="organization"
           />
-          {errors.name && (
+          {formState.errors.name && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.name.message}`}
+                {`${formState.errors.name.message}`}
               </span>
             </label>
           )}
@@ -133,11 +125,11 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
             {...register("streetAddress")}
             data-autocomplete="street-address"
           />
-          {errors.streetAddress && (
+          {formState.errors.streetAddress && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.streetAddress.message}`}
+                {`${formState.errors.streetAddress.message}`}
               </span>
             </label>
           )}
@@ -154,11 +146,11 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
             {...register("province")}
             data-autocomplete="address-level1"
           />
-          {errors.province && (
+          {formState.errors.province && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.province.message}`}
+                {`${formState.errors.province.message}`}
               </span>
             </label>
           )}
@@ -175,11 +167,11 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
             {...register("city")}
             data-autocomplete="address-level2"
           />
-          {errors.city && (
+          {formState.errors.city && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.city.message}`}
+                {`${formState.errors.city.message}`}
               </span>
             </label>
           )}
@@ -196,11 +188,11 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
             {...register("postalCode")}
             data-autocomplete="postal-code"
           />
-          {errors.postalCode && (
+          {formState.errors.postalCode && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.postalCode.message}`}
+                {`${formState.errors.postalCode.message}`}
               </span>
             </label>
           )}
@@ -217,11 +209,11 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
             {...register("websiteURL")}
             data-autocomplete="url"
           />
-          {errors.websiteURL && (
+          {formState.errors.websiteURL && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.websiteURL.message}`}
+                {`${formState.errors.websiteURL.message}`}
               </span>
             </label>
           )}
@@ -245,11 +237,11 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
             }}
           />
 
-          {errors.logo && (
+          {formState.errors.logo && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.logo.message}`}
+                {`${formState.errors.logo.message}`}
               </span>
             </label>
           )}
@@ -265,11 +257,11 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
             placeholder="Your organisation tagline"
             {...register("tagline")}
           />
-          {errors.tagline && (
+          {formState.errors.tagline && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.tagline.message}`}
+                {`${formState.errors.tagline.message}`}
               </span>
             </label>
           )}
@@ -284,11 +276,11 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
             placeholder="Your organisation biography"
             {...register("biography")}
           />
-          {errors.biography && (
+          {formState.errors.biography && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.biography.message}`}
+                {`${formState.errors.biography.message}`}
               </span>
             </label>
           )}
