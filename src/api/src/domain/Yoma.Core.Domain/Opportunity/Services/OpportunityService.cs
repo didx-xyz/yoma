@@ -656,7 +656,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignLanguages(result, languageIds);
             result = await RemoveLanguages(result, result.Languages?.Where(o => !languageIds.Contains(o.Id)).Select(o => o.Id).ToList());
-            
+
             return result;
         }
 
@@ -667,7 +667,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignSkills(result, skillIds);
             result = await RemoveSkills(result, skillIds == null ? result.Skills?.Select(o => o.Id).ToList() : result.Skills?.Where(o => !skillIds.Contains(o.Id)).Select(o => o.Id).ToList());
-           
+
             return result;
         }
 
@@ -675,7 +675,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
             var result = GetById(id, false, ensureOrganizationAuthorization);
 
-            if(result.VerificationSupported && (verificationTypes == null || !verificationTypes.Any()))
+            if (result.VerificationSupported && (verificationTypes == null || !verificationTypes.Any()))
                 throw new ValidationException("One or more verification types are required when verification is supported");
 
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);

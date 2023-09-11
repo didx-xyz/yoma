@@ -68,7 +68,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                         Name = o.Country.Name,
                         CodeAlpha2 = o.Country.CodeAlpha2,
                         CodeAlpha3 = o.Country.CodeAlpha3,
-                        CodeNumeric = o.Country.CodeNumeric }).ToList() : null,
+                        CodeNumeric = o.Country.CodeNumeric
+                    }).ToList() : null,
                 Languages = includeChildItems ?
                     entity.Languages.Select(o => new Domain.Lookups.Models.Language
                     { Id = o.LanguageId, Name = o.Language.Name, CodeAlpha2 = o.Language.CodeAlpha2 }).ToList() : null,
@@ -81,7 +82,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                         Id = o.VerificationTypeId,
                         Type = Enum.Parse<VerificationType>(o.VerificationType.Name, true),
                         DisplayName = o.VerificationType.DisplayName,
-                        Description = o.Description ?? o.VerificationType.Description }).ToList() : null,
+                        Description = o.Description ?? o.VerificationType.Description
+                    }).ToList() : null,
             }).AsSplitQuery();
         }
 

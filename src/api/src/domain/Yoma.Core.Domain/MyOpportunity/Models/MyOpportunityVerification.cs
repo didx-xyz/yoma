@@ -16,7 +16,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public string? GeometryProperties { get; set; }
 
-        public Geometry? Geometry { get; set; } 
+        public Geometry? Geometry { get; set; }
 
         public Guid? FileId { get; set; }
 
