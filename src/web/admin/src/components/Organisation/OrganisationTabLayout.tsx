@@ -5,6 +5,7 @@ const OrganisationTabLayout = () => {
   const router = useRouter();
   const { id } = router.query;
 
+  /* eslint-disable @typescript-eslint/restrict-template-expressions */
   return (
     <>
       <div className="tabs">
@@ -69,6 +70,7 @@ const OrganisationTabLayout = () => {
       </div>
     </>
   );
+  /* eslint-enable @typescript-eslint/restrict-template-expressions */
 };
 
 export default OrganisationTabLayout;

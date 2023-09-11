@@ -5,7 +5,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { AxiosError } from "axios";
+import { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -23,7 +23,10 @@ import {
 } from "react-icons/io";
 import ReactModal from "react-modal";
 import { toast } from "react-toastify";
-import { Organization, OrganizationStatus } from "~/api/models/organisation";
+import {
+  type Organization,
+  OrganizationStatus,
+} from "~/api/models/organisation";
 import {
   getOrganisationAdminsById,
   getOrganisationById,
@@ -68,7 +71,7 @@ const OrganisationDetails: NextPageWithLayout<{
 }> = ({ id }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [isLoading, setIsLoading] = useState(false);
+  //const [isLoading, setIsLoading] = useState(false);
   const [modalVerifySingleVisible, setModalVerifySingleVisible] =
     useState(false);
   const [verifyComments, setVerifyComments] = useState("");
@@ -79,7 +82,7 @@ const OrganisationDetails: NextPageWithLayout<{
   });
 
   const onSubmit = useCallback(async () => {
-    setIsLoading(true);
+    //setIsLoading(true);
 
     try {
       // update api
@@ -106,18 +109,18 @@ const OrganisationDetails: NextPageWithLayout<{
       });
 
       captureException(error);
-      setIsLoading(false);
+      //setIsLoading(false);
 
       return;
     }
 
-    setIsLoading(false);
+    //setIsLoading(false);
 
     void router.push("/organisations/search");
   }, [
-    setIsLoading,
+    //setIsLoading,
+    router,
     id,
-    organisation,
     queryClient,
     verifyActionApprove,
     verifyComments,

@@ -7,7 +7,7 @@ import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { IoMdImage } from "react-icons/io";
-import { Organization } from "~/api/models/organisation";
+import { type Organization } from "~/api/models/organisation";
 import { getOrganisationById } from "~/api/services/organisations";
 import LeftNavLayout from "~/components/Layout/LeftNav";
 import MainLayout from "~/components/Layout/Main";

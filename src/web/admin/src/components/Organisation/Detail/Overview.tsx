@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { IoMdImage } from "react-icons/io";
-import { UserInfo, type Organization } from "~/api/models/organisation";
+import { type UserInfo, type Organization } from "~/api/models/organisation";
 
 export interface InputProps {
   organisation: Organization | undefined;
