@@ -53,16 +53,12 @@ export const postOrganisation = async (
   return data;
 };
 
-// export const uploadOrganisationImage = async (
-//   organisationId: string,
-//   model: ImageRequestDto,
-// ): Promise<OrganisationResponseDto> => {
-//   const { data } = await ApiClient.post<ApiResponse<OrganisationResponseDto>>(
-//     `/organisations/${organisationId}/logo`,
-//     model,
-//     { headers: { "Content-Type": "multipart/form-data" } },
-//   );
-
-//   if (!data.meta.success) throw new Error(data.meta.message);
-//   return data.data;
-// };
+export const getOrganisationById = async (
+  id: string,
+  context?: GetServerSidePropsContext,
+): Promise<Organization> => {
+  const { data } = context
+    ? await ApiServer(context).get<Organization>(`/organization/${id}`)
+    : await ApiClient.get<Organization>(`/organization/${id}`);
+  return data;
+};

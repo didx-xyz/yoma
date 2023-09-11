@@ -8,6 +8,7 @@ import {
 import { type DefaultJWT } from "next-auth/jwt";
 import KeycloakProvider from "next-auth/providers/keycloak";
 import { env } from "process";
+import { OrganizationInfo, UserProfile } from "~/api/models/user";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -24,7 +25,7 @@ declare module "next-auth" {
 }
 export interface User extends DefaultUser {
   roles: string[];
-  organisationId: string | null;
+  adminsOf: OrganizationInfo[];
   photoURL: string | null;
 }
 declare module "next-auth/jwt" {
@@ -68,7 +69,7 @@ export const authOptions: NextAuthOptions = {
           user: {
             ...user,
             roles: realm_access.roles, // eslint-disable-line
-            organisationId: userProfile?.organisationId,
+            adminsOf: userProfile?.adminsOf,
             photoURL: userProfile?.photoURL,
           },
         };
@@ -118,7 +119,9 @@ const decode = function (token: any) {
   return JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
 };
 
-async function getYomaUserProfile(access_token: string): Promise<User | null> {
+async function getYomaUserProfile(
+  access_token: string,
+): Promise<UserProfile | null> {
   const response = await fetch(`${env.API_BASE_URL}/user`, {
     headers: {
       "Content-Type": "application/json",
