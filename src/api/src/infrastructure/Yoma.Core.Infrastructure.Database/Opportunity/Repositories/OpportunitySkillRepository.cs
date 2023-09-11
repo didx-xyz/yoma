@@ -19,7 +19,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 Id = entity.Id,
                 OpportunityId = entity.OpportunityId,
                 SkillId = entity.SkillId,
-                Skill = entity.Skill.Name,
                 DateCreated = entity.DateCreated
             });
         }

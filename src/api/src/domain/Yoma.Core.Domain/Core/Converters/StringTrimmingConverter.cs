@@ -16,7 +16,10 @@ namespace Yoma.Core.Domain.Core.Converters
                                         object? existingValue, JsonSerializer serializer)
         {
             if (reader.Value == null) return null;
-            return ((string)reader.Value).Trim();
+
+            var result = ((string)reader.Value).Trim();
+
+            return string.IsNullOrEmpty(result) ? null : result;
         }
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)

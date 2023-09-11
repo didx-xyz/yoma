@@ -26,12 +26,19 @@ namespace Yoma.Core.Domain.Core
     {
         Photos, //logo and profile photo
         Certificates,
-        Documents
+        Documents,
+        VoiceNotes
     }
 
     public enum Country
     {
         [Description("WW")]
         Worldwide
+    }
+
+    public enum SpatialType
+    {
+        None,
+        Point
     }
 }

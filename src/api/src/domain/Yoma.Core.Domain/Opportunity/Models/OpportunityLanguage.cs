@@ -8,10 +8,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public Guid LanguageId { get; set; }
 
-        public string Language { get; set; }
-
-        public string LanguageCodeAlpha2 { get; set; }
-
         public DateTimeOffset DateCreated { get; set; }
     }
 }

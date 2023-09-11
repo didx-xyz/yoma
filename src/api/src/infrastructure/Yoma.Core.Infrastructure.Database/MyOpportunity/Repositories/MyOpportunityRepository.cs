@@ -1,12 +1,13 @@
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.MyOpportunity;
+using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
 {
-    public class MyOpportunityRepository : BaseRepository<Entities.MyOpportunity>, IRepository<Domain.MyOpportunity.Models.MyOpportunity>
+    public class MyOpportunityRepository : BaseRepository<Entities.MyOpportunity>, IRepositoryWithNavigation<Domain.MyOpportunity.Models.MyOpportunity>
     {
         #region Constructor
         public MyOpportunityRepository(ApplicationDbContext context) : base(context) { }
@@ -15,10 +16,16 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         #region Public Members
         public IQueryable<Domain.MyOpportunity.Models.MyOpportunity> Query()
         {
+            return Query(false);
+        }
+
+        public IQueryable<Domain.MyOpportunity.Models.MyOpportunity> Query(bool includeChildItems)
+        {
             return _context.MyOpportunity.Select(entity => new Domain.MyOpportunity.Models.MyOpportunity()
             {
                 Id = entity.Id,
                 UserId = entity.UserId,
+                UserDisplayName = entity.User.DisplayName,
                 OpportunityId = entity.OpportunityId,
                 OpportunityTitle = entity.Opportunity.Title,
                 OpportunityType = entity.Opportunity.Type.Name,
@@ -33,7 +40,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 VerificationStatusId = entity.VerificationStatusId,
                 VerificationStatus = entity.VerificationStatus != null ? Enum.Parse<VerificationStatus>(entity.VerificationStatus.Name, true) : null,
                 CommentVerification = entity.CommentVerification,
-                CertificateId = entity.CertificateId,
                 DateStart = entity.DateStart,
                 DateEnd = entity.DateEnd,
                 DateCompleted = entity.DateCompleted,
@@ -41,6 +47,17 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 YomaReward = entity.YomaReward,
                 DateCreated = entity.DateCreated,
                 DateModified = entity.DateModified,
+                Verifications = entity.Verifications == null ? null : includeChildItems ?
+                    entity.Verifications.Select(o => new Domain.MyOpportunity.Models.MyOpportunityVerification
+                    {
+                        Id = o.Id,
+                        MyOpportunityId = o.MyOpportunityId,
+                        VerificationTypeId = o.VerificationTypeId,
+                        VerificationType = Enum.Parse<VerificationType>(o.VerificationType.Name, true),
+                        GeometryProperties = o.GeometryProperties,
+                        FileId = o.FileId,
+                        DateCreated = o.DateCreated
+                    }).ToList() : null
             });
         }
 
@@ -57,7 +74,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 ActionId = item.ActionId,
                 VerificationStatusId = item.VerificationStatusId,
                 CommentVerification = item.CommentVerification,
-                CertificateId = item.CertificateId,
                 DateStart = item.DateStart,
                 DateEnd = item.DateEnd,
                 DateCompleted = item.DateCompleted,
@@ -83,7 +99,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
             entity.ActionId = item.ActionId;
             entity.VerificationStatusId = item.VerificationStatusId;
             entity.CommentVerification = item.CommentVerification;
-            entity.CertificateId = item.CertificateId;
             entity.DateStart = item.DateStart;
             entity.DateEnd = item.DateEnd;
             entity.DateCompleted = item.DateCompleted;

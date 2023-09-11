@@ -48,7 +48,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
 
   const schema = zod
     .object({
-      providerTypeIds: zod
+      providerTypes: zod
         .array(zod.string().uuid())
         .min(1, "Please select at least one option."),
       registrationDocuments: zod
@@ -77,7 +77,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
       );
 
       if (
-        values.providerTypeIds?.findIndex((x: string) => x == educationPT?.id) >
+        values.providerTypes?.findIndex((x: string) => x == educationPT?.id) >
         -1
       ) {
         if (
@@ -98,9 +98,8 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
       );
 
       if (
-        values.providerTypeIds?.findIndex(
-          (x: string) => x == marketplacePT?.id,
-        ) > -1
+        values.providerTypes?.findIndex((x: string) => x == marketplacePT?.id) >
+        -1
       ) {
         if (
           values.businessDocuments == null ||
@@ -163,14 +162,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const {
-    register: register,
-    handleSubmit: handleSubmit,
-    formState: { errors: errors },
-    getValues: getValues,
-    setValue: setValue,
-    reset: reset,
-  } = form;
+  const { register, handleSubmit, formState, setValue, reset } = form;
 
   // set default values
   useEffect(() => {
@@ -210,7 +202,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
               key={item.id}
             >
               <input
-                {...register("providerTypeIds")}
+                {...register("providerTypes")}
                 type="checkbox"
                 value={item.id}
                 id={item.id}
@@ -220,11 +212,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
             </label>
           ))}
 
-          {errors.providerTypeIds && (
+          {formState.errors.providerTypes && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.providerTypeIds.message}`}
+                {`${formState.errors.providerTypes.message}`}
               </span>
             </label>
           )}
@@ -249,11 +241,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
             }}
           />
 
-          {errors.registrationDocuments && (
+          {formState.errors.registrationDocuments && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.registrationDocuments.message}`}
+                {`${formState.errors.registrationDocuments.message}`}
               </span>
             </label>
           )}
@@ -276,11 +268,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
             }}
           />
 
-          {errors.educationProviderDocuments && (
+          {formState.errors.educationProviderDocuments && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.educationProviderDocuments.message}`}
+                {`${formState.errors.educationProviderDocuments.message}`}
               </span>
             </label>
           )}
@@ -303,11 +295,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
             }}
           />
 
-          {errors.businessDocuments && (
+          {formState.errors.businessDocuments && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.businessDocuments.message}`}
+                {`${formState.errors.businessDocuments.message}`}
               </span>
             </label>
           )}

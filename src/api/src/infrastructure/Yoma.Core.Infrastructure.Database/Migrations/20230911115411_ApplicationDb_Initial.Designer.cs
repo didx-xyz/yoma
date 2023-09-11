@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230906090217_ApplicationDb_Initial")]
+    [Migration("20230911115411_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -559,9 +559,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<Guid>("ActionId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CertificateId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("CommentVerification")
                         .HasColumnType("varchar(500)");
 
@@ -599,8 +596,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("ActionId");
 
-                    b.HasIndex("CertificateId");
-
                     b.HasIndex("OpportunityId");
 
                     b.HasIndex("UserId", "OpportunityId", "ActionId")
@@ -609,6 +604,39 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified");
 
                     b.ToTable("MyOpportunity", "opportunity");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunityVerification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("FileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("GeometryProperties")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("MyOpportunityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("VerificationTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FileId");
+
+                    b.HasIndex("VerificationTypeId");
+
+                    b.HasIndex("MyOpportunityId", "VerificationTypeId")
+                        .IsUnique();
+
+                    b.ToTable("MyOpportunityVerifications", "opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityCategory", b =>
@@ -695,6 +723,35 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.ToTable("OpportunityType", "opportunity");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityVerificationType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("varchar(125)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(125)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("OpportunityVerificationType", "opportunity");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -749,8 +806,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<int?>("ParticipantLimit")
                         .HasColumnType("int");
 
+                    b.Property<bool>("SSIIntegrated")
+                        .HasColumnType("bit");
+
                     b.Property<Guid>("StatusId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Summary")
+                        .HasColumnType("varchar(500)");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -901,6 +964,34 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.ToTable("OpportunitySkills", "opportunity");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityVerificationType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<Guid>("OpportunityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("VerificationTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VerificationTypeId");
+
+                    b.HasIndex("OpportunityId", "VerificationTypeId")
+                        .IsUnique();
+
+                    b.ToTable("OpportunityVerificationTypes", "opportunity");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>
                 {
                     b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "Country")
@@ -1035,10 +1126,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", "Certificate")
-                        .WithMany()
-                        .HasForeignKey("CertificateId");
-
                     b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                         .WithMany()
                         .HasForeignKey("OpportunityId")
@@ -1057,13 +1144,36 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Navigation("Action");
 
-                    b.Navigation("Certificate");
-
                     b.Navigation("Opportunity");
 
                     b.Navigation("User");
 
                     b.Navigation("VerificationStatus");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunityVerification", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", "File")
+                        .WithMany()
+                        .HasForeignKey("FileId");
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunity", "MyOpportunity")
+                        .WithMany("Verifications")
+                        .HasForeignKey("MyOpportunityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityVerificationType", "VerificationType")
+                        .WithMany()
+                        .HasForeignKey("VerificationTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("File");
+
+                    b.Navigation("MyOpportunity");
+
+                    b.Navigation("VerificationType");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", b =>
@@ -1185,6 +1295,25 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Navigation("Skill");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityVerificationType", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
+                        .WithMany("VerificationTypes")
+                        .HasForeignKey("OpportunityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityVerificationType", "VerificationType")
+                        .WithMany()
+                        .HasForeignKey("VerificationTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Opportunity");
+
+                    b.Navigation("VerificationType");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>
                 {
                     b.Navigation("Documents");
@@ -1197,6 +1326,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Navigation("Skills");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunity", b =>
+                {
+                    b.Navigation("Verifications");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", b =>
                 {
                     b.Navigation("Categories");
@@ -1206,6 +1340,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Navigation("Languages");
 
                     b.Navigation("Skills");
+
+                    b.Navigation("VerificationTypes");
                 });
 #pragma warning restore 612, 618
         }

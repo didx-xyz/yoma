@@ -8,8 +8,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public Guid SkillId { get; set; }
 
-        public string Skill { get; set; }
-
         public DateTimeOffset DateCreated { get; set; }
     }
 }

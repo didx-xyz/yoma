@@ -33,7 +33,6 @@ namespace Yoma.Core.Domain.Opportunity.Helpers
                 Countries = value.Countries,
                 Languages = value.Languages,
                 Skills = value.Skills
-
             };
         }
     }

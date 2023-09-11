@@ -8,8 +8,6 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public Guid ProviderTypeId { get; set; }
 
-        public string ProviderType { get; set; }
-
         public DateTimeOffset DateCreated { get; set; }
     }
 }

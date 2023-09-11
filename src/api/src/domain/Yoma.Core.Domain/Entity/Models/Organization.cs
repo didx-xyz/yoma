@@ -53,5 +53,7 @@ namespace Yoma.Core.Domain.Entity.Models
         public DateTimeOffset DateModified { get; set; }
 
         public List<Lookups.OrganizationProviderType>? ProviderTypes { get; set; }
+
+        public List<UserInfo>? Administrators { get; set; }
     }
 }

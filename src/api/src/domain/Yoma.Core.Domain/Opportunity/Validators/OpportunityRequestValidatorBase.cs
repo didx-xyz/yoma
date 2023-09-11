@@ -18,6 +18,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         private readonly ICountryService _countryService;
         private readonly ILanguageService _languageService;
         private readonly ISkillService _skillService;
+        private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
         #endregion
 
         #region Public Members
@@ -28,8 +29,8 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             IOpportunityCategoryService opportunityCategoryService,
             ICountryService countryService,
             ILanguageService languageService,
-            ISkillService skillService
-            )
+            ISkillService skillService,
+            IOpportunityVerificationTypeService opportunityVerificationTypeService)
         {
             _opportunityTypeService = opportunityTypeService;
             _organizationService = organizationService;
@@ -39,6 +40,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             _countryService = countryService;
             _languageService = languageService;
             _skillService = skillService;
+            _opportunityVerificationTypeService = opportunityVerificationTypeService;
 
             RuleFor(x => x.Title).NotEmpty().Length(1, 255);
             RuleFor(x => x.Description).NotEmpty();
@@ -46,16 +48,16 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             RuleFor(x => x.OrganizationId).NotEmpty().Must(OrganizationUpdatable).WithMessage($"Specified organization has been declined / deleted or does not exist.");
             //instructions (varchar(max); auto trimmed
             RuleFor(x => x.URL).Length(1, 2048).Must(ValidURL).When(x => string.IsNullOrEmpty(x.URL)).WithMessage("'{PropertyName}' is invalid.");
-            RuleFor(x => x.ZltoReward).GreaterThan(0).When(x => x.ZltoReward.HasValue).WithMessage("'{PropertyName}' must be greater than 0");
-            RuleFor(x => x.YomaReward).GreaterThan(0).When(x => x.YomaReward.HasValue).WithMessage("'{PropertyName}' must be greater than 0");
-            RuleFor(x => x.ZltoRewardPool).GreaterThan(0).When(x => x.ZltoRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0").
+            RuleFor(x => x.ZltoReward).GreaterThan(0).When(x => x.ZltoReward.HasValue).WithMessage("'{PropertyName}' must be greater than 0.");
+            RuleFor(x => x.YomaReward).GreaterThan(0).When(x => x.YomaReward.HasValue).WithMessage("'{PropertyName}' must be greater than 0.");
+            RuleFor(x => x.ZltoRewardPool).GreaterThan(0).When(x => x.ZltoRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.").
                 Must((model, zltoRewardPool) => !model.ZltoRewardPool.HasValue || (model.ZltoReward.HasValue && zltoRewardPool >= model.ZltoReward)).WithMessage("'{PropertyName}' must be greater than or equal to ZltoReward.");
-            RuleFor(x => x.YomaRewardPool).GreaterThan(0).When(x => x.YomaRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0").
+            RuleFor(x => x.YomaRewardPool).GreaterThan(0).When(x => x.YomaRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.").
                 Must((model, yomaRewardPool) => !model.YomaRewardPool.HasValue || (model.YomaReward.HasValue && yomaRewardPool >= model.YomaReward)).WithMessage("'{PropertyName}' must be greater than or equal to YomaReward."); ;
             RuleFor(x => x.DifficultyId).NotEmpty().Must(DifficultyExists).WithMessage($"Specified difficulty is invalid / does not exist.");
             RuleFor(x => x.CommitmentIntervalId).NotEmpty().Must(TimeIntervalExists).WithMessage($"Specified time interval is invalid / does not exist.");
-            RuleFor(x => x.CommitmentIntervalCount).Must(x => x.HasValue && x > 0).When(x => x.CommitmentIntervalCount.HasValue).WithMessage("'{PropertyName}' must be greater than 0");
-            RuleFor(x => x.ParticipantLimit).Must(x => x.HasValue && x > 0).When(x => x.ParticipantLimit.HasValue).WithMessage("'{PropertyName}' must be greater than 0");
+            RuleFor(x => x.CommitmentIntervalCount).Must(x => x.HasValue && x > 0).When(x => x.CommitmentIntervalCount.HasValue).WithMessage("'{PropertyName}' must be greater than 0.");
+            RuleFor(x => x.ParticipantLimit).Must(x => x.HasValue && x > 0).When(x => x.ParticipantLimit.HasValue).WithMessage("'{PropertyName}' must be greater than 0.");
             RuleFor(x => x.Keywords).Must(keywords => keywords == null || keywords.All(x => !string.IsNullOrWhiteSpace(x) && !x.Contains(OpportunityService.Keywords_Separator))).WithMessage("{PropertyName} contains empty value(s) or keywords with ',' character.");
             RuleFor(model => model.Keywords).Must(list => list == null || CalculateCombinedLength(list) >= 1 && CalculateCombinedLength(list) <= OpportunityService.Keywords_CombinedMaxLength).WithMessage("The combined length of keywords must be between 1 and 500 characters.");
             RuleFor(x => x.DateStart).NotEmpty();
@@ -67,13 +69,18 @@ namespace Yoma.Core.Domain.Opportunity.Validators
                 .When(model => model.DateEnd.HasValue)
                 .WithMessage("{PropertyName} is earlier than the Start Date.");
             RuleFor(x => x.Categories).Must(categories => categories != null && categories.Any() && categories.All(id => id != Guid.Empty && CategoryExist(id)))
-              .WithMessage("Categories are required and must exist");
+              .WithMessage("Categories are required and must exist.");
             RuleFor(x => x.Countries).Must(countries => countries != null && countries.Any() && countries.All(id => id != Guid.Empty && CountryExist(id)))
-                .WithMessage("Countries are required and must exist");
+                .WithMessage("Countries are required and must exist.");
             RuleFor(x => x.Languages).Must(languages => languages != null && languages.Any() && languages.All(id => id != Guid.Empty && LanguageExist(id)))
-                .WithMessage("Languages are required and must exist");
-            RuleFor(x => x.Skills).Must(skills => skills != null && skills.Any() && skills.All(id => id != Guid.Empty && SkillExist(id)))
-                .WithMessage("Skills are required and must exist");
+                .WithMessage("Languages are required and must exist.");
+            RuleFor(x => x.Skills).Must(skills => skills == null || skills.Any() && skills.All(id => id != Guid.Empty && SkillExist(id)))
+                .WithMessage("Skills are optional, but must exist if specified.")
+                .When(x => x.Skills != null && x.Skills.Any());
+            RuleFor(x => x.VerificationTypes)
+              .Must(types => types == null || types.All(type => VerificationTypeExist(type.Key)))
+              .WithMessage("Verification types are optional, but must exist if specified.")
+              .When(x => x.VerificationTypes != null && x.VerificationTypes.Any());
         }
         #endregion
 
@@ -133,6 +140,11 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         {
             if (!id.HasValue) return true;
             return _skillService.GetByIdOrNull(id.Value) != null;
+        }
+
+        private bool VerificationTypeExist(VerificationType type)
+        {
+            return _opportunityVerificationTypeService.GetByTypeOrNull(type) != null;
         }
         #endregion
     }

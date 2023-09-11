@@ -68,7 +68,8 @@ namespace Yoma.Core.Infrastructure.Database
             services.AddScoped<IRepository<Domain.MyOpportunity.Models.Lookups.MyOpportunityVerificationStatus>, MyOpportunity.Repositories.Lookups.MyOpportunityVerificationStatusRepository>();
             #endregion Lookup
 
-            services.AddScoped<IRepository<Domain.MyOpportunity.Models.MyOpportunity>, MyOpportunityRepository>();
+            services.AddScoped<IRepositoryWithNavigation<Domain.MyOpportunity.Models.MyOpportunity>, MyOpportunityRepository>();
+            services.AddScoped<IRepository<Domain.MyOpportunity.Models.MyOpportunityVerification>, MyOpportunityVerificationRepository>();
             #endregion My Opportunity
 
             #region Opportunity
@@ -77,6 +78,7 @@ namespace Yoma.Core.Infrastructure.Database
             services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityDifficulty>, Opportunity.Repositories.Lookups.OpportunityDifficultyRepository>();
             services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityStatus>, Opportunity.Repositories.Lookups.OpportunityStatusRepository>();
             services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityType>, Opportunity.Repositories.Lookups.OpportunityTypeRepository>();
+            services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityVerificationType>, Opportunity.Repositories.Lookups.OpportunityVerificationTypeRepository>();
             #endregion
 
             services.AddScoped<IRepositoryValueContainsWithNavigation<Domain.Opportunity.Models.Opportunity>, OpportunityRepository>();
@@ -84,6 +86,7 @@ namespace Yoma.Core.Infrastructure.Database
             services.AddScoped<IRepository<OpportunityCountry>, OpportunityCountryRepository>();
             services.AddScoped<IRepository<OpportunityLanguage>, OpportunityLanguageRepository>();
             services.AddScoped<IRepository<OpportunitySkill>, OpportunitySkillRepository>();
+            services.AddScoped<IRepository<OpportunityVerificationType>, OpportunityVerificationTypeRepository>();
             #endregion
         }
 

@@ -32,6 +32,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public bool VerificationSupported { get; set; }
 
         [Required]
+        public bool SSIIntegrated { get; set; }
+
+        [Required]
         public Guid DifficultyId { get; set; }
 
         [Required]
@@ -59,5 +62,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         [Required]
         public List<Guid> Skills { get; set; }
+
+        public Dictionary<VerificationType, string?>? VerificationTypes { get; set; }
     }
 }

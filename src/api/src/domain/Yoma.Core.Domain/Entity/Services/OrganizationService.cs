@@ -106,6 +106,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             result.LogoURL = GetBlobObjectURL(result.LogoId);
             result.Documents?.ForEach(o => o.Url = _blobService.GetURL(o.FileId));
+            result.Administrators = ListAdmins(result);
 
             return result;
         }
@@ -121,6 +122,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             result.LogoURL = GetBlobObjectURL(result.LogoId);
             result.Documents?.ForEach(o => o.Url = _blobService.GetURL(o.FileId));
+            result.Administrators = ListAdmins(result);
 
             return result;
         }
@@ -220,15 +222,13 @@ namespace Yoma.Core.Domain.Entity.Services
                 blobObjects.Add(resultLogo.BlobOject);
 
                 //assign admins
+                var admins = request.AdminAdditionalEmails ??= new List<string>();
                 if (request.AddCurrentUserAsAdmin)
                 {
                     var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-                    await AssignAdmin(result, username);
+                    admins.Add(username);
                 }
-
-                if (request.AdminAdditionalEmails != null && request.AdminAdditionalEmails.Any())
-                    foreach (var item in request.AdminAdditionalEmails)
-                        await AssignAdmin(result, item);
+                result = await AssignAdmins(result, admins);
 
                 //upload documents
                 var resultDocuments = await UpsertDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocuments);
@@ -312,37 +312,37 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
-        public async Task UpdateStatus(Guid id, OrganizationRequestUpdateStatus request, bool ensureOrganizationAuthorization)
+        public async Task<Organization> UpdateStatus(Guid id, OrganizationRequestUpdateStatus request, bool ensureOrganizationAuthorization)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
             await _organizationRequestUpdateStatusValidator.ValidateAndThrowAsync(request);
 
-            var org = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, false, ensureOrganizationAuthorization);
 
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
 
             switch (request.Status)
             {
                 case OrganizationStatus.Active:
-                    if (org.Status == OrganizationStatus.Active) return;
+                    if (result.Status == OrganizationStatus.Active) return result;
 
-                    if (!Statuses_Activatable.Contains(org.Status))
-                        throw new ValidationException($"{nameof(Organization)} can not be activated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
+                    if (!Statuses_Activatable.Contains(result.Status))
+                        throw new ValidationException($"{nameof(Organization)} can not be activated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
 
                     if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
                     //TODO: Send email to org admins
 
-                    org.CommentApproval = request.Comment;
+                    result.CommentApproval = request.Comment;
                     break;
 
                 case OrganizationStatus.Inactive:
-                    if (org.Status == OrganizationStatus.Inactive) return;
+                    if (result.Status == OrganizationStatus.Inactive) return result;
 
-                    if (!Statuses_DeActivatable.Contains(org.Status))
-                        throw new ValidationException($"{nameof(Organization)} can not be deactivated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
+                    if (!Statuses_DeActivatable.Contains(result.Status))
+                        throw new ValidationException($"{nameof(Organization)} can not be deactivated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
 
                     if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
@@ -350,67 +350,48 @@ namespace Yoma.Core.Domain.Entity.Services
                     break;
 
                 case OrganizationStatus.Declined:
-                    if (org.Status == OrganizationStatus.Declined) return;
+                    if (result.Status == OrganizationStatus.Declined) return result;
 
-                    if (!Statuses_Declinable.Contains(org.Status))
-                        throw new ValidationException($"{nameof(Organization)} can not be declined (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Declinable)}'");
+                    if (!Statuses_Declinable.Contains(result.Status))
+                        throw new ValidationException($"{nameof(Organization)} can not be declined (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Declinable)}'");
 
                     if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
                     //TODO: Send email to org admins
 
-                    org.CommentApproval = request.Comment;
+                    result.CommentApproval = request.Comment;
                     break;
 
                 case OrganizationStatus.Deleted:
-                    if (org.Status == OrganizationStatus.Deleted) return;
+                    if (result.Status == OrganizationStatus.Deleted) return result;
 
-                    if (!Statuses_CanDelete.Contains(org.Status))
-                        throw new ValidationException($"{nameof(Organization)} can not be deleted (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
+                    if (!Statuses_CanDelete.Contains(result.Status))
+                        throw new ValidationException($"{nameof(Organization)} can not be deleted (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
                     break;
 
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(request.Status), $"{nameof(Status)} of '{request.Status}' not supported");
+                    throw new ArgumentOutOfRangeException(nameof(request), $"{nameof(Status)} of '{request.Status}' not supported");
             }
 
             var statusId = _organizationStatusService.GetByName(request.Status.ToString()).Id;
 
-            org.StatusId = statusId;
-            org.Status = request.Status;
+            result.StatusId = statusId;
+            result.Status = request.Status;
 
-            await _organizationRepository.Update(org);
+            await _organizationRepository.Update(result);
+
+            return result;
         }
 
-        public async Task<Organization> AssignProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization)
+        public async Task<Organization> UpdateProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, true, ensureOrganizationAuthorization);
 
-            return await AssignProviderTypes(result, providerTypeIds, true);
-        }
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+            result = await AssignProviderTypes(result, providerTypeIds, true);
+            result = await RemoveProviderTypes(result, result.ProviderTypes?.Where(o => !providerTypeIds.Contains(o.Id)).Select(o => o.Id).ToList());
 
-        public async Task<Organization> DeleteProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization)
-        {
-            var result = GetById(id, true, ensureOrganizationAuthorization);
-
-            if (providerTypeIds == null || !providerTypeIds.Any())
-                throw new ArgumentNullException(nameof(providerTypeIds));
-
-            if (!Statuses_Updatable.Contains(result.Status))
-                throw new ValidationException($"{nameof(Organization)} '{result.Name}' can no longer be updated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
-
-            foreach (var typeId in providerTypeIds)
-            {
-                var type = _providerTypeService.GetById(typeId);
-
-                var item = _organizationProviderTypeRepository.Query().SingleOrDefault(o => o.OrganizationId == result.Id && o.ProviderTypeId == type.Id);
-                if (item == null) continue;
-
-                await _organizationProviderTypeRepository.Delete(item);
-
-                var typeToRemove = (result.ProviderTypes?.Single(o => o.Id == type.Id))
-                    ?? throw new InvalidOperationException($"Type '{type.Name}' expected but not found");
-                result.ProviderTypes?.Remove(typeToRemove);
-            }
+            scope.Complete();
 
             return result;
         }
@@ -432,33 +413,17 @@ namespace Yoma.Core.Domain.Entity.Services
             return resultDocuments.Organization;
         }
 
-        public async Task AssignAdmin(Guid id, string email, bool ensureOrganizationAuthorization)
+        public async Task<Organization> UpdateAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization)
         {
-            var org = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, false, ensureOrganizationAuthorization);
 
-            await AssignAdmin(org, email);
-        }
-
-        public async Task RemoveAdmin(Guid id, string email, bool ensureOrganizationAuthorization)
-        {
-            var org = GetById(id, false, ensureOrganizationAuthorization);
-
-            var user = _userService.GetByEmail(email, false);
-            if (!user.ExternalId.HasValue)
-                throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
-
-            if (!Statuses_Updatable.Contains(org.Status))
-                throw new ValidationException($"{nameof(Organization)} '{org.Name}' can no longer be updated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
-
-            var item = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == id && o.UserId == user.Id);
-            if (item == null) return;
-
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            await _organizationUserRepository.Delete(item);
-
-            await _identityProviderClient.RemoveRoles(user.ExternalId.Value, new List<string> { Constants.Role_OrganizationAdmin });
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+            result = await AssignAdmins(result, emails);
+            result = await RemoveAdmins(result, result.Administrators?.Where(o => !emails.Contains(o.Email)).Select(o => o.Email).ToList());
 
             scope.Complete();
+
+            return result;
         }
 
         public bool IsAdmin(Guid id, bool throwUnauthorized)
@@ -484,11 +449,7 @@ namespace Yoma.Core.Domain.Entity.Services
         public List<UserInfo> ListAdmins(Guid id, bool ensureOrganizationAuthorization)
         {
             var org = GetById(id, false, ensureOrganizationAuthorization);
-            var adminIds = _organizationUserRepository.Query().Where(o => o.OrganizationId == org.Id).Select(o => o.UserId).ToList();
-
-            var results = new List<User>();
-            adminIds.ForEach(o => results.Add(_userService.GetById(o, false)));
-            return results.Select(o => o.ToInfo()).ToList();
+            return ListAdmins(org);
         }
 
         public List<OrganizationInfo> ListAdminsOf()
@@ -502,26 +463,35 @@ namespace Yoma.Core.Domain.Entity.Services
         #endregion
 
         #region Private Members
-        private bool IsAdmin(Organization org, bool throwUnauthorized)
+        private List<UserInfo> ListAdmins(Organization organization)
+        {
+            var adminIds = _organizationUserRepository.Query().Where(o => o.OrganizationId == organization.Id).Select(o => o.UserId).ToList();
+
+            var results = new List<User>();
+            adminIds.ForEach(o => results.Add(_userService.GetById(o, false)));
+            return results.Select(o => o.ToInfo()).ToList();
+        }
+
+        private bool IsAdmin(Organization organization, bool throwUnauthorized)
         {
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
 
             OrganizationUser? orgUser = null;
             var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
-            if (!isAdmin) orgUser = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == org.Id && o.UserId == user.Id);
+            if (!isAdmin) orgUser = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == organization.Id && o.UserId == user.Id);
 
             if (!isAdmin && orgUser == null && throwUnauthorized)
                 throw new SecurityException("Unauthorized");
             return true;
         }
 
-        private async Task<Organization> AssignProviderTypes(Organization org, List<Guid> providerTypeIds, bool sendForReapproval)
+        private async Task<Organization> AssignProviderTypes(Organization organization, List<Guid> providerTypeIds, bool sendForReapproval)
         {
             if (providerTypeIds == null || !providerTypeIds.Any())
                 throw new ArgumentNullException(nameof(providerTypeIds));
 
-            if (!Statuses_Updatable.Contains(org.Status))
-                throw new ValidationException($"{nameof(Organization)} '{org.Name}' can no longer be updated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+            if (!Statuses_Updatable.Contains(organization.Status))
+                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             var typesAdded = false;
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
@@ -529,19 +499,19 @@ namespace Yoma.Core.Domain.Entity.Services
             {
                 var type = _providerTypeService.GetById(typeId);
 
-                var itemExisting = org.ProviderTypes?.SingleOrDefault(o => o.Id == type.Id);
+                var itemExisting = organization.ProviderTypes?.SingleOrDefault(o => o.Id == type.Id);
                 if (itemExisting != null) continue;
 
                 var item = new Models.OrganizationProviderType
                 {
-                    OrganizationId = org.Id,
+                    OrganizationId = organization.Id,
                     ProviderTypeId = type.Id
                 };
 
                 await _organizationProviderTypeRepository.Create(item);
 
-                org.ProviderTypes ??= new List<Models.Lookups.OrganizationProviderType>();
-                org.ProviderTypes.Add(new Models.Lookups.OrganizationProviderType { Id = type.Id, Name = type.Name });
+                organization.ProviderTypes ??= new List<Models.Lookups.OrganizationProviderType>();
+                organization.ProviderTypes.Add(new Models.Lookups.OrganizationProviderType { Id = type.Id, Name = type.Name });
 
                 typesAdded = true;
             }
@@ -550,35 +520,60 @@ namespace Yoma.Core.Domain.Entity.Services
             {
                 //with type addition organization is send for re-approval; all related opportunities will temporarily disappear from the listings
                 var statusInactiveId = _organizationStatusService.GetByName(OrganizationStatus.Inactive.ToString()).Id;
-                org.StatusId = statusInactiveId;
-                org.Status = OrganizationStatus.Inactive;
-                await _organizationRepository.Update(org);
+                organization.StatusId = statusInactiveId;
+                organization.Status = OrganizationStatus.Inactive;
+                await _organizationRepository.Update(organization);
 
                 //TODO: Send email to SAP admins
             }
 
             scope.Complete();
 
-            return org;
+            return organization;
         }
 
-        private async Task<(Organization Organization, BlobObject BlobOject)> UpsertLogo(Organization org, IFormFile? file)
+        private async Task<Organization> RemoveProviderTypes(Organization organization, List<Guid>? providerTypeIds)
+        {
+            if (providerTypeIds == null || !providerTypeIds.Any()) return organization;
+
+            if (!Statuses_Updatable.Contains(organization.Status))
+                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+            foreach (var typeId in providerTypeIds)
+            {
+                var type = _providerTypeService.GetById(typeId);
+
+                var item = _organizationProviderTypeRepository.Query().SingleOrDefault(o => o.OrganizationId == organization.Id && o.ProviderTypeId == type.Id);
+                if (item == null) continue;
+
+                await _organizationProviderTypeRepository.Delete(item);
+
+                organization.ProviderTypes?.Remove(organization.ProviderTypes.Single(o => o.Id == type.Id));
+            }
+
+            scope.Complete();
+
+            return organization;
+        }
+
+        private async Task<(Organization Organization, BlobObject BlobOject)> UpsertLogo(Organization organization, IFormFile? file)
         {
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
 
-            if (!Statuses_Updatable.Contains(org.Status))
-                throw new ValidationException($"{nameof(Organization)} '{org.Name}' can no longer be updated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+            if (!Statuses_Updatable.Contains(organization.Status))
+                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
-            var currentLogo = org.LogoId.HasValue ? new { Id = org.LogoId.Value, File = await _blobService.Download(org.LogoId.Value) } : null;
+            var currentLogo = organization.LogoId.HasValue ? new { Id = organization.LogoId.Value, File = await _blobService.Download(organization.LogoId.Value) } : null;
 
             BlobObject? blobObject = null;
             try
             {
                 using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
                 blobObject = await _blobService.Create(file, FileType.Photos);
-                org.LogoId = blobObject.Id;
-                await _organizationRepository.Update(org);
+                organization.LogoId = blobObject.Id;
+                await _organizationRepository.Update(organization);
 
                 if (currentLogo != null)
                     await _blobService.Delete(currentLogo.Id);
@@ -596,44 +591,84 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw;
             }
 
-            org.LogoURL = GetBlobObjectURL(org.LogoId);
+            organization.LogoURL = GetBlobObjectURL(organization.LogoId);
 
-            return (org, blobObject);
+            return (organization, blobObject);
         }
 
-        private async Task AssignAdmin(Organization org, string email)
+        private async Task<Organization> AssignAdmins(Organization organization, List<string> emails)
         {
-            var user = _userService.GetByEmail(email, false);
-            if (!user.ExternalId.HasValue)
-                throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
+            if (emails == null || !emails.Any())
+                throw new ArgumentNullException(nameof(emails));
 
-            if (!Statuses_Updatable.Contains(org.Status))
-                throw new ValidationException($"{nameof(Organization)} '{org.Name}' can no longer be updated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
-
-            var item = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == org.Id && o.UserId == user.Id);
-            if (item != null) return;
-
-            item = new OrganizationUser
-            {
-                OrganizationId = org.Id,
-                UserId = user.Id
-            };
+            if (!Statuses_Updatable.Contains(organization.Status))
+                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            await _organizationUserRepository.Create(item);
+            foreach (var email in emails)
+            {
+                var user = _userService.GetByEmail(email, false);
+                if (!user.ExternalId.HasValue)
+                    throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
-            await _identityProviderClient.EnsureRoles(user.ExternalId.Value, new List<string> { Constants.Role_OrganizationAdmin });
+                var item = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == organization.Id && o.UserId == user.Id);
+                if (item != null) return organization;
+
+                item = new OrganizationUser
+                {
+                    OrganizationId = organization.Id,
+                    UserId = user.Id
+                };
+
+                await _organizationUserRepository.Create(item);
+
+                await _identityProviderClient.EnsureRoles(user.ExternalId.Value, new List<string> { Constants.Role_OrganizationAdmin });
+
+                organization.Administrators ??= new List<UserInfo>();
+                organization.Administrators.Add(user.ToInfo());
+            }
 
             scope.Complete();
+
+            return organization;
         }
 
-        private async Task<(Organization Organization, List<BlobObject> BlobObjects)> UpsertDocuments(Organization org, OrganizationDocumentType type, List<IFormFile> documents)
+        private async Task<Organization> RemoveAdmins(Organization organization, List<string>? emails)
+        {
+            if (emails == null || !emails.Any()) return organization;
+
+            if (!Statuses_Updatable.Contains(organization.Status))
+                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+            foreach (var email in emails)
+            {
+                var user = _userService.GetByEmail(email, false);
+                if (!user.ExternalId.HasValue)
+                    throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
+
+                var item = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == organization.Id && o.UserId == user.Id);
+                if (item == null) continue;
+
+                await _organizationUserRepository.Delete(item);
+
+                await _identityProviderClient.RemoveRoles(user.ExternalId.Value, new List<string> { Constants.Role_OrganizationAdmin });
+
+                organization.Administrators?.Remove(organization.Administrators.Single(o => o.Id == user.Id));
+            }
+
+            scope.Complete();
+
+            return organization;
+        }
+
+        private async Task<(Organization Organization, List<BlobObject> BlobObjects)> UpsertDocuments(Organization organization, OrganizationDocumentType type, List<IFormFile> documents)
         {
             if (documents == null || !documents.Any())
                 throw new ArgumentNullException(nameof(documents));
 
-            if (!Statuses_Updatable.Contains(org.Status))
-                throw new ValidationException($"{nameof(Organization)} '{org.Name}' can no longer be updated (current status '{org.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+            if (!Statuses_Updatable.Contains(organization.Status))
+                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             var itemsNew = new List<OrganizationDocument>();
             var itemsExisting = new List<OrganizationDocument>();
@@ -642,7 +677,7 @@ namespace Yoma.Core.Domain.Entity.Services
             try
             {
                 using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-                var itemsExistingByType = org.Documents?.Where(o => o.Type == type.ToString()).ToList();
+                var itemsExistingByType = organization.Documents?.Where(o => o.Type == type.ToString()).ToList();
 
                 //track existing (to be deleted)
                 if (itemsExistingByType != null && itemsExistingByType.Any())
@@ -661,7 +696,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
                     var item = new OrganizationDocument
                     {
-                        OrganizationId = org.Id,
+                        OrganizationId = organization.Id,
                         FileId = blobObject.Id,
                         Type = type.ToString(),
                         ContentType = file.ContentType,
@@ -697,11 +732,11 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw;
             }
 
-            org.Documents ??= new List<OrganizationDocument>();
-            org.Documents.AddRange(itemsNew);
-            org.Documents?.ForEach(o => o.Url = _blobService.GetURL(o.FileId));
+            organization.Documents ??= new List<OrganizationDocument>();
+            organization.Documents.AddRange(itemsNew);
+            organization.Documents?.ForEach(o => o.Url = _blobService.GetURL(o.FileId));
 
-            return (org, itemsNewBlobs);
+            return (organization, itemsNewBlobs);
         }
 
         private string? GetBlobObjectURL(Guid? id)

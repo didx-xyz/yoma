@@ -34,10 +34,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
         [Column(TypeName = "varchar(500)")]
         public string? CommentVerification { get; set; }
 
-        [ForeignKey(nameof(CertificateId))]
-        public Guid? CertificateId { get; set; }
-        public BlobObject? Certificate { get; set; }
-
         public DateTimeOffset? DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }
@@ -55,5 +51,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
 
         [Required]
         public DateTimeOffset DateModified { get; set; }
+
+        public ICollection<MyOpportunityVerification>? Verifications { get; set; }
     }
 }

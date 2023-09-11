@@ -19,7 +19,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 Id = entity.Id,
                 UserId = entity.UserId,
                 SkillId = entity.SkillId,
-                Skill = entity.Skill.Name,
                 DateCreated = entity.DateCreated
             });
         }

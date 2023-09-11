@@ -34,6 +34,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 Organization = entity.Organization.Name,
                 OrganizationStatusId = entity.Organization.StatusId,
                 OrganizationStatus = Enum.Parse<OrganizationStatus>(entity.Organization.Status.Name, true),
+                Summary = entity.Summary,
                 Instructions = entity.Instructions,
                 URL = entity.URL,
                 ZltoReward = entity.ZltoReward,
@@ -41,6 +42,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 ZltoRewardPool = entity.ZltoRewardPool,
                 YomaRewardPool = entity.YomaRewardPool,
                 VerificationSupported = entity.VerificationSupported,
+                SSIIntegrated = entity.SSIIntegrated,
                 DifficultyId = entity.DifficultyId,
                 Difficulty = entity.Difficulty.Name,
                 CommitmentIntervalId = entity.CommitmentIntervalId,
@@ -61,11 +63,27 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                     entity.Categories.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityCategory { Id = o.CategoryId, Name = o.Category.Name }).ToList() : null,
                 Countries = includeChildItems ?
                     entity.Countries.Select(o => new Domain.Lookups.Models.Country
-                    { Id = o.CountryId, Name = o.Country.Name, CodeAlpha2 = o.Country.CodeAlpha2, CodeAlpha3 = o.Country.CodeAlpha3, CodeNumeric = o.Country.CodeNumeric }).ToList() : null,
+                    {
+                        Id = o.CountryId,
+                        Name = o.Country.Name,
+                        CodeAlpha2 = o.Country.CodeAlpha2,
+                        CodeAlpha3 = o.Country.CodeAlpha3,
+                        CodeNumeric = o.Country.CodeNumeric
+                    }).ToList() : null,
                 Languages = includeChildItems ?
-                    entity.Languages.Select(o => new Domain.Lookups.Models.Language { Id = o.LanguageId, Name = o.Language.Name, CodeAlpha2 = o.Language.CodeAlpha2 }).ToList() : null,
-                Skills = includeChildItems ?
-                    entity.Skills.Select(o => new Domain.Lookups.Models.Skill { Id = o.SkillId, Name = o.Skill.Name, InfoURL = o.Skill.InfoURL }).ToList() : null
+                    entity.Languages.Select(o => new Domain.Lookups.Models.Language
+                    { Id = o.LanguageId, Name = o.Language.Name, CodeAlpha2 = o.Language.CodeAlpha2 }).ToList() : null,
+                Skills = entity.Skills == null ? null : includeChildItems ?
+                    entity.Skills.Select(o => new Domain.Lookups.Models.Skill
+                    { Id = o.SkillId, Name = o.Skill.Name, InfoURL = o.Skill.InfoURL }).ToList() : null,
+                VerificationTypes = entity.VerificationTypes == null ? null : includeChildItems ?
+                    entity.VerificationTypes.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityVerificationType
+                    {
+                        Id = o.VerificationTypeId,
+                        Type = Enum.Parse<VerificationType>(o.VerificationType.Name, true),
+                        DisplayName = o.VerificationType.DisplayName,
+                        Description = o.Description ?? o.VerificationType.Description
+                    }).ToList() : null,
             }).AsSplitQuery();
         }
 
@@ -91,6 +109,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 Description = item.Description,
                 TypeId = item.TypeId,
                 OrganizationId = item.OrganizationId,
+                Summary = item.Summary,
                 Instructions = item.Instructions,
                 URL = item.URL,
                 ZltoReward = item.ZltoReward,
@@ -98,6 +117,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 ZltoRewardPool = item.ZltoRewardPool,
                 YomaRewardPool = item.YomaRewardPool,
                 VerificationSupported = item.VerificationSupported,
+                SSIIntegrated = item.SSIIntegrated,
                 DifficultyId = item.DifficultyId,
                 CommitmentIntervalId = item.CommitmentIntervalId,
                 CommitmentIntervalCount = item.CommitmentIntervalCount,
@@ -130,6 +150,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
             entity.Description = item.Description;
             entity.TypeId = item.TypeId;
             entity.OrganizationId = item.OrganizationId;
+            entity.Summary = item.Summary;
             entity.Instructions = item.Instructions;
             entity.URL = item.URL;
             entity.ZltoReward = item.ZltoReward;
@@ -137,6 +158,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
             entity.ZltoRewardPool = item.ZltoRewardPool;
             entity.YomaRewardPool = item.YomaRewardPool;
             entity.VerificationSupported = item.VerificationSupported;
+            entity.SSIIntegrated = item.SSIIntegrated;
             entity.DifficultyId = item.DifficultyId;
             entity.CommitmentIntervalId = item.CommitmentIntervalId;
             entity.CommitmentIntervalCount = item.CommitmentIntervalCount;

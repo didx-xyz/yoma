@@ -32,6 +32,9 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
         public Guid OrganizationId { get; set; }
         public Organization Organization { get; set; }
 
+        [Column(TypeName = "varchar(500)")]
+        public string? Summary { get; set; }
+
         [Column(TypeName = "varchar(MAX)")]
         public string? Instructions { get; set; }
 
@@ -58,6 +61,9 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
 
         [Required]
         public bool VerificationSupported { get; set; }
+
+        [Required]
+        public bool SSIIntegrated { get; set; }
 
         [Required]
         [ForeignKey("DifficultyId")]
@@ -108,6 +114,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
 
         public ICollection<OpportunityLanguage> Languages { get; set; }
 
-        public ICollection<OpportunitySkill> Skills { get; set; }
+        public ICollection<OpportunitySkill>? Skills { get; set; }
+
+        public ICollection<OpportunityVerificationType>? VerificationTypes { get; set; }
     }
 }
