@@ -1,0 +1,66 @@
+.lds-dual-ring {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+}
+.lds-dual-ring:after {
+  content: " ";
+  display: block;
+  width: 28px;
+  height: 28px;
+  margin: 2px;
+
+  border-radius: 50%;
+  border: 3px solid theme("colors.gray-dark");
+  border-color: theme("colors.gray-dark") transparent theme("colors.gray-dark")
+    transparent;
+  animation: lds-dual-ring 1.2s linear infinite;
+}
+@keyframes lds-dual-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.lds-dual-ring-lg {
+  display: inline-block;
+  @apply flex place-items-center;
+}
+.lds-dual-ring-lg:after {
+  content: " ";
+  display: block;
+  width: 56px;
+  height: 56px;
+  margin: 2px;
+
+  border-radius: 50%;
+  border: 3px solid theme("colors.gray-dark");
+  border-color: theme("colors.gray-dark") transparent theme("colors.gray-dark")
+    transparent;
+  animation: lds-dual-ring 1.2s linear infinite;
+}
+
+@keyframes lds-dual-ring-lg {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.overlay {
+  position: fixed; /* Sit on top of the page content */
+  width: 100%; /* Full width (cover the whole page) */
+  height: 100%; /* Full height (cover the whole page) */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
+  z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+  cursor: wait; /* Add a pointer on hover */
+}
