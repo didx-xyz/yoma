@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public Guid UserId { get; set; }
 
+        public string? UserDisplayName { get; set; }
+
         public Guid OpportunityId { get; set; }
 
         public string OpportunityTitle { get; set; }
@@ -51,5 +53,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
         public DateTimeOffset DateCreated { get; set; }
 
         public DateTimeOffset DateModified { get; set; }
+
+        public List<MyOpportunityVerification>? Verifications { get; set; }
     }
 }

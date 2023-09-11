@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public Guid VerificationTypeId { get; set; }
 
+        public string? Description { get; set; }
+
         public DateTimeOffset DateCreated { get; set; }
     }
 }

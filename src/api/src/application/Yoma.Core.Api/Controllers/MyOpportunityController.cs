@@ -110,7 +110,7 @@ namespace Yoma.Core.Api.Controllers
         }
 
         [SwaggerOperation(Summary = "Remove a saved opportunity (Authenticated User)")]
-        [HttpPut("action/{opportunityId}/save/remove")]
+        [HttpDelete("action/{opportunityId}/save/remove")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_User}")]
         public async Task<IActionResult> PerformActionSavedRemove([FromRoute] Guid opportunityId)

@@ -19,6 +19,9 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
         public Guid VerificationTypeId { get; set; }
         public Lookups.OpportunityVerificationType VerificationType { get; set; }
 
+        [Column(TypeName = "varchar(255)")]
+        public string? Description { get; set; }
+
         [Required]
         public DateTimeOffset DateCreated { get; set; }
     }

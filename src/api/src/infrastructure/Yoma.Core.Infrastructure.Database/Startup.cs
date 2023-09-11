@@ -68,7 +68,8 @@ namespace Yoma.Core.Infrastructure.Database
             services.AddScoped<IRepository<Domain.MyOpportunity.Models.Lookups.MyOpportunityVerificationStatus>, MyOpportunity.Repositories.Lookups.MyOpportunityVerificationStatusRepository>();
             #endregion Lookup
 
-            services.AddScoped<IRepository<Domain.MyOpportunity.Models.MyOpportunity>, MyOpportunityRepository>();
+            services.AddScoped<IRepositoryWithNavigation<Domain.MyOpportunity.Models.MyOpportunity>, MyOpportunityRepository>();
+            services.AddScoped<IRepository<Domain.MyOpportunity.Models.MyOpportunityVerification>, MyOpportunityVerificationRepository>();
             #endregion My Opportunity
 
             #region Opportunity

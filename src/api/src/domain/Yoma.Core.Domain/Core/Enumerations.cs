@@ -38,6 +38,7 @@ namespace Yoma.Core.Domain.Core
 
     public enum SpatialType
     {
+        None,
         Point
     }
 }

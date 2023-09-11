@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Opportunity.Models.Lookups
     {
         public Guid Id { get; set; }
 
-        public string Name { get; set; }
+        public VerificationType Type { get; set; }
 
         public string DisplayName { get; set; }
 

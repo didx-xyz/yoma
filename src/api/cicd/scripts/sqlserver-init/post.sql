@@ -177,8 +177,8 @@ CROSS JOIN (
 GO
 
 --verification types
-INSERT INTO [opportunity].[OpportunityVerificationTypes]([Id],[OpportunityId],[VerificationTypeId],[DateCreated])
-SELECT NEWID(), O.[Id] AS [OpportunityId], R.[VerificationTypeId], GETDATE()
+INSERT INTO [opportunity].[OpportunityVerificationTypes]([Id],[OpportunityId],[VerificationTypeId],[Description],[DateCreated])
+SELECT NEWID(), O.[Id] AS [OpportunityId], R.[VerificationTypeId], NULL, GETDATE()
 FROM [opportunity].[Opportunity] O
 CROSS JOIN (
     SELECT TOP 10 [Id] AS [VerificationTypeId]
@@ -190,14 +190,13 @@ GO
 
 /****myOpportunities****/
 --viewed
-INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CertificateId],[DateStart]
+INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[DateStart]
            ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
 	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
 	O.[Id],
 	(SELECT [Id] FROM [opportunity].[MyOpportunityAction] WHERE [Name] = 'Viewed'),
-	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -214,14 +213,13 @@ FETCH NEXT 30 ROWS ONLY;
 GO
 
 --saved
-INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CertificateId],[DateStart]
+INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[DateStart]
            ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
 	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
 	O.[Id],
 	(SELECT [Id] FROM [opportunity].[MyOpportunityAction] WHERE [Name] = 'Saved'),
-	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -238,7 +236,7 @@ FETCH NEXT 30 ROWS ONLY;
 GO
 
 --verification (pending)
-INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CertificateId],[DateStart]
+INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[DateStart]
            ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
@@ -246,7 +244,6 @@ SELECT
 	O.[Id],
 	(SELECT [Id] FROM [opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification'),
 	(SELECT [Id] FROM [opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Pending'),
-	NULL,
 	CAST(DATEADD(DAY, 1, O.[DateStart]) AS DATE),
 	CAST(DATEADD(DAY, 2, O.[DateStart]) AS DATE),
 	NULL,
@@ -262,7 +259,7 @@ FETCH NEXT 30 ROWS ONLY;
 GO
 
 --verification (rejected)
-INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CertificateId],[DateStart]
+INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[DateStart]
            ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
@@ -270,7 +267,6 @@ SELECT
 	O.[Id],
 	(SELECT [Id] FROM [opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification'),
 	(SELECT [Id] FROM [opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Rejected'),
-	NULL,
 	CAST(DATEADD(DAY, 1, O.[DateStart]) AS DATE),
 	CAST(DATEADD(DAY, 2, O.[DateStart]) AS DATE),
 	NULL,
@@ -286,7 +282,7 @@ FETCH NEXT 30 ROWS ONLY;
 GO
 
 --verification (completed)
-INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CertificateId],[DateStart]
+INSERT INTO [opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[DateStart]
            ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
@@ -294,7 +290,6 @@ SELECT
 	O.[Id],
 	(SELECT [Id] FROM [opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification'),
 	(SELECT [Id] FROM [opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Completed'),
-	NULL,
 	CAST(DATEADD(DAY, 1, O.[DateStart]) AS DATE),
 	CAST(DATEADD(DAY, 2, O.[DateStart]) AS DATE),
 	GETDATE(),

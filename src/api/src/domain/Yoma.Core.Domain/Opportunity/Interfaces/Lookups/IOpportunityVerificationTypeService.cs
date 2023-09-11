@@ -4,9 +4,9 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces.Lookups
 {
     public interface IOpportunityVerificationTypeService
     {
-        OpportunityVerificationType GetByName(string name);
+        OpportunityVerificationType GetByType(VerificationType type);
 
-        OpportunityVerificationType? GetByNameOrNull(string name);
+        OpportunityVerificationType? GetByTypeOrNull(VerificationType type);
 
         OpportunityVerificationType GetById(Guid id);
 

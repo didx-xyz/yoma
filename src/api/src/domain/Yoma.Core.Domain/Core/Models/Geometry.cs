@@ -9,6 +9,6 @@ namespace Yoma.Core.Domain.Core.Models
 
         //Point: X-coordinate (longitude -180 to +180), Y-coordinate (latitude -90 to +90), Z-elevation
         [JsonProperty("coordinates")]
-        public List<double[]> Coordinates { get; set; }
+        public List<double[]>? Coordinates { get; set; }
     }
 }

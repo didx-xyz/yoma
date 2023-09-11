@@ -27,19 +27,15 @@ namespace Yoma.Core.Domain.Opportunity.Services.Lookups
         #endregion
 
         #region Public Members
-        public OpportunityVerificationType GetByName(string name)
+        public OpportunityVerificationType GetByType(VerificationType type)
         {
-            var result = GetByNameOrNull(name) ?? throw new ArgumentException($"{nameof(OpportunityVerificationType)} with name '{name}' does not exists", nameof(name));
+            var result = GetByTypeOrNull(type) ?? throw new ArgumentException($"{nameof(OpportunityVerificationType)} of type '{type}' does not exists", nameof(type));
             return result;
         }
 
-        public OpportunityVerificationType? GetByNameOrNull(string name)
+        public OpportunityVerificationType? GetByTypeOrNull(VerificationType type)
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentNullException(nameof(name));
-            name = name.Trim();
-
-            return List().SingleOrDefault(o => o.Name == name);
+            return List().SingleOrDefault(o => o.Type == type);
         }
 
         public OpportunityVerificationType GetById(Guid id)

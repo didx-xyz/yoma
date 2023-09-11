@@ -552,7 +552,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ActionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     VerificationStatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CommentVerification = table.Column<string>(type: "varchar(500)", nullable: true),
-                    CertificateId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     DateStart = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateCompleted = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -564,12 +563,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_MyOpportunity", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_MyOpportunity_Blob_CertificateId",
-                        column: x => x.CertificateId,
-                        principalSchema: "object",
-                        principalTable: "Blob",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_MyOpportunity_MyOpportunityAction_ActionId",
                         column: x => x.ActionId,
@@ -723,6 +716,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     OpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     VerificationTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Description = table.Column<string>(type: "varchar(255)", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
                 constraints: table =>
@@ -740,6 +734,43 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         column: x => x.OpportunityId,
                         principalSchema: "opportunity",
                         principalTable: "Opportunity",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MyOpportunityVerifications",
+                schema: "opportunity",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    MyOpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    VerificationTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    GeometryProperties = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FileId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MyOpportunityVerifications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MyOpportunityVerifications_Blob_FileId",
+                        column: x => x.FileId,
+                        principalSchema: "object",
+                        principalTable: "Blob",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_MyOpportunityVerifications_MyOpportunity_MyOpportunityId",
+                        column: x => x.MyOpportunityId,
+                        principalSchema: "opportunity",
+                        principalTable: "MyOpportunity",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_MyOpportunityVerifications_OpportunityVerificationType_VerificationTypeId",
+                        column: x => x.VerificationTypeId,
+                        principalSchema: "opportunity",
+                        principalTable: "OpportunityVerificationType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -807,12 +838,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 column: "ActionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MyOpportunity_CertificateId",
-                schema: "opportunity",
-                table: "MyOpportunity",
-                column: "CertificateId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_MyOpportunity_OpportunityId",
                 schema: "opportunity",
                 table: "MyOpportunity",
@@ -837,6 +862,25 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 table: "MyOpportunityAction",
                 column: "Name",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MyOpportunityVerifications_FileId",
+                schema: "opportunity",
+                table: "MyOpportunityVerifications",
+                column: "FileId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MyOpportunityVerifications_MyOpportunityId_VerificationTypeId",
+                schema: "opportunity",
+                table: "MyOpportunityVerifications",
+                columns: new[] { "MyOpportunityId", "VerificationTypeId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MyOpportunityVerifications_VerificationTypeId",
+                schema: "opportunity",
+                table: "MyOpportunityVerifications",
+                column: "VerificationTypeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_MyOpportunityVerificationStatus_Name",
@@ -1138,7 +1182,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "MyOpportunity",
+                name: "MyOpportunityVerifications",
                 schema: "opportunity");
 
             migrationBuilder.DropTable(
@@ -1178,11 +1222,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "entity");
 
             migrationBuilder.DropTable(
-                name: "MyOpportunityAction",
-                schema: "opportunity");
-
-            migrationBuilder.DropTable(
-                name: "MyOpportunityVerificationStatus",
+                name: "MyOpportunity",
                 schema: "opportunity");
 
             migrationBuilder.DropTable(
@@ -1198,16 +1238,24 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "opportunity");
 
             migrationBuilder.DropTable(
-                name: "Opportunity",
-                schema: "opportunity");
-
-            migrationBuilder.DropTable(
                 name: "OrganizationProviderType",
                 schema: "entity");
 
             migrationBuilder.DropTable(
                 name: "Skill",
                 schema: "lookup");
+
+            migrationBuilder.DropTable(
+                name: "MyOpportunityAction",
+                schema: "opportunity");
+
+            migrationBuilder.DropTable(
+                name: "MyOpportunityVerificationStatus",
+                schema: "opportunity");
+
+            migrationBuilder.DropTable(
+                name: "Opportunity",
+                schema: "opportunity");
 
             migrationBuilder.DropTable(
                 name: "User",

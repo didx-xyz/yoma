@@ -63,14 +63,25 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                     entity.Categories.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityCategory { Id = o.CategoryId, Name = o.Category.Name }).ToList() : null,
                 Countries = includeChildItems ?
                     entity.Countries.Select(o => new Domain.Lookups.Models.Country
-                    { Id = o.CountryId, Name = o.Country.Name, CodeAlpha2 = o.Country.CodeAlpha2, CodeAlpha3 = o.Country.CodeAlpha3, CodeNumeric = o.Country.CodeNumeric }).ToList() : null,
+                    {
+                        Id = o.CountryId,
+                        Name = o.Country.Name,
+                        CodeAlpha2 = o.Country.CodeAlpha2,
+                        CodeAlpha3 = o.Country.CodeAlpha3,
+                        CodeNumeric = o.Country.CodeNumeric }).ToList() : null,
                 Languages = includeChildItems ?
-                    entity.Languages.Select(o => new Domain.Lookups.Models.Language { Id = o.LanguageId, Name = o.Language.Name, CodeAlpha2 = o.Language.CodeAlpha2 }).ToList() : null,
-                Skills = includeChildItems ?
-                    entity.Skills.Select(o => new Domain.Lookups.Models.Skill { Id = o.SkillId, Name = o.Skill.Name, InfoURL = o.Skill.InfoURL }).ToList() : null,
-                VerificationTypes = includeChildItems ?
+                    entity.Languages.Select(o => new Domain.Lookups.Models.Language
+                    { Id = o.LanguageId, Name = o.Language.Name, CodeAlpha2 = o.Language.CodeAlpha2 }).ToList() : null,
+                Skills = entity.Skills == null ? null : includeChildItems ?
+                    entity.Skills.Select(o => new Domain.Lookups.Models.Skill
+                    { Id = o.SkillId, Name = o.Skill.Name, InfoURL = o.Skill.InfoURL }).ToList() : null,
+                VerificationTypes = entity.VerificationTypes == null ? null : includeChildItems ?
                     entity.VerificationTypes.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityVerificationType
-                    { Id = o.VerificationTypeId, Name = o.VerificationType.Name, DisplayName = o.VerificationType.DisplayName, Description = o.VerificationType.Description }).ToList() : null,
+                    {
+                        Id = o.VerificationTypeId,
+                        Type = Enum.Parse<VerificationType>(o.VerificationType.Name, true),
+                        DisplayName = o.VerificationType.DisplayName,
+                        Description = o.Description ?? o.VerificationType.Description }).ToList() : null,
             }).AsSplitQuery();
         }
 

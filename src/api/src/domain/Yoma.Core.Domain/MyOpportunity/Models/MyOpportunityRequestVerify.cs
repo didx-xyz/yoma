@@ -1,26 +1,20 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Models
 {
     public class MyOpportunityRequestVerify
     {
-        [FromForm]
-        public List<MyOpportunityRequestVerifyItem> Items { get; set; } 
+        public IFormFile? Certificate { get; set; }
+
+        public IFormFile? VoiceNote { get; set; }
+
+        public IFormFile? Picture { get; set; }
+
+        public Geometry? Geometry { get; set; }
 
         public DateTimeOffset? DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }
-    }
-
-    public class MyOpportunityRequestVerifyItem
-    {
-        public Guid VerificationTypeId { get; set; }
-
-        [FromForm]
-        public IFormFile? File { get; set; }
-
-        public Geometry? Geometry { get; set; } 
     }
 }

@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public Guid UserId { get; set; }
 
-        public string UserDisplayName { get; set; }
+        public string? UserDisplayName { get; set; }
 
         public Guid OpportunityId { get; set; }
 
@@ -22,10 +22,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public VerificationStatus? VerificationStatus { get; set; }
 
-        public Guid? CertificateId { get; set; }
-
-        public string? CertificateURL { get; set; }
-
         public DateTimeOffset? DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }
@@ -35,5 +31,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
         public decimal? ZltoReward { get; set; }
 
         public decimal? YomaReward { get; set; }
+
+        public List<MyOpportunityInfoVerification>? Verifications { get; set; }
     }
 }

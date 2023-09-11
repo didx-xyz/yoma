@@ -1,4 +1,5 @@
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
@@ -19,7 +20,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories.Lookups
             return _context.OpportunityVerificationType.Select(entity => new OpportunityVerificationType
             {
                 Id = entity.Id,
-                Name = entity.Name,
+                Type = Enum.Parse<VerificationType>(entity.Name, true),
                 DisplayName = entity.DisplayName,
                 Description = entity.Description
             });

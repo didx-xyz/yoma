@@ -10,7 +10,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         #region Class Variables
         private readonly ScheduleJobOptions _scheduleJobOptions;
         private readonly IMyOpportunityVerificationStatusService _myOpportunityVerificationStatusService;
-        private readonly IRepository<Models.MyOpportunity> _myOpportunityRepository;
+        private readonly IRepositoryWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
 
         private static readonly VerificationStatus[] Statuses_Rejectable = { VerificationStatus.Pending };
         #endregion
@@ -18,7 +18,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         #region Constructor
         public MyOpportunityBackgroundService(IOptions<ScheduleJobOptions> scheduleJobOptions,
             IMyOpportunityVerificationStatusService myOpportunityVerificationStatusService,
-            IRepository<Models.MyOpportunity> myOpportunityRepository)
+            IRepositoryWithNavigation<Models.MyOpportunity> myOpportunityRepository)
         {
             _scheduleJobOptions = scheduleJobOptions.Value;
             _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService;

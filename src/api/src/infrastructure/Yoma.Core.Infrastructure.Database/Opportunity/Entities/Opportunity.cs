@@ -114,8 +114,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
 
         public ICollection<OpportunityLanguage> Languages { get; set; }
 
-        public ICollection<OpportunitySkill> Skills { get; set; }
+        public ICollection<OpportunitySkill>? Skills { get; set; }
 
-        public ICollection<OpportunityVerificationType> VerificationTypes { get; set; }
+        public ICollection<OpportunityVerificationType>? VerificationTypes { get; set; }
     }
 }
