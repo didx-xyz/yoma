@@ -474,8 +474,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var result = GetById(request.Id, true, false);
 
-            if (!Statuses_Updatable.Contains(result.Status))
-                throw new ValidationException($"The {nameof(Models.Opportunity)} cannot be updated in its current state, namely '{result.Status}'. Please change the status to one of the following: {string.Join(" / ", Statuses_Updatable)} before performing the update.");
+            ValidateUpdatable(result);
 
             var existingByTitle = GetByTitleOrNull(request.Title, false);
             if (existingByTitle != null && result.Id != existingByTitle.Id)
@@ -631,6 +630,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
             var result = GetById(id, false, ensureOrganizationAuthorization);
 
+            ValidateUpdatable(result);
+
             result = await AssignCategories(result, categoryIds);
 
             return result;
@@ -643,6 +644,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (categoryIds == null || !categoryIds.Any())
                 throw new ArgumentNullException(nameof(categoryIds));
 
+            ValidateUpdatable(result);
+
             result = await RemoveCategories(result, categoryIds);
 
             return result;
@@ -651,6 +654,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         public async Task<Models.Opportunity> AssignCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, false, ensureOrganizationAuthorization);
+
+            ValidateUpdatable(result);
 
             result = await AssignCountries(result, countryIds);
 
@@ -664,6 +669,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (countryIds == null || !countryIds.Any())
                 throw new ArgumentNullException(nameof(countryIds));
 
+            ValidateUpdatable(result);
+
             result = await RemoveCountries(result, countryIds);
 
             return result;
@@ -672,6 +679,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         public async Task<Models.Opportunity> AssignLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, false, ensureOrganizationAuthorization);
+
+            ValidateUpdatable(result);
 
             result = await AssignLanguages(result, languageIds);
 
@@ -685,6 +694,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (languageIds == null || !languageIds.Any())
                 throw new ArgumentNullException(nameof(languageIds));
 
+            ValidateUpdatable(result);
+
             result = await RemoveLanguages(result, languageIds);
 
             return result;
@@ -696,6 +707,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             if (skillIds == null || !skillIds.Any())
                 throw new ArgumentNullException(nameof(skillIds));
+
+            ValidateUpdatable(result);
 
             result = await AssignSkills(result, skillIds);
 
@@ -709,6 +722,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (skillIds == null || !skillIds.Any())
                 throw new ArgumentNullException(nameof(skillIds));
 
+            ValidateUpdatable(result);
+
             result = await RemoveSkills(result, skillIds);
 
             return result;
@@ -720,6 +735,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             if (verificationTypes == null || !verificationTypes.Any())
                 throw new ArgumentNullException(nameof(verificationTypes));
+
+            ValidateUpdatable(result);
 
             result = await AssignVerificationTypes(result, verificationTypes);
 
@@ -733,8 +750,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (verificationTypes == null || !verificationTypes.Any())
                 throw new ArgumentNullException(nameof(verificationTypes));
 
+            ValidateUpdatable(result);
+
             if (result.VerificationSupported && (result.VerificationTypes == null || result.VerificationTypes.All(o => verificationTypes.Contains(o.Type))))
-                throw new ValidationException("Verification supported. Removal will result in no assigned verification types");
+                throw new ValidationException("One or more verification types are required when verification is supported. Removal will result in no associated verification types");
 
             result = await RemoveVerificationTypes(result, verificationTypes);
 
@@ -749,9 +768,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(countryIds));
 
             countryIds = countryIds.Distinct().ToList();
-
-            if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             var results = new List<Domain.Lookups.Models.Country>();
 
@@ -787,9 +803,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             countryIds = countryIds.Distinct().ToList();
 
-            if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
-
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var countryId in countryIds)
             {
@@ -814,9 +827,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(categoryIds));
 
             categoryIds = categoryIds.Distinct().ToList();
-
-            if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var categoryId in categoryIds)
@@ -849,9 +859,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             categoryIds = categoryIds.Distinct().ToList();
 
-            if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
-
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var categoryId in categoryIds)
             {
@@ -876,9 +883,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(languageIds));
 
             languageIds = languageIds.Distinct().ToList();
-
-            if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             var results = new List<Domain.Lookups.Models.Language>();
 
@@ -914,9 +918,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             languageIds = languageIds.Distinct().ToList();
 
-            if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
-
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var languageId in languageIds)
             {
@@ -940,9 +941,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (skillIds == null || !skillIds.Any()) return opportunity; //skills are optional
 
             skillIds = skillIds.Distinct().ToList();
-
-            if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var skillId in skillIds)
@@ -1045,9 +1043,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
             if (verificationTypes == null || !verificationTypes.Any()) return opportunity;
 
-            if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
-
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var type in verificationTypes)
             {
@@ -1065,6 +1060,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             return opportunity;
         }
+
+        private static void ValidateUpdatable(Models.Opportunity opportunity)
+        {
+            if (!Statuses_Updatable.Contains(opportunity.Status))
+                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+        }
+
         #endregion
     }
 }
