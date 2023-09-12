@@ -627,60 +627,116 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return result;
         }
 
-        public async Task<Models.Opportunity> UpdateCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> AssignCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, false, ensureOrganizationAuthorization);
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignCategories(result, categoryIds);
-            result = await RemoveCategories(result, result.Categories?.Where(o => !categoryIds.Contains(o.Id)).Select(o => o.Id).ToList());
 
             return result;
         }
 
-        public async Task<Models.Opportunity> UpdateCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> RemoveCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, false, ensureOrganizationAuthorization);
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+            if (categoryIds == null || !categoryIds.Any())
+                throw new ArgumentNullException(nameof(categoryIds));
+
+            result = await RemoveCategories(result, categoryIds);
+
+            return result;
+        }
+
+        public async Task<Models.Opportunity> AssignCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization)
+        {
+            var result = GetById(id, false, ensureOrganizationAuthorization);
+
             result = await AssignCountries(result, countryIds);
-            result = await RemoveCountries(result, result.Countries?.Where(o => !countryIds.Contains(o.Id)).Select(o => o.Id).ToList());
 
             return result;
         }
 
-        public async Task<Models.Opportunity> UpdateLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> RemoveCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, false, ensureOrganizationAuthorization);
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+            if (countryIds == null || !countryIds.Any())
+                throw new ArgumentNullException(nameof(countryIds));
+
+            result = await RemoveCountries(result, countryIds);
+
+            return result;
+        }
+
+        public async Task<Models.Opportunity> AssignLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization)
+        {
+            var result = GetById(id, false, ensureOrganizationAuthorization);
+
             result = await AssignLanguages(result, languageIds);
-            result = await RemoveLanguages(result, result.Languages?.Where(o => !languageIds.Contains(o.Id)).Select(o => o.Id).ToList());
 
             return result;
         }
 
-        public async Task<Models.Opportunity> UpdateSkills(Guid id, List<Guid>? skillIds, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> RemoveLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, false, ensureOrganizationAuthorization);
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+            if (languageIds == null || !languageIds.Any())
+                throw new ArgumentNullException(nameof(languageIds));
+
+            result = await RemoveLanguages(result, languageIds);
+
+            return result;
+        }
+
+        public async Task<Models.Opportunity> AssignSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization)
+        {
+            var result = GetById(id, false, ensureOrganizationAuthorization);
+
+            if (skillIds == null || !skillIds.Any())
+                throw new ArgumentNullException(nameof(skillIds));
+
             result = await AssignSkills(result, skillIds);
-            result = await RemoveSkills(result, skillIds == null ? result.Skills?.Select(o => o.Id).ToList() : result.Skills?.Where(o => !skillIds.Contains(o.Id)).Select(o => o.Id).ToList());
 
             return result;
         }
 
-        public async Task<Models.Opportunity> UpdateVerificationTypes(Guid id, Dictionary<VerificationType, string?>? verificationTypes, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> RemoveSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, false, ensureOrganizationAuthorization);
 
-            if (result.VerificationSupported && (verificationTypes == null || !verificationTypes.Any()))
-                throw new ValidationException("One or more verification types are required when verification is supported");
+            if (skillIds == null || !skillIds.Any())
+                throw new ArgumentNullException(nameof(skillIds));
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+            result = await RemoveSkills(result, skillIds);
+
+            return result;
+        }
+
+        public async Task<Models.Opportunity> AssignVerificationTypes(Guid id, Dictionary<VerificationType, string?> verificationTypes, bool ensureOrganizationAuthorization)
+        {
+            var result = GetById(id, false, ensureOrganizationAuthorization);
+
+            if (verificationTypes == null || !verificationTypes.Any())
+                throw new ArgumentNullException(nameof(verificationTypes));
+
             result = await AssignVerificationTypes(result, verificationTypes);
-            result = await RemoveVerificationTypes(result, verificationTypes?.Keys.ToList());
+
+            return result;
+        }
+
+        public async Task<Models.Opportunity> RemoveVerificationTypes(Guid id, List<VerificationType> verificationTypes, bool ensureOrganizationAuthorization)
+        {
+            var result = GetById(id, false, ensureOrganizationAuthorization);
+
+            if (verificationTypes == null || !verificationTypes.Any())
+                throw new ArgumentNullException(nameof(verificationTypes));
+
+            if (result.VerificationSupported && (result.VerificationTypes == null || result.VerificationTypes.All(o => verificationTypes.Contains(o.Type))))
+                throw new ValidationException("Verification supported. Removal will result in no assigned verification types");
+
+            result = await RemoveVerificationTypes(result, verificationTypes);
 
             return result;
         }

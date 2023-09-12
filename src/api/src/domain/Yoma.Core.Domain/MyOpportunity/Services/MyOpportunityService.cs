@@ -355,6 +355,100 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             await PerformActionSendForVerification(request, opportunity, myOpportunity, isNew);
         }
 
+        public async Task FinalizeVerification(MyOpportunityRequestVerifyFinalizeBatch request)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            if (request.Items == null)
+                throw new ArgumentNullException(nameof(request), "No items specified");
+
+            // request validated by FinalizeVerification
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+            foreach (var item in request.Items)
+            {
+                await FinalizeVerification(new MyOpportunityRequestVerifyFinalize
+                {
+                    OpportunityId = item.OpportunityId,
+                    UserId = item.UserId,
+                    Status = request.Status,
+                    Comment = request.Comment
+                });
+            }
+        }
+
+        //supported statuses: Rejected or Completed
+        public async Task FinalizeVerification(MyOpportunityRequestVerifyFinalize request)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            await _myOpportunityRequestValidatorVerifyFinalize.ValidateAndThrowAsync(request);
+
+            var user = _userService.GetById(request.UserId, false);
+
+            //can complete, provided opportunity is active (and started) or expired (actioned prior to expiration)
+            var opportunity = _opportunityService.GetById(request.OpportunityId, false, false);
+            var canFinalize = opportunity.Status == Opportunity.Status.Expired;
+            if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
+            if (!canFinalize)
+                throw new ValidationException($"Verification for opportunity '{opportunity.Title}' can no longer be finalized (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+
+            var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+            var item = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
+                ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Email}'");
+
+            if (item.VerificationStatus != VerificationStatus.Pending)
+                throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
+
+            if (item.VerificationStatus == request.Status) return;
+
+            var statusId = _myOpportunityVerificationStatusService.GetByName(request.Status.ToString()).Id;
+
+            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+
+            item.VerificationStatusId = statusId;
+            item.CommentVerification = request.Comment;
+
+            switch (request.Status)
+            {
+                case VerificationStatus.Rejected:
+                    break;
+
+                case VerificationStatus.Completed:
+                    var dateCompleted = DateTimeOffset.Now;
+
+                    if (item.DateEnd.HasValue && item.DateEnd.Value > dateCompleted)
+                        throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd}')");
+
+                    var (zltoReward, yomaReward) = await _opportunityService.AllocateRewards(opportunity.Id, true);
+                    item.ZltoReward = zltoReward;
+                    item.YomaReward = yomaReward;
+                    item.DateCompleted = DateTimeOffset.Now;
+
+                    var skillIds = opportunity.Skills?.Select(o => o.Id).ToList();
+                    if (skillIds != null && skillIds.Any())
+                        await _userService.AssignSkills(user.Id, skillIds);
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(request), $"{nameof(request.Status)} of '{request.Status}' not supported");
+            }
+
+            await _myOpportunityRepository.Update(item);
+
+            //TODO: Send email (youth)
+        }
+        #endregion
+
+        #region Private Members
+        private string? GetBlobObjectURL(Guid? id)
+        {
+            if (!id.HasValue) return null;
+            return _blobService.GetURL(id.Value);
+        }
+
         private async Task PerformActionSendForVerification(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity myOpportunity, bool isNew)
         {
             var itemsExisting = new List<MyOpportunityVerification>();
@@ -474,100 +568,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
                 throw;
             }
-        }
-
-        public async Task FinalizeVerification(MyOpportunityRequestVerifyFinalizeBatch request)
-        {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
-            if (request.Items == null)
-                throw new ArgumentNullException(nameof(request), "No items specified");
-
-            // request validated by FinalizeVerification
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-
-            foreach (var item in request.Items)
-            {
-                await FinalizeVerification(new MyOpportunityRequestVerifyFinalize
-                {
-                    OpportunityId = item.OpportunityId,
-                    UserId = item.UserId,
-                    Status = request.Status,
-                    Comment = request.Comment
-                });
-            }
-        }
-
-        //supported statuses: Rejected or Completed
-        public async Task FinalizeVerification(MyOpportunityRequestVerifyFinalize request)
-        {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
-            await _myOpportunityRequestValidatorVerifyFinalize.ValidateAndThrowAsync(request);
-
-            var user = _userService.GetById(request.UserId, false);
-
-            //can complete, provided opportunity is active (and started) or expired (actioned prior to expiration)
-            var opportunity = _opportunityService.GetById(request.OpportunityId, false, false);
-            var canFinalize = opportunity.Status == Opportunity.Status.Expired;
-            if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
-            if (!canFinalize)
-                throw new ValidationException($"Verification for opportunity '{opportunity.Title}' can no longer be finalized (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
-
-            var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
-            var item = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
-                ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Email}'");
-
-            if (item.VerificationStatus != VerificationStatus.Pending)
-                throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
-
-            if (item.VerificationStatus == request.Status) return;
-
-            var statusId = _myOpportunityVerificationStatusService.GetByName(request.Status.ToString()).Id;
-
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-
-            item.VerificationStatusId = statusId;
-            item.CommentVerification = request.Comment;
-
-            switch (request.Status)
-            {
-                case VerificationStatus.Rejected:
-                    break;
-
-                case VerificationStatus.Completed:
-                    var dateCompleted = DateTimeOffset.Now;
-
-                    if (item.DateEnd.HasValue && item.DateEnd.Value > dateCompleted)
-                        throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd}')");
-
-                    var (zltoReward, yomaReward) = await _opportunityService.AllocateRewards(opportunity.Id, true);
-                    item.ZltoReward = zltoReward;
-                    item.YomaReward = yomaReward;
-                    item.DateCompleted = DateTimeOffset.Now;
-
-                    var skillIds = opportunity.Skills?.Select(o => o.Id).ToList();
-                    if (skillIds != null && skillIds.Any())
-                        await _userService.AssignSkills(user.Id, skillIds);
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(request), $"{nameof(request.Status)} of '{request.Status}' not supported");
-            }
-
-            await _myOpportunityRepository.Update(item);
-
-            //TODO: Send email (youth)
-        }
-        #endregion
-
-        #region Private Members
-        private string? GetBlobObjectURL(Guid? id)
-        {
-            if (!id.HasValue) return null;
-            return _blobService.GetURL(id.Value);
         }
         #endregion
     }

@@ -1,5 +1,6 @@
 using FluentValidation;
 using Yoma.Core.Domain.Core.Validators;
+using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 
@@ -10,12 +11,14 @@ namespace Yoma.Core.Domain.Entity.Validators
     {
         #region Class Variables
         private readonly ICountryService _countryService;
+        private readonly IOrganizationProviderTypeService _organizationProviderTypeService;
         #endregion
 
         #region Constructor
-        public OrganizationRequestValidatorBase(ICountryService countryService)
+        public OrganizationRequestValidatorBase(ICountryService countryService, IOrganizationProviderTypeService organizationProviderTypeService)
         {
             _countryService = countryService;
+            _organizationProviderTypeService = organizationProviderTypeService;
 
             RuleFor(x => x.Name).NotEmpty().Length(1, 80);
             RuleFor(x => x.WebsiteURL).Length(1, 2048).Must(ValidURL).WithMessage("'{PropertyName}' is invalid.");
@@ -32,6 +35,17 @@ namespace Yoma.Core.Domain.Entity.Validators
             RuleFor(x => x.PostalCode).Length(1, 10).When(x => !string.IsNullOrEmpty(x.PostalCode));
             RuleFor(x => x.Tagline).Length(1, 160).When(x => !string.IsNullOrEmpty(x.PostalCode));
             RuleFor(x => x.Biography).Length(1, 480).When(x => !string.IsNullOrEmpty(x.PostalCode));
+            RuleFor(x => x.ProviderTypes).Must(providerTypes => providerTypes != null && providerTypes.Any() && providerTypes.All(id => id != Guid.Empty && ProviderTypeExist(id)))
+                  .WithMessage("Provider types are required and must exist.");
+            RuleFor(x => x.EducationProviderDocuments)
+                .Must(docs => docs != null && docs.All(file => file != null && file.Length > 0))
+                .WithMessage("Education provider documents are optional, but if specified, can not be empty.")
+                .When(x => x.EducationProviderDocuments != null && x.EducationProviderDocuments.Any());
+
+            RuleFor(x => x.BusinessDocuments)
+               .Must(docs => docs != null && docs.All(file => file != null && file.Length > 0))
+               .WithMessage("Business documents are optional, but if specified, can not be empty.")
+               .When(x => x.BusinessDocuments != null && x.BusinessDocuments.Any());
         }
         #endregion
 
@@ -46,6 +60,12 @@ namespace Yoma.Core.Domain.Entity.Validators
         {
             if (!countryId.HasValue) return true;
             return _countryService.GetByIdOrNull(countryId.Value) != null;
+        }
+
+        private bool ProviderTypeExist(Guid? id)
+        {
+            if (!id.HasValue) return true;
+            return _organizationProviderTypeService.GetByIdOrNull(id.Value) != null;
         }
         #endregion
     }

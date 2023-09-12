@@ -28,14 +28,24 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
         Task<Models.Opportunity> UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization);
 
-        Task<Models.Opportunity> UpdateCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> AssignCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization);
 
-        Task<Models.Opportunity> UpdateCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> RemoveCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization);
 
-        Task<Models.Opportunity> UpdateLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> AssignCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization);
 
-        Task<Models.Opportunity> UpdateSkills(Guid id, List<Guid>? skillIds, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> RemoveCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization);
 
-        Task<Models.Opportunity> UpdateVerificationTypes(Guid id, Dictionary<VerificationType, string?>? verificationTypes, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> AssignLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization);
+
+        Task<Models.Opportunity> RemoveLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization);
+
+        Task<Models.Opportunity> AssignSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization);
+
+        Task<Models.Opportunity> RemoveSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization);
+
+        Task<Models.Opportunity> AssignVerificationTypes(Guid id, Dictionary<VerificationType, string?> verificationTypes, bool ensureOrganizationAuthorization);
+
+        Task<Models.Opportunity> RemoveVerificationTypes(Guid id, List<VerificationType> verificationTypes, bool ensureOrganizationAuthorization);
     }
 }
