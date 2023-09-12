@@ -306,7 +306,7 @@ namespace Yoma.Core.Domain.Entity.Services
             ValidateUpdatable(result);
 
             var itemsAdded = new List<BlobObject>();
-            var itemsDeleted = new List<(Guid Id, IFormFile File, FileType Type)>();
+            var itemsDeleted = new List<(Guid FileId, IFormFile File, FileType Type)>();
             try
             {
                 using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
@@ -339,57 +339,56 @@ namespace Yoma.Core.Domain.Entity.Services
                 result = await AssignAdmins(result, admins);
 
                 //documents
-                var documentsAdded = request.RegistrationDocuments != null && request.RegistrationDocuments.Any();
-                if (documentsAdded)
+                if (request.RegistrationDocuments != null && request.RegistrationDocuments.Any())
                 {
                     var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocuments);
                     result = resultDocuments.Organization;
                     itemsAdded.AddRange(resultDocuments.ItemsAdded);
-                    documentsAdded = true;
                 }
-                else if (request.RegistrationDocumentsDelete != null && request.RegistrationDocumentsDelete.Any())
+
+                if (request.RegistrationDocumentsDelete != null && request.RegistrationDocumentsDelete.Any())
                 {
                     if (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Registration).All(o => request.RegistrationDocumentsDelete.Contains(o.FileId)))
                         throw new ValidationException("Registration documents are required. Update will result in no associated documents");
 
                     var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocumentsDelete);
-                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.Id, o.File, FileType.Documents)));
+                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File, FileType.Documents)));
                     result = resultDelete.Organization;
                 }
 
-                documentsAdded = request.EducationProviderDocuments != null && request.EducationProviderDocuments.Any();
-                if (documentsAdded)
+                if (request.EducationProviderDocuments != null && request.EducationProviderDocuments.Any())
                 {
-                    var resultDocuments = await AddDocuments(result, OrganizationDocumentType.EducationProvider, request.RegistrationDocuments);
+                    var resultDocuments = await AddDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocuments);
                     result = resultDocuments.Organization;
                     itemsAdded.AddRange(resultDocuments.ItemsAdded);
                 }
-                else if (request.EducationProviderDocumentsDelete != null && request.EducationProviderDocumentsDelete.Any())
+
+                if (request.EducationProviderDocumentsDelete != null && request.EducationProviderDocumentsDelete.Any())
                 {
                     var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
                     if (isProviderTypeEducation && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.EducationProvider).All(o => request.EducationProviderDocumentsDelete.Contains(o.FileId))))
                         throw new ValidationException("Education provider type documents are required. Update will result in no associated documents");
 
                     var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocumentsDelete);
-                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.Id, o.File, FileType.Documents)));
+                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File, FileType.Documents)));
                     result = resultDelete.Organization;
                 }
 
-                documentsAdded = request.BusinessDocuments != null && request.BusinessDocuments.Any();
-                if (documentsAdded)
+                if (request.BusinessDocuments != null && request.BusinessDocuments.Any())
                 {
                     var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Business, request.RegistrationDocuments);
                     result = resultDocuments.Organization;
                     itemsAdded.AddRange(resultDocuments.ItemsAdded);
                 }
-                else if (request.BusinessDocumentsDelete != null && request.BusinessDocumentsDelete.Any())
+
+                if (request.BusinessDocumentsDelete != null && request.BusinessDocumentsDelete.Any())
                 {
                     var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
                     if (isProviderTypeMarketplace && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Business).All(o => request.BusinessDocumentsDelete.Contains(o.FileId))))
                         throw new ValidationException($"Business documents are required. Update will result in no associated documents");
 
                     var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.Business, request.BusinessDocumentsDelete);
-                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.Id, o.File, FileType.Documents)));
+                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File, FileType.Documents)));
                     result = resultDelete.Organization;
                 }
 
@@ -404,7 +403,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
                 //re-upload deleted items to blob storage
                 foreach (var item in itemsDeleted)
-                    await _blobService.Create(item.Id, item.File, item.Type);
+                    await _blobService.Create(item.FileId, item.File, item.Type);
 
                 throw;
             }
