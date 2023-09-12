@@ -1,15 +1,20 @@
 import { signIn } from "next-auth/react";
 import React, { useState } from "react";
 import { IoMdFingerPrint } from "react-icons/io";
-import { env } from "~/env.mjs";
+import { fetchClientEnv } from "~/lib/utils";
 
 export const SignInButton: React.FC = () => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setIsButtonLoading(true);
 
-    signIn(env.NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER); // eslint-disable-line @typescript-eslint/no-floating-promises
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    signIn(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
+        "") as string,
+    );
   };
 
   return (

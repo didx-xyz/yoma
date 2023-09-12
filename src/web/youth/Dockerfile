@@ -1,5 +1,4 @@
 ##### DEPENDENCIES
-
 FROM node:18-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
@@ -15,19 +14,15 @@ RUN \
  fi
 
 ##### BUILDER
-
 FROM node:18-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED 1
+ENV CI=true
 
 # Server environment variables don't appear to be needed at build time
-ARG NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER
-ENV NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER=${NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER}
-ARG NEXT_PUBLIC_API_BASE_URL
-ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 ARG NEXT_PUBLIC_ENVIRONMENT
 ENV NEXT_PUBLIC_ENVIRONMENT=${NEXT_PUBLIC_ENVIRONMENT}
 
@@ -43,7 +38,6 @@ RUN chmod -R a-w /app/.next/standalone
 RUN chmod -R a-w /app/.next/static
 
 ##### RUNNER
-
 FROM node:18-alpine AS runner
 WORKDIR /app
 

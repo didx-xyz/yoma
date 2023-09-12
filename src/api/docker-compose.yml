@@ -1,4 +1,5 @@
-version: "3.8"
+version: "3"
+name: yoma-v3
 services:
   sqlserver: # Local MSSQL server
     platform: linux/amd64
@@ -197,7 +198,8 @@ services:
         condition: service_completed_successfully
 
   yoma-api: # Local Yoma API server
-    image: ${REGISTRY:-local}/yoma-api:${IMAGE_TAG:-latest}
+    platform: linux/amd64 # Until we get multi-arch docker images
+    image: ${REGISTRY:-local}/yoma-api:${API_TAG:-latest}
     container_name: yoma-api
     build:
       context: .
