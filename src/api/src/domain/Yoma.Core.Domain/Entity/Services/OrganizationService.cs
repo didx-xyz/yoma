@@ -222,7 +222,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 blobObjects.Add(resultLogo.ItemAdded);
 
                 //assign admins
-                var admins = request.AdminAdditionalEmails ??= new List<string>();
+                var admins = request.AdminEmails ??= new List<string>();
                 if (request.AddCurrentUserAsAdmin)
                 {
                     var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
@@ -303,8 +303,7 @@ namespace Yoma.Core.Domain.Entity.Services
             result.Tagline = request.Tagline;
             result.Biography = request.Biography;
 
-            if (!Statuses_Updatable.Contains(result.Status))
-                throw new ValidationException($"The {nameof(Organization)} cannot be updated in its current state, namely '{result.Status}'. Please change the status to one of the following: {string.Join(" / ", Statuses_Updatable)} before performing the update.");
+            ValidateUpdatable(result);
 
             var itemsAdded = new List<BlobObject>();
             var itemsDeleted = new List<(Guid Id, IFormFile File, FileType Type)>();
@@ -317,8 +316,8 @@ namespace Yoma.Core.Domain.Entity.Services
                 result.DateModified = DateTimeOffset.Now;
 
                 //provider types
-                result = await RemoveProviderTypes(result, result.ProviderTypes?.Where(o => !request.ProviderTypes.Contains(o.Id)).Select(o => o.Id).ToList());
                 result = await AssignProviderTypes(result, request.ProviderTypes, true);
+                result = await RemoveProviderTypes(result, result.ProviderTypes?.Where(o => !request.ProviderTypes.Contains(o.Id)).Select(o => o.Id).ToList());
 
                 //logo
                 if (request.Logo != null)
@@ -330,39 +329,69 @@ namespace Yoma.Core.Domain.Entity.Services
                 }
 
                 //admins
-                result = await RemoveAdmins(result, result.Administrators?.Where(o => !request.AdminEmails.Contains(o.Email)).Select(o => o.Email).ToList());
-                result = await AssignAdmins(result, request.AdminEmails);
+                var admins = request.AdminEmails ??= new List<string>();
+                if (request.AddCurrentUserAsAdmin)
+                {
+                    var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+                    admins.Add(username);
+                }
+                result = await RemoveAdmins(result, result.Administrators?.Where(o => !admins.Contains(o.Email)).Select(o => o.Email).ToList());
+                result = await AssignAdmins(result, admins);
 
                 //documents
-                if (request.RegistrationDocuments != null && request.RegistrationDocuments.Any())
+                var documentsAdded = request.RegistrationDocuments != null && request.RegistrationDocuments.Any();
+                if (documentsAdded)
                 {
                     var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocuments);
                     result = resultDocuments.Organization;
                     itemsAdded.AddRange(resultDocuments.ItemsAdded);
+                    documentsAdded = true;
                 }
-                var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocumentsDelete);
-                resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.Id, o.File, FileType.Documents)));
-                result = resultDelete.Organization;
+                else if (request.RegistrationDocumentsDelete != null && request.RegistrationDocumentsDelete.Any())
+                {
+                    if (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Registration).All(o => request.RegistrationDocumentsDelete.Contains(o.FileId)))
+                        throw new ValidationException("Registration documents are required. Update will result in no associated documents");
 
-                if (request.EducationProviderDocuments != null && request.EducationProviderDocuments.Any())
+                    var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocumentsDelete);
+                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.Id, o.File, FileType.Documents)));
+                    result = resultDelete.Organization;
+                }
+
+                documentsAdded = request.EducationProviderDocuments != null && request.EducationProviderDocuments.Any();
+                if (documentsAdded)
                 {
                     var resultDocuments = await AddDocuments(result, OrganizationDocumentType.EducationProvider, request.RegistrationDocuments);
                     result = resultDocuments.Organization;
                     itemsAdded.AddRange(resultDocuments.ItemsAdded);
                 }
-                resultDelete = await DeleteDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocumentsDelete);
-                resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.Id, o.File, FileType.Documents)));
-                result = resultDelete.Organization;
+                else if (request.EducationProviderDocumentsDelete != null && request.EducationProviderDocumentsDelete.Any())
+                {
+                    var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+                    if (isProviderTypeEducation && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.EducationProvider).All(o => request.EducationProviderDocumentsDelete.Contains(o.FileId))))
+                        throw new ValidationException("Education provider type documents are required. Update will result in no associated documents");
 
-                if (request.BusinessDocuments != null && request.BusinessDocuments.Any())
+                    var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocumentsDelete);
+                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.Id, o.File, FileType.Documents)));
+                    result = resultDelete.Organization;
+                }
+
+                documentsAdded = request.BusinessDocuments != null && request.BusinessDocuments.Any();
+                if (documentsAdded)
                 {
                     var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Business, request.RegistrationDocuments);
                     result = resultDocuments.Organization;
                     itemsAdded.AddRange(resultDocuments.ItemsAdded);
                 }
-                resultDelete = await DeleteDocuments(result, OrganizationDocumentType.Business, request.BusinessDocumentsDelete);
-                resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.Id, o.File, FileType.Documents)));
-                result = resultDelete.Organization;
+                else if (request.BusinessDocumentsDelete != null && request.BusinessDocumentsDelete.Any())
+                {
+                    var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+                    if (isProviderTypeMarketplace && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Business).All(o => request.BusinessDocumentsDelete.Contains(o.FileId))))
+                        throw new ValidationException($"Business documents are required. Update will result in no associated documents");
+
+                    var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.Business, request.BusinessDocumentsDelete);
+                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.Id, o.File, FileType.Documents)));
+                    result = resultDelete.Organization;
+                }
 
                 scope.Complete();
             }
@@ -458,6 +487,8 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             var result = GetById(id, true, ensureOrganizationAuthorization);
 
+            ValidateUpdatable(result);
+
             result = await AssignProviderTypes(result, providerTypeIds, true);
 
             return result;
@@ -470,6 +501,11 @@ namespace Yoma.Core.Domain.Entity.Services
             if (providerTypeIds == null || !providerTypeIds.Any())
                 throw new ArgumentNullException(nameof(providerTypeIds));
 
+            ValidateUpdatable(result);
+
+            if (result.ProviderTypes == null || result.ProviderTypes.All(o => providerTypeIds.Contains(o.Id)))
+                throw new ValidationException("One or more provider types are required. Removal will result in no associated provider types");
+
             result = await RemoveProviderTypes(result, providerTypeIds);
 
             return result;
@@ -478,6 +514,8 @@ namespace Yoma.Core.Domain.Entity.Services
         public async Task<Organization> UpdateLogo(Guid id, IFormFile? file, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, true, ensureOrganizationAuthorization);
+
+            ValidateUpdatable(result);
 
             var resultLogo = await UpdateLogo(result, file);
 
@@ -488,6 +526,8 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             var result = GetById(id, true, ensureOrganizationAuthorization);
 
+            ValidateUpdatable(result);
+
             var resultDocuments = await AddDocuments(result, type, documents);
 
             return resultDocuments.Organization;
@@ -497,6 +537,19 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             var result = GetById(id, true, ensureOrganizationAuthorization);
 
+            ValidateUpdatable(result);
+
+            if (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Registration).All(o => documentFileIds.Contains(o.FileId)))
+                throw new ValidationException("Registration documents are required. Removal will result in no associated documents");
+
+            var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+            if (isProviderTypeEducation && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.EducationProvider).All(o => documentFileIds.Contains(o.FileId))))
+                throw new ValidationException("Education provider type documents are required. Removal will result in no associated documents");
+
+            var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+            if (isProviderTypeMarketplace && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Business).All(o => documentFileIds.Contains(o.FileId))))
+                throw new ValidationException($"Business documents are required. Removal will result in no associated documents");
+
             var resultDelete = await DeleteDocuments(result, type, documentFileIds);
 
             return resultDelete.Organization;
@@ -505,6 +558,8 @@ namespace Yoma.Core.Domain.Entity.Services
         public async Task<Organization> AssignAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, false, ensureOrganizationAuthorization);
+
+            ValidateUpdatable(result);
 
             result = await AssignAdmins(result, emails);
 
@@ -517,6 +572,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
             if (emails == null || !emails.Any())
                 throw new ArgumentNullException(nameof(emails));
+
+            ValidateUpdatable(result);
 
             result = await RemoveAdmins(result, emails);
 
@@ -587,8 +644,7 @@ namespace Yoma.Core.Domain.Entity.Services
             if (providerTypeIds == null || !providerTypeIds.Any())
                 throw new ArgumentNullException(nameof(providerTypeIds));
 
-            if (!Statuses_Updatable.Contains(organization.Status))
-                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+            ValidateUpdatable(organization);
 
             var typesAdded = false;
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
@@ -633,8 +689,7 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             if (providerTypeIds == null || !providerTypeIds.Any()) return organization;
 
-            if (!Statuses_Updatable.Contains(organization.Status))
-                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+            providerTypeIds = providerTypeIds.Distinct().ToList();
 
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var typeId in providerTypeIds)
@@ -659,9 +714,6 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
-
-            if (!Statuses_Updatable.Contains(organization.Status))
-                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             (Guid Id, IFormFile File, FileType Type)? currentLogo = null;
             if (organization.LogoId.HasValue)
@@ -701,9 +753,6 @@ namespace Yoma.Core.Domain.Entity.Services
             if (emails == null || !emails.Any())
                 throw new ArgumentNullException(nameof(emails));
 
-            if (!Statuses_Updatable.Contains(organization.Status))
-                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
-
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var email in emails)
             {
@@ -737,8 +786,7 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             if (emails == null || !emails.Any()) return organization;
 
-            if (!Statuses_Updatable.Contains(organization.Status))
-                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+            emails = emails.Distinct().ToList();
 
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var email in emails)
@@ -766,9 +814,6 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             if (documents == null || !documents.Any())
                 throw new ArgumentNullException(nameof(documents));
-
-            if (!Statuses_Updatable.Contains(organization.Status))
-                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             var itemsNew = new List<OrganizationDocument>();
             var itemsNewBlobs = new List<BlobObject>();
@@ -816,30 +861,25 @@ namespace Yoma.Core.Domain.Entity.Services
             return (organization, itemsNewBlobs);
         }
 
-        private async Task<(Organization Organization, List<OrganizationDocument>? ItemsDeleted)> DeleteDocuments(Organization organization, OrganizationDocumentType type, List<Guid>? documentFileIds)
+        private async Task<(Organization Organization, List<OrganizationDocument>? ItemsDeleted)> DeleteDocuments(Organization organization,
+            OrganizationDocumentType type, List<Guid>? documentFileIds)
         {
-            if (documentFileIds == null || documentFileIds.Any()) return (organization, null);
+            if (documentFileIds == null || !documentFileIds.Any()) return (organization, null);
 
-            if (!Statuses_Updatable.Contains(organization.Status))
-                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+            documentFileIds = documentFileIds.Distinct().ToList();
 
-            var itemsExisting = new List<OrganizationDocument>();
             var itemsExistingDeleted = new List<OrganizationDocument>();
-            var itemsExistingByType = organization.Documents?.Where(o => o.Type == type && documentFileIds.Contains(o.FileId)).ToList();
-            if (itemsExistingByType == null || !itemsExistingByType.Any()) return (organization, null);
+            var itemsExisting = organization.Documents?.Where(o => o.Type == type && documentFileIds.Contains(o.FileId)).ToList();
+            if (itemsExisting == null || !itemsExisting.Any()) return (organization, null);
 
-            //TODO: Provider type validation
             try
             {
                 using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
-                foreach (var item in itemsExistingByType)
-                    item.File = await _blobService.Download(item.FileId);
-                itemsExisting.AddRange(itemsExistingByType);
-
-                //delete existing items in blob storage and db
+                //download and delete existing items in blob storage and db
                 foreach (var item in itemsExisting)
                 {
+                    item.File = await _blobService.Download(item.FileId);
                     await _organizationDocumentRepository.Delete(item);
                     await _blobService.Delete(item.FileId);
                     itemsExistingDeleted.Add(item);
@@ -865,6 +905,12 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             if (!id.HasValue) return null;
             return _blobService.GetURL(id.Value);
+        }
+
+        private static void ValidateUpdatable(Organization organization)
+        {
+            if (!Statuses_Updatable.Contains(organization.Status))
+                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
         }
         #endregion
     }

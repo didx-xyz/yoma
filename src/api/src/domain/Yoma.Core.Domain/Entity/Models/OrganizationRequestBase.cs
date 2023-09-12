@@ -46,5 +46,10 @@ namespace Yoma.Core.Domain.Entity.Models
         public List<IFormFile>? EducationProviderDocuments { get; set; }
 
         public List<IFormFile>? BusinessDocuments { get; set; }
+
+        [Required]
+        public bool AddCurrentUserAsAdmin { get; set; }
+
+        public List<string>? AdminEmails { get; set; }
     }
 }
