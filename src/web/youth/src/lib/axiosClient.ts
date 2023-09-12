@@ -1,12 +1,19 @@
 import axios from "axios";
 import { type Session } from "next-auth";
 import { getSession } from "next-auth/react";
-import { env } from "~/env.mjs";
+import { fetchClientEnv } from "./utils";
+
+let apiBaseUrl = "";
 
 // Axios instance for client-side requests
-const ApiClient = () => {
+const ApiClient = async () => {
+  if (!apiBaseUrl) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    apiBaseUrl = ((await fetchClientEnv()).NEXT_PUBLIC_API_BASE_URL ||
+      "") as string;
+  }
   const instance = axios.create({
-    baseURL: env.NEXT_PUBLIC_API_BASE_URL,
+    baseURL: apiBaseUrl,
   });
 
   let lastSession: Session | null = null;
