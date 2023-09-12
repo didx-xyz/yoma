@@ -217,9 +217,9 @@ namespace Yoma.Core.Domain.Entity.Services
                 result = await AssignProviderTypes(result, request.ProviderTypes, false);
 
                 //insert logo
-                var resultLogo = await UpsertLogo(result, request.Logo);
+                var resultLogo = await UpdateLogo(result, request.Logo);
                 result = resultLogo.Organization;
-                blobObjects.Add(resultLogo.BlobOject);
+                blobObjects.Add(resultLogo.ItemAdded);
 
                 //assign admins
                 var admins = request.AdminAdditionalEmails ??= new List<string>();
@@ -231,9 +231,9 @@ namespace Yoma.Core.Domain.Entity.Services
                 result = await AssignAdmins(result, admins);
 
                 //upload documents
-                var resultDocuments = await UpsertDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocuments);
+                var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocuments);
                 result = resultDocuments.Organization;
-                blobObjects.AddRange(resultDocuments.BlobObjects);
+                blobObjects.AddRange(resultDocuments.ItemsAdded);
 
                 var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
                 if (isProviderTypeEducation && (request.EducationProviderDocuments == null || !request.EducationProviderDocuments.Any()))
@@ -241,9 +241,9 @@ namespace Yoma.Core.Domain.Entity.Services
 
                 if (request.EducationProviderDocuments != null && request.EducationProviderDocuments.Any())
                 {
-                    resultDocuments = await UpsertDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocuments);
+                    resultDocuments = await AddDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocuments);
                     result = resultDocuments.Organization;
-                    blobObjects.AddRange(resultDocuments.BlobObjects);
+                    blobObjects.AddRange(resultDocuments.ItemsAdded);
                 }
 
                 var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
@@ -252,9 +252,9 @@ namespace Yoma.Core.Domain.Entity.Services
 
                 if (request.BusinessDocuments != null && request.BusinessDocuments.Any())
                 {
-                    resultDocuments = await UpsertDocuments(result, OrganizationDocumentType.Business, request.BusinessDocuments);
+                    resultDocuments = await AddDocuments(result, OrganizationDocumentType.Business, request.BusinessDocuments);
                     result = resultDocuments.Organization;
-                    blobObjects.AddRange(resultDocuments.BlobObjects);
+                    blobObjects.AddRange(resultDocuments.ItemsAdded);
                 }
 
                 //TODO: Send email to SAP admins
@@ -306,8 +306,79 @@ namespace Yoma.Core.Domain.Entity.Services
             if (!Statuses_Updatable.Contains(result.Status))
                 throw new ValidationException($"The {nameof(Organization)} cannot be updated in its current state, namely '{result.Status}'. Please change the status to one of the following: {string.Join(" / ", Statuses_Updatable)} before performing the update.");
 
-            await _organizationRepository.Update(result);
-            result.DateModified = DateTimeOffset.Now;
+            var itemsAdded = new List<BlobObject>();
+            var itemsDeleted = new List<(Guid Id, IFormFile File, FileType Type)>();
+            try
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+                //update org
+                await _organizationRepository.Update(result);
+                result.DateModified = DateTimeOffset.Now;
+
+                //provider types
+                result = await RemoveProviderTypes(result, result.ProviderTypes?.Where(o => !request.ProviderTypes.Contains(o.Id)).Select(o => o.Id).ToList());
+                result = await AssignProviderTypes(result, request.ProviderTypes, true);
+
+                //logo
+                if (request.Logo != null)
+                {
+                    var resultLogo = await UpdateLogo(result, request.Logo);
+                    result = resultLogo.Organization;
+                    itemsAdded.Add(resultLogo.ItemAdded);
+                    if (resultLogo.ItemDeleted != null) itemsDeleted.Add(resultLogo.ItemDeleted.Value);
+                }
+
+                //admins
+                result = await RemoveAdmins(result, result.Administrators?.Where(o => !request.AdminEmails.Contains(o.Email)).Select(o => o.Email).ToList());
+                result = await AssignAdmins(result, request.AdminEmails);
+
+                //documents
+                if (request.RegistrationDocuments != null && request.RegistrationDocuments.Any())
+                {
+                    var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocuments);
+                    result = resultDocuments.Organization;
+                    itemsAdded.AddRange(resultDocuments.ItemsAdded);
+                }
+                var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocumentsDelete);
+                resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.Id, o.File, FileType.Documents)));
+                result = resultDelete.Organization;
+
+                if (request.EducationProviderDocuments != null && request.EducationProviderDocuments.Any())
+                {
+                    var resultDocuments = await AddDocuments(result, OrganizationDocumentType.EducationProvider, request.RegistrationDocuments);
+                    result = resultDocuments.Organization;
+                    itemsAdded.AddRange(resultDocuments.ItemsAdded);
+                }
+                resultDelete = await DeleteDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocumentsDelete);
+                resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.Id, o.File, FileType.Documents)));
+                result = resultDelete.Organization;
+
+                if (request.BusinessDocuments != null && request.BusinessDocuments.Any())
+                {
+                    var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Business, request.RegistrationDocuments);
+                    result = resultDocuments.Organization;
+                    itemsAdded.AddRange(resultDocuments.ItemsAdded);
+                }
+                resultDelete = await DeleteDocuments(result, OrganizationDocumentType.Business, request.BusinessDocumentsDelete);
+                resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.Id, o.File, FileType.Documents)));
+                result = resultDelete.Organization;
+
+                scope.Complete();
+            }
+            catch
+            {
+                //rollback created blobs
+                if (itemsAdded.Any())
+                    foreach (var blob in itemsAdded)
+                        await _blobService.Delete(blob.Key);
+
+                //re-upload deleted items to blob storage
+                foreach (var item in itemsDeleted)
+                    await _blobService.Create(item.Id, item.File, item.Type);
+
+                throw;
+            }
 
             return result;
         }
@@ -383,45 +454,71 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
-        public async Task<Organization> UpdateProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization)
+        public async Task<Organization> AssignProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, true, ensureOrganizationAuthorization);
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignProviderTypes(result, providerTypeIds, true);
-            result = await RemoveProviderTypes(result, result.ProviderTypes?.Where(o => !providerTypeIds.Contains(o.Id)).Select(o => o.Id).ToList());
-
-            scope.Complete();
 
             return result;
         }
 
-        public async Task<Organization> UpsertLogo(Guid id, IFormFile? file, bool ensureOrganizationAuthorization)
+        public async Task<Organization> RemoveProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, true, ensureOrganizationAuthorization);
 
-            var resultLogo = await UpsertLogo(result, file);
+            if (providerTypeIds == null || !providerTypeIds.Any())
+                throw new ArgumentNullException(nameof(providerTypeIds));
+
+            result = await RemoveProviderTypes(result, providerTypeIds);
+
+            return result;
+        }
+
+        public async Task<Organization> UpdateLogo(Guid id, IFormFile? file, bool ensureOrganizationAuthorization)
+        {
+            var result = GetById(id, true, ensureOrganizationAuthorization);
+
+            var resultLogo = await UpdateLogo(result, file);
 
             return resultLogo.Organization;
         }
 
-        public async Task<Organization> UpsertDocuments(Guid id, OrganizationDocumentType type, List<IFormFile> documents, bool ensureOrganizationAuthorization)
+        public async Task<Organization> AddDocuments(Guid id, OrganizationDocumentType type, List<IFormFile> documents, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, true, ensureOrganizationAuthorization);
 
-            var resultDocuments = await UpsertDocuments(result, type, documents);
+            var resultDocuments = await AddDocuments(result, type, documents);
+
             return resultDocuments.Organization;
         }
 
-        public async Task<Organization> UpdateAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization)
+        public async Task<Organization> DeleteDocuments(Guid id, OrganizationDocumentType type, List<Guid> documentFileIds, bool ensureOrganizationAuthorization)
+        {
+            var result = GetById(id, true, ensureOrganizationAuthorization);
+
+            var resultDelete = await DeleteDocuments(result, type, documentFileIds);
+
+            return resultDelete.Organization;
+        }
+
+        public async Task<Organization> AssignAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, false, ensureOrganizationAuthorization);
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignAdmins(result, emails);
-            result = await RemoveAdmins(result, result.Administrators?.Where(o => !emails.Contains(o.Email)).Select(o => o.Email).ToList());
 
-            scope.Complete();
+            return result;
+        }
+
+        public async Task<Organization> RemoveAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization)
+        {
+            var result = GetById(id, false, ensureOrganizationAuthorization);
+
+            if (emails == null || !emails.Any())
+                throw new ArgumentNullException(nameof(emails));
+
+            result = await RemoveAdmins(result, emails);
 
             return result;
         }
@@ -557,7 +654,8 @@ namespace Yoma.Core.Domain.Entity.Services
             return organization;
         }
 
-        private async Task<(Organization Organization, BlobObject BlobOject)> UpsertLogo(Organization organization, IFormFile? file)
+        private async Task<(Organization Organization, BlobObject ItemAdded, (Guid Id, IFormFile File, FileType Type)? ItemDeleted)> UpdateLogo(
+            Organization organization, IFormFile? file)
         {
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
@@ -565,7 +663,9 @@ namespace Yoma.Core.Domain.Entity.Services
             if (!Statuses_Updatable.Contains(organization.Status))
                 throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
-            var currentLogo = organization.LogoId.HasValue ? new { Id = organization.LogoId.Value, File = await _blobService.Download(organization.LogoId.Value) } : null;
+            (Guid Id, IFormFile File, FileType Type)? currentLogo = null;
+            if (organization.LogoId.HasValue)
+                currentLogo = (organization.LogoId.Value, await _blobService.Download(organization.LogoId.Value), FileType.Photos);
 
             BlobObject? blobObject = null;
             try
@@ -576,7 +676,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 await _organizationRepository.Update(organization);
 
                 if (currentLogo != null)
-                    await _blobService.Delete(currentLogo.Id);
+                    await _blobService.Delete(currentLogo.Value.Id);
 
                 scope.Complete();
             }
@@ -586,14 +686,14 @@ namespace Yoma.Core.Domain.Entity.Services
                     await _blobService.Delete(blobObject.Key);
 
                 if (currentLogo != null)
-                    await _blobService.Create(currentLogo.Id, currentLogo.File, FileType.Photos);
+                    await _blobService.Create(currentLogo.Value.Id, currentLogo.Value.File, currentLogo.Value.Type);
 
                 throw;
             }
 
             organization.LogoURL = GetBlobObjectURL(organization.LogoId);
 
-            return (organization, blobObject);
+            return (organization, blobObject, currentLogo);
         }
 
         private async Task<Organization> AssignAdmins(Organization organization, List<string> emails)
@@ -612,7 +712,7 @@ namespace Yoma.Core.Domain.Entity.Services
                     throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
                 var item = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == organization.Id && o.UserId == user.Id);
-                if (item != null) return organization;
+                if (item != null) continue;
 
                 item = new OrganizationUser
                 {
@@ -662,7 +762,7 @@ namespace Yoma.Core.Domain.Entity.Services
             return organization;
         }
 
-        private async Task<(Organization Organization, List<BlobObject> BlobObjects)> UpsertDocuments(Organization organization, OrganizationDocumentType type, List<IFormFile> documents)
+        private async Task<(Organization Organization, List<BlobObject> ItemsAdded)> AddDocuments(Organization organization, OrganizationDocumentType type, List<IFormFile>? documents)
         {
             if (documents == null || !documents.Any())
                 throw new ArgumentNullException(nameof(documents));
@@ -671,21 +771,10 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             var itemsNew = new List<OrganizationDocument>();
-            var itemsExisting = new List<OrganizationDocument>();
-            var itemsExistingDeleted = new List<OrganizationDocument>();
             var itemsNewBlobs = new List<BlobObject>();
             try
             {
                 using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-                var itemsExistingByType = organization.Documents?.Where(o => o.Type == type.ToString()).ToList();
-
-                //track existing (to be deleted)
-                if (itemsExistingByType != null && itemsExistingByType.Any())
-                {
-                    foreach (var item in itemsExistingByType)
-                        item.File = await _blobService.Download(item.FileId);
-                    itemsExisting.AddRange(itemsExistingByType);
-                }
 
                 //new items
                 foreach (var file in documents)
@@ -698,7 +787,7 @@ namespace Yoma.Core.Domain.Entity.Services
                     {
                         OrganizationId = organization.Id,
                         FileId = blobObject.Id,
-                        Type = type.ToString(),
+                        Type = type,
                         ContentType = file.ContentType,
                         OriginalFileName = file.FileName,
                         DateCreated = DateTimeOffset.Now
@@ -708,6 +797,45 @@ namespace Yoma.Core.Domain.Entity.Services
                     await _organizationDocumentRepository.Create(item);
                     itemsNew.Add(item);
                 }
+
+                scope.Complete();
+            }
+            catch //roll back
+            {
+                //delete newly create items in blob storage
+                foreach (var item in itemsNewBlobs)
+                    await _blobService.Delete(item.Key);
+
+                throw;
+            }
+
+            organization.Documents ??= new List<OrganizationDocument>();
+            organization.Documents.AddRange(itemsNew);
+            organization.Documents?.ForEach(o => o.Url = _blobService.GetURL(o.FileId));
+
+            return (organization, itemsNewBlobs);
+        }
+
+        private async Task<(Organization Organization, List<OrganizationDocument>? ItemsDeleted)> DeleteDocuments(Organization organization, OrganizationDocumentType type, List<Guid>? documentFileIds)
+        {
+            if (documentFileIds == null || documentFileIds.Any()) return (organization, null);
+
+            if (!Statuses_Updatable.Contains(organization.Status))
+                throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+
+            var itemsExisting = new List<OrganizationDocument>();
+            var itemsExistingDeleted = new List<OrganizationDocument>();
+            var itemsExistingByType = organization.Documents?.Where(o => o.Type == type && documentFileIds.Contains(o.FileId)).ToList();
+            if (itemsExistingByType == null || !itemsExistingByType.Any()) return (organization, null);
+
+            //TODO: Provider type validation
+            try
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+
+                foreach (var item in itemsExistingByType)
+                    item.File = await _blobService.Download(item.FileId);
+                itemsExisting.AddRange(itemsExistingByType);
 
                 //delete existing items in blob storage and db
                 foreach (var item in itemsExisting)
@@ -725,18 +853,12 @@ namespace Yoma.Core.Domain.Entity.Services
                 foreach (var item in itemsExistingDeleted)
                     await _blobService.Create(item.FileId, item.File, FileType.Documents);
 
-                //delete newly create items in blob storage
-                foreach (var item in itemsNewBlobs)
-                    await _blobService.Delete(item.Key);
-
                 throw;
             }
 
-            organization.Documents ??= new List<OrganizationDocument>();
-            organization.Documents.AddRange(itemsNew);
-            organization.Documents?.ForEach(o => o.Url = _blobService.GetURL(o.FileId));
+            organization.Documents = organization.Documents?.Except(itemsExisting).ToList();
 
-            return (organization, itemsNewBlobs);
+            return (organization, itemsExisting);
         }
 
         private string? GetBlobObjectURL(Guid? id)

@@ -82,11 +82,11 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Update the specified organization's details")]
+        [SwaggerOperation(Summary = "Update the specified organization")]
         [HttpPatch()]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> Update([FromBody] OrganizationRequestUpdate request)
+        public async Task<IActionResult> Update([FromForm] OrganizationRequestUpdate request)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(Update));
 
@@ -96,7 +96,6 @@ namespace Yoma.Core.Api.Controllers
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
-
 
         [SwaggerOperation(Summary = "Update organization status",
             Description = $"An Admin have the power to activate, deactivate, decline or delete an organization, whilst an Organization Admin can only delete. With a decline, an approval comment is required")]
@@ -129,62 +128,107 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Update provider type(s) for the specified organization")]
-        [HttpPatch("{id}/providerTypes")]
+        [SwaggerOperation(Summary = "Assign provider type(s) to the specified organization")]
+        [HttpPatch("{id}/assign/providerTypes")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> UpdateProviderTypes([FromRoute] Guid id, [Required][FromBody] List<Guid> providerTypeIds)
+        public async Task<IActionResult> AssignProviderTypes([FromRoute] Guid id, [Required][FromBody] List<Guid> providerTypeIds)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(UpdateProviderTypes));
+            _logger.LogInformation("Handling request {requestName}", nameof(AssignProviderTypes));
 
-            var result = await _organizationService.UpdateProviderTypes(id, providerTypeIds, true);
+            var result = await _organizationService.AssignProviderTypes(id, providerTypeIds, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(UpdateProviderTypes));
+            _logger.LogInformation("Request {requestName} handled", nameof(AssignProviderTypes));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Insert or update the organization's logo")]
+        [SwaggerOperation(Summary = "Remove provider type(s) from the specified organization")]
+        [HttpPatch("{id}/remove/providerTypes")]
+        [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public async Task<IActionResult> RemoveProviderTypes([FromRoute] Guid id, [Required][FromBody] List<Guid> providerTypeIds)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(RemoveProviderTypes));
+
+            var result = await _organizationService.RemoveProviderTypes(id, providerTypeIds, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(RemoveProviderTypes));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Update the organization's logo")]
         [HttpPatch("{id}/logo")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> UpsertLogo([FromRoute] Guid id, [Required] IFormFile file)
+        public async Task<IActionResult> UpdateLogo([FromRoute] Guid id, [Required] IFormFile file)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(UpsertLogo));
+            _logger.LogInformation("Handling request {requestName}", nameof(UpdateLogo));
 
-            var result = await _organizationService.UpsertLogo(id, file, true);
+            var result = await _organizationService.UpdateLogo(id, file, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(UpsertLogo));
+            _logger.LogInformation("Request {requestName} handled", nameof(UpdateLogo));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Insert or update the organization's documents")]
+        [SwaggerOperation(Summary = "Add document(s) for the specified organization's")]
         [HttpPatch("{id}/documents/{type}")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> UpsertDocuments([FromRoute] Guid id, [FromRoute] OrganizationDocumentType type, [Required] List<IFormFile> documents)
+        public async Task<IActionResult> AddDocuments([FromRoute] Guid id, [FromRoute] OrganizationDocumentType type, [Required] List<IFormFile> documents)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(UpsertDocuments));
+            _logger.LogInformation("Handling request {requestName}", nameof(AddDocuments));
 
-            var result = await _organizationService.UpsertDocuments(id, type, documents, true);
+            var result = await _organizationService.AddDocuments(id, type, documents, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(UpsertDocuments));
+            _logger.LogInformation("Request {requestName} handled", nameof(AddDocuments));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Update administrators for the specified organization")]
-        [HttpPatch("{id}/admins")]
+        [SwaggerOperation(Summary = "Delete document(s) from the specified organization")]
+        [HttpDelete("{id}/documents/{type}")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> UpdateAdmins([FromRoute] Guid id, [FromRoute] List<string> emails)
+        public async Task<IActionResult> DeleteDocuments([FromRoute] Guid id, [FromRoute] OrganizationDocumentType type, [Required] List<Guid> documentIds)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(UpdateAdmins));
+            _logger.LogInformation("Handling request {requestName}", nameof(DeleteDocuments));
 
-            var result = await _organizationService.UpdateAdmins(id, emails, true);
+            var result = await _organizationService.DeleteDocuments(id, type, documentIds, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(UpdateAdmins));
+            _logger.LogInformation("Request {requestName} handled", nameof(DeleteDocuments));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Assign administrators to the specified organization")]
+        [HttpPatch("{id}/assign/admins")]
+        [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public async Task<IActionResult> AssignAdmins([FromRoute] Guid id, [FromRoute] List<string> emails)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(AssignAdmins));
+
+            var result = await _organizationService.AssignAdmins(id, emails, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(AssignAdmins));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Remove administrators from the specified organization")]
+        [HttpPatch("{id}/remove/admins")]
+        [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public async Task<IActionResult> RemoveAdmins([FromRoute] Guid id, [FromRoute] List<string> emails)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(RemoveAdmins));
+
+            var result = await _organizationService.RemoveAdmins(id, emails, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(RemoveAdmins));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

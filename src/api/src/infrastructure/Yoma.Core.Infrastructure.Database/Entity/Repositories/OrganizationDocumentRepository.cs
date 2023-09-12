@@ -1,4 +1,5 @@
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Entity;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
@@ -19,7 +20,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 Id = entity.Id,
                 OrganizationId = entity.OrganizationId,
                 FileId = entity.FileId,
-                Type = entity.Type,
+                Type = Enum.Parse<OrganizationDocumentType>(entity.Type, true),
                 ContentType = entity.File.ContentType,
                 OriginalFileName = entity.File.OriginalFileName,
                 DateCreated = entity.DateCreated
@@ -54,7 +55,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         public async Task Delete(Domain.Entity.Models.OrganizationDocument item)
         {
             var entity = _context.OrganizationDocuments.Where(o => o.Id == item.Id).SingleOrDefault()
-                ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(OrganizationProviderType)} with id '{item.Id}' does not exist");
+                ?? throw new ArgumentOutOfRangeException(nameof(item), $"Document with id '{item.Id}' does not exist");
             _context.OrganizationDocuments.Remove(entity);
             await _context.SaveChangesAsync();
         }

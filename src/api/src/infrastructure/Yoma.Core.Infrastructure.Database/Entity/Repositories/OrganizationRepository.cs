@@ -55,7 +55,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                         Id = o.Id,
                         OrganizationId = o.OrganizationId,
                         FileId = o.FileId,
-                        Type = o.Type,
+                        Type = Enum.Parse<OrganizationDocumentType>(o.Type, true),
                         ContentType = o.File.ContentType,
                         OriginalFileName = o.File.OriginalFileName,
                         DateCreated = o.DateCreated

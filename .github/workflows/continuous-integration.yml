@@ -11,6 +11,9 @@ on:
     branches:
       - "master"
 
+env:
+  REGISTRY: ghcr.io/${{ github.repository_owner }}
+
 jobs:
   lint:
     name: Lint
@@ -58,15 +61,7 @@ jobs:
               prettier_extensions: js,ts,tsx
               prettier_args: --ignore-path ../../../.gitignore --config prettier.config.cjs
             env:
-              NEXTAUTH_SECRET: superSecretNextAuthSecret
-              NEXTAUTH_URL: http://localhost:3000
-              KEYCLOAK_ISSUER: http://keycloak:8080/realms/yoma
-              KEYCLOAK_CLIENT_ID: yoma-web-youth
-              KEYCLOAK_CLIENT_SECRET: superSecretKeycloakClientSecret
-              NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER: keycloak
-              API_BASE_URL: http://localhost:5000/api/v3
-              NEXT_PUBLIC_API_BASE_URL: http://localhost:5000/api/v3
-              NEXT_PUBLIC_ENVIRONMENT: local
+              SKIP_ENV_VALIDATION: true
 
     # outputs: # https://github.com/actions/runner/pull/2477
     #   ${{ matrix.project }}-changes: ${{ steps.filter.outputs.changes }}
@@ -86,9 +81,8 @@ jobs:
       - uses: actions/setup-node@v3
         if: (steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
-          node-version: '18'
-      - run: npm install -g yarn eslint prettier
-        if: (steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+          node-version: 18
+          cache: yarn
       - run: yarn install --frozen-lockfile
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         working-directory: ${{ matrix.dir }}
@@ -129,9 +123,12 @@ jobs:
           - image: yoma-api
             context: ./src/api
             file: ./src/api/Dockerfile
+            buildArgs: ""
           - image: yoma-web-youth
             context: ./src/web/youth
             file: ./src/web/youth/Dockerfile
+            buildArgs: |-
+              NEXT_PUBLIC_ENVIRONMENT=production
 
     steps:
       - uses: actions/checkout@v4
@@ -151,10 +148,9 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ github.token }}
       - uses: docker/metadata-action@v4
-        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
         id: meta
         with:
-          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          images: ${{ env.REGISTRY }}/${{ matrix.image }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
             type=sha,prefix={{branch}}-,priority=601,enable=${{ github.event_name != 'pull_request' }}
@@ -165,7 +161,7 @@ jobs:
       - uses: docker/build-push-action@v4
         if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
         with:
-          platforms: linux/amd64 # linux/arm64 is a little too slow right now
+          platforms: linux/amd64 # linux/arm64/v8 is a little too slow right now
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
           push: true
@@ -173,3 +169,83 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=build-${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=build-${{ matrix.image }}
+          build-args: ${{ matrix.buildArgs }}
+
+  test-e2e:
+    name: Test (e2e)
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+    needs: build
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: ${{ github.workflow }}-e2e-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ github.token }}
+
+      - uses: dorny/paths-filter@v2 # https://github.com/actions/runner/pull/2477
+        id: filter
+        with:
+          base: master
+          filters: |-
+            api:
+              - './src/api/**'
+            web-youth:
+              - './src/web/youth/**'
+
+      - name: Pre-pull images
+        run: |-
+          docker compose -f ./src/api/docker-compose.yml pull
+          docker compose -f ./src/web/youth/docker-compose.yml pull
+        env:
+          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
+          YOUTH_TAG: ${{ steps.filter.outputs.web-youth == 'true' && needs.build.outputs.image_version || 'latest' }}
+        continue-on-error: true
+      - name: Start services
+        run: |-
+          docker compose -f ./src/api/docker-compose.yml up -d
+          docker compose -f ./src/web/youth/docker-compose.yml up -d
+        env:
+          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
+          YOUTH_TAG: ${{ steps.filter.outputs.web-youth == 'true' && needs.build.outputs.image_version || 'latest' }}
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: yarn
+      - uses: cypress-io/github-action@v6
+      - name: Upload Cypress Screenshots
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          if-no-files-found: ignore
+      - name: Upload Cypress Recording
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: cypress-videos
+          path: cypress/videos
+          if-no-files-found: ignore
+
+      - name: Keycloak logs
+        if: always()
+        run: docker logs keycloak
+      - name: Yoma API logs
+        if: always()
+        run: docker logs yoma-api
+      - name: Yoma Web Youth logs
+        if: always()
+        run: docker logs yoma-web-youth
+
+      - run: docker compose down -v

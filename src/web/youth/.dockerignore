@@ -1,9 +1,22 @@
-.env
-Dockerfile
-.dockerignore
-node_modules
-npm-debug.log
-README.md
-.next
-.git
-.vscode
+# Ignore everything
+**
+
+# Except the following:
+!public/
+public/*.js
+public/*.map
+
+!src/
+!.env.example
+!.eslintrc.cjs
+!.prettierignore
+!next.config.mjs
+!package.json
+!postcss.config.cjs
+!prettier.config.cjs
+!sentry.client.config.ts
+!sentry.edge.config.ts
+!sentry.server.config.ts
+!tailwind.config.ts
+!tsconfig.json
+!yarn.lock

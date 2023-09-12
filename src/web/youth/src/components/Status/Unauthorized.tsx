@@ -1,11 +1,16 @@
 import { signIn } from "next-auth/react";
 import Head from "next/head";
 import { FaExclamationTriangle } from "react-icons/fa";
-import { env } from "~/env.mjs";
+import { fetchClientEnv } from "~/lib/utils";
 
 export const Unauthorized: React.FC = () => {
-  const handleLogin = () => {
-    signIn(env.NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER); // eslint-disable-line @typescript-eslint/no-floating-promises
+  const handleLogin = async () => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    signIn(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
+        "") as string,
+    );
   };
 
   return (

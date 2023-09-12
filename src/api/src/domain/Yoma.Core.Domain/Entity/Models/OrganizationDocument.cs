@@ -13,7 +13,7 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public Guid FileId { get; set; }
 
-        public string Type { get; set; }
+        public OrganizationDocumentType Type { get; set; }
 
         public string ContentType { get; set; }
 

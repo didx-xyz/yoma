@@ -51,7 +51,6 @@
     "@typescript-eslint/parser": "6.4.1",
     "autoprefixer": "^10.4.15",
     "cross-env": "^7.0.3",
-    "cypress-keycloak": "^2.0.1",
     "eslint": "^8.47.0",
     "eslint-config-next": "^13.4.19",
     "filepond": "^4.30.4",

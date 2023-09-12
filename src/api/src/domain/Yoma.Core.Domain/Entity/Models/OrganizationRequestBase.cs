@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
 namespace Yoma.Core.Domain.Entity.Models
@@ -34,5 +35,16 @@ namespace Yoma.Core.Domain.Entity.Models
         public string? Tagline { get; set; }
 
         public string? Biography { get; set; }
+
+        public IFormFile? Logo { get; set; }
+
+        [Required]
+        public List<Guid> ProviderTypes { get; set; }
+
+        public List<IFormFile>? RegistrationDocuments { get; set; }
+
+        public List<IFormFile>? EducationProviderDocuments { get; set; }
+
+        public List<IFormFile>? BusinessDocuments { get; set; }
     }
 }
