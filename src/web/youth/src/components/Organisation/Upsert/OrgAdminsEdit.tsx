@@ -9,14 +9,18 @@ import { validateEmail } from "~/lib/validate";
 
 export interface InputProps {
   organisation: OrganizationCreateRequest | null;
-  onSubmit: (fieldValues: FieldValues) => void;
-  onCancel: (fieldValues: FieldValues) => void;
+  onSubmit?: (fieldValues: FieldValues) => void;
+  onCancel?: (fieldValues: FieldValues) => void;
+  cancelButtonText?: string;
+  submitButtonText?: string;
 }
 
 export const OrgAdminsEdit: React.FC<InputProps> = ({
   organisation,
   onSubmit,
   onCancel,
+  cancelButtonText = "Cancel",
+  submitButtonText = "Submit",
 }) => {
   const schema = zod
     .object({
@@ -74,7 +78,7 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
   // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      onSubmit(data);
+      if (onSubmit) onSubmit(data);
     },
     [onSubmit],
   );
@@ -143,16 +147,20 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
 
         {/* BUTTONS */}
         <div className="my-4 flex items-center justify-center gap-2">
-          <button
-            type="button"
-            className="btn btn-warning btn-sm flex-grow"
-            onClick={(data) => onCancel(data)}
-          >
-            Back
-          </button>
-          <button type="submit" className="btn btn-success btn-sm flex-grow">
-            Submit
-          </button>
+          {onCancel && (
+            <button
+              type="button"
+              className="btn btn-warning btn-sm flex-grow"
+              onClick={(data) => onCancel(data)}
+            >
+              {cancelButtonText}
+            </button>
+          )}
+          {onSubmit && (
+            <button type="submit" className="btn btn-success btn-sm flex-grow">
+              {submitButtonText}
+            </button>
+          )}
         </div>
       </form>
     </>

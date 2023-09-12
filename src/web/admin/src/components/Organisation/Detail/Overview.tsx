@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { IoMdImage } from "react-icons/io";
-import { type UserInfo, type Organization } from "~/api/models/organisation";
+import { type Organization, type UserInfo } from "~/api/models/organisation";
 
 export interface InputProps {
   organisation: Organization | undefined;
@@ -20,7 +20,9 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
             <label className="label">
               <span className="label-text text-gray-dark">Company name</span>
             </label>
-            <div className="text-sm">{organisation?.name}</div>
+            <label className="label">
+              <div className="label-text">{organisation?.name}</div>
+            </label>
           </div>
         )}
 
@@ -30,7 +32,7 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
               <span className="label-text text-gray-dark">Company website</span>
             </label>
             <Link
-              className="hover:text-success-600 focus:text-success-600 active:text-success-700 text-success transition duration-150 ease-in-out"
+              className="hover:text-success-600 focus:text-success-600 active:text-success-700 pl-1 text-success transition duration-150 ease-in-out"
               href={organisation?.websiteURL}
             >
               {organisation?.websiteURL}
@@ -56,7 +58,7 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
 
         <div className="divider"></div>
 
-        <h4>Logo</h4>
+        <h5>Logo</h5>
 
         <div className="flex min-w-max items-center justify-center">
           {/* NO IMAGE */}
@@ -87,10 +89,12 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
           <label className="label">
             <span className="label-text text-gray-dark">Address</span>
           </label>
-          <div className="text-sm">{organisation?.streetAddress}</div>
-          <div className="text-sm">{organisation?.province}</div>
-          <div className="text-sm">{organisation?.city}</div>
-          <div className="text-sm">{organisation?.postalCode}</div>
+          <label className="label">
+            <div className="label-text">
+              {organisation?.streetAddress} {organisation?.province}{" "}
+              {organisation?.city} {organisation?.postalCode}
+            </div>
+          </label>
         </div>
 
         {organisation?.tagline && (
@@ -98,7 +102,9 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
             <label className="label">
               <span className="label-text text-gray-dark">Tagline</span>
             </label>
-            <div className="text-sm">{organisation?.tagline}</div>
+            <label className="label">
+              <div className="label-text">{organisation?.tagline}</div>
+            </label>
           </div>
         )}
 
@@ -107,19 +113,26 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
             <label className="label">
               <span className="label-text text-gray-dark">Biography</span>
             </label>
-            <div className="text-sm">{organisation?.biography}</div>
+            <label className="label">
+              <div className="label-text">{organisation?.biography}</div>
+            </label>
           </div>
         )}
         <div className="divider"></div>
-        <h4>Company registration</h4>
+        <h5>Company registration</h5>
         <div className="form-control">
-          <label className="label font-bold">
+          <label className="label">
             <span className="label-text text-gray-dark">Documents</span>
           </label>
 
           {/* display list of file links */}
           {organisation?.documents?.map((item) => (
-            <Link key={item.fileId} href={item.url} target="_blank">
+            <Link
+              key={item.fileId}
+              href={item.url}
+              target="_blank"
+              className="label"
+            >
               {item.originalFileName}
             </Link>
           ))}
@@ -149,7 +162,7 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
           </div>
         )}
         <div className="divider"></div>
-        <h4>Admins</h4>
+        <h5>Admins</h5>
 
         {organisationAdmins?.map((item) => (
           <div key={item.id} className="form-control">
@@ -158,7 +171,9 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
                 {item.firstName} {item.surname}
               </span>
             </label>
-            <div className="text-sm">{item.email}</div>
+            <label className="label">
+              <div className="label-text">{item.email}</div>
+            </label>
           </div>
         ))}
         {/* <OrgAdmins organisation={organisation} /> */}

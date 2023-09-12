@@ -41,11 +41,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     await queryClient.prefetchQuery(["organisationProviderTypes"], () =>
       getOrganisationProviderTypes(context),
     );
-    if (id != "register") {
-      await queryClient.prefetchQuery(["organisation", id], () =>
-        getOrganisationById(id, context),
-      );
-    }
+    await queryClient.prefetchQuery(["organisation", id], () =>
+      getOrganisationById(id, context),
+    );
   }
 
   return {
@@ -65,7 +63,6 @@ const RegisterOrganisation: NextPageWithLayout<{
 
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
-    enabled: id != "register",
   });
 
   const [organizationCreateRequest, setOrganizationCreateRequest] =
@@ -134,13 +131,10 @@ const RegisterOrganisation: NextPageWithLayout<{
 
       setOrganizationCreateRequest(model);
 
-      if (step === 4) {
-        await onSubmit();
-        return;
-      }
-      setStep(step);
+      await onSubmit();
+      return;
     },
-    [setStep, organizationCreateRequest, onSubmit],
+    [, organizationCreateRequest, onSubmit],
   );
 
   const handleCancel = () => {
@@ -148,69 +142,85 @@ const RegisterOrganisation: NextPageWithLayout<{
   };
 
   return (
-    <div className="container max-w-md">
+    <div className="container max-w-5xl">
       {isLoading && <Loading />}
-      organisation: {JSON.stringify(organisation)}
-      {step == 1 && (
-        <>
-          <ul className="steps steps-vertical w-full lg:steps-horizontal">
-            <li className="step step-success"></li>
-            <li className="step"></li>
-            <li className="step"></li>
-          </ul>
-          <div className="flex flex-col text-center">
-            <h2>Organisation details</h2>
-            <p className="my-2">General organisation information</p>
-          </div>
-          <OrgInfoEdit
-            organisation={organizationCreateRequest}
-            onCancel={handleCancel}
-            onSubmit={(data) => onSubmitStep(2, data)}
-          />
-        </>
-      )}
-      {step == 2 && (
-        <>
-          <ul className="steps steps-vertical w-full lg:steps-horizontal">
-            <li className="step"></li>
-            <li className="step step-success"></li>
-            <li className="step"></li>
-          </ul>
-          <div className="flex flex-col text-center">
-            <h2>Organisation roles</h2>
-            <p className="my-2">
-              What role will your organisation play within Yoma?
-            </p>
-          </div>
 
-          <OrgRolesEdit
-            organisation={organizationCreateRequest}
-            onCancel={() => {
-              setStep(1);
-            }}
-            onSubmit={(data) => onSubmitStep(3, data)}
-          />
-        </>
-      )}
-      {step == 3 && (
-        <>
-          <ul className="steps steps-vertical w-full lg:steps-horizontal">
-            <li className="step"></li>
-            <li className="step"></li>
-            <li className="step step-success"></li>
-          </ul>
-          <div className="flex flex-col text-center">
-            <h2>Organisation Admins</h2>
-            <p className="my-2">Who can login and manage the organisation?</p>
-          </div>
+      <div className="flex flex-col pt-8">
+        <h3 className="pl-16">Profile information</h3>
 
-          <OrgAdminsEdit
-            organisation={organizationCreateRequest}
-            onCancel={(data) => onSubmitStep(2, data)}
-            onSubmit={(data) => onSubmitStep(4, data)}
-          />
-        </>
-      )}
+        <div className="flex flex-col justify-center gap-2 p-8 md:flex-row">
+          <ul className="menu rounded-box menu-horizontal h-40 w-full gap-2 bg-white p-4 md:menu-vertical md:max-w-[300px]">
+            <li
+              className={`w-full rounded ${
+                step === 1
+                  ? "bg-emerald-100 font-bold text-green"
+                  : "bg-gray-light"
+              }`}
+            >
+              <a onClick={() => setStep(1)}>Organisation details</a>
+            </li>
+            <li
+              className={`w-full rounded ${
+                step === 2
+                  ? "bg-emerald-100 font-bold text-green"
+                  : "bg-gray-light"
+              }`}
+            >
+              <a onClick={() => setStep(2)}>Organisation roles</a>
+            </li>
+            <li
+              className={`w-full rounded ${
+                step === 3
+                  ? "bg-emerald-100 font-bold text-green"
+                  : "bg-gray-light"
+              }`}
+            >
+              <a onClick={() => setStep(3)}>Organisation admins</a>
+            </li>
+          </ul>
+          <div className="flex w-full flex-col rounded-lg bg-white p-8">
+            {/* organisation: {JSON.stringify(organisation)} */}
+            {step == 1 && (
+              <>
+                <div className="flex flex-col text-center">
+                  <h2>Organisation details</h2>
+                </div>
+                <OrgInfoEdit
+                  organisation={organizationCreateRequest}
+                  onSubmit={(data) => onSubmitStep(2, data)}
+                />
+              </>
+            )}
+            {step == 2 && (
+              <>
+                <div className="flex flex-col text-center">
+                  <h2>Organisation roles</h2>
+                </div>
+
+                <OrgRolesEdit
+                  organisation={organizationCreateRequest}
+                  onCancel={() => {
+                    setStep(1);
+                  }}
+                  onSubmit={(data) => onSubmitStep(3, data)}
+                />
+              </>
+            )}
+            {step == 3 && (
+              <>
+                <div className="flex flex-col text-center">
+                  <h2>Organisation admins</h2>
+                </div>
+
+                <OrgAdminsEdit
+                  organisation={organizationCreateRequest}
+                  onSubmit={(data) => onSubmitStep(4, data)}
+                />
+              </>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

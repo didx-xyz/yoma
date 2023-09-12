@@ -13,14 +13,18 @@ import { FileUploader } from "./FileUpload";
 
 export interface InputProps {
   organisation: OrganizationCreateRequest | null;
-  onSubmit: (fieldValues: FieldValues) => void;
-  onCancel: () => void;
+  onSubmit?: (fieldValues: FieldValues) => void;
+  onCancel?: () => void;
+  cancelButtonText?: string;
+  submitButtonText?: string;
 }
 
 export const OrgInfoEdit: React.FC<InputProps> = ({
   organisation,
   onSubmit,
   onCancel,
+  cancelButtonText = "Cancel",
+  submitButtonText = "Submit",
 }) => {
   const [logoFiles, setLogoFiles] = useState<File[]>(organisation?.logo as any);
 
@@ -83,7 +87,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
   // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      onSubmit(data);
+      if (onSubmit) onSubmit(data);
     },
     [onSubmit],
   );
@@ -288,16 +292,20 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
 
         {/* BUTTONS */}
         <div className="my-4 flex items-center justify-center gap-2">
-          <button
-            type="button"
-            className="btn btn-warning btn-sm flex-grow"
-            onClick={onCancel}
-          >
-            Cancel
-          </button>
-          <button type="submit" className="btn btn-success btn-sm flex-grow">
-            Next
-          </button>
+          {onCancel && (
+            <button
+              type="button"
+              className="btn btn-warning btn-sm flex-grow"
+              onClick={onCancel}
+            >
+              {cancelButtonText}
+            </button>
+          )}
+          {onSubmit && (
+            <button type="submit" className="btn btn-success btn-sm flex-grow">
+              {submitButtonText}
+            </button>
+          )}
         </div>
       </form>
     </>

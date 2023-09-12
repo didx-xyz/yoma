@@ -24,8 +24,8 @@ import {
 import ReactModal from "react-modal";
 import { toast } from "react-toastify";
 import {
-  type Organization,
   OrganizationStatus,
+  type Organization,
 } from "~/api/models/organisation";
 import {
   getOrganisationAdminsById,
@@ -160,10 +160,10 @@ const OrganisationDetails: NextPageWithLayout<{
                 <>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    className="rounded-lg"
+                    className="m-4 rounded-lg"
                     alt="company logo"
-                    width={80}
-                    height={80}
+                    width={60}
+                    height={60}
                     src={organisation.logoURL}
                   />
                 </>

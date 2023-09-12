@@ -139,10 +139,13 @@ const RegisterOrganisation: NextPageWithLayout = () => {
             <h2>Organisation details</h2>
             <p className="my-2">General organisation information</p>
           </div>
+
           <OrgInfoEdit
             organisation={organizationCreateRequest}
             onCancel={handleCancel}
             onSubmit={(data) => onSubmitStep(2, data)}
+            cancelButtonText="Cancel"
+            submitButtonText="Next"
           />
         </>
       )}
@@ -167,6 +170,8 @@ const RegisterOrganisation: NextPageWithLayout = () => {
               setStep(1);
             }}
             onSubmit={(data) => onSubmitStep(3, data)}
+            cancelButtonText="Back"
+            submitButtonText="Next"
           />
         </>
       )}
@@ -187,6 +192,8 @@ const RegisterOrganisation: NextPageWithLayout = () => {
             organisation={organizationCreateRequest}
             onCancel={(data) => onSubmitStep(2, data)}
             onSubmit={(data) => onSubmitStep(4, data)}
+            cancelButtonText="Back"
+            submitButtonText="Next"
           />
         </>
       )}

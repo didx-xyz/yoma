@@ -80,10 +80,10 @@ const OrganisationOpportunities: NextPageWithLayout<{
                 <>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    className="rounded-lg"
+                    className="m-4 rounded-lg"
                     alt="company logo"
-                    width={80}
-                    height={80}
+                    width={60}
+                    height={60}
                     src={organisation.logoURL}
                   />
                 </>
