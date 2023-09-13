@@ -119,17 +119,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             //action (required)
             query = query.Where(o => o.ActionId == actionId);
 
-            //userId
-            var filterByUsers = filter.UserId.HasValue;
-            var userIds = new List<Guid>();
+            //userId (explicitly specified)
             if (filter.UserId.HasValue)
-                userIds.Add(filter.UserId.Value);
+                query = query.Where(o => o.UserId == filter.UserId);
 
-            //opportunity
-            var filterOpportunities = filter.OpportunityId.HasValue;
-            var opportunityIds = new List<Guid>();
+            //opportunity (explicitly specified)
             if (filter.OpportunityId.HasValue)
-                opportunityIds.Add(filter.OpportunityId.Value);
+                query = query.Where(o => o.OpportunityId == filter.OpportunityId);
 
             //valueContains (opportunities and users) 
             if (!string.IsNullOrEmpty(filter.ValueContains))
@@ -137,22 +133,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 var predicate = PredicateBuilder.False<Models.MyOpportunity>();
 
                 var matchedOpportunityIds = _opportunityService.Contains(filter.ValueContains).Select(o => o.Id).ToList();
-                opportunityIds.AddRange(matchedOpportunityIds.Except(opportunityIds));
-                predicate = predicate.Or(o => opportunityIds.Contains(o.OpportunityId));
+                predicate = predicate.Or(o => matchedOpportunityIds.Contains(o.OpportunityId));
 
                 var matchedUserIds = _userService.Contains(filter.ValueContains).Select(o => o.Id).ToList();
-                userIds.AddRange(matchedUserIds.Except(userIds));
-                predicate = predicate.Or(o => userIds.Contains(o.UserId));
+                predicate = predicate.Or(o => matchedUserIds.Contains(o.UserId));
 
                 query = query.Where(predicate);
-            }
-            else
-            {
-                if (filterByUsers)
-                    query = query.Where(o => userIds.Contains(o.UserId));
-
-                if (filterOpportunities)
-                    query = query.Where(o => opportunityIds.Contains(o.OpportunityId));
             }
 
             switch (filter.Action)
@@ -297,10 +283,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             await _myOpportunityRequestValidatorVerify.ValidateAndThrowAsync(request);
 
-            //published and started opportunities
+            //provided opportunity is published (and started) or expired
             var opportunity = _opportunityService.GetById(opportunityId, true, false);
-            if (!opportunity.Published || opportunity.DateStart > DateTimeOffset.Now)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+            var canSendForVerification = opportunity.Status == Opportunity.Status.Expired;
+            if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
+            if (!canSendForVerification)
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can no longer be send for verification (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
             if (!opportunity.VerificationSupported)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / does not support verification");
@@ -388,7 +376,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             var user = _userService.GetById(request.UserId, false);
 
-            //can complete, provided opportunity is active (and started) or expired (actioned prior to expiration)
+            //can complete, provided opportunity is published (and started) or expired (actioned prior to expiration)
             var opportunity = _opportunityService.GetById(request.OpportunityId, false, false);
             var canFinalize = opportunity.Status == Opportunity.Status.Expired;
             if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;

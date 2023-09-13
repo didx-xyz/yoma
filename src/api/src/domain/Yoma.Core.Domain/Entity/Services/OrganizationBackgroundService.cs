@@ -4,7 +4,6 @@ using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Microsoft.Extensions.Options;
-using Yoma.Core.Domain.Opportunity;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -54,7 +53,7 @@ namespace Yoma.Core.Domain.Entity.Services
         public async Task ProcessDeletion()
         {
             var statusDeletionIds = Statuses_Deletion.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
-            var statusDeletedId = _organizationStatusService.GetByName(Status.Deleted.ToString()).Id;
+            var statusDeletedId = _organizationStatusService.GetByName(OrganizationStatus.Deleted.ToString()).Id;
 
             do
             {

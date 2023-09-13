@@ -13,9 +13,21 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public List<Guid>? Countries { get; set; }
 
+        /// <summary>
+        /// Includes organizations (name), opportunities (title, keywords, description), opportunity types (name), opportunity categories (name) and skills (name) matched on search text
+        /// </summary>
         public string? ValueContains { get; set; }
 
+        /// <summary>
+        /// Includes published (active opportunities relating to active organizations, irrespective of started)
+        /// </summary>
         [JsonIgnore]
-        internal bool? ValueContainsActiveMatchesOnly { get; set; }
+        internal bool Published { get; set; }
+
+        /// <summary>
+        /// Includes expired opportunities (expired relating to active organizations)
+        /// </summary>
+        [JsonIgnore]
+        internal bool IncludeExpired { get; set; }
     }
 }
