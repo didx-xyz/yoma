@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FieldValues, useForm } from "react-hook-form";
 import zod from "zod";
 import {
-  type OrganizationCreateRequest,
+  type OrganizationRequestBase,
   type OrganizationProviderType,
 } from "~/api/models/organisation";
 import { getOrganisationProviderTypes } from "~/api/services/organisations";
@@ -18,7 +18,7 @@ import {
 import { FileUploader } from "./FileUpload";
 
 export interface InputProps {
-  organisation: OrganizationCreateRequest | null;
+  organisation: OrganizationRequestBase | null;
   onSubmit?: (fieldValues: FieldValues) => void;
   onCancel?: (fieldValues: FieldValues) => void;
   cancelButtonText?: string;

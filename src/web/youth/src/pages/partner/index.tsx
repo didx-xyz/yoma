@@ -7,7 +7,7 @@ import router from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
 import { type FieldValues } from "react-hook-form";
 import { toast } from "react-toastify";
-import { type OrganizationCreateRequest } from "~/api/models/organisation";
+import { type OrganizationRequestBase } from "~/api/models/organisation";
 import {
   getOrganisationProviderTypes,
   postOrganisation,
@@ -45,8 +45,9 @@ const RegisterOrganisation: NextPageWithLayout = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
 
-  const [organizationCreateRequest, setOrganizationCreateRequest] =
-    useState<OrganizationCreateRequest>({
+  const [OrganizationRequestBase, setOrganizationRequestBase] =
+    useState<OrganizationRequestBase>({
+      id: "",
       name: "",
       websiteURL: "",
       primaryContactName: "",
@@ -65,59 +66,65 @@ const RegisterOrganisation: NextPageWithLayout = () => {
       providerTypes: [],
       logo: null,
       addCurrentUserAsAdmin: false,
-      adminAdditionalEmails: [],
+      adminEmails: [],
       registrationDocuments: [],
       educationProviderDocuments: [],
       businessDocuments: [],
+      businessDocumentsDelete: [],
+      educationProviderDocumentsDelete: [],
+      registrationDocumentsDelete: [],
     });
 
-  const onSubmit = useCallback(async () => {
-    setIsLoading(true);
+  const onSubmit = useCallback(
+    async (model: OrganizationRequestBase) => {
+      setIsLoading(true);
 
-    try {
-      // update api
-      await postOrganisation(organizationCreateRequest);
+      try {
+        // update api
+        await postOrganisation(model);
 
-      toast("Your organisation has been updated", {
-        type: "success",
-        toastId: "organisationRegistration",
-      });
-      setIsLoading(false);
+        toast("Your organisation has been updated", {
+          type: "success",
+          toastId: "organisationRegistration",
+        });
+        setIsLoading(false);
 
-      void router.push("/partner/success");
-    } catch (error) {
-      toast(<ApiErrors error={error as AxiosError} />, {
-        type: "error",
-        toastId: "organisationRegistration",
-        autoClose: false,
-        icon: false,
-      });
+        void router.push("/partner/success");
+      } catch (error) {
+        toast(<ApiErrors error={error as AxiosError} />, {
+          type: "error",
+          toastId: "organisationRegistration",
+          autoClose: false,
+          icon: false,
+        });
 
-      captureException(error);
-      setIsLoading(false);
+        captureException(error);
+        setIsLoading(false);
 
-      return;
-    }
-  }, [organizationCreateRequest, setIsLoading]);
+        return;
+      }
+    },
+    [OrganizationRequestBase, setIsLoading],
+  );
 
   // form submission handler
   const onSubmitStep = useCallback(
     async (step: number, data: FieldValues) => {
       // set form data
       const model = {
-        ...organizationCreateRequest,
-        ...(data as OrganizationCreateRequest),
+        ...OrganizationRequestBase,
+        ...(data as OrganizationRequestBase),
       };
 
-      setOrganizationCreateRequest(model);
+      setOrganizationRequestBase(model);
 
       if (step === 4) {
-        await onSubmit();
+        await onSubmit(model);
         return;
       }
       setStep(step);
     },
-    [setStep, organizationCreateRequest, onSubmit],
+    [setStep, OrganizationRequestBase, onSubmit],
   );
 
   const handleCancel = () => {
@@ -141,7 +148,7 @@ const RegisterOrganisation: NextPageWithLayout = () => {
           </div>
 
           <OrgInfoEdit
-            organisation={organizationCreateRequest}
+            organisation={OrganizationRequestBase}
             onCancel={handleCancel}
             onSubmit={(data) => onSubmitStep(2, data)}
             cancelButtonText="Cancel"
@@ -165,7 +172,7 @@ const RegisterOrganisation: NextPageWithLayout = () => {
           </div>
 
           <OrgRolesEdit
-            organisation={organizationCreateRequest}
+            organisation={OrganizationRequestBase}
             onCancel={() => {
               setStep(1);
             }}
@@ -189,7 +196,7 @@ const RegisterOrganisation: NextPageWithLayout = () => {
           </div>
 
           <OrgAdminsEdit
-            organisation={organizationCreateRequest}
+            organisation={OrganizationRequestBase}
             onCancel={(data) => onSubmitStep(2, data)}
             onSubmit={(data) => onSubmitStep(4, data)}
             cancelButtonText="Back"

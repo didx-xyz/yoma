@@ -1,4 +1,5 @@
-export interface OrganizationCreateRequest {
+export interface OrganizationRequestBase {
+  id: string;
   name: string;
   websiteURL: string | null;
   primaryContactName: string | null;
@@ -14,13 +15,16 @@ export interface OrganizationCreateRequest {
   postalCode: string | null;
   tagline: string | null;
   biography: string | null;
-  providerTypes: string[];
   logo: FormFile | null;
-  addCurrentUserAsAdmin: boolean;
-  adminAdditionalEmails: string[] | null;
-  registrationDocuments: FormFile[];
+  providerTypes: string[];
+  registrationDocuments: FormFile[] | null;
   educationProviderDocuments: FormFile[] | null;
   businessDocuments: FormFile[] | null;
+  addCurrentUserAsAdmin: boolean;
+  adminEmails: string[];
+  registrationDocumentsDelete: string[] | null;
+  educationProviderDocumentsDelete: string[] | null;
+  businessDocumentsDelete: string[] | null;
 }
 
 export interface OrganizationProviderType {

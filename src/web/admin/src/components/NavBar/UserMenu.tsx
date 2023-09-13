@@ -14,7 +14,7 @@ export const UserMenu: React.FC = () => {
   const { data: session } = useSession();
 
   const handleLogout = () => {
-    signOut(); // eslint-disable-line @typescript-eslint/no-floating-promises
+    signOut();
   };
 
   return (

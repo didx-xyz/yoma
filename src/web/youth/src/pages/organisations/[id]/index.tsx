@@ -9,8 +9,8 @@ import { useCallback, useState, type ReactElement } from "react";
 import { type FieldValues } from "react-hook-form";
 import { toast } from "react-toastify";
 import {
-  Organization,
-  type OrganizationCreateRequest,
+  type Organization,
+  type OrganizationRequestBase,
 } from "~/api/models/organisation";
 import {
   getOrganisationById,
@@ -65,8 +65,9 @@ const RegisterOrganisation: NextPageWithLayout<{
     queryKey: ["organisation", id],
   });
 
-  const [organizationCreateRequest, setOrganizationCreateRequest] =
-    useState<OrganizationCreateRequest>({
+  const [OrganizationRequestBase, setOrganizationRequestBase] =
+    useState<OrganizationRequestBase>({
+      id: organisation?.id ?? "",
       name: organisation?.name ?? "",
       websiteURL: organisation?.websiteURL ?? "",
       primaryContactName: organisation?.primaryContactName ?? "",
@@ -85,10 +86,13 @@ const RegisterOrganisation: NextPageWithLayout<{
       providerTypes: organisation?.providerTypes?.map((x) => x.name) ?? [],
       logo: null,
       addCurrentUserAsAdmin: false,
-      adminAdditionalEmails: [],
+      adminEmails: [],
       registrationDocuments: [],
       educationProviderDocuments: [],
       businessDocuments: [],
+      registrationDocumentsDelete: [],
+      educationProviderDocumentsDelete: [],
+      businessDocumentsDelete: [],
     });
 
   const onSubmit = useCallback(async () => {
@@ -96,7 +100,7 @@ const RegisterOrganisation: NextPageWithLayout<{
 
     try {
       // update api
-      await postOrganisation(organizationCreateRequest);
+      await postOrganisation(OrganizationRequestBase);
 
       toast("Your organisation has been updated", {
         type: "success",
@@ -118,23 +122,23 @@ const RegisterOrganisation: NextPageWithLayout<{
 
       return;
     }
-  }, [organizationCreateRequest, setIsLoading]);
+  }, [OrganizationRequestBase, setIsLoading]);
 
   // form submission handler
   const onSubmitStep = useCallback(
     async (step: number, data: FieldValues) => {
       // set form data
       const model = {
-        ...organizationCreateRequest,
-        ...(data as OrganizationCreateRequest),
+        ...OrganizationRequestBase,
+        ...(data as OrganizationRequestBase),
       };
 
-      setOrganizationCreateRequest(model);
+      setOrganizationRequestBase(model);
 
       await onSubmit();
       return;
     },
-    [, organizationCreateRequest, onSubmit],
+    [, OrganizationRequestBase, onSubmit],
   );
 
   const handleCancel = () => {
@@ -186,7 +190,7 @@ const RegisterOrganisation: NextPageWithLayout<{
                   <h2>Organisation details</h2>
                 </div>
                 <OrgInfoEdit
-                  organisation={organizationCreateRequest}
+                  organisation={OrganizationRequestBase}
                   onSubmit={(data) => onSubmitStep(2, data)}
                 />
               </>
@@ -198,7 +202,7 @@ const RegisterOrganisation: NextPageWithLayout<{
                 </div>
 
                 <OrgRolesEdit
-                  organisation={organizationCreateRequest}
+                  organisation={OrganizationRequestBase}
                   onCancel={() => {
                     setStep(1);
                   }}
@@ -213,7 +217,7 @@ const RegisterOrganisation: NextPageWithLayout<{
                 </div>
 
                 <OrgAdminsEdit
-                  organisation={organizationCreateRequest}
+                  organisation={OrganizationRequestBase}
                   onSubmit={(data) => onSubmitStep(4, data)}
                 />
               </>

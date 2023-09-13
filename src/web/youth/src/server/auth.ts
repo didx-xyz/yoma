@@ -6,7 +6,10 @@ import {
   type NextAuthOptions,
 } from "next-auth";
 import { type DefaultJWT } from "next-auth/jwt";
-import KeycloakProvider from "next-auth/providers/keycloak";
+import { type OAuthConfig } from "next-auth/providers";
+import KeycloakProvider, {
+  type KeycloakProfile,
+} from "next-auth/providers/keycloak";
 import { env } from "process";
 import { OrganizationInfo, UserProfile } from "~/api/models/user";
 
@@ -46,6 +49,36 @@ declare module "next-auth/jwt" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
+  events: {
+    async signOut({ token }) {
+      if (token.provider === "keycloak") {
+        const issuerUrl = (
+          authOptions.providers.find(
+            (p) => p.id === "keycloak",
+          ) as OAuthConfig<KeycloakProfile>
+        ).options!.issuer!;
+        const logOutUrl = new URL(
+          `${issuerUrl}/protocol/openid-connect/logout`,
+        );
+        logOutUrl.searchParams.set("id_token_hint", token.accessToken!);
+        await fetch(logOutUrl);
+      }
+      const url =
+        process.env.KEYCLOAK_ISSUER + "/protocol/openid-connect/logout?";
+
+      await fetch(url, {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        method: "POST",
+        body: new URLSearchParams({
+          client_id: process.env.KEYCLOAK_CLIENT_ID!, // eslint-disable-line
+          client_secret: process.env.KEYCLOAK_CLIENT_SECRET!, // eslint-disable-line
+          refresh_token: token.refreshToken, // eslint-disable-line
+        }),
+      });
+    },
+  },
   callbacks: {
     async jwt({ token, user, account, trigger, session }) {
       // called when user profile is updated (update function from settings.tsx)
