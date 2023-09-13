@@ -51,6 +51,7 @@ export interface Organization {
   biography: string | null;
   statusId: string;
   status: OrganizationStatus;
+  commentApproval: string | null;
   dateStatusModified: string;
   logoId: string | null;
   logoURL: string | null;
@@ -58,6 +59,15 @@ export interface Organization {
   dateCreated: string;
   dateModified: string;
   providerTypes: OrganizationProviderType[] | null;
+  administrators: UserInfo[] | null;
+}
+
+export interface UserInfo {
+  id: string;
+  email: string;
+  firstName: string;
+  surname: string;
+  displayName: string | null;
 }
 
 export interface OrganizationDocument {

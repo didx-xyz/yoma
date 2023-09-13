@@ -1,10 +1,8 @@
 import { captureException } from "@sentry/nextjs";
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
-import { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
-import router from "next/router";
-import { ParsedUrlQuery } from "querystring";
+import { getServerSession, type User } from "next-auth";
+import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useState, type ReactElement } from "react";
 import { type FieldValues } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -15,7 +13,7 @@ import {
 import {
   getOrganisationById,
   getOrganisationProviderTypes,
-  postOrganisation,
+  patchOrganisation,
 } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
 import { OrgAdminsEdit } from "~/components/Organisation/Upsert/OrgAdminsEdit";
@@ -24,7 +22,7 @@ import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import withAuth from "~/context/withAuth";
-import { NextPageWithLayout } from "~/pages/_app";
+import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
@@ -57,7 +55,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 const RegisterOrganisation: NextPageWithLayout<{
   id: string;
-}> = ({ id }) => {
+  user: User | null;
+}> = ({ id, user }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
 
@@ -83,10 +82,12 @@ const RegisterOrganisation: NextPageWithLayout<{
       postalCode: organisation?.postalCode ?? "",
       tagline: organisation?.tagline ?? "",
       biography: organisation?.biography ?? "",
-      providerTypes: organisation?.providerTypes?.map((x) => x.name) ?? [],
+      providerTypes: organisation?.providerTypes?.map((x) => x.id) ?? [],
       logo: null,
-      addCurrentUserAsAdmin: false,
-      adminEmails: [],
+      addCurrentUserAsAdmin:
+        organisation?.administrators?.find((x) => x.email == user?.email) !=
+          null ?? false,
+      adminEmails: organisation?.administrators?.map((x) => x.email) ?? [],
       registrationDocuments: [],
       educationProviderDocuments: [],
       businessDocuments: [],
@@ -95,34 +96,35 @@ const RegisterOrganisation: NextPageWithLayout<{
       businessDocumentsDelete: [],
     });
 
-  const onSubmit = useCallback(async () => {
-    setIsLoading(true);
+  const onSubmit = useCallback(
+    async (model: OrganizationRequestBase) => {
+      setIsLoading(true);
 
-    try {
-      // update api
-      await postOrganisation(OrganizationRequestBase);
+      try {
+        // update api
+        await patchOrganisation(model);
 
-      toast("Your organisation has been updated", {
-        type: "success",
-        toastId: "organisationRegistration",
-      });
-      setIsLoading(false);
+        toast("Your organisation has been updated", {
+          type: "success",
+          toastId: "patchOrganisation",
+        });
+        setIsLoading(false);
+      } catch (error) {
+        toast(<ApiErrors error={error} />, {
+          type: "error",
+          toastId: "patchOrganisation",
+          autoClose: false,
+          icon: false,
+        });
 
-      void router.push("/partner/success");
-    } catch (error) {
-      toast(<ApiErrors error={error as AxiosError} />, {
-        type: "error",
-        toastId: "organisationRegistration",
-        autoClose: false,
-        icon: false,
-      });
+        captureException(error);
+        setIsLoading(false);
 
-      captureException(error);
-      setIsLoading(false);
-
-      return;
-    }
-  }, [OrganizationRequestBase, setIsLoading]);
+        return;
+      }
+    },
+    [setIsLoading],
+  );
 
   // form submission handler
   const onSubmitStep = useCallback(
@@ -135,22 +137,18 @@ const RegisterOrganisation: NextPageWithLayout<{
 
       setOrganizationRequestBase(model);
 
-      await onSubmit();
+      await onSubmit(model);
       return;
     },
-    [, OrganizationRequestBase, onSubmit],
+    [OrganizationRequestBase, onSubmit],
   );
-
-  const handleCancel = () => {
-    router.back();
-  };
 
   return (
     <div className="container max-w-5xl">
       {isLoading && <Loading />}
 
       <div className="flex flex-col pt-8">
-        <h3 className="pl-16">Profile information</h3>
+        <h3 className="pl-16">Organisation information</h3>
 
         <div className="flex flex-col justify-center gap-2 p-8 md:flex-row">
           <ul className="menu rounded-box menu-horizontal h-40 w-full gap-2 bg-white p-4 md:menu-vertical md:max-w-[300px]">
@@ -183,14 +181,14 @@ const RegisterOrganisation: NextPageWithLayout<{
             </li>
           </ul>
           <div className="flex w-full flex-col rounded-lg bg-white p-8">
-            {/* organisation: {JSON.stringify(organisation)} */}
             {step == 1 && (
               <>
                 <div className="flex flex-col text-center">
                   <h2>Organisation details</h2>
                 </div>
                 <OrgInfoEdit
-                  organisation={OrganizationRequestBase}
+                  formData={OrganizationRequestBase}
+                  organisation={organisation}
                   onSubmit={(data) => onSubmitStep(2, data)}
                 />
               </>
@@ -202,10 +200,8 @@ const RegisterOrganisation: NextPageWithLayout<{
                 </div>
 
                 <OrgRolesEdit
-                  organisation={OrganizationRequestBase}
-                  onCancel={() => {
-                    setStep(1);
-                  }}
+                  formData={OrganizationRequestBase}
+                  organisation={organisation}
                   onSubmit={(data) => onSubmitStep(3, data)}
                 />
               </>

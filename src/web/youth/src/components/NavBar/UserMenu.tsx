@@ -87,7 +87,7 @@ export const UserMenu: React.FC = () => {
 
           <div className="divider m-0" />
 
-          {/* render all the organisations for the user via session.user.adminsOf */}
+          {/* organisations */}
           {session?.user?.adminsOf?.map((organisation) => (
             <Link
               key={organisation.id}

@@ -104,7 +104,7 @@ const RegisterOrganisation: NextPageWithLayout = () => {
         return;
       }
     },
-    [OrganizationRequestBase, setIsLoading],
+    [setIsLoading],
   );
 
   // form submission handler
@@ -148,7 +148,7 @@ const RegisterOrganisation: NextPageWithLayout = () => {
           </div>
 
           <OrgInfoEdit
-            organisation={OrganizationRequestBase}
+            formData={OrganizationRequestBase}
             onCancel={handleCancel}
             onSubmit={(data) => onSubmitStep(2, data)}
             cancelButtonText="Cancel"
@@ -172,7 +172,7 @@ const RegisterOrganisation: NextPageWithLayout = () => {
           </div>
 
           <OrgRolesEdit
-            organisation={OrganizationRequestBase}
+            formData={OrganizationRequestBase}
             onCancel={() => {
               setStep(1);
             }}

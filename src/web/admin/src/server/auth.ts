@@ -96,7 +96,7 @@ export const authOptions: NextAuthOptions = {
         const userProfile = await getYomaUserProfile(account.access_token!);
 
         return {
-          idToken: account.id_token,
+          //idToken: account.id_token,
           accessToken: account.accessToken,
           accessTokenExpires: account.expires_at,
           refreshToken: account.refresh_token,
@@ -120,7 +120,16 @@ export const authOptions: NextAuthOptions = {
     // eslint-disable-next-line
     async session({ session, token }) {
       if (token) {
+        // // get roles from access_token
+        // const { realm_access } = decode(token.accessToken); // eslint-disable-line
+
+        // // get user profile from yoma-api
+        // const userProfile = await getYomaUserProfile(token.accessToken!);
+
         session.user = token.user;
+        // session.user.roles = realm_access.roles; // eslint-disable-line
+        // session.user.adminsOf = userProfile?.adminsOf!;
+        // session.user.photoURL = userProfile?.photoURL!;
         session.accessToken = token.accessToken;
         session.error = token.error;
         session.expires = new Date(token.accessTokenExpires).toISOString();

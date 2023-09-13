@@ -11,7 +11,7 @@ import KeycloakProvider, {
   type KeycloakProfile,
 } from "next-auth/providers/keycloak";
 import { env } from "process";
-import { OrganizationInfo, UserProfile } from "~/api/models/user";
+import { type OrganizationInfo, type UserProfile } from "~/api/models/user";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -60,7 +60,7 @@ export const authOptions: NextAuthOptions = {
         const logOutUrl = new URL(
           `${issuerUrl}/protocol/openid-connect/logout`,
         );
-        logOutUrl.searchParams.set("id_token_hint", token.accessToken!);
+        logOutUrl.searchParams.set("id_token_hint", token.accessToken);
         await fetch(logOutUrl);
       }
       const url =
