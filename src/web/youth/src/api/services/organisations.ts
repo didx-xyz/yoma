@@ -103,7 +103,7 @@ export const getOrganisationById = async (
   /* eslint-disable */
   const { data } = context
     ? await ApiServer(context).get<Organization>(`/organization/${id}`)
-    : await ApiClient.get<Organization>(`/organization/${id}`);
+    : await (await ApiClient).get<Organization>(`/organization/${id}`);
   return data;
   /* eslint-enable */
 };
