@@ -61,7 +61,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                         DateCreated = o.DateCreated
                     }).OrderBy(o => o.DateCreated).ToList() : null,
                 Administrators = includeChildItems ?
-                    entity.Administrators.Select(o=> new Domain.Entity.Models.UserInfo
+                    entity.Administrators.Select(o => new Domain.Entity.Models.UserInfo
                     {
                         Id = o.UserId,
                         Email = o.User.Email,

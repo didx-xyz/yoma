@@ -178,7 +178,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
             if (string.IsNullOrWhiteSpace(role))
                 throw new ArgumentNullException(nameof(role));
 
-            if(!Constants.Roles_Supported.Contains(role, StringComparer.InvariantCultureIgnoreCase))
+            if (!Constants.Roles_Supported.Contains(role, StringComparer.InvariantCultureIgnoreCase))
                 throw new ArgumentOutOfRangeException(nameof(role), $"Role '{role}' is invalid");
 
             using var rolesApi = ApiClientFactory.Create<RoleContainerApi>(_httpClient);
