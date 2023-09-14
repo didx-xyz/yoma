@@ -17,5 +17,6 @@ users:
       yoma-realm:
         - view-users
         - manage-users
+        - view-realm
     notBefore: 0
     groups: []
