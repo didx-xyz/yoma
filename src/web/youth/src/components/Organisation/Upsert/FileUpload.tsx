@@ -5,6 +5,7 @@ import { FilePond, registerPlugin } from "react-filepond";
 import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
 // Import FilePond styles
 import "filepond/dist/filepond.min.css";
+//import "./FileUpload.module.css";
 
 // Import the Image EXIF Orientation and Image Preview plugins
 // Note: These need to be installed separately
@@ -35,22 +36,23 @@ export const FileUploader: React.FC<InputProps> = ({
   const [data, setFiles] = useState<any[]>(files);
 
   return (
-    <div>
-      <FilePond
-        files={data}
-        onupdatefiles={(data) => {
-          setFiles(data);
-          onUploadComplete && onUploadComplete(data);
-        }}
-        allowMultiple={allowMultiple}
-        dropOnPage
-        name="files"
-        dropValidation
-        acceptedFileTypes={fileTypes}
-        labelIdle='Drag & Drop your files or <span class="filepond--label-action">Browse</span>'
-        allowImageExifOrientation={true}
-      />
-    </div>
+    <FilePond
+      files={data}
+      onupdatefiles={(data) => {
+        setFiles(data);
+        onUploadComplete && onUploadComplete(data);
+      }}
+      allowMultiple={allowMultiple}
+      dropOnPage
+      name="files"
+      dropValidation
+      acceptedFileTypes={fileTypes}
+      //labelIdle='Drag & Drop your files or <span class="filepond--label-action">Browse</span>'
+      labelIdle='<span class="btn btn-sm btn-primary normal-case">Choose File</span>'
+      //={"-p-4 -m-4"}
+      allowImageExifOrientation={true}
+      credits={false}
+    />
   );
 };
 /* eslint-enable */

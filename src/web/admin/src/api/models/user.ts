@@ -82,3 +82,32 @@ export enum OrganizationProviderType {
   Education,
   Marketplace,
 }
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  emailConfirmed: boolean;
+  firstName: string;
+  surname: string;
+  displayName: string | null;
+  phoneNumber: string | null;
+  countryId: string | null;
+  countryOfResidenceId: string | null;
+  genderId: string | null;
+  dateOfBirth: string | null;
+  photoId: string | null;
+  photoURL: string | null;
+  dateLastLogin: string | null;
+  skills: Skill[] | null;
+  adminsOf: OrganizationInfo[];
+  zltoBalance: number;
+  opportunityCountSaved: number;
+  opportunityCountPending: number;
+  opportunityCountCompleted: number;
+}
+
+export interface Skill {
+  id: string;
+  name: string;
+  infoURL: string | null;
+}

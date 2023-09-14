@@ -3,8 +3,8 @@ import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import {
   type Organization,
-  type OrganizationCreateRequest,
   type OrganizationProviderType,
+  type OrganizationRequestBase,
 } from "../models/organisation";
 
 export const getOrganisationProviderTypes = async (
@@ -21,27 +21,32 @@ export const getOrganisationProviderTypes = async (
 };
 
 export const postOrganisation = async (
-  model: OrganizationCreateRequest,
+  model: OrganizationRequestBase,
 ): Promise<Organization> => {
   /* eslint-disable */
   // convert model to form data
   const formData = new FormData();
   for (const property in model) {
+    let propVal = (model as any)[property];
+
     if (property === "logo") {
       // send as first item in array
-      formData.append(property, (model as any)[property][0]);
+      formData.append(property, propVal ? propVal[0] : null);
     } else if (
+      property === "providerTypes" ||
+      property === "adminEmails" ||
       property === "registrationDocuments" ||
       property === "educationProviderDocuments" ||
       property === "businessDocuments" ||
-      property === "providerTypes" ||
-      property === "adminAdditionalEmails"
+      property === "registrationDocumentsDelete" ||
+      property === "educationProviderDocumentsDelete" ||
+      property === "businessDocumentsDelete"
     ) {
       // send as multiple items in form data
-      for (const file of (model as any)[property]) {
+      for (const file of propVal) {
         formData.append(property, file);
       }
-    } else formData.append(property, (model as any)[property]);
+    } else formData.append(property, propVal);
   }
   /* eslint-enable */
 
@@ -53,16 +58,52 @@ export const postOrganisation = async (
   return data;
 };
 
-// export const uploadOrganisationImage = async (
-//   organisationId: string,
-//   model: ImageRequestDto,
-// ): Promise<OrganisationResponseDto> => {
-//   const { data } = await ApiClient.post<ApiResponse<OrganisationResponseDto>>(
-//     `/organisations/${organisationId}/logo`,
-//     model,
-//     { headers: { "Content-Type": "multipart/form-data" } },
-//   );
+export const patchOrganisation = async (
+  model: OrganizationRequestBase,
+): Promise<Organization> => {
+  /* eslint-disable */
+  // convert model to form data
+  const formData = new FormData();
+  for (const property in model) {
+    let propVal = (model as any)[property];
 
-//   if (!data.meta.success) throw new Error(data.meta.message);
-//   return data.data;
-// };
+    if (property === "logo") {
+      // send as first item in array
+      formData.append(property, propVal ? propVal[0] : null);
+    } else if (
+      property === "providerTypes" ||
+      property === "adminEmails" ||
+      property === "registrationDocuments" ||
+      property === "educationProviderDocuments" ||
+      property === "businessDocuments" ||
+      property === "registrationDocumentsDelete" ||
+      property === "educationProviderDocumentsDelete" ||
+      property === "businessDocumentsDelete"
+    ) {
+      // send as multiple items in form data
+      for (const file of propVal) {
+        formData.append(property, file);
+      }
+    } else formData.append(property, propVal);
+  }
+  /* eslint-enable */
+
+  const { data } = await (
+    await ApiClient
+  ).patch<Organization>("/organization", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+};
+
+export const getOrganisationById = async (
+  id: string,
+  context?: GetServerSidePropsContext,
+): Promise<Organization> => {
+  /* eslint-disable */
+  const { data } = context
+    ? await ApiServer(context).get<Organization>(`/organization/${id}`)
+    : await (await ApiClient).get<Organization>(`/organization/${id}`);
+  return data;
+  /* eslint-enable */
+};
