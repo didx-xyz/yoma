@@ -52,15 +52,15 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Search for organizations based on the supplied filter (Admin role required)")]
+        [SwaggerOperation(Summary = "Search for organizations based on the supplied filter")]
         [HttpPost("search")]
         [ProducesResponseType(typeof(OrganizationSearchResults), (int)HttpStatusCode.OK)]
-        [Authorize(Roles = Constants.Role_Admin)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult Search([FromBody] OrganizationSearchFilter filter)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
-            var result = _organizationService.Search(filter);
+            var result = _organizationService.Search(filter, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(Search));
 

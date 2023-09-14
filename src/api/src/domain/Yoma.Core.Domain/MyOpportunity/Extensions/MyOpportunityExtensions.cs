@@ -4,9 +4,9 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity;
 
-namespace Yoma.Core.Domain.MyOpportunity.Helpers
+namespace Yoma.Core.Domain.MyOpportunity.Extensions
 {
-    public static class MyOpportunityHelper
+    public static class MyOpportunityExtensions
     {
         public static MyOpportunityInfo ToInfo(this Models.MyOpportunity value)
         {

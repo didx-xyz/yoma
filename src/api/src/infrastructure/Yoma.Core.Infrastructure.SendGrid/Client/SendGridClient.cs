@@ -31,7 +31,7 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
 
         #region Public Members
         public async Task Send<T>(EmailType type, List<EmailRecipient> recipients, T data)
-            where T : EmailDataBase
+            where T : EmailBase
         {
             if (recipients == null || !recipients.Any())
                 throw new ArgumentNullException(nameof(recipients));
@@ -48,16 +48,16 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
             var msg = new SendGridMessage
             {
                 TemplateId = _options.Templates[type.ToString()],
-                From = new EmailAddress(_options.From.Name, _options.From.Email),
+                From = new EmailAddress(_options.From.Email, _options.From.Name),
                 Personalizations = ProcessRecipients(recipients, data)
             };
 
-            if (_options.ReplyTo != null) msg.ReplyTo = new EmailAddress(_options.ReplyTo.Name, _options.ReplyTo.Email);
+            if (_options.ReplyTo != null) msg.ReplyTo = new EmailAddress(_options.ReplyTo.Email, _options.ReplyTo.Name);
 
             var response = await _sendGridClient.SendEmailAsync(msg);
             if (response.IsSuccessStatusCode) return;
 
-            string responseBody = await response.Body.ReadAsStringAsync();
+            var responseBody = await response.Body.ReadAsStringAsync();
             var errorResponse = JsonConvert.DeserializeObject<SendGridErrorResponse>(responseBody)
                 ?? throw new HttpClientException(response.StatusCode, "Failed to send email: Reason unknown");
 
@@ -66,20 +66,22 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
         #endregion
 
         #region Private Members
-        private static List<Personalization> ProcessRecipients<T>(List<EmailRecipient> recipients, T data)
-            where T : EmailDataBase
+        private List<Personalization> ProcessRecipients<T>(List<EmailRecipient> recipients, T data)
+            where T : EmailBase
         {
             var result = new List<Personalization>();
 
             foreach (var recipient in recipients)
             {
+                data.RecipientDisplayName = string.IsNullOrEmpty(recipient.DisplayName) ? recipient.Email : recipient.DisplayName;
+
                 var item = new Personalization
                 {
                     Tos = new List<EmailAddress>(),
                     TemplateData = data
                 };
 
-                item.Tos.Add(new EmailAddress(recipient.DisplayName, recipient.Email));
+                item.Tos.Add(new EmailAddress(recipient.Email, recipient.DisplayName));
                 result.Add(item);
             }
 

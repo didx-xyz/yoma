@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;

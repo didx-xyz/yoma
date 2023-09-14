@@ -15,7 +15,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         List<Organization> Contains(string value);
 
-        OrganizationSearchResults Search(OrganizationSearchFilter filter);
+        OrganizationSearchResults Search(OrganizationSearchFilter filter, bool ensureOrganizationAuthorization);
 
         Task<Organization> Create(OrganizationRequestCreate request);
 
@@ -37,7 +37,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         bool IsAdminsOf(List<Guid> ids, bool throwUnauthorized);
 
-        List<UserInfo> ListAdmins(Guid id, bool ensureOrganizationAuthorization);
+        List<UserInfo>? ListAdmins(Guid id, bool ensureOrganizationAuthorization);
 
         List<OrganizationInfo> ListAdminsOf();
 
