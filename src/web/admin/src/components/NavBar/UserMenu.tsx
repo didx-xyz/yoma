@@ -1,17 +1,17 @@
 import { useAtomValue } from "jotai";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { IoMdPerson } from "react-icons/io";
 import ReactModal from "react-modal";
 import { shimmer, toBase64 } from "~/lib/image";
-import { navbarColorAtom } from "~/lib/store";
+import { navbarColorAtom, userProfileAtom } from "~/lib/store";
 
 export const UserMenu: React.FC = () => {
   const navbarColor = useAtomValue(navbarColorAtom);
   const [userMenuVisible, setUserMenuVisible] = useState(false);
-  const { data: session } = useSession();
+  const userProfile = useAtomValue(userProfileAtom);
 
   const handleLogout = () => {
     signOut();
@@ -34,10 +34,10 @@ export const UserMenu: React.FC = () => {
           {/* )} */}
 
           {/* EXISTING IMAGE */}
-          {session?.user?.photoURL && (
+          {userProfile?.photoURL && (
             <>
               <Image
-                src={session?.user?.photoURL}
+                src={userProfile?.photoURL}
                 alt="User Logo"
                 width={44}
                 height={44}
@@ -80,17 +80,26 @@ export const UserMenu: React.FC = () => {
 
           <div className="divider m-0" />
 
-          {/* render all the organisations for the user via session.user.adminsOf */}
-          {session?.user?.adminsOf?.map((organisation) => (
+          {/* organisations */}
+          {userProfile?.adminsOf?.map((organisation) => (
             <Link
               key={organisation.id}
               href={`/organisations/${organisation.id}`}
               className="px-7 py-3 text-white hover:brightness-50"
             >
-              {organisation.name}
+              <div className="flex flex-row items-center gap-4 rounded-lg bg-emerald-400 p-2">
+                {organisation.logoURL && (
+                  <Image
+                    src={organisation.logoURL!}
+                    alt={`${organisation.name} logo`}
+                    width={30}
+                    height={30}
+                  />
+                )}
+                {organisation.name}
+              </div>
             </Link>
           ))}
-
           <button
             className="px-7 py-3 text-left text-white hover:brightness-50"
             onClick={handleLogout}

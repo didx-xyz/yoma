@@ -53,7 +53,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-const RegisterOrganisation: NextPageWithLayout<{
+const OrganisationUpdate: NextPageWithLayout<{
   id: string;
   user: User | null;
 }> = ({ id, user }) => {
@@ -225,8 +225,8 @@ const RegisterOrganisation: NextPageWithLayout<{
   );
 };
 
-RegisterOrganisation.getLayout = function getLayout(page: ReactElement) {
+OrganisationUpdate.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(RegisterOrganisation);
+export default withAuth(OrganisationUpdate);

@@ -41,7 +41,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-const RegisterOrganisation: NextPageWithLayout = () => {
+const OrganisationCreate: NextPageWithLayout = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
 
@@ -208,8 +208,8 @@ const RegisterOrganisation: NextPageWithLayout = () => {
   );
 };
 
-RegisterOrganisation.getLayout = function getLayout(page: ReactElement) {
+OrganisationCreate.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(RegisterOrganisation);
+export default withAuth(OrganisationCreate);

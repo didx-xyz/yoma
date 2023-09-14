@@ -11,7 +11,6 @@ import KeycloakProvider, {
   type KeycloakProfile,
 } from "next-auth/providers/keycloak";
 import { env } from "process";
-import { type OrganizationInfo, type UserProfile } from "~/api/models/user";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -28,8 +27,8 @@ declare module "next-auth" {
 }
 export interface User extends DefaultUser {
   roles: string[];
-  adminsOf: OrganizationInfo[];
-  photoURL: string | null;
+  //adminsOf: OrganizationInfo[];
+  //photoURL: string | null;
 }
 declare module "next-auth/jwt" {
   /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
@@ -93,7 +92,7 @@ export const authOptions: NextAuthOptions = {
         const { realm_access } = decode(account.access_token); // eslint-disable-line
 
         // get user profile from yoma-api
-        const userProfile = await getYomaUserProfile(account.access_token!);
+        //const userProfile = await getYomaUserProfile(account.access_token!);
 
         return {
           accessToken: account.accessToken,
@@ -102,8 +101,6 @@ export const authOptions: NextAuthOptions = {
           user: {
             ...user,
             roles: realm_access.roles, // eslint-disable-line
-            adminsOf: userProfile?.adminsOf,
-            photoURL: userProfile?.photoURL,
           },
         };
       }
@@ -152,26 +149,26 @@ const decode = function (token: any) {
   return JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
 };
 
-async function getYomaUserProfile(
-  access_token: string,
-): Promise<UserProfile | null> {
-  const response = await fetch(`${env.API_BASE_URL}/user`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${access_token}`,
-    },
-    method: "GET",
-  });
+// async function getYomaUserProfile(
+//   access_token: string,
+// ): Promise<UserProfile | null> {
+//   const response = await fetch(`${env.API_BASE_URL}/user`, {
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${access_token}`,
+//     },
+//     method: "GET",
+//   });
 
-  if (!response.ok) {
-    console.error(
-      "Failed to get user profile from yoma-api: " + response.statusText,
-    );
-    return null;
-  }
+//   if (!response.ok) {
+//     console.error(
+//       "Failed to get user profile from yoma-api: " + response.statusText,
+//     );
+//     return null;
+//   }
 
-  return await response.json(); // eslint-disable-line
-}
+//   return await response.json(); // eslint-disable-line
+// }
 
 /**
  * Takes a token, and returns a new token with updated

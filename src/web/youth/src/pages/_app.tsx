@@ -10,6 +10,7 @@ import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import type { AppProps } from "next/app";
 import { Open_Sans } from "next/font/google";
+import { useRouter } from "next/router";
 import type { ReactElement, ReactNode } from "react";
 import { useState } from "react";
 import ReactModal from "react-modal";
@@ -27,23 +28,6 @@ const openSans = Open_Sans({
   subsets: ["latin"],
   variable: "--font-open-sans",
 });
-
-//
-// React FilePond
-// import { registerPlugin } from "react-filepond";
-
-// // Import FilePond styles
-// import "filepond/dist/filepond.min.css";
-
-// // Import the Image EXIF Orientation and Image Preview plugins
-// // Note: These need to be installed separately
-// // `npm i filepond-plugin-image-preview filepond-plugin-image-exif-orientation --save`
-// import FilePondPluginImageExifOrientation from "filepond-plugin-image-exif-orientation";
-// import FilePondPluginImagePreview from "filepond-plugin-image-preview";
-// import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
-
-// Register the plugins
-//registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 
 // Make sure to bind modal to your appElement (https://reactcommunity.org/react-modal/accessibility/)
 // needed so screen readers don't see main content when modal is opened
@@ -63,6 +47,10 @@ const MyApp = ({
   Component,
   pageProps,
 }: AppPropsWithLayout<{ session: Session; dehydratedState: object }>) => {
+  // see https://flaviocopes.com/nextjs-refresh-state-navigation/
+  // when the state of a component is not refreshed when navigating between pages
+  const router = useRouter();
+
   // This ensures that data is not shared
   // between different users and requests
   const [queryClient] = useState(() => new QueryClient(config));
@@ -89,7 +77,7 @@ const MyApp = ({
                   <Global />
                   <Navbar />
 
-                  {getLayout(<Component {...pageProps} />)}
+                  {getLayout(<Component {...pageProps} key={router.asPath} />)}
 
                   <ToastContainer
                     containerId="toastContainer"
