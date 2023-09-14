@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.Core.Models
     {
         public const string Section = nameof(AppSettings);
 
+        public string AppBaseURL { get; set; }
+
         public AppSettingsCredentials Hangfire { get; set; }
 
         public string AuthorizationPolicyScope { get; set; }

@@ -18,7 +18,7 @@ namespace Yoma.Core.Infrastructure.SendGrid
         {
             var options = configuration.GetSection(SendGridOptions.Section).Get<SendGridOptions>()
                 ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{SendGridOptions.Section}'");
-            services.AddSendGrid(options => { options.ApiKey = options.ApiKey; });
+            services.AddSendGrid(o => { o.ApiKey = options.ApiKey; });
 
             services.AddScoped<IEmailProviderClientFactory, SendGridClientFactory>();
         }

@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Http;
-using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Exceptions;
 
 namespace Yoma.Core.Domain.Core.Validators
@@ -46,7 +46,7 @@ namespace Yoma.Core.Domain.Core.Validators
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
 
-            if (!extensions.Contains(FileHelper.GetExtension(file), StringComparer.InvariantCultureIgnoreCase))
+            if (!extensions.Contains(file.GetExtension(), StringComparer.InvariantCultureIgnoreCase))
                 throw new BusinessException($"Only supports file formats '{string.Join(", ", extensions)}'");
 
             if (file.Length > maxSizeBytes)

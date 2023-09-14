@@ -5,6 +5,6 @@ namespace Yoma.Core.Domain.EmailProvider.Interfaces
     public interface IEmailProviderClient
     {
         Task Send<T>(EmailType type, List<EmailRecipient> recipients, T data)
-            where T : EmailDataBase;
+            where T : EmailBase;
     }
 }

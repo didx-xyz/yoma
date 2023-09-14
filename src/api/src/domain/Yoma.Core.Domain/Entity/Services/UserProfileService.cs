@@ -4,7 +4,6 @@ using System.Transactions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Extensions;
-using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Entity.Validators;

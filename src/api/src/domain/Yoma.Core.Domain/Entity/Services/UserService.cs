@@ -9,7 +9,6 @@ using FluentValidation;
 using System.Transactions;
 using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
-using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core;
 

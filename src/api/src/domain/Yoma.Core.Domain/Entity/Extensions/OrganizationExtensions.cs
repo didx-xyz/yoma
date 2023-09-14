@@ -1,8 +1,8 @@
 using Yoma.Core.Domain.Entity.Models;
 
-namespace Yoma.Core.Domain.Entity.Helpers
+namespace Yoma.Core.Domain.Entity.Extensions
 {
-    public static class OrganizationHelper
+    public static class OrganizationExtensions
     {
         public static OrganizationInfo ToInfo(this Organization value)
         {

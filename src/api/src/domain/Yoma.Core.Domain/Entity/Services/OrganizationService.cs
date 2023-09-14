@@ -12,19 +12,29 @@ using Yoma.Core.Domain.Entity.Validators;
 using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Opportunity;
-using Yoma.Core.Domain.Entity.Helpers;
+using Yoma.Core.Domain.EmailProvider.Interfaces;
+using Yoma.Core.Domain.EmailProvider.Models;
+using Microsoft.Extensions.Options;
+using Flurl;
+using Yoma.Core.Domain.Entity.Extensions;
+using Yoma.Core.Domain.IdentityProvider.Helpers;
+using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
     public class OrganizationService : IOrganizationService
     {
         #region Class Variables
+        private readonly ILogger<OrganizationService> _logger;
+        private readonly AppSettings _appSettings;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUserService _userService;
         private readonly IIdentityProviderClient _identityProviderClient;
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IOrganizationProviderTypeService _providerTypeService;
         private readonly IBlobService _blobService;
+        private readonly IEmailProviderClient _emailProviderClient;
         private readonly OrganizationRequestValidatorCreate _organizationCreateRequestValidator;
         private readonly OrganizationRequestValidatorUpdate _organizationUpdateRequestValidator;
         private readonly OrganizationSearchFilterValidator _organizationSearchFilterValidator;
@@ -42,12 +52,15 @@ namespace Yoma.Core.Domain.Entity.Services
         #endregion
 
         #region Constructor
-        public OrganizationService(IHttpContextAccessor httpContextAccessor,
+        public OrganizationService(ILogger<OrganizationService> logger,
+            IOptions<AppSettings> appSettings,
+            IHttpContextAccessor httpContextAccessor,
             IUserService userService,
             IIdentityProviderClientFactory identityProviderClientFactory,
             IOrganizationStatusService organizationStatusService,
             IOrganizationProviderTypeService providerTypeService,
             IBlobService blobService,
+            IEmailProviderClientFactory emailProviderClientFactory,
             OrganizationRequestValidatorCreate organizationCreateRequestValidator,
             OrganizationRequestValidatorUpdate organizationUpdateRequestValidator,
             OrganizationSearchFilterValidator organizationSearchFilterValidator,
@@ -57,12 +70,15 @@ namespace Yoma.Core.Domain.Entity.Services
             IRepository<Models.OrganizationProviderType> organizationProviderTypeRepository,
             IRepository<OrganizationDocument> organizationDocumentRepository)
         {
+            _logger = logger;
+            _appSettings = appSettings.Value;
             _httpContextAccessor = httpContextAccessor;
             _userService = userService;
             _identityProviderClient = identityProviderClientFactory.CreateClient();
             _organizationStatusService = organizationStatusService;
             _providerTypeService = providerTypeService;
             _blobService = blobService;
+            _emailProviderClient = emailProviderClientFactory.CreateClient();
             _organizationCreateRequestValidator = organizationCreateRequestValidator;
             _organizationUpdateRequestValidator = organizationUpdateRequestValidator;
             _organizationSearchFilterValidator = organizationSearchFilterValidator;
@@ -106,7 +122,6 @@ namespace Yoma.Core.Domain.Entity.Services
 
             result.LogoURL = GetBlobObjectURL(result.LogoId);
             result.Documents?.ForEach(o => o.Url = _blobService.GetURL(o.FileId));
-            result.Administrators = ListAdmins(result);
 
             return result;
         }
@@ -122,7 +137,6 @@ namespace Yoma.Core.Domain.Entity.Services
 
             result.LogoURL = GetBlobObjectURL(result.LogoId);
             result.Documents?.ForEach(o => o.Url = _blobService.GetURL(o.FileId));
-            result.Administrators = ListAdmins(result);
 
             return result;
         }
@@ -136,7 +150,7 @@ namespace Yoma.Core.Domain.Entity.Services
             return _organizationRepository.Contains(_organizationRepository.Query(), value).ToList();
         }
 
-        public OrganizationSearchResults Search(OrganizationSearchFilter filter)
+        public OrganizationSearchResults Search(OrganizationSearchFilter filter, bool ensureOrganizationAuthorization)
         {
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
@@ -144,6 +158,12 @@ namespace Yoma.Core.Domain.Entity.Services
             _organizationSearchFilterValidator.ValidateAndThrow(filter);
 
             var query = _organizationRepository.Query();
+
+            if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+            {
+                var organizationIds = ListAdminsOf().Select(o => o.Id).ToList();
+                query = query.Where(o => organizationIds.Contains(o.Id));
+            }
 
             if (filter.Statuses != null)
             {
@@ -257,7 +277,7 @@ namespace Yoma.Core.Domain.Entity.Services
                     blobObjects.AddRange(resultDocuments.ItemsAdded);
                 }
 
-                //TODO: Send email to SAP admins
+                await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Requested);
 
                 scope.Complete();
             }
@@ -418,7 +438,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             await _organizationRequestUpdateStatusValidator.ValidateAndThrowAsync(request);
 
-            var result = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, true, ensureOrganizationAuthorization);
 
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
 
@@ -432,9 +452,10 @@ namespace Yoma.Core.Domain.Entity.Services
 
                     if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
-                    //TODO: Send email to org admins
-
                     result.CommentApproval = request.Comment;
+
+                    await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Approved);
+
                     break;
 
                 case OrganizationStatus.Inactive:
@@ -445,7 +466,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
                     if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
-                    //TODO: Send email to SAP admins
+                    await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Requested);
                     break;
 
                 case OrganizationStatus.Declined:
@@ -456,9 +477,10 @@ namespace Yoma.Core.Domain.Entity.Services
 
                     if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
-                    //TODO: Send email to org admins
-
                     result.CommentApproval = request.Comment;
+
+                    await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Declined);
+
                     break;
 
                 case OrganizationStatus.Deleted:
@@ -599,10 +621,10 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
-        public List<UserInfo> ListAdmins(Guid id, bool ensureOrganizationAuthorization)
+        public List<UserInfo>? ListAdmins(Guid id, bool ensureOrganizationAuthorization)
         {
-            var org = GetById(id, false, ensureOrganizationAuthorization);
-            return ListAdmins(org);
+            var org = GetById(id, true, ensureOrganizationAuthorization);
+            return org.Administrators;
         }
 
         public List<OrganizationInfo> ListAdminsOf()
@@ -610,21 +632,13 @@ namespace Yoma.Core.Domain.Entity.Services
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
             var orgIds = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).Select(o => o.OrganizationId).ToList();
 
-            var results = _organizationRepository.Query().Where(o => orgIds.Contains(o.Id)).ToList();
-            return results.Select(o => o.ToInfo()).ToList();
+            var organizations = _organizationRepository.Query().Where(o => orgIds.Contains(o.Id)).ToList();
+            organizations.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId));
+            return organizations.Select(o => o.ToInfo()).ToList();
         }
         #endregion
 
         #region Private Members
-        private List<UserInfo> ListAdmins(Organization organization)
-        {
-            var adminIds = _organizationUserRepository.Query().Where(o => o.OrganizationId == organization.Id).Select(o => o.UserId).ToList();
-
-            var results = new List<User>();
-            adminIds.ForEach(o => results.Add(_userService.GetById(o, false)));
-            return results.Select(o => o.ToInfo()).ToList();
-        }
-
         private bool IsAdmin(Organization organization, bool throwUnauthorized)
         {
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
@@ -676,7 +690,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 organization.Status = OrganizationStatus.Inactive;
                 await _organizationRepository.Update(organization);
 
-                //TODO: Send email to SAP admins
+                await SendEmail(organization, EmailProvider.EmailType.Organization_Approval_Requested);
             }
 
             scope.Complete();
@@ -910,6 +924,54 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             if (!Statuses_Updatable.Contains(organization.Status))
                 throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+        }
+
+        private async Task SendEmail(Organization organization, EmailProvider.EmailType type)
+        {
+            List<EmailRecipient>? recipients = null;
+            try
+            {
+                var dataOrg = new EmailOrganizationApprovalItem { Name = organization.Name };
+                switch (type)
+                {
+                    case EmailProvider.EmailType.Organization_Approval_Requested:
+                        //send email to super administrators
+                        var superAdmins = await _identityProviderClient.ListByRole(Constants.Role_Admin);
+                        recipients = superAdmins?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.ToDisplayName() }).ToList();
+
+                        dataOrg.URL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(organization.Id).AppendPathSegment("verify").ToUri().ToString();
+                        break;
+
+                    case EmailProvider.EmailType.Organization_Approval_Approved:
+                    case EmailProvider.EmailType.Organization_Approval_Declined:
+                        //send email to organization administrators
+                        recipients = organization.Administrators?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList();
+
+                        dataOrg.Comment = organization.CommentApproval;
+                        dataOrg.URL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(organization.Id).ToUri().ToString();
+                        break;
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
+                }
+
+                if (recipients == null || !recipients.Any()) return;
+
+                var data = new EmailOrganizationApproval
+                {
+                    Organizations = new List<EmailOrganizationApprovalItem>() { dataOrg }
+                };
+
+                await _emailProviderClient.Send(type, recipients, data);
+
+                _logger.LogInformation("Successfully send '{emailType}' email to '{recipients}'", type,
+                    string.Join(",", recipients.Select(o => o.Email)));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send '{emailType}' email  to '{recipients}'", type,
+                    recipients == null || !recipients.Any() ? "n/a" : string.Join(",", recipients.Select(o => o.Email)));
+            }
         }
         #endregion
     }

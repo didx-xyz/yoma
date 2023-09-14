@@ -11,6 +11,7 @@ using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.IdentityProvider.Models;
 using Yoma.Core.Infrastructure.Keycloak.Models;
+using Yoma.Core.Infrastructure.Keycloak.Extensions;
 
 namespace Yoma.Core.Infrastructure.Keycloak.Client
 {
@@ -77,25 +78,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
             if (kcUser == null) return null;
 
-            return new User
-            {
-                Id = Guid.Parse(kcUser.Id),
-                Username = kcUser.Username,
-                Email = kcUser.Email.Trim(),
-                FirstName = kcUser.FirstName.Trim(),
-                LastName = kcUser.LastName.Trim(),
-                PhoneNumber = kcUser.Attributes.Keys.Contains(CustomAttributes.PhoneNumber.ToDescription())
-                    ? kcUser.Attributes[CustomAttributes.PhoneNumber.ToDescription()].FirstOrDefault()?.Trim() : null,
-                Gender = kcUser.Attributes.Keys.Contains(CustomAttributes.Gender.ToDescription())
-                    ? kcUser.Attributes[CustomAttributes.Gender.ToDescription()].FirstOrDefault()?.Trim() : null,
-                CountryOfOrigin = kcUser.Attributes.Keys.Contains(CustomAttributes.CountryOfOrigin.ToDescription())
-                    ? kcUser.Attributes[CustomAttributes.CountryOfOrigin.ToDescription()].FirstOrDefault()?.Trim() : null,
-                CountryOfResidence = kcUser.Attributes.Keys.Contains(CustomAttributes.CountryOfResidence.ToDescription())
-                    ? kcUser.Attributes[CustomAttributes.CountryOfResidence.ToDescription()].FirstOrDefault()?.Trim() : null,
-                DateOfBirth = kcUser.Attributes.Keys.Contains(CustomAttributes.DateOfBirth.ToDescription())
-                    ? kcUser.Attributes[CustomAttributes.DateOfBirth.ToDescription()].FirstOrDefault()?.Trim() : null,
-                EmailVerified = kcUser.EmailVerified.HasValue && kcUser.EmailVerified.Value
-            };
+            return kcUser.ToUser();
         }
 
         public async Task UpdateUser(User user, bool resetPassword)
@@ -188,6 +171,21 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
             var roleRepresentations = roleRepresentationsExisting.RealmMappings.Where(o => roles.Contains(o.Name, StringComparer.InvariantCultureIgnoreCase)).ToList();
 
             await rolesMapperApi.PostUsersRoleMappingsRealmByIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString(), roleRepresentations);
+        }
+
+        public async Task<List<User>?> ListByRole(string role)
+        {
+            if (string.IsNullOrWhiteSpace(role))
+                throw new ArgumentNullException(nameof(role));
+
+            if(!Constants.Roles_Supported.Contains(role, StringComparer.InvariantCultureIgnoreCase))
+                throw new ArgumentOutOfRangeException(nameof(role), $"Role '{role}' is invalid");
+
+            using var rolesApi = ApiClientFactory.Create<RoleContainerApi>(_httpClient);
+
+            var kcUsers = await rolesApi.GetRolesUsersByRoleNameAsync(_keycloakAuthenticationOptions.Realm, role);
+
+            return kcUsers.Select(o => o.ToUser()).ToList();
         }
 
         public void Dispose()

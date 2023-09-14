@@ -81,5 +81,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
         public ICollection<OrganizationProviderType> ProviderTypes { get; set; }
 
         public ICollection<OrganizationDocument> Documents { get; set; }
+
+        public ICollection<OrganizationUser> Administrators { get; set; }
     }
 }

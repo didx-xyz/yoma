@@ -9,7 +9,6 @@ using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Extensions;
-using Yoma.Core.Domain.Opportunity.Helpers;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
