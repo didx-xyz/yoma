@@ -2,7 +2,7 @@ version: "3.9"
 name: yoma-v3
 services:
   yoma-web-admin:
-    image: ${REGISTRY:-local}/yoma-web-admin:${IMAGE_TAG:-latest}
+    image: ${REGISTRY:-local}/yoma-web-admin:${ADMIN_TAG:-latest}
     container_name: yoma-web-admin
     build:
       context: .

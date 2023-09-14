@@ -32,6 +32,7 @@ jobs:
         project:
           - api
           - youth
+          - admin
         include:
           - project: api
             dir: ./src/api
@@ -58,6 +59,25 @@ jobs:
               # Prettier
               prettier: true
               prettier_dir: ./src/web/youth
+              prettier_extensions: js,ts,tsx
+              prettier_args: --ignore-path ../../../.gitignore --config prettier.config.cjs
+            env:
+              SKIP_ENV_VALIDATION: true
+          - project: admin
+            dir: ./src/web/admin
+            lang: js
+            config:
+              auto_fix: false
+              continue_on_error: false
+              check_name: '${linter} (${dir})'
+              # ESLint
+              eslint: true
+              eslint_dir: ./src/web/admin
+              eslint_extensions: js,ts,tsx
+              eslint_args: --ignore-path ../../../.gitignore --config .eslintrc.cjs
+              # Prettier
+              prettier: true
+              prettier_dir: ./src/web/admin
               prettier_extensions: js,ts,tsx
               prettier_args: --ignore-path ../../../.gitignore --config prettier.config.cjs
             env:
@@ -119,6 +139,7 @@ jobs:
         image:
           - yoma-api
           - yoma-web-youth
+          - yoma-web-admin
         include:
           - image: yoma-api
             context: ./src/api
@@ -127,6 +148,11 @@ jobs:
           - image: yoma-web-youth
             context: ./src/web/youth
             file: ./src/web/youth/Dockerfile
+            buildArgs: |-
+              NEXT_PUBLIC_ENVIRONMENT=production
+          - image: yoma-web-admin
+            context: ./src/web/admin
+            file: ./src/web/admin/Dockerfile
             buildArgs: |-
               NEXT_PUBLIC_ENVIRONMENT=production
 
@@ -201,22 +227,28 @@ jobs:
               - './src/api/**'
             web-youth:
               - './src/web/youth/**'
+            web-admin:
+              - './src/web/admin/**'
 
       - name: Pre-pull images
         run: |-
           docker compose -f ./src/api/docker-compose.yml pull
           docker compose -f ./src/web/youth/docker-compose.yml pull
+          docker compose -f ./src/web/admin/docker-compose.yml pull
         env:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web-youth == 'true' && needs.build.outputs.image_version || 'latest' }}
+          ADMIN_TAG: ${{ steps.filter.outputs.web-admin == 'true' && needs.build.outputs.image_version || 'latest' }}
         continue-on-error: true
       - name: Start services
         run: |-
           docker compose -f ./src/api/docker-compose.yml up -d
           docker compose -f ./src/web/youth/docker-compose.yml up -d
+          docker compose -f ./src/web/admin/docker-compose.yml up -d
         env:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web-youth == 'true' && needs.build.outputs.image_version || 'latest' }}
+          ADMIN_TAG: ${{ steps.filter.outputs.web-admin == 'true' && needs.build.outputs.image_version || 'latest' }}
 
       - uses: actions/setup-node@v3
         with:
@@ -247,5 +279,8 @@ jobs:
       - name: Yoma Web Youth logs
         if: always()
         run: docker logs yoma-web-youth
+      - name: Yoma Web Admin logs
+        if: always()
+        run: docker logs yoma-web-admin
 
       - run: docker compose down -v

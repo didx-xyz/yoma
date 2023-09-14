@@ -4,3 +4,4 @@ name: yoma-v3
 include:
   - ./src/api/docker-compose.yml
   - ./src/web/youth/docker-compose.yml
+  - ./src/admin/youth/docker-compose.yml

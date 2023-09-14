@@ -22,3 +22,12 @@ updates:
       - javascript
       - dependencies
       - web/youth
+  # Maintain NPM dependencies for `web/admin`
+  - package-ecosystem: npm
+    directory: /src/web/admin
+    schedule:
+      interval: weekly
+    labels:
+      - javascript
+      - dependencies
+      - web/admin
