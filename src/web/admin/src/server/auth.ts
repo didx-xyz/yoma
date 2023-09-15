@@ -28,8 +28,6 @@ declare module "next-auth" {
 }
 export interface User extends DefaultUser {
   roles: string[];
-  adminsOf: OrganizationInfo[];
-  photoURL: string | null;
 }
 declare module "next-auth/jwt" {
   /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
@@ -92,19 +90,13 @@ export const authOptions: NextAuthOptions = {
         // get roles from access_token
         const { realm_access } = decode(account.access_token); // eslint-disable-line
 
-        // get user profile from yoma-api
-        const userProfile = await getYomaUserProfile(account.access_token!);
-
         return {
-          //idToken: account.id_token,
           accessToken: account.accessToken,
           accessTokenExpires: account.expires_at,
           refreshToken: account.refresh_token,
           user: {
             ...user,
             roles: realm_access.roles, // eslint-disable-line
-            adminsOf: userProfile?.adminsOf,
-            photoURL: userProfile?.photoURL,
           },
         };
       }
@@ -161,27 +153,6 @@ const decode = function (token: any) {
   // eslint-disable-next-line
   return JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
 };
-
-async function getYomaUserProfile(
-  access_token: string,
-): Promise<UserProfile | null> {
-  const response = await fetch(`${env.API_BASE_URL}/user`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${access_token}`,
-    },
-    method: "GET",
-  });
-
-  if (!response.ok) {
-    console.error(
-      "Failed to get user profile from yoma-api: " + response.statusText,
-    );
-    return null;
-  }
-
-  return await response.json(); // eslint-disable-line
-}
 
 /**
  * Takes a token, and returns a new token with updated
