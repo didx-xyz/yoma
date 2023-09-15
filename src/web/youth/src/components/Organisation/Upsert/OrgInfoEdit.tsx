@@ -294,8 +294,9 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
                 <img
                   className="rounded-lg object-contain shadow-lg"
                   alt="logo"
-                  width={80}
-                  height={80}
+                  width={100}
+                  height={100}
+                  style={{ width: 100, height: 100 }}
                   src={logoExisting}
                 />
               </div>

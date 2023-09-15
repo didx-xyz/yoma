@@ -6,6 +6,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public Guid UserId { get; set; }
 
+        public string UserEmail { get; set; }
+
         public string? UserDisplayName { get; set; }
 
         public Guid OpportunityId { get; set; }

@@ -167,228 +167,244 @@ const Settings: NextPageWithLayout<{
   };
 
   return (
-    <div className="container max-w-md">
+    <div className="container max-w-5xl px-2 py-8">
       {isLoading && <Loading />}
-      <h1 className="bold text-center text-2xl">User Settings</h1>
-      <form
-        onSubmit={handleSubmit(onSubmit)} // eslint-disable-line @typescript-eslint/no-misused-promises
-        className="gap-2x flex flex-col"
-      >
-        <div className="form-control">
-          <label className="label font-bold">
-            <span className="label-text">Email</span>
-          </label>
-          <input
-            type="text"
-            className="input input-bordered w-full"
-            {...register("email")}
-          />
-          {errors.email && (
-            <label className="label font-bold">
-              <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.email.message}`}
-              </span>
-            </label>
-          )}
-        </div>
 
-        <div className="form-control">
-          <label className="label font-bold">
-            <span className="label-text">First name</span>
-          </label>
-          <input
-            type="text"
-            className="input input-bordered"
-            {...register("firstName")}
-          />
-          {errors.firstName && (
-            <label className="label font-bold">
-              <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.firstName.message}`}
-              </span>
-            </label>
-          )}
-        </div>
+      <h2 className="pb-8 font-bold">User Settings</h2>
 
-        <div className="form-control">
-          <label className="label font-bold">
-            <span className="label-text">Last name</span>
-          </label>
-          <input
-            type="text"
-            className="input input-bordered"
-            {...register("surname")}
-          />
-          {errors.surname && (
-            <label className="label font-bold">
-              <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.surname.message}`}
-              </span>
-            </label>
-          )}
-        </div>
-
-        <div className="form-control">
-          <label className="label font-bold">
-            <span className="label-text">Display name</span>
-          </label>
-          <input
-            type="text"
-            className="input input-bordered"
-            {...register("displayName")}
-          />
-          {errors.displayName && (
-            <label className="label font-bold">
-              <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.displayName.message}`}
-              </span>
-            </label>
-          )}
-        </div>
-
-        <div className="form-control">
-          <label className="label font-bold">
-            <span className="label-text">Phone Number</span>
-          </label>
-          <input
-            type="text"
-            className="input input-bordered"
-            {...register("phoneNumber")}
-          />
-          {errors.phoneNumber && (
-            <label className="label font-bold">
-              <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.phoneNumber.message}`}
-              </span>
-            </label>
-          )}
-        </div>
-
-        <div className="form-control">
-          <label className="label font-bold">
-            <span className="label-text">Country</span>
-          </label>
-          <select className="select select-bordered" {...register("countryId")}>
-            <option value="">Please select</option>
-            {countries?.map((country) => (
-              <option key={country.id} value={country.id}>
-                {country.name}
-              </option>
-            ))}
-          </select>
-          {errors.countryId && (
-            <label className="label font-bold">
-              <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.countryId.message}`}
-              </span>
-            </label>
-          )}
-        </div>
-
-        <div className="form-control">
-          <label className="label font-bold">
-            <span className="label-text">Country Of Residence</span>
-          </label>
-          <select
-            className="select select-bordered"
-            {...register("countryOfResidenceId")}
+      {/* CONTENT */}
+      <div className="flex items-center justify-center">
+        <div className="flex w-full max-w-2xl flex-col rounded-lg bg-white p-8">
+          <form
+            onSubmit={handleSubmit(onSubmit)} // eslint-disable-line @typescript-eslint/no-misused-promises
+            className="gap-2x flex flex-col"
           >
-            <option value="">Please select</option>
-            {countries?.map((country) => (
-              <option key={country.id} value={country.id}>
-                {country.name}
-              </option>
-            ))}
-          </select>
-          {errors.countryOfResidenceId && (
-            <label className="label font-bold">
-              <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.countryOfResidenceId.message}`}
-              </span>
-            </label>
-          )}
-        </div>
+            <div className="form-control">
+              <label className="label font-bold">
+                <span className="label-text">Email</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                {...register("email")}
+              />
+              {errors.email && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                    {`${errors.email.message}`}
+                  </span>
+                </label>
+              )}
+            </div>
 
-        <div className="form-control">
-          <label className="label font-bold">
-            <span className="label-text">Gender</span>
-          </label>
-          <select className="select select-bordered" {...register("genderId")}>
-            <option value="">Please select</option>
-            {genders?.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-          {errors.genderId && (
-            <label className="label font-bold">
-              <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.genderId.message}`}
-              </span>
-            </label>
-          )}
-        </div>
+            <div className="form-control">
+              <label className="label font-bold">
+                <span className="label-text">First name</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered"
+                {...register("firstName")}
+              />
+              {errors.firstName && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                    {`${errors.firstName.message}`}
+                  </span>
+                </label>
+              )}
+            </div>
 
-        <div className="form-control">
-          <label className="label font-bold">
-            <span className="label-text">Date of Birth</span>
-          </label>
-          <input
-            type="date"
-            className="input input-bordered"
-            {...register("dateOfBirth")}
-          />
-          {errors.dateOfBirth && (
-            <label className="label font-bold">
-              <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.dateOfBirth.message}`}
-              </span>
-            </label>
-          )}
-        </div>
+            <div className="form-control">
+              <label className="label font-bold">
+                <span className="label-text">Last name</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered"
+                {...register("surname")}
+              />
+              {errors.surname && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                    {`${errors.surname.message}`}
+                  </span>
+                </label>
+              )}
+            </div>
 
-        <div className="form-control">
-          <label className="label cursor-pointer">
-            <span className="label-text">Reset Password</span>
-            <input
-              type="checkbox"
-              className="checkbox mr-2"
-              {...register("resetPassword")}
-            />
-          </label>
-          {errors.resetPassword && (
-            <label className="label font-bold">
-              <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${errors.resetPassword.message}`}
-              </span>
-            </label>
-          )}
-        </div>
+            <div className="form-control">
+              <label className="label font-bold">
+                <span className="label-text">Display name</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered"
+                {...register("displayName")}
+              />
+              {errors.displayName && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                    {`${errors.displayName.message}`}
+                  </span>
+                </label>
+              )}
+            </div>
 
-        <div className="my-4 flex items-center justify-center gap-2">
-          <button
-            type="button"
-            className="btn btn-warning btn-sm flex-grow"
-            onClick={handleCancel}
-          >
-            Cancel
-          </button>
-          <button type="submit" className="btn btn-success btn-sm flex-grow">
-            Submit
-          </button>
+            <div className="form-control">
+              <label className="label font-bold">
+                <span className="label-text">Phone Number</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered"
+                {...register("phoneNumber")}
+              />
+              {errors.phoneNumber && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                    {`${errors.phoneNumber.message}`}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            <div className="form-control">
+              <label className="label font-bold">
+                <span className="label-text">Country</span>
+              </label>
+              <select
+                className="select select-bordered"
+                {...register("countryId")}
+              >
+                <option value="">Please select</option>
+                {countries?.map((country) => (
+                  <option key={country.id} value={country.id}>
+                    {country.name}
+                  </option>
+                ))}
+              </select>
+              {errors.countryId && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                    {`${errors.countryId.message}`}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            <div className="form-control">
+              <label className="label font-bold">
+                <span className="label-text">Country Of Residence</span>
+              </label>
+              <select
+                className="select select-bordered"
+                {...register("countryOfResidenceId")}
+              >
+                <option value="">Please select</option>
+                {countries?.map((country) => (
+                  <option key={country.id} value={country.id}>
+                    {country.name}
+                  </option>
+                ))}
+              </select>
+              {errors.countryOfResidenceId && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                    {`${errors.countryOfResidenceId.message}`}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            <div className="form-control">
+              <label className="label font-bold">
+                <span className="label-text">Gender</span>
+              </label>
+              <select
+                className="select select-bordered"
+                {...register("genderId")}
+              >
+                <option value="">Please select</option>
+                {genders?.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+              {errors.genderId && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                    {`${errors.genderId.message}`}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            <div className="form-control">
+              <label className="label font-bold">
+                <span className="label-text">Date of Birth</span>
+              </label>
+              <input
+                type="date"
+                className="input input-bordered"
+                {...register("dateOfBirth")}
+              />
+              {errors.dateOfBirth && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                    {`${errors.dateOfBirth.message}`}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text">Reset Password</span>
+                <input
+                  type="checkbox"
+                  className="checkbox mr-2"
+                  {...register("resetPassword")}
+                />
+              </label>
+              {errors.resetPassword && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                    {`${errors.resetPassword.message}`}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            <div className="my-4 flex items-center justify-center gap-2">
+              <button
+                type="button"
+                className="btn btn-warning btn-sm flex-grow"
+                onClick={handleCancel}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-success btn-sm flex-grow"
+              >
+                Submit
+              </button>
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
     </div>
   );
 };

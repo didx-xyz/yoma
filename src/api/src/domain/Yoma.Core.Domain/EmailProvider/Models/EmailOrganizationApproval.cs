@@ -13,8 +13,11 @@ namespace Yoma.Core.Domain.EmailProvider.Models
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        [JsonProperty("comment")]
+        [JsonIgnore]
         public string? Comment { get; set; }
+
+        [JsonProperty("commentFormatted")]
+        public string? CommentFormatted => !string.IsNullOrEmpty(Comment) ? Comment : "No additional information";
 
         [JsonProperty("url")]
         public string URL { get; set; }

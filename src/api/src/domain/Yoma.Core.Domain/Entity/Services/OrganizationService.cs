@@ -19,7 +19,6 @@ using Flurl;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.IdentityProvider.Helpers;
 using Microsoft.Extensions.Logging;
-using System.Linq;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -277,8 +276,6 @@ namespace Yoma.Core.Domain.Entity.Services
                     blobObjects.AddRange(resultDocuments.ItemsAdded);
                 }
 
-                await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Requested);
-
                 scope.Complete();
             }
             catch
@@ -287,9 +284,10 @@ namespace Yoma.Core.Domain.Entity.Services
                 if (blobObjects.Any())
                     foreach (var blob in blobObjects)
                         await _blobService.Delete(blob.Key);
-
                 throw;
             }
+
+            await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Requested);
 
             return result;
         }
@@ -964,13 +962,11 @@ namespace Yoma.Core.Domain.Entity.Services
 
                 await _emailProviderClient.Send(type, recipients, data);
 
-                _logger.LogInformation("Successfully send '{emailType}' email to '{recipients}'", type,
-                    string.Join(",", recipients.Select(o => o.Email)));
+                _logger.LogInformation("Successfully send '{emailType}' email", type);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send '{emailType}' email  to '{recipients}'", type,
-                    recipients == null || !recipients.Any() ? "n/a" : string.Join(",", recipients.Select(o => o.Email)));
+                _logger.LogError(ex, "Failed to send '{emailType}' email", type);
             }
         }
         #endregion

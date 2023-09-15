@@ -93,3 +93,46 @@ export interface FormFile {
   name: string;
   fileName: string;
 }
+
+export interface OrganizationSearchFilter extends PaginationFilter {
+  valueContains: string | null;
+  statuses: Status[] | null;
+}
+
+export interface PaginationFilter {
+  pageNumber: number | null;
+  pageSize: number | null;
+}
+
+export enum Status {
+  Active,
+  Deleted,
+  Expired,
+  Inactive,
+}
+
+export interface OrganizationSearchResults {
+  totalCount: number | null;
+  items: OrganizationInfo[];
+}
+
+export interface OrganizationInfo {
+  id: string;
+  name: string;
+  tagline: string | null;
+  status: OrganizationStatus;
+  logoURL: string | null;
+}
+
+export interface OrganizationRequestUpdateStatus {
+  status: OrganizationStatus;
+  comment: string | null;
+}
+
+export interface UserInfo {
+  id: string;
+  email: string;
+  firstName: string;
+  surname: string;
+  displayName: string | null;
+}

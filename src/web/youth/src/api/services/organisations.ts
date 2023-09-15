@@ -1,22 +1,24 @@
 import { type GetServerSidePropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
-import {
-  type Organization,
-  type OrganizationProviderType,
-  type OrganizationRequestBase,
+import type {
+  Organization,
+  OrganizationProviderType,
+  OrganizationRequestBase,
+  OrganizationRequestUpdateStatus,
+  OrganizationSearchFilter,
+  OrganizationSearchResults,
+  UserInfo,
 } from "../models/organisation";
 
 export const getOrganisationProviderTypes = async (
   context?: GetServerSidePropsContext,
 ): Promise<OrganizationProviderType[]> => {
-  const { data } = context
-    ? await ApiServer(context).get<OrganizationProviderType[]>(
-        "/organization/lookup/providerType",
-      )
-    : await (
-        await ApiClient
-      ).get<OrganizationProviderType[]>("/organization/lookup/providerType");
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<OrganizationProviderType[]>(
+    "/organization/lookup/providerType",
+  );
   return data;
 };
 
@@ -100,10 +102,38 @@ export const getOrganisationById = async (
   id: string,
   context?: GetServerSidePropsContext,
 ): Promise<Organization> => {
-  /* eslint-disable */
-  const { data } = context
-    ? await ApiServer(context).get<Organization>(`/organization/${id}`)
-    : await (await ApiClient).get<Organization>(`/organization/${id}`);
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<Organization>(`/organization/${id}`);
   return data;
-  /* eslint-enable */
+};
+
+export const getOrganisations = async (
+  filter: OrganizationSearchFilter,
+  context?: GetServerSidePropsContext,
+): Promise<OrganizationSearchResults> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.post<OrganizationSearchResults>(
+    "/organization/search",
+    filter,
+  );
+  return data;
+};
+
+export const getOrganisationAdminsById = async (
+  id: string,
+  context?: GetServerSidePropsContext,
+): Promise<UserInfo[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<UserInfo[]>(`/organization/${id}/admin`);
+  return data;
+};
+
+export const patchOrganisationStatus = async (
+  id: string,
+  model: OrganizationRequestUpdateStatus,
+) => {
+  await (
+    await ApiClient
+  ).patch<Organization>(`/organization/${id}/status`, model);
 };

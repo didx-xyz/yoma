@@ -1,5 +1,6 @@
 import Head from "next/head";
 import type { ReactElement } from "react";
+import { Footer } from "../Footer/Footer";
 
 export type LayoutProps = ({
   children,
@@ -22,7 +23,7 @@ const MainLayout: LayoutProps = ({ children }) => {
       <main className="flex min-h-screen justify-center bg-gray-light p-4 pt-[66px]">
         {children}
       </main>
-      {/* <Footer /> */}
+      <Footer />
     </>
   );
 };

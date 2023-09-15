@@ -10,7 +10,7 @@ const About: NextPageWithLayout = () => {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
         <Link
           className="flex max-w-xs flex-col gap-4 rounded-xl bg-white p-4"
-          href="/partner"
+          href="/organisations/register"
         >
           <h3 className="font-bold">Register Organisation →</h3>
           <div className="text-lgx">
