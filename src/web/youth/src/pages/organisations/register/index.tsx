@@ -19,8 +19,8 @@ import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import withAuth from "~/context/withAuth";
+import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
-import { type NextPageWithLayout } from "../_app";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -89,7 +89,7 @@ const OrganisationCreate: NextPageWithLayout = () => {
         });
         setIsLoading(false);
 
-        void router.push("/organisations/register/success");
+        void router.push("/partner/success");
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
@@ -132,78 +132,87 @@ const OrganisationCreate: NextPageWithLayout = () => {
   };
 
   return (
-    <div className="container max-w-md">
+    <div className="container max-w-5xl px-2 py-8">
       {isLoading && <Loading />}
 
-      {step == 1 && (
-        <>
-          <ul className="steps steps-vertical w-full lg:steps-horizontal">
-            <li className="step step-success"></li>
-            <li className="step"></li>
-            <li className="step"></li>
-          </ul>
-          <div className="flex flex-col text-center">
-            <h2>Organisation details</h2>
-            <p className="my-2">General organisation information</p>
-          </div>
+      <h2 className="pb-8 font-bold">Register Organisation</h2>
 
-          <OrgInfoEdit
-            formData={OrganizationRequestBase}
-            onCancel={handleCancel}
-            onSubmit={(data) => onSubmitStep(2, data)}
-            cancelButtonText="Cancel"
-            submitButtonText="Next"
-          />
-        </>
-      )}
+      {/* CONTENT */}
+      <div className="flex items-center justify-center">
+        <div className="flex w-full max-w-2xl flex-col rounded-lg bg-white p-8">
+          {step == 1 && (
+            <>
+              <ul className="steps steps-horizontal w-full">
+                <li className="step step-success"></li>
+                <li className="step"></li>
+                <li className="step"></li>
+              </ul>
+              <div className="flex flex-col text-center">
+                <h2>Organisation details</h2>
+                <p className="my-2">General organisation information</p>
+              </div>
 
-      {step == 2 && (
-        <>
-          <ul className="steps steps-vertical w-full lg:steps-horizontal">
-            <li className="step"></li>
-            <li className="step step-success"></li>
-            <li className="step"></li>
-          </ul>
-          <div className="flex flex-col text-center">
-            <h2>Organisation roles</h2>
-            <p className="my-2">
-              What role will your organisation play within Yoma?
-            </p>
-          </div>
+              <OrgInfoEdit
+                formData={OrganizationRequestBase}
+                onCancel={handleCancel}
+                onSubmit={(data) => onSubmitStep(2, data)}
+                cancelButtonText="Cancel"
+                submitButtonText="Next"
+              />
+            </>
+          )}
 
-          <OrgRolesEdit
-            formData={OrganizationRequestBase}
-            onCancel={() => {
-              setStep(1);
-            }}
-            onSubmit={(data) => onSubmitStep(3, data)}
-            cancelButtonText="Back"
-            submitButtonText="Next"
-          />
-        </>
-      )}
+          {step == 2 && (
+            <>
+              <ul className="steps steps-horizontal w-full">
+                <li className="step"></li>
+                <li className="step step-success"></li>
+                <li className="step"></li>
+              </ul>
+              <div className="flex flex-col text-center">
+                <h2>Organisation roles</h2>
+                <p className="my-2">
+                  What role will your organisation play within Yoma?
+                </p>
+              </div>
 
-      {step == 3 && (
-        <>
-          <ul className="steps steps-vertical w-full lg:steps-horizontal">
-            <li className="step"></li>
-            <li className="step"></li>
-            <li className="step step-success"></li>
-          </ul>
-          <div className="flex flex-col text-center">
-            <h2>Organisation Admins</h2>
-            <p className="my-2">Who can login and manage the organisation?</p>
-          </div>
+              <OrgRolesEdit
+                formData={OrganizationRequestBase}
+                onCancel={() => {
+                  setStep(1);
+                }}
+                onSubmit={(data) => onSubmitStep(3, data)}
+                cancelButtonText="Back"
+                submitButtonText="Next"
+              />
+            </>
+          )}
 
-          <OrgAdminsEdit
-            organisation={OrganizationRequestBase}
-            onCancel={(data) => onSubmitStep(2, data)}
-            onSubmit={(data) => onSubmitStep(4, data)}
-            cancelButtonText="Back"
-            submitButtonText="Next"
-          />
-        </>
-      )}
+          {step == 3 && (
+            <>
+              <ul className="steps steps-horizontal w-full">
+                <li className="step"></li>
+                <li className="step"></li>
+                <li className="step step-success"></li>
+              </ul>
+              <div className="flex flex-col text-center">
+                <h2>Organisation Admins</h2>
+                <p className="my-2">
+                  Who can login and manage the organisation?
+                </p>
+              </div>
+
+              <OrgAdminsEdit
+                organisation={OrganizationRequestBase}
+                onCancel={(data) => onSubmitStep(2, data)}
+                onSubmit={(data) => onSubmitStep(4, data)}
+                cancelButtonText="Back"
+                submitButtonText="Next"
+              />
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

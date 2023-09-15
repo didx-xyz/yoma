@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { OrganizationDocument } from "~/api/models/organisation";
+import type { OrganizationDocument } from "~/api/models/organisation";
 import { useCallback, useState } from "react";
 
 export interface InputProps {
@@ -13,7 +13,7 @@ export const Document: React.FC<InputProps> = ({ doc, onRemove }) => {
   const onRemoveSubmit = useCallback(() => {
     if (onRemove) onRemove(doc);
     setIsRemoved(true);
-  }, [setIsRemoved]);
+  }, [doc, setIsRemoved, onRemove]);
 
   if (isRemoved) return null;
 

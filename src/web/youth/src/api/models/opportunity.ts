@@ -1,5 +1,5 @@
-import { PaginationFilter } from "./common";
-import { Country, Language, Skill } from "./lookups";
+import type { PaginationFilter } from "./common";
+import type { Country, Language, Skill } from "./lookups";
 
 export interface OpportunitySearchFilterAdmin
   extends OpportunitySearchFilterBase {

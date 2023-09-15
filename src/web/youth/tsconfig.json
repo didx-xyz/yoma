@@ -30,7 +30,8 @@
     "**/*.mjs",
     "next.config.js",
     "next.config.mjs",
-    "src/components/Organisation/Upsert/OrgRolesEdit.tsx"
+    "src/components/Organisation/Upsert/OrgRolesEdit.tsx",
+    "src/pages/opportunities/opportunity/[id].remtsx"
   ],
   "exclude": ["node_modules"]
 }

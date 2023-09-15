@@ -1,5 +1,5 @@
 import { atom } from "jotai";
-import { UserProfile } from "~/api/models/user";
+import type { UserProfile } from "~/api/models/user";
 
 // used to change navbar color per page
 // default to white to avoid flickering on initial page load

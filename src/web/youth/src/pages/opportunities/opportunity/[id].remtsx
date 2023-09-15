@@ -21,9 +21,9 @@ import { toast } from "react-toastify";
 import { type KeyValuePair } from "tailwindcss/types/config";
 import z from "zod";
 import { type SelectOption } from "~/api/models/lookups";
-import {
-  type FullOpportunityResponseDto,
-  type OpportunityRequestDto,
+import type {
+  FullOpportunityResponseDto,
+  OpportunityRequestDto,
 } from "~/api/models/opportunity";
 import { getCountries } from "~/api/services/lookups";
 import {

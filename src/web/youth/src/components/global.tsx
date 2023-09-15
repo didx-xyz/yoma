@@ -8,17 +8,18 @@ import { navbarColorAtom, userProfileAtom } from "~/lib/store";
 // * global app concerns
 // * needs to be done here as jotai atoms are not available in _app.tsx
 export const Global: React.FC = () => {
-  // 🔔 user profile atom
+  // 🔔 USER PROFILE ATOM
   const { data: session } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
 
   useEffect(() => {
     if (session && !userProfile) {
-      alert("getting profile");
-      getUserProfile().then((res) => {
-        setUserProfile(res);
-      });
+      getUserProfile()
+        .then((res) => {
+          setUserProfile(res);
+        })
+        .catch((e) => console.error(e));
     }
   }, [session, userProfile, setUserProfile]);
 
