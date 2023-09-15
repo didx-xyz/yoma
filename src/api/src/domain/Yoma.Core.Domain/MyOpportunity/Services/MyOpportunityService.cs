@@ -1,5 +1,8 @@
 using FluentValidation;
+using Flurl;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Transactions;
 using Yoma.Core.Domain.Core;
@@ -7,6 +10,9 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.EmailProvider;
+using Yoma.Core.Domain.EmailProvider.Interfaces;
+using Yoma.Core.Domain.EmailProvider.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
@@ -23,6 +29,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     public class MyOpportunityService : IMyOpportunityService
     {
         #region Class Variables
+        private readonly ILogger<MyOpportunityService> _logger;
+        private readonly AppSettings _appSettings;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUserService _userService;
         private readonly IOrganizationService _organizationService;
@@ -32,6 +40,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         private readonly IOpportunityStatusService _opportunityStatusService;
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IBlobService _blobService;
+        private readonly IEmailProviderClient _emailProviderClient;
         private readonly MyOpportunitySearchFilterValidator _myOpportunitySearchFilterValidator;
         private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
         private readonly MyOpportunityRequestValidatorVerifyFinalize _myOpportunityRequestValidatorVerifyFinalize;
@@ -40,7 +49,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         #endregion
 
         #region Constructor
-        public MyOpportunityService(IHttpContextAccessor httpContextAccessor,
+        public MyOpportunityService(ILogger<MyOpportunityService> logger,
+            IOptions<AppSettings> appSettings,
+            IHttpContextAccessor httpContextAccessor,
             IUserService userService,
             IOrganizationService organizationService,
             IOpportunityService opportunityService,
@@ -48,25 +59,29 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             IMyOpportunityVerificationStatusService myOpportunityVerificationStatusService,
             IOpportunityStatusService opportunityStatusService,
             IOrganizationStatusService organizationStatusService,
+            IBlobService blobService,
+            IEmailProviderClientFactory emailProviderClientFactory,
             MyOpportunitySearchFilterValidator myOpportunitySearchFilterValidator,
             MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
             MyOpportunityRequestValidatorVerifyFinalize myOpportunityRequestValidatorVerifyFinalize,
-            IBlobService blobService,
             IRepositoryWithNavigation<Models.MyOpportunity> myOpportunityRepository,
             IRepository<MyOpportunityVerification> myOpportunityVerificationRepository)
         {
+            _logger = logger;
+            _appSettings = appSettings.Value;
             _httpContextAccessor = httpContextAccessor;
             _userService = userService;
             _organizationService = organizationService;
             _opportunityService = opportunityService;
             _myOpportunityActionService = myOpportunityActionService;
             _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService;
-            _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify;
-            _myOpportunityRequestValidatorVerifyFinalize = myOpportunityRequestValidatorVerifyFinalize;
             _opportunityStatusService = opportunityStatusService;
             _organizationStatusService = organizationStatusService;
             _blobService = blobService;
+            _emailProviderClient = emailProviderClientFactory.CreateClient();
             _myOpportunitySearchFilterValidator = myOpportunitySearchFilterValidator;
+            _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify;
+            _myOpportunityRequestValidatorVerifyFinalize = myOpportunityRequestValidatorVerifyFinalize;
             _myOpportunityRepository = myOpportunityRepository;
             _myOpportunityVerificationRepository = myOpportunityVerificationRepository;
         }
@@ -364,6 +379,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     Comment = request.Comment
                 });
             }
+
+            scope.Complete();
         }
 
         //supported statuses: Rejected or Completed
@@ -399,9 +416,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             item.VerificationStatusId = statusId;
             item.CommentVerification = request.Comment;
 
+            EmailType emailType;
             switch (request.Status)
             {
                 case VerificationStatus.Rejected:
+                    emailType = EmailType.Opportunity_Verification_Rejected;
                     break;
 
                 case VerificationStatus.Completed:
@@ -418,6 +437,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     var skillIds = opportunity.Skills?.Select(o => o.Id).ToList();
                     if (skillIds != null && skillIds.Any())
                         await _userService.AssignSkills(user.Id, skillIds);
+
+                    emailType = EmailType.Opportunity_Verification_Completed;
                     break;
 
                 default:
@@ -426,7 +447,40 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             await _myOpportunityRepository.Update(item);
 
-            //TODO: Send email (youth)
+            scope.Complete();
+
+            try
+            {
+                var recipients = new List<EmailRecipient>
+                {
+                    new EmailRecipient { Email = item.UserEmail, DisplayName = item.UserDisplayName }
+                };
+
+                var data = new EmailOpportunityVerification
+                {
+                    Opportunities = new List<EmailOpportunityVerificationItem>()
+                    {
+                        new EmailOpportunityVerificationItem
+                        {
+                            Title = item.OpportunityTitle,
+                            DateStart = item.DateStart,
+                            DateEnd = item.DateEnd,
+                            Comment = item.CommentVerification,
+                            URL = _appSettings.AppBaseURL.AppendPathSegment("opportunities").AppendPathSegment(item.Id).ToUri().ToString(),
+                            ZltoReward = item.ZltoReward,
+                            YomaReward = item.YomaReward
+                        }
+                    }
+                };
+
+                await _emailProviderClient.Send(emailType, recipients, data);
+
+                _logger.LogInformation("Successfully send '{emailType}' email", emailType);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send '{emailType}' email", emailType);
+            }
         }
         #endregion
 
