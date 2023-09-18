@@ -112,7 +112,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                         item.StatusId = statusDeletedId;
 
                     _opportunityRepository.Update(items).Wait();
-                    
+
                 } while (true);
             }
         }

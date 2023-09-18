@@ -68,7 +68,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public string? KeywordsFlatten { get; set; }
 
         public List<string>? Keywords { get; set; }
-        
+
         public DateTimeOffset DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }
