@@ -6,10 +6,11 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Entity;
+using Yoma.Core.Domain.Opportunity.Services;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 {
-    public class OpportunityRepository : BaseRepository<Entities.Opportunity>, IRepositoryValueContainsWithNavigation<Domain.Opportunity.Models.Opportunity>
+    public class OpportunityRepository : BaseRepository<Entities.Opportunity>, IRepositoryBatchedValueContainsWithNavigation<Domain.Opportunity.Models.Opportunity>
     {
         #region Constructor
         public OpportunityRepository(ApplicationDbContext context) : base(context) { }
@@ -52,7 +53,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 ParticipantCount = entity.ParticipantCount,
                 StatusId = entity.StatusId,
                 Status = Enum.Parse<Status>(entity.Status.Name, true),
-                Keywords = entity.Keywords,
+                KeywordsFlatten = entity.Keywords,
+                Keywords = string.IsNullOrEmpty(entity.Keywords) ? null : entity.Keywords.Split(OpportunityService.Keywords_Separator, StringSplitOptions.None).ToList(),
                 DateStart = entity.DateStart,
                 DateEnd = entity.DateEnd,
                 DateCreated = entity.DateCreated,
@@ -89,12 +91,12 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 
         public Expression<Func<Domain.Opportunity.Models.Opportunity, bool>> Contains(Expression<Func<Domain.Opportunity.Models.Opportunity, bool>> predicate, string value)
         {
-            return predicate.Or(o => o.Title.Contains(value) || (!string.IsNullOrEmpty(o.Keywords) && o.Keywords.Contains(value)) || EF.Functions.FreeText(o.Description, value));
+            return predicate.Or(o => o.Title.Contains(value) || (!string.IsNullOrEmpty(o.KeywordsFlatten) && o.KeywordsFlatten.Contains(value)) || EF.Functions.FreeText(o.Description, value));
         }
 
         public IQueryable<Domain.Opportunity.Models.Opportunity> Contains(IQueryable<Domain.Opportunity.Models.Opportunity> query, string value)
         {
-            return query.Where(o => o.Title.Contains(value) || (!string.IsNullOrEmpty(o.Keywords) && o.Keywords.Contains(value)) || EF.Functions.FreeText(o.Description, value));
+            return query.Where(o => o.Title.Contains(value) || (!string.IsNullOrEmpty(o.KeywordsFlatten) && o.KeywordsFlatten.Contains(value)) || EF.Functions.FreeText(o.Description, value));
         }
 
         public async Task<Domain.Opportunity.Models.Opportunity> Create(Domain.Opportunity.Models.Opportunity item)
@@ -124,7 +126,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 ParticipantLimit = item.ParticipantLimit,
                 ParticipantCount = item.ParticipantCount,
                 StatusId = item.StatusId,
-                Keywords = item.Keywords,
+                Keywords = item.KeywordsFlatten,
                 DateStart = item.DateStart,
                 DateEnd = item.DateEnd,
                 DateCreated = item.DateCreated,
@@ -139,6 +141,56 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
             item.Id = entity.Id;
 
             return item;
+        }
+
+        public async Task<List<Domain.Opportunity.Models.Opportunity>> Create(List<Domain.Opportunity.Models.Opportunity> items)
+        {
+            if (items == null || !items.Any())
+                throw new ArgumentNullException(nameof(items));
+
+            items.ForEach(item =>
+            {
+                item.DateCreated = DateTimeOffset.Now;
+                item.DateModified = DateTimeOffset.Now;
+            });
+
+            var entities = items.Select(item =>
+              new Entities.Opportunity
+              {
+                  Id = item.Id,
+                  Title = item.Title,
+                  Description = item.Description,
+                  TypeId = item.TypeId,
+                  OrganizationId = item.OrganizationId,
+                  Summary = item.Summary,
+                  Instructions = item.Instructions,
+                  URL = item.URL,
+                  ZltoReward = item.ZltoReward,
+                  YomaReward = item.YomaReward,
+                  ZltoRewardPool = item.ZltoRewardPool,
+                  YomaRewardPool = item.YomaRewardPool,
+                  VerificationSupported = item.VerificationSupported,
+                  SSIIntegrated = item.SSIIntegrated,
+                  DifficultyId = item.DifficultyId,
+                  CommitmentIntervalId = item.CommitmentIntervalId,
+                  CommitmentIntervalCount = item.CommitmentIntervalCount,
+                  ParticipantLimit = item.ParticipantLimit,
+                  ParticipantCount = item.ParticipantCount,
+                  StatusId = item.StatusId,
+                  Keywords = item.KeywordsFlatten,
+                  DateStart = item.DateStart,
+                  DateEnd = item.DateEnd,
+                  DateCreated = item.DateCreated,
+                  CreatedBy = item.CreatedBy,
+                  DateModified = item.DateModified,
+                  ModifiedBy = item.ModifiedBy
+              });
+
+            _context.Opportunity.AddRange(entities);
+
+            await _context.SaveChangesAsync();
+
+            return items;
         }
 
         public async Task Update(Domain.Opportunity.Models.Opportunity item)
@@ -165,11 +217,54 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
             entity.ParticipantLimit = item.ParticipantLimit;
             entity.ParticipantCount = item.ParticipantCount;
             entity.StatusId = item.StatusId;
-            entity.Keywords = item.Keywords;
+            entity.Keywords = item.KeywordsFlatten;
             entity.DateStart = item.DateStart;
             entity.DateEnd = item.DateEnd;
             entity.DateModified = DateTimeOffset.Now;
             entity.ModifiedBy = item.ModifiedBy;
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task Update(List<Domain.Opportunity.Models.Opportunity> items)
+        {
+            if (items == null || !items.Any())
+                throw new ArgumentNullException(nameof(items));
+
+            var itemIds = items.Select(o => o.Id).ToList();
+            var entities = _context.Opportunity.Where(o => itemIds.Contains(o.Id));
+
+            foreach (var item in items)
+            {
+                var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Entities.Opportunity)} with id '{item.Id}' does not exist");
+
+                entity.Title = item.Title;
+                entity.Description = item.Description;
+                entity.TypeId = item.TypeId;
+                entity.OrganizationId = item.OrganizationId;
+                entity.Summary = item.Summary;
+                entity.Instructions = item.Instructions;
+                entity.URL = item.URL;
+                entity.ZltoReward = item.ZltoReward;
+                entity.YomaReward = item.YomaReward;
+                entity.ZltoRewardPool = item.ZltoRewardPool;
+                entity.YomaRewardPool = item.YomaRewardPool;
+                entity.VerificationSupported = item.VerificationSupported;
+                entity.SSIIntegrated = item.SSIIntegrated;
+                entity.DifficultyId = item.DifficultyId;
+                entity.CommitmentIntervalId = item.CommitmentIntervalId;
+                entity.CommitmentIntervalCount = item.CommitmentIntervalCount;
+                entity.ParticipantLimit = item.ParticipantLimit;
+                entity.ParticipantCount = item.ParticipantCount;
+                entity.StatusId = item.StatusId;
+                entity.Keywords = item.KeywordsFlatten;
+                entity.DateStart = item.DateStart;
+                entity.DateEnd = item.DateEnd;
+                entity.DateModified = DateTimeOffset.Now;
+                entity.ModifiedBy = item.ModifiedBy;
+            }
+
+            _context.Opportunity.UpdateRange(entities);
 
             await _context.SaveChangesAsync();
         }

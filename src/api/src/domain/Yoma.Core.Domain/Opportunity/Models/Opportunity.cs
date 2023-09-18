@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Lookups.Models;
 
@@ -63,8 +64,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public Status Status { get; set; }
 
-        public string? Keywords { get; set; }
+        [JsonIgnore]
+        public string? KeywordsFlatten { get; set; }
 
+        public List<string>? Keywords { get; set; }
+        
         public DateTimeOffset DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }

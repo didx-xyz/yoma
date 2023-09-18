@@ -41,7 +41,7 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
 
             if (!_options.Templates.ContainsKey(type.ToString()))
                 throw new ArgumentException($"Email template id for type '{type}' not configured", nameof(type));
-
+   
             //ensure environment suffix
             data.SubjectSuffix = _environmentProvider.Environment == Domain.Core.Environment.Production ? string.Empty : $" ({_environmentProvider.Environment.ToDescription()})";
 
@@ -53,6 +53,9 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
             };
 
             if (_options.ReplyTo != null) msg.ReplyTo = new EmailAddress(_options.ReplyTo.Email, _options.ReplyTo.Name);
+
+            if (_environmentProvider.Environment == Domain.Core.Environment.Local)
+                return; //emails not send on local
 
             var response = await _sendGridClient.SendEmailAsync(msg);
             if (response.IsSuccessStatusCode) return;

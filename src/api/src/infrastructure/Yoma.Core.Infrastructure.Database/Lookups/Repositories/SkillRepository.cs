@@ -7,7 +7,7 @@ using Yoma.Core.Domain.Core.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 {
-    public class SkillRepository : BaseRepository<Skill>, IRepositoryBatchedWithValueContains<Domain.Lookups.Models.Skill>
+    public class SkillRepository : BaseRepository<Skill>, IRepositoryBatchedValueContains<Domain.Lookups.Models.Skill>
     {
         #region Constructor
         public SkillRepository(ApplicationDbContext context) : base(context)
@@ -66,25 +66,33 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
             return item;
         }
 
-        public async Task Create(List<Domain.Lookups.Models.Skill> items)
+        public async Task<List<Domain.Lookups.Models.Skill>> Create(List<Domain.Lookups.Models.Skill> items)
         {
             if (items == null || !items.Any())
                 throw new ArgumentNullException(nameof(items));
 
-            var entities = items.Select(o =>
-                new Skill
-                {
-                    Id = o.Id,
-                    Name = o.Name,
-                    ExternalId = o.ExternalId,
-                    InfoURL = o.InfoURL,
-                    DateCreated = DateTimeOffset.Now,
-                    DateModified = DateTimeOffset.Now
-                });
+            items.ForEach(item =>
+            {
+                item.DateCreated = DateTimeOffset.Now;
+                item.DateModified = DateTimeOffset.Now;
+            });
+
+            var entities = items.Select(item =>
+            new Skill
+            {
+                Id = item.Id,
+                Name = item.Name,
+                ExternalId = item.ExternalId,
+                InfoURL = item.InfoURL,
+                DateCreated = item.DateCreated,
+                DateModified = item.DateModified
+            });
 
             _context.Skill.AddRange(entities);
 
             await _context.SaveChangesAsync();
+
+            return items;
         }
 
         public async Task Update(Domain.Lookups.Models.Skill item)

@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         private readonly MyOpportunitySearchFilterValidator _myOpportunitySearchFilterValidator;
         private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
         private readonly MyOpportunityRequestValidatorVerifyFinalize _myOpportunityRequestValidatorVerifyFinalize;
-        private readonly IRepositoryWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
+        private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
         private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
         #endregion
 
@@ -64,7 +64,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             MyOpportunitySearchFilterValidator myOpportunitySearchFilterValidator,
             MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
             MyOpportunityRequestValidatorVerifyFinalize myOpportunityRequestValidatorVerifyFinalize,
-            IRepositoryWithNavigation<Models.MyOpportunity> myOpportunityRepository,
+            IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
             IRepository<MyOpportunityVerification> myOpportunityVerificationRepository)
         {
             _logger = logger;

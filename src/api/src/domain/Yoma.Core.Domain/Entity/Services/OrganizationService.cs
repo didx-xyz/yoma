@@ -38,7 +38,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly OrganizationRequestValidatorUpdate _organizationUpdateRequestValidator;
         private readonly OrganizationSearchFilterValidator _organizationSearchFilterValidator;
         private readonly OrganizationRequestUpdateStatusValidator _organizationRequestUpdateStatusValidator;
-        private readonly IRepositoryValueContainsWithNavigation<Organization> _organizationRepository;
+        private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
         private readonly IRepository<OrganizationUser> _organizationUserRepository;
         private readonly IRepository<Models.OrganizationProviderType> _organizationProviderTypeRepository;
         private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
@@ -64,7 +64,7 @@ namespace Yoma.Core.Domain.Entity.Services
             OrganizationRequestValidatorUpdate organizationUpdateRequestValidator,
             OrganizationSearchFilterValidator organizationSearchFilterValidator,
             OrganizationRequestUpdateStatusValidator organizationRequestUpdateStatusValidator,
-            IRepositoryValueContainsWithNavigation<Organization> organizationRepository,
+            IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
             IRepository<OrganizationUser> organizationUserRepository,
             IRepository<Models.OrganizationProviderType> organizationProviderTypeRepository,
             IRepository<OrganizationDocument> organizationDocumentRepository)

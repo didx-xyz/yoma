@@ -37,7 +37,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
         private readonly OpportunitySearchFilterValidator _searchFilterValidator;
 
-        private readonly IRepositoryValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
+        private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
         private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
         private readonly IRepository<OpportunityCountry> _opportunityCountryRepository;
         private readonly IRepository<OpportunityLanguage> _opportunityLanguageRepository;
@@ -68,7 +68,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
             OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
             OpportunitySearchFilterValidator searchFilterValidator,
-            IRepositoryValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
+            IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
             IRepository<OpportunityCategory> opportunityCategoryRepository,
             IRepository<OpportunityCountry> opportunityCountryRepository,
             IRepository<OpportunityLanguage> opportunityLanguageRepository,
@@ -372,7 +372,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 CommitmentInterval = _timeIntervalService.GetById(request.CommitmentIntervalId).Name,
                 CommitmentIntervalCount = request.CommitmentIntervalCount,
                 ParticipantLimit = request.ParticipantLimit,
-                Keywords = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords),
+                KeywordsFlatten = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords),
+                Keywords = request.Keywords,
                 DateStart = request.DateStart.RemoveTime(),
                 DateEnd = !request.DateEnd.HasValue ? null : request.DateEnd.Value.ToEndOfDay(),
                 StatusId = _opportunityStatusService.GetByName(status.ToString()).Id,
@@ -448,7 +449,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.CommitmentInterval = _timeIntervalService.GetById(request.CommitmentIntervalId).Name;
             result.CommitmentIntervalCount = request.CommitmentIntervalCount;
             result.ParticipantLimit = request.ParticipantLimit;
-            result.Keywords = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords);
+            result.KeywordsFlatten = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords);
+            result.Keywords = request.Keywords;
             result.DateStart = request.DateStart.RemoveTime();
             result.DateEnd = !request.DateEnd.HasValue ? null : request.DateEnd.Value.ToEndOfDay();
             result.ModifiedBy = username;
