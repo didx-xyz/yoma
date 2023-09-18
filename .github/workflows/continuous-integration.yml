@@ -158,7 +158,7 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-      - uses: docker/build-push-action@v4
+      - uses: docker/build-push-action@v5
         if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
         with:
           platforms: linux/amd64 # linux/arm64/v8 is a little too slow right now
