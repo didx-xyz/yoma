@@ -4,13 +4,12 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { type ReactElement } from "react";
-//import ReactDataGrid, { type RenderCellProps } from "react-data-grid";
 import { getOpportunitiesAdmin } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
-import { type NextPageWithLayout } from "../_app";
 import { type OpportunitySearchResults } from "~/api/models/opportunity";
+import { NextPageWithLayout } from "~/pages/_app";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
