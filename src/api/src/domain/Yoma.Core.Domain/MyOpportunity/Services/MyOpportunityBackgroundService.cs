@@ -63,7 +63,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         item.VerificationStatusId = statusRejectedId;
                     }
 
-                    _myOpportunityRepository.Update(items).Wait();
+                    items = _myOpportunityRepository.Update(items).Result;
 
                     var groupedMyOpportunities = items.GroupBy(item => new { item.UserEmail, item.UserDisplayName });
 

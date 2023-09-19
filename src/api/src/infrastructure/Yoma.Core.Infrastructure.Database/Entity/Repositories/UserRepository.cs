@@ -88,17 +88,18 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             };
 
             _context.User.Add(entity);
-
             await _context.SaveChangesAsync();
 
             item.Id = entity.Id;
-
             return item;
         }
 
-        public async Task Update(Domain.Entity.Models.User item)
+        public async Task<Domain.Entity.Models.User> Update(Domain.Entity.Models.User item)
         {
             var entity = _context.User.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"User with id '{item.Id}' does not exist");
+
+            item.DateModified = DateTimeOffset.Now;
+
             entity.Email = item.Email;
             entity.EmailConfirmed = item.EmailConfirmed;
             entity.FirstName = item.FirstName;
@@ -114,9 +115,11 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             entity.ExternalId = item.ExternalId;
             entity.ZltoWalletId = item.ZltoWalletId;
             entity.TenantId = item.TenantId;
-            entity.DateModified = DateTimeOffset.Now;
+            entity.DateModified = item.DateModified;
 
             await _context.SaveChangesAsync();
+
+            return item;
         }
 
         public Task Delete(Domain.Entity.Models.User item)

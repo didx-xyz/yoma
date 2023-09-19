@@ -79,6 +79,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             if (!user.ExternalId.HasValue)
                 throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
+            var externalId = user.ExternalId.Value;
 
             var emailUpdated = !string.Equals(user.Email, request.Email, StringComparison.CurrentCultureIgnoreCase);
             if (emailUpdated)
@@ -99,12 +100,11 @@ namespace Yoma.Core.Domain.Entity.Services
 
             using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
             {
-                await _userRepository.Update(user);
-                user.DateModified = DateTimeOffset.Now;
+                user = await _userRepository.Update(user);
 
                 var userIdentityProvider = new IdentityProvider.Models.User
                 {
-                    Id = user.ExternalId.Value,
+                    Id = externalId,
                     FirstName = user.FirstName,
                     LastName = user.Surname,
                     Username = user.Email,

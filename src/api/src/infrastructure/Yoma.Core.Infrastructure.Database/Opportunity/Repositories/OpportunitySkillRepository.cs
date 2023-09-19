@@ -33,15 +33,15 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 OpportunityId = item.OpportunityId,
                 SkillId = item.SkillId,
                 DateCreated = item.DateCreated,
-
             };
 
             _context.OpportunitySkills.Add(entity);
             await _context.SaveChangesAsync();
+
             item.Id = entity.Id;
             return item;
         }
-        public Task Update(OpportunitySkill item)
+        public Task<OpportunitySkill> Update(OpportunitySkill item)
         {
             throw new NotImplementedException();
         }

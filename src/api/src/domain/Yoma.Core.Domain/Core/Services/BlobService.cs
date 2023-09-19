@@ -72,7 +72,7 @@ namespace Yoma.Core.Domain.Core.Services
 
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
-            await _blobObjectRepository.Create(result);
+            result = await _blobObjectRepository.Create(result);
             await _blobProviderClient.Create(key, file.ContentType, file.ToBinary());
 
             scope.Complete();

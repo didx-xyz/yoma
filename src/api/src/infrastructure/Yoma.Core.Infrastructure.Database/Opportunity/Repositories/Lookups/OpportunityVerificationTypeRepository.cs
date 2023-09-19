@@ -31,7 +31,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories.Lookups
             throw new NotImplementedException();
         }
 
-        public Task Update(OpportunityVerificationType item)
+        public Task<OpportunityVerificationType> Update(OpportunityVerificationType item)
         {
             throw new NotImplementedException();
         }

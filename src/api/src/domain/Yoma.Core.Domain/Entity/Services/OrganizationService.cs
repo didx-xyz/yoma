@@ -330,8 +330,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
                 //update org
-                await _organizationRepository.Update(result);
-                result.DateModified = DateTimeOffset.Now;
+                result = await _organizationRepository.Update(result);
 
                 //provider types
                 result = await AssignProviderTypes(result, request.ProviderTypes, true);
@@ -497,7 +496,7 @@ namespace Yoma.Core.Domain.Entity.Services
             result.StatusId = statusId;
             result.Status = request.Status;
 
-            await _organizationRepository.Update(result);
+            result = await _organizationRepository.Update(result);
 
             return result;
         }
@@ -686,7 +685,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 var statusInactiveId = _organizationStatusService.GetByName(OrganizationStatus.Inactive.ToString()).Id;
                 organization.StatusId = statusInactiveId;
                 organization.Status = OrganizationStatus.Inactive;
-                await _organizationRepository.Update(organization);
+                organization = await _organizationRepository.Update(organization);
 
                 await SendEmail(organization, EmailProvider.EmailType.Organization_Approval_Requested);
             }
@@ -736,7 +735,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
                 blobObject = await _blobService.Create(file, FileType.Photos);
                 organization.LogoId = blobObject.Id;
-                await _organizationRepository.Update(organization);
+                organization = await _organizationRepository.Update(organization);
 
                 if (currentLogo != null)
                     await _blobService.Delete(currentLogo.Value.Id);
@@ -850,7 +849,7 @@ namespace Yoma.Core.Domain.Entity.Services
                     };
 
                     //create new item in db
-                    await _organizationDocumentRepository.Create(item);
+                    item = await _organizationDocumentRepository.Create(item);
                     itemsNew.Add(item);
                 }
 

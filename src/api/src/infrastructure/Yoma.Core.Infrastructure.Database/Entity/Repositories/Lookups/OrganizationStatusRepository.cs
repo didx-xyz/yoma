@@ -28,7 +28,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories.Lookups
             throw new NotImplementedException();
         }
 
-        public Task Update(OrganizationStatus item)
+        public Task<OrganizationStatus> Update(OrganizationStatus item)
         {
             throw new NotImplementedException();
         }

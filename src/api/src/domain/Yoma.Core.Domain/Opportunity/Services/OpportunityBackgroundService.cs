@@ -65,7 +65,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                     foreach (var item in items)
                         item.StatusId = statusExpiredId;
 
-                    _opportunityRepository.Update(items).Wait();
+                    items = _opportunityRepository.Update(items).Result;
 
                     SendEmail(items, EmailType.Opportunity_Expiration_Expired).Wait();
 

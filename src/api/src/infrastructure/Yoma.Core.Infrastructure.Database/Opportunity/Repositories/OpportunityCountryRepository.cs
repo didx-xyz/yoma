@@ -38,10 +38,11 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 
             _context.OpportunityCountries.Add(entity);
             await _context.SaveChangesAsync();
+
             item.Id = entity.Id;
             return item;
         }
-        public Task Update(OpportunityCountry item)
+        public Task<OpportunityCountry> Update(OpportunityCountry item)
         {
             throw new NotImplementedException();
         }

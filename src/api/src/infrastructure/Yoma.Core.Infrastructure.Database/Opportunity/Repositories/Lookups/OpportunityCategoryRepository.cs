@@ -28,7 +28,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories.Lookups
             throw new NotImplementedException();
         }
 
-        public Task Update(OpportunityCategory item)
+        public Task<OpportunityCategory> Update(OpportunityCategory item)
         {
             throw new NotImplementedException();
         }

@@ -179,13 +179,7 @@ namespace Yoma.Core.Domain.Entity.Services
             result.ZltoWalletId = request.ZltoWalletId;
             result.TenantId = request.TenantId;
 
-            if (isNew)
-                result = await _userRepository.Create(result);
-            else
-            {
-                await _userRepository.Update(result);
-                result.DateModified = DateTimeOffset.Now;
-            }
+            result = isNew ? await _userRepository.Create(result) : await _userRepository.Update(result);
 
             return result;
         }
@@ -205,7 +199,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
                 blobObject = await _blobService.Create(file, FileType.Photos);
                 result.PhotoId = blobObject.Id;
-                await _userRepository.Update(result);
+                result = await _userRepository.Update(result);
 
                 if (currentPhoto != null)
                     await _blobService.Delete(currentPhoto.Id);
