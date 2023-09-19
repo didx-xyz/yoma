@@ -14,6 +14,7 @@ import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
+import { PageBackground } from "~/components/PageBackground";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -50,17 +51,20 @@ const OrganisationOverview: NextPageWithLayout<{
       <Head>
         <title>Yoma Admin | {organisation?.name}</title>
       </Head>
-      <div className="container max-w-5xl px-2 py-8">
+
+      <PageBackground />
+
+      <div className="container z-10 max-w-5xl px-2 py-4">
         {/* BREADCRUMB */}
         <div className="flex flex-row text-xs text-gray">
           <Link
-            className="font-bold text-gray-dark hover:text-gray"
+            className="font-bold text-white hover:text-gray"
             href={"/organisations"}
           >
             Organisations
           </Link>
           <div className="mx-2">/</div>
-          <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-gray-dark">
+          <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
             {organisation?.name}
           </div>
         </div>
