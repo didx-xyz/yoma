@@ -1,7 +1,6 @@
 using Flurl;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Transactions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.EmailProvider;
@@ -23,9 +22,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly IOpportunityStatusService _opportunityStatusService;
         private readonly IOrganizationService _organizationService;
         private readonly IEmailProviderClient _emailProviderClient;
-        private readonly IRepositoryValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
+        private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
         private static readonly Status[] Statuses_Expirable = { Status.Active, Status.Inactive };
         private static readonly Status[] Statuses_Deletion = { Status.Inactive, Status.Expired };
+
+        private static readonly object _lock_Object = new();
         #endregion
 
         #region Constructor
@@ -35,7 +36,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             IOpportunityStatusService opportunityStatusService,
             IOrganizationService organizationService,
             IEmailProviderClientFactory emailProviderClientFactory,
-            IRepositoryValueContainsWithNavigation<Models.Opportunity> opportunityRepository)
+            IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository)
         {
             _logger = logger;
             _appSettings = appSettings.Value;
@@ -48,69 +49,72 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Public Members
-        public async Task ProcessExpiration()
+        public void ProcessExpiration()
         {
-            var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
-            var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
-
-            do
+            lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
-                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, new TransactionOptions() { IsolationLevel = IsolationLevel.ReadCommitted }, TransactionScopeAsyncFlowOption.Enabled);
+                var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+                var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
 
-                var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-                    o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.Now).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
-                if (!items.Any()) break;
-
-                foreach (var item in items)
+                do
                 {
-                    item.StatusId = statusExpiredId;
-                    await _opportunityRepository.Update(item);
-                }
+                    var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
+                        o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.Now).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
+                    if (!items.Any()) break;
 
-                scope.Complete();
+                    foreach (var item in items)
+                        item.StatusId = statusExpiredId;
 
-                await SendEmail(items, EmailType.Opportunity_Expiration_Expired);
+                    _opportunityRepository.Update(items).Wait();
 
-            } while (true);
+                    SendEmail(items, EmailType.Opportunity_Expiration_Expired).Wait();
+
+                } while (true);
+            }
         }
 
-        public async Task ProcessExpirationNotifications()
+        public void ProcessExpirationNotifications()
         {
-            var datetimeFrom = new DateTimeOffset(DateTime.Today);
-            var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.OpportunityExpirationNotificationIntervalInDays);
-            var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
-
-            do
+            lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
-                var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-                    o.DateEnd.HasValue && o.DateEnd.Value >= datetimeFrom && o.DateEnd.Value <= datetimeTo)
-                    .OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
-                if (!items.Any()) break;
+                var datetimeFrom = new DateTimeOffset(DateTime.Today);
+                var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.OpportunityExpirationNotificationIntervalInDays);
+                var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
 
-                await SendEmail(items, EmailType.Opportunity_Expiration_WithinNextDays);
+                do
+                {
+                    var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
+                        o.DateEnd.HasValue && o.DateEnd.Value >= datetimeFrom && o.DateEnd.Value <= datetimeTo)
+                        .OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
+                    if (!items.Any()) break;
 
-            } while (true);
+                    SendEmail(items, EmailType.Opportunity_Expiration_WithinNextDays).Wait();
+
+                } while (true);
+            }
         }
 
-        public async Task ProcessDeletion()
+        public void ProcessDeletion()
         {
-            var statusDeletionIds = Statuses_Deletion.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
-            var statusDeletedId = _opportunityStatusService.GetByName(Status.Deleted.ToString()).Id;
-
-            do
+            lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
-                var items = _opportunityRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
-                    o.DateModified <= DateTimeOffset.Now.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
-                    .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
-                if (!items.Any()) break;
+                var statusDeletionIds = Statuses_Deletion.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+                var statusDeletedId = _opportunityStatusService.GetByName(Status.Deleted.ToString()).Id;
 
-                foreach (var item in items)
+                do
                 {
-                    item.StatusId = statusDeletedId;
-                    await _opportunityRepository.Update(item);
-                }
+                    var items = _opportunityRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
+                        o.DateModified <= DateTimeOffset.Now.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
+                        .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
+                    if (!items.Any()) break;
 
-            } while (true);
+                    foreach (var item in items)
+                        item.StatusId = statusDeletedId;
+
+                    _opportunityRepository.Update(items).Wait();
+
+                } while (true);
+            }
         }
         #endregion
 

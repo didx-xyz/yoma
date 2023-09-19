@@ -15,14 +15,14 @@ namespace Yoma.Core.Domain.Lookups.Services
         private readonly ScheduleJobOptions _scheduleJobOptions;
         private readonly ILaborMarketProviderClient _laborMarketProviderClient;
         private readonly SkillSearchFilterValidator _searchFilterValidator;
-        private readonly IRepositoryBatchedWithValueContains<Skill> _skillRepository;
+        private readonly IRepositoryBatchedValueContains<Skill> _skillRepository;
         #endregion
 
         #region Constructor
         public SkillService(IOptions<ScheduleJobOptions> scheduleJobOptions,
             ILaborMarketProviderClientFactory laborMarketProviderClientFactory,
             SkillSearchFilterValidator searchFilterValidator,
-            IRepositoryBatchedWithValueContains<Skill> skillRepository)
+            IRepositoryBatchedValueContains<Skill> skillRepository)
         {
             _scheduleJobOptions = scheduleJobOptions.Value;
             _laborMarketProviderClient = laborMarketProviderClientFactory.CreateClient();

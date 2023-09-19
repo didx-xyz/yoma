@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.EmailProvider.Interfaces;
 using Yoma.Core.Domain.EmailProvider.Models;
 using Flurl;
-using System.Transactions;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -20,9 +19,11 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly ScheduleJobOptions _scheduleJobOptions;
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IEmailProviderClient _emailProviderClient;
-        private readonly IRepositoryValueContainsWithNavigation<Organization> _organizationRepository;
+        private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
         private static readonly OrganizationStatus[] Statuses_Declination = { OrganizationStatus.Inactive };
         private static readonly OrganizationStatus[] Statuses_Deletion = { OrganizationStatus.Declined };
+
+        private static readonly object _lock_Object = new();
         #endregion
 
         #region Constructor
@@ -31,7 +32,7 @@ namespace Yoma.Core.Domain.Entity.Services
             IOptions<ScheduleJobOptions> scheduleJobOptions,
             IOrganizationStatusService organizationStatusService,
             IEmailProviderClientFactory emailProviderClientFactory,
-            IRepositoryValueContainsWithNavigation<Organization> organizationRepository)
+            IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository)
         {
             _logger = logger;
             _appSettings = appSettings.Value;
@@ -43,85 +44,87 @@ namespace Yoma.Core.Domain.Entity.Services
         #endregion
 
         #region Public Memebers
-        public async Task ProcessDeclination()
+        public void ProcessDeclination()
         {
-            var statusDeclinationIds = Statuses_Declination.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
-            var statusDeclinedId = _organizationStatusService.GetByName(OrganizationStatus.Declined.ToString()).Id;
-
-            do
+            lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
-                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, new TransactionOptions() { IsolationLevel = IsolationLevel.ReadCommitted }, TransactionScopeAsyncFlowOption.Enabled);
+                var statusDeclinationIds = Statuses_Declination.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
+                var statusDeclinedId = _organizationStatusService.GetByName(OrganizationStatus.Declined.ToString()).Id;
 
-                var items = _organizationRepository.Query(true).Where(o => statusDeclinationIds.Contains(o.StatusId) &&
-                    o.DateModified <= DateTimeOffset.Now.AddDays(-_scheduleJobOptions.OrganizationDeclinationIntervalInDays))
-                    .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeclinationBatchSize).ToList();
-                if (!items.Any()) break;
-
-                foreach (var item in items)
+                do
                 {
-                    item.CommentApproval = $"Auto-Declined due to being {string.Join("/", Statuses_Declination).ToLower()} for more than {_scheduleJobOptions.OrganizationDeclinationIntervalInDays} days";
-                    item.StatusId = statusDeclinedId;
-                    await _organizationRepository.Update(item);
-                }
+                    var items = _organizationRepository.Query(true).Where(o => statusDeclinationIds.Contains(o.StatusId) &&
+                        o.DateModified <= DateTimeOffset.Now.AddDays(-_scheduleJobOptions.OrganizationDeclinationIntervalInDays))
+                        .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeclinationBatchSize).ToList();
+                    if (!items.Any()) break;
 
-                scope.Complete();
-
-                var groupedOrganizations = items
-                    .SelectMany(org => org.Administrators ?? Enumerable.Empty<UserInfo>(), (org, admin) => new { Administrator = admin, Organization = org })
-                    .GroupBy(item => item.Administrator, item => item.Organization);
-
-                var emailType = EmailProvider.EmailType.Organization_Approval_Declined;
-                foreach (var group in groupedOrganizations)
-                {
-                    try
+                    foreach (var item in items)
                     {
-                        var recipients = new List<EmailRecipient>
+                        item.CommentApproval = $"Auto-Declined due to being {string.Join("/", Statuses_Declination).ToLower()} for more than {_scheduleJobOptions.OrganizationDeclinationIntervalInDays} days";
+                        item.StatusId = statusDeclinedId;
+                    }
+
+                    _organizationRepository.Update(items).Wait();
+
+                    var groupedOrganizations = items
+                        .SelectMany(org => org.Administrators ?? Enumerable.Empty<UserInfo>(), (org, admin) => new { Administrator = admin, Organization = org })
+                        .GroupBy(item => item.Administrator, item => item.Organization);
+
+                    var emailType = EmailProvider.EmailType.Organization_Approval_Declined;
+                    foreach (var group in groupedOrganizations)
+                    {
+                        try
+                        {
+                            var recipients = new List<EmailRecipient>
                         {
                             new EmailRecipient { Email = group.Key.Email, DisplayName = group.Key.DisplayName }
                         };
 
-                        var data = new EmailOrganizationApproval { Organizations = new List<EmailOrganizationApprovalItem>() };
-                        foreach (var org in group)
-                        {
-                            data.Organizations.Add(new EmailOrganizationApprovalItem
+                            var data = new EmailOrganizationApproval { Organizations = new List<EmailOrganizationApprovalItem>() };
+                            foreach (var org in group)
                             {
-                                Name = org.Name,
-                                Comment = org.CommentApproval,
-                                URL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(org.Id).ToUri().ToString()
-                            });
+                                data.Organizations.Add(new EmailOrganizationApprovalItem
+                                {
+                                    Name = org.Name,
+                                    Comment = org.CommentApproval,
+                                    URL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(org.Id).ToUri().ToString()
+                                });
+                            }
+
+                            _emailProviderClient.Send(emailType, recipients, data).Wait();
+
+                            _logger.LogInformation("Successfully send '{emailType}' email", emailType);
                         }
-
-                        await _emailProviderClient.Send(emailType, recipients, data);
-
-                        _logger.LogInformation("Successfully send '{emailType}' email", emailType);
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send '{emailType}' email", emailType);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Failed to send '{emailType}' email", emailType);
-                    }
-                }
-            } while (true);
+                } while (true);
+            }
         }
 
-        public async Task ProcessDeletion()
+        public void ProcessDeletion()
         {
-            var statusDeletionIds = Statuses_Deletion.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
-            var statusDeletedId = _organizationStatusService.GetByName(OrganizationStatus.Deleted.ToString()).Id;
-
-            do
+            lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same transactions on multiple threads
             {
-                var items = _organizationRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
-                    o.DateModified <= DateTimeOffset.Now.AddDays(-_scheduleJobOptions.OrganizationDeletionIntervalInDays))
-                    .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeletionBatchSize).ToList();
-                if (!items.Any()) break;
+                var statusDeletionIds = Statuses_Deletion.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
+                var statusDeletedId = _organizationStatusService.GetByName(OrganizationStatus.Deleted.ToString()).Id;
 
-                foreach (var item in items)
+                do
                 {
-                    item.StatusId = statusDeletedId;
-                    await _organizationRepository.Update(item);
-                }
+                    var items = _organizationRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
+                        o.DateModified <= DateTimeOffset.Now.AddDays(-_scheduleJobOptions.OrganizationDeletionIntervalInDays))
+                        .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeletionBatchSize).ToList();
+                    if (!items.Any()) break;
 
-            } while (true);
+                    foreach (var item in items)
+                        item.StatusId = statusDeletedId;
+
+                    _organizationRepository.Update(items).Wait();
+
+                } while (true);
+            }
         }
         #endregion
     }

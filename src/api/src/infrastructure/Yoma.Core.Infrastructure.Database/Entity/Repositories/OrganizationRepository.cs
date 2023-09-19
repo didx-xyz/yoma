@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 {
-    public class OrganizationRepository : BaseRepository<Organization>, IRepositoryValueContainsWithNavigation<Domain.Entity.Models.Organization>
+    public class OrganizationRepository : BaseRepository<Organization>, IRepositoryBatchedValueContainsWithNavigation<Domain.Entity.Models.Organization>
     {
         #region Constructor
         public OrganizationRepository(ApplicationDbContext context) : base(context) { }
@@ -123,6 +123,52 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             return item;
         }
 
+        public async Task<List<Domain.Entity.Models.Organization>> Create(List<Domain.Entity.Models.Organization> items)
+        {
+            if (items == null || !items.Any())
+                throw new ArgumentNullException(nameof(items));
+
+            items.ForEach(item =>
+            {
+                item.DateCreated = DateTimeOffset.Now;
+                item.DateModified = DateTimeOffset.Now;
+                item.DateStatusModified = DateTimeOffset.Now;
+            });
+
+            var entities = items.Select(item =>
+               new Organization
+               {
+                   Id = item.Id,
+                   Name = item.Name,
+                   WebsiteURL = item.WebsiteURL,
+                   PrimaryContactName = item.PrimaryContactName,
+                   PrimaryContactEmail = item.PrimaryContactEmail,
+                   PrimaryContactPhone = item.PrimaryContactPhone,
+                   VATIN = item.VATIN,
+                   TaxNumber = item.TaxNumber,
+                   RegistrationNumber = item.RegistrationNumber,
+                   City = item.City,
+                   CountryId = item.CountryId,
+                   StreetAddress = item.StreetAddress,
+                   Province = item.Province,
+                   PostalCode = item.PostalCode,
+                   Tagline = item.Tagline,
+                   Biography = item.Biography,
+                   StatusId = item.StatusId,
+                   CommentApproval = item.CommentApproval,
+                   DateStatusModified = item.DateStatusModified,
+                   LogoId = item.LogoId,
+                   DateCreated = item.DateCreated,
+                   DateModified = item.DateModified
+               });
+
+            _context.Organization.AddRange(entities);
+
+            await _context.SaveChangesAsync();
+
+            return items;
+        }
+
         public async Task Update(Domain.Entity.Models.Organization item)
         {
             var entity = _context.Organization.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Organization)} with id '{item.Id}' does not exist");
@@ -146,6 +192,45 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             entity.CommentApproval = item.CommentApproval;
             entity.LogoId = item.LogoId;
             entity.DateModified = DateTimeOffset.Now;
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task Update(List<Domain.Entity.Models.Organization> items)
+        {
+            if (items == null || !items.Any())
+                throw new ArgumentNullException(nameof(items));
+
+            var itemIds = items.Select(o => o.Id).ToList();
+            var entities = _context.Organization.Where(o => itemIds.Contains(o.Id));
+
+            foreach (var item in items)
+            {
+                var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Organization)} with id '{item.Id}' does not exist");
+
+                entity.Name = item.Name;
+                entity.WebsiteURL = item.WebsiteURL;
+                entity.PrimaryContactName = item.PrimaryContactName;
+                entity.PrimaryContactEmail = item.PrimaryContactEmail;
+                entity.PrimaryContactPhone = item.PrimaryContactPhone;
+                entity.VATIN = item.VATIN;
+                entity.TaxNumber = item.TaxNumber;
+                entity.RegistrationNumber = item.RegistrationNumber;
+                entity.City = item.City;
+                entity.CountryId = item.CountryId;
+                entity.StreetAddress = item.StreetAddress;
+                entity.Province = item.Province;
+                entity.PostalCode = item.PostalCode;
+                entity.Tagline = item.Tagline;
+                entity.Biography = item.Biography;
+                if (entity.StatusId != item.StatusId) entity.DateStatusModified = DateTimeOffset.Now;
+                entity.StatusId = item.StatusId;
+                entity.CommentApproval = item.CommentApproval;
+                entity.LogoId = item.LogoId;
+                entity.DateModified = DateTimeOffset.Now;
+            }
+
+            _context.Organization.UpdateRange(entities);
 
             await _context.SaveChangesAsync();
         }

@@ -7,7 +7,7 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
 {
-    public class MyOpportunityRepository : BaseRepository<Entities.MyOpportunity>, IRepositoryWithNavigation<Domain.MyOpportunity.Models.MyOpportunity>
+    public class MyOpportunityRepository : BaseRepository<Entities.MyOpportunity>, IRepositoryBatchedWithNavigation<Domain.MyOpportunity.Models.MyOpportunity>
     {
         #region Constructor
         public MyOpportunityRepository(ApplicationDbContext context) : base(context) { }
@@ -92,6 +92,42 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
             return item;
         }
 
+        public async Task<List<Domain.MyOpportunity.Models.MyOpportunity>> Create(List<Domain.MyOpportunity.Models.MyOpportunity> items)
+        {
+            if (items == null || !items.Any())
+                throw new ArgumentNullException(nameof(items));
+
+            items.ForEach(item =>
+            {
+                item.DateCreated = DateTimeOffset.Now;
+                item.DateModified = DateTimeOffset.Now;
+            });
+
+            var entities = items.Select(item =>
+              new Entities.MyOpportunity
+              {
+                  Id = item.Id,
+                  UserId = item.UserId,
+                  OpportunityId = item.OpportunityId,
+                  ActionId = item.ActionId,
+                  VerificationStatusId = item.VerificationStatusId,
+                  CommentVerification = item.CommentVerification,
+                  DateStart = item.DateStart,
+                  DateEnd = item.DateEnd,
+                  DateCompleted = item.DateCompleted,
+                  ZltoReward = item.ZltoReward,
+                  YomaReward = item.YomaReward,
+                  DateCreated = item.DateCreated,
+                  DateModified = item.DateModified,
+              });
+
+            _context.MyOpportunity.AddRange(entities);
+
+            await _context.SaveChangesAsync();
+
+            return items;
+        }
+
         public async Task Update(Domain.MyOpportunity.Models.MyOpportunity item)
         {
             var entity = _context.MyOpportunity.Where(o => o.Id == item.Id).SingleOrDefault()
@@ -106,6 +142,34 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
             entity.ZltoReward = item.ZltoReward;
             entity.YomaReward = item.YomaReward;
             entity.DateModified = DateTimeOffset.Now;
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task Update(List<Domain.MyOpportunity.Models.MyOpportunity> items)
+        {
+            if (items == null || !items.Any())
+                throw new ArgumentNullException(nameof(items));
+
+            var itemIds = items.Select(o => o.Id).ToList();
+            var entities = _context.MyOpportunity.Where(o => itemIds.Contains(o.Id));
+
+            foreach (var item in items)
+            {
+                var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Entities.MyOpportunity)} with id '{item.Id}' does not exist");
+
+                entity.ActionId = item.ActionId;
+                entity.VerificationStatusId = item.VerificationStatusId;
+                entity.CommentVerification = item.CommentVerification;
+                entity.DateStart = item.DateStart;
+                entity.DateEnd = item.DateEnd;
+                entity.DateCompleted = item.DateCompleted;
+                entity.ZltoReward = item.ZltoReward;
+                entity.YomaReward = item.YomaReward;
+                entity.DateModified = DateTimeOffset.Now;
+            }
+
+            _context.MyOpportunity.UpdateRange(entities);
 
             await _context.SaveChangesAsync();
         }

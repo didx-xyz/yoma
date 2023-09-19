@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain
             #endregion Lookups
 
             services.AddScoped<IOrganizationService, OrganizationService>();
-            services.AddScoped<IOrganizationBackgroundService, OrganizationBackgroundService>();
+            services.AddSingleton<IOrganizationBackgroundService, OrganizationBackgroundService>();
             services.AddScoped<IUserProfileService, UserProfileService>();
             services.AddScoped<IUserService, UserService>();
             #endregion Entity
@@ -63,7 +63,7 @@ namespace Yoma.Core.Domain
             #endregion Lookups
 
             services.AddScoped<IMyOpportunityService, MyOpportunityService>();
-            services.AddScoped<IMyOpportunityBackgroundService, MyOpportunityBackgroundService>();
+            services.AddSingleton<IMyOpportunityBackgroundService, MyOpportunityBackgroundService>();
             #endregion My Opportunity
 
             #region Opportunity
@@ -76,7 +76,7 @@ namespace Yoma.Core.Domain
             #endregion Lookups
 
             services.AddScoped<IOpportunityService, OpportunityService>();
-            services.AddScoped<IOpportunityBackgroundService, OpportunityBackgroundService>();
+            services.AddSingleton<IOpportunityBackgroundService, OpportunityBackgroundService>();
             #endregion Opportunity
         }
 

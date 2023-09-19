@@ -2,8 +2,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 {
     public interface IOrganizationBackgroundService
     {
-        Task ProcessDeclination();
+        void ProcessDeclination();
 
-        Task ProcessDeletion();
+        void ProcessDeletion();
     }
 }
