@@ -456,8 +456,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.ModifiedBy = username;
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            await _opportunityRepository.Update(result);
-            result.DateModified = DateTimeOffset.Now;
+            result = await _opportunityRepository.Update(result);
 
             // categories
             result = await RemoveCategories(result, result.Categories?.Where(o => !request.Categories.Contains(o.Id)).Select(o => o.Id).ToList());
@@ -570,7 +569,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.Status = status;
             result.ModifiedBy = username;
 
-            await _opportunityRepository.Update(result);
+            result = await _opportunityRepository.Update(result);
 
             return result;
         }

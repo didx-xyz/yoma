@@ -44,11 +44,12 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
 
             _context.MyOpportunityVerifications.Add(entity);
             await _context.SaveChangesAsync();
+
             item.Id = entity.Id;
             return item;
         }
 
-        public Task Update(Domain.MyOpportunity.Models.MyOpportunityVerification item)
+        public Task<Domain.MyOpportunity.Models.MyOpportunityVerification> Update(Domain.MyOpportunity.Models.MyOpportunityVerification item)
         {
             throw new NotImplementedException();
         }

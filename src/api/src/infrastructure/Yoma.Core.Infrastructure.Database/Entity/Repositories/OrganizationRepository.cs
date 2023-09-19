@@ -116,10 +116,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             };
 
             _context.Organization.Add(entity);
-
             await _context.SaveChangesAsync();
-            item.Id = entity.Id;
 
+            item.Id = entity.Id;
             return item;
         }
 
@@ -127,13 +126,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         {
             if (items == null || !items.Any())
                 throw new ArgumentNullException(nameof(items));
-
-            items.ForEach(item =>
-            {
-                item.DateCreated = DateTimeOffset.Now;
-                item.DateModified = DateTimeOffset.Now;
-                item.DateStatusModified = DateTimeOffset.Now;
-            });
 
             var entities = items.Select(item =>
                new Organization
@@ -156,22 +148,34 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                    Biography = item.Biography,
                    StatusId = item.StatusId,
                    CommentApproval = item.CommentApproval,
-                   DateStatusModified = item.DateStatusModified,
+                   DateStatusModified = DateTimeOffset.Now,
                    LogoId = item.LogoId,
-                   DateCreated = item.DateCreated,
-                   DateModified = item.DateModified
+                   DateCreated = DateTimeOffset.Now,
+                   DateModified = DateTimeOffset.Now
                });
 
             _context.Organization.AddRange(entities);
-
             await _context.SaveChangesAsync();
+
+            items = items.Zip(entities, (item, entity) =>
+            {
+                item.Id = entity.Id;
+                item.DateStatusModified = entity.DateStatusModified;
+                item.DateCreated = entity.DateCreated;
+                item.DateModified = entity.DateModified;
+                return item;
+            }).ToList();
 
             return items;
         }
 
-        public async Task Update(Domain.Entity.Models.Organization item)
+        public async Task<Domain.Entity.Models.Organization> Update(Domain.Entity.Models.Organization item)
         {
             var entity = _context.Organization.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Organization)} with id '{item.Id}' does not exist");
+
+            item.DateModified = DateTimeOffset.Now;
+            if (item.StatusId != entity.StatusId) item.DateStatusModified = DateTimeOffset.Now;
+
             entity.Name = item.Name;
             entity.WebsiteURL = item.WebsiteURL;
             entity.PrimaryContactName = item.PrimaryContactName;
@@ -187,16 +191,18 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             entity.PostalCode = item.PostalCode;
             entity.Tagline = item.Tagline;
             entity.Biography = item.Biography;
-            if (entity.StatusId != item.StatusId) entity.DateStatusModified = DateTimeOffset.Now;
+            entity.DateStatusModified = item.DateStatusModified;
             entity.StatusId = item.StatusId;
             entity.CommentApproval = item.CommentApproval;
             entity.LogoId = item.LogoId;
-            entity.DateModified = DateTimeOffset.Now;
+            entity.DateModified = item.DateModified;
 
             await _context.SaveChangesAsync();
+
+            return item;
         }
 
-        public async Task Update(List<Domain.Entity.Models.Organization> items)
+        public async Task<List<Domain.Entity.Models.Organization>> Update(List<Domain.Entity.Models.Organization> items)
         {
             if (items == null || !items.Any())
                 throw new ArgumentNullException(nameof(items));
@@ -207,6 +213,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             foreach (var item in items)
             {
                 var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Organization)} with id '{item.Id}' does not exist");
+
+                item.DateModified = DateTimeOffset.Now;
+                if (item.StatusId != entity.StatusId) item.DateStatusModified = DateTimeOffset.Now;
 
                 entity.Name = item.Name;
                 entity.WebsiteURL = item.WebsiteURL;
@@ -223,16 +232,17 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 entity.PostalCode = item.PostalCode;
                 entity.Tagline = item.Tagline;
                 entity.Biography = item.Biography;
-                if (entity.StatusId != item.StatusId) entity.DateStatusModified = DateTimeOffset.Now;
+                entity.DateStatusModified = item.DateStatusModified;
                 entity.StatusId = item.StatusId;
                 entity.CommentApproval = item.CommentApproval;
                 entity.LogoId = item.LogoId;
-                entity.DateModified = DateTimeOffset.Now;
+                entity.DateModified = item.DateModified;
             }
 
             _context.Organization.UpdateRange(entities);
-
             await _context.SaveChangesAsync();
+
+            return items;
         }
 
         public Task Delete(Domain.Entity.Models.Organization item)

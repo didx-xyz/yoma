@@ -38,16 +38,16 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 FileId = item.FileId,
                 Type = item.Type.ToString(),
                 DateCreated = item.DateCreated,
-
             };
 
             _context.OrganizationDocuments.Add(entity);
             await _context.SaveChangesAsync();
+
             item.Id = entity.Id;
             return item;
         }
 
-        public Task Update(Domain.Entity.Models.OrganizationDocument item)
+        public Task<Domain.Entity.Models.OrganizationDocument> Update(Domain.Entity.Models.OrganizationDocument item)
         {
             throw new NotImplementedException();
         }

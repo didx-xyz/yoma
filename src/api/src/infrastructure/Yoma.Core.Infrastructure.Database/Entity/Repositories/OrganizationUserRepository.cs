@@ -38,12 +38,12 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 
             _context.OrganizationUsers.Add(entity);
             await _context.SaveChangesAsync();
-            item.Id = entity.Id;
 
+            item.Id = entity.Id;
             return item;
         }
 
-        public Task Update(Domain.Entity.Models.OrganizationUser item)
+        public Task<Domain.Entity.Models.OrganizationUser> Update(Domain.Entity.Models.OrganizationUser item)
         {
             throw new NotImplementedException();
         }

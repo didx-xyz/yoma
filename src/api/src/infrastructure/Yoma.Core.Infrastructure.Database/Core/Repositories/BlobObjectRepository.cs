@@ -43,12 +43,12 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
 
             _context.BlobObject.Add(entity);
             item.Id = entity.Id;
-            await _context.SaveChangesAsync();
 
+            await _context.SaveChangesAsync();
             return item;
         }
 
-        public Task Update(Domain.Core.Models.BlobObject item)
+        public Task<Domain.Core.Models.BlobObject> Update(Domain.Core.Models.BlobObject item)
         {
             throw new NotImplementedException();
         }

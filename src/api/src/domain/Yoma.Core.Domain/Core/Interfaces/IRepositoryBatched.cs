@@ -5,6 +5,6 @@ namespace Yoma.Core.Domain.Core.Interfaces
     {
         Task<List<T>> Create(List<T> items);
 
-        Task Update(List<T> items);
+        Task<List<T>> Update(List<T> items);
     }
 }

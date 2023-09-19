@@ -85,10 +85,9 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
             };
 
             _context.MyOpportunity.Add(entity);
-
             await _context.SaveChangesAsync();
-            item.Id = entity.Id;
 
+            item.Id = entity.Id;
             return item;
         }
 
@@ -96,12 +95,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         {
             if (items == null || !items.Any())
                 throw new ArgumentNullException(nameof(items));
-
-            items.ForEach(item =>
-            {
-                item.DateCreated = DateTimeOffset.Now;
-                item.DateModified = DateTimeOffset.Now;
-            });
 
             var entities = items.Select(item =>
               new Entities.MyOpportunity
@@ -117,21 +110,30 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                   DateCompleted = item.DateCompleted,
                   ZltoReward = item.ZltoReward,
                   YomaReward = item.YomaReward,
-                  DateCreated = item.DateCreated,
-                  DateModified = item.DateModified,
+                  DateCreated = DateTimeOffset.Now,
+                  DateModified = DateTimeOffset.Now,
               });
 
             _context.MyOpportunity.AddRange(entities);
-
             await _context.SaveChangesAsync();
+
+            items = items.Zip(entities, (item, entity) =>
+            {
+                item.Id = entity.Id;
+                item.DateCreated = entity.DateCreated;
+                item.DateModified = entity.DateModified;
+                return item;
+            }).ToList();
 
             return items;
         }
 
-        public async Task Update(Domain.MyOpportunity.Models.MyOpportunity item)
+        public async Task<Domain.MyOpportunity.Models.MyOpportunity> Update(Domain.MyOpportunity.Models.MyOpportunity item)
         {
             var entity = _context.MyOpportunity.Where(o => o.Id == item.Id).SingleOrDefault()
                 ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.MyOpportunity)} with id '{item.Id}' does not exist");
+
+            item.DateModified = DateTimeOffset.Now;
 
             entity.ActionId = item.ActionId;
             entity.VerificationStatusId = item.VerificationStatusId;
@@ -141,12 +143,14 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
             entity.DateCompleted = item.DateCompleted;
             entity.ZltoReward = item.ZltoReward;
             entity.YomaReward = item.YomaReward;
-            entity.DateModified = DateTimeOffset.Now;
+            entity.DateModified = item.DateModified;
 
             await _context.SaveChangesAsync();
+
+            return item;
         }
 
-        public async Task Update(List<Domain.MyOpportunity.Models.MyOpportunity> items)
+        public async Task<List<Domain.MyOpportunity.Models.MyOpportunity>> Update(List<Domain.MyOpportunity.Models.MyOpportunity> items)
         {
             if (items == null || !items.Any())
                 throw new ArgumentNullException(nameof(items));
@@ -158,6 +162,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
             {
                 var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Entities.MyOpportunity)} with id '{item.Id}' does not exist");
 
+                item.DateModified = DateTimeOffset.Now;
+
                 entity.ActionId = item.ActionId;
                 entity.VerificationStatusId = item.VerificationStatusId;
                 entity.CommentVerification = item.CommentVerification;
@@ -166,12 +172,13 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 entity.DateCompleted = item.DateCompleted;
                 entity.ZltoReward = item.ZltoReward;
                 entity.YomaReward = item.YomaReward;
-                entity.DateModified = DateTimeOffset.Now;
+                entity.DateModified = item.DateModified;
             }
 
             _context.MyOpportunity.UpdateRange(entities);
-
             await _context.SaveChangesAsync();
+
+            return items;
         }
 
         public async Task Delete(Domain.MyOpportunity.Models.MyOpportunity item)

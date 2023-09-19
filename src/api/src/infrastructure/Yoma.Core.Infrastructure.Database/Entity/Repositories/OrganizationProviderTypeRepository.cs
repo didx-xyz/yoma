@@ -33,16 +33,16 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 OrganizationId = item.OrganizationId,
                 ProviderTypeId = item.ProviderTypeId,
                 DateCreated = item.DateCreated,
-
             };
 
             _context.OrganizationProviderTypes.Add(entity);
             await _context.SaveChangesAsync();
+
             item.Id = entity.Id;
             return item;
         }
 
-        public Task Update(Domain.Entity.Models.OrganizationProviderType item)
+        public Task<Domain.Entity.Models.OrganizationProviderType> Update(Domain.Entity.Models.OrganizationProviderType item)
         {
             throw new NotImplementedException();
         }

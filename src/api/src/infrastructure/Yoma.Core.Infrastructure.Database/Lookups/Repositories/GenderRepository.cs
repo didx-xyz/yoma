@@ -28,7 +28,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
             throw new NotImplementedException();
         }
 
-        public Task Update(Domain.Lookups.Models.Gender item)
+        public Task<Domain.Lookups.Models.Gender> Update(Domain.Lookups.Models.Gender item)
         {
             throw new NotImplementedException();
         }

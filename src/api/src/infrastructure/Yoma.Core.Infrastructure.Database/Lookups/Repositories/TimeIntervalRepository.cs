@@ -28,7 +28,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
             throw new NotImplementedException();
         }
 
-        public Task Update(Domain.Lookups.Models.TimeInterval item)
+        public Task<Domain.Lookups.Models.TimeInterval> Update(Domain.Lookups.Models.TimeInterval item)
         {
             throw new NotImplementedException();
         }

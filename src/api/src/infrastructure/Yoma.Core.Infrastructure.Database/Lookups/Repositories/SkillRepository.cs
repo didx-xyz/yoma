@@ -58,11 +58,9 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
             };
 
             _context.Skill.Add(entity);
-
             await _context.SaveChangesAsync();
 
             item.Id = entity.Id;
-
             return item;
         }
 
@@ -71,12 +69,6 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
             if (items == null || !items.Any())
                 throw new ArgumentNullException(nameof(items));
 
-            items.ForEach(item =>
-            {
-                item.DateCreated = DateTimeOffset.Now;
-                item.DateModified = DateTimeOffset.Now;
-            });
-
             var entities = items.Select(item =>
             new Skill
             {
@@ -84,28 +76,40 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
                 Name = item.Name,
                 ExternalId = item.ExternalId,
                 InfoURL = item.InfoURL,
-                DateCreated = item.DateCreated,
-                DateModified = item.DateModified
+                DateCreated = DateTimeOffset.Now,
+                DateModified = DateTimeOffset.Now
             });
 
             _context.Skill.AddRange(entities);
-
             await _context.SaveChangesAsync();
+
+            items = items.Zip(entities, (item, entity) =>
+            {
+                item.Id = entity.Id;
+                item.DateCreated = entity.DateCreated;
+                item.DateModified = entity.DateModified;
+                return item;
+            }).ToList();
 
             return items;
         }
 
-        public async Task Update(Domain.Lookups.Models.Skill item)
+        public async Task<Domain.Lookups.Models.Skill> Update(Domain.Lookups.Models.Skill item)
         {
             var entity = _context.Skill.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Skill)} with id '{item.Id}' does not exist");
+
+            item.DateModified = DateTimeOffset.Now;
+
             entity.Name = item.Name;
             entity.InfoURL = item.InfoURL;
-            entity.DateModified = DateTimeOffset.Now;
+            entity.DateModified = item.DateModified;
 
             await _context.SaveChangesAsync();
+
+            return item;
         }
 
-        public async Task Update(List<Domain.Lookups.Models.Skill> items)
+        public async Task<List<Domain.Lookups.Models.Skill>> Update(List<Domain.Lookups.Models.Skill> items)
         {
             if (items == null || !items.Any())
                 throw new ArgumentNullException(nameof(items));
@@ -120,14 +124,17 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
                 if (!updated) updated = !string.Equals(entity.InfoURL, item.InfoURL, StringComparison.CurrentCultureIgnoreCase);
                 if (!updated) continue;
 
+                item.DateModified = DateTimeOffset.Now;
+
                 entity.Name = item.Name;
                 entity.InfoURL = item.InfoURL;
-                entity.DateModified = DateTimeOffset.Now;
+                entity.DateModified = item.DateModified;
             }
 
             _context.Skill.UpdateRange(entities);
-
             await _context.SaveChangesAsync();
+
+            return items;
         }
 
         public Task Delete(Domain.Lookups.Models.Skill item)

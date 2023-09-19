@@ -40,10 +40,11 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 
             _context.OpportunityVerificationTypes.Add(entity);
             await _context.SaveChangesAsync();
+
             item.Id = entity.Id;
             return item;
         }
-        public Task Update(OpportunityVerificationType item)
+        public Task<OpportunityVerificationType> Update(OpportunityVerificationType item)
         {
             throw new NotImplementedException();
         }

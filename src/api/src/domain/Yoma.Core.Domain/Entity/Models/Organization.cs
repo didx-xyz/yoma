@@ -40,7 +40,7 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public string? CommentApproval { get; set; }
 
-        public DateTimeOffset DateStatusModified { get; set; }
+        public DateTimeOffset? DateStatusModified { get; set; }
 
         public Guid? LogoId { get; set; }
 

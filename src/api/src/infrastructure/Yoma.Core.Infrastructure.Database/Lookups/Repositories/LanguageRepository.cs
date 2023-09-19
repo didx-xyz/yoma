@@ -29,7 +29,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
             throw new NotImplementedException();
         }
 
-        public Task Update(Domain.Lookups.Models.Language item)
+        public Task<Domain.Lookups.Models.Language> Update(Domain.Lookups.Models.Language item)
         {
             throw new NotImplementedException();
         }

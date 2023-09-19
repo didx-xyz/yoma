@@ -33,15 +33,15 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 OpportunityId = item.OpportunityId,
                 LanguageId = item.LanguageId,
                 DateCreated = item.DateCreated,
-
             };
 
             _context.OpportunityLanguages.Add(entity);
             await _context.SaveChangesAsync();
+
             item.Id = entity.Id;
             return item;
         }
-        public Task Update(OpportunityLanguage item)
+        public Task<OpportunityLanguage> Update(OpportunityLanguage item)
         {
             throw new NotImplementedException();
         }

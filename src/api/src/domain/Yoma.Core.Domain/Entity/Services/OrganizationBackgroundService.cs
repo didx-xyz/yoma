@@ -64,7 +64,7 @@ namespace Yoma.Core.Domain.Entity.Services
                         item.StatusId = statusDeclinedId;
                     }
 
-                    _organizationRepository.Update(items).Wait();
+                    items = _organizationRepository.Update(items).Result;
 
                     var groupedOrganizations = items
                         .SelectMany(org => org.Administrators ?? Enumerable.Empty<UserInfo>(), (org, admin) => new { Administrator = admin, Organization = org })

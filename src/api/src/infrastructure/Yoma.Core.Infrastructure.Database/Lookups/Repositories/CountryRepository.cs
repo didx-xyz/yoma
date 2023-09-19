@@ -31,7 +31,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
             throw new NotImplementedException();
         }
 
-        public Task Update(Domain.Lookups.Models.Country item)
+        public Task<Domain.Lookups.Models.Country> Update(Domain.Lookups.Models.Country item)
         {
             throw new NotImplementedException();
         }

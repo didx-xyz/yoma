@@ -327,7 +327,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (myOpportunity == null)
                 myOpportunity = new Models.MyOpportunity
                 {
-                    Id = Guid.NewGuid(),
                     UserId = user.Id,
                     OpportunityId = opportunity.Id,
                     ActionId = actionVerificationId,
@@ -445,7 +444,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     throw new ArgumentOutOfRangeException(nameof(request), $"{nameof(request.Status)} of '{request.Status}' not supported");
             }
 
-            await _myOpportunityRepository.Update(item);
+            item = await _myOpportunityRepository.Update(item);
 
             scope.Complete();
 
@@ -501,7 +500,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
                 if (isNew)
-                    await _myOpportunityRepository.Create(myOpportunity);
+                    myOpportunity = await _myOpportunityRepository.Create(myOpportunity);
                 else
                 {
                     //track existing (to be deleted)
@@ -517,7 +516,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         }
                     }
 
-                    await _myOpportunityRepository.Update(myOpportunity);
+                    myOpportunity = await _myOpportunityRepository.Update(myOpportunity);
                 }
 
                 //new items
