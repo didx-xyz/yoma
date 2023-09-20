@@ -36,6 +36,10 @@ export const Global: React.FC = () => {
     )
       setNavbarColor("bg-blue");
     else if (
+      router.asPath.match(/\/organisations\/[a-z0-9-]{36}\/opportunities/)
+    )
+      setNavbarColor("bg-green");
+    else if (
       router.asPath.startsWith("/user") ||
       router.asPath.startsWith("/organisation")
     )
