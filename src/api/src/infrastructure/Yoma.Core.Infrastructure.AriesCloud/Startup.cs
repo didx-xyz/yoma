@@ -10,9 +10,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud
 {
     public static class Startup
     {
-        public static void Configure_SSIProvider(this IServiceProvider services)
+        public static void UseSSIProvider(this IApplicationBuilder applicationBuilder)
         {
-            services.UseAriesCloudAPI();
+            applicationBuilder.ApplicationServices.UseAriesCloudAPI();
         }
 
         public static void ConfigureServices_InfrastructureSSIProvider(this IServiceCollection services, IConfiguration configuration, string nameOrConnectionString)

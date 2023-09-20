@@ -155,7 +155,7 @@ namespace Yoma.Core.Api
                 }
             });
 
-            app.ApplicationServices.Configure_SSIProvider();
+            app.UseSSIProvider();
             #endregion
 
             #region System
