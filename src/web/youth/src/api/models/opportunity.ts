@@ -132,13 +132,13 @@ export interface OpportunityRequestBase {
   commitmentIntervalCount: number | null;
   participantLimit: number | null;
   keywords: string[] | null;
-  dateStart: string|null;
+  dateStart: string | null;
   dateEnd: string | null;
   categories: string[];
   countries: string[];
   languages: string[];
   skills: string[];
-  verificationTypes: KeyValuePair<VerificationType, string | null>[] | null;
+  verificationTypes: OpportunityVerificationType[] | null;
   postAsActive: boolean;
 }
 
@@ -161,9 +161,4 @@ export interface OpportunityVerificationType {
   type: VerificationType;
   displayName: string;
   description: string;
-}
-
-export interface TimeInterval {
-  id: string;
-  name: string;
 }
