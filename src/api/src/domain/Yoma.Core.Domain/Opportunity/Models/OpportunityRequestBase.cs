@@ -63,6 +63,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
         [Required]
         public List<Guid> Skills { get; set; }
 
-        public Dictionary<VerificationType, string?>? VerificationTypes { get; set; }
+        public List<OpportunityRequestVerificationType>? VerificationTypes { get; set; }
     }
 }

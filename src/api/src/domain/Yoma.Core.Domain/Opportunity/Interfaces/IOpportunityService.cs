@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
         Task<Models.Opportunity> RemoveSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization);
 
-        Task<Models.Opportunity> AssignVerificationTypes(Guid id, Dictionary<VerificationType, string?> verificationTypes, bool ensureOrganizationAuthorization);
+        Task<Models.Opportunity> AssignVerificationTypes(Guid id, List<OpportunityRequestVerificationType> verificationTypes, bool ensureOrganizationAuthorization);
 
         Task<Models.Opportunity> RemoveVerificationTypes(Guid id, List<VerificationType> verificationTypes, bool ensureOrganizationAuthorization);
     }
