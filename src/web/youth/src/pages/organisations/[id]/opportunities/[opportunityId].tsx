@@ -24,6 +24,7 @@ import type {
   Opportunity,
   OpportunityRequestBase,
   OpportunityType,
+  OpportunityVerificationType,
 } from "~/api/models/opportunity";
 import {
   getCountries,
@@ -160,13 +161,9 @@ const OpportunityDetails: NextPageWithLayout<{
         label: c.name,
       })),
   });
-  const { data: verificationTypes } = useQuery<SelectOption[]>({
+  const { data: verificationTypes } = useQuery<OpportunityVerificationType[]>({
     queryKey: ["verificationTypes"],
-    queryFn: async () =>
-      (await getVerificationTypes()).map((c) => ({
-        value: c.id,
-        label: c.displayName,
-      })),
+    queryFn: async () => await getVerificationTypes(),
   });
   const { data: difficulties } = useQuery<SelectOption[]>({
     queryKey: ["difficulties"],
@@ -274,7 +271,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
     sSIIntegrated: opportunity?.sSIIntegrated ?? false,
 
-    organizationId: opportunity?.organizationId ?? "",
+    organizationId: id,
     postAsActive: opportunity?.published ?? false,
 
     //TODO:
@@ -287,7 +284,12 @@ const OpportunityDetails: NextPageWithLayout<{
   const onSubmit = useCallback(
     async (data: OpportunityRequestBase) => {
       setIsLoading(true);
+      console.log("data:", data);
+      //return;
 
+      // data.verificationTypes = data.verificationTypes.filter(
+      //   (x) => x.key != null && x.key != undefined && x.key != false,
+      // );
       try {
         // update api
         if (opportunity) {
@@ -440,7 +442,13 @@ const OpportunityDetails: NextPageWithLayout<{
   const schemaStep5 = z
     .object({
       verificationSupported: z.boolean(),
-      verificationTypes: z.array(z.any()),
+      verificationTypes: z.array(
+        // z.object({
+        //   type: z.string({ required_error: "Verification type is required" }),
+        //   description: z.string({ required_error: "Description is required" }),
+        // }),
+        z.any(),
+      ),
     })
     .superRefine((values, ctx) => {
       if (!values.verificationSupported) return;
@@ -454,9 +462,9 @@ const OpportunityDetails: NextPageWithLayout<{
       }
 
       var count = values.verificationTypes.filter(
-        (x) => x.key != null && x.key != undefined && x.key != false,
+        (x) => x.type != null && x.type != undefined,
       ).length;
-
+      debugger;
       if (count === 0)
         ctx.addIssue({
           message: "At least one verification type is required.",
@@ -465,7 +473,7 @@ const OpportunityDetails: NextPageWithLayout<{
         });
 
       for (const file of values.verificationTypes) {
-        if (file?.key && !file.description) {
+        if (file?.type && !file.description) {
           ctx.addIssue({
             message: "A description for each verification type is required .",
             code: z.ZodIssueCode.custom,
@@ -601,7 +609,7 @@ const OpportunityDetails: NextPageWithLayout<{
               <a
                 className={`menu-title ${
                   step === 1
-                    ? "bg-green-light hover:bg-green-light text-green"
+                    ? "bg-green-light text-green hover:bg-green-light"
                     : "bg-gray text-gray-dark"
                 }`}
               >
@@ -619,7 +627,7 @@ const OpportunityDetails: NextPageWithLayout<{
               <a
                 className={`menu-title ${
                   step === 2
-                    ? "bg-green-light hover:bg-green-light text-green"
+                    ? "bg-green-light text-green hover:bg-green-light"
                     : "bg-gray text-gray-dark"
                 }`}
               >
@@ -637,7 +645,7 @@ const OpportunityDetails: NextPageWithLayout<{
               <a
                 className={`menu-title ${
                   step === 3
-                    ? "bg-green-light hover:bg-green-light text-green"
+                    ? "bg-green-light text-green hover:bg-green-light"
                     : "bg-gray text-gray-dark"
                 }`}
               >
@@ -655,7 +663,7 @@ const OpportunityDetails: NextPageWithLayout<{
               <a
                 className={`menu-title ${
                   step === 4
-                    ? "bg-green-light hover:bg-green-light text-green"
+                    ? "bg-green-light text-green hover:bg-green-light"
                     : "bg-gray text-gray-dark"
                 }`}
               >
@@ -673,7 +681,7 @@ const OpportunityDetails: NextPageWithLayout<{
               <a
                 className={`menu-title ${
                   step === 5
-                    ? "bg-green-light hover:bg-green-light text-green"
+                    ? "bg-green-light text-green hover:bg-green-light"
                     : "bg-gray text-gray-dark"
                 }`}
               >
@@ -691,7 +699,7 @@ const OpportunityDetails: NextPageWithLayout<{
               <a
                 className={`menu-title ${
                   step === 6
-                    ? "bg-green-light hover:bg-green-light text-green"
+                    ? "bg-green-light text-green hover:bg-green-light"
                     : "bg-gray text-gray-dark"
                 }`}
               >
@@ -709,7 +717,7 @@ const OpportunityDetails: NextPageWithLayout<{
               <a
                 className={`menu-title ${
                   step === 7
-                    ? "bg-green-light hover:bg-green-light text-green"
+                    ? "bg-green-light text-green hover:bg-green-light"
                     : "bg-gray text-gray-dark"
                 }`}
               >
@@ -1570,25 +1578,24 @@ const OpportunityDetails: NextPageWithLayout<{
                       </label>
 
                       {verificationTypes?.map((item, index) => (
-                        <div className="flex flex-row" key={item.value}>
+                        <div className="flex flex-row" key={item.id}>
                           {/* checkbox label */}
                           <label
-                            htmlFor={item.value}
+                            htmlFor={item.id}
                             className="label w-full cursor-pointer justify-normal"
-                            key={item.value}
                           >
                             <input
                               {...registerStep5(
-                                `verificationTypes[${index}].key`,
+                                `verificationTypes[${index}].type`,
                               )}
                               type="checkbox"
-                              value={item.value}
-                              id={item.value}
+                              value={item.type}
+                              id={item.id}
                               className="checkbox-primary checkbox"
                               disabled={!watchVerificationSupported}
                             />
                             <span className="label-text ml-4">
-                              {item.label}
+                              {item.displayName}
                             </span>
                           </label>
                           {/* description input */}
@@ -1604,8 +1611,8 @@ const OpportunityDetails: NextPageWithLayout<{
                                 `verificationTypes[${index}].description`,
                               )}
                               contentEditable
-                              //value={item.label}
-                              //defaultValue={item.label}
+                              //value={item.description}
+                              //defaultValue={item.description}
                               disabled={!watchVerificationSupported}
                             />
                           </div>
