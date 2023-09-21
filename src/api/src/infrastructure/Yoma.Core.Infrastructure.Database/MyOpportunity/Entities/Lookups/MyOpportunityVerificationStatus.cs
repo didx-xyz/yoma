@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups
 {
-    [Table("MyOpportunityVerificationStatus", Schema = "opportunity")]
+    [Table("MyOpportunityVerificationStatus", Schema = "Opportunity")]
     [Index(nameof(Name), IsUnique = true)]
     public class MyOpportunityVerificationStatus : BaseEntity<Guid>
     {

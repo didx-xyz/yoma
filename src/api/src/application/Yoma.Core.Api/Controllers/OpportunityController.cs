@@ -338,7 +338,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpPatch("{id}/assign/verificationTypes")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> AssignVerificationTypes([FromRoute] Guid id, [Required][FromBody] Dictionary<VerificationType, string?> verificationTypes)
+        public async Task<IActionResult> AssignVerificationTypes([FromRoute] Guid id, [Required][FromBody] List<OpportunityRequestVerificationType> verificationTypes)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(AssignVerificationTypes));
 

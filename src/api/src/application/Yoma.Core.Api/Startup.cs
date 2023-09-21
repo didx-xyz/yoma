@@ -21,6 +21,7 @@ using Yoma.Core.Infrastructure.SendGrid;
 using Yoma.Core.Infrastructure.AmazonS3;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Infrastructure.Zlto;
+using Yoma.Core.Infrastructure.AriesCloud;
 
 namespace Yoma.Core.Api
 {
@@ -88,6 +89,7 @@ namespace Yoma.Core.Api
 
             #region Services & Infrastructure
             services.ConfigureServices_DomainServices();
+            services.ConfigureServices_InfrastructureSSIProvider(_configuration, _configuration.Configuration_ConnectionStringName());
             services.ConfigureServices_InfrastructureBlobProvider(_configuration);
             services.ConfigureServices_InfrastructureIdentityProvider();
             services.ConfigureServices_InfrastructureLaborMarketProvider();
@@ -97,7 +99,7 @@ namespace Yoma.Core.Api
             #endregion Services & Infrastructure
 
             #region 3rd Party (post ConfigureServices_InfrastructureDatabase)
-            ConfigureHangfire(services, _configuration); //
+            ConfigureHangfire(services, _configuration);
             #endregion 3rd Party (post ConfigureServices_InfrastructureDatabase)
         }
 
@@ -127,7 +129,9 @@ namespace Yoma.Core.Api
 
             app.UseAuthentication();
             app.UseAuthorization();
+            #endregion
 
+            #region 3rd Party
             app.UseHangfireDashboard(options: new DashboardOptions
             {
                 DarkModeEnabled = true,
@@ -151,6 +155,10 @@ namespace Yoma.Core.Api
                 }
             });
 
+            app.UseSSIProvider();
+            #endregion
+
+            #region System
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
@@ -158,10 +166,10 @@ namespace Yoma.Core.Api
             });
             #endregion System
 
-            #region Recurring Jobs
+            #region 3rd Partry
             //migrations applied as part of ConfigureHangfire to ensure db exist prior to executing Hangfire migrations
             serviceProvider.Configure_RecurringJobs(_configuration);
-            #endregion ring Jobs
+            #endregion 3rd Party
         }
         #endregion
 
@@ -209,6 +217,7 @@ namespace Yoma.Core.Api
             services.AddHangfire((serviceProvider, config) =>
             {
                 serviceProvider.Configure_InfrastructureDatabase();
+                serviceProvider.Configure_InfrastructureDatabaseSSIProvider();
                 config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
                .UseSimpleAssemblyNameTypeSerializer()
                .UseRecommendedSerializerSettings()

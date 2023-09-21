@@ -28,7 +28,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"CCA1F97F-A848-4E11-A8EA-A1E0CDD4149F","Deleted",DateTimeOffset.Now}
             },
-            schema: "entity");
+            schema: "Entity");
 
             migrationBuilder.InsertData(
             table: "OrganizationProviderType",
@@ -43,7 +43,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"41690ADD-B95C-44C3-AD3B-8E02E5890FD4","Marketplace",DateTimeOffset.Now}
             },
-            schema: "entity");
+            schema: "Entity");
             #endregion Entity
 
             #region Lookups
@@ -553,7 +553,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     {"0EFB07E6-6634-46DE-A98D-A85BF331C20E","Worldwide","WW","WWE","000",DateTimeOffset.Now}
 
             },
-            schema: "lookup");
+            schema: "Lookup");
 
             migrationBuilder.InsertData(
             table: "Gender",
@@ -570,7 +570,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"26BA24A5-9209-48B2-A885-95C43EF142B5","Unknown",DateTimeOffset.Now}
             },
-            schema: "lookup");
+            schema: "Lookup");
 
             migrationBuilder.InsertData(
             table: "Language",
@@ -943,7 +943,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"C4C9EA0F-ED40-48C1-B984-9BACC743CE0D" ,"Zulu" ,"ZU", DateTimeOffset.Now}
             },
-            schema: "lookup");
+            schema: "Lookup");
 
             migrationBuilder.InsertData(
             table: "TimeInterval",
@@ -958,7 +958,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"0EFC48B5-E04E-4BA5-A2F1-305E965BC7CB","Month",DateTimeOffset.Now}
             },
-            schema: "lookup");
+            schema: "Lookup");
             #endregion Lookups
 
             #region Opportunity
@@ -979,7 +979,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"F36051C9-9057-4765-BC2F-9DEE82EF60D6","Tourism and Hospitality",DateTimeOffset.Now}
             },
-            schema: "opportunity");
+            schema: "Opportunity");
 
             migrationBuilder.InsertData(
             table: "OpportunityDifficulty",
@@ -994,7 +994,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"448E2CE3-DDF9-43EA-BE8D-B30CB8712222","Any Level",DateTimeOffset.Now}
             },
-            schema: "opportunity");
+            schema: "Opportunity");
 
             migrationBuilder.InsertData(
             table: "OpportunityStatus",
@@ -1009,7 +1009,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"691CA956-5C83-4EAC-B1EB-50161A603D95","Deleted",DateTimeOffset.Now}
             },
-            schema: "opportunity");
+            schema: "Opportunity");
 
             migrationBuilder.InsertData(
             table: "OpportunityType",
@@ -1020,7 +1020,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"F12A9D90-A8F6-4914-8CA5-6ACF209F7312","Task",DateTimeOffset.Now}
             },
-            schema: "opportunity");
+            schema: "Opportunity");
 
             migrationBuilder.InsertData(
             table: "OpportunityVerificationType",
@@ -1035,7 +1035,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"43FB21C9-0ED7-46D4-A7D2-5E301881649C","VoiceNote","Voice Note","Explain the difference this had on your life",DateTimeOffset.Now}
             },
-            schema: "opportunity");
+            schema: "Opportunity");
 
             migrationBuilder.InsertData(
             table: "MyOpportunityAction",
@@ -1048,7 +1048,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"CB1B8F0F-7BB2-473E-8F20-CA54F0BB8D7E","Verification",DateTimeOffset.Now}
             },
-            schema: "opportunity");
+            schema: "Opportunity");
 
             migrationBuilder.InsertData(
             table: "MyOpportunityVerificationStatus",
@@ -1061,7 +1061,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"4BECE37C-BD3D-40E2-A7C5-2FF2D4A3C802","Completed",DateTimeOffset.Now}
             },
-            schema: "opportunity");
+            schema: "Opportunity");
             #endregion Opportunity
         }
     }

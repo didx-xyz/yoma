@@ -78,7 +78,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
                 .WithMessage("Skills are optional, but must exist if specified.")
                 .When(x => x.Skills != null && x.Skills.Any());
             RuleFor(x => x.VerificationTypes)
-              .Must(types => types != null && types.All(type => VerificationTypeExist(type.Key)))
+              .Must(types => types != null && types.All(type => VerificationTypeExist(type.Type)))
               .WithMessage("Verification types are optional, but must exist if specified.")
               .When(x => x.VerificationTypes != null && x.VerificationTypes.Any());
         }

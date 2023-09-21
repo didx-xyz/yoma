@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Yoma.Core.Infrastructure.Database.Core.Entities
 {
-    [Table("Blob", Schema = "object")]
+    [Table("Blob", Schema = "Object")]
     [Index(nameof(Key), IsUnique = true)]
     public class BlobObject : BaseEntity<Guid>
     {

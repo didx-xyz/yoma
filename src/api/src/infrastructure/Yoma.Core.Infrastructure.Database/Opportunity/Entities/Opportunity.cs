@@ -8,7 +8,7 @@ using Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
 {
-    [Table("Opportunity", Schema = "opportunity")]
+    [Table("Opportunity", Schema = "Opportunity")]
     [Index(nameof(Title), IsUnique = true)]
     [Index(nameof(TypeId), nameof(OrganizationId), nameof(DifficultyId), nameof(CommitmentIntervalId), nameof(StatusId), nameof(Keywords),
         nameof(DateStart), nameof(DateEnd), nameof(DateCreated), nameof(DateModified))]

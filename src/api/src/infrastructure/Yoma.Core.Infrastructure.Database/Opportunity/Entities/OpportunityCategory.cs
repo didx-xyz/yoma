@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
 {
-    [Table("OpportunityCategories", Schema = "opportunity")]
+    [Table("OpportunityCategories", Schema = "Opportunity")]
     [Index(nameof(OpportunityId), nameof(CategoryId), IsUnique = true)]
     public class OpportunityCategory : BaseEntity<Guid>
     {

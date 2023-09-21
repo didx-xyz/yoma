@@ -478,7 +478,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (request.VerificationSupported && (request.VerificationTypes == null || !request.VerificationTypes.Any()))
                 throw new ValidationException("One or more verification types are required when verification is supported");
 
-            result = await RemoveVerificationTypes(result, result.VerificationTypes?.Where(o => request.VerificationTypes == null || !request.VerificationTypes.ContainsKey(o.Type)).Select(o => o.Type).ToList());
+            result = await RemoveVerificationTypes(result, result.VerificationTypes?.Select(o => o.Type).Except(request.VerificationTypes?.Select(o => o.Type) ?? Enumerable.Empty<VerificationType>()).ToList());
             result = await AssignVerificationTypes(result, request.VerificationTypes);
 
             scope.Complete();
@@ -677,7 +677,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return result;
         }
 
-        public async Task<Models.Opportunity> AssignVerificationTypes(Guid id, Dictionary<VerificationType, string?> verificationTypes, bool ensureOrganizationAuthorization)
+        public async Task<Models.Opportunity> AssignVerificationTypes(Guid id, List<OpportunityRequestVerificationType> verificationTypes, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, false, ensureOrganizationAuthorization);
 
@@ -942,7 +942,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return opportunity;
         }
 
-        private async Task<Models.Opportunity> AssignVerificationTypes(Models.Opportunity opportunity, Dictionary<VerificationType, string?>? verificationTypes)
+        private async Task<Models.Opportunity> AssignVerificationTypes(Models.Opportunity opportunity, List<OpportunityRequestVerificationType>? verificationTypes)
         {
             if (verificationTypes == null || !verificationTypes.Any()) return opportunity; //verification types is optional
 
@@ -954,13 +954,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var type in verificationTypes)
             {
-                var verificationType = _opportunityVerificationTypeService.GetByType(type.Key);
+                var verificationType = _opportunityVerificationTypeService.GetByType(type.Type);
                 results.Add(verificationType);
 
                 var item = _opportunityVerificationTypeRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.VerificationTypeId == verificationType.Id);
                 if (item != null) continue;
 
-                var desc = type.Value?.Trim();
+                var desc = type.Description?.Trim();
                 if (string.IsNullOrEmpty(desc)) desc = null;
 
                 item = new OpportunityVerificationType

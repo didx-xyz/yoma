@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups
 {
-    [Table("OrganizationStatus", Schema = "entity")]
+    [Table("OrganizationStatus", Schema = "Entity")]
     [Index(nameof(Name), IsUnique = true)]
     public class OrganizationStatus : BaseEntity<Guid>
     {
