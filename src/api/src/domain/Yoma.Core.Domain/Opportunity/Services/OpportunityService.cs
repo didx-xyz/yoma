@@ -378,7 +378,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 DateEnd = !request.DateEnd.HasValue ? null : request.DateEnd.Value.ToEndOfDay(),
                 StatusId = _opportunityStatusService.GetByName(status.ToString()).Id,
                 Status = status,
-                CreatedBy = username
+                CreatedBy = username,
+                ModifiedBy = username
             };
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);

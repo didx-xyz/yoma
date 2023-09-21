@@ -1063,6 +1063,72 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             },
             schema: "Opportunity");
             #endregion Opportunity
+
+            #region SSI
+            migrationBuilder.InsertData(
+            table: "SchemaEntity",
+            columns: new[] { "Id", "TypeName", "DateCreated" },
+            values: new object[,]
+            {
+                    {"AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","Yoma.Core.Domain.Entity.Models.User",DateTimeOffset.Now}
+                    ,
+                    {"E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Yoma.Core.Domain.Opportunity.Models.Opportunity",DateTimeOffset.Now}
+                    ,
+                    {"CA11D9D0-39F6-46D8-A0D3-350EC41402F5","Yoma.Core.Domain.MyOpportunity.Models.MyOpportunity",DateTimeOffset.Now}
+            },
+            schema: "SSI");
+
+            migrationBuilder.InsertData(
+            table: "SchemaEntityProperty",
+            columns: new[] { "Id", "SSISchemaObjectId", "Name", "ValueDescription", "DateCreated" },
+            values: new object[,]
+            {
+                    {"32447353-1698-467C-8B5D-AD85E89235B0","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","Email","Email",DateTimeOffset.Now}
+                    ,
+                    {"D26B85E6-223E-48B6-A12F-6C2D0136DD2F","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","FirstName","First Name",DateTimeOffset.Now}
+                    ,
+                    {"F7D89C98-0447-42DF-8A2D-A369B9FBAEBA","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","Surname","Surname",DateTimeOffset.Now}
+                    ,
+                    {"26EA32E2-5913-44B7-835F-12F0882685C4","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","DisplayName","Display Name",DateTimeOffset.Now}
+                    ,
+                    {"64D4CBEB-3692-4E39-AAA7-B704F46AFB6D","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","PhoneNumber","Phone Number",DateTimeOffset.Now}
+                    ,
+                    {"B14C9C34-4C89-4DAE-88AB-9D667BE2EF7F","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","Country","Country",DateTimeOffset.Now}
+                    ,
+                    {"B88A8825-FC5A-4000-93FE-9406A7898C58","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","CountryOfResidence","Country of Residence",DateTimeOffset.Now}
+                    ,
+                    {"C26D9276-5F94-4BB3-94BA-67C435025708","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","Gender","Gender",DateTimeOffset.Now}
+                    ,
+                    {"D56808D2-F3DB-4D82-AA5C-1FBA04C8E3BD","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","DateOfBirth","Date of Birth",DateTimeOffset.Now}
+                    ,
+                    {"F2937615-3F9D-4700-B3AB-B3AFFE2FEC0D","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","Skills.Name","Skills",DateTimeOffset.Now}
+                    ,
+                    {"869AC79B-1FF3-45FC-AAD8-6E383E463D00","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Title","Title",DateTimeOffset.Now}
+                    ,
+                    {"755B1F54-1365-4D2F-AF29-8AEC57CC7B4C","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Type","i.e. Learning",DateTimeOffset.Now}
+                    ,
+                    {"E763C235-F1B8-4D12-B60F-117AF7948355","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Organization","Organization Name",DateTimeOffset.Now}
+                    ,
+                    {"FF423D0C-2E91-48A6-9245-28EEF6E96B01","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Difficulty","i.e. Intermediate",DateTimeOffset.Now}
+                    ,
+                    {"DC38BEF2-631F-4666-9B93-4E1A04522373","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","CommitmentInterval","i.e. Hour",DateTimeOffset.Now}
+                    ,
+                    {"34D3CD04-C94E-4450-B574-31AF3F8A7B3F","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","CommitmentIntervalCount","i.e. 10 Hours",DateTimeOffset.Now}
+                    ,
+                    {"1FE6A465-D888-4346-A421-1185F7DD79BF","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","DateStart","Start Date",DateTimeOffset.Now}
+                    ,
+                    {"06E282B5-EC92-42B9-84AD-C9DDC3A85011","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","DateEnd","End Date",DateTimeOffset.Now}
+                    ,
+                    {"F4BAA24B-463F-4B74-BA81-7CC5DCBE8DF5","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Skills.Name","Skills",DateTimeOffset.Now}
+                    ,
+                    {"A3E3FF94-67E0-4A03-983F-8D3D5DF5B56A","CA11D9D0-39F6-46D8-A0D3-350EC41402F5","DateCompleted","Completion Date",DateTimeOffset.Now}
+                    ,
+                    {"682974E4-7AAB-4060-8A27-426F91C02ADD","CA11D9D0-39F6-46D8-A0D3-350EC41402F5","ZltoReward","Zlto Reward",DateTimeOffset.Now}
+                    ,
+                    {"35632B44-19A1-4763-A92B-22E72B1BA4A3","CA11D9D0-39F6-46D8-A0D3-350EC41402F5","YomaReward","Yoma Reward",DateTimeOffset.Now}
+            },
+            schema: "SSI");
+            #endregion SSI
         }
     }
 }

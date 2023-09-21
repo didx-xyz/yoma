@@ -40,8 +40,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public string? CommentVerification { get; set; }
 
-        public Guid? CertificateId { get; set; }
-
         public DateTimeOffset? DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }

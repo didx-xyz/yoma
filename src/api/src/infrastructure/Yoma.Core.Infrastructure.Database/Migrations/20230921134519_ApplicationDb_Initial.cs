@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -21,6 +22,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.EnsureSchema(
                 name: "Entity");
+
+            migrationBuilder.EnsureSchema(
+                name: "SSI");
 
             migrationBuilder.CreateTable(
                 name: "Blob",
@@ -213,6 +217,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SchemaEntity",
+                schema: "SSI",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TypeName = table.Column<string>(type: "varchar(255)", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SchemaEntity", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Skill",
                 schema: "Lookup",
                 columns: table => new
@@ -344,6 +362,29 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         column: x => x.StatusId,
                         principalSchema: "Entity",
                         principalTable: "OrganizationStatus",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SchemaEntityProperty",
+                schema: "SSI",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SSISchemaObjectId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "varchar(50)", nullable: false),
+                    ValueDescription = table.Column<string>(type: "varchar(125)", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SchemaEntityProperty", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SchemaEntityProperty_SchemaEntity_SSISchemaObjectId",
+                        column: x => x.SSISchemaObjectId,
+                        principalSchema: "SSI",
+                        principalTable: "SchemaEntity",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1104,6 +1145,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SchemaEntity_TypeName",
+                schema: "SSI",
+                table: "SchemaEntity",
+                column: "TypeName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SchemaEntityProperty_SSISchemaObjectId_Name",
+                schema: "SSI",
+                table: "SchemaEntityProperty",
+                columns: new[] { "SSISchemaObjectId", "Name" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Skill_ExternalId",
                 schema: "Lookup",
                 table: "Skill",
@@ -1217,6 +1272,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Entity");
 
             migrationBuilder.DropTable(
+                name: "SchemaEntityProperty",
+                schema: "SSI");
+
+            migrationBuilder.DropTable(
                 name: "UserSkills",
                 schema: "Entity");
 
@@ -1239,6 +1298,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             migrationBuilder.DropTable(
                 name: "OrganizationProviderType",
                 schema: "Entity");
+
+            migrationBuilder.DropTable(
+                name: "SchemaEntity",
+                schema: "SSI");
 
             migrationBuilder.DropTable(
                 name: "Skill",

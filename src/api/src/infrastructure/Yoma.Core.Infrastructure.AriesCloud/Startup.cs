@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Yoma.Core.Domain.SSIProvider.Interfaces;
+using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Infrastructure.AriesCloud.Client;
 using Yoma.Core.Infrastructure.AriesCloud.Context;
 
@@ -15,15 +15,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud
             applicationBuilder.ApplicationServices.UseAriesCloudAPI();
         }
 
-        public static void ConfigureServices_InfrastructureSSIProvider(this IServiceCollection services, IConfiguration configuration, string nameOrConnectionString)
+        public static void ConfigureServices_InfrastructureSSIProvider(this IServiceCollection services, IConfiguration configuration, string connectionString)
         {
-            if (string.IsNullOrWhiteSpace(nameOrConnectionString))
-                throw new ArgumentNullException(nameof(nameOrConnectionString));
-            nameOrConnectionString = nameOrConnectionString.Trim();
-
-            var connectionString = configuration.GetConnectionString(nameOrConnectionString);
-            if (string.IsNullOrEmpty(connectionString)) connectionString = nameOrConnectionString;
-
             services.AddDbContext<AriesCloudDbContext>(options => options.UseSqlServer(connectionString));
 
             services.AddAriesCloudAPI();

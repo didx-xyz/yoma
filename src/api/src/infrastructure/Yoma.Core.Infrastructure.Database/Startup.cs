@@ -21,11 +21,6 @@ namespace Yoma.Core.Infrastructure.Database
         private const string ConnectionStrings_SQLConnection = "SQLConnection";
 
         #region Public Members
-        public static string Configuration_ConnectionStringName(this IConfiguration configuration)
-        {
-            return ConnectionStrings_SQLConnection;
-        }
-
         public static string Configuration_ConnectionString(this IConfiguration configuration)
         {
             var result = configuration.GetConnectionString(ConnectionStrings_SQLConnection);

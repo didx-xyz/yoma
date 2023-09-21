@@ -304,7 +304,7 @@ OFFSET 120 ROWS
 FETCH NEXT 30 ROWS ONLY;
 GO
 
---verification (completed): assing user skills
+--verification (completed): assign user skills
 INSERT INTO [Entity].[UserSkills]([Id],[UserId],[SkillId],[DateCreated])
 SELECT NEWID(),
 	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
