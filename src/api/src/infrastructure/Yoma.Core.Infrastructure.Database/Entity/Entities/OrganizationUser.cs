@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 {
-    [Table("OrganizationUsers", Schema = "entity")]
+    [Table("OrganizationUsers", Schema = "Entity")]
     [Index(nameof(OrganizationId), nameof(UserId), IsUnique = true)]
     public class OrganizationUser : BaseEntity<Guid>
     {

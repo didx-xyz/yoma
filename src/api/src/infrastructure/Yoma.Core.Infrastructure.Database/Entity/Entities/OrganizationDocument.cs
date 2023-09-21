@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 {
-    [Table("OrganizationDocuments", Schema = "entity")]
+    [Table("OrganizationDocuments", Schema = "Entity")]
     [Index(nameof(FileId), IsUnique = true)]
     [Index(nameof(OrganizationId), nameof(Type), nameof(DateCreated))]
     public class OrganizationDocument : BaseEntity<Guid>

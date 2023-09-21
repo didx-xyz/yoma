@@ -48,7 +48,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Key")
                         .IsUnique();
 
-                    b.ToTable("Blob", "object");
+                    b.ToTable("Blob", "Object");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups.OrganizationProviderType", b =>
@@ -69,7 +69,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("OrganizationProviderType", "entity");
+                    b.ToTable("OrganizationProviderType", "Entity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups.OrganizationStatus", b =>
@@ -90,7 +90,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("OrganizationStatus", "entity");
+                    b.ToTable("OrganizationStatus", "Entity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>
@@ -174,7 +174,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("StatusId", "DateStatusModified", "DateModified", "DateCreated");
 
-                    b.ToTable("Organization", "entity");
+                    b.ToTable("Organization", "Entity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.OrganizationDocument", b =>
@@ -203,7 +203,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("OrganizationId", "Type", "DateCreated");
 
-                    b.ToTable("OrganizationDocuments", "entity");
+                    b.ToTable("OrganizationDocuments", "Entity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.OrganizationProviderType", b =>
@@ -228,7 +228,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("OrganizationId", "ProviderTypeId")
                         .IsUnique();
 
-                    b.ToTable("OrganizationProviderTypes", "entity");
+                    b.ToTable("OrganizationProviderTypes", "Entity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.OrganizationUser", b =>
@@ -253,7 +253,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("OrganizationId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("OrganizationUsers", "entity");
+                    b.ToTable("OrganizationUsers", "Entity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.User", b =>
@@ -331,7 +331,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "DateCreated", "DateModified");
 
-                    b.ToTable("User", "entity");
+                    b.ToTable("User", "Entity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserSkill", b =>
@@ -356,7 +356,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("UserId", "SkillId")
                         .IsUnique();
 
-                    b.ToTable("UserSkills", "entity");
+                    b.ToTable("UserSkills", "Entity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", b =>
@@ -398,7 +398,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Country", "lookup");
+                    b.ToTable("Country", "Lookup");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Lookups.Entities.Gender", b =>
@@ -419,7 +419,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Gender", "lookup");
+                    b.ToTable("Gender", "Lookup");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Lookups.Entities.Language", b =>
@@ -447,7 +447,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Language", "lookup");
+                    b.ToTable("Language", "Lookup");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Lookups.Entities.Skill", b =>
@@ -481,7 +481,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Skill", "lookup");
+                    b.ToTable("Skill", "Lookup");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Lookups.Entities.TimeInterval", b =>
@@ -502,7 +502,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("TimeInterval", "lookup");
+                    b.ToTable("TimeInterval", "Lookup");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups.MyOpportunityAction", b =>
@@ -523,7 +523,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("MyOpportunityAction", "opportunity");
+                    b.ToTable("MyOpportunityAction", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups.MyOpportunityVerificationStatus", b =>
@@ -544,7 +544,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("MyOpportunityVerificationStatus", "opportunity");
+                    b.ToTable("MyOpportunityVerificationStatus", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunity", b =>
@@ -600,7 +600,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified");
 
-                    b.ToTable("MyOpportunity", "opportunity");
+                    b.ToTable("MyOpportunity", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunityVerification", b =>
@@ -633,7 +633,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("MyOpportunityId", "VerificationTypeId")
                         .IsUnique();
 
-                    b.ToTable("MyOpportunityVerifications", "opportunity");
+                    b.ToTable("MyOpportunityVerifications", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityCategory", b =>
@@ -654,7 +654,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("OpportunityCategory", "opportunity");
+                    b.ToTable("OpportunityCategory", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityDifficulty", b =>
@@ -675,7 +675,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("OpportunityDifficulty", "opportunity");
+                    b.ToTable("OpportunityDifficulty", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityStatus", b =>
@@ -696,7 +696,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("OpportunityStatus", "opportunity");
+                    b.ToTable("OpportunityStatus", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityType", b =>
@@ -717,7 +717,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("OpportunityType", "opportunity");
+                    b.ToTable("OpportunityType", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityVerificationType", b =>
@@ -746,7 +746,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("OpportunityVerificationType", "opportunity");
+                    b.ToTable("OpportunityVerificationType", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", b =>
@@ -858,7 +858,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("TypeId", "OrganizationId", "DifficultyId", "CommitmentIntervalId", "StatusId", "Keywords", "DateStart", "DateEnd", "DateCreated", "DateModified");
 
-                    b.ToTable("Opportunity", "opportunity");
+                    b.ToTable("Opportunity", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityCategory", b =>
@@ -883,7 +883,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("OpportunityId", "CategoryId")
                         .IsUnique();
 
-                    b.ToTable("OpportunityCategories", "opportunity");
+                    b.ToTable("OpportunityCategories", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityCountry", b =>
@@ -908,7 +908,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("OpportunityId", "CountryId")
                         .IsUnique();
 
-                    b.ToTable("OpportunityCountries", "opportunity");
+                    b.ToTable("OpportunityCountries", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityLanguage", b =>
@@ -933,7 +933,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("OpportunityId", "LanguageId")
                         .IsUnique();
 
-                    b.ToTable("OpportunityLanguages", "opportunity");
+                    b.ToTable("OpportunityLanguages", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunitySkill", b =>
@@ -958,7 +958,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("OpportunityId", "SkillId")
                         .IsUnique();
 
-                    b.ToTable("OpportunitySkills", "opportunity");
+                    b.ToTable("OpportunitySkills", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityVerificationType", b =>
@@ -986,7 +986,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("OpportunityId", "VerificationTypeId")
                         .IsUnique();
 
-                    b.ToTable("OpportunityVerificationTypes", "opportunity");
+                    b.ToTable("OpportunityVerificationTypes", "Opportunity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>
@@ -1053,7 +1053,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.OrganizationUser", b =>
                 {
                     b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
-                        .WithMany()
+                        .WithMany("Administrators")
                         .HasForeignKey("OrganizationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1313,6 +1313,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>
                 {
+                    b.Navigation("Administrators");
+
                     b.Navigation("Documents");
 
                     b.Navigation("ProviderTypes");

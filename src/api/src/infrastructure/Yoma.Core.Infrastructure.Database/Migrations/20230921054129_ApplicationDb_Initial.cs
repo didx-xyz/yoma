@@ -11,20 +11,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
-                name: "object");
+                name: "Object");
 
             migrationBuilder.EnsureSchema(
-                name: "lookup");
+                name: "Lookup");
 
             migrationBuilder.EnsureSchema(
-                name: "opportunity");
+                name: "Opportunity");
 
             migrationBuilder.EnsureSchema(
-                name: "entity");
+                name: "Entity");
 
             migrationBuilder.CreateTable(
                 name: "Blob",
-                schema: "object",
+                schema: "Object",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -40,7 +40,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Country",
-                schema: "lookup",
+                schema: "Lookup",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -57,7 +57,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Gender",
-                schema: "lookup",
+                schema: "Lookup",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -71,7 +71,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Language",
-                schema: "lookup",
+                schema: "Lookup",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -86,7 +86,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "MyOpportunityAction",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -100,7 +100,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "MyOpportunityVerificationStatus",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -114,7 +114,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OpportunityCategory",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -128,7 +128,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OpportunityDifficulty",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -142,7 +142,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OpportunityStatus",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -156,7 +156,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OpportunityType",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -170,7 +170,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OpportunityVerificationType",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -186,7 +186,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OrganizationProviderType",
-                schema: "entity",
+                schema: "Entity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -200,7 +200,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OrganizationStatus",
-                schema: "entity",
+                schema: "Entity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -214,7 +214,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Skill",
-                schema: "lookup",
+                schema: "Lookup",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -231,7 +231,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "TimeInterval",
-                schema: "lookup",
+                schema: "Lookup",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -245,7 +245,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "User",
-                schema: "entity",
+                schema: "Entity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -273,32 +273,32 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_User_Blob_PhotoId",
                         column: x => x.PhotoId,
-                        principalSchema: "object",
+                        principalSchema: "Object",
                         principalTable: "Blob",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_User_Country_CountryId",
                         column: x => x.CountryId,
-                        principalSchema: "lookup",
+                        principalSchema: "Lookup",
                         principalTable: "Country",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_User_Country_CountryOfResidenceId",
                         column: x => x.CountryOfResidenceId,
-                        principalSchema: "lookup",
+                        principalSchema: "Lookup",
                         principalTable: "Country",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_User_Gender_GenderId",
                         column: x => x.GenderId,
-                        principalSchema: "lookup",
+                        principalSchema: "Lookup",
                         principalTable: "Gender",
                         principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
                 name: "Organization",
-                schema: "entity",
+                schema: "Entity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -330,19 +330,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_Organization_Blob_LogoId",
                         column: x => x.LogoId,
-                        principalSchema: "object",
+                        principalSchema: "Object",
                         principalTable: "Blob",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Organization_Country_CountryId",
                         column: x => x.CountryId,
-                        principalSchema: "lookup",
+                        principalSchema: "Lookup",
                         principalTable: "Country",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Organization_OrganizationStatus_StatusId",
                         column: x => x.StatusId,
-                        principalSchema: "entity",
+                        principalSchema: "Entity",
                         principalTable: "OrganizationStatus",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -350,7 +350,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "UserSkills",
-                schema: "entity",
+                schema: "Entity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -364,14 +364,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_UserSkills_Skill_SkillId",
                         column: x => x.SkillId,
-                        principalSchema: "lookup",
+                        principalSchema: "Lookup",
                         principalTable: "Skill",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_UserSkills_User_UserId",
                         column: x => x.UserId,
-                        principalSchema: "entity",
+                        principalSchema: "Entity",
                         principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -379,7 +379,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Opportunity",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -418,35 +418,35 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_Opportunity_OpportunityDifficulty_DifficultyId",
                         column: x => x.DifficultyId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "OpportunityDifficulty",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Opportunity_OpportunityStatus_StatusId",
                         column: x => x.StatusId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "OpportunityStatus",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Opportunity_OpportunityType_TypeId",
                         column: x => x.TypeId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "OpportunityType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Opportunity_Organization_OrganizationId",
                         column: x => x.OrganizationId,
-                        principalSchema: "entity",
+                        principalSchema: "Entity",
                         principalTable: "Organization",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Opportunity_TimeInterval_CommitmentIntervalId",
                         column: x => x.CommitmentIntervalId,
-                        principalSchema: "lookup",
+                        principalSchema: "Lookup",
                         principalTable: "TimeInterval",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -454,7 +454,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OrganizationDocuments",
-                schema: "entity",
+                schema: "Entity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -469,14 +469,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_OrganizationDocuments_Blob_FileId",
                         column: x => x.FileId,
-                        principalSchema: "object",
+                        principalSchema: "Object",
                         principalTable: "Blob",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_OrganizationDocuments_Organization_OrganizationId",
                         column: x => x.OrganizationId,
-                        principalSchema: "entity",
+                        principalSchema: "Entity",
                         principalTable: "Organization",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -484,7 +484,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OrganizationProviderTypes",
-                schema: "entity",
+                schema: "Entity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -498,14 +498,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_OrganizationProviderTypes_OrganizationProviderType_ProviderTypeId",
                         column: x => x.ProviderTypeId,
-                        principalSchema: "entity",
+                        principalSchema: "Entity",
                         principalTable: "OrganizationProviderType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_OrganizationProviderTypes_Organization_OrganizationId",
                         column: x => x.OrganizationId,
-                        principalSchema: "entity",
+                        principalSchema: "Entity",
                         principalTable: "Organization",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -513,7 +513,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OrganizationUsers",
-                schema: "entity",
+                schema: "Entity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -527,14 +527,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_OrganizationUsers_Organization_OrganizationId",
                         column: x => x.OrganizationId,
-                        principalSchema: "entity",
+                        principalSchema: "Entity",
                         principalTable: "Organization",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_OrganizationUsers_User_UserId",
                         column: x => x.UserId,
-                        principalSchema: "entity",
+                        principalSchema: "Entity",
                         principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -542,7 +542,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "MyOpportunity",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -565,27 +565,27 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_MyOpportunity_MyOpportunityAction_ActionId",
                         column: x => x.ActionId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "MyOpportunityAction",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_MyOpportunity_MyOpportunityVerificationStatus_VerificationStatusId",
                         column: x => x.VerificationStatusId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "MyOpportunityVerificationStatus",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_MyOpportunity_Opportunity_OpportunityId",
                         column: x => x.OpportunityId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "Opportunity",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_MyOpportunity_User_UserId",
                         column: x => x.UserId,
-                        principalSchema: "entity",
+                        principalSchema: "Entity",
                         principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -593,7 +593,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OpportunityCategories",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -607,14 +607,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_OpportunityCategories_OpportunityCategory_CategoryId",
                         column: x => x.CategoryId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "OpportunityCategory",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_OpportunityCategories_Opportunity_OpportunityId",
                         column: x => x.OpportunityId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "Opportunity",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -622,7 +622,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OpportunityCountries",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -636,14 +636,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_OpportunityCountries_Country_CountryId",
                         column: x => x.CountryId,
-                        principalSchema: "lookup",
+                        principalSchema: "Lookup",
                         principalTable: "Country",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_OpportunityCountries_Opportunity_OpportunityId",
                         column: x => x.OpportunityId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "Opportunity",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -651,7 +651,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OpportunityLanguages",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -665,14 +665,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_OpportunityLanguages_Language_LanguageId",
                         column: x => x.LanguageId,
-                        principalSchema: "lookup",
+                        principalSchema: "Lookup",
                         principalTable: "Language",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_OpportunityLanguages_Opportunity_OpportunityId",
                         column: x => x.OpportunityId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "Opportunity",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -680,7 +680,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OpportunitySkills",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -694,14 +694,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_OpportunitySkills_Opportunity_OpportunityId",
                         column: x => x.OpportunityId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "Opportunity",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_OpportunitySkills_Skill_SkillId",
                         column: x => x.SkillId,
-                        principalSchema: "lookup",
+                        principalSchema: "Lookup",
                         principalTable: "Skill",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -709,7 +709,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OpportunityVerificationTypes",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -724,14 +724,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_OpportunityVerificationTypes_OpportunityVerificationType_VerificationTypeId",
                         column: x => x.VerificationTypeId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "OpportunityVerificationType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_OpportunityVerificationTypes_Opportunity_OpportunityId",
                         column: x => x.OpportunityId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "Opportunity",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -739,7 +739,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "MyOpportunityVerifications",
-                schema: "opportunity",
+                schema: "Opportunity",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -755,20 +755,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_MyOpportunityVerifications_Blob_FileId",
                         column: x => x.FileId,
-                        principalSchema: "object",
+                        principalSchema: "Object",
                         principalTable: "Blob",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_MyOpportunityVerifications_MyOpportunity_MyOpportunityId",
                         column: x => x.MyOpportunityId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "MyOpportunity",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_MyOpportunityVerifications_OpportunityVerificationType_VerificationTypeId",
                         column: x => x.VerificationTypeId,
-                        principalSchema: "opportunity",
+                        principalSchema: "Opportunity",
                         principalTable: "OpportunityVerificationType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -776,400 +776,400 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_Blob_Key",
-                schema: "object",
+                schema: "Object",
                 table: "Blob",
                 column: "Key",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Country_CodeAlpha2",
-                schema: "lookup",
+                schema: "Lookup",
                 table: "Country",
                 column: "CodeAlpha2",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Country_CodeAlpha3",
-                schema: "lookup",
+                schema: "Lookup",
                 table: "Country",
                 column: "CodeAlpha3",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Country_CodeNumeric",
-                schema: "lookup",
+                schema: "Lookup",
                 table: "Country",
                 column: "CodeNumeric",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Country_Name",
-                schema: "lookup",
+                schema: "Lookup",
                 table: "Country",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Gender_Name",
-                schema: "lookup",
+                schema: "Lookup",
                 table: "Gender",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Language_CodeAlpha2",
-                schema: "lookup",
+                schema: "Lookup",
                 table: "Language",
                 column: "CodeAlpha2",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Language_Name",
-                schema: "lookup",
+                schema: "Lookup",
                 table: "Language",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_MyOpportunity_ActionId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "MyOpportunity",
                 column: "ActionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_MyOpportunity_OpportunityId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "MyOpportunity",
                 column: "OpportunityId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_MyOpportunity_UserId_OpportunityId_ActionId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "MyOpportunity",
                 columns: new[] { "UserId", "OpportunityId", "ActionId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_MyOpportunity_VerificationStatusId_DateCompleted_ZltoReward_YomaReward_DateCreated_DateModified",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "MyOpportunity",
                 columns: new[] { "VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_MyOpportunityAction_Name",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "MyOpportunityAction",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_MyOpportunityVerifications_FileId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "MyOpportunityVerifications",
                 column: "FileId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_MyOpportunityVerifications_MyOpportunityId_VerificationTypeId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "MyOpportunityVerifications",
                 columns: new[] { "MyOpportunityId", "VerificationTypeId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_MyOpportunityVerifications_VerificationTypeId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "MyOpportunityVerifications",
                 column: "VerificationTypeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_MyOpportunityVerificationStatus_Name",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "MyOpportunityVerificationStatus",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Opportunity_CommitmentIntervalId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "Opportunity",
                 column: "CommitmentIntervalId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Opportunity_DifficultyId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "Opportunity",
                 column: "DifficultyId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Opportunity_OrganizationId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "Opportunity",
                 column: "OrganizationId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Opportunity_StatusId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "Opportunity",
                 column: "StatusId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Opportunity_Title",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "Opportunity",
                 column: "Title",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Opportunity_TypeId_OrganizationId_DifficultyId_CommitmentIntervalId_StatusId_Keywords_DateStart_DateEnd_DateCreated_DateModi~",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "Opportunity",
                 columns: new[] { "TypeId", "OrganizationId", "DifficultyId", "CommitmentIntervalId", "StatusId", "Keywords", "DateStart", "DateEnd", "DateCreated", "DateModified" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityCategories_CategoryId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunityCategories",
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityCategories_OpportunityId_CategoryId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunityCategories",
                 columns: new[] { "OpportunityId", "CategoryId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityCategory_Name",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunityCategory",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityCountries_CountryId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunityCountries",
                 column: "CountryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityCountries_OpportunityId_CountryId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunityCountries",
                 columns: new[] { "OpportunityId", "CountryId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityDifficulty_Name",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunityDifficulty",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityLanguages_LanguageId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunityLanguages",
                 column: "LanguageId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityLanguages_OpportunityId_LanguageId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunityLanguages",
                 columns: new[] { "OpportunityId", "LanguageId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunitySkills_OpportunityId_SkillId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunitySkills",
                 columns: new[] { "OpportunityId", "SkillId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunitySkills_SkillId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunitySkills",
                 column: "SkillId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityStatus_Name",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunityStatus",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityType_Name",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunityType",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityVerificationType_Name",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunityVerificationType",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityVerificationTypes_OpportunityId_VerificationTypeId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunityVerificationTypes",
                 columns: new[] { "OpportunityId", "VerificationTypeId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityVerificationTypes_VerificationTypeId",
-                schema: "opportunity",
+                schema: "Opportunity",
                 table: "OpportunityVerificationTypes",
                 column: "VerificationTypeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Organization_CountryId",
-                schema: "entity",
+                schema: "Entity",
                 table: "Organization",
                 column: "CountryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Organization_LogoId",
-                schema: "entity",
+                schema: "Entity",
                 table: "Organization",
                 column: "LogoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Organization_Name",
-                schema: "entity",
+                schema: "Entity",
                 table: "Organization",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Organization_StatusId_DateStatusModified_DateModified_DateCreated",
-                schema: "entity",
+                schema: "Entity",
                 table: "Organization",
                 columns: new[] { "StatusId", "DateStatusModified", "DateModified", "DateCreated" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrganizationDocuments_FileId",
-                schema: "entity",
+                schema: "Entity",
                 table: "OrganizationDocuments",
                 column: "FileId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrganizationDocuments_OrganizationId_Type_DateCreated",
-                schema: "entity",
+                schema: "Entity",
                 table: "OrganizationDocuments",
                 columns: new[] { "OrganizationId", "Type", "DateCreated" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrganizationProviderType_Name",
-                schema: "entity",
+                schema: "Entity",
                 table: "OrganizationProviderType",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrganizationProviderTypes_OrganizationId_ProviderTypeId",
-                schema: "entity",
+                schema: "Entity",
                 table: "OrganizationProviderTypes",
                 columns: new[] { "OrganizationId", "ProviderTypeId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrganizationProviderTypes_ProviderTypeId",
-                schema: "entity",
+                schema: "Entity",
                 table: "OrganizationProviderTypes",
                 column: "ProviderTypeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrganizationStatus_Name",
-                schema: "entity",
+                schema: "Entity",
                 table: "OrganizationStatus",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrganizationUsers_OrganizationId_UserId",
-                schema: "entity",
+                schema: "Entity",
                 table: "OrganizationUsers",
                 columns: new[] { "OrganizationId", "UserId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrganizationUsers_UserId",
-                schema: "entity",
+                schema: "Entity",
                 table: "OrganizationUsers",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Skill_ExternalId",
-                schema: "lookup",
+                schema: "Lookup",
                 table: "Skill",
                 column: "ExternalId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Skill_Name",
-                schema: "lookup",
+                schema: "Lookup",
                 table: "Skill",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_TimeInterval_Name",
-                schema: "lookup",
+                schema: "Lookup",
                 table: "TimeInterval",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_User_CountryId",
-                schema: "entity",
+                schema: "Entity",
                 table: "User",
                 column: "CountryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_User_CountryOfResidenceId",
-                schema: "entity",
+                schema: "Entity",
                 table: "User",
                 column: "CountryOfResidenceId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_User_Email",
-                schema: "entity",
+                schema: "Entity",
                 table: "User",
                 column: "Email",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_ExternalId_DateCreated_DateModified",
-                schema: "entity",
+                schema: "Entity",
                 table: "User",
                 columns: new[] { "FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "DateCreated", "DateModified" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_User_GenderId",
-                schema: "entity",
+                schema: "Entity",
                 table: "User",
                 column: "GenderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_User_PhotoId",
-                schema: "entity",
+                schema: "Entity",
                 table: "User",
                 column: "PhotoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserSkills_SkillId",
-                schema: "entity",
+                schema: "Entity",
                 table: "UserSkills",
                 column: "SkillId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserSkills_UserId_SkillId",
-                schema: "entity",
+                schema: "Entity",
                 table: "UserSkills",
                 columns: new[] { "UserId", "SkillId" },
                 unique: true);
@@ -1182,119 +1182,119 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         {
             migrationBuilder.DropTable(
                 name: "MyOpportunityVerifications",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "OpportunityCategories",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "OpportunityCountries",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "OpportunityLanguages",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "OpportunitySkills",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "OpportunityVerificationTypes",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "OrganizationDocuments",
-                schema: "entity");
+                schema: "Entity");
 
             migrationBuilder.DropTable(
                 name: "OrganizationProviderTypes",
-                schema: "entity");
+                schema: "Entity");
 
             migrationBuilder.DropTable(
                 name: "OrganizationUsers",
-                schema: "entity");
+                schema: "Entity");
 
             migrationBuilder.DropTable(
                 name: "UserSkills",
-                schema: "entity");
+                schema: "Entity");
 
             migrationBuilder.DropTable(
                 name: "MyOpportunity",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "OpportunityCategory",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "Language",
-                schema: "lookup");
+                schema: "Lookup");
 
             migrationBuilder.DropTable(
                 name: "OpportunityVerificationType",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "OrganizationProviderType",
-                schema: "entity");
+                schema: "Entity");
 
             migrationBuilder.DropTable(
                 name: "Skill",
-                schema: "lookup");
+                schema: "Lookup");
 
             migrationBuilder.DropTable(
                 name: "MyOpportunityAction",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "MyOpportunityVerificationStatus",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "Opportunity",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "User",
-                schema: "entity");
+                schema: "Entity");
 
             migrationBuilder.DropTable(
                 name: "OpportunityDifficulty",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "OpportunityStatus",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "OpportunityType",
-                schema: "opportunity");
+                schema: "Opportunity");
 
             migrationBuilder.DropTable(
                 name: "Organization",
-                schema: "entity");
+                schema: "Entity");
 
             migrationBuilder.DropTable(
                 name: "TimeInterval",
-                schema: "lookup");
+                schema: "Lookup");
 
             migrationBuilder.DropTable(
                 name: "Gender",
-                schema: "lookup");
+                schema: "Lookup");
 
             migrationBuilder.DropTable(
                 name: "Blob",
-                schema: "object");
+                schema: "Object");
 
             migrationBuilder.DropTable(
                 name: "Country",
-                schema: "lookup");
+                schema: "Lookup");
 
             migrationBuilder.DropTable(
                 name: "OrganizationStatus",
-                schema: "entity");
+                schema: "Entity");
         }
     }
 }

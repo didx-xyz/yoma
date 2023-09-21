@@ -59,7 +59,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
 
                     b.HasIndex("SourceTenantId", "TargetTenantId", "InvitationId", "Type", "Status", "ThreadId");
 
-                    b.ToTable("InvitationCache", "ariescloud");
+                    b.ToTable("InvitationCache", "AriesCloud");
                 });
 #pragma warning restore 612, 618
         }

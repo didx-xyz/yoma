@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Entities
 {
-    [Table("TimeInterval", Schema = "lookup")]
+    [Table("TimeInterval", Schema = "Lookup")]
     [Index(nameof(Name), IsUnique = true)]
     public class TimeInterval : BaseEntity<Guid>
     {

@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.AriesCloud.Context;
 namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
 {
     [DbContext(typeof(AriesCloudDbContext))]
-    [Migration("20230920134529_AriesCloudDb_Initial")]
+    [Migration("20230921053920_AriesCloudDb_Initial")]
     partial class AriesCloudDb_Initial
     {
         /// <inheritdoc />
@@ -62,7 +62,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
 
                     b.HasIndex("SourceTenantId", "TargetTenantId", "InvitationId", "Type", "Status", "ThreadId");
 
-                    b.ToTable("InvitationCache", "ariescloud");
+                    b.ToTable("InvitationCache", "AriesCloud");
                 });
 #pragma warning restore 612, 618
         }

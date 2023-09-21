@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Yoma.Core.Infrastructure.AriesCloud.Entities
 {
-    [Table("InvitationCache", Schema = "ariescloud")]
+    [Table("InvitationCache", Schema = "AriesCloud")]
     [Index(nameof(SourceTenantId), nameof(TargetTenantId), nameof(InvitationId), nameof(Type), nameof(Status), nameof(ThreadId))]
     public class InvitationCache : BaseEntity<Guid>
     {

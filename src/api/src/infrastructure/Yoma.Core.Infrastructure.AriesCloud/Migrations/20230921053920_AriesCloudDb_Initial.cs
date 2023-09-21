@@ -1,4 +1,3 @@
-﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -12,11 +11,11 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
-                name: "ariescloud");
+                name: "AriesCloud");
 
             migrationBuilder.CreateTable(
                 name: "InvitationCache",
-                schema: "ariescloud",
+                schema: "AriesCloud",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -36,7 +35,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_InvitationCache_SourceTenantId_TargetTenantId_InvitationId_Type_Status_ThreadId",
-                schema: "ariescloud",
+                schema: "AriesCloud",
                 table: "InvitationCache",
                 columns: new[] { "SourceTenantId", "TargetTenantId", "InvitationId", "Type", "Status", "ThreadId" });
         }
@@ -46,7 +45,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
         {
             migrationBuilder.DropTable(
                 name: "InvitationCache",
-                schema: "ariescloud");
+                schema: "AriesCloud");
         }
     }
 }

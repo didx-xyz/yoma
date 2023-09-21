@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
 {
-    [Table("OpportunityVerificationTypes", Schema = "opportunity")]
+    [Table("OpportunityVerificationTypes", Schema = "Opportunity")]
     [Index(nameof(OpportunityId), nameof(VerificationTypeId), IsUnique = true)]
     public class OpportunityVerificationType : BaseEntity<Guid>
     {

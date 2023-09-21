@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Entities
 {
-    [Table("Country", Schema = "lookup")]
+    [Table("Country", Schema = "Lookup")]
     [Index(nameof(Name), IsUnique = true)]
     [Index(nameof(CodeAlpha2), IsUnique = true)]
     [Index(nameof(CodeAlpha3), IsUnique = true)]
