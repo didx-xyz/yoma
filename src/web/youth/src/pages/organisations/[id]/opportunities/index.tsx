@@ -10,21 +10,35 @@ import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
 import { type OpportunitySearchResults } from "~/api/models/opportunity";
 import { NextPageWithLayout } from "~/pages/_app";
+import { ParsedUrlQuery } from "querystring";
+
+interface IParams extends ParsedUrlQuery {
+  id: string;
+}
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { id } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
 
   const queryClient = new QueryClient();
   if (session) {
     // 👇 prefetch queries (on server)
-    await queryClient.prefetchQuery(["opportunities"], () =>
+    await queryClient.prefetchQuery(["opportunities", id], () =>
       getOpportunitiesAdmin(
+        {
+          organizations: [id],
+          pageNumber: 1,
+          pageSize: 10,
+          startDate: null,
+          endDate: null,
+          statuses: null,
+          types: null,
+          categories: null,
+          languages: null,
+          countries: null,
+          valueContains: null,
+        },
         context,
-        //,
-        //{
-        //organizations
-        //session.user.organisationId!
-        //}
       ),
     );
   }
@@ -33,20 +47,21 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      id: id,
     },
   };
 }
 
-const Opportunities: NextPageWithLayout = () => {
+const Opportunities: NextPageWithLayout<{ id: string }> = (id) => {
   const router = useRouter();
 
   // 👇 use prefetched queries (from server)
   const { data: opportunities } = useQuery<OpportunitySearchResults[]>({
-    queryKey: ["opportunities"],
+    queryKey: ["opportunities", id],
   });
 
   const handleAddOpportunity = () => {
-    void router.push("/dashboard/opportunity/create");
+    void router.push("/organisations/${id}/opportunities/create");
   };
 
   // const SkillsFormatter = useCallback(
@@ -129,6 +144,7 @@ const Opportunities: NextPageWithLayout = () => {
           )}
 
           {/* GRID */}
+          <>{JSON.stringify(opportunities)}</>
           {opportunities && opportunities.length > 0 && (
             <>{JSON.stringify(opportunities)}</>
 

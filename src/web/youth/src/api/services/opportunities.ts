@@ -13,8 +13,8 @@ import type {
 } from "../models/opportunity";
 
 export const getOpportunitiesAdmin = async (
-  context: GetServerSidePropsContext,
-  filter?: OpportunitySearchFilterAdmin,
+  filter: OpportunitySearchFilterAdmin,
+  context?: GetServerSidePropsContext,
 ): Promise<OpportunitySearchResults[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 

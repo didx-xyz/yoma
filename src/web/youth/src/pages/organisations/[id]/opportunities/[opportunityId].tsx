@@ -141,7 +141,7 @@ const OpportunityDetails: NextPageWithLayout<{
     queryKey: ["countries"],
     queryFn: async () =>
       (await getCountries()).map((c) => ({
-        value: c.codeNumeric,
+        value: c.id,
         label: c.name,
       })),
   });
@@ -267,7 +267,7 @@ const OpportunityDetails: NextPageWithLayout<{
     skills: opportunity?.skills?.map((x) => x.id) ?? [],
     keywords: opportunity?.keywords ?? [],
     verificationSupported: opportunity?.verificationSupported ?? false,
-    verificationTypes: [], //opportunity?.verificationTypes?.map((x) => x.id) ?? [],
+    verificationTypes: opportunity?.verificationTypes ?? [],
 
     sSIIntegrated: opportunity?.sSIIntegrated ?? false,
 
@@ -393,12 +393,11 @@ const OpportunityDetails: NextPageWithLayout<{
       }),
     //noEndDate: z.boolean(),
     dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
-    participantLimit: z
-      .union([z.nan(), z.null(), z.number()])
-      // eslint-disable-next-line
-      .refine((val) => val !== null && !Number.isNaN(val as any), {
-        message: "Participant Count is required.",
-      }),
+    participantLimit: z.union([z.nan(), z.null(), z.number()]).optional(),
+    // eslint-disable-next-line
+    // .refine((val) => val !== null && !Number.isNaN(val as any), {
+    //   message: "Participant Limit is required.",
+    // }),
   });
 
   const schemaStep3 = z.object({
@@ -442,45 +441,59 @@ const OpportunityDetails: NextPageWithLayout<{
   const schemaStep5 = z
     .object({
       verificationSupported: z.boolean(),
-      verificationTypes: z.array(
-        // z.object({
-        //   type: z.string({ required_error: "Verification type is required" }),
-        //   description: z.string({ required_error: "Description is required" }),
-        // }),
-        z.any(),
-      ),
+      verificationTypes: z
+        .array(
+          z.object({
+            type: z.any(),
+            description: z
+              .string({
+                required_error: "Description is required",
+              })
+              .optional(),
+          }),
+          //z.any(),
+        )
+        .optional(),
     })
     .superRefine((values, ctx) => {
       if (!values.verificationSupported) return;
 
-      if (values.verificationTypes.length === 0) {
+      const count =
+        values?.verificationTypes?.filter(
+          (x) => x.type != null && x.type != undefined && x.type != false,
+        )?.length ?? 0;
+
+      if (count === 0) {
         ctx.addIssue({
           message: "At least one verification type is required.",
           code: z.ZodIssueCode.custom,
           path: ["verificationTypes"],
+          fatal: true,
         });
+        return z.NEVER;
       }
 
-      var count = values.verificationTypes.filter(
-        (x) => x.type != null && x.type != undefined,
-      ).length;
-      debugger;
-      if (count === 0)
-        ctx.addIssue({
-          message: "At least one verification type is required.",
-          code: z.ZodIssueCode.custom,
-          path: ["verificationTypes"],
-        });
-
-      for (const file of values.verificationTypes) {
-        if (file?.type && !file.description) {
+      for (const item of values.verificationTypes!) {
+        if (item?.type && !item.description) {
+          // set default value for description
+          // item.description =
+          //   verificationTypes?.find((x) => x.type == item.type)?.description ??
+          //   "";
           ctx.addIssue({
-            message: "A description for each verification type is required .",
+            message: "A description is required for each type of proof.",
             code: z.ZodIssueCode.custom,
             path: ["verificationTypes"],
           });
         }
       }
+    })
+    .transform((values) => {
+      // remove non-selected verification types
+      values.verificationTypes =
+        values.verificationTypes?.filter(
+          (x) => x.type != null && x.type != undefined && x.type != false,
+        ) ?? [];
+      return values;
     });
 
   const schemaStep6 = z.object({
@@ -537,15 +550,20 @@ const OpportunityDetails: NextPageWithLayout<{
   const {
     register: registerStep5,
     handleSubmit: handleSubmitStep5,
+    getValues: getValuesStep5,
     setValue: setValueStep5,
     formState: { errors: errorsStep5, isValid: isValidStep5 },
     control: controlStep5,
     watch: watchStep5,
   } = useForm({
     resolver: zodResolver(schemaStep5),
-    //defaultValues: opportunity,
+    // defaultValues: {
+    //   verificationSupported: opportunity?.verificationSupported ?? false,
+    //   verificationTypes: opportunity?.verificationTypes ?? verificationTypes,
+    // },
   });
   const watchVerificationSupported = watchStep5("verificationSupported");
+  const watchVerificationTypes = watchStep5("verificationTypes");
 
   const {
     register: registerStep6,
@@ -1568,66 +1586,84 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
                     </div>
 
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text">
-                          Select the types of verification that participants
-                          need to provide as part of completing the
-                          opportuntity?
-                        </span>
-                      </label>
-
-                      {verificationTypes?.map((item, index) => (
-                        <div className="flex flex-row" key={item.id}>
-                          {/* checkbox label */}
-                          <label
-                            htmlFor={item.id}
-                            className="label w-full cursor-pointer justify-normal"
-                          >
-                            <input
-                              {...registerStep5(
-                                `verificationTypes[${index}].type`,
-                              )}
-                              type="checkbox"
-                              value={item.type}
-                              id={item.id}
-                              className="checkbox-primary checkbox"
-                              disabled={!watchVerificationSupported}
-                            />
-                            <span className="label-text ml-4">
-                              {item.displayName}
-                            </span>
-                          </label>
-                          {/* description input */}
-                          <div className="form-control w-full">
-                            {/* <label className="label">
-                              <span className="label-text">Description</span>
-                            </label> */}
-                            <input
-                              type="text"
-                              className="input input-bordered input-sm rounded-md"
-                              placeholder="Label to display e.g. certificate, photo, video, etc."
-                              {...registerStep5(
-                                `verificationTypes[${index}].description`,
-                              )}
-                              contentEditable
-                              //value={item.description}
-                              //defaultValue={item.description}
-                              disabled={!watchVerificationSupported}
-                            />
-                          </div>
-                        </div>
-                      ))}
-
-                      {errorsStep5.verificationTypes && (
-                        <label className="label font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                            {`${errorsStep5.verificationTypes.message}`}
+                    {watchVerificationSupported && (
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">
+                            Select the types of proof that participants need to
+                            upload as part of completing the opportuntity.
                           </span>
                         </label>
-                      )}
-                    </div>
+
+                        <div className="flex flex-col gap-2">
+                          {verificationTypes?.map((item, index) => (
+                            // <Controller
+                            //   key={item.id}
+                            //   control={controlStep5}
+                            //   name="verificationTypes"
+                            //   render={({ field: { onChange, value } }) => (
+                            //     <>
+                            <div className="flex flex-col" key={item.id}>
+                              {/* checkbox label */}
+                              <label
+                                htmlFor={item.id}
+                                className="label w-full cursor-pointer justify-normal"
+                              >
+                                <input
+                                  {...registerStep5(
+                                    `verificationTypes.${index}.type`,
+                                  )}
+                                  type="checkbox"
+                                  value={item.type}
+                                  id={item.id}
+                                  className="checkbox-primary checkbox"
+                                  disabled={!watchVerificationSupported}
+                                />
+                                <span className="label-text ml-4">
+                                  {item.displayName}
+                                </span>
+                              </label>
+                              {/* description input */}
+                              {watchVerificationTypes?.find(
+                                (x: OpportunityVerificationType) =>
+                                  x.type === item.type,
+                              ) && (
+                                <div className="form-control w-full">
+                                  <label className="label">
+                                    <span className="label-text">
+                                      Description
+                                    </span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    className="input input-bordered input-sm rounded-md"
+                                    placeholder="Enter description"
+                                    {...registerStep5(
+                                      `verificationTypes.${index}.description`,
+                                    )}
+                                    contentEditable
+                                    // value={value ?? item.description}
+                                    defaultValue={item.description}
+                                    disabled={!watchVerificationSupported}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                            //     </>
+                            //   )}
+                            // />
+                          ))}
+                        </div>
+                        {errorsStep5.verificationTypes?.root && (
+                          <label className="label font-bold">
+                            <span className="label-text-alt italic text-red-500">
+                              {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                              {`${errorsStep5.verificationTypes.root.message}`}
+                            </span>
+                          </label>
+                        )}
+                      </div>
+                    )}
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
@@ -2097,8 +2133,8 @@ const OpportunityDetails: NextPageWithLayout<{
                           {formData.verificationTypes
                             ?.map(
                               (x: any) =>
-                                verificationTypes?.find((y) => y.value == x.key)
-                                  ?.label,
+                                verificationTypes?.find((y) => y.id == x.id)
+                                  ?.displayName,
                             )
                             .filter((x) => x !== undefined)
                             .join(", ")}
