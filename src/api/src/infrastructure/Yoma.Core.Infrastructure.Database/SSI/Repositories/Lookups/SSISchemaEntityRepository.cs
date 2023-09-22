@@ -27,7 +27,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
                 Id = entity.Id,
                 TypeName = entity.TypeName,
                 Properties = includeChildItems ?
-                    entity.Properties.Select(o => new SSISchemaEntityProperty { Id = o.Id, Name = o.Name, ValueDescription = o.ValueDescription }).ToList() : null
+                    entity.Properties.Select(o => new SSISchemaEntityProperty { Id = o.Id, Name = o.Name, ValueDescription = o.ValueDescription, Required = o.Required }).ToList() : null
             }).AsSplitQuery();
         }
 

@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.Entity.Services.Lookups
 
         public Models.Lookups.OrganizationStatus GetById(Guid id)
         {
-            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(Models.Lookups.OrganizationStatus)} for '{id}' does not exists", nameof(id));
+            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(Models.Lookups.OrganizationStatus)} with '{id}' does not exists", nameof(id));
             return result;
         }
 

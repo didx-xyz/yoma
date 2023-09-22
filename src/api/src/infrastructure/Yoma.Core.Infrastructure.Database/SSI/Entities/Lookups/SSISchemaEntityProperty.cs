@@ -23,6 +23,9 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups
         public string ValueDescription { get; set; }
 
         [Required]
+        public bool Required { get; set; }
+
+        [Required]
         public DateTimeOffset DateCreated { get; set; }
     }
 }

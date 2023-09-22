@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services.Lookups
 
         public MyOpportunityVerificationStatus GetById(Guid id)
         {
-            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(MyOpportunityVerificationStatus)} for '{id}' does not exists", nameof(id));
+            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(MyOpportunityVerificationStatus)} with '{id}' does not exists", nameof(id));
             return result;
         }
 

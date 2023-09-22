@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.Lookups.Services
 
         public Language GetById(Guid id)
         {
-            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(Language)} for '{id}' does not exists", nameof(id));
+            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(Language)} with '{id}' does not exists", nameof(id));
             return result;
         }
 

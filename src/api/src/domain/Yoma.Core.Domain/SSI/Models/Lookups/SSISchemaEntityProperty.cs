@@ -13,8 +13,8 @@ namespace Yoma.Core.Domain.SSI.Models.Lookups
 
         public string TypeDisplayName { get; set; }
 
-        [JsonIgnore]
-        public string TypeDotNet { get; set; }
+        //[JsonIgnore]
+        public string? TypeDotNet { get; set; }
 
         public string ValueDescription { get; set; }
 

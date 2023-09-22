@@ -5,8 +5,8 @@ namespace Yoma.Core.Domain.SSI.Interfaces
 {
     public interface ISSISchemaService
     {
-        List<SSISchema> List();
+        List<SSISchema> List(bool? latestVersions);
 
-        Task<SSISchema> Upsert(SSISchemaRequest request);
+        Task<SSISchema> Create(SSISchemaRequest request);
     }
 }

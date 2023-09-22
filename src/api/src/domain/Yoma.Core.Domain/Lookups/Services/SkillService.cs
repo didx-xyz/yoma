@@ -52,7 +52,7 @@ namespace Yoma.Core.Domain.Lookups.Services
         {
             var result = GetByIdOrNull(id);
 
-            return result ?? throw new ArgumentException($"{nameof(Skill)} for '{id}' does not exists", nameof(id));
+            return result ?? throw new ArgumentException($"{nameof(Skill)} with '{id}' does not exists", nameof(id));
         }
 
         public Skill? GetByIdOrNull(Guid id)

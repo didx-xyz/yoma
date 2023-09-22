@@ -375,6 +375,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     SSISchemaObjectId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "varchar(50)", nullable: false),
                     ValueDescription = table.Column<string>(type: "varchar(125)", nullable: false),
+                    Required = table.Column<bool>(type: "bit", nullable: false),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
                 constraints: table =>

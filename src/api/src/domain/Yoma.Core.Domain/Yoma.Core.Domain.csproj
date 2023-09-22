@@ -22,8 +22,4 @@
 	<PackageReference Include="Sentry.AspNetCore" Version="3.34.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="SSI\Services\" />
-  </ItemGroup>
-
 </Project>

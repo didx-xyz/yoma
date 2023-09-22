@@ -1023,6 +1023,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(50)");
 
+                    b.Property<bool>("Required")
+                        .HasColumnType("bit");
+
                     b.Property<Guid>("SSISchemaObjectId")
                         .HasColumnType("uniqueidentifier");
 
