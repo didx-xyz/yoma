@@ -1,8 +1,5 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
-using System.Collections;
-using System.Reflection;
-using System.Reflection.Emit;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
@@ -101,8 +98,11 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
 
                         if (multiPart)
                         {
-                            if (!IsListType(propInfo.PropertyType, out Type elementType))
+                            if (!IsListType(propInfo.PropertyType, out Type? elementType))
                                 throw new InvalidOperationException($"With a multi-part property, only a parent of List<> is supported for property '{propName}' in entity '{entity.Name}'");
+
+                            if (elementType == null)
+                                throw new InvalidOperationException("ElementType expected with ListType");
 
                             if (elementType.IsPrimitive || elementType == typeof(string) || elementType == typeof(DateTimeOffset))
                                 throw new InvalidOperationException($"Multi-part property only supports a non-nullable child property of type primitive, string, or DateTimeOffset for property '{propName}' in entity '{entity.Name}'");
@@ -110,7 +110,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
                             currentType = elementType;
 
                             prop.TypeDisplayName = $"List<{elementType.Name}>";
-                            prop.TypeDotNet = $"{propInfo.PropertyType.GetGenericTypeDefinition().Name}[[{{0}}]]";
+                            prop.TypeDotNet = $"{propInfo.PropertyType.GetGenericTypeDefinition().FullName}[[{{0}}]]";
 
                             multiPart = false;
                         }
@@ -132,14 +132,13 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
                             prop.TypeDotNet = string.IsNullOrEmpty(prop.TypeDotNet) ? propInfo.PropertyType.FullName : string.Format(prop.TypeDotNet, propInfo.PropertyType.FullName);
                         }
 
-                        if (!string.IsNullOrEmpty(prop.NameAttribute)) prop.NameAttribute += "_";
-                        prop.NameAttribute += $"{propInfo.DeclaringType.Name}_{propInfo.Name}";
+                        if (string.IsNullOrEmpty(prop.NameAttribute)) prop.NameAttribute += $"{propInfo.DeclaringType.Name}_{propInfo.Name}"; 
                     }
                 }
             }
         }
 
-        private bool IsListType(Type type, out Type elementType)
+        private bool IsListType(Type type, out Type? elementType)
         {
             elementType = null;
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))

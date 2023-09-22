@@ -1,5 +1,6 @@
 using AriesCloudAPI.DotnetSDK.AspCore.Clients;
-using Yoma.Core.Domain.SSI.Interfaces;
+using Yoma.Core.Domain.SSI.Interfaces.Provider;
+using Yoma.Core.Domain.SSI.Models.Provider;
 
 namespace Yoma.Core.Infrastructure.AriesCloud.Client
 {
@@ -17,6 +18,20 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         #endregion
 
         #region Public Members
+        public async Task<List<Schema>> ListSchemas()
+        {
+            var client = _clientFactory.CreateGovernanceClient();
+
+            var results = await client.GetSchemasAsync();
+
+            return results.Select(o => new Schema
+            {
+                Id = o.Id,
+                Name = o.Name,
+                Version = Version.Parse(o.Version),
+                AttributeNames = o.Attribute_names
+            }).ToList();
+        }
         #endregion
     }
 }

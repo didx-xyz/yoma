@@ -1,4 +1,4 @@
-namespace Yoma.Core.Domain.SSI.Interfaces
+namespace Yoma.Core.Domain.SSI.Interfaces.Provider
 {
     public interface ISSIProviderClientFactory
     {
