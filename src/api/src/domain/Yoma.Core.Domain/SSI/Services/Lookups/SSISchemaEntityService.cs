@@ -2,6 +2,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 
@@ -41,6 +42,28 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
             return List().SingleOrDefault(o => o.Id == id);
         }
 
+        public SSISchemaEntityProperty GetByAttributeName(string attributeName)
+        {
+            var result = GetByAttributeNameOrNull(attributeName) ?? throw new ArgumentException($"{nameof(SSISchemaEntityProperty)} with attribute name '{attributeName}' does not exists", nameof(attributeName));
+            return result;
+        }
+
+        public SSISchemaEntityProperty? GetByAttributeNameOrNull(string attributeName)
+        {
+            if (string.IsNullOrWhiteSpace(attributeName))
+                throw new ArgumentNullException(nameof(attributeName));
+            attributeName = attributeName.Trim();
+
+            var result = List().SelectMany(o => o.Properties?.Where(p => string.Equals(p.AttributeName, attributeName, StringComparison.InvariantCultureIgnoreCase)) ?? Enumerable.Empty<SSISchemaEntityProperty>()).ToList();
+            if (result == null || !result.Any())
+                throw new ArgumentException($"{nameof(SSISchemaEntityProperty)} not found with attribute name '{attributeName}'", nameof(attributeName));
+
+            if (result.Count > 1)
+                throw new DataInconsistencyException($"More than one {nameof(SSISchemaEntityProperty)} found with attribute name '{attributeName}'");
+
+            return result.SingleOrDefault();
+        }
+
         public List<SSISchemaEntity> List()
         {
             if (!_appSettings.CacheEnabledByReferenceDataTypes.HasFlag(Core.ReferenceDataType.Lookups))
@@ -48,6 +71,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
                 var entities = _ssiSchemaEntityRepository.Query(true).ToList();
                 ReflectEntityTypeInformation(entities);
                 entities = entities.OrderBy(o => o.Name).ToList();
+                entities.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.AttributeName).ToList());
                 return entities;
             }
 
@@ -58,6 +82,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
                 var entities = _ssiSchemaEntityRepository.Query(true).ToList();
                 ReflectEntityTypeInformation(entities);
                 entities = entities.OrderBy(o => o.Name).ToList();
+                entities.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.AttributeName).ToList());
                 return entities;
             }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(SSISchemaEntity)}s'");
             return result;
@@ -109,8 +134,8 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
 
                             currentType = elementType;
 
-                            prop.TypeDisplayName = $"List<{elementType.Name}>";
-                            prop.TypeDotNet = $"{propInfo.PropertyType.GetGenericTypeDefinition().FullName}[[{{0}}]]";
+                            prop.TypeName = $"List<{elementType.Name}>";
+                            prop.DotNetType = $"{propInfo.PropertyType.GetGenericTypeDefinition().FullName}[[{{0}}]]";
 
                             multiPart = false;
                         }
@@ -128,11 +153,11 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
                             else
                                 propTypeDisplayName = propInfo.PropertyType.Name;
 
-                            prop.TypeDisplayName = string.IsNullOrEmpty(prop.TypeDisplayName) ? propTypeDisplayName : string.Format(prop.TypeDisplayName, propTypeDisplayName);
-                            prop.TypeDotNet = string.IsNullOrEmpty(prop.TypeDotNet) ? propInfo.PropertyType.FullName : string.Format(prop.TypeDotNet, propInfo.PropertyType.FullName);
+                            prop.TypeName = string.IsNullOrEmpty(prop.TypeName) ? propTypeDisplayName : string.Format(prop.TypeName, propTypeDisplayName);
+                            prop.DotNetType = string.IsNullOrEmpty(prop.DotNetType) ? propInfo.PropertyType.FullName : string.Format(prop.DotNetType, propInfo.PropertyType.FullName);
                         }
 
-                        if (string.IsNullOrEmpty(prop.NameAttribute)) prop.NameAttribute += $"{propInfo.DeclaringType.Name}_{propInfo.Name}"; 
+                        if (string.IsNullOrEmpty(prop.AttributeName)) prop.AttributeName += $"{propInfo.DeclaringType.Name}_{propInfo.Name}";
                     }
                 }
             }

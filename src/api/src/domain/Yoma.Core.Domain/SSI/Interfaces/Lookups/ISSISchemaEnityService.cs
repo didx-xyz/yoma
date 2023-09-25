@@ -8,6 +8,10 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Lookups
 
         SSISchemaEntity? GetByIdOrNull(Guid id);
 
+        SSISchemaEntityProperty GetByAttributeName(string attributeName);
+
+        SSISchemaEntityProperty? GetByAttributeNameOrNull(string attributeName);
+
         List<SSISchemaEntity> List();
     }
 }

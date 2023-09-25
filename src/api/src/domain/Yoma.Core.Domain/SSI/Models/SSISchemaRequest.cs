@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.SSI.Models.Lookups
     {
         public string Name { get; set; }
 
-        public List<SSISchemaRequestEntity> Entities { get; set; }
+        public List<string> Attributes { get; set; }
     }
 }

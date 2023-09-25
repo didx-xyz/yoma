@@ -3,6 +3,9 @@ using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
+using Yoma.Core.Domain.SSI.Models.Provider;
+using Yoma.Core.Domain.SSI.Validators;
+using FluentValidation;
 
 namespace Yoma.Core.Domain.SSI.Services
 {
@@ -11,29 +14,24 @@ namespace Yoma.Core.Domain.SSI.Services
         #region Class Variables
         private readonly ISSIProviderClient _ssiProviderClient;
         private readonly ISSISchemaEntityService _ssiSchemaEntityService;
+        private readonly SchemaRequestValidator _schemaRequestValidator;
         #endregion
 
         #region Constructor
         public SSISchemaService(ISSIProviderClientFactory ssiProviderClientFactory,
-            ISSISchemaEntityService ssiSchemaEntityService)
+            ISSISchemaEntityService ssiSchemaEntityService,
+            SchemaRequestValidator schemaRequestValidator)
         {
             _ssiProviderClient = ssiProviderClientFactory.CreateClient();
             _ssiSchemaEntityService = ssiSchemaEntityService;
+            _schemaRequestValidator = schemaRequestValidator;
         }
         #endregion
 
         #region Public Members
         public async Task<List<SSISchema>> List(bool? latestVersions)
         {
-            var schemas = await _ssiProviderClient.ListSchemas();
-
-            if (latestVersions.HasValue && latestVersions.Value)
-            {
-                schemas = schemas
-                    .GroupBy(s => s.Id)
-                    .Select(group => group.OrderByDescending(s => s.Version).First())
-                    .ToList();
-            }
+            var schemas = await _ssiProviderClient.ListSchemas(latestVersions.HasValue && latestVersions.Value);
 
             var results = new List<SSISchema>();
 
@@ -42,20 +40,32 @@ namespace Yoma.Core.Domain.SSI.Services
 
             var matchedEntitiesGrouped = _ssiSchemaEntityService.List()
                 .SelectMany(entity => schemas
-                    .Where(schema => schema.AttributeNames
-                        .Any(attributeName => entity.Properties?.Any(property =>
-                            string.Equals(property.NameAttribute, attributeName, StringComparison.InvariantCultureIgnoreCase)
-                        ) == true
-                    ))
-                    .Select(schema => new { SchemaId = schema.Id, Entity = entity })
+                .Where(schema => schema.AttributeNames
+                    .Any(attributeName => entity.Properties?.Any(property =>
+                        string.Equals(property.AttributeName, attributeName, StringComparison.InvariantCultureIgnoreCase)
+                    ) == true
+                ))
+                .Select(schema => new
+                {
+                    SchemaId = schema.Id,
+                    Entity = entity,
+                    MatchedProperties = entity.Properties?
+                        .Where(property => schema.AttributeNames
+                            .Contains(property.AttributeName, StringComparer.InvariantCultureIgnoreCase))
+                        .ToList() ?? new List<SSISchemaEntityProperty>()
+                })
                 )
-                .GroupBy(item => item.SchemaId, item => item.Entity)
+                .GroupBy(item => item.SchemaId, item => new SSISchemaEntity
+                {
+                    Id = item.Entity.Id,
+                    Name = item.Entity.Name,
+                    Properties = item.MatchedProperties
+                })
                 .ToDictionary(group => group.Key, group => group.ToList());
 
-            //no matches found for schema attributes that match entities
+            // No matches found for schema attributes that match entities
             if (matchedEntitiesGrouped == null || !matchedEntitiesGrouped.Any()) return results;
 
-            //only includes schemas with matched entities
             results = schemas.Where(o => matchedEntitiesGrouped.ContainsKey(o.Id)).Select(o => new SSISchema
             {
                 Id = o.Id,
@@ -67,9 +77,44 @@ namespace Yoma.Core.Domain.SSI.Services
             return results;
         }
 
-        public Task<SSISchema> Create(SSISchemaRequest request)
+        public async Task<SSISchema> Create(SSISchemaRequest request)
         {
-            throw new NotImplementedException();
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            await _schemaRequestValidator.ValidateAndThrowAsync(request);
+
+            var schema = await _ssiProviderClient.Create(new SchemaRequest
+            {
+                Name = request.Name,
+                Attributes = request.Attributes
+            });
+
+            var matchedEntities = _ssiSchemaEntityService.List()
+             .Where(entity =>
+                 entity.Properties?.Any(property =>
+                     request.Attributes.Contains(property.AttributeName, StringComparer.InvariantCultureIgnoreCase)) == true
+             )
+             .Select(entity => new SSISchemaEntity
+             {
+                 Id = entity.Id,
+                 Name = entity.Name,
+                 Properties = entity.Properties?
+                     .Where(property =>
+                         request.Attributes.Contains(property.AttributeName, StringComparer.InvariantCultureIgnoreCase))
+                     .ToList() ?? new List<SSISchemaEntityProperty>()
+             })
+             .ToList();
+
+            var result = new SSISchema
+            {
+                Id = schema.Id,
+                Name = schema.Name,
+                Version = schema.Version.ToString(),
+                Entities = matchedEntities.Any() ? matchedEntities : null
+            };
+
+            return result;
         }
         #endregion
     }
