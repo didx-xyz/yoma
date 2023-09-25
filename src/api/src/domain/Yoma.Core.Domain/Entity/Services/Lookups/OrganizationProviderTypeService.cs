@@ -28,7 +28,7 @@ namespace Yoma.Core.Domain.Entity.Services.Lookups
         #region Public Members
         public Models.Lookups.OrganizationProviderType GetById(Guid id)
         {
-            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(OrganizationProviderType)} for '{id}' does not exists", nameof(id));
+            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(OrganizationProviderType)} with '{id}' does not exists", nameof(id));
             return result;
         }
 

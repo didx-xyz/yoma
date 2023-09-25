@@ -33,11 +33,11 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 
         [ForeignKey("CountryId")]
         public Guid? CountryId { get; set; }
-        public Country Country { get; set; }
+        public Country? Country { get; set; }
 
         [ForeignKey("CountryOfResidenceId")]
         public Guid? CountryOfResidenceId { get; set; }
-        public Country CountryOfResidence { get; set; }
+        public Country? CountryOfResidence { get; set; }
 
         [ForeignKey(nameof(PhotoId))]
         public Guid? PhotoId { get; set; }
@@ -45,7 +45,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 
         [ForeignKey("GenderId")]
         public Guid? GenderId { get; set; }
-        public Gender Gender { get; set; }
+        public Gender? Gender { get; set; }
 
         public DateTimeOffset? DateOfBirth { get; set; }
 

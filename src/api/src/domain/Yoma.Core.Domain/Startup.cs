@@ -21,6 +21,10 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.Opportunity.Services.Lookups;
+using Yoma.Core.Domain.SSI.Interfaces;
+using Yoma.Core.Domain.SSI.Interfaces.Lookups;
+using Yoma.Core.Domain.SSI.Services;
+using Yoma.Core.Domain.SSI.Services.Lookups;
 
 namespace Yoma.Core.Domain
 {
@@ -78,6 +82,13 @@ namespace Yoma.Core.Domain
             services.AddScoped<IOpportunityService, OpportunityService>();
             services.AddSingleton<IOpportunityBackgroundService, OpportunityBackgroundService>();
             #endregion Opportunity
+
+            #region SSI
+            #region Lookups
+            services.AddScoped<ISSISchemaEntityService, SSISchemaEntityService>();
+            #endregion Lookups
+            services.AddScoped<ISSISchemaService, SSISchemaService>();
+            #endregion SSI
         }
 
         public static void Configure_RecurringJobs(this IServiceProvider serviceProvider, IConfiguration configuration)

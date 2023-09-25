@@ -41,7 +41,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 
         [ForeignKey("CountryId")]
         public Guid? CountryId { get; set; }
-        public Country Country { get; set; }
+        public Country? Country { get; set; }
 
         [Column(TypeName = "varchar(500)")]
         public string? StreetAddress { get; set; }

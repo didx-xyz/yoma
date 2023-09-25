@@ -20,9 +20,15 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public Guid? CountryId { get; set; }
 
+        public string? Country { get; set; }
+
         public Guid? CountryOfResidenceId { get; set; }
 
+        public string? CountryOfResidence { get; set; }
+
         public Guid? GenderId { get; set; }
+
+        public string? Gender { get; set; }
 
         public DateTimeOffset? DateOfBirth { get; set; }
 
