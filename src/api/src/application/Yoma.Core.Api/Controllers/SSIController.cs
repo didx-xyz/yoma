@@ -66,7 +66,7 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Create a new schema with the specified entities (objects) and properties", Description =  "If a schema with the specified name already exists, a new version will be automatically created")]
+        [SwaggerOperation(Summary = "Create a new schema with the specified entities (objects) and properties", Description = "If a schema with the specified name already exists, a new version will be automatically created")]
         [HttpPost("schema")]
         [ProducesResponseType(typeof(SSISchema), (int)HttpStatusCode.OK)]
         [Authorize(Roles = Constants.Role_Admin)]

@@ -1,4 +1,3 @@
-
 using Newtonsoft.Json;
 
 namespace Yoma.Core.Domain.SSI.Models.Lookups
