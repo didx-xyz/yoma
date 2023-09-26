@@ -20,7 +20,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         private readonly ILanguageService _languageService;
         private readonly ISkillService _skillService;
         private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
-        private readonly ISSISchemaService _ssiSchemaService; 
+        private readonly ISSISchemaService _ssiSchemaService;
         #endregion
 
         #region Public Members
@@ -171,7 +171,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
 
         private bool SSISchemaExists(string? name)
         {
-            if (string.IsNullOrEmpty(name)) return false;    
+            if (string.IsNullOrEmpty(name)) return false;
             return _ssiSchemaService.GetByNameOrNull(name).Result != null;
         }
         #endregion

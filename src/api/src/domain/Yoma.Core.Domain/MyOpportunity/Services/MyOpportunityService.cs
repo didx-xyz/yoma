@@ -308,7 +308,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (!opportunity.VerificationEnabled)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / verification is not enabled");
 
-            if(opportunity.VerificationMethod == null || opportunity.VerificationMethod != Opportunity.VerificationMethod.Manual)
+            if (opportunity.VerificationMethod == null || opportunity.VerificationMethod != Opportunity.VerificationMethod.Manual)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / requires verification method manual");
 
             if (opportunity.VerificationTypes == null || !opportunity.VerificationTypes.Any())

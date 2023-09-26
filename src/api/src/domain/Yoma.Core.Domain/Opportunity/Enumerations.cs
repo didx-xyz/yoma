@@ -17,7 +17,7 @@ namespace Yoma.Core.Domain.Opportunity
         /// <summary>
         /// Verification by the provider directly / automatically via SSI integration
         /// </summary>
-        Automatic 
+        Automatic
     }
 
     public enum VerificationType
