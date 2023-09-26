@@ -281,7 +281,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("DisplayName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -314,7 +314,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ZltoWalletId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(50)");
 
                     b.HasKey("Id");
 
@@ -779,13 +779,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("varchar(MAX)");
+                        .HasColumnType("nvarchar(MAX)");
 
                     b.Property<Guid>("DifficultyId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Instructions")
-                        .HasColumnType("varchar(MAX)");
+                        .HasColumnType("nvarchar(MAX)");
 
                     b.Property<string>("Keywords")
                         .HasColumnType("varchar(500)");
@@ -810,11 +810,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Summary")
-                        .HasColumnType("varchar(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<Guid>("TypeId")
                         .HasColumnType("uniqueidentifier");

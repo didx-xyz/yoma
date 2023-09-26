@@ -26,6 +26,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
         [Column(TypeName = "varchar(125)")]
         public string Surname { get; set; }
 
+        [Column(TypeName = "varchar(255)")]
         public string? DisplayName { get; set; }
 
         [Column(TypeName = "varchar(50)")]
@@ -53,6 +54,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 
         public Guid? ExternalId { get; set; }
 
+        [Column(TypeName = "varchar(50)")]
         public string? ZltoWalletId { get; set; }
 
         public Guid? TenantId { get; set; }

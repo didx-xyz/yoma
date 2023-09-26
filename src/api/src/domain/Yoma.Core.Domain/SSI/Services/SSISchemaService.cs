@@ -29,14 +29,14 @@ namespace Yoma.Core.Domain.SSI.Services
         #endregion
 
         #region Public Members
-        public async Task<List<SSISchema>> List(bool? latestVersions)
+        public async Task<List<SSISchema>> List()
         {
-            var schemas = await _ssiProviderClient.ListSchemas(latestVersions.HasValue && latestVersions.Value);
+            var schemas = await _ssiProviderClient.ListSchemas(true);
 
             var results = new List<SSISchema>();
 
             //no configured schemas found 
-            if (!schemas.Any()) return results;
+            if (schemas == null || !schemas.Any()) return results;
 
             var matchedEntitiesGrouped = _ssiSchemaEntityService.List()
                 .SelectMany(entity => schemas

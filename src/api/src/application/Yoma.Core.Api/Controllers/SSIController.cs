@@ -51,15 +51,15 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Return a list of configured schemas. Optionally, only return the latest version of each schema (Admin or Organization Admin roles required)", Description = "Results includes the schema's associated entities (objects) and properties")]
+        [SwaggerOperation(Summary = "Return a list of configured schemas, providing only the latest version of each schema (Admin or Organization Admin roles required)", Description = "Results includes the schema's associated entities (objects) and properties")]
         [HttpGet("schema")]
         [ProducesResponseType(typeof(List<SSISchema>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> ListSchemas([FromQuery] bool? latestVersions)
+        public async Task<IActionResult> ListSchemas()
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListSchemas));
 
-            var result = await _ssiSchemaService.List(latestVersions);
+            var result = await _ssiSchemaService.List();
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListSchemas));
 
