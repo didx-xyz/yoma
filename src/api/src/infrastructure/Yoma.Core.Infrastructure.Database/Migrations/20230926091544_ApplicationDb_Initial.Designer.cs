@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230926062552_ApplicationDb_Initial")]
+    [Migration("20230926091544_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -768,6 +768,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(320)");
 
+                    b.Property<bool>("CredentialIssuanceEnabled")
+                        .HasColumnType("bit");
+
                     b.Property<DateTimeOffset>("DateCreated")
                         .HasColumnType("datetimeoffset");
 
@@ -806,8 +809,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<int?>("ParticipantLimit")
                         .HasColumnType("int");
 
-                    b.Property<bool>("SSIIntegrated")
-                        .HasColumnType("bit");
+                    b.Property<string>("SSISchemaName")
+                        .HasColumnType("varchar(255)");
 
                     b.Property<Guid>("StatusId")
                         .HasColumnType("uniqueidentifier");
@@ -825,8 +828,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<string>("URL")
                         .HasColumnType("varchar(2048)");
 
-                    b.Property<bool>("VerificationSupported")
+                    b.Property<bool>("VerificationEnabled")
                         .HasColumnType("bit");
+
+                    b.Property<string>("VerificationMethod")
+                        .HasColumnType("varchar(20)");
 
                     b.Property<decimal?>("YomaReward")
                         .HasColumnType("decimal(8,2)");

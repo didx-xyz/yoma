@@ -305,10 +305,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (!canSendForVerification)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can no longer be send for verification (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
-            if (!opportunity.VerificationSupported)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / does not support verification");
-            else if (opportunity.VerificationTypes == null || !opportunity.VerificationTypes.Any())
-                throw new DataInconsistencyException("Verification supported but opportunity has no mapped verification types");
+            if (!opportunity.VerificationEnabled)
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / verification is not enabled");
+
+            if (opportunity.VerificationMethod == null || opportunity.VerificationMethod != Opportunity.VerificationMethod.Manual)
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / requires verification method manual");
+
+            if (opportunity.VerificationTypes == null || !opportunity.VerificationTypes.Any())
+                throw new DataInconsistencyException("Manual verification enabled but opportunity has no mapped verification types");
 
             if (request.DateStart.HasValue && request.DateStart.Value < opportunity.DateStart)
                 throw new ValidationException($"Start date can not be earlier than the opportunity stated date of '{opportunity.DateStart}'");

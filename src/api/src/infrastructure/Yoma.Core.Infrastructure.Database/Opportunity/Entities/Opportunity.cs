@@ -64,10 +64,10 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
         public decimal? YomaRewardCumulative { get; set; }
 
         [Required]
-        public bool VerificationSupported { get; set; }
+        public bool VerificationEnabled { get; set; }
 
-        [Required]
-        public bool SSIIntegrated { get; set; }
+        [Column(TypeName = "varchar(20)")]
+        public string? VerificationMethod { get; set; }
 
         [Required]
         [ForeignKey("DifficultyId")]
@@ -97,6 +97,12 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
         public DateTimeOffset DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }
+
+        [Required]
+        public bool CredentialIssuanceEnabled { get; set; }
+
+        [Column(TypeName = "varchar(255)")]
+        public string? SSISchemaName { get; set; }
 
         [Required]
         public DateTimeOffset DateCreated { get; set; }

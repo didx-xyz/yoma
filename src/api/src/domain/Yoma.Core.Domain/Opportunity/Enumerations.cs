@@ -8,6 +8,18 @@ namespace Yoma.Core.Domain.Opportunity
         Inactive, //flagged expired provided ended (notified), or as deleted if inactive for x days
     }
 
+    public enum VerificationMethod
+    {
+        /// <summary>
+        /// Verification via upload of proof based on the configured verification types
+        /// </summary>
+        Manual,
+        /// <summary>
+        /// Verification by the provider directly / automatically via SSI integration
+        /// </summary>
+        Automatic
+    }
+
     public enum VerificationType
     {
         FileUpload,

@@ -29,10 +29,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public decimal? YomaRewardPool { get; set; }
 
         [Required]
-        public bool VerificationSupported { get; set; }
+        public bool VerificationEnabled { get; set; }
 
-        [Required]
-        public bool SSIIntegrated { get; set; }
+        public VerificationMethod? VerificationMethod { get; set; }
 
         [Required]
         public Guid DifficultyId { get; set; }
@@ -50,6 +49,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public DateTimeOffset DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }
+
+        [Required]
+        public bool CredentialIssuanceEnabled { get; set; }
+
+        public string? SSISchemaName { get; set; }
 
         [Required]
         public List<Guid> Categories { get; set; }
