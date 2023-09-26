@@ -10,15 +10,16 @@ import type {
   OpportunitySearchResults,
   OpportunityRequestBase,
   Opportunity,
+  OpportunityInfo,
 } from "../models/opportunity";
 
 export const getOpportunitiesAdmin = async (
   filter: OpportunitySearchFilterAdmin,
   context?: GetServerSidePropsContext,
-): Promise<OpportunitySearchResults[]> => {
+): Promise<OpportunitySearchResults> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
-  const { data } = await instance.post<OpportunitySearchResults[]>(
+  const { data } = await instance.post<OpportunitySearchResults>(
     `/opportunity/search/admin`,
     filter,
   );
@@ -88,5 +89,15 @@ export const getOpportunityById = async (
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.get<Opportunity>(`/opportunity/${id}/admin`);
+  return data;
+};
+
+export const getOpportunityInfoById = async (
+  id: string,
+  context?: GetServerSidePropsContext,
+): Promise<OpportunityInfo> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<OpportunityInfo>(`/opportunity/${id}`);
   return data;
 };

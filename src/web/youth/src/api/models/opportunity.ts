@@ -30,7 +30,7 @@ export interface Opportunity {
   organizationStatus: OrganizationStatus;
   summary: string | null;
   instructions: string | null;
-  uRL: string | null;
+  url: string | null;
   zltoReward: number | null;
   zltoRewardPool: number | null;
   zltoRewardCumulative: number | null;
@@ -120,7 +120,7 @@ export interface OpportunityRequestBase {
   typeId: string;
   organizationId: string;
   instructions: string | null;
-  uRL: string | null;
+  url: string | null;
   zltoReward: number | null;
   yomaReward: number | null;
   zltoRewardPool: number | null;

@@ -11,35 +11,42 @@ import { authOptions } from "~/server/auth";
 import { type OpportunitySearchResults } from "~/api/models/opportunity";
 import { NextPageWithLayout } from "~/pages/_app";
 import { ParsedUrlQuery } from "querystring";
+import Link from "next/link";
+import { PageBackground } from "~/components/PageBackground";
+import { IoIosAdd } from "react-icons/io";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
+  query?: string;
+  page?: string;
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id } = context.params as IParams;
+  const { id, query, page } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
 
   const queryClient = new QueryClient();
   if (session) {
     // 👇 prefetch queries (on server)
-    await queryClient.prefetchQuery(["opportunities", id], () =>
-      getOpportunitiesAdmin(
-        {
-          organizations: [id],
-          pageNumber: 1,
-          pageSize: 10,
-          startDate: null,
-          endDate: null,
-          statuses: null,
-          types: null,
-          categories: null,
-          languages: null,
-          countries: null,
-          valueContains: null,
-        },
-        context,
-      ),
+    await queryClient.prefetchQuery(
+      [`OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`],
+      () =>
+        getOpportunitiesAdmin(
+          {
+            organizations: [id],
+            pageNumber: page ? parseInt(page.toString()) : 1,
+            pageSize: 10,
+            startDate: null,
+            endDate: null,
+            statuses: null,
+            types: null,
+            categories: null,
+            languages: null,
+            countries: null,
+            valueContains: query ?? null,
+          },
+          context,
+        ),
     );
   }
 
@@ -47,22 +54,43 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null, // (required for 'withAuth' HOC component)
-      id: id,
+      id: id ?? null,
+      query: query ?? null,
+      page: page ?? null,
     },
   };
 }
 
-const Opportunities: NextPageWithLayout<{ id: string }> = (id) => {
+const Opportunities: NextPageWithLayout<{
+  id: string;
+  query?: string;
+  page?: string;
+}> = ({ id, query, page }) => {
   const router = useRouter();
 
   // 👇 use prefetched queries (from server)
-  const { data: opportunities } = useQuery<OpportunitySearchResults[]>({
-    queryKey: ["opportunities", id],
+  const { data: opportunities } = useQuery<OpportunitySearchResults>({
+    queryKey: [
+      `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`,
+    ],
+    // queryFn: () =>
+    //   getOpportunitiesAdmin(
+    //     {
+    //       organizations: [id],
+    //       pageNumber: 1,
+    //       pageSize: 10,
+    //       startDate: null,
+    //       endDate: null,
+    //       statuses: null,
+    //       types: null,
+    //       categories: null,
+    //       languages: null,
+    //       countries: null,
+    //       valueContains: query,
+    //     },
+    //     null,
+    //   ),
   });
-
-  const handleAddOpportunity = () => {
-    void router.push("/organisations/${id}/opportunities/create");
-  };
 
   // const SkillsFormatter = useCallback(
   //   (row: RenderCellProps<FullOpportunityResponseDto>) => {
@@ -116,23 +144,24 @@ const Opportunities: NextPageWithLayout<{ id: string }> = (id) => {
       <Head>
         <title>Yoma Partner | Opportunities</title>
       </Head>
-      <div className="container">
+      <PageBackground />
+      <div className="container z-10">
         <div className="flex flex-row py-4">
           <h3 className="flex flex-grow">Opportunities</h3>
           <div className="flex justify-end">
-            <button
-              type="button"
-              className="btn btn-success btn-sm"
-              onClick={handleAddOpportunity}
+            <Link
+              href={`/organisations/${id}/opportunities/create`}
+              className="bg-green-dark whitespace-nowrap rounded-full text-white"
             >
+              <IoIosAdd className="h-5 w-5" />
               Create New
-            </button>
+            </Link>
           </div>
         </div>
 
         <div className="rounded-lg bg-white p-4">
           {/* NO ROWS */}
-          {opportunities && opportunities.length === 0 && (
+          {opportunities && opportunities.items?.length === 0 && (
             <div
               style={{
                 textAlign: "center",
@@ -142,11 +171,51 @@ const Opportunities: NextPageWithLayout<{ id: string }> = (id) => {
               <h3>No data to show</h3>
             </div>
           )}
-
           {/* GRID */}
-          <>{JSON.stringify(opportunities)}</>
-          {opportunities && opportunities.length > 0 && (
-            <>{JSON.stringify(opportunities)}</>
+
+          {opportunities && opportunities.items?.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Opportunity title</th>
+                    <th>Reward</th>
+                    <th>Url</th>
+                    <th>Participants</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {opportunities.items.map((opportunity) => (
+                    <tr key={opportunity.id}>
+                      <td>
+                        <Link
+                          href={`/organisations/${id}/opportunities/${opportunity.id}/info`}
+                        >
+                          {opportunity.title}
+                        </Link>
+                      </td>
+                      <td>
+                        <>
+                          {opportunity.zltoReward && (
+                            <span className="text-xs">
+                              {opportunity.zltoReward} Zlto
+                            </span>
+                          )}
+                          {opportunity.yomaReward && (
+                            <span className="text-xs">
+                              {opportunity.yomaReward} Yoma
+                            </span>
+                          )}
+                        </>
+                      </td>
+                      <td>{opportunity.url}</td>
+                      <td>{opportunity.participantCount}</td>
+                      {/* <td>{opportunity.ver}</td>  */}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             // <ReactDataGrid
             //   columns={[

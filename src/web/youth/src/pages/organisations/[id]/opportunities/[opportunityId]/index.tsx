@@ -46,11 +46,11 @@ import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
-import { type NextPageWithLayout } from "../../../_app";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
 import { IoMdArrowRoundBack, IoMdInformationCircle } from "react-icons/io";
 import CreatableSelect from "react-select/creatable";
+import { NextPageWithLayout } from "~/pages/_app";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -247,9 +247,9 @@ const OpportunityDetails: NextPageWithLayout<{
     id: opportunity?.id ?? "",
     title: opportunity?.title ?? "",
     description: opportunity?.description ?? "",
-    typeId: opportunity?.type ?? "",
+    typeId: opportunity?.typeId ?? "",
     categories: opportunity?.categories?.map((x) => x.id) ?? [],
-    uRL: opportunity?.uRL ?? "",
+    uRL: opportunity?.url ?? "",
 
     languages: opportunity?.languages?.map((x) => x.id) ?? [],
     countries: opportunity?.countries?.map((x) => x.id) ?? [],
@@ -284,25 +284,20 @@ const OpportunityDetails: NextPageWithLayout<{
   const onSubmit = useCallback(
     async (data: OpportunityRequestBase) => {
       setIsLoading(true);
-      console.log("data:", data);
-      //return;
 
-      // data.verificationTypes = data.verificationTypes.filter(
-      //   (x) => x.key != null && x.key != undefined && x.key != false,
-      // );
       try {
         // update api
         if (opportunity) {
           await updateOpportunity(data);
           toast("The opportunity has been updated.", {
             type: "success",
-            toastId: "opportunitySuccess",
+            toastId: "opportunity",
           });
         } else {
           await createOpportunity(data);
           toast("The opportunity has been created.", {
             type: "success",
-            toastId: "opportunitySuccess",
+            toastId: "opportunity",
           });
         }
 
@@ -312,7 +307,7 @@ const OpportunityDetails: NextPageWithLayout<{
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
-          toastId: "patchOpportunityError",
+          toastId: "opportunity",
           autoClose: false,
           icon: false,
         });
@@ -325,7 +320,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
       setIsLoading(false);
 
-      void router.push(`/organisations/${id}}/opportunities`);
+      void router.push(`/organisations/${id}/opportunities`);
     },
     [setIsLoading, id, opportunity, queryClient],
   );
@@ -394,7 +389,7 @@ const OpportunityDetails: NextPageWithLayout<{
     //noEndDate: z.boolean(),
     dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
     participantLimit: z.union([z.nan(), z.null(), z.number()]).optional(),
-      // eslint-disable-next-line
+    // eslint-disable-next-line
     // .refine((val) => val !== null && !Number.isNaN(val as any), {
     //   message: "Participant Limit is required.",
     // }),
@@ -448,7 +443,7 @@ const OpportunityDetails: NextPageWithLayout<{
             description: z
               .string({
                 required_error: "Description is required",
-    })
+              })
               .optional(),
           }),
           //z.any(),
@@ -463,7 +458,7 @@ const OpportunityDetails: NextPageWithLayout<{
           (x) => x.type != null && x.type != undefined && x.type != false,
         )?.length ?? 0;
 
-      if (count === 0) {
+      if (values.verificationTypes == null || count === 0) {
         ctx.addIssue({
           message: "At least one verification type is required.",
           code: z.ZodIssueCode.custom,
@@ -472,18 +467,6 @@ const OpportunityDetails: NextPageWithLayout<{
         });
         return z.NEVER;
       }
-
-      for (const item of values.verificationTypes!) {
-        if (item?.type && !item.description) {
-          // set default value for description
-          // item.description =
-          //   verificationTypes?.find((x) => x.type == item.type)?.description ??
-          //   "";
-        ctx.addIssue({
-            message: "A description is required for each type of proof.",
-          code: z.ZodIssueCode.custom,
-          path: ["verificationTypes"],
-        });
 
       for (const file of values.verificationTypes) {
         if (file?.type && !file.description) {
@@ -520,7 +503,7 @@ const OpportunityDetails: NextPageWithLayout<{
     control: controlStep1,
   } = useForm({
     resolver: zodResolver(schemaStep1),
-    //defaultValues: opportunity,
+    defaultValues: formData,
   });
 
   const {
@@ -530,7 +513,7 @@ const OpportunityDetails: NextPageWithLayout<{
     control: controlStep2,
   } = useForm({
     resolver: zodResolver(schemaStep2),
-    //defaultValues: opportunity,
+    defaultValues: formData,
   });
 
   const {
@@ -541,7 +524,7 @@ const OpportunityDetails: NextPageWithLayout<{
     control: controlStep3,
   } = useForm({
     resolver: zodResolver(schemaStep3),
-    //defaultValues: opportunity,
+    defaultValues: formData,
   });
 
   const {
@@ -552,7 +535,7 @@ const OpportunityDetails: NextPageWithLayout<{
     control: controlStep4,
   } = useForm({
     resolver: zodResolver(schemaStep4),
-    //defaultValues: opportunity,
+    defaultValues: formData,
   });
 
   const {
@@ -565,10 +548,7 @@ const OpportunityDetails: NextPageWithLayout<{
     watch: watchStep5,
   } = useForm({
     resolver: zodResolver(schemaStep5),
-    // defaultValues: {
-    //   verificationSupported: opportunity?.verificationSupported ?? false,
-    //   verificationTypes: opportunity?.verificationTypes ?? verificationTypes,
-    // },
+    defaultValues: formData,
   });
   const watchVerificationSupported = watchStep5("verificationSupported");
   const watchVerificationTypes = watchStep5("verificationTypes");
@@ -581,7 +561,7 @@ const OpportunityDetails: NextPageWithLayout<{
     control: controlStep6,
   } = useForm({
     resolver: zodResolver(schemaStep6),
-    //defaultValues: opportunity,
+    defaultValues: formData,
   });
 
   const {
@@ -592,7 +572,7 @@ const OpportunityDetails: NextPageWithLayout<{
     control: controlStep7,
   } = useForm({
     resolver: zodResolver(schemaStep7),
-    //defaultValues: opportunity,
+    defaultValues: formData,
   });
 
   return (
@@ -919,6 +899,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       <label className="label">
                         <span className="label-text">Opportunity link</span>
                       </label>
+
                       <input
                         type="text"
                         className="input input-bordered rounded-md"
@@ -926,7 +907,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         {...registerStep1("uRL")}
                         contentEditable
                       />
-
                       {errorsStep1.uRL && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
@@ -1561,6 +1541,22 @@ const OpportunityDetails: NextPageWithLayout<{
                                 checked={value === true}
                               />
                               <span className="label-text ml-4">
+                                Youth verification happens automatically
+                              </span>
+                            </label>
+
+                            <label
+                              htmlFor="verificationSupportedYes"
+                              className="label cursor-pointer justify-normal"
+                            >
+                              <input
+                                type="radio"
+                                className="radio-primary radio"
+                                id="verificationSupportedYes"
+                                onChange={() => onChange(true)}
+                                checked={value === true}
+                              />
+                              <span className="label-text ml-4">
                                 Youth should upload proof of completion
                               </span>
                             </label>
@@ -1595,16 +1591,16 @@ const OpportunityDetails: NextPageWithLayout<{
                     </div>
 
                     {watchVerificationSupported && (
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text">
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">
                             Select the types of proof that participants need to
                             upload as part of completing the opportuntity.
-                        </span>
-                      </label>
+                          </span>
+                        </label>
 
                         <div className="flex flex-col gap-2">
-                      {verificationTypes?.map((item, index) => (
+                          {verificationTypes?.map((item, index) => (
                             // <Controller
                             //   key={item.id}
                             //   control={controlStep5}
@@ -1612,65 +1608,65 @@ const OpportunityDetails: NextPageWithLayout<{
                             //   render={({ field: { onChange, value } }) => (
                             //     <>
                             <div className="flex flex-col" key={item.id}>
-                          {/* checkbox label */}
-                          <label
-                            htmlFor={item.id}
-                            className="label w-full cursor-pointer justify-normal"
-                          >
-                            <input
-                              {...registerStep5(
+                              {/* checkbox label */}
+                              <label
+                                htmlFor={item.id}
+                                className="label w-full cursor-pointer justify-normal"
+                              >
+                                <input
+                                  {...registerStep5(
                                     `verificationTypes.${index}.type`,
-                              )}
-                              type="checkbox"
-                              value={item.type}
-                              id={item.id}
-                              className="checkbox-primary checkbox"
-                              disabled={!watchVerificationSupported}
-                            />
-                            <span className="label-text ml-4">
-                              {item.displayName}
-                            </span>
-                          </label>
-                          {/* description input */}
+                                  )}
+                                  type="checkbox"
+                                  value={item.type}
+                                  id={item.id}
+                                  className="checkbox-primary checkbox"
+                                  disabled={!watchVerificationSupported}
+                                />
+                                <span className="label-text ml-4">
+                                  {item.displayName}
+                                </span>
+                              </label>
+                              {/* description input */}
                               {watchVerificationTypes?.find(
                                 (x: OpportunityVerificationType) =>
                                   x.type === item.type,
                               ) && (
-                          <div className="form-control w-full">
+                                <div className="form-control w-full">
                                   <label className="label">
                                     <span className="label-text">
                                       Description
                                     </span>
                                   </label>
-                            <input
-                              type="text"
-                              className="input input-bordered input-sm rounded-md"
+                                  <input
+                                    type="text"
+                                    className="input input-bordered input-sm rounded-md"
                                     placeholder="Enter description"
-                              {...registerStep5(
+                                    {...registerStep5(
                                       `verificationTypes.${index}.description`,
-                              )}
-                              contentEditable
+                                    )}
+                                    contentEditable
                                     // value={value ?? item.description}
                                     defaultValue={item.description}
-                              disabled={!watchVerificationSupported}
-                            />
-                          </div>
+                                    disabled={!watchVerificationSupported}
+                                  />
+                                </div>
                               )}
-                        </div>
+                            </div>
                             //     </>
                             //   )}
                             // />
-                      ))}
+                          ))}
                         </div>
                         {errorsStep5.verificationTypes?.root && (
-                        <label className="label font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                          <label className="label font-bold">
+                            <span className="label-text-alt italic text-red-500">
+                              {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                               {`${errorsStep5.verificationTypes.root.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
+                            </span>
+                          </label>
+                        )}
+                      </div>
                     )}
 
                     {/* BUTTONS */}
