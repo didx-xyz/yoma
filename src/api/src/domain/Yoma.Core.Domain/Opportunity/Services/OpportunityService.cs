@@ -364,8 +364,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 YomaReward = request.YomaReward,
                 ZltoRewardPool = request.ZltoRewardPool,
                 YomaRewardPool = request.YomaRewardPool,
-                VerificationSupported = request.VerificationSupported,
-                SSIIntegrated = request.SSIIntegrated,
+                VerificationEnabled = request.VerificationEnabled,
+                VerificationMethod = request.VerificationMethod,
                 DifficultyId = request.DifficultyId,
                 Difficulty = _opportunityDifficultyService.GetById(request.DifficultyId).Name,
                 CommitmentIntervalId = request.CommitmentIntervalId,
@@ -376,6 +376,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 Keywords = request.Keywords,
                 DateStart = request.DateStart.RemoveTime(),
                 DateEnd = !request.DateEnd.HasValue ? null : request.DateEnd.Value.ToEndOfDay(),
+                CredentialIssuanceEnabled = request.CredentialIssuanceEnabled,
+                SSISchemaName = request.SSISchemaName,
                 StatusId = _opportunityStatusService.GetByName(status.ToString()).Id,
                 Status = status,
                 CreatedBy = username,
@@ -398,9 +400,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result = await AssignSkills(result, request.Skills);
 
             // verification types (optional)
-            if (request.VerificationSupported && (request.VerificationTypes == null || !request.VerificationTypes.Any()))
-                throw new ValidationException("One or more verification types are required when verification is supported");
-
             result = await AssignVerificationTypes(result, request.VerificationTypes);
 
             scope.Complete();
@@ -442,8 +441,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.YomaReward = request.YomaReward;
             result.ZltoRewardPool = request.ZltoRewardPool;
             result.YomaRewardPool = request.YomaRewardPool;
-            result.VerificationSupported = request.VerificationSupported;
-            result.SSIIntegrated = request.SSIIntegrated;
+            result.VerificationEnabled = request.VerificationEnabled;
+            result.VerificationMethod = request.VerificationMethod;
             result.DifficultyId = request.DifficultyId;
             result.Difficulty = _opportunityDifficultyService.GetById(request.DifficultyId).Name;
             result.CommitmentIntervalId = request.CommitmentIntervalId;
@@ -454,6 +453,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.Keywords = request.Keywords;
             result.DateStart = request.DateStart.RemoveTime();
             result.DateEnd = !request.DateEnd.HasValue ? null : request.DateEnd.Value.ToEndOfDay();
+            result.CredentialIssuanceEnabled = request.CredentialIssuanceEnabled;
+            result.SSISchemaName = request.SSISchemaName;
             result.ModifiedBy = username;
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
@@ -476,9 +477,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result = await AssignSkills(result, request.Skills);
 
             // verification types (optional)
-            if (request.VerificationSupported && (request.VerificationTypes == null || !request.VerificationTypes.Any()))
-                throw new ValidationException("One or more verification types are required when verification is supported");
-
             result = await RemoveVerificationTypes(result, result.VerificationTypes?.Select(o => o.Type).Except(request.VerificationTypes?.Select(o => o.Type) ?? Enumerable.Empty<VerificationType>()).ToList());
             result = await AssignVerificationTypes(result, request.VerificationTypes);
 
@@ -701,7 +699,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
-            if (result.VerificationSupported && (result.VerificationTypes == null || result.VerificationTypes.All(o => verificationTypes.Contains(o.Type))))
+            if (result.VerificationEnabled && (result.VerificationTypes == null || result.VerificationTypes.All(o => verificationTypes.Contains(o.Type))))
                 throw new ValidationException("One or more verification types are required when verification is supported. Removal will result in no associated verification types");
 
             result = await RemoveVerificationTypes(result, verificationTypes);

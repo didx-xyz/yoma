@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -437,8 +438,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     YomaReward = table.Column<decimal>(type: "decimal(8,2)", nullable: true),
                     YomaRewardPool = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
                     YomaRewardCumulative = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
-                    VerificationSupported = table.Column<bool>(type: "bit", nullable: false),
-                    SSIIntegrated = table.Column<bool>(type: "bit", nullable: false),
+                    VerificationEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    VerificationMethod = table.Column<string>(type: "varchar(20)", nullable: true),
                     DifficultyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CommitmentIntervalId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CommitmentIntervalCount = table.Column<short>(type: "smallint", nullable: true),
@@ -448,6 +449,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     Keywords = table.Column<string>(type: "varchar(500)", nullable: true),
                     DateStart = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DateEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    CredentialIssuanceEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    SSISchemaName = table.Column<string>(type: "varchar(255)", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     CreatedBy = table.Column<string>(type: "varchar(320)", nullable: false),
                     DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
