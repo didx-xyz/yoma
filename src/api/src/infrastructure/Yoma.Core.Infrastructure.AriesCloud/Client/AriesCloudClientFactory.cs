@@ -1,5 +1,5 @@
 using AriesCloudAPI.DotnetSDK.AspCore.Clients;
-using Yoma.Core.Domain.SSIProvider.Interfaces;
+using Yoma.Core.Domain.SSI.Interfaces.Provider;
 
 namespace Yoma.Core.Infrastructure.AriesCloud.Client
 {

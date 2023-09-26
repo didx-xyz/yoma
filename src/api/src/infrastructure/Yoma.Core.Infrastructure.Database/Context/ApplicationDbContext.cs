@@ -3,6 +3,7 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 using Yoma.Core.Infrastructure.Database.Opportunity.Entities;
+using Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups;
 
 namespace Yoma.Core.Infrastructure.Database.Context
 {
@@ -86,6 +87,14 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
         public DbSet<OpportunityVerificationType> OpportunityVerificationTypes { get; set; }
         #endregion Opportunity
+
+        #region SSI
+        #region Lookups
+        public DbSet<SSISchemaEntity> SSISchemaObject { get; set; }
+
+        public DbSet<SSISchemaEntityProperty> SSISchemaObjectProperty { get; set; }
+        #endregion Lookups
+        #endregion SSI
 
         #endregion
 

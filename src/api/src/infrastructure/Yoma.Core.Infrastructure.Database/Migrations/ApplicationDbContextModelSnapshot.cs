@@ -281,7 +281,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("DisplayName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -314,7 +314,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ZltoWalletId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(50)");
 
                     b.HasKey("Id");
 
@@ -779,13 +779,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("varchar(MAX)");
+                        .HasColumnType("nvarchar(MAX)");
 
                     b.Property<Guid>("DifficultyId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Instructions")
-                        .HasColumnType("varchar(MAX)");
+                        .HasColumnType("nvarchar(MAX)");
 
                     b.Property<string>("Keywords")
                         .HasColumnType("varchar(500)");
@@ -810,11 +810,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Summary")
-                        .HasColumnType("varchar(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<Guid>("TypeId")
                         .HasColumnType("uniqueidentifier");
@@ -987,6 +987,58 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsUnique();
 
                     b.ToTable("OpportunityVerificationTypes", "Opportunity");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("TypeName")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TypeName")
+                        .IsUnique();
+
+                    b.ToTable("SchemaEntity", "SSI");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaEntityProperty", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<bool>("Required")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("SSISchemaObjectId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ValueDescription")
+                        .IsRequired()
+                        .HasColumnType("varchar(125)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SSISchemaObjectId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("SchemaEntityProperty", "SSI");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>
@@ -1311,6 +1363,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Navigation("VerificationType");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaEntityProperty", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaEntity", "SSISchemaObject")
+                        .WithMany("Properties")
+                        .HasForeignKey("SSISchemaObjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SSISchemaObject");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>
                 {
                     b.Navigation("Administrators");
@@ -1341,6 +1404,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Navigation("Skills");
 
                     b.Navigation("VerificationTypes");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaEntity", b =>
+                {
+                    b.Navigation("Properties");
                 });
 #pragma warning restore 612, 618
         }

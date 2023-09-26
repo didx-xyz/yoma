@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.Lookups.Services
 
         public Gender GetById(Guid id)
         {
-            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(Gender)} for '{id}' does not exists", nameof(id));
+            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(Gender)} with '{id}' does not exists", nameof(id));
             return result;
         }
 

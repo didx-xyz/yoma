@@ -59,7 +59,7 @@ namespace Yoma.Core.Domain.Lookups.Services
 
         public Country GetById(Guid id)
         {
-            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(Country)} for '{id}' does not exists", nameof(id));
+            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(Country)} with '{id}' does not exists", nameof(id));
             return result;
         }
 

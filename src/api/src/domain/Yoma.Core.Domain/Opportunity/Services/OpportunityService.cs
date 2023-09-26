@@ -223,7 +223,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             //organization (explicitly specified)
             if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
             {
-                if (filter.Organizations != null)
+                if (filter.Organizations != null && filter.Organizations.Any())
                 {
                     filter.Organizations = filter.Organizations.Distinct().ToList();
                     _organizationService.IsAdminsOf(filter.Organizations, true);
@@ -232,18 +232,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
                     filter.Organizations = _organizationService.ListAdminsOf().Select(o => o.Id).ToList();
             }
 
-            if (filter.Organizations != null)
+            if (filter.Organizations != null && filter.Organizations.Any())
                 query = query.Where(o => filter.Organizations.Contains(o.OrganizationId));
 
             //types (explicitly specified)
-            if (filter.Types != null)
+            if (filter.Types != null && filter.Types.Any())
             {
                 filter.Types = filter.Types.Distinct().ToList();
                 query = query.Where(o => filter.Types.Contains(o.TypeId));
             }
 
             //categories (explicitly specified)
-            if (filter.Categories != null)
+            if (filter.Categories != null && filter.Categories.Any())
             {
                 filter.Categories = filter.Categories.Distinct().ToList();
                 var matchedOpportunities = _opportunityCategoryRepository.Query().Where(o => filter.Categories.Contains(o.CategoryId)).Select(o => o.OpportunityId).ToList();
@@ -251,7 +251,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             }
 
             //languages
-            if (filter.Languages != null)
+            if (filter.Languages != null && filter.Languages.Any())
             {
                 filter.Languages = filter.Languages.Distinct().ToList();
                 var matchedOpportunityIds = _opportunityLanguageRepository.Query().Where(o => filter.Languages.Contains(o.LanguageId)).Select(o => o.OpportunityId).ToList();
@@ -259,7 +259,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             }
 
             //countries
-            if (filter.Countries != null)
+            if (filter.Countries != null && filter.Countries.Any())
             {
                 filter.Countries = filter.Countries.Distinct().ToList();
                 var matchedOpportunityIds = _opportunityCountryRepository.Query().Where(o => filter.Countries.Contains(o.CountryId)).Select(o => o.OpportunityId).ToList();
@@ -280,7 +280,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 if (filter.IncludeExpired) filter.Statuses.Add(Status.Expired);
             }
 
-            if (filter.Statuses != null)
+            if (filter.Statuses != null && filter.Statuses.Any())
             {
                 filter.Statuses = filter.Statuses.Distinct().ToList();
                 var statusIds = filter.Statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();

@@ -164,7 +164,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 query = query.Where(o => organizationIds.Contains(o.Id));
             }
 
-            if (filter.Statuses != null)
+            if (filter.Statuses != null && filter.Statuses.Any())
             {
                 filter.Statuses = filter.Statuses.Distinct().ToList();
                 var statusIds = filter.Statuses.Select(o => _organizationStatusService.GetByName(o.ToString())).Select(o => o.Id).ToList();

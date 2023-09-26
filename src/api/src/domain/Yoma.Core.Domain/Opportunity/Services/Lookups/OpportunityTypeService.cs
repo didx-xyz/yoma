@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.Opportunity.Services.Lookups
 
         public OpportunityType GetById(Guid id)
         {
-            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(OpportunityType)} for '{id}' does not exists", nameof(id));
+            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(OpportunityType)} with '{id}' does not exists", nameof(id));
             return result;
         }
 
