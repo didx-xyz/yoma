@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -270,7 +271,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
                     FirstName = table.Column<string>(type: "varchar(125)", nullable: false),
                     Surname = table.Column<string>(type: "varchar(125)", nullable: false),
-                    DisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DisplayName = table.Column<string>(type: "varchar(255)", nullable: true),
                     PhoneNumber = table.Column<string>(type: "varchar(50)", nullable: true),
                     CountryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CountryOfResidenceId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -279,7 +280,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     DateOfBirth = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateLastLogin = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     ExternalId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ZltoWalletId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ZltoWalletId = table.Column<string>(type: "varchar(50)", nullable: true),
                     TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
@@ -424,12 +425,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Title = table.Column<string>(type: "varchar(255)", nullable: false),
-                    Description = table.Column<string>(type: "varchar(MAX)", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(255)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(MAX)", nullable: false),
                     TypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Summary = table.Column<string>(type: "varchar(500)", nullable: true),
-                    Instructions = table.Column<string>(type: "varchar(MAX)", nullable: true),
+                    Summary = table.Column<string>(type: "nvarchar(500)", nullable: true),
+                    Instructions = table.Column<string>(type: "nvarchar(MAX)", nullable: true),
                     URL = table.Column<string>(type: "varchar(2048)", nullable: true),
                     ZltoReward = table.Column<decimal>(type: "decimal(8,2)", nullable: true),
                     ZltoRewardPool = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
@@ -437,8 +438,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     YomaReward = table.Column<decimal>(type: "decimal(8,2)", nullable: true),
                     YomaRewardPool = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
                     YomaRewardCumulative = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
-                    VerificationSupported = table.Column<bool>(type: "bit", nullable: false),
-                    SSIIntegrated = table.Column<bool>(type: "bit", nullable: false),
+                    VerificationEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    VerificationMethod = table.Column<string>(type: "varchar(20)", nullable: true),
                     DifficultyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CommitmentIntervalId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CommitmentIntervalCount = table.Column<short>(type: "smallint", nullable: true),
@@ -448,6 +449,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     Keywords = table.Column<string>(type: "varchar(500)", nullable: true),
                     DateStart = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DateEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    CredentialIssuanceEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    SSISchemaName = table.Column<string>(type: "varchar(255)", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     CreatedBy = table.Column<string>(type: "varchar(320)", nullable: false),
                     DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),

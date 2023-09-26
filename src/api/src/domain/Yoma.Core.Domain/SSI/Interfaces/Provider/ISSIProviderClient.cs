@@ -7,7 +7,7 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Provider
         /// <summary>
         /// Return a list of configured schemas for the client. Optionally only return the latest versions
         /// </summary>
-        Task<List<Schema>> ListSchemas(bool latestVersion);
+        Task<List<Schema>?> ListSchemas(bool latestVersion);
 
         /// <summary>
         /// Find and return the latest version of a schema with the specified name

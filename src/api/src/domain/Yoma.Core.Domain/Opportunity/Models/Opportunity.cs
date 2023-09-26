@@ -1,4 +1,6 @@
 using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Lookups.Models;
 
@@ -42,9 +44,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public decimal? YomaRewardCumulative { get; set; }
 
-        public bool VerificationSupported { get; set; }
+        public bool VerificationEnabled { get; set; }
 
-        public bool SSIIntegrated { get; set; }
+        public VerificationMethod? VerificationMethod { get; set; }
 
         public Guid DifficultyId { get; set; }
 
@@ -72,6 +74,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public DateTimeOffset DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }
+
+        public bool CredentialIssuanceEnabled { get; set; }
+
+        public string? SSISchemaName { get; set; }
 
         public DateTimeOffset DateCreated { get; set; }
 

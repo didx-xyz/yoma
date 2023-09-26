@@ -2,6 +2,8 @@ using FluentValidation;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.SSI.Interfaces;
+using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 
 namespace Yoma.Core.Domain.Opportunity.Validators
 {
@@ -16,9 +18,10 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             ICountryService countryService,
             ILanguageService languageService,
             ISkillService skillService,
-            IOpportunityVerificationTypeService opportunityVerificationTypeService)
+            IOpportunityVerificationTypeService opportunityVerificationTypeService,
+            ISSISchemaService ssiSchemaService)
             : base(opportunityTypeService, organizationService, opportunityDifficultyService, timeIntervalService,
-                  opportunityCategoryService, countryService, languageService, skillService, opportunityVerificationTypeService)
+                  opportunityCategoryService, countryService, languageService, skillService, opportunityVerificationTypeService, ssiSchemaService)
         {
             RuleFor(x => x.Id).NotEmpty();
         }

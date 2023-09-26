@@ -75,6 +75,8 @@ DECLARE @SecondsPerIteration BIGINT = @TotalSecondsIn2Months / @Iterations
 --opportunities
 WHILE @RowCount < @Iterations
 BEGIN
+  DECLARE @VerificationEnabled BIT = CAST(CHECKSUM(NEWID()) % 2 AS BIT);
+
   INSERT INTO [Opportunity].[Opportunity]([Id],
 		[Title],
 		[Description],
@@ -88,8 +90,8 @@ BEGIN
 		[YomaReward],
 		[YomaRewardPool],
 		[YomaRewardCumulative],
-		[VerificationSupported],
-		[SSIIntegrated],
+		[VerificationEnabled],
+		[VerificationMethod],
 		[DifficultyId],
 		[CommitmentIntervalId],
 		[CommitmentIntervalCount],
@@ -99,6 +101,8 @@ BEGIN
 		[Keywords],
 		[DateStart],
 		[DateEnd],
+		[CredentialIssuanceEnabled],
+		[SSISchemaName],
 		[DateCreated],
 		[CreatedBy],
 		[DateModified],
@@ -116,8 +120,8 @@ BEGIN
 		(SELECT ROUND(100 + (350 - 100) * RAND(), 2)) as [YomaReward],
 		(SELECT ROUND(1000 + (3500 - 1000) * RAND(), 2)) as [YomaRewardPool],
 		NULL,
-		(SELECT CAST(CHECKSUM(NEWID()) % 2 AS BIT)) as [VerificationSupported],
-    0,
+		@VerificationEnabled,
+    	CASE WHEN @VerificationEnabled = 1 THEN 'Manual' ELSE NULL END,
 		(SELECT TOP 1 [Id] FROM [Opportunity].[OpportunityDifficulty] ORDER BY NEWID()) as [DifficultyId],
 		(SELECT TOP 1 [Id] FROM [Lookup].[TimeInterval] ORDER BY NEWID()) as [CommitmentIntervalId],
 		(SELECT 1 + ABS(CHECKSUM(NEWID()) % 10)) as [CommitmentIntervalCount],
@@ -127,6 +131,8 @@ BEGIN
 		(SELECT TOP 1 STRING_AGG(Word, ',') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (ABS(CHECKSUM(NEWID()) % 101) + 100) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) as [Keywords],
 		CAST(@DateStart AS DATE),
 		CAST(DATEADD(DAY, 7, @DateStart) AS DATE),
+		0,
+		NULL,
 		@DateCreated,
 		'testuser@gmail.com',
 		GETDATE(),
@@ -185,7 +191,7 @@ CROSS JOIN (
     FROM [Opportunity].[OpportunityVerificationType]
     ORDER BY NEWID()
 ) AS R
-WHERE O.VerificationSupported = 1
+WHERE O.VerificationEnabled = 1
 GO
 
 /****myOpportunities****/

@@ -163,7 +163,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
             }
         }
 
-        private bool IsListType(Type type, out Type? elementType)
+        private static bool IsListType(Type type, out Type? elementType)
         {
             elementType = null;
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))

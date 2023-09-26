@@ -42,8 +42,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 YomaReward = entity.YomaReward,
                 ZltoRewardPool = entity.ZltoRewardPool,
                 YomaRewardPool = entity.YomaRewardPool,
-                VerificationSupported = entity.VerificationSupported,
-                SSIIntegrated = entity.SSIIntegrated,
+                VerificationEnabled = entity.VerificationEnabled,
+                VerificationMethod = string.IsNullOrEmpty(entity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(entity.VerificationMethod),
                 DifficultyId = entity.DifficultyId,
                 Difficulty = entity.Difficulty.Name,
                 CommitmentIntervalId = entity.CommitmentIntervalId,
@@ -57,6 +57,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 Keywords = string.IsNullOrEmpty(entity.Keywords) ? null : entity.Keywords.Split(OpportunityService.Keywords_Separator, StringSplitOptions.None).ToList(),
                 DateStart = entity.DateStart,
                 DateEnd = entity.DateEnd,
+                CredentialIssuanceEnabled = entity.CredentialIssuanceEnabled,
+                SSISchemaName = entity.SSISchemaName,
                 DateCreated = entity.DateCreated,
                 CreatedBy = entity.CreatedBy,
                 DateModified = entity.DateModified,
@@ -118,8 +120,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 YomaReward = item.YomaReward,
                 ZltoRewardPool = item.ZltoRewardPool,
                 YomaRewardPool = item.YomaRewardPool,
-                VerificationSupported = item.VerificationSupported,
-                SSIIntegrated = item.SSIIntegrated,
+                VerificationEnabled = item.VerificationEnabled,
+                VerificationMethod = item.VerificationMethod?.ToString(),
                 DifficultyId = item.DifficultyId,
                 CommitmentIntervalId = item.CommitmentIntervalId,
                 CommitmentIntervalCount = item.CommitmentIntervalCount,
@@ -129,6 +131,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 Keywords = item.KeywordsFlatten,
                 DateStart = item.DateStart,
                 DateEnd = item.DateEnd,
+                CredentialIssuanceEnabled = item.CredentialIssuanceEnabled,
+                SSISchemaName = item.SSISchemaName,
                 DateCreated = item.DateCreated,
                 CreatedBy = item.CreatedBy,
                 DateModified = item.DateModified,
@@ -162,8 +166,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                   YomaReward = item.YomaReward,
                   ZltoRewardPool = item.ZltoRewardPool,
                   YomaRewardPool = item.YomaRewardPool,
-                  VerificationSupported = item.VerificationSupported,
-                  SSIIntegrated = item.SSIIntegrated,
+                  VerificationEnabled = item.VerificationEnabled,
+                  VerificationMethod = item.VerificationMethod?.ToString(),
                   DifficultyId = item.DifficultyId,
                   CommitmentIntervalId = item.CommitmentIntervalId,
                   CommitmentIntervalCount = item.CommitmentIntervalCount,
@@ -173,6 +177,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                   Keywords = item.KeywordsFlatten,
                   DateStart = item.DateStart,
                   DateEnd = item.DateEnd,
+                  CredentialIssuanceEnabled = item.CredentialIssuanceEnabled,
+                  SSISchemaName = item.SSISchemaName,
                   DateCreated = DateTimeOffset.Now,
                   CreatedBy = item.CreatedBy,
                   DateModified = DateTimeOffset.Now,
@@ -211,8 +217,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
             entity.YomaReward = item.YomaReward;
             entity.ZltoRewardPool = item.ZltoRewardPool;
             entity.YomaRewardPool = item.YomaRewardPool;
-            entity.VerificationSupported = item.VerificationSupported;
-            entity.SSIIntegrated = item.SSIIntegrated;
+            entity.VerificationEnabled = item.VerificationEnabled;
+            entity.VerificationMethod = item.VerificationMethod?.ToString();
             entity.DifficultyId = item.DifficultyId;
             entity.CommitmentIntervalId = item.CommitmentIntervalId;
             entity.CommitmentIntervalCount = item.CommitmentIntervalCount;
@@ -222,6 +228,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
             entity.Keywords = item.KeywordsFlatten;
             entity.DateStart = item.DateStart;
             entity.DateEnd = item.DateEnd;
+            entity.CredentialIssuanceEnabled = item.CredentialIssuanceEnabled;
+            entity.SSISchemaName = item.SSISchemaName;
             entity.DateModified = item.DateModified;
             entity.ModifiedBy = item.ModifiedBy;
 
@@ -255,8 +263,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 entity.YomaReward = item.YomaReward;
                 entity.ZltoRewardPool = item.ZltoRewardPool;
                 entity.YomaRewardPool = item.YomaRewardPool;
-                entity.VerificationSupported = item.VerificationSupported;
-                entity.SSIIntegrated = item.SSIIntegrated;
+                entity.VerificationEnabled = item.VerificationEnabled;
+                entity.VerificationMethod = item.VerificationMethod?.ToString();
                 entity.DifficultyId = item.DifficultyId;
                 entity.CommitmentIntervalId = item.CommitmentIntervalId;
                 entity.CommitmentIntervalCount = item.CommitmentIntervalCount;
@@ -266,6 +274,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 entity.Keywords = item.KeywordsFlatten;
                 entity.DateStart = item.DateStart;
                 entity.DateEnd = item.DateEnd;
+                entity.CredentialIssuanceEnabled = item.CredentialIssuanceEnabled;
+                entity.SSISchemaName = item.SSISchemaName;
                 entity.DateModified = item.DateModified;
                 entity.ModifiedBy = item.ModifiedBy;
             }

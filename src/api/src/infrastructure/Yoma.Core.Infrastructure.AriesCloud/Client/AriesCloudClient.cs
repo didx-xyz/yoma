@@ -20,7 +20,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         #endregion
 
         #region Public Members
-        public async Task<List<Schema>> ListSchemas(bool latestVersion)
+        public async Task<List<Schema>?> ListSchemas(bool latestVersion)
         {
             var client = _clientFactory.CreateGovernanceClient();
             var schemas = await client.GetSchemasAsync();
@@ -38,7 +38,12 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             var schemas = await client.GetSchemasAsync(schema_name: name);
 
             var results = FilterByLatestVersion(schemas, true);
-            return results.FirstOrDefault();
+            if (results == null || !results.Any()) return null;
+
+            if (results.Count > 1)
+                throw new InvalidOperationException("Single result expected for schema by name, latest version");
+
+            return results.SingleOrDefault();
         }
 
         public async Task<Schema> Create(SchemaRequest request)
@@ -73,8 +78,10 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         #endregion
 
         #region Private Members
-        private static List<Schema> FilterByLatestVersion(ICollection<CredentialSchema> schemas, bool latestVersion)
+        private static List<Schema>? FilterByLatestVersion(ICollection<CredentialSchema> schemas, bool latestVersion)
         {
+            if (!schemas.Any()) return null;
+
             var results = schemas.Select(o => new Schema
             {
                 Id = o.Id,
@@ -88,6 +95,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                   .GroupBy(s => s.Name)
                   .Select(group => group.OrderByDescending(s => s.Version).First())
                   .ToList();
+
             return results;
         }
         #endregion

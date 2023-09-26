@@ -14,12 +14,14 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
         nameof(DateStart), nameof(DateEnd), nameof(DateCreated), nameof(DateModified))]
     public class Opportunity : BaseEntity<Guid>
     {
+        //support specials characters like emojis  
         [Required]
-        [Column(TypeName = "varchar(255)")]
+        [Column(TypeName = "nvarchar(255)")]
         public string Title { get; set; }
 
+        //support specials characters like emojis  
         [Required]
-        [Column(TypeName = "varchar(MAX)")]
+        [Column(TypeName = "nvarchar(MAX)")]
         public string Description { get; set; }
 
         [Required]
@@ -32,10 +34,12 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
         public Guid OrganizationId { get; set; }
         public Organization Organization { get; set; }
 
-        [Column(TypeName = "varchar(500)")]
+        //support specials characters like emojis  
+        [Column(TypeName = "nvarchar(500)")]
         public string? Summary { get; set; }
 
-        [Column(TypeName = "varchar(MAX)")]
+        //support specials characters like emojis  
+        [Column(TypeName = "nvarchar(MAX)")]
         public string? Instructions { get; set; }
 
         [Column(TypeName = "varchar(2048)")]
@@ -60,10 +64,10 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
         public decimal? YomaRewardCumulative { get; set; }
 
         [Required]
-        public bool VerificationSupported { get; set; }
+        public bool VerificationEnabled { get; set; }
 
-        [Required]
-        public bool SSIIntegrated { get; set; }
+        [Column(TypeName = "varchar(20)")]
+        public string? VerificationMethod { get; set; }
 
         [Required]
         [ForeignKey("DifficultyId")]
@@ -93,6 +97,12 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
         public DateTimeOffset DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }
+
+        [Required]
+        public bool CredentialIssuanceEnabled { get; set; }
+
+        [Column(TypeName = "varchar(255)")]
+        public string? SSISchemaName { get; set; }
 
         [Required]
         public DateTimeOffset DateCreated { get; set; }

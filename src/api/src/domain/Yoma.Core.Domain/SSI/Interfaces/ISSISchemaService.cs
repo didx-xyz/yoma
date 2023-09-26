@@ -5,7 +5,11 @@ namespace Yoma.Core.Domain.SSI.Interfaces
 {
     public interface ISSISchemaService
     {
-        Task<List<SSISchema>> List(bool? latestVersions);
+        Task<SSISchema> GetByName(string name);
+
+        Task<SSISchema?> GetByNameOrNull(string name);
+
+        Task<List<SSISchema>> List();
 
         Task<SSISchema> Create(SSISchemaRequest request);
     }

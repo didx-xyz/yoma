@@ -3,6 +3,7 @@ using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
+using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Validators
 {
@@ -19,6 +20,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         private readonly ILanguageService _languageService;
         private readonly ISkillService _skillService;
         private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
+        private readonly ISSISchemaService _ssiSchemaService;
         #endregion
 
         #region Public Members
@@ -30,7 +32,8 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             ICountryService countryService,
             ILanguageService languageService,
             ISkillService skillService,
-            IOpportunityVerificationTypeService opportunityVerificationTypeService)
+            IOpportunityVerificationTypeService opportunityVerificationTypeService,
+            ISSISchemaService ssiSchemaService)
         {
             _opportunityTypeService = opportunityTypeService;
             _organizationService = organizationService;
@@ -41,6 +44,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             _languageService = languageService;
             _skillService = skillService;
             _opportunityVerificationTypeService = opportunityVerificationTypeService;
+            _ssiSchemaService = ssiSchemaService;
 
             RuleFor(x => x.Title).NotEmpty().Length(1, 255);
             RuleFor(x => x.Description).NotEmpty();
@@ -54,6 +58,10 @@ namespace Yoma.Core.Domain.Opportunity.Validators
                 Must((model, zltoRewardPool) => !model.ZltoRewardPool.HasValue || (model.ZltoReward.HasValue && zltoRewardPool >= model.ZltoReward)).WithMessage("'{PropertyName}' must be greater than or equal to ZltoReward.");
             RuleFor(x => x.YomaRewardPool).GreaterThan(0).When(x => x.YomaRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.").
                 Must((model, yomaRewardPool) => !model.YomaRewardPool.HasValue || (model.YomaReward.HasValue && yomaRewardPool >= model.YomaReward)).WithMessage("'{PropertyName}' must be greater than or equal to YomaReward."); ;
+            RuleFor(x => x.VerificationMethod)
+                .NotNull()
+                .When(x => x.VerificationEnabled)
+                .WithMessage("A verification method is required when verification is enabled.");
             RuleFor(x => x.DifficultyId).NotEmpty().Must(DifficultyExists).WithMessage($"Specified difficulty is invalid / does not exist.");
             RuleFor(x => x.CommitmentIntervalId).NotEmpty().Must(TimeIntervalExists).WithMessage($"Specified time interval is invalid / does not exist.");
             RuleFor(x => x.CommitmentIntervalCount).Must(x => x.HasValue && x > 0).When(x => x.CommitmentIntervalCount.HasValue).WithMessage("'{PropertyName}' must be greater than 0.");
@@ -68,6 +76,17 @@ namespace Yoma.Core.Domain.Opportunity.Validators
                 .GreaterThanOrEqualTo(model => model.DateStart)
                 .When(model => model.DateEnd.HasValue)
                 .WithMessage("{PropertyName} is earlier than the Start Date.");
+            RuleFor(x => x.CredentialIssuanceEnabled)
+                .Equal(true)
+                .When(x => x.VerificationEnabled)
+                .WithMessage("Credential issuance can only be enabled when verification is enabled.");
+            RuleFor(x => x.SSISchemaName)
+                .NotEmpty()
+                .When(x => x.CredentialIssuanceEnabled)
+                .WithMessage("SSI schema name is required when credential issuance is enabled.")
+                .Must(SSISchemaExists)
+                .When(x => !string.IsNullOrEmpty(x.SSISchemaName))
+                .WithMessage("SSI schema does not exist.");
             RuleFor(x => x.Categories).Must(categories => categories != null && categories.Any() && categories.All(id => id != Guid.Empty && CategoryExist(id)))
               .WithMessage("Categories are required and must exist.");
             RuleFor(x => x.Countries).Must(countries => countries != null && countries.Any() && countries.All(id => id != Guid.Empty && CountryExist(id)))
@@ -78,9 +97,12 @@ namespace Yoma.Core.Domain.Opportunity.Validators
                 .WithMessage("Skills are optional, but must exist if specified.")
                 .When(x => x.Skills != null && x.Skills.Any());
             RuleFor(x => x.VerificationTypes)
-              .Must(types => types != null && types.All(type => VerificationTypeExist(type.Type)))
-              .WithMessage("Verification types are optional, but must exist if specified.")
-              .When(x => x.VerificationTypes != null && x.VerificationTypes.Any());
+                .Must(types => types != null && types.Any())
+                .When(x => x.VerificationMethod != null && x.VerificationMethod == VerificationMethod.Manual)
+                .WithMessage("With manual verification, one or more verification types are required.");
+            RuleFor(x => x.VerificationTypes)
+                .Must(types => types == null || types.All(type => VerificationTypeExist(type.Type)))
+                .WithMessage("Verification types must exist if specified.");
         }
         #endregion
 
@@ -145,6 +167,12 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         private bool VerificationTypeExist(VerificationType type)
         {
             return _opportunityVerificationTypeService.GetByTypeOrNull(type) != null;
+        }
+
+        private bool SSISchemaExists(string? name)
+        {
+            if (string.IsNullOrEmpty(name)) return false;
+            return _ssiSchemaService.GetByNameOrNull(name).Result != null;
         }
         #endregion
     }
