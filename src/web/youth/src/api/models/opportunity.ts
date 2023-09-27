@@ -87,7 +87,9 @@ export interface OpportunityInfo {
   commitmentInterval: string;
   commitmentIntervalCount: number | null;
   participantLimit: number | null;
-  participantCount: number | null;
+  participantCountVerificationCompleted: number;
+  participantCountVerificationPending: number;
+  participantCountTotal: number;
   keywords: string[] | null;
   dateStart: string;
   dateEnd: string | null;

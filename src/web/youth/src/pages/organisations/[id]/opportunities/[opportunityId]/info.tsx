@@ -714,10 +714,10 @@ const OpportunityDetails: NextPageWithLayout<{
               <IoMdClock className="mr-2 h-4 w-4" />
               {`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}`}
             </div>
-            {(opportunity?.participantCount ?? 0) > 0 && (
+            {(opportunity?.participantCountTotal ?? 0) > 0 && (
               <div className="badge bg-green-light">
                 <IoMdPerson className="mr-2 h-4 w-4" />
-                {opportunity?.participantCount} enrolled
+                {opportunity?.participantCountTotal} enrolled
               </div>
             )}
             <div className="badge bg-green-light">Ongoing</div>
@@ -725,32 +725,35 @@ const OpportunityDetails: NextPageWithLayout<{
         </div>
 
         <div className="flex flex-col gap-2 md:flex-row">
-          <div className="w-[70%] flex-grow rounded-lg bg-white p-6">
+          <div className="w-[66%] flex-grow rounded-lg bg-white p-6">
             {opportunity?.description}
           </div>
-          <div className="flex w-[30%] flex-col gap-2">
+          <div className="flex w-[33%] flex-col gap-2">
             <div className="flex flex-col rounded-lg bg-white p-6">
-              <div className="flex flex-row gap-1  text-sm font-bold">
+              <div className="flex flex-row items-center gap-1 text-sm font-bold">
                 <IoMdPerson className="h-6 w-6 text-gray" />
                 Participants
               </div>
               <div className="flex flex-row items-center gap-4 rounded-lg bg-gray p-4">
                 <div className="text-3xl font-bold text-gray-dark">
-                  {opportunity?.participantCount ?? 0}
+                  {opportunity?.participantCountTotal ?? 0}
                 </div>
-                <div className="bg-yellow-light flex flex-row items-center gap-2 rounded-lg p-1">
-                  <div className="badge badge-warning rounded-lg bg-yellow text-white">
-                    {14}
-                  </div>
-                  <div className="text-xs font-bold text-yellow">
-                    to be verified
-                  </div>
-                </div>
+                {opportunity?.participantCountVerificationPending &&
+                  opportunity?.participantCountVerificationPending > 0 && (
+                    <div className="flex flex-row items-center gap-2 rounded-lg bg-yellow-light p-1">
+                      <div className="badge badge-warning rounded-lg bg-yellow text-white">
+                        {opportunity?.participantCountVerificationPending}
+                      </div>
+                      <div className="text-xs font-bold text-yellow">
+                        to be verified
+                      </div>
+                    </div>
+                  )}
               </div>
             </div>
             <div className="flex flex-col gap-1 rounded-lg bg-white p-6">
               <div>
-                <div className="flex flex-row gap-1 text-sm font-bold">
+                <div className="flex flex-row items-center gap-1 text-sm font-bold">
                   <IoMdClipboard className="h-6 w-6 text-gray" />
                   Skills you will learn
                 </div>
@@ -758,7 +761,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   {opportunity?.skills?.map((item) => (
                     <div
                       key={item.id}
-                      className="badge badge-primary mr-2 h-auto rounded-lg"
+                      className="badge mr-2 h-auto rounded-lg border-0 bg-green text-white"
                     >
                       {item.name}
                     </div>
@@ -767,7 +770,7 @@ const OpportunityDetails: NextPageWithLayout<{
               </div>
               <div className="divider m-0" />
               <div>
-                <div className="flex flex-row gap-1 text-sm font-bold">
+                <div className="flex flex-row items-center gap-1 text-sm font-bold">
                   <IoMdClock className="h-6 w-6 text-gray" />
                   How much time you will need
                 </div>
@@ -775,7 +778,7 @@ const OpportunityDetails: NextPageWithLayout<{
               </div>
               <div className="divider m-0" />
               <div>
-                <div className="flex flex-row gap-1 text-sm font-bold">
+                <div className="flex flex-row items-center gap-1 text-sm font-bold">
                   <IoMdPricetag className="h-6 w-6 text-gray" />
                   Topics
                 </div>
@@ -783,7 +786,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   {opportunity?.categories?.map((item) => (
                     <div
                       key={item.id}
-                      className="badge badge-primary mr-2 h-auto rounded-lg"
+                      className="badge mr-2 h-auto rounded-lg bg-green text-white"
                     >
                       {item.name}
                     </div>
@@ -792,7 +795,7 @@ const OpportunityDetails: NextPageWithLayout<{
               </div>
               <div className="divider m-0" />
               <div>
-                <div className="flex flex-row gap-1 text-sm font-bold">
+                <div className="flex flex-row items-center gap-1 text-sm font-bold">
                   <IoMdGlobe className="h-6 w-6 text-gray" />
                   Languages
                 </div>
@@ -800,7 +803,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   {opportunity?.languages?.map((item) => (
                     <div
                       key={item.id}
-                      className="badge badge-primary mr-2 h-auto rounded-lg"
+                      className="badge mr-2 h-auto rounded-lg bg-green text-white"
                     >
                       {item.name}
                     </div>
