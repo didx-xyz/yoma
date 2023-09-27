@@ -10,6 +10,8 @@ namespace Yoma.Core.Domain.SSI.Models
 
         public string Version { get; set; }
 
+        public ArtifactType ArtifactType { get; set; }
+
         public List<SSISchemaEntity>? Entities { get; set; }
     }
 }

@@ -10,7 +10,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Context
         #endregion
 
         #region Public Members
-        public DbSet<InvitationCache> InvitationCache { get; set; }
+        public DbSet<CredentialSchema> CredentialSchema { get; set; }
         #endregion
     }
 }
