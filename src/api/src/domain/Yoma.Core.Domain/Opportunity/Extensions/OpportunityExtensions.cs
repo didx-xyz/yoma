@@ -32,7 +32,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
                 CommitmentInterval = value.CommitmentInterval,
                 CommitmentIntervalCount = value.CommitmentIntervalCount,
                 ParticipantLimit = value.ParticipantLimit,
-                ParticipantCount = value.ParticipantCount,
+                ParticipantCountVerificationCompleted = value.ParticipantCount ?? default,
                 Keywords = value.Keywords,
                 DateStart = value.DateStart,
                 DateEnd = value.DateEnd,

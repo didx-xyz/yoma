@@ -8,15 +8,9 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
         Models.Opportunity? GetByIdOrNull(Guid id, bool includeChildItems);
 
-        OpportunityInfo GetInfoById(Guid id, bool includeChildren);
-
         Models.Opportunity? GetByTitleOrNull(string title, bool includeChildItems);
 
-        OpportunityInfo? GetInfoByTitleOrNull(string title, bool includeChildItems);
-
         List<Models.Opportunity> Contains(string value);
-
-        OpportunitySearchResultsInfo Search(OpportunitySearchFilter filter);
 
         OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
