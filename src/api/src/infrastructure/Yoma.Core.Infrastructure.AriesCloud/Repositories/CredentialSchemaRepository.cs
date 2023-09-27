@@ -19,7 +19,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
                 Id = entity.Id,
                 Name = entity.Name,
                 Version = entity.Version,
-                ArtifactType = Enum.Parse<ArtifactType>(entity.ArtifactType, true), 
+                ArtifactType = Enum.Parse<ArtifactType>(entity.ArtifactType, true),
                 AttributeNames = entity.AttributeNames,
                 DateCreated = entity.DateCreated
             });

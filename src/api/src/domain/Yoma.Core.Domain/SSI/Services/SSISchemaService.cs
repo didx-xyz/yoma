@@ -41,7 +41,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 throw new ArgumentNullException(nameof(name));
             name = name.Trim();
 
-            var schema = await _ssiProviderClient.GetByName(name);
+            var schema = await _ssiProviderClient.GetSchemaByName(name);
             if (schema == null) return null;
 
             return ConvertToSSISchema(schema);

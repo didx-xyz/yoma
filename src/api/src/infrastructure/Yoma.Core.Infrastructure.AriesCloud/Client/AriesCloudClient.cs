@@ -38,7 +38,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             return (ToSchema(schemasAries, latestVersion) ?? Enumerable.Empty<Schema>()).Concat(ToSchema(schemasLocal, latestVersion) ?? Enumerable.Empty<Schema>()).ToList();
         }
 
-        public async Task<Schema?> GetByName(string name)
+        public async Task<Schema?> GetSchemaByName(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentNullException(nameof(name));
@@ -65,7 +65,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             if (!request.Attributes.Any())
                 throw new ArgumentNullException(nameof(request), "One or more associated attributes required");
 
-            var schemaExisting = await GetByName(request.Name);
+            var schemaExisting = await GetSchemaByName(request.Name);
 
             var version = VersionExtensions.Default;
             if (schemaExisting != null)
