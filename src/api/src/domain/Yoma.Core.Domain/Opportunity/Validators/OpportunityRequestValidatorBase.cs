@@ -77,13 +77,14 @@ namespace Yoma.Core.Domain.Opportunity.Validators
                 .When(model => model.DateEnd.HasValue)
                 .WithMessage("{PropertyName} is earlier than the Start Date.");
             RuleFor(x => x.CredentialIssuanceEnabled)
-                .Equal(true)
-                .When(x => x.VerificationEnabled)
-                .WithMessage("Credential issuance can only be enabled when verification is enabled.");
+               .Equal(false)
+               .When(x => !x.VerificationEnabled)
+               .WithMessage("Credential issuance cannot be enabled when verification is disabled.");
             RuleFor(x => x.SSISchemaName)
                 .NotEmpty()
                 .When(x => x.CredentialIssuanceEnabled)
-                .WithMessage("SSI schema name is required when credential issuance is enabled.")
+                .WithMessage("SSI schema name is required when credential issuance is enabled.");
+            RuleFor(x => x.SSISchemaName)
                 .Must(SSISchemaExists)
                 .When(x => !string.IsNullOrEmpty(x.SSISchemaName))
                 .WithMessage("SSI schema does not exist.");
