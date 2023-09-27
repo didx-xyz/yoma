@@ -37,8 +37,8 @@ export interface Opportunity {
   yomaReward: number | null;
   yomaRewardPool: number | null;
   yomaRewardCumulative: number | null;
-  verificationSupported: boolean;
-  sSIIntegrated: boolean;
+  verificationEnabled: boolean;
+  verificationMethod: VerificationMethod | null;
   difficultyId: string;
   difficulty: string;
   commitmentIntervalId: string;
@@ -51,6 +51,8 @@ export interface Opportunity {
   keywords: string[] | null;
   dateStart: string;
   dateEnd: string | null;
+  credentialIssuanceEnabled: boolean;
+  sSISchemaName: string | null;
   dateCreated: string;
   createdBy: string;
   dateModified: string;
@@ -71,6 +73,31 @@ export interface OpportunitySearchFilterBase extends PaginationFilter {
   valueContains: string | null;
 }
 
+export interface OpportunityInfo {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  organization: string;
+  instructions: string | null;
+  uRL: string | null;
+  zltoReward: number | null;
+  yomaReward: number | null;
+  difficulty: string;
+  commitmentInterval: string;
+  commitmentIntervalCount: number | null;
+  participantLimit: number | null;
+  participantCount: number | null;
+  keywords: string[] | null;
+  dateStart: string;
+  dateEnd: string | null;
+  published: boolean;
+  categories: OpportunityCategory[] | null;
+  countries: Country[] | null;
+  languages: Language[] | null;
+  skills: Skill[] | null;
+}
+
 export enum Status {
   Active,
   Deleted,
@@ -84,6 +111,12 @@ export enum VerificationType {
   Location,
   VoiceNote,
 }
+
+export enum VerificationMethod {
+  Manual,
+  Automatic,
+}
+
 export enum OrganizationStatus {
   Inactive,
   Active,
@@ -113,20 +146,50 @@ export interface OpportunityVerificationType {
   description: string;
 }
 
+// export interface OpportunityRequestBase {
+//   id: string;
+//   title: string;
+//   description: string;
+//   typeId: string;
+//   organizationId: string;
+//   instructions: string | null;
+//   url: string | null;
+//   zltoReward: number | null;
+//   yomaReward: number | null;
+//   zltoRewardPool: number | null;
+//   yomaRewardPool: number | null;
+//   sSIIntegrated: boolean;
+//   difficultyId: string;
+//   commitmentIntervalId: string;
+//   commitmentIntervalCount: number | null;
+//   participantLimit: number | null;
+//   keywords: string[] | null;
+//   dateStart: string | null;
+//   dateEnd: string | null;
+//   categories: string[];
+//   countries: string[];
+//   languages: string[];
+//   skills: string[];
+//   verificationEnabled: boolean;
+//   verificationMethod: boolean;
+//   verificationTypes: OpportunityVerificationType[] | null;
+//   postAsActive: boolean;
+// }
+
 export interface OpportunityRequestBase {
-  id: string;
+  id: string | null;
   title: string;
   description: string;
   typeId: string;
   organizationId: string;
   instructions: string | null;
-  url: string | null;
+  uRL: string | null;
   zltoReward: number | null;
   yomaReward: number | null;
   zltoRewardPool: number | null;
   yomaRewardPool: number | null;
-  verificationSupported: boolean;
-  sSIIntegrated: boolean;
+  verificationEnabled: boolean | null;
+  verificationMethod: VerificationMethod | null;
   difficultyId: string;
   commitmentIntervalId: string;
   commitmentIntervalCount: number | null;
@@ -134,6 +197,8 @@ export interface OpportunityRequestBase {
   keywords: string[] | null;
   dateStart: string | null;
   dateEnd: string | null;
+  credentialIssuanceEnabled: boolean;
+  sSISchemaName: string | null;
   categories: string[];
   countries: string[];
   languages: string[];

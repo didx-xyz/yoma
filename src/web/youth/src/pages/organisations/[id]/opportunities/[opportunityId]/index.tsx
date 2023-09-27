@@ -20,11 +20,12 @@ import AsyncSelect from "react-select/async";
 import { toast } from "react-toastify";
 import z from "zod";
 import { type SelectOption } from "~/api/models/lookups";
-import type {
-  Opportunity,
-  OpportunityRequestBase,
-  OpportunityType,
-  OpportunityVerificationType,
+import {
+  VerificationMethod,
+  type Opportunity,
+  type OpportunityRequestBase,
+  type OpportunityType,
+  type OpportunityVerificationType,
 } from "~/api/models/opportunity";
 import {
   getCountries,
@@ -51,6 +52,7 @@ import Link from "next/link";
 import { IoMdArrowRoundBack, IoMdInformationCircle } from "react-icons/io";
 import CreatableSelect from "react-select/creatable";
 import { NextPageWithLayout } from "~/pages/_app";
+import { getSchemas } from "~/api/services/credentials";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -191,7 +193,14 @@ const OpportunityDetails: NextPageWithLayout<{
         label: c.name,
       })),
   });
-
+  const { data: schemas } = useQuery<SelectOption[]>({
+    queryKey: ["schemas"],
+    queryFn: async () =>
+      (await getSchemas()).map((c) => ({
+        value: c.id,
+        label: c.name,
+      })),
+  });
   // skills cache. searched items are added to this cache
   const [skillsCache, setSkillsCache] = useState<SelectOption[]>([]);
   useMemo(() => {
@@ -244,7 +253,7 @@ const OpportunityDetails: NextPageWithLayout<{
   };
 
   const [formData, setFormData] = useState<OpportunityRequestBase>({
-    id: opportunity?.id ?? "",
+    id: opportunity?.id ?? null,
     title: opportunity?.title ?? "",
     description: opportunity?.description ?? "",
     typeId: opportunity?.typeId ?? "",
@@ -266,10 +275,13 @@ const OpportunityDetails: NextPageWithLayout<{
     yomaRewardPool: opportunity?.yomaRewardPool ?? null,
     skills: opportunity?.skills?.map((x) => x.id) ?? [],
     keywords: opportunity?.keywords ?? [],
-    verificationSupported: opportunity?.verificationSupported ?? false,
+
+    verificationEnabled: opportunity?.verificationEnabled ?? null,
+    verificationMethod: opportunity?.verificationMethod ?? null,
     verificationTypes: opportunity?.verificationTypes ?? [],
 
-    sSIIntegrated: opportunity?.sSIIntegrated ?? false,
+    credentialIssuanceEnabled: opportunity?.credentialIssuanceEnabled ?? false,
+    sSISchemaName: opportunity?.sSISchemaName ?? null,
 
     organizationId: id,
     postAsActive: opportunity?.published ?? false,
@@ -435,7 +447,10 @@ const OpportunityDetails: NextPageWithLayout<{
 
   const schemaStep5 = z
     .object({
-      verificationSupported: z.boolean(),
+      verificationEnabled: z.union([z.boolean(), z.null()]),
+      verificationMethod: z.union([z.number(), z.null()]).optional(),
+      // transform by returning the enum name
+      // .transform((val) => VerificationMethod[val as any]),
       verificationTypes: z
         .array(
           z.object({
@@ -446,13 +461,25 @@ const OpportunityDetails: NextPageWithLayout<{
               })
               .optional(),
           }),
-          //z.any(),
         )
         .optional(),
     })
     .superRefine((values, ctx) => {
-      if (!values.verificationSupported) return;
+      //  debugger;
+      if (values.verificationEnabled == null) {
+        ctx.addIssue({
+          message: "Please select an option.",
+          code: z.ZodIssueCode.custom,
+          path: ["verificationEnabled"],
+          fatal: true,
+        });
+        return z.NEVER;
+      }
 
+      if (values.verificationEnabled == false) return;
+      if (values?.verificationMethod == VerificationMethod.Automatic) return;
+
+      //* verificationTypes required when manual
       const count =
         values?.verificationTypes?.filter(
           (x) => x.type != null && x.type != undefined && x.type != false,
@@ -487,9 +514,20 @@ const OpportunityDetails: NextPageWithLayout<{
       return values;
     });
 
-  const schemaStep6 = z.object({
-    sSIIntegrated: z.boolean(),
-  });
+  const schemaStep6 = z
+    .object({
+      credentialIssuanceEnabled: z.boolean(),
+      sSISchemaName: z.union([z.string(), z.null()]),
+    })
+    .superRefine((values, ctx) => {
+      if (values.credentialIssuanceEnabled && !values.sSISchemaName) {
+        ctx.addIssue({
+          message: "Schema name is required.",
+          code: z.ZodIssueCode.custom,
+          path: ["sSISchemaName"],
+        });
+      }
+    });
 
   const schemaStep7 = z.object({
     postAsActive: z.boolean(),
@@ -550,7 +588,8 @@ const OpportunityDetails: NextPageWithLayout<{
     resolver: zodResolver(schemaStep5),
     defaultValues: formData,
   });
-  const watchVerificationSupported = watchStep5("verificationSupported");
+  const watchverificationEnabled = watchStep5("verificationEnabled");
+  const watchverificationMethod = watchStep5("verificationMethod");
   const watchVerificationTypes = watchStep5("verificationTypes");
 
   const {
@@ -559,10 +598,14 @@ const OpportunityDetails: NextPageWithLayout<{
     setValue: setValueStep6,
     formState: { errors: errorsStep6, isValid: isValidStep6 },
     control: controlStep6,
+    watch: watchStep6,
   } = useForm({
     resolver: zodResolver(schemaStep6),
     defaultValues: formData,
   });
+  const watchcredentialIssuanceEnabled = watchStep6(
+    "credentialIssuanceEnabled",
+  );
 
   const {
     register: registerStep7,
@@ -1526,50 +1569,85 @@ const OpportunityDetails: NextPageWithLayout<{
                     <div className="form-control">
                       <Controller
                         control={controlStep5}
-                        name="verificationSupported"
+                        name="verificationEnabled"
                         render={({ field: { onChange, value } }) => (
                           <>
+                            {/* automatic */}
                             <label
-                              htmlFor="verificationSupportedYes"
+                              htmlFor="verificationEnabledAutomatic"
                               className="label cursor-pointer justify-normal"
                             >
                               <input
                                 type="radio"
                                 className="radio-primary radio"
-                                id="verificationSupportedYes"
-                                onChange={() => onChange(true)}
-                                checked={value === true}
+                                id="verificationEnabledAutomatic"
+                                onChange={() => {
+                                  setValueStep5("verificationEnabled", true);
+                                  setValueStep5(
+                                    "verificationMethod",
+                                    VerificationMethod.Automatic,
+                                  );
+
+                                  onChange(true);
+                                }}
+                                checked={
+                                  value === true &&
+                                  getValuesStep5("verificationMethod") ===
+                                    VerificationMethod.Automatic
+                                }
                               />
                               <span className="label-text ml-4">
                                 Youth verification happens automatically
                               </span>
                             </label>
 
+                            {/* manual */}
                             <label
-                              htmlFor="verificationSupportedYes"
+                              htmlFor="verificationEnabledManual"
                               className="label cursor-pointer justify-normal"
                             >
                               <input
                                 type="radio"
                                 className="radio-primary radio"
-                                id="verificationSupportedYes"
-                                onChange={() => onChange(true)}
-                                checked={value === true}
+                                id="verificationEnabledManual"
+                                onChange={() => {
+                                  setValueStep5("verificationEnabled", true);
+                                  setValueStep5(
+                                    "verificationMethod",
+                                    VerificationMethod.Manual,
+                                  );
+
+                                  onChange(true);
+                                }}
+                                checked={
+                                  value === true &&
+                                  getValuesStep5("verificationMethod") ===
+                                    VerificationMethod.Manual
+                                }
                               />
                               <span className="label-text ml-4">
                                 Youth should upload proof of completion
                               </span>
                             </label>
 
+                            {/* not required */}
                             <label
-                              htmlFor="verificationSupportedNo"
+                              htmlFor="verificationEnabledNo"
                               className="label cursor-pointer justify-normal"
                             >
                               <input
                                 type="radio"
                                 className="radio-primary radio"
-                                id="verificationSupportedNo"
-                                onChange={() => onChange(false)}
+                                id="verificationEnabledNo"
+                                onChange={() => {
+                                  setValueStep5("verificationEnabled", false);
+                                  // setValueStep5(
+                                  //   "verificationMethod",
+                                  //   VerificationMethod.Manual,
+                                  // );
+
+                                  onChange(false);
+                                }}
                                 checked={value === false}
                               />
                               <span className="label-text ml-4">
@@ -1580,94 +1658,103 @@ const OpportunityDetails: NextPageWithLayout<{
                         )}
                       />
 
-                      {errorsStep5.verificationSupported && (
+                      {errorsStep5.verificationEnabled && (
                         <label className="label font-bold">
                           <span className="label-text-alt italic text-red-500">
                             {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                            {`${errorsStep5.verificationSupported.message}`}
+                            {`${errorsStep5.verificationEnabled.message}`}
+                          </span>
+                        </label>
+                      )}
+                      {errorsStep5.verificationMethod && (
+                        <label className="label font-bold">
+                          <span className="label-text-alt italic text-red-500">
+                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                            {`${errorsStep5.verificationMethod.message}`}
                           </span>
                         </label>
                       )}
                     </div>
 
-                    {watchVerificationSupported && (
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">
-                            Select the types of proof that participants need to
-                            upload as part of completing the opportuntity.
-                          </span>
-                        </label>
-
-                        <div className="flex flex-col gap-2">
-                          {verificationTypes?.map((item, index) => (
-                            // <Controller
-                            //   key={item.id}
-                            //   control={controlStep5}
-                            //   name="verificationTypes"
-                            //   render={({ field: { onChange, value } }) => (
-                            //     <>
-                            <div className="flex flex-col" key={item.id}>
-                              {/* checkbox label */}
-                              <label
-                                htmlFor={item.id}
-                                className="label w-full cursor-pointer justify-normal"
-                              >
-                                <input
-                                  {...registerStep5(
-                                    `verificationTypes.${index}.type`,
-                                  )}
-                                  type="checkbox"
-                                  value={item.type}
-                                  id={item.id}
-                                  className="checkbox-primary checkbox"
-                                  disabled={!watchVerificationSupported}
-                                />
-                                <span className="label-text ml-4">
-                                  {item.displayName}
-                                </span>
-                              </label>
-                              {/* description input */}
-                              {watchVerificationTypes?.find(
-                                (x: OpportunityVerificationType) =>
-                                  x.type === item.type,
-                              ) && (
-                                <div className="form-control w-full">
-                                  <label className="label">
-                                    <span className="label-text">
-                                      Description
-                                    </span>
-                                  </label>
-                                  <input
-                                    type="text"
-                                    className="input input-bordered input-sm rounded-md"
-                                    placeholder="Enter description"
-                                    {...registerStep5(
-                                      `verificationTypes.${index}.description`,
-                                    )}
-                                    contentEditable
-                                    // value={value ?? item.description}
-                                    defaultValue={item.description}
-                                    disabled={!watchVerificationSupported}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                            //     </>
-                            //   )}
-                            // />
-                          ))}
-                        </div>
-                        {errorsStep5.verificationTypes?.root && (
-                          <label className="label font-bold">
-                            <span className="label-text-alt italic text-red-500">
-                              {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                              {`${errorsStep5.verificationTypes.root.message}`}
+                    {watchverificationEnabled &&
+                      watchverificationMethod === VerificationMethod.Manual && (
+                        <div className="form-control">
+                          <label className="label">
+                            <span className="label-text">
+                              Select the types of proof that participants need
+                              to upload as part of completing the opportuntity.
                             </span>
                           </label>
-                        )}
-                      </div>
-                    )}
+
+                          <div className="flex flex-col gap-2">
+                            {verificationTypes?.map((item, index) => (
+                              // <Controller
+                              //   key={item.id}
+                              //   control={controlStep5}
+                              //   name="verificationTypes"
+                              //   render={({ field: { onChange, value } }) => (
+                              //     <>
+                              <div className="flex flex-col" key={item.id}>
+                                {/* checkbox label */}
+                                <label
+                                  htmlFor={item.id}
+                                  className="label w-full cursor-pointer justify-normal"
+                                >
+                                  <input
+                                    {...registerStep5(
+                                      `verificationTypes.${index}.type`,
+                                    )}
+                                    type="checkbox"
+                                    value={item.type}
+                                    id={item.id}
+                                    className="checkbox-primary checkbox"
+                                    disabled={!watchverificationEnabled}
+                                  />
+                                  <span className="label-text ml-4">
+                                    {item.displayName}
+                                  </span>
+                                </label>
+                                {/* description input */}
+                                {watchVerificationTypes?.find(
+                                  (x: OpportunityVerificationType) =>
+                                    x.type === item.type,
+                                ) && (
+                                  <div className="form-control w-full">
+                                    <label className="label">
+                                      <span className="label-text">
+                                        Description
+                                      </span>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className="input input-bordered input-sm rounded-md"
+                                      placeholder="Enter description"
+                                      {...registerStep5(
+                                        `verificationTypes.${index}.description`,
+                                      )}
+                                      contentEditable
+                                      // value={value ?? item.description}
+                                      defaultValue={item.description}
+                                      disabled={!watchverificationEnabled}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                              //     </>
+                              //   )}
+                              // />
+                            ))}
+                          </div>
+                          {errorsStep5.verificationTypes?.root && (
+                            <label className="label font-bold">
+                              <span className="label-text-alt italic text-red-500">
+                                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                                {`${errorsStep5.verificationTypes.root.message}`}
+                              </span>
+                            </label>
+                          )}
+                        </div>
+                      )}
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
@@ -1709,29 +1796,63 @@ const OpportunityDetails: NextPageWithLayout<{
                     <div className="form-control">
                       {/* checkbox label */}
                       <label
-                        htmlFor="sSIIntegrated"
+                        htmlFor="credentialIssuanceEnabled"
                         className="label w-full cursor-pointer justify-normal"
                       >
                         <input
-                          {...registerStep6(`sSIIntegrated`)}
+                          {...registerStep6(`credentialIssuanceEnabled`)}
                           type="checkbox"
                           //value={item.value}
-                          id="sSIIntegrated"
+                          id="credentialIssuanceEnabled"
                           className="checkbox-primary checkbox"
                         />
                         <span className="label-text ml-4">
                           I want to issue a credential upon completion
                         </span>
                       </label>
+
+                      {errorsStep6.credentialIssuanceEnabled && (
+                        <label className="label font-bold">
+                          <span className="label-text-alt italic text-red-500">
+                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                            {`${errorsStep6.credentialIssuanceEnabled.message}`}
+                          </span>
+                        </label>
+                      )}
                     </div>
-                    {errorsStep6.sSIIntegrated && (
-                      <label className="label font-bold">
-                        <span className="label-text-alt italic text-red-500">
-                          {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                          {`${errorsStep6.sSIIntegrated.message}`}
-                        </span>
-                      </label>
+
+                    {watchcredentialIssuanceEnabled && (
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">Schema</span>
+                        </label>
+
+                        <Controller
+                          control={controlStep6}
+                          name="sSISchemaName"
+                          render={({ field: { onChange, value } }) => (
+                            <Select
+                              classNames={{
+                                control: () => "input input-bordered",
+                              }}
+                              options={schemas}
+                              onChange={(val) => onChange(val?.value)}
+                              value={schemas?.find((c) => c.value === value)}
+                            />
+                          )}
+                        />
+
+                        {errorsStep6.sSISchemaName && (
+                          <label className="label">
+                            <span className="label-text-alt italic text-red-500">
+                              {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                              {`${errorsStep6.sSISchemaName.message}`}
+                            </span>
+                          </label>
+                        )}
+                      </div>
                     )}
+
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
                       <button
@@ -2112,21 +2233,21 @@ const OpportunityDetails: NextPageWithLayout<{
                         </span>
                       </label>
                       <label className="label-text text-sm">
-                        {formData.verificationSupported
+                        {formData.verificationEnabled
                           ? "Youth should upload proof of completion"
                           : "No verification is required"}
                       </label>
-                      {errorsStep3.verificationSupported && (
+                      {errorsStep3.verificationEnabled && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
                             {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                            {`${errorsStep3.verificationSupported.message}`}
+                            {`${errorsStep3.verificationEnabled.message}`}
                           </span>
                         </label>
                       )}
                     </div>
 
-                    {formData.verificationSupported && (
+                    {formData.verificationEnabled && (
                       <div className="form-control">
                         <label className="label">
                           <span className="label-text font-bold">
@@ -2159,15 +2280,15 @@ const OpportunityDetails: NextPageWithLayout<{
                         <span className="label-text font-bold">Credential</span>
                       </label>
                       <label className="label-text text-sm">
-                        {formData.sSIIntegrated
+                        {formData.credentialIssuanceEnabled
                           ? "I want to issue a credential upon completionn"
                           : "No credential is required"}
                       </label>
-                      {errorsStep6.sSIIntegrated && (
+                      {errorsStep6.credentialIssuanceEnabled && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
                             {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                            {`${errorsStep6.sSIIntegrated.message}`}
+                            {`${errorsStep6.credentialIssuanceEnabled.message}`}
                           </span>
                         </label>
                       )}
@@ -2190,15 +2311,16 @@ const OpportunityDetails: NextPageWithLayout<{
                           I want to this opportunity to be Publicly available
                         </span>
                       </label>
+
+                      {errorsStep7.postAsActive && (
+                        <label className="label font-bold">
+                          <span className="label-text-alt italic text-red-500">
+                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                            {`${errorsStep7.postAsActive.message}`}
+                          </span>
+                        </label>
+                      )}
                     </div>
-                    {errorsStep7.postAsActive && (
-                      <label className="label font-bold">
-                        <span className="label-text-alt italic text-red-500">
-                          {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                          {`${errorsStep7.postAsActive.message}`}
-                        </span>
-                      </label>
-                    )}
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
