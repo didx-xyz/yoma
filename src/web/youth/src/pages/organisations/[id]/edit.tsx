@@ -2,6 +2,7 @@ import { captureException } from "@sentry/nextjs";
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession, type User } from "next-auth";
+import Head from "next/head";
 import Link from "next/link";
 import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useState, type ReactElement } from "react";
@@ -21,6 +22,7 @@ import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { OrgAdminsEdit } from "~/components/Organisation/Upsert/OrgAdminsEdit";
 import { OrgInfoEdit } from "~/components/Organisation/Upsert/OrgInfoEdit";
 import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
+import { PageBackground } from "~/components/PageBackground";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import withAuth from "~/context/withAuth";
@@ -146,105 +148,110 @@ const OrganisationUpdate: NextPageWithLayout<{
   );
 
   return (
-    <div className="container max-w-5xl px-2 py-8">
-      {isLoading && <Loading />}
+    <>
+      <Head>
+        <title>Yoma Admin | Edit organisation</title>
+      </Head>
 
-      {/* BREADCRUMB */}
-      <div className="flex flex-row text-xs text-gray">
-        <Link
-          className="font-bold text-gray-dark hover:text-gray"
-          href={"/organisations"}
-        >
-          Organisations
-        </Link>
-        <div className="mx-2">/</div>
-        <Link
-          className="font-bold text-gray-dark hover:text-gray"
-          href={`/organisations/${id}`}
-        >
-          {organisation?.name}
-        </Link>
-        <div className="mx-2">/</div>
-        <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-gray-dark">
-          Update
+      <PageBackground />
+
+      <div className="container z-10 max-w-5xl px-2 py-8">
+        {isLoading && <Loading />}
+
+        {/* BREADCRUMB */}
+        <div className="flex flex-row text-xs text-white">
+          <Link className="font-bold hover:text-gray" href={"/organisations"}>
+            Organisations
+          </Link>
+          <div className="mx-2">/</div>
+          <Link
+            className="font-bold hover:text-gray"
+            href={`/organisations/${id}`}
+          >
+            {organisation?.name}
+          </Link>
+          <div className="mx-2">/</div>
+          <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
+            Edit
+          </div>
+        </div>
+
+        {/* LOGO/TITLE */}
+        <LogoTitle logoUrl={organisation?.logoURL} title={organisation?.name} />
+
+        {/* CONTENT */}
+        <div className="flex flex-col justify-center gap-2 md:flex-row">
+          <ul className="menu menu-horizontal h-40 w-full gap-2 rounded-lg bg-white p-4 md:menu-vertical md:max-w-[300px]">
+            <li
+              className={`w-full rounded ${
+                step === 1
+                  ? "bg-emerald-100 font-bold text-green"
+                  : "bg-gray-light"
+              }`}
+            >
+              <a onClick={() => setStep(1)}>Organisation details</a>
+            </li>
+            <li
+              className={`w-full rounded ${
+                step === 2
+                  ? "bg-emerald-100 font-bold text-green"
+                  : "bg-gray-light"
+              }`}
+            >
+              <a onClick={() => setStep(2)}>Organisation roles</a>
+            </li>
+            <li
+              className={`w-full rounded ${
+                step === 3
+                  ? "bg-emerald-100 font-bold text-green"
+                  : "bg-gray-light"
+              }`}
+            >
+              <a onClick={() => setStep(3)}>Organisation admins</a>
+            </li>
+          </ul>
+          <div className="flex w-full flex-col rounded-lg bg-white p-8">
+            {step == 1 && (
+              <>
+                <div className="flex flex-col text-center">
+                  <h2>Organisation details</h2>
+                </div>
+                <OrgInfoEdit
+                  formData={OrganizationRequestBase}
+                  organisation={organisation}
+                  onSubmit={(data) => onSubmitStep(2, data)}
+                />
+              </>
+            )}
+            {step == 2 && (
+              <>
+                <div className="flex flex-col text-center">
+                  <h2>Organisation roles</h2>
+                </div>
+
+                <OrgRolesEdit
+                  formData={OrganizationRequestBase}
+                  organisation={organisation}
+                  onSubmit={(data) => onSubmitStep(3, data)}
+                />
+              </>
+            )}
+            {step == 3 && (
+              <>
+                <div className="flex flex-col text-center">
+                  <h2>Organisation admins</h2>
+                </div>
+
+                <OrgAdminsEdit
+                  organisation={OrganizationRequestBase}
+                  onSubmit={(data) => onSubmitStep(4, data)}
+                />
+              </>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* LOGO/TITLE */}
-      <LogoTitle logoUrl={organisation?.logoURL} title={organisation?.name} />
-
-      {/* CONTENT */}
-      <div className="flex flex-col justify-center gap-2 md:flex-row">
-        <ul className="menu rounded-box menu-horizontal h-40 w-full gap-2 bg-white p-4 md:menu-vertical md:max-w-[300px]">
-          <li
-            className={`w-full rounded ${
-              step === 1
-                ? "bg-emerald-100 font-bold text-green"
-                : "bg-gray-light"
-            }`}
-          >
-            <a onClick={() => setStep(1)}>Organisation details</a>
-          </li>
-          <li
-            className={`w-full rounded ${
-              step === 2
-                ? "bg-emerald-100 font-bold text-green"
-                : "bg-gray-light"
-            }`}
-          >
-            <a onClick={() => setStep(2)}>Organisation roles</a>
-          </li>
-          <li
-            className={`w-full rounded ${
-              step === 3
-                ? "bg-emerald-100 font-bold text-green"
-                : "bg-gray-light"
-            }`}
-          >
-            <a onClick={() => setStep(3)}>Organisation admins</a>
-          </li>
-        </ul>
-        <div className="flex w-full flex-col rounded-lg bg-white p-8">
-          {step == 1 && (
-            <>
-              <div className="flex flex-col text-center">
-                <h2>Organisation details</h2>
-              </div>
-              <OrgInfoEdit
-                formData={OrganizationRequestBase}
-                organisation={organisation}
-                onSubmit={(data) => onSubmitStep(2, data)}
-              />
-            </>
-          )}
-          {step == 2 && (
-            <>
-              <div className="flex flex-col text-center">
-                <h2>Organisation roles</h2>
-              </div>
-
-              <OrgRolesEdit
-                formData={OrganizationRequestBase}
-                organisation={organisation}
-                onSubmit={(data) => onSubmitStep(3, data)}
-              />
-            </>
-          )}
-          {step == 3 && (
-            <>
-              <div className="flex flex-col text-center">
-                <h2>Organisation admins</h2>
-              </div>
-
-              <OrgAdminsEdit
-                organisation={OrganizationRequestBase}
-                onSubmit={(data) => onSubmitStep(4, data)}
-              />
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+    </>
   );
 };
 

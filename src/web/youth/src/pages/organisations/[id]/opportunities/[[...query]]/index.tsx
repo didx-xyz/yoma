@@ -3,7 +3,7 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { type ReactElement } from "react";
+import { useCallback, type ReactElement } from "react";
 import { getOpportunitiesAdmin } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import withAuth from "~/context/withAuth";
@@ -14,6 +14,8 @@ import { ParsedUrlQuery } from "querystring";
 import Link from "next/link";
 import { PageBackground } from "~/components/PageBackground";
 import { IoIosAdd } from "react-icons/io";
+import { SearchInput } from "~/components/SearchInput";
+import NoRowsMessage from "~/components/NoRowsMessage";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -22,7 +24,9 @@ interface IParams extends ParsedUrlQuery {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id, query, page } = context.params as IParams;
+  const { id } = context.params as IParams;
+  const { query, page } = context.query;
+
   const session = await getServerSession(context.req, context.res, authOptions);
 
   const queryClient = new QueryClient();
@@ -43,7 +47,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             categories: null,
             languages: null,
             countries: null,
-            valueContains: query ?? null,
+            valueContains: query as any,
           },
           context,
         ),
@@ -73,106 +77,80 @@ const Opportunities: NextPageWithLayout<{
     queryKey: [
       `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`,
     ],
-    // queryFn: () =>
-    //   getOpportunitiesAdmin(
-    //     {
-    //       organizations: [id],
-    //       pageNumber: 1,
-    //       pageSize: 10,
-    //       startDate: null,
-    //       endDate: null,
-    //       statuses: null,
-    //       types: null,
-    //       categories: null,
-    //       languages: null,
-    //       countries: null,
-    //       valueContains: query,
-    //     },
-    //     null,
-    //   ),
+    queryFn: () =>
+      getOpportunitiesAdmin({
+        organizations: [id],
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: 10,
+        startDate: null,
+        endDate: null,
+        statuses: null,
+        types: null,
+        categories: null,
+        languages: null,
+        countries: null,
+        valueContains: query as any,
+      }),
   });
 
-  // const SkillsFormatter = useCallback(
-  //   (row: RenderCellProps<FullOpportunityResponseDto>) => {
-  //     return row.row.skills.join(", ");
-  //   },
-  //   [],
-  // );
+  const onSearch = useCallback(
+    (query: string) => {
+      if (query && query.length > 2) {
+        // uri encode the search value
+        const queryEncoded = encodeURIComponent(query);
 
-  // const StatusFormatter = useCallback(
-  //   (row: RenderCellProps<FullOpportunityResponseDto>) => {
-  //     return row.row.endTime && Date.parse(row.row.endTime) < Date.now()
-  //       ? "Expired"
-  //       : "Active";
-  //   },
-  //   [],
-  // );
-
-  // const UnverifiedCredentialsFormatter = useCallback(
-  //   (row: RenderCellProps<FullOpportunityResponseDto>) => {
-  //     return row.row.unverifiedCredentials ? (
-  //       <div className="grid grid-cols-2 items-center justify-center">
-  //         <div>{row.row.unverifiedCredentials}</div>
-  //         <Link
-  //           href={`/dashboard/verify/${row.row.id}`}
-  //           className="btn btn-warning btn-xs flex flex-row flex-nowrap"
-  //         >
-  //           <FaExclamationTriangle className="text-yellow-700 mr-2 h-4 w-4" />
-  //           Verify
-  //         </Link>
-  //       </div>
-  //     ) : (
-  //       "n/a"
-  //     );
-  //   },
-  //   [],
-  // );
-
-  // const ManageFormatter = useCallback(
-  //   (row: RenderCellProps<FullOpportunityResponseDto>) => {
-  //     return (
-  //       <Link href={`/dashboard/opportunity/${row.row.id}`}>
-  //         <IoMdSettings className="h-6 w-6" />
-  //       </Link>
-  //     );
-  //   },
-  //   [],
-  // );
+        // redirect to the search page
+        void router.push(
+          `/organisations/${id}/opportunities?query=${queryEncoded}`,
+        );
+      } else {
+        void router.push(`/organisations/${id}/opportunities`);
+      }
+    },
+    [router],
+  );
 
   return (
     <>
       <Head>
         <title>Yoma Partner | Opportunities</title>
       </Head>
+
       <PageBackground />
-      <div className="container z-10">
-        <div className="flex flex-row py-4">
-          <h3 className="flex flex-grow">Opportunities</h3>
-          <div className="flex justify-end">
+
+      <div className="container z-10 max-w-5xl px-2 py-8">
+        <div className="flex flex-col gap-2 py-4 sm:flex-row">
+          <h3 className="flex flex-grow text-white">Opportunities</h3>
+
+          <div className="flex gap-2 sm:justify-end">
+            <SearchInput defaultValue={query} onSearch={onSearch} />
+
             <Link
               href={`/organisations/${id}/opportunities/create`}
-              className="bg-green-dark whitespace-nowrap rounded-full text-white"
+              className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
             >
-              <IoIosAdd className="h-5 w-5" />
-              Create New
+              <IoIosAdd className="h-5 w-5 mr-1" />
+              Add opportunity
             </Link>
           </div>
         </div>
 
         <div className="rounded-lg bg-white p-4">
           {/* NO ROWS */}
-          {opportunities && opportunities.items?.length === 0 && (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "100px",
-              }}
-            >
-              <h3>No data to show</h3>
-            </div>
+          {opportunities && opportunities.items?.length === 0 && !query && (
+            <NoRowsMessage
+              title={"No opportunities found"}
+              description={"Opportunities that you add will be displayed here."}
+            />
           )}
-          {/* GRID */}
+          {opportunities && opportunities.items?.length === 0 && query && (
+            <NoRowsMessage
+              title={"No opportunities found"}
+              description={"Please try refining your search query."}
+            />
+          )}
 
+          {/* GRID */}
           {opportunities && opportunities.items?.length > 0 && (
             <div className="overflow-x-auto">
               <table className="table">

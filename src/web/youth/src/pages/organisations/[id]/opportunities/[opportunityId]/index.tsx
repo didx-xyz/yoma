@@ -249,7 +249,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCancel = () => {
-    void router.push(`/organisation/${id}/opportunities`);
+    void router.push(`/organisations/${id}/opportunities`);
   };
 
   const [formData, setFormData] = useState<OpportunityRequestBase>({
@@ -641,7 +641,16 @@ const OpportunityDetails: NextPageWithLayout<{
             </li>
             <li>
               <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
-                {opportunity?.title ?? "Create"}
+                {opportunityId == "create" ? (
+                  "Create"
+                ) : (
+                  <Link
+                    className="text-white hover:text-gray"
+                    href={`/organisations/${id}/opportunities/${opportunityId}/info`}
+                  >
+                    {opportunity?.title}
+                  </Link>
+                )}
               </div>
             </li>
           </ul>

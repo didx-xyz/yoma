@@ -54,7 +54,7 @@ const OrganisationOverview: NextPageWithLayout<{
 
       <PageBackground />
 
-      <div className="container z-10 max-w-5xl px-2 py-4">
+      <div className="container z-10 max-w-5xl px-2 py-8">
         {/* BREADCRUMB */}
         <div className="flex flex-row text-xs text-gray">
           <Link
@@ -76,8 +76,8 @@ const OrganisationOverview: NextPageWithLayout<{
         {/* <OrganisationTabLayout /> */}
 
         {/* CONTENT */}
-        <div className="flex flex-col items-center pt-4">
-          <div className="flex w-full flex-col gap-2 rounded-lg bg-white p-8 shadow-lg lg:w-[600px]">
+        <div className="flex flex-col items-center">
+          <div className="flex w-full flex-col gap-2 rounded-lg bg-white p-4 shadow-lg lg:w-[600px]">
             <Overview organisation={organisation}></Overview>
           </div>
         </div>
