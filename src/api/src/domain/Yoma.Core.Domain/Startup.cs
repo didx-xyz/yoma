@@ -80,6 +80,7 @@ namespace Yoma.Core.Domain
             #endregion Lookups
 
             services.AddScoped<IOpportunityService, OpportunityService>();
+            services.AddScoped<IOpportunityInfoService, OpportunityInfoService>();
             services.AddSingleton<IOpportunityBackgroundService, OpportunityBackgroundService>();
             #endregion Opportunity
 

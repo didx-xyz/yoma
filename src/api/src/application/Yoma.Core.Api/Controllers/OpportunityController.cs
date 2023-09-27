@@ -21,6 +21,7 @@ namespace Yoma.Core.Api.Controllers
         #region Class Variables
         private readonly ILogger<OpportunityController> _logger;
         private readonly IOpportunityService _opportunityService;
+        private readonly IOpportunityInfoService _opportunityInfoService;
         private readonly IOpportunityCategoryService _opportunityCategoryService;
         private readonly IOpportunityDifficultyService _opportunityDifficultyService;
         private readonly IOpportunityTypeService _opportunityTypeService;
@@ -31,6 +32,7 @@ namespace Yoma.Core.Api.Controllers
         public OpportunityController(
             ILogger<OpportunityController> logger,
             IOpportunityService opportunityService,
+            IOpportunityInfoService opportunityInfoService,
             IOpportunityCategoryService opportunityCategoryService,
             IOpportunityDifficultyService opportunityDifficultyService,
             IOpportunityTypeService opportunityTypeService,
@@ -38,6 +40,7 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger = logger;
             _opportunityService = opportunityService;
+            _opportunityInfoService = opportunityInfoService;
             _opportunityCategoryService = opportunityCategoryService;
             _opportunityDifficultyService = opportunityDifficultyService;
             _opportunityTypeService = opportunityTypeService;
@@ -55,7 +58,7 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
 
-            var result = _opportunityService.GetInfoById(id, true);
+            var result = _opportunityInfoService.GetInfoById(id, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
 
@@ -70,7 +73,7 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
-            var result = _opportunityService.Search(filter);
+            var result = _opportunityInfoService.Search(filter);
 
             _logger.LogInformation("Request {requestName} handled", nameof(Search));
 
