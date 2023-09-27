@@ -30,7 +30,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public int? ParticipantLimit { get; set; }
 
-        public int? ParticipantCount { get; set; }
+        public int ParticipantCountVerificationCompleted { get; set; }
+
+        public int ParticipantCountVerificationPending { get; set; }
+
+        public int ParticipantCountTotal { get; set; }
 
         public List<string>? Keywords { get; set; }
 

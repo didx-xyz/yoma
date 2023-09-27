@@ -8,6 +8,7 @@ using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
@@ -130,13 +131,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return result;
         }
 
-        public OpportunityInfo GetInfoById(Guid id, bool includeChildren)
-        {
-            var result = GetById(id, includeChildren, false);
-
-            return result.ToOpportunityInfo();
-        }
-
         public Models.Opportunity? GetByTitleOrNull(string title, bool includeChildItems)
         {
             if (string.IsNullOrWhiteSpace(title))
@@ -151,14 +145,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return result;
         }
 
-        public OpportunityInfo? GetInfoByTitleOrNull(string title, bool includeChildItems)
-        {
-            var result = GetByTitleOrNull(title, includeChildItems);
-            if (result == null) return null;
-
-            return result.ToOpportunityInfo();
-        }
-
         public List<Models.Opportunity> Contains(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -166,36 +152,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
             value = value.Trim();
 
             return _opportunityRepository.Contains(_opportunityRepository.Query(), value).ToList();
-        }
-
-        public OpportunitySearchResultsInfo Search(OpportunitySearchFilter filter)
-        {
-            if (filter == null)
-                throw new ArgumentNullException(nameof(filter));
-
-            //filter validated by SearchAdmin
-
-            var filterInternal = new OpportunitySearchFilterAdmin
-            {
-                Published = true, // by default published only (active relating to active organizations, irrespective of started)
-                IncludeExpired = filter.IncludeExpired.HasValue && filter.IncludeExpired.Value, // also includes expired (expired relating to active organizations)
-                Types = filter.Types,
-                Categories = filter.Categories,
-                Languages = filter.Languages,
-                Countries = filter.Countries,
-                ValueContains = filter.ValueContains,
-                PageNumber = filter.PageNumber,
-                PageSize = filter.PageSize
-            };
-
-            var searchResult = Search(filterInternal, false);
-            var results = new OpportunitySearchResultsInfo
-            {
-                TotalCount = searchResult.TotalCount,
-                Items = searchResult.Items.Select(o => o.ToOpportunityInfo()).ToList()
-            };
-
-            return results;
         }
 
         public OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
