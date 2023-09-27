@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Yoma.Core.Infrastructure.AriesCloud.Context;
 
@@ -11,9 +12,11 @@ using Yoma.Core.Infrastructure.AriesCloud.Context;
 namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
 {
     [DbContext(typeof(AriesCloudDbContext))]
-    partial class AriesCloudDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230927093659_AriesCloudDb_Initial")]
+    partial class AriesCloudDb_Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

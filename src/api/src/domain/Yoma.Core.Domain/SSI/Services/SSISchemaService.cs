@@ -89,6 +89,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 Id = o.Id,
                 Name = o.Name,
                 Version = o.Version.ToString(),
+                ArtifactType = o.ArtifactType,
                 Entities = matchedEntitiesGrouped.TryGetValue(o.Id, out var entities) ? entities : null
             }).ToList();
 
@@ -105,6 +106,7 @@ namespace Yoma.Core.Domain.SSI.Services
             var schema = await _ssiProviderClient.Create(new SchemaRequest
             {
                 Name = request.Name,
+                ArtifactType = request.ArtifactType,
                 Attributes = request.Attributes
             });
 
@@ -136,6 +138,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 Id = schema.Id,
                 Name = schema.Name,
                 Version = schema.Version.ToString(),
+                ArtifactType = schema.ArtifactType,
                 Entities = matchedEntities.Any() ? matchedEntities : null
             };
             return result;

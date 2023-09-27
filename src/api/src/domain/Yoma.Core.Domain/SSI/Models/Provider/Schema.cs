@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.SSI.Models.Provider
 
         public Version Version { get; set; }
 
+        public ArtifactType ArtifactType { get; set; }
+
         public ICollection<string> AttributeNames { get; set; }
     }
 }
