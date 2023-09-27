@@ -1,12 +1,18 @@
 using AriesCloudAPI.DotnetSDK.AspCore.Clients;
+using AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions;
+using AriesCloudAPI.DotnetSDK.AspCore.Clients.Interfaces;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
+using Flurl;
+using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
+using System.Data;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Provider;
+using Yoma.Core.Infrastructure.AriesCloud.Extensions;
 
 namespace Yoma.Core.Infrastructure.AriesCloud.Client
 {
@@ -14,6 +20,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     {
         #region Class Variables
         private readonly ClientFactory _clientFactory;
+        private readonly IMemoryCache _memoryCache;
         private readonly IRepository<Models.CredentialSchema> _credentialSchemaRepository;
 
         private const string Schema_Prefix_LdProof = "KtX2yAeljr0zZ9MuoQnIcWb";
@@ -21,9 +28,11 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
         #region Constructor
         public AriesCloudClient(ClientFactory clientFactory,
+            IMemoryCache memoryCache,
             IRepository<Models.CredentialSchema> credentialSchemaRepository)
         {
             _clientFactory = clientFactory;
+            _memoryCache = memoryCache;
             _credentialSchemaRepository = credentialSchemaRepository;
         }
         #endregion
@@ -57,7 +66,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             return results.SingleOrDefault();
         }
 
-        public async Task<Schema> Create(SchemaRequest request)
+        public async Task<Schema> CreateSchema(SchemaRequest request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -104,9 +113,69 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                     throw new InvalidOperationException($"Artifact type of '{request.ArtifactType}' not supported");
             }
         }
+
+        public async Task<string> EnsureTenant(TenantRequest request)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            request.TenantId = request.TenantId?.Trim();
+
+            if (string.IsNullOrWhiteSpace(request.Name))
+                throw new ArgumentNullException(nameof(request), "Name is required");
+            request.Name = request.Name.Trim();
+
+            if (request.Roles == null || !request.Roles.Any())
+                throw new ArgumentNullException(nameof(request), "Roles is required");
+
+            request.ImageUrl = request.ImageUrl?.Trim();
+            if (!string.IsNullOrEmpty(request.ImageUrl) && !Uri.IsWellFormedUriString(request.ImageUrl, UriKind.Absolute))
+                throw new ArgumentException("ImageUrl is invalid", nameof(request));
+
+            var client = _clientFactory.CreateCustomerClient();
+
+            //try and find the tenant by id, is specified
+            var tenant = await GetTenantByIdOrNull(request.TenantId, client);
+
+            if (tenant == null)
+            {
+                var createTenantRequest = new CreateTenantRequest
+                {
+                    Name = request.Name,
+                    Roles = request.Roles.ToAriesRoles(),
+                };
+
+                var response = await client.CreateTenantAsync(createTenantRequest);
+                return response.Tenant_id;
+            }
+
+            var existingRoles = new List<Role>() { Role.Holder };
+            var actor = GetTrustRegistry().Actors.SingleOrDefault(o => o.Id == tenant.Tenant_id);
+            if (actor != null) existingRoles.AddRange(actor.Roles.ToSSIRoles());
+
+            var diffs = request.Roles.Except(existingRoles).ToList();
+            if (diffs.Any())
+                throw new DataInconsistencyException(
+                    $"Role mismatched detected for tenant with id '{tenant.Tenant_id}'. Updating of tenant are not supported");
+
+            return tenant.Tenant_id;
+        }
         #endregion
 
         #region Private Members
+        private TrustRegistry GetTrustRegistry()
+        {
+            var result = _memoryCache.GetOrCreate(nameof(TrustRegistry), entry =>
+            {
+                entry.SlidingExpiration = TimeSpan.FromMinutes(1);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+                var client = _clientFactory.CreatePublicClient();
+                return client.GetTrustRegistryAsync().Result;
+            });
+
+            return result == null ? throw new InvalidOperationException($"Failed to get the '{nameof(TrustRegistry)}' cache item") : result;
+        }
+
         private static List<Schema>? ToSchema(ICollection<CredentialSchema> schemas, bool latestVersion)
         {
             if (!schemas.Any()) return null;
@@ -161,6 +230,25 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                   .Select(group => group.OrderByDescending(s => s.Version).First())
                   .ToList();
             return results;
+        }
+
+        private static async Task<Tenant?> GetTenantByIdOrNull(string? tenantId, ICustomerClient client)
+        {
+            Tenant? result = null;
+            if (!string.IsNullOrEmpty(tenantId))
+            {
+                try
+                {
+                    //utilize GetTenantAsync instead of GetTenantsAsync() with client side filtering
+                    result = await client.GetTenantAsync(tenantId);
+                }
+                catch (HttpClientException ex)
+                {
+                    if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+                }
+            }
+
+            return result;
         }
         #endregion
     }

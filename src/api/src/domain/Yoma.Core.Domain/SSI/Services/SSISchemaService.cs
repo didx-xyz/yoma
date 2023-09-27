@@ -103,7 +103,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
             await _schemaRequestValidator.ValidateAndThrowAsync(request);
 
-            var schema = await _ssiProviderClient.Create(new SchemaRequest
+            var schema = await _ssiProviderClient.CreateSchema(new SchemaRequest
             {
                 Name = request.Name,
                 ArtifactType = request.ArtifactType,
