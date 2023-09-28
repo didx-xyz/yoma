@@ -52,7 +52,7 @@ export interface Opportunity {
   dateStart: string;
   dateEnd: string | null;
   credentialIssuanceEnabled: boolean;
-  sSISchemaName: string | null;
+  ssiSchemaName: string | null;
   dateCreated: string;
   createdBy: string;
   dateModified: string;
@@ -143,7 +143,7 @@ export interface OpportunityCategory {
 
 export interface OpportunityVerificationType {
   id: string;
-  type: VerificationType;
+  type?: VerificationType;
   displayName: string;
   description: string;
 }
@@ -191,7 +191,7 @@ export interface OpportunityRequestBase {
   zltoRewardPool: number | null;
   yomaRewardPool: number | null;
   verificationEnabled: boolean | null;
-  verificationMethod: VerificationMethod | null;
+  verificationMethod: VerificationMethod | null | string;
   difficultyId: string;
   commitmentIntervalId: string;
   commitmentIntervalCount: number | null;
@@ -200,7 +200,7 @@ export interface OpportunityRequestBase {
   dateStart: string | null;
   dateEnd: string | null;
   credentialIssuanceEnabled: boolean;
-  sSISchemaName: string | null;
+  ssiSchemaName: string | null;
   categories: string[];
   countries: string[];
   languages: string[];
@@ -221,11 +221,4 @@ export interface OpportunityDifficulty {
 export interface OpportunityType {
   id: string;
   name: string;
-}
-
-export interface OpportunityVerificationType {
-  id: string;
-  type: VerificationType;
-  displayName: string;
-  description: string;
 }

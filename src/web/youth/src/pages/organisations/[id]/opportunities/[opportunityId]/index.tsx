@@ -283,11 +283,26 @@ const OpportunityDetails: NextPageWithLayout<{
     keywords: opportunity?.keywords ?? [],
 
     verificationEnabled: opportunity?.verificationEnabled ?? null,
-    verificationMethod: opportunity?.verificationMethod ?? null,
-    verificationTypes: opportunity?.verificationTypes ?? [],
+    // enum value comes as string from server, convert to number
+    verificationMethod: opportunity?.verificationMethod
+      ? VerificationMethod[opportunity.verificationMethod]
+      : null,
+    // map the verification types from the opportunity. ensure all types are included
+    // verificationTypes:
+    //   verificationTypes?.map((x) => ({
+    //     type:
+    //       opportunity?.verificationTypes?.find((y) => y.type == x.type)?.type ??
+    //       undefined,
+    //     description:
+    //       opportunity?.verificationTypes?.find((y) => y.type == x.type)
+    //         ?.description ?? x.description,
+    //     id: "",
+    //     displayName: "",
+    //   })) ?? [],
+    verificationTypes: [],
 
     credentialIssuanceEnabled: opportunity?.credentialIssuanceEnabled ?? false,
-    sSISchemaName: opportunity?.sSISchemaName ?? null,
+    ssiSchemaName: opportunity?.ssiSchemaName ?? null,
 
     organizationId: id,
     postAsActive: opportunity?.published ?? false,
@@ -321,7 +336,8 @@ const OpportunityDetails: NextPageWithLayout<{
 
         // invalidate queries
         await queryClient.invalidateQueries(["opportunities"]);
-        await queryClient.invalidateQueries([id, "opportunities"]);
+        await queryClient.invalidateQueries(["opportunities", id]);
+        await queryClient.invalidateQueries(["opportunity", opportunityId]);
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
@@ -532,14 +548,14 @@ const OpportunityDetails: NextPageWithLayout<{
   const schemaStep6 = z
     .object({
       credentialIssuanceEnabled: z.boolean(),
-      sSISchemaName: z.union([z.string(), z.null()]),
+      ssiSchemaName: z.union([z.string(), z.null()]),
     })
     .superRefine((values, ctx) => {
-      if (values.credentialIssuanceEnabled && !values.sSISchemaName) {
+      if (values.credentialIssuanceEnabled && !values.ssiSchemaName) {
         ctx.addIssue({
           message: "Schema name is required.",
           code: z.ZodIssueCode.custom,
-          path: ["sSISchemaName"],
+          path: ["ssiSchemaName"],
         });
       }
     });
@@ -599,6 +615,7 @@ const OpportunityDetails: NextPageWithLayout<{
     formState: { errors: errorsStep5, isValid: isValidStep5 },
     control: controlStep5,
     watch: watchStep5,
+    reset: resetStep5,
   } = useForm({
     resolver: zodResolver(schemaStep5),
     defaultValues: formData,
@@ -637,6 +654,23 @@ const OpportunityDetails: NextPageWithLayout<{
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [step]);
+
+  // on change of verificationTypes, update the formData
+  useEffect(() => {
+    formData.verificationTypes =
+      verificationTypes?.map((x) => ({
+        type:
+          opportunity?.verificationTypes?.find((y) => y.type == x.type)?.type ??
+          undefined,
+        description:
+          opportunity?.verificationTypes?.find((y) => y.type == x.type)
+            ?.description ?? x.description,
+        id: "",
+        displayName: "",
+      })) ?? [];
+
+    resetStep5(formData);
+  }, [verificationTypes, resetStep5]);
 
   return (
     <>
@@ -1629,7 +1663,6 @@ const OpportunityDetails: NextPageWithLayout<{
                                 Youth verification happens automatically
                               </span>
                             </label>
-
                             {/* manual */}
                             <label
                               htmlFor="verificationEnabledManual"
@@ -1658,7 +1691,6 @@ const OpportunityDetails: NextPageWithLayout<{
                                 Youth should upload proof of completion
                               </span>
                             </label>
-
                             {/* not required */}
                             <label
                               htmlFor="verificationEnabledNo"
@@ -1670,11 +1702,6 @@ const OpportunityDetails: NextPageWithLayout<{
                                 id="verificationEnabledNo"
                                 onChange={() => {
                                   setValueStep5("verificationEnabled", false);
-                                  // setValueStep5(
-                                  //   "verificationMethod",
-                                  //   VerificationMethod.Manual,
-                                  // );
-
                                   onChange(false);
                                 }}
                                 checked={value === false}
@@ -1686,7 +1713,6 @@ const OpportunityDetails: NextPageWithLayout<{
                           </>
                         )}
                       />
-
                       {errorsStep5.verificationEnabled && (
                         <label className="label font-bold">
                           <span className="label-text-alt italic text-red-500">
@@ -1717,12 +1743,6 @@ const OpportunityDetails: NextPageWithLayout<{
 
                           <div className="flex flex-col gap-2">
                             {verificationTypes?.map((item, index) => (
-                              // <Controller
-                              //   key={item.id}
-                              //   control={controlStep5}
-                              //   name="verificationTypes"
-                              //   render={({ field: { onChange, value } }) => (
-                              //     <>
                               <div className="flex flex-col" key={item.id}>
                                 {/* checkbox label */}
                                 <label
@@ -1738,6 +1758,12 @@ const OpportunityDetails: NextPageWithLayout<{
                                     id={item.id}
                                     className="checkbox-primary checkbox"
                                     disabled={!watchverificationEnabled}
+                                    checked={
+                                      watchVerificationTypes?.find(
+                                        (x: OpportunityVerificationType) =>
+                                          x?.type === item.type,
+                                      ) !== undefined
+                                    }
                                   />
                                   <span className="label-text ml-4">
                                     {item.displayName}
@@ -1769,9 +1795,6 @@ const OpportunityDetails: NextPageWithLayout<{
                                   </div>
                                 )}
                               </div>
-                              //     </>
-                              //   )}
-                              // />
                             ))}
                           </div>
                           {errorsStep5.verificationTypes?.root && (
@@ -1836,12 +1859,19 @@ const OpportunityDetails: NextPageWithLayout<{
                           //value={item.value}
                           id="credentialIssuanceEnabled"
                           className="checkbox-primary checkbox"
+                          disabled={watchverificationEnabled !== true}
                         />
                         <span className="label-text ml-4">
                           I want to issue a credential upon completion
                         </span>
                       </label>
 
+                      {watchverificationEnabled !== true && (
+                        <div className="text-sm text-warning">
+                          Credential issuance is only available if Verification
+                          is supported (previous step).
+                        </div>
+                      )}
                       {errorsStep6.credentialIssuanceEnabled && (
                         <label className="label font-bold">
                           <span className="label-text-alt italic text-red-500">
@@ -1860,24 +1890,23 @@ const OpportunityDetails: NextPageWithLayout<{
 
                         <Controller
                           control={controlStep6}
-                          name="sSISchemaName"
+                          name="ssiSchemaName"
                           render={({ field: { onChange, value } }) => (
                             <Select
                               classNames={{
                                 control: () => "input input-bordered",
                               }}
                               options={schemas}
-                              onChange={(val) => onChange(val?.value)}
-                              value={schemas?.find((c) => c.value === value)}
+                              onChange={(val) => onChange(val?.label)}
+                              value={schemas?.find((c) => c.label === value)}
                             />
                           )}
                         />
-
-                        {errorsStep6.sSISchemaName && (
+                        {errorsStep6.ssiSchemaName && (
                           <label className="label">
                             <span className="label-text-alt italic text-red-500">
                               {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                              {`${errorsStep6.sSISchemaName.message}`}
+                              {`${errorsStep6.ssiSchemaName.message}`}
                             </span>
                           </label>
                         )}
