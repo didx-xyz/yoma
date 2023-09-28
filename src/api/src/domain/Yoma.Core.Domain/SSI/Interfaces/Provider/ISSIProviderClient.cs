@@ -12,7 +12,7 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Provider
         /// <summary>
         /// Find and return the latest version of a schema with the specified name
         /// </summary>
-        Task<Schema?> GetByName(string name);
+        Task<Schema?> GetSchemaByName(string name);
 
         /// <summary>
         /// Create a new schema with the specified name and attributes. If a schema with the same name already exists, a new version will automatically be created
