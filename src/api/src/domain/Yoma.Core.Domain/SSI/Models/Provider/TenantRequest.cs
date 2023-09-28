@@ -2,7 +2,7 @@ namespace Yoma.Core.Domain.SSI.Models.Provider
 {
     public class TenantRequest
     {
-        public string? TenantId { get; set; }
+        public string Reference { get; set; }
 
         public string Name { get; set; }
 

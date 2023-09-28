@@ -15,17 +15,12 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
              .Where(role => role != Role.Holder)
              .Select(role =>
              {
-                 switch (role)
+                 return role switch
                  {
-                     case Role.Issuer:
-                         return Roles2.Issuer;
-
-                     case Role.Verifier:
-                         return Roles2.Verifier;
-
-                     default:
-                         throw new ArgumentException($"Unsupported role '{role}'", nameof(roles));
-                 }
+                     Role.Issuer => Roles2.Issuer,
+                     Role.Verifier => Roles2.Verifier,
+                     _ => throw new ArgumentException($"Unsupported role '{role}'", nameof(roles)),
+                 };
              })
              .ToList();
         }
@@ -38,17 +33,12 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
             return roles
              .Select(role =>
              {
-                 switch (role)
+                 return role switch
                  {
-                     case Roles.Issuer:
-                         return Role.Issuer;
-
-                     case Roles.Verifier:
-                         return Role.Verifier;
-
-                     default:
-                         throw new ArgumentException($"Unsupported role '{role}'", nameof(roles));
-                 }
+                     Roles.Issuer => Role.Issuer,
+                     Roles.Verifier => Role.Verifier,
+                     _ => throw new ArgumentException($"Unsupported role '{role}'", nameof(roles)),
+                 };
              })
              .ToList();
         }
