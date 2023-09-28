@@ -11,7 +11,13 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import router from "next/router";
 import { type ParsedUrlQuery } from "querystring";
-import { useCallback, useMemo, useState, type ReactElement } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type ReactElement,
+  useEffect,
+} from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
@@ -301,13 +307,13 @@ const OpportunityDetails: NextPageWithLayout<{
         // update api
         if (opportunity) {
           await updateOpportunity(data);
-          toast("The opportunity has been updated.", {
+          toast("Opportunity updated.", {
             type: "success",
             toastId: "opportunity",
           });
         } else {
           await createOpportunity(data);
-          toast("The opportunity has been created.", {
+          toast("Opportunity created.", {
             type: "success",
             toastId: "opportunity",
           });
@@ -332,7 +338,9 @@ const OpportunityDetails: NextPageWithLayout<{
 
       setIsLoading(false);
 
-      void router.push(`/organisations/${id}/opportunities`);
+      // redirect to list after create
+      if (opportunityId === "create")
+        void router.push(`/organisations/${id}/opportunities`);
     },
     [setIsLoading, id, opportunity, queryClient],
   );
@@ -349,7 +357,14 @@ const OpportunityDetails: NextPageWithLayout<{
 
       console.log("model", model);
 
-      if (step === 8) {
+      if (opportunityId === "create") {
+        if (step === 8) {
+          // submit on last page when creating new opportunity
+          await onSubmit(model);
+          return;
+        }
+      } else {
+        // submit on each page when updating opportunity
         await onSubmit(model);
         return;
       }
@@ -618,6 +633,11 @@ const OpportunityDetails: NextPageWithLayout<{
     defaultValues: formData,
   });
 
+  // scroll to top on step change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [step]);
+
   return (
     <>
       {isLoading && <Loading />}
@@ -771,32 +791,35 @@ const OpportunityDetails: NextPageWithLayout<{
                 Credential
               </a>
             </li>
-            <li onClick={() => setStep(7)}>
-              <a
-                className={`menu-title ${
-                  step === 7
-                    ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark"
-                }`}
-              >
-                <span
-                  className={`mr-2 rounded-full bg-gray-dark px-1.5 py-0.5 text-xs font-medium text-white ${
-                    isValidStep1 &&
-                    isValidStep2 &&
-                    isValidStep3 &&
-                    isValidStep4 &&
-                    isValidStep5 &&
-                    isValidStep6 &&
-                    isValidStep7
-                      ? "bg-green"
-                      : "bg-gray-dark"
+            {/* only show preview when creating new opportunity */}
+            {opportunityId === "create" && (
+              <li onClick={() => setStep(7)}>
+                <a
+                  className={`menu-title ${
+                    step === 7
+                      ? "bg-green-light text-green hover:bg-green-light"
+                      : "bg-gray text-gray-dark"
                   }`}
                 >
-                  7
-                </span>
-                Preview opportunity
-              </a>
-            </li>
+                  <span
+                    className={`mr-2 rounded-full bg-gray-dark px-1.5 py-0.5 text-xs font-medium text-white ${
+                      isValidStep1 &&
+                      isValidStep2 &&
+                      isValidStep3 &&
+                      isValidStep4 &&
+                      isValidStep5 &&
+                      isValidStep6 &&
+                      isValidStep7
+                        ? "bg-green"
+                        : "bg-gray-dark"
+                    }`}
+                  >
+                    7
+                  </span>
+                  Preview opportunity
+                </a>
+              </li>
+            )}
           </ul>
 
           {/* dropdown menu */}
@@ -991,18 +1014,20 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-warning btn-sm flex-grow"
-                        onClick={handleCancel}
-                      >
-                        Cancel
-                      </button>
+                      {opportunityId === "create" && (
+                        <button
+                          type="button"
+                          className="btn btn-warning btn-sm flex-grow"
+                          onClick={handleCancel}
+                        >
+                          Cancel
+                        </button>
+                      )}
                       <button
                         type="submit"
                         className="btn btn-success btn-sm flex-grow"
                       >
-                        Next
+                        {opportunityId === "create" ? "Next" : "Submit"}
                       </button>
                     </div>
                   </form>
@@ -1225,17 +1250,6 @@ const OpportunityDetails: NextPageWithLayout<{
                               />
                             )}
                           />
-
-                          {/* <label className="label cursor-pointer text-sm">
-                  <input
-                    type="checkbox"
-                    className="checkbox-primary checkbox"
-                    {...registerStep2("noEndDate")}
-                  />
-                  <span className="label-text ml-4 w-full text-left">
-                    No end date
-                  </span>
-                </label> */}
                         </div>
 
                         {errorsStep2.dateEnd && (
@@ -1278,20 +1292,22 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-warning btn-sm flex-grow"
-                        onClick={() => {
-                          setStep(1);
-                        }}
-                      >
-                        Back
-                      </button>
+                      {opportunityId === "create" && (
+                        <button
+                          type="button"
+                          className="btn btn-warning btn-sm flex-grow"
+                          onClick={() => {
+                            setStep(1);
+                          }}
+                        >
+                          Back
+                        </button>
+                      )}
                       <button
                         type="submit"
                         className="btn btn-success btn-sm flex-grow"
                       >
-                        Next
+                        {opportunityId === "create" ? "Next" : "Submit"}
                       </button>
                     </div>
                   </form>
@@ -1460,20 +1476,22 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-warning btn-sm flex-grow"
-                        onClick={() => {
-                          setStep(2);
-                        }}
-                      >
-                        Back
-                      </button>
+                      {opportunityId === "create" && (
+                        <button
+                          type="button"
+                          className="btn btn-warning btn-sm flex-grow"
+                          onClick={() => {
+                            setStep(2);
+                          }}
+                        >
+                          Back
+                        </button>
+                      )}
                       <button
                         type="submit"
                         className="btn btn-success btn-sm flex-grow"
                       >
-                        Next
+                        {opportunityId === "create" ? "Next" : "Submit"}
                       </button>
                     </div>
                   </form>
@@ -1541,20 +1559,22 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-warning btn-sm flex-grow"
-                        onClick={() => {
-                          setStep(3);
-                        }}
-                      >
-                        Back
-                      </button>
+                      {opportunityId === "create" && (
+                        <button
+                          type="button"
+                          className="btn btn-warning btn-sm flex-grow"
+                          onClick={() => {
+                            setStep(3);
+                          }}
+                        >
+                          Back
+                        </button>
+                      )}
                       <button
                         type="submit"
                         className="btn btn-success btn-sm flex-grow"
                       >
-                        Next
+                        {opportunityId === "create" ? "Next" : "Submit"}
                       </button>
                     </div>
                   </form>
@@ -1767,20 +1787,22 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-warning btn-sm flex-grow"
-                        onClick={() => {
-                          setStep(4);
-                        }}
-                      >
-                        Back
-                      </button>
+                      {opportunityId === "create" && (
+                        <button
+                          type="button"
+                          className="btn btn-warning btn-sm flex-grow"
+                          onClick={() => {
+                            setStep(4);
+                          }}
+                        >
+                          Back
+                        </button>
+                      )}
                       <button
                         type="submit"
                         className="btn btn-success btn-sm flex-grow"
                       >
-                        Next
+                        {opportunityId === "create" ? "Next" : "Submit"}
                       </button>
                     </div>
                   </form>
@@ -1864,26 +1886,30 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-warning btn-sm flex-grow"
-                        onClick={() => {
-                          setStep(5);
-                        }}
-                      >
-                        Back
-                      </button>
+                      {opportunityId === "create" && (
+                        <button
+                          type="button"
+                          className="btn btn-warning btn-sm flex-grow"
+                          onClick={() => {
+                            setStep(5);
+                          }}
+                        >
+                          Back
+                        </button>
+                      )}
                       <button
                         type="submit"
                         className="btn btn-success btn-sm flex-grow"
                       >
-                        Next
+                        {opportunityId === "create" ? "Next" : "Submit"}
                       </button>
                     </div>
                   </form>
                 </>
               )}
-              {step === 7 && (
+
+              {/* only show preview when creating new opportunity */}
+              {step === 7 && opportunityId === "create" && (
                 <>
                   <div className="flex flex-col">
                     <h6 className="font-bold">Opportunity preview</h6>
