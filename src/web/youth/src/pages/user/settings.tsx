@@ -26,8 +26,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
   if (session) {
     // 👇 prefetch queries (on server)
-    await queryClient.prefetchQuery(["genders"], getGenders);
-    await queryClient.prefetchQuery(["countries"], getCountries);
+    await queryClient.prefetchQuery(["genders"], () => getGenders);
+    await queryClient.prefetchQuery(["countries"], () => getCountries);
   }
 
   return {
@@ -45,11 +45,11 @@ const Settings: NextPageWithLayout<{
   // 👇 use prefetched queries (from server)
   const { data: genders } = useQuery({
     queryKey: ["genders"],
-    queryFn: getGenders,
+    queryFn: () => getGenders,
   });
   const { data: countries } = useQuery({
     queryKey: ["countries"],
-    queryFn: getCountries,
+    queryFn: () => getCountries,
   });
   const { data: userProfile } = useQuery({
     queryKey: ["userProfile"],
