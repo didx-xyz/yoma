@@ -1,5 +1,5 @@
 import ApiClient from "~/lib/axiosClient";
-import { GetServerSidePropsContext } from "next";
+import type { GetServerSidePropsContext } from "next";
 import ApiServer from "~/lib/axiosServer";
 import type { SSISchema } from "../models/credential";
 

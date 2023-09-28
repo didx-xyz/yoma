@@ -1,4 +1,4 @@
-import { PaginationFilter } from "./common";
+import type { PaginationFilter } from "./common";
 
 export interface Country {
   id: string;

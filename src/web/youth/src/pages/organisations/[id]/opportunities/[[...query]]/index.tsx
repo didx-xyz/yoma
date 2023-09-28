@@ -9,8 +9,8 @@ import MainLayout from "~/components/Layout/Main";
 import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
 import { type OpportunitySearchResults } from "~/api/models/opportunity";
-import { NextPageWithLayout } from "~/pages/_app";
-import { ParsedUrlQuery } from "querystring";
+import { type NextPageWithLayout } from "~/pages/_app";
+import { type ParsedUrlQuery } from "querystring";
 import Link from "next/link";
 import { PageBackground } from "~/components/PageBackground";
 import { IoIosAdd } from "react-icons/io";
@@ -47,7 +47,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             categories: null,
             languages: null,
             countries: null,
-            valueContains: query as any,
+            valueContains: query?.toString() ?? null,
           },
           context,
         ),
@@ -89,7 +89,7 @@ const Opportunities: NextPageWithLayout<{
         categories: null,
         languages: null,
         countries: null,
-        valueContains: query as any,
+        valueContains: query?.toString() ?? null,
       }),
   });
 
@@ -107,7 +107,7 @@ const Opportunities: NextPageWithLayout<{
         void router.push(`/organisations/${id}/opportunities`);
       }
     },
-    [router],
+    [router, id],
   );
 
   return (
@@ -129,7 +129,7 @@ const Opportunities: NextPageWithLayout<{
               href={`/organisations/${id}/opportunities/create`}
               className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
             >
-              <IoIosAdd className="h-5 w-5 mr-1" />
+              <IoIosAdd className="mr-1 h-5 w-5" />
               Add opportunity
             </Link>
           </div>

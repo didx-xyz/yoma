@@ -30,7 +30,6 @@ import {
   VerificationMethod,
   type Opportunity,
   type OpportunityRequestBase,
-  type OpportunityType,
   type OpportunityVerificationType,
 } from "~/api/models/opportunity";
 import {
@@ -55,9 +54,9 @@ import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
-import { IoMdArrowRoundBack, IoMdInformationCircle } from "react-icons/io";
+import { IoMdArrowRoundBack } from "react-icons/io";
 import CreatableSelect from "react-select/creatable";
-import { NextPageWithLayout } from "~/pages/_app";
+import type { NextPageWithLayout } from "~/pages/_app";
 import { getSchemas } from "~/api/services/credentials";
 
 interface IParams extends ParsedUrlQuery {
@@ -134,7 +133,7 @@ const OpportunityDetails: NextPageWithLayout<{
   id: string;
   opportunityId: string;
   user: User;
-}> = ({ id, opportunityId, user }) => {
+}> = ({ id, opportunityId }) => {
   const queryClient = useQueryClient();
 
   const { data: categories } = useQuery<SelectOption[]>({
@@ -358,7 +357,7 @@ const OpportunityDetails: NextPageWithLayout<{
       if (opportunityId === "create")
         void router.push(`/organisations/${id}/opportunities`);
     },
-    [setIsLoading, id, opportunity, queryClient],
+    [setIsLoading, id, opportunityId, opportunity, queryClient],
   );
 
   // form submission handler
@@ -386,7 +385,7 @@ const OpportunityDetails: NextPageWithLayout<{
       }
       setStep(step);
     },
-    [setStep, formData, setFormData, onSubmit],
+    [opportunityId, setStep, formData, setFormData, onSubmit],
   );
 
   const schemaStep1 = z.object({
@@ -588,7 +587,6 @@ const OpportunityDetails: NextPageWithLayout<{
   const {
     register: registerStep3,
     handleSubmit: handleSubmitStep3,
-    setValue: setValueStep3,
     formState: { errors: errorsStep3, isValid: isValidStep3 },
     control: controlStep3,
   } = useForm({
@@ -597,9 +595,7 @@ const OpportunityDetails: NextPageWithLayout<{
   });
 
   const {
-    register: registerStep4,
     handleSubmit: handleSubmitStep4,
-    setValue: setValueStep4,
     formState: { errors: errorsStep4, isValid: isValidStep4 },
     control: controlStep4,
   } = useForm({
@@ -627,7 +623,6 @@ const OpportunityDetails: NextPageWithLayout<{
   const {
     register: registerStep6,
     handleSubmit: handleSubmitStep6,
-    setValue: setValueStep6,
     formState: { errors: errorsStep6, isValid: isValidStep6 },
     control: controlStep6,
     watch: watchStep6,
@@ -642,9 +637,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const {
     register: registerStep7,
     handleSubmit: handleSubmitStep7,
-    setValue: setValueStep7,
     formState: { errors: errorsStep7, isValid: isValidStep7 },
-    control: controlStep7,
   } = useForm({
     resolver: zodResolver(schemaStep7),
     defaultValues: formData,
@@ -670,7 +663,7 @@ const OpportunityDetails: NextPageWithLayout<{
       })) ?? [];
 
     resetStep5(formData);
-  }, [verificationTypes, resetStep5]);
+  }, [formData, opportunity?.verificationTypes, verificationTypes, resetStep5]);
 
   return (
     <>
@@ -859,7 +852,7 @@ const OpportunityDetails: NextPageWithLayout<{
           {/* dropdown menu */}
           <select
             className="select select-bordered select-sm md:hidden"
-            onClick={(e: any) => {
+            onChange={(e) => {
               switch (e.target.value) {
                 case "Opportunity information":
                   setStep(1);
@@ -1619,7 +1612,8 @@ const OpportunityDetails: NextPageWithLayout<{
                   <div className="flex flex-col">
                     <h6 className="font-bold">Verification</h6>
                     <p className="my-2 text-sm">
-                      How can young participants confirm they're involvement?
+                      How can young participants confirm they&apos;re
+                      involvement?
                     </p>
                   </div>
 
@@ -2020,7 +2014,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         </span>
                       </label>
                       <label className="label-text text-sm">
-                        {formData.keywords?.map((x: any) => x).join(", ")}
+                        {formData.keywords?.join(", ")}
                       </label>
                       {errorsStep1.keywords && (
                         <label className="label">
@@ -2066,8 +2060,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       <label className="label-text text-sm">
                         {formData.languages
                           ?.map(
-                            (x: any) =>
-                              languages?.find((y) => y.value == x)?.label,
+                            (x) => languages?.find((y) => y.value == x)?.label,
                           )
                           .join(", ")}
                       </label>
@@ -2090,8 +2083,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       <label className="label-text text-sm">
                         {formData.countries
                           ?.map(
-                            (x: any) =>
-                              countries?.find((y) => y.value == x)?.label,
+                            (x) => countries?.find((y) => y.value == x)?.label,
                           )
                           .join(", ")}
                       </label>
@@ -2321,7 +2313,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         <label className="label-text text-sm">
                           {formData.verificationTypes
                             ?.map(
-                              (x: any) =>
+                              (x) =>
                                 verificationTypes?.find((y) => y.id == x.id)
                                   ?.displayName,
                             )

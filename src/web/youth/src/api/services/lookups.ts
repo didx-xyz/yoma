@@ -7,7 +7,7 @@ import type {
   SkillSearchResults,
   TimeInterval,
 } from "../models/lookups";
-import { GetServerSidePropsContext } from "next";
+import type { GetServerSidePropsContext } from "next";
 import ApiServer from "~/lib/axiosServer";
 
 export const getGenders = async (

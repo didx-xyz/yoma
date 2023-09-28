@@ -5,14 +5,13 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { type ParsedUrlQuery } from "querystring";
-import React, { useState, type ReactElement, useCallback } from "react";
-import { IoMdAdd, IoMdSearch, IoMdSquare } from "react-icons/io";
+import React, { type ReactElement, useCallback } from "react";
+import { IoMdAdd, IoMdSquare } from "react-icons/io";
 import {
-  OrganizationStatus,
-  Status,
   type OrganizationInfo,
   type OrganizationSearchResults,
+  Status,
+  OrganizationStatus,
 } from "~/api/models/organisation";
 import { getOrganisations } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
@@ -22,11 +21,6 @@ import { SearchInput } from "~/components/SearchInput";
 import withAuth from "~/context/withAuth";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
-
-interface IParams extends ParsedUrlQuery {
-  query: string;
-  page: string;
-}
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -43,7 +37,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           {
             pageNumber: page ? parseInt(page.toString()) : 1,
             pageSize: 20,
-            valueContains: query as any,
+            valueContains: query?.toString() ?? null,
             statuses: [Status.Active],
           },
           context,
@@ -56,7 +50,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           {
             pageNumber: page ? parseInt(page.toString()) : 1,
             pageSize: 20,
-            valueContains: query as any,
+            valueContains: query?.toString() ?? null,
             statuses: [Status.Inactive],
           },
           context,
@@ -71,57 +65,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     },
   };
 }
-
-// export const SearchComponent: React.FC<{ defaultValue: string }> = (props) => {
-//   const router = useRouter();
-//   const [searchInputValue, setSearchInputValue] = useState(props.defaultValue);
-
-//   const handleSubmit = (e: React.SyntheticEvent) => {
-//     e.preventDefault(); // 👈️ prevent page refresh
-
-//     // trim whitespace
-//     const searchValue = searchInputValue?.trim();
-
-//     if (searchValue) {
-//       // uri encode the search value
-//       const searchValueEncoded = encodeURIComponent(searchValue);
-
-//       // redirect to the search page
-//       void router.push(`/organisations?query=${searchValueEncoded}`);
-//     } else {
-//       // redirect to the search page
-//       void router.push("/organisations");
-//     }
-//   };
-
-//   return (
-//     <>
-//       <form onSubmit={handleSubmit}>
-//         <div className="search flex">
-//           <input
-//             type="search"
-//             className="input input-bordered input-sm w-full rounded-br-none rounded-tr-none text-sm"
-//             placeholder="Search organisations..."
-//             autoComplete="off"
-//             value={searchInputValue}
-//             onChange={(e) => setSearchInputValue(e.target.value)}
-//             onFocus={(e) => (e.target.placeholder = "")}
-//             onBlur={(e) => (e.target.placeholder = "Search organisations...")}
-//           />
-
-//           <button
-//             type="button"
-//             aria-label="Search"
-//             className="btn-search btn btn-sm rounded-bl-none rounded-tl-none border-gray"
-//             onClick={handleSubmit}
-//           >
-//             <IoMdSearch className="icon-search h-6 w-6" />
-//           </button>
-//         </div>
-//       </form>
-//     </>
-//   );
-// };
 
 export const OrganisationCardComponent: React.FC<{
   item: OrganizationInfo;

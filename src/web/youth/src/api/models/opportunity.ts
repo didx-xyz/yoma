@@ -1,4 +1,3 @@
-import { KeyValuePair } from "tailwindcss/types/config";
 import type { PaginationFilter } from "./common";
 import type { Country, Language, Skill } from "./lookups";
 
@@ -147,36 +146,6 @@ export interface OpportunityVerificationType {
   displayName: string;
   description: string;
 }
-
-// export interface OpportunityRequestBase {
-//   id: string;
-//   title: string;
-//   description: string;
-//   typeId: string;
-//   organizationId: string;
-//   instructions: string | null;
-//   url: string | null;
-//   zltoReward: number | null;
-//   yomaReward: number | null;
-//   zltoRewardPool: number | null;
-//   yomaRewardPool: number | null;
-//   sSIIntegrated: boolean;
-//   difficultyId: string;
-//   commitmentIntervalId: string;
-//   commitmentIntervalCount: number | null;
-//   participantLimit: number | null;
-//   keywords: string[] | null;
-//   dateStart: string | null;
-//   dateEnd: string | null;
-//   categories: string[];
-//   countries: string[];
-//   languages: string[];
-//   skills: string[];
-//   verificationEnabled: boolean;
-//   verificationMethod: boolean;
-//   verificationTypes: OpportunityVerificationType[] | null;
-//   postAsActive: boolean;
-// }
 
 export interface OpportunityRequestBase {
   id: string | null;
