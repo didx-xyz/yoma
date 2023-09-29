@@ -320,7 +320,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
   const onSubmit = useCallback(
     async (data: OpportunityRequestBase) => {
-      return;
+      //return;
       setIsLoading(true);
 
       try {
@@ -605,15 +605,15 @@ const OpportunityDetails: NextPageWithLayout<{
     resolver: zodResolver(schemaStep5),
     defaultValues: formData,
   });
-  const watchverificationEnabled = watchStep5("verificationEnabled");
-  const watchverificationMethod = watchStep5("verificationMethod");
+  const watchVerificationEnabled = watchStep5("verificationEnabled");
+  const watchVerificationMethod = watchStep5("verificationMethod");
   const watchVerificationTypes = watchStep5("verificationTypes");
-  // const { fields, append, prepend, remove, swap, move, insert } = useFieldArray(
-  //   {
-  //     control: controlStep5,
-  //     name: "verificationTypes",
-  //   },
-  // );
+  const { fields, append, prepend, remove, swap, move, insert } = useFieldArray(
+    {
+      control: controlStep5,
+      name: "verificationTypes",
+    },
+  );
 
   const {
     register: registerStep6,
@@ -1716,8 +1716,8 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
                     </div>
 
-                    {watchverificationEnabled &&
-                      watchverificationMethod === VerificationMethod.Manual && (
+                    {watchVerificationEnabled &&
+                      watchVerificationMethod === VerificationMethod.Manual && (
                         <div className="form-control">
                           <label className="label">
                             <span className="label-text">
@@ -1725,9 +1725,12 @@ const OpportunityDetails: NextPageWithLayout<{
                               to upload as part of completing the opportuntity.
                             </span>
                           </label>
-                          {/* {fields.map((field, index) => (
+                          watchVerificationTypes:{" "}
+                          {JSON.stringify(watchVerificationTypes)}
+                          FIELDS:{" "}
+                          {fields.map((field, index) => (
                             <div>{JSON.stringify(field)}</div>
-                          ))} */}
+                          ))}
                           <div className="flex flex-col gap-2">
                             {verificationTypes?.map((item, index) => (
                               <div className="flex flex-col" key={item.id}>
@@ -1737,18 +1740,27 @@ const OpportunityDetails: NextPageWithLayout<{
                                   className="label w-full cursor-pointer justify-normal"
                                 >
                                   <input
-                                    {...registerStep5(
-                                      `verificationTypes.${index}.type`,
-                                    )}
+                                    // {...registerStep5(
+                                    //   `verificationTypes.${index}.type`,
+                                    // )}
                                     type="checkbox"
                                     value={item.type}
-                                    // onChange={(e) => {
-                                    //   if (e.target.checked) remove(index);
-                                    //   else append(item);
-                                    // }}
+                                    onChange={(e) => {
+                                      //debugger;
+
+                                      if (e.target.checked) append(item);
+                                      else {
+                                        const index =
+                                          watchVerificationTypes?.findIndex(
+                                            (x: OpportunityVerificationType) =>
+                                              x.type === item.type,
+                                          );
+                                        remove(index);
+                                      }
+                                    }}
                                     id={item.id}
                                     className="checkbox-primary checkbox"
-                                    disabled={!watchverificationEnabled}
+                                    disabled={!watchVerificationEnabled}
                                     checked={
                                       watchVerificationTypes?.find(
                                         (x: OpportunityVerificationType) =>
@@ -1781,36 +1793,26 @@ const OpportunityDetails: NextPageWithLayout<{
                                       type="text"
                                       className="input input-bordered input-sm rounded-md"
                                       placeholder="Enter description"
-                                      {...registerStep5(
-                                        `verificationTypes.${index}.description`,
-                                      )}
-                                      // onChange={(e) => {
-                                      //   var a =
-                                      //     getValuesStep5(
-                                      //       "verificationTypes",
-                                      //     );
-                                      //   var b = a?.map(
-                                      //     (
-                                      //       x: OpportunityVerificationType,
-                                      //     ) => {
-                                      //       if (x.type === item.type) {
-                                      //         x.description =
-                                      //           e.target.value;
-                                      //       }
-                                      //       return x;
-                                      //     },
-                                      //   );
+                                      // {...registerStep5(
+                                      //   `verificationTypes.${index}.description`,
+                                      // )}
+                                      onChange={(e) => {
+                                        var b = watchVerificationTypes?.map(
+                                          (x: OpportunityVerificationType) => {
+                                            if (x.type === item.type) {
+                                              x.description = e.target.value;
+                                            }
+                                            return x;
+                                          },
+                                        );
 
-                                      //   // set description
-                                      //   setValueStep5(
-                                      //     "verificationTypes",
-                                      //     b,
-                                      //   );
-                                      // }}
+                                        // set description
+                                        setValueStep5("verificationTypes", b);
+                                      }}
                                       contentEditable
                                       // value={value ?? item.description}
                                       defaultValue={item.description}
-                                      disabled={!watchverificationEnabled}
+                                      disabled={!watchVerificationEnabled}
                                     />
                                   </div>
                                   //   )}
@@ -1881,14 +1883,14 @@ const OpportunityDetails: NextPageWithLayout<{
                           //value={item.value}
                           id="credentialIssuanceEnabled"
                           className="checkbox-primary checkbox"
-                          disabled={watchverificationEnabled !== true}
+                          disabled={watchVerificationEnabled !== true}
                         />
                         <span className="label-text ml-4">
                           I want to issue a credential upon completion
                         </span>
                       </label>
 
-                      {watchverificationEnabled !== true && (
+                      {watchVerificationEnabled !== true && (
                         <div className="text-sm text-warning">
                           Credential issuance is only available if Verification
                           is supported (previous step).
