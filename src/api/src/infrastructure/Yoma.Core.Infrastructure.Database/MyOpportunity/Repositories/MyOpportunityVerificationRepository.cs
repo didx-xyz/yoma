@@ -6,7 +6,7 @@ using Yoma.Core.Infrastructure.Database.MyOpportunity.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
 {
-    public class MyOpportunityVerificationRepository : BaseRepository<MyOpportunityVerification>, IRepository<Domain.MyOpportunity.Models.MyOpportunityVerification>
+    public class MyOpportunityVerificationRepository : BaseRepository<MyOpportunityVerification, Guid>, IRepository<Domain.MyOpportunity.Models.MyOpportunityVerification>
     {
         #region Constructor
         public MyOpportunityVerificationRepository(ApplicationDbContext context) : base(context) { }

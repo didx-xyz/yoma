@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Entity.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 {
-    public class UserSkillRepository : BaseRepository<UserSkill>, IRepository<Domain.Entity.Models.UserSkill>
+    public class UserSkillRepository : BaseRepository<UserSkill, Guid>, IRepository<Domain.Entity.Models.UserSkill>
     {
         #region Constructor
         public UserSkillRepository(ApplicationDbContext context) : base(context) { }

@@ -176,8 +176,6 @@ namespace Yoma.Core.Domain.Entity.Services
             result.EmailConfirmed = request.EmailConfirmed;
             result.DateLastLogin = request.DateLastLogin;
             result.ExternalId = request.ExternalId;
-            result.ZltoWalletId = request.ZltoWalletId;
-            result.TenantId = request.TenantId;
 
             result = isNew ? await _userRepository.Create(result) : await _userRepository.Update(result);
 

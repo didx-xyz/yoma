@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 {
-    public class CountryRepository : BaseRepository<Country>, IRepository<Domain.Lookups.Models.Country>
+    public class CountryRepository : BaseRepository<Country, Guid>, IRepository<Domain.Lookups.Models.Country>
     {
         #region Constructor
         public CountryRepository(ApplicationDbContext context) : base(context)

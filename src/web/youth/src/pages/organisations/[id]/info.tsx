@@ -14,6 +14,7 @@ import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
+import { PageBackground } from "~/components/PageBackground";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -50,17 +51,20 @@ const OrganisationOverview: NextPageWithLayout<{
       <Head>
         <title>Yoma Admin | {organisation?.name}</title>
       </Head>
-      <div className="container max-w-5xl px-2 py-8">
+
+      <PageBackground />
+
+      <div className="container z-10 max-w-5xl px-2 py-8">
         {/* BREADCRUMB */}
         <div className="flex flex-row text-xs text-gray">
           <Link
-            className="font-bold text-gray-dark hover:text-gray"
+            className="font-bold text-white hover:text-gray"
             href={"/organisations"}
           >
             Organisations
           </Link>
           <div className="mx-2">/</div>
-          <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-gray-dark">
+          <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
             {organisation?.name}
           </div>
         </div>
@@ -72,8 +76,8 @@ const OrganisationOverview: NextPageWithLayout<{
         {/* <OrganisationTabLayout /> */}
 
         {/* CONTENT */}
-        <div className="flex flex-col items-center pt-4">
-          <div className="flex w-full flex-col gap-2 rounded-lg bg-white p-8 shadow-lg lg:w-[600px]">
+        <div className="flex flex-col items-center">
+          <div className="flex w-full flex-col gap-2 rounded-lg bg-white p-4 shadow-lg lg:w-[600px]">
             <Overview organisation={organisation}></Overview>
           </div>
         </div>

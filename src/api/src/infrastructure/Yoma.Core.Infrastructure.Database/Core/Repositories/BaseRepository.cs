@@ -4,8 +4,8 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Core.Repositories
 {
-    public abstract class BaseRepository<TEntity>
-       where TEntity : BaseEntity<Guid>
+    public abstract class BaseRepository<TEntity, TKey>
+       where TEntity : BaseEntity<TKey>
     {
         #region Class Variables
         protected readonly ApplicationDbContext _context;

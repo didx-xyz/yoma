@@ -31,6 +31,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud
 
             // repositories
             services.AddScoped<IRepository<CredentialSchema>, CredentialSchemaRepository>();
+            services.AddScoped<IRepository<Connection>, ConnectionRepository>();
 
             services.AddAriesCloudAPI();
             services.AddScoped<ISSIProviderClientFactory, AriesCloudClientFactory>();

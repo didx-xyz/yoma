@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230926091544_ApplicationDb_Initial")]
+    [Migration("20230929070343_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -123,6 +123,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<DateTimeOffset?>("DateStatusModified")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<DateTimeOffset?>("DateTenantCreated")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<Guid?>("LogoId")
                         .HasColumnType("uniqueidentifier");
 
@@ -160,6 +163,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<string>("TaxNumber")
                         .HasColumnType("varchar(255)");
 
+                    b.Property<string>("TenantId")
+                        .HasColumnType("varchar(50)");
+
                     b.Property<string>("VATIN")
                         .HasColumnType("varchar(255)");
 
@@ -175,7 +181,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.HasIndex("StatusId", "DateStatusModified", "DateModified", "DateCreated");
+                    b.HasIndex("StatusId", "DateStatusModified", "TenantId", "DateTenantCreated", "DateModified", "DateCreated");
 
                     b.ToTable("Organization", "Entity");
                 });
@@ -283,6 +289,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<DateTimeOffset?>("DateOfBirth")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<DateTimeOffset?>("DateTenantCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DateZltoWalletCreated")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("DisplayName")
                         .HasColumnType("varchar(255)");
 
@@ -313,8 +325,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(125)");
 
-                    b.Property<Guid?>("TenantId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("TenantId")
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("ZltoWalletId")
                         .HasColumnType("varchar(50)");
@@ -332,7 +344,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("PhotoId");
 
-                    b.HasIndex("FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "DateCreated", "DateModified");
+                    b.HasIndex("FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "ZltoWalletId", "DateZltoWalletCreated", "TenantId", "DateTenantCreated", "DateCreated", "DateModified");
 
                     b.ToTable("User", "Entity");
                 });
@@ -562,10 +574,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<string>("CommentVerification")
                         .HasColumnType("varchar(500)");
 
+                    b.Property<string>("CredentialId")
+                        .HasColumnType("varchar(50)");
+
                     b.Property<DateTimeOffset?>("DateCompleted")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DateCredentialIssued")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<DateTimeOffset?>("DateEnd")
@@ -601,7 +619,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("UserId", "OpportunityId", "ActionId")
                         .IsUnique();
 
-                    b.HasIndex("VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified");
+                    b.HasIndex("VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "CredentialId", "DateCredentialIssued", "DateCreated", "DateModified");
 
                     b.ToTable("MyOpportunity", "Opportunity");
                 });

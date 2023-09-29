@@ -12,7 +12,7 @@ export const LogoTitle: React.FC<InputProps> = ({ logoUrl, title }) => {
       {/* LOGO */}
       <div className="flex h-20 min-w-max items-center justify-center">
         {/* NO IMAGE */}
-        {!logoUrl && <IoMdImage className="text-gray-400 h-20 w-20" />}
+        {!logoUrl && <IoMdImage className="text-gray-400 h-10 w-10" />}
 
         {/* EXISTING IMAGE */}
         {logoUrl && (
@@ -21,8 +21,8 @@ export const LogoTitle: React.FC<InputProps> = ({ logoUrl, title }) => {
             <Image
               className="m-4 rounded-lg"
               alt="company logo"
-              width={60}
-              height={60}
+              width={40}
+              height={40}
               src={logoUrl}
             />
           </>
@@ -30,9 +30,9 @@ export const LogoTitle: React.FC<InputProps> = ({ logoUrl, title }) => {
       </div>
 
       {/* TITLE */}
-      <h2 className="overflow-hidden text-ellipsis whitespace-nowrap font-bold">
+      <h3 className="overflow-hidden text-ellipsis whitespace-nowrap text-white">
         {title}
-      </h2>
+      </h3>
     </div>
   );
 };

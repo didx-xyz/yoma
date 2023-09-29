@@ -22,10 +22,47 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.AriesCloud.Entities.Connection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Protocol")
+                        .IsRequired()
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("SourceConnectionId")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("SourceTenantId")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("TargetConnectionId")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("TargetTenantId")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceTenantId", "TargetTenantId", "Protocol")
+                        .IsUnique();
+
+                    b.ToTable("Connection", "AriesCloud");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.AriesCloud.Entities.CredentialSchema", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("ArtifactType")
                         .IsRequired()

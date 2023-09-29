@@ -4,7 +4,7 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Core.Repositories
 {
-    public class BlobObjectRepository : BaseRepository<BlobObject>, IRepository<Domain.Core.Models.BlobObject>
+    public class BlobObjectRepository : BaseRepository<BlobObject, Guid>, IRepository<Domain.Core.Models.BlobObject>
     {
         #region Class Variables
         #endregion

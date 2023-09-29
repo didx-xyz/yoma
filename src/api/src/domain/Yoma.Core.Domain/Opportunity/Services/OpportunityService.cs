@@ -911,11 +911,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 var verificationType = _opportunityVerificationTypeService.GetByType(type.Type);
                 results.Add(verificationType);
 
-                var item = _opportunityVerificationTypeRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.VerificationTypeId == verificationType.Id);
-                if (item != null) continue;
-
                 var desc = type.Description?.Trim();
                 if (string.IsNullOrEmpty(desc)) desc = null;
+
+                var item = _opportunityVerificationTypeRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.VerificationTypeId == verificationType.Id);
+                if (item != null)
+                {
+                    //update (custom specified) or remove (defaults to lookup description)
+                    item.Description = desc;
+                    await _opportunityVerificationTypeRepository.Update(item);
+
+                    continue;
+                }
 
                 item = new OpportunityVerificationType
                 {

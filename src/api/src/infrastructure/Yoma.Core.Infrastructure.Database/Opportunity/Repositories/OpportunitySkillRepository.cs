@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 {
-    public class OpportunitySkillRepository : BaseRepository<Entities.OpportunitySkill>, IRepository<OpportunitySkill>
+    public class OpportunitySkillRepository : BaseRepository<Entities.OpportunitySkill, Guid>, IRepository<OpportunitySkill>
     {
         #region Constructor
         public OpportunitySkillRepository(ApplicationDbContext context) : base(context) { }

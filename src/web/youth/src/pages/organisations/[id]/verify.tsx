@@ -39,6 +39,7 @@ import { Loading } from "~/components/Status/Loading";
 import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
+import { PageBackground } from "~/components/PageBackground";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -131,18 +132,21 @@ const OrganisationDetails: NextPageWithLayout<{
       <Head>
         <title>Yoma Admin | Verify Organisation</title>
       </Head>
-      <div className="container max-w-5xl px-2 py-8">
+
+      <PageBackground />
+
+      <div className="container z-10 max-w-5xl px-2 py-8">
         {isLoading && <Loading />}
         {/* BREADCRUMB */}
         <div className="flex flex-row text-xs text-gray">
           <Link
-            className="font-bold text-gray-dark hover:text-gray"
+            className="font-bold text-white hover:text-gray"
             href={"/organisations"}
           >
             Organisations
           </Link>
           <div className="mx-2">/</div>
-          <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-gray-dark">
+          <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
             {organisation?.name}
           </div>
         </div>
@@ -189,7 +193,7 @@ const OrganisationDetails: NextPageWithLayout<{
               }}
               className={`text-gray-700 fixed inset-0 m-auto h-[230px] w-[380px] rounded-lg bg-white p-4 font-openSans duration-100 animate-in fade-in zoom-in`}
               overlayClassName="fixed inset-0 bg-black modal-overlay"
-              portalClassName={"fixed"}
+              portalClassName={"fixed z-20"}
             >
               <div className="flex h-full flex-col space-y-2">
                 <div className="flex flex-row space-x-2">

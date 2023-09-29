@@ -31,19 +31,14 @@ namespace Yoma.Core.Domain.SSI.Services
         #region Public Members
         public async Task<SSISchema> GetByName(string name)
         {
-            var result = await GetByNameOrNull(name) ?? throw new ArgumentException($"{nameof(SSISchema)} with name '{name}' does not exists", nameof(name));
-            return result;
+            var schema = await _ssiProviderClient.GetSchemaByName(name);
+            return ConvertToSSISchema(schema);
         }
 
         public async Task<SSISchema?> GetByNameOrNull(string name)
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentNullException(nameof(name));
-            name = name.Trim();
-
-            var schema = await _ssiProviderClient.GetSchemaByName(name);
+            var schema = await _ssiProviderClient.GetSchemaByNameOrNull(name);
             if (schema == null) return null;
-
             return ConvertToSSISchema(schema);
         }
 
@@ -103,7 +98,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
             await _schemaRequestValidator.ValidateAndThrowAsync(request);
 
-            var schema = await _ssiProviderClient.Create(new SchemaRequest
+            var schema = await _ssiProviderClient.CreateSchema(new SchemaRequest
             {
                 Name = request.Name,
                 ArtifactType = request.ArtifactType,

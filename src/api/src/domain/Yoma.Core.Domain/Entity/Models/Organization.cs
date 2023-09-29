@@ -46,11 +46,15 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public string? LogoURL { get; set; }
 
-        public List<OrganizationDocument>? Documents { get; set; }
+        public string? TenantId { get; set; }
+
+        public DateTimeOffset? DateTenantCreated { get; set; }
 
         public DateTimeOffset DateCreated { get; set; }
 
         public DateTimeOffset DateModified { get; set; }
+
+        public List<OrganizationDocument>? Documents { get; set; }
 
         public List<Lookups.OrganizationProviderType>? ProviderTypes { get; set; }
 

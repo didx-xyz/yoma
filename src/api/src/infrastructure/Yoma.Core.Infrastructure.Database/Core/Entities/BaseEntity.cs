@@ -6,6 +6,6 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
     {
         [Required]
         [Key]
-        public TKey Id { get; set; }
+        public virtual TKey Id { get; set; }
     }
 }

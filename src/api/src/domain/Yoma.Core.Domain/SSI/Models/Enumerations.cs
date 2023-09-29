@@ -5,4 +5,11 @@ namespace Yoma.Core.Domain.SSI.Models
         Indy,
         Ld_proof
     }
+
+    public enum Role
+    {
+        Holder,
+        Issuer,
+        Verifier
+    }
 }

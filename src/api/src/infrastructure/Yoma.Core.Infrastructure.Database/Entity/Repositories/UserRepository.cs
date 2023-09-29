@@ -8,7 +8,7 @@ using Yoma.Core.Infrastructure.Database.Entity.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 {
-    public class UserRepository : BaseRepository<User>, IRepositoryValueContainsWithNavigation<Domain.Entity.Models.User>
+    public class UserRepository : BaseRepository<User, Guid>, IRepositoryValueContainsWithNavigation<Domain.Entity.Models.User>
     {
         #region Constructor
         public UserRepository(ApplicationDbContext context) : base(context) { }
@@ -42,7 +42,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 DateLastLogin = entity.DateLastLogin,
                 ExternalId = entity.ExternalId,
                 ZltoWalletId = entity.ZltoWalletId,
+                DateZltoWalletCreated = entity.DateZltoWalletCreated,
                 TenantId = entity.TenantId,
+                DateTenantCreated = entity.DateTenantCreated,
                 DateCreated = entity.DateCreated,
                 DateModified = entity.DateModified,
                 Skills = includeChildItems ?
@@ -65,6 +67,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
 
+            item.DateZltoWalletCreated = string.IsNullOrEmpty(item.ZltoWalletId) ? null : DateTimeOffset.Now;
+            item.DateTenantCreated = string.IsNullOrEmpty(item.TenantId) ? null : DateTimeOffset.Now;
             item.DateCreated = DateTimeOffset.Now;
             item.DateModified = DateTimeOffset.Now;
 
@@ -85,7 +89,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 DateLastLogin = item.DateLastLogin,
                 ExternalId = item.ExternalId,
                 ZltoWalletId = item.ZltoWalletId,
+                DateZltoWalletCreated = item.DateZltoWalletCreated,
                 TenantId = item.TenantId,
+                DateTenantCreated = item.DateTenantCreated,
                 DateCreated = item.DateCreated,
                 DateModified = item.DateModified
             };
@@ -101,6 +107,12 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         {
             var entity = _context.User.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"User with id '{item.Id}' does not exist");
 
+            item.DateZltoWalletCreated = string.IsNullOrEmpty(item.ZltoWalletId)
+                    ? null
+                    : item.ZltoWalletId != entity.ZltoWalletId ? DateTimeOffset.Now : entity.DateZltoWalletCreated;
+            item.DateTenantCreated = string.IsNullOrEmpty(item.TenantId)
+                    ? null
+                    : item.TenantId != entity.TenantId ? DateTimeOffset.Now : entity.DateTenantCreated;
             item.DateModified = DateTimeOffset.Now;
 
             entity.Email = item.Email;
@@ -117,7 +129,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             entity.DateLastLogin = item.DateLastLogin;
             entity.ExternalId = item.ExternalId;
             entity.ZltoWalletId = item.ZltoWalletId;
+            entity.DateZltoWalletCreated = item.DateZltoWalletCreated;
             entity.TenantId = item.TenantId;
+            entity.DateTenantCreated = item.DateTenantCreated;
             entity.DateModified = item.DateModified;
 
             await _context.SaveChangesAsync();

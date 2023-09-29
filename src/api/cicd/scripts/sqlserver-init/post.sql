@@ -5,23 +5,23 @@ GO
 
 --testuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO [Entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
-			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[TenantId],[DateCreated],[DateModified])
+			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[DateZltoWalletCreated],[TenantId],[DateTenantCreated],[DateCreated],[DateModified])
 VALUES(NEWID(),'testuser@gmail.com',1,'Test','User','Test User','+27125555555',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),
-		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -20, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,GETDATE(),GETDATE())
+		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -20, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,NULL,NULL,GETDATE(),GETDATE())
 GO
 
 --testadminuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO [Entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
-			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[TenantId],[DateCreated],[DateModified])
+			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[DateZltoWalletCreated],[TenantId],[DateTenantCreated],[DateCreated],[DateModified])
 VALUES(NEWID(),'testadminuser@gmail.com',1,'Test Admin','User','Test Admin User','+27125555555',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),
-		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -21, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,GETDATE(),GETDATE())
+		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -21, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,NULL,NULL,GETDATE(),GETDATE())
 GO
 
 --testorgadminuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO [Entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
-			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[TenantId],[DateCreated],[DateModified])
+			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[DateZltoWalletCreated],[TenantId],[DateTenantCreated],[DateCreated],[DateModified])
 VALUES(NEWID(),'testorgadminuser@gmail.com',1,'Test Organization Admin','User','Test Organization Admin User','+27125555555',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),
-		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -22, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,GETDATE(),GETDATE())
+		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -22, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,NULL,NULL,GETDATE(),GETDATE())
 GO
 
 DECLARE @Words VARCHAR(500) = 'The,A,An,Awesome,Incredible,Fantastic,Amazing,Wonderful,Exciting,Unbelievable,Great,Marvelous,Stunning,Impressive,Captivating,Extraordinary,Superb,Epic,Spectacular,Magnificent,Phenomenal,Outstanding,Brilliant,Enthralling,Enchanting,Mesmerizing,Riveting,Spellbinding,Unforgettable,Sublime';
@@ -38,14 +38,14 @@ BEGIN
 			    [City],[CountryId],[StreetAddress],[Province],[PostalCode],
 			    [Tagline],
 			    [Biography],
-			    [StatusId],[DateStatusModified],[LogoId],[DateCreated],[DateModified])
+			    [StatusId],[CommentApproval],[DateStatusModified],[LogoId],[TenantId],[DateTenantCreated],[DateCreated],[DateModified])
     SELECT TOP 1 NEWID(),
             (SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthName) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) + ' ' + CAST(ABS(CHECKSUM(NEWID())) % 2147483647 AS VARCHAR(10)),
 		    'https://www.google.com/','Primary Contact','primarycontact@gmail.com','+27125555555', 'GB123456789', '0123456789', '12345/28/14',
 		    'My City',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),'My Street Address 1000', 'My Province', '12345-1234',
 		    (SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthOther) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords),
 		    (SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthOther) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords),
-		    (SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active'), GETDATE(), NULL,GETDATE(),GETDATE()
+		    (SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active'),'Approved',GETDATE(), NULL,NULL,NULL,GETDATE(),GETDATE()
     FROM sys.all_columns
   	SET @RowCount = @RowCount + 1;
 END;
@@ -82,6 +82,7 @@ BEGIN
 		[Description],
 		[TypeId],
 		[OrganizationId],
+		[Summary],
 		[Instructions],
 		[URL],
 		[ZltoReward],
@@ -112,6 +113,7 @@ BEGIN
 		(SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (ABS(CHECKSUM(NEWID()) % 101) + 100) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) as [Description],
 		(SELECT TOP 1 [Id] FROM [Opportunity].[OpportunityType] ORDER BY NEWID()) as [TypeId],
 		(SELECT TOP 1 [Id] FROM [Entity].[Organization] ORDER BY NEWID()) as [OrganizationId],
+		NULL,
 		(SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (ABS(CHECKSUM(NEWID()) % 101) + 100) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) as [Instructions],
 		'www.google.com',
 		(SELECT ROUND(100 + (350 - 100) * RAND(), 2)) as [ZltoReward],
@@ -196,13 +198,16 @@ GO
 
 /****myOpportunities****/
 --viewed
-INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[DateStart]
-           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CommentVerification],[DateStart]
+           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[CredentialId],[DateCredentialIssued],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
 	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
 	O.[Id],
 	(SELECT [Id] FROM [Opportunity].[MyOpportunityAction] WHERE [Name] = 'Viewed'),
+	NULL,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -219,13 +224,16 @@ FETCH NEXT 30 ROWS ONLY;
 GO
 
 --saved
-INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[DateStart]
-           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CommentVerification],[DateStart]
+           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[CredentialId],[DateCredentialIssued],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
 	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
 	O.[Id],
 	(SELECT [Id] FROM [Opportunity].[MyOpportunityAction] WHERE [Name] = 'Saved'),
+	NULL,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -242,16 +250,19 @@ FETCH NEXT 30 ROWS ONLY;
 GO
 
 --verification (pending)
-INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[DateStart]
-           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CommentVerification],[DateStart]
+           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[CredentialId],[DateCredentialIssued],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
 	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
 	O.[Id],
 	(SELECT [Id] FROM [Opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification'),
 	(SELECT [Id] FROM [Opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Pending'),
+	NULL,
 	CAST(DATEADD(DAY, 1, O.[DateStart]) AS DATE),
 	CAST(DATEADD(DAY, 2, O.[DateStart]) AS DATE),
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -265,16 +276,19 @@ FETCH NEXT 30 ROWS ONLY;
 GO
 
 --verification (rejected)
-INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[DateStart]
-           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CommentVerification],[DateStart]
+           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[CredentialId],[DateCredentialIssued],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
 	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
 	O.[Id],
 	(SELECT [Id] FROM [Opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification'),
 	(SELECT [Id] FROM [Opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Rejected'),
+	'Rejection Comment',
 	CAST(DATEADD(DAY, 1, O.[DateStart]) AS DATE),
 	CAST(DATEADD(DAY, 2, O.[DateStart]) AS DATE),
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -288,19 +302,22 @@ FETCH NEXT 30 ROWS ONLY;
 GO
 
 --verification (completed)
-INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[DateStart]
-           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CommentVerification],[DateStart]
+           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[CredentialId],[DateCredentialIssued],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
 	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
 	O.[Id],
 	(SELECT [Id] FROM [Opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification'),
 	(SELECT [Id] FROM [Opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Completed'),
+	'Approved Comment',
 	CAST(DATEADD(DAY, 1, O.[DateStart]) AS DATE),
 	CAST(DATEADD(DAY, 2, O.[DateStart]) AS DATE),
 	GETDATE(),
 	O.[ZltoReward],
 	O.[YomaReward],
+	NULL,
+	NULL,
 	GETDATE(),
 	GETDATE()
 FROM [Opportunity].[Opportunity] O
