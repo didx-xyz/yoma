@@ -765,7 +765,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     OpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     VerificationTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Description = table.Column<string>(type: "varchar(255)", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
                 constraints: table =>
                 {

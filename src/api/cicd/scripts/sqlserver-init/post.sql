@@ -185,8 +185,8 @@ CROSS JOIN (
 GO
 
 --verification types
-INSERT INTO [Opportunity].[OpportunityVerificationTypes]([Id],[OpportunityId],[VerificationTypeId],[Description],[DateCreated])
-SELECT NEWID(), O.[Id] AS [OpportunityId], R.[VerificationTypeId], NULL, GETDATE()
+INSERT INTO [Opportunity].[OpportunityVerificationTypes]([Id],[OpportunityId],[VerificationTypeId],[Description],[DateCreated],[DateModified])
+SELECT NEWID(), O.[Id] AS [OpportunityId], R.[VerificationTypeId], NULL, GETDATE(), GETDATE()
 FROM [Opportunity].[Opportunity] O
 CROSS JOIN (
     SELECT TOP 10 [Id] AS [VerificationTypeId]

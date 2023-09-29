@@ -24,5 +24,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
 
         [Required]
         public DateTimeOffset DateCreated { get; set; }
+
+        [Required]
+        public DateTimeOffset DateModified { get; set; }
     }
 }
