@@ -14,6 +14,7 @@ import withAuth from "~/context/withAuth";
 import { navbarColorAtom } from "~/lib/store";
 import { authOptions, type User } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
+import Link from "next/link";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -203,8 +204,13 @@ const OrganisationOverview: NextPageWithLayout<{
             </div>
           </div>
         </div>
-        <div className="font-helvetica-neue relative inline-block h-[20.52px] w-[205.08px] shrink-0 text-lg font-medium leading-[119%]">
-          Opportunities
+        <div>
+          <Link
+            href={`/organisations/${id}/opportunities`}
+            className="font-helvetica-neue relative inline-block h-[20.52px] w-[205.08px] shrink-0 text-lg font-medium leading-[119%]"
+          >
+            Opportunities
+          </Link>
         </div>
         <div className="flex flex-row items-start justify-start gap-[18px]">
           <div className="relative h-[326px] w-[909px]">

@@ -1,3 +1,5 @@
+import type { PaginationFilter } from "./common";
+
 export interface Country {
   id: string;
   name: string;
@@ -20,4 +22,23 @@ export interface Skill {
   id: string;
   name: string;
   infoURL: string | null;
+}
+
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+export interface SkillSearchResults {
+  totalCount: number | null;
+  items: Skill[];
+}
+
+export interface SkillSearchFilter extends PaginationFilter {
+  nameContains: string | null;
+}
+
+export interface TimeInterval {
+  id: string;
+  name: string;
 }

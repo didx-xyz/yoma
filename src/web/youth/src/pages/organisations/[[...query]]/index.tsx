@@ -5,29 +5,26 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { type ParsedUrlQuery } from "querystring";
-import React, { useState, type ReactElement } from "react";
-import { IoMdAdd, IoMdSearch, IoMdSquare } from "react-icons/io";
+import React, { type ReactElement, useCallback } from "react";
+import { IoMdAdd, IoMdSquare } from "react-icons/io";
 import {
-  OrganizationStatus,
-  Status,
   type OrganizationInfo,
   type OrganizationSearchResults,
+  Status,
+  OrganizationStatus,
 } from "~/api/models/organisation";
 import { getOrganisations } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
+import NoRowsMessage from "~/components/NoRowsMessage";
+import { PageBackground } from "~/components/PageBackground";
+import { SearchInput } from "~/components/SearchInput";
 import withAuth from "~/context/withAuth";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
-interface IParams extends ParsedUrlQuery {
-  query: string;
-  page: string;
-}
-
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { query, page } = context.query as IParams;
+  const { query, page } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
 
   const queryClient = new QueryClient();
@@ -40,7 +37,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           {
             pageNumber: page ? parseInt(page.toString()) : 1,
             pageSize: 20,
-            valueContains: query ?? "",
+            valueContains: query?.toString() ?? null,
             statuses: [Status.Active],
           },
           context,
@@ -53,7 +50,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           {
             pageNumber: page ? parseInt(page.toString()) : 1,
             pageSize: 20,
-            valueContains: query ?? "",
+            valueContains: query?.toString() ?? null,
             statuses: [Status.Inactive],
           },
           context,
@@ -68,57 +65,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     },
   };
 }
-
-export const SearchComponent: React.FC<{ defaultValue: string }> = (props) => {
-  const router = useRouter();
-  const [searchInputValue, setSearchInputValue] = useState(props.defaultValue);
-
-  const handleSubmit = (e: React.SyntheticEvent) => {
-    e.preventDefault(); // 👈️ prevent page refresh
-
-    // trim whitespace
-    const searchValue = searchInputValue?.trim();
-
-    if (searchValue) {
-      // uri encode the search value
-      const searchValueEncoded = encodeURIComponent(searchValue);
-
-      // redirect to the search page
-      void router.push(`/organisations?query=${searchValueEncoded}`);
-    } else {
-      // redirect to the search page
-      void router.push("/organisations");
-    }
-  };
-
-  return (
-    <>
-      <form onSubmit={handleSubmit}>
-        <div className="search flex">
-          <input
-            type="search"
-            className="input input-bordered input-sm w-full rounded-br-none rounded-tr-none text-sm"
-            placeholder="Search organisations..."
-            autoComplete="off"
-            value={searchInputValue}
-            onChange={(e) => setSearchInputValue(e.target.value)}
-            onFocus={(e) => (e.target.placeholder = "")}
-            onBlur={(e) => (e.target.placeholder = "Search organisations...")}
-          />
-
-          <button
-            type="button"
-            aria-label="Search"
-            className="btn-search btn btn-sm rounded-bl-none rounded-tl-none border-gray"
-            onClick={handleSubmit}
-          >
-            <IoMdSearch className="icon-search h-6 w-6" />
-          </button>
-        </div>
-      </form>
-    </>
-  );
-};
 
 export const OrganisationCardComponent: React.FC<{
   item: OrganizationInfo;
@@ -192,31 +138,69 @@ const Opportunities: NextPageWithLayout = () => {
       }),
   });
 
+  const onSearch = useCallback(
+    (query: string) => {
+      if (query && query.length > 2) {
+        // uri encode the search value
+        const searchValueEncoded = encodeURIComponent(query);
+
+        // redirect to the search page
+        void router.push(`/organisations?query=${searchValueEncoded}`);
+      } else {
+        // redirect to the search page
+        void router.push("/organisations");
+      }
+    },
+    [router],
+  );
+
   return (
     <>
       <Head>
         <title>Yoma Admin | Organisations</title>
       </Head>
-      <div className="container max-w-5xl px-2 py-8">
-        <div className="flex flex-row items-center gap-2 pb-4">
-          <h2 className="flex flex-grow font-bold">Organisations</h2>
 
-          <SearchComponent defaultValue={query as string} />
+      <PageBackground />
 
-          <div className="flex items-center justify-end">
+      <div className="container z-10 max-w-5xl px-2 py-8">
+        <div className="flex flex-col gap-2 py-4 sm:flex-row">
+          <h3 className="flex flex-grow text-white">Organisations</h3>
+
+          <div className="flex gap-2 sm:justify-end">
+            <SearchInput defaultValue={query as string} onSearch={onSearch} />
+
             <Link
               href="/organisations/register"
-              className="btn btn-success btn-sm normal-case"
+              className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
             >
               <IoMdAdd className="h-5 w-5" />
-              Organisation
+              Add organisation
             </Link>
           </div>
         </div>
 
-        <div className="flex flex-col items-center pt-4">
+        <div className="items-centerx flex flex-col rounded-lg bg-white p-4">
           <div className="flex w-full flex-col gap-2  lg:w-[1000px]">
             <h4>Organisations for approval</h4>
+
+            {/* NO ROWS */}
+            {!organisationsInactive ||
+              (organisationsInactive.items.length === 0 && !query && (
+                <NoRowsMessage
+                  title={"No organisations found"}
+                  description={
+                    "Organisations awaiting approval will be displayed here."
+                  }
+                />
+              ))}
+
+            {!organisationsInactive ||
+              (organisationsInactive.items.length === 0 && query && (
+                <NoRowsMessage
+                  title={"No organisations found"}
+                  description={"Please try refining your search query."}
+                />
+              ))}
 
             {/* GRID */}
             {organisationsInactive &&
@@ -229,20 +213,19 @@ const Opportunities: NextPageWithLayout = () => {
                   </div>
                 </>
               )}
-            {/* NO ROWS */}
-            {!organisationsInactive ||
-              (organisationsInactive.items.length === 0 && (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "50px",
-                  }}
-                >
-                  <h6>No data to show</h6>
-                </div>
-              ))}
 
             <h4>Approved Organisations</h4>
+
+            {/* NO ROWS */}
+            {!organisationsActive ||
+              (organisationsActive.items.length === 0 && (
+                <NoRowsMessage
+                  title={"No organisations found"}
+                  description={
+                    "Opportunities that you add will be displayed here."
+                  }
+                />
+              ))}
 
             {organisationsActive && organisationsActive.items.length > 0 && (
               <>
@@ -253,18 +236,6 @@ const Opportunities: NextPageWithLayout = () => {
                 </div>
               </>
             )}
-            {/* NO ROWS */}
-            {!organisationsActive ||
-              (organisationsActive.items.length === 0 && (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "50px",
-                  }}
-                >
-                  <h6>No data to show</h6>
-                </div>
-              ))}
           </div>
         </div>
       </div>
