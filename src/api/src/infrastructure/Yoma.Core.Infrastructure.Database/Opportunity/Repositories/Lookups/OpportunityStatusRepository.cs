@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories.Lookups
 {
-    public class OpportunityStatusRepository : BaseRepository<Entities.Lookups.OpportunityStatus>, IRepository<OpportunityStatus>
+    public class OpportunityStatusRepository : BaseRepository<Entities.Lookups.OpportunityStatus, Guid>, IRepository<OpportunityStatus>
     {
         #region Constructor
         public OpportunityStatusRepository(ApplicationDbContext context) : base(context)

@@ -280,7 +280,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     DateLastLogin = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     ExternalId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ZltoWalletId = table.Column<string>(type: "varchar(50)", nullable: true),
-                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DateZltoWalletCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    TenantId = table.Column<string>(type: "varchar(50)", nullable: true),
+                    DateTenantCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
@@ -338,6 +340,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     CommentApproval = table.Column<string>(type: "varchar(500)", nullable: true),
                     DateStatusModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     LogoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    TenantId = table.Column<string>(type: "varchar(50)", nullable: true),
+                    DateTenantCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
@@ -599,6 +603,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     DateCompleted = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     ZltoReward = table.Column<decimal>(type: "decimal(8,2)", nullable: true),
                     YomaReward = table.Column<decimal>(type: "decimal(8,2)", nullable: true),
+                    CredentialId = table.Column<string>(type: "varchar(50)", nullable: true),
+                    DateCredentialIssued = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
@@ -893,10 +899,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_MyOpportunity_VerificationStatusId_DateCompleted_ZltoReward_YomaReward_DateCreated_DateModified",
+                name: "IX_MyOpportunity_VerificationStatusId_DateCompleted_ZltoReward_YomaReward_CredentialId_DateCredentialIssued_DateCreated_DateMod~",
                 schema: "Opportunity",
                 table: "MyOpportunity",
-                columns: new[] { "VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified" });
+                columns: new[] { "VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "CredentialId", "DateCredentialIssued", "DateCreated", "DateModified" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_MyOpportunityAction_Name",
@@ -1088,10 +1094,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Organization_StatusId_DateStatusModified_DateModified_DateCreated",
+                name: "IX_Organization_StatusId_DateStatusModified_TenantId_DateTenantCreated_DateModified_DateCreated",
                 schema: "Entity",
                 table: "Organization",
-                columns: new[] { "StatusId", "DateStatusModified", "DateModified", "DateCreated" });
+                columns: new[] { "StatusId", "DateStatusModified", "TenantId", "DateTenantCreated", "DateModified", "DateCreated" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrganizationDocuments_FileId",
@@ -1201,10 +1207,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_ExternalId_DateCreated_DateModified",
+                name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_ExternalId_ZltoWalletId_DateZltoWalletCreated_TenantId_DateTenantCreated_D~",
                 schema: "Entity",
                 table: "User",
-                columns: new[] { "FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "DateCreated", "DateModified" });
+                columns: new[] { "FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "ZltoWalletId", "DateZltoWalletCreated", "TenantId", "DateTenantCreated", "DateCreated", "DateModified" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_User_GenderId",

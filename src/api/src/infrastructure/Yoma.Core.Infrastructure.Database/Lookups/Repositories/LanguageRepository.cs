@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 {
-    public class LanguageRepository : BaseRepository<Language>, IRepository<Domain.Lookups.Models.Language>
+    public class LanguageRepository : BaseRepository<Language, Guid>, IRepository<Domain.Lookups.Models.Language>
     {
         #region Constructor
         public LanguageRepository(ApplicationDbContext context) : base(context)

@@ -8,6 +8,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Entities
     [Index(nameof(Name), nameof(ArtifactType))]
     public class CredentialSchema : BaseEntity<string>
     {
+        [Column(TypeName = "varchar(50)")]
+        public override string Id { get; set; }
+
         [Required]
         [Column(TypeName = "varchar(125)")]
         public string Name { get; set; }

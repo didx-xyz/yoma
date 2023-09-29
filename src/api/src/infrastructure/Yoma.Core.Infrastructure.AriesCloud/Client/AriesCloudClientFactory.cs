@@ -11,23 +11,26 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         private readonly ClientFactory _clientFactory;
         private readonly IMemoryCache _memoryCache;
         private readonly IRepository<Models.CredentialSchema> _credentialSchemaRepository;
+        private readonly IRepository<Models.Connection> _connectionRepository;
         #endregion
 
         #region Constructor
         public AriesCloudClientFactory(ClientFactory clientFactory,
             IMemoryCache memoryCache,
-            IRepository<Models.CredentialSchema> credentialSchemaRepository)
+            IRepository<Models.CredentialSchema> credentialSchemaRepository,
+            IRepository<Models.Connection> connectionRepository)
         {
             _clientFactory = clientFactory;
             _memoryCache = memoryCache;
             _credentialSchemaRepository = credentialSchemaRepository;
+            _connectionRepository = connectionRepository;
         }
         #endregion
 
         #region Public Members
         public ISSIProviderClient CreateClient()
         {
-            return new AriesCloudClient(_clientFactory, _memoryCache, _credentialSchemaRepository);
+            return new AriesCloudClient(_clientFactory, _memoryCache, _credentialSchemaRepository, _connectionRepository);
         }
         #endregion
     }

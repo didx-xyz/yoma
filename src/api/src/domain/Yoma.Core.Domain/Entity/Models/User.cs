@@ -42,7 +42,11 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public string? ZltoWalletId { get; set; }
 
-        public Guid? TenantId { get; set; }
+        public DateTimeOffset? DateZltoWalletCreated { get; set; }
+
+        public string? TenantId { get; set; }
+
+        public DateTimeOffset? DateTenantCreated { get; set; }
 
         public DateTimeOffset DateCreated { get; set; }
 

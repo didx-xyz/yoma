@@ -44,8 +44,6 @@ namespace Yoma.Core.Domain.Entity.Extensions
                 DateOfBirth = user.DateOfBirth,
                 DateLastLogin = user.DateLastLogin,
                 ExternalId = user.ExternalId,
-                ZltoWalletId = user.ZltoWalletId,
-                TenantId = user.TenantId
             };
         }
 

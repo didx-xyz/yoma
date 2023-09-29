@@ -6,6 +6,6 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Entities
     {
         [Required]
         [Key]
-        public TKey Id { get; set; }
+        public virtual TKey Id { get; set; }
     }
 }

@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 {
-    public class TimeIntervalRepository : BaseRepository<TimeInterval>, IRepository<Domain.Lookups.Models.TimeInterval>
+    public class TimeIntervalRepository : BaseRepository<TimeInterval, Guid>, IRepository<Domain.Lookups.Models.TimeInterval>
     {
         #region Constructor
         public TimeIntervalRepository(ApplicationDbContext context) : base(context)

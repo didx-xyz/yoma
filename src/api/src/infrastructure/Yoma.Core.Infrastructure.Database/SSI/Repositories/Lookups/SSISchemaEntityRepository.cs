@@ -6,7 +6,7 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
 {
-    public class SSISchemaEntityRepository : BaseRepository<Entities.Lookups.SSISchemaEntity>, IRepositoryWithNavigation<SSISchemaEntity>
+    public class SSISchemaEntityRepository : BaseRepository<Entities.Lookups.SSISchemaEntity, Guid>, IRepositoryWithNavigation<SSISchemaEntity>
     {
         #region Constructor
         public SSISchemaEntityRepository(ApplicationDbContext context) : base(context)

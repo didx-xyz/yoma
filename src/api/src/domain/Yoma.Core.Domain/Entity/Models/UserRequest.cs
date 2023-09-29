@@ -12,9 +12,5 @@ namespace Yoma.Core.Domain.Entity.Models
         public DateTimeOffset? DateLastLogin { get; set; }
 
         public Guid? ExternalId { get; set; }
-
-        public string? ZltoWalletId { get; set; }
-
-        public Guid? TenantId { get; set; }
     }
 }

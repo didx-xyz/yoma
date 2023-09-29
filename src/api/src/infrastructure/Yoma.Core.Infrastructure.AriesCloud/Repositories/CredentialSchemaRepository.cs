@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.AriesCloud.Models;
 
 namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
 {
-    public class CredentialSchemaRepository : BaseRepository<Entities.CredentialSchema>, IRepository<CredentialSchema>
+    public class CredentialSchemaRepository : BaseRepository<Entities.CredentialSchema, string>, IRepository<CredentialSchema>
     {
         #region Constructor
         public CredentialSchemaRepository(AriesCloudDbContext context) : base(context) { }

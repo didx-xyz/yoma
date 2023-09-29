@@ -10,7 +10,7 @@ using Yoma.Core.Domain.Opportunity.Services;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 {
-    public class OpportunityRepository : BaseRepository<Entities.Opportunity>, IRepositoryBatchedValueContainsWithNavigation<Domain.Opportunity.Models.Opportunity>
+    public class OpportunityRepository : BaseRepository<Entities.Opportunity, Guid>, IRepositoryBatchedValueContainsWithNavigation<Domain.Opportunity.Models.Opportunity>
     {
         #region Constructor
         public OpportunityRepository(ApplicationDbContext context) : base(context) { }

@@ -7,7 +7,7 @@ using Yoma.Core.Domain.Core.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 {
-    public class SkillRepository : BaseRepository<Skill>, IRepositoryBatchedValueContains<Domain.Lookups.Models.Skill>
+    public class SkillRepository : BaseRepository<Skill, Guid>, IRepositoryBatchedValueContains<Domain.Lookups.Models.Skill>
     {
         #region Constructor
         public SkillRepository(ApplicationDbContext context) : base(context)

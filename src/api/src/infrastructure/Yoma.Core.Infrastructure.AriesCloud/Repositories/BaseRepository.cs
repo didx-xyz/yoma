@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Yoma.Core.Infrastructure.AriesCloud.Context;
+using Yoma.Core.Infrastructure.AriesCloud.Entities;
 
 namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
 {
-    public abstract class BaseRepository<TEntity>
-        where TEntity : class
+    public abstract class BaseRepository<TEntity, TKey>
+        where TEntity : BaseEntity<TKey>
     {
         #region Class Variables
         protected readonly AriesCloudDbContext _context;

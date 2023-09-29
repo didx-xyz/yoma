@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 {
-    public class OrganizationRepository : BaseRepository<Organization>, IRepositoryBatchedValueContainsWithNavigation<Domain.Entity.Models.Organization>
+    public class OrganizationRepository : BaseRepository<Organization, Guid>, IRepositoryBatchedValueContainsWithNavigation<Domain.Entity.Models.Organization>
     {
         #region Constructor
         public OrganizationRepository(ApplicationDbContext context) : base(context) { }
@@ -44,7 +44,10 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 StatusId = entity.StatusId,
                 Status = Enum.Parse<OrganizationStatus>(entity.Status.Name, true),
                 CommentApproval = entity.CommentApproval,
+                DateStatusModified = entity.DateStatusModified,
                 LogoId = entity.LogoId,
+                TenantId = entity.TenantId,
+                DateTenantCreated = entity.DateTenantCreated,
                 DateCreated = entity.DateCreated,
                 DateModified = entity.DateModified,
                 ProviderTypes = includeChildItems ?
@@ -85,9 +88,11 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 
         public async Task<Domain.Entity.Models.Organization> Create(Domain.Entity.Models.Organization item)
         {
+            item.DateStatusModified = DateTimeOffset.Now;
+            item.DateTenantCreated = string.IsNullOrEmpty(item.TenantId) ? null : DateTimeOffset.Now;
             item.DateCreated = DateTimeOffset.Now;
             item.DateModified = DateTimeOffset.Now;
-            item.DateStatusModified = DateTimeOffset.Now;
+            
 
             var entity = new Organization
             {
@@ -111,6 +116,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 CommentApproval = item.CommentApproval,
                 DateStatusModified = item.DateStatusModified,
                 LogoId = item.LogoId,
+                TenantId = item.TenantId,
+                DateTenantCreated = item.DateTenantCreated,
                 DateCreated = item.DateCreated,
                 DateModified = item.DateModified
             };
@@ -150,6 +157,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                    CommentApproval = item.CommentApproval,
                    DateStatusModified = DateTimeOffset.Now,
                    LogoId = item.LogoId,
+                   TenantId = item.TenantId,
+                   DateTenantCreated = string.IsNullOrEmpty(item.TenantId) ? null : DateTimeOffset.Now,
                    DateCreated = DateTimeOffset.Now,
                    DateModified = DateTimeOffset.Now
                });
@@ -161,6 +170,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             {
                 item.Id = entity.Id;
                 item.DateStatusModified = entity.DateStatusModified;
+                item.DateTenantCreated = entity.DateTenantCreated;
                 item.DateCreated = entity.DateCreated;
                 item.DateModified = entity.DateModified;
                 return item;
@@ -173,8 +183,11 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         {
             var entity = _context.Organization.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Organization)} with id '{item.Id}' does not exist");
 
-            item.DateModified = DateTimeOffset.Now;
             if (item.StatusId != entity.StatusId) item.DateStatusModified = DateTimeOffset.Now;
+            item.DateTenantCreated = string.IsNullOrEmpty(item.TenantId)
+                ? null
+                : item.TenantId != entity.TenantId ? DateTimeOffset.Now : entity.DateTenantCreated;
+            item.DateModified = DateTimeOffset.Now;
 
             entity.Name = item.Name;
             entity.WebsiteURL = item.WebsiteURL;
@@ -195,6 +208,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             entity.StatusId = item.StatusId;
             entity.CommentApproval = item.CommentApproval;
             entity.LogoId = item.LogoId;
+            entity.TenantId = item.TenantId;
+            entity.DateTenantCreated = item.DateTenantCreated;
             entity.DateModified = item.DateModified;
 
             await _context.SaveChangesAsync();
@@ -214,8 +229,11 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             {
                 var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Organization)} with id '{item.Id}' does not exist");
 
-                item.DateModified = DateTimeOffset.Now;
+                item.DateTenantCreated = string.IsNullOrEmpty(item.TenantId)
+                    ? null
+                    : item.TenantId != entity.TenantId ? DateTimeOffset.Now : entity.DateTenantCreated;
                 if (item.StatusId != entity.StatusId) item.DateStatusModified = DateTimeOffset.Now;
+                item.DateModified = DateTimeOffset.Now;
 
                 entity.Name = item.Name;
                 entity.WebsiteURL = item.WebsiteURL;
@@ -236,6 +254,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 entity.StatusId = item.StatusId;
                 entity.CommentApproval = item.CommentApproval;
                 entity.LogoId = item.LogoId;
+                entity.TenantId = item.TenantId;
+                entity.DateTenantCreated = item.DateTenantCreated;
                 entity.DateModified = item.DateModified;
             }
 

@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 {
-    public class OpportunityLanguageRepository : BaseRepository<Entities.OpportunityLanguage>, IRepository<OpportunityLanguage>
+    public class OpportunityLanguageRepository : BaseRepository<Entities.OpportunityLanguage, Guid>, IRepository<OpportunityLanguage>
     {
         #region Constructor
         public OpportunityLanguageRepository(ApplicationDbContext context) : base(context) { }

@@ -11,6 +11,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Context
 
         #region Public Members
         public DbSet<CredentialSchema> CredentialSchema { get; set; }
+
+        public DbSet<Connection> Connection { get; set; }
         #endregion
     }
 }

@@ -50,6 +50,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public decimal? YomaReward { get; set; }
 
+        public string? CredentialId { get; set; }
+
+        public DateTimeOffset? DateCredentialIssued { get; set; }
+
         public DateTimeOffset DateCreated { get; set; }
 
         public DateTimeOffset DateModified { get; set; }

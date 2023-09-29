@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Entity.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 {
-    public class OrganizationUserRepository : BaseRepository<OrganizationUser>, IRepository<Domain.Entity.Models.OrganizationUser>
+    public class OrganizationUserRepository : BaseRepository<OrganizationUser, Guid>, IRepository<Domain.Entity.Models.OrganizationUser>
     {
         #region Constructor
         public OrganizationUserRepository(ApplicationDbContext context) : base(context) { }

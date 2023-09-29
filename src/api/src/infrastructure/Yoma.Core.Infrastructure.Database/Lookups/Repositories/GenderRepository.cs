@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 {
-    public class GenderRepository : BaseRepository<Gender>, IRepository<Domain.Lookups.Models.Gender>
+    public class GenderRepository : BaseRepository<Gender, Guid>, IRepository<Domain.Lookups.Models.Gender>
     {
         #region Constructor
         public GenderRepository(ApplicationDbContext context) : base(context)

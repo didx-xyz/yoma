@@ -1,9 +1,9 @@
 using AriesCloudAPI.DotnetSDK.AspCore.Clients;
+using AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Interfaces;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
-using System.Data;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Exceptions;
@@ -11,7 +11,6 @@ using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Provider;
 using Yoma.Core.Infrastructure.AriesCloud.Extensions;
-using Yoma.Core.Infrastructure.AriesCloud.Models;
 
 namespace Yoma.Core.Infrastructure.AriesCloud.Client
 {
@@ -21,6 +20,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         private readonly ClientFactory _clientFactory;
         private readonly IMemoryCache _memoryCache;
         private readonly IRepository<Models.CredentialSchema> _credentialSchemaRepository;
+        private readonly IRepository<Models.Connection> _connectionRepository;
 
         private const string Schema_Prefix_LdProof = "KtX2yAeljr0zZ9MuoQnIcWb";
         #endregion
@@ -28,11 +28,13 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         #region Constructor
         public AriesCloudClient(ClientFactory clientFactory,
             IMemoryCache memoryCache,
-            IRepository<Models.CredentialSchema> credentialSchemaRepository)
+            IRepository<Models.CredentialSchema> credentialSchemaRepository,
+            IRepository<Models.Connection> connectionRepository)
         {
             _clientFactory = clientFactory;
             _memoryCache = memoryCache;
             _credentialSchemaRepository = credentialSchemaRepository;
+            _connectionRepository = connectionRepository;
         }
         #endregion
 
@@ -312,6 +314,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             return tenants.FirstOrDefault(o => string.Equals(name, o.Tenant_name, StringComparison.InvariantCultureIgnoreCase));
         }
 
+        /// <summary>
+        /// Ensure a credential definition for the specified issuer and schema (applies to artifact type Indy)
+        /// </summary>
         private async Task<string> EnsureDefinition(Tenant tenantIssuer, Schema schema)
         {
             var client = _clientFactory.CreateTenantClient(tenantIssuer.Tenant_id);
@@ -334,8 +339,36 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             return definition.Id;
         }
 
+        /// <summary>
+        /// Ensure a connection between the Issuer & Holder, initiated by the Issuer
+        /// </summary>
         private async Task<Models.Connection> EnsureConnectionCI(Tenant tenantSource, Tenant tenantTarget)
         {
+            //try and find an existing connection
+            var result = _connectionRepository.Query().SingleOrDefault(o =>
+                o.SourceTenantId == tenantSource.Tenant_id && o.TargetTenantId == tenantTarget.Tenant_id && o.Protocol == Connection_protocol.Connections_1_0);
+
+            var clientIssuer = _clientFactory.CreateTenantClient(tenantSource.Tenant_id);
+
+            Connection? connectionAries = null;
+            if (result != null)
+            {
+                try
+                {
+                    //ensure connected (active)
+                    connectionAries = await clientIssuer.GetConnectionAsync(result.SourceConnectionId);
+
+                    if (connectionAries != null
+                        && string.Equals(connectionAries.State, Models.ConnectionState.Completed.ToString(), StringComparison.InvariantCultureIgnoreCase)) return result;
+
+                    await _connectionRepository.Delete(result);
+                }
+                catch (HttpClientException ex)
+                {
+                    if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+                }
+            }
+
             //create invitation by issuer
             var createInvitationRequest = new CreateInvitation
             {
@@ -344,7 +377,6 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 Use_public_did = false
             };
 
-            var clientIssuer = _clientFactory.CreateTenantClient(tenantSource.Tenant_id);
             var invitation = await clientIssuer.CreateInvitationAsync(createInvitationRequest);
 
             //accept invitation by holder
@@ -365,18 +397,18 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 }
             };
             var clientHolder = _clientFactory.CreateTenantClient(tenantTarget.Tenant_id);
-            var connection = await clientHolder.AcceptInvitationAsync(acceptInvitationRequest);
+            connectionAries = await clientHolder.AcceptInvitationAsync(acceptInvitationRequest);
 
-            var result = new Models.Connection
+            result = new Models.Connection
             {
                 SourceTenantId = tenantSource.Tenant_id,
                 SourceConnectionId = invitation.Connection_id,
                 TargetTenantId = tenantTarget.Tenant_id,
-                TargetConnectionId = connection.Connection_id,
-                Protocol = connection.Connection_protocol.ToString()
+                TargetConnectionId = connectionAries.Connection_id,
+                Protocol = connectionAries.Connection_protocol
             };
 
-            //TODO: Persist to db
+            result = await _connectionRepository.Create(result);
 
             return result;
         }

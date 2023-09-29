@@ -1,7 +1,11 @@
+using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
+
 namespace Yoma.Core.Infrastructure.AriesCloud.Models
 {
     public class Connection
     {
+        public Guid Id { get; set; }
+
         public string SourceTenantId { get; set; }
 
         public string TargetTenantId { get; set; }
@@ -10,6 +14,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Models
 
         public string TargetConnectionId { get; set; }
 
-        public string Protocol { get; set; }
+        public Connection_protocol Protocol { get; set; }
+
+        public DateTimeOffset DateCreated { get; set; }
     }
 }
