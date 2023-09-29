@@ -485,6 +485,7 @@ const OpportunityDetails: NextPageWithLayout<{
         .optional(),
     })
     .superRefine((values, ctx) => {
+      // verificationEnabled option is required
       if (values.verificationEnabled == null) {
         ctx.addIssue({
           message: "Please select an option.",
@@ -498,13 +499,11 @@ const OpportunityDetails: NextPageWithLayout<{
       if (values.verificationEnabled == false) return;
       if (values?.verificationMethod == VerificationMethod.Automatic) return;
 
-      //* verificationTypes required when manual
-      const count =
-        values?.verificationTypes?.filter(
-          (x) => x.type != null && x.type != undefined && x.type != false,
-        )?.length ?? 0;
-
-      if (values.verificationTypes == null || count === 0) {
+      // verificationTypes are required when VerificationMethod is Manual
+      if (
+        values.verificationTypes == null ||
+        values?.verificationTypes?.length === 0
+      ) {
         ctx.addIssue({
           message: "At least one verification type is required.",
           code: z.ZodIssueCode.custom,
@@ -1725,29 +1724,20 @@ const OpportunityDetails: NextPageWithLayout<{
                               to upload as part of completing the opportuntity.
                             </span>
                           </label>
-                          watchVerificationTypes:{" "}
-                          {JSON.stringify(watchVerificationTypes)}
-                          FIELDS:{" "}
-                          {fields.map((field, index) => (
-                            <div>{JSON.stringify(field)}</div>
-                          ))}
+
                           <div className="flex flex-col gap-2">
                             {verificationTypes?.map((item, index) => (
                               <div className="flex flex-col" key={item.id}>
-                                {/* checkbox label */}
+                                {/* verification type: checkbox label */}
                                 <label
                                   htmlFor={item.id}
                                   className="label w-full cursor-pointer justify-normal"
                                 >
                                   <input
-                                    // {...registerStep5(
-                                    //   `verificationTypes.${index}.type`,
-                                    // )}
                                     type="checkbox"
                                     value={item.type}
+                                    // on change, add or remove the item from the verificationTypes array
                                     onChange={(e) => {
-                                      //debugger;
-
                                       if (e.target.checked) append(item);
                                       else {
                                         const index =
@@ -1772,17 +1762,12 @@ const OpportunityDetails: NextPageWithLayout<{
                                     {item.displayName}
                                   </span>
                                 </label>
-                                {/* description input */}
+
+                                {/* verification type: description input */}
                                 {watchVerificationTypes?.find(
                                   (x: OpportunityVerificationType) =>
                                     x.type === item.type,
                                 ) && (
-                                  // <Controller
-                                  //   control={controlStep5}
-                                  //   // name="verificationTypes."
-                                  //   render={({
-                                  //     field: { onChange, value },
-                                  //   }) => (
                                   <div className="form-control w-full">
                                     <label className="label">
                                       <span className="label-text">
@@ -1793,39 +1778,41 @@ const OpportunityDetails: NextPageWithLayout<{
                                       type="text"
                                       className="input input-bordered input-sm rounded-md"
                                       placeholder="Enter description"
-                                      // {...registerStep5(
-                                      //   `verificationTypes.${index}.description`,
-                                      // )}
                                       onChange={(e) => {
-                                        var b = watchVerificationTypes?.map(
-                                          (x: OpportunityVerificationType) => {
-                                            if (x.type === item.type) {
-                                              x.description = e.target.value;
-                                            }
-                                            return x;
-                                          },
+                                        // update the description in the verificationTypes array
+                                        setValueStep5(
+                                          "verificationTypes",
+                                          watchVerificationTypes?.map(
+                                            (
+                                              x: OpportunityVerificationType,
+                                            ) => {
+                                              if (x.type === item.type) {
+                                                x.description = e.target.value;
+                                              }
+                                              return x;
+                                            },
+                                          ),
                                         );
-
-                                        // set description
-                                        setValueStep5("verificationTypes", b);
                                       }}
                                       contentEditable
-                                      // value={value ?? item.description}
-                                      defaultValue={item.description}
+                                      defaultValue={
+                                        // get default value from formData or item description
+                                        formData.verificationTypes?.find(
+                                          (x) => x.type === item.type,
+                                        )?.description ?? item.description
+                                      }
                                       disabled={!watchVerificationEnabled}
                                     />
                                   </div>
-                                  //   )}
-                                  // />
                                 )}
                               </div>
                             ))}
                           </div>
-                          {errorsStep5.verificationTypes?.root && (
+                          {errorsStep5.verificationTypes && (
                             <label className="label font-bold">
                               <span className="label-text-alt italic text-red-500">
                                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                                {`${errorsStep5.verificationTypes.root.message}`}
+                                {`${errorsStep5.verificationTypes.message}`}
                               </span>
                             </label>
                           )}
