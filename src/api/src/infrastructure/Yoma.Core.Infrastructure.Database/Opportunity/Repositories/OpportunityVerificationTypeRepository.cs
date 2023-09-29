@@ -20,13 +20,15 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 OpportunityId = entity.OpportunityId,
                 VerificationTypeId = entity.VerificationTypeId,
                 Description = entity.Description,
-                DateCreated = entity.DateCreated
+                DateCreated = entity.DateCreated,
+                DateModified = entity.DateModified
             });
         }
 
         public async Task<OpportunityVerificationType> Create(OpportunityVerificationType item)
         {
             item.DateCreated = DateTimeOffset.Now;
+            item.DateModified = DateTimeOffset.Now;
 
             var entity = new Entities.OpportunityVerificationType
             {
@@ -35,7 +37,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 VerificationTypeId = item.VerificationTypeId,
                 Description = item.Description,
                 DateCreated = item.DateCreated,
-
+                DateModified = item.DateModified
             };
 
             _context.OpportunityVerificationTypes.Add(entity);
@@ -44,9 +46,19 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
             item.Id = entity.Id;
             return item;
         }
-        public Task<OpportunityVerificationType> Update(OpportunityVerificationType item)
+        public async Task<OpportunityVerificationType> Update(OpportunityVerificationType item)
         {
-            throw new NotImplementedException();
+            var entity = _context.OpportunityVerificationTypes.Where(o => o.Id == item.Id).SingleOrDefault()
+               ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.OpportunityVerificationType)} with id '{item.Id}' does not exist");
+
+            item.DateModified = DateTimeOffset.Now;
+
+            entity.Description = item.Description;
+            entity.DateModified = item.DateModified;
+
+            await _context.SaveChangesAsync();
+
+            return item;
         }
 
         public async Task Delete(OpportunityVerificationType item)
