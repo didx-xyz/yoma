@@ -29,15 +29,15 @@ export interface Opportunity {
   organizationStatus: OrganizationStatus;
   summary: string | null;
   instructions: string | null;
-  uRL: string | null;
+  url: string | null;
   zltoReward: number | null;
   zltoRewardPool: number | null;
   zltoRewardCumulative: number | null;
   yomaReward: number | null;
   yomaRewardPool: number | null;
   yomaRewardCumulative: number | null;
-  verificationSupported: boolean;
-  sSIIntegrated: boolean;
+  verificationEnabled: boolean;
+  verificationMethod: VerificationMethod | null;
   difficultyId: string;
   difficulty: string;
   commitmentIntervalId: string;
@@ -47,9 +47,11 @@ export interface Opportunity {
   participantCount: number | null;
   statusId: string;
   status: Status;
-  keywords: string | null;
+  keywords: string[] | null;
   dateStart: string;
   dateEnd: string | null;
+  credentialIssuanceEnabled: boolean;
+  ssiSchemaName: string | null;
   dateCreated: string;
   createdBy: string;
   dateModified: string;
@@ -70,6 +72,33 @@ export interface OpportunitySearchFilterBase extends PaginationFilter {
   valueContains: string | null;
 }
 
+export interface OpportunityInfo {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  organization: string;
+  instructions: string | null;
+  uRL: string | null;
+  zltoReward: number | null;
+  yomaReward: number | null;
+  difficulty: string;
+  commitmentInterval: string;
+  commitmentIntervalCount: number | null;
+  participantLimit: number | null;
+  participantCountVerificationCompleted: number;
+  participantCountVerificationPending: number;
+  participantCountTotal: number;
+  keywords: string[] | null;
+  dateStart: string;
+  dateEnd: string | null;
+  published: boolean;
+  categories: OpportunityCategory[] | null;
+  countries: Country[] | null;
+  languages: Language[] | null;
+  skills: Skill[] | null;
+}
+
 export enum Status {
   Active,
   Deleted,
@@ -83,6 +112,12 @@ export enum VerificationType {
   Location,
   VoiceNote,
 }
+
+export enum VerificationMethod {
+  Manual,
+  Automatic,
+}
+
 export enum OrganizationStatus {
   Inactive,
   Active,
@@ -107,7 +142,52 @@ export interface OpportunityCategory {
 
 export interface OpportunityVerificationType {
   id: string;
-  type: VerificationType;
+  type?: VerificationType;
   displayName: string;
   description: string;
+}
+
+export interface OpportunityRequestBase {
+  id: string | null;
+  title: string;
+  description: string;
+  typeId: string;
+  organizationId: string;
+  instructions: string | null;
+  uRL: string | null;
+  zltoReward: number | null;
+  yomaReward: number | null;
+  zltoRewardPool: number | null;
+  yomaRewardPool: number | null;
+  verificationEnabled: boolean | null;
+  verificationMethod: VerificationMethod | null | string;
+  difficultyId: string;
+  commitmentIntervalId: string;
+  commitmentIntervalCount: number | null;
+  participantLimit: number | null;
+  keywords: string[] | null;
+  dateStart: string | null;
+  dateEnd: string | null;
+  credentialIssuanceEnabled: boolean;
+  ssiSchemaName: string | null;
+  categories: string[];
+  countries: string[];
+  languages: string[];
+  skills: string[];
+  verificationTypes: OpportunityVerificationType[] | null;
+  postAsActive: boolean;
+}
+
+export interface OpportunityCategory {
+  id: string;
+  name: string;
+}
+export interface OpportunityDifficulty {
+  id: string;
+  name: string;
+}
+
+export interface OpportunityType {
+  id: string;
+  name: string;
 }
