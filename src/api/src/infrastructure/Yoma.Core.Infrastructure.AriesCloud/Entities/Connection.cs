@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Yoma.Core.Infrastructure.AriesCloud.Entities
 {
     [Table("Connection", Schema = "AriesCloud")]
-    [Index(nameof(SourceTenantId), nameof(TargetTenantId),nameof(Protocol), IsUnique = true)]
+    [Index(nameof(SourceTenantId), nameof(TargetTenantId), nameof(Protocol), IsUnique = true)]
     public class Connection : BaseEntity<Guid>
     {
         [Required]

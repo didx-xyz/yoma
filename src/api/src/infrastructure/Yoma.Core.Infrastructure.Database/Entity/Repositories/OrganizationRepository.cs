@@ -92,7 +92,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             item.DateTenantCreated = string.IsNullOrEmpty(item.TenantId) ? null : DateTimeOffset.Now;
             item.DateCreated = DateTimeOffset.Now;
             item.DateModified = DateTimeOffset.Now;
-            
+
 
             var entity = new Organization
             {

@@ -20,7 +20,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
                 TargetTenantId = entity.TargetTenantId,
                 SourceConnectionId = entity.SourceConnectionId,
                 TargetConnectionId = entity.TargetConnectionId,
-                Protocol = Enum.Parse< Connection_protocol>(entity.Protocol, true),
+                Protocol = Enum.Parse<Connection_protocol>(entity.Protocol, true),
                 DateCreated = entity.DateCreated
             });
         }
