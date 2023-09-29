@@ -20,7 +20,12 @@ import {
 } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { Controller, useForm, type FieldValues } from "react-hook-form";
+import {
+  Controller,
+  useForm,
+  type FieldValues,
+  useFieldArray,
+} from "react-hook-form";
 import Select from "react-select";
 import AsyncSelect from "react-select/async";
 import { toast } from "react-toastify";
@@ -272,7 +277,7 @@ const OpportunityDetails: NextPageWithLayout<{
     commitmentIntervalId: opportunity?.commitmentIntervalId ?? "",
     dateStart: opportunity?.dateStart ?? null,
     dateEnd: opportunity?.dateEnd ?? null,
-    participantLimit: opportunity?.participantLimit ?? 0,
+    participantLimit: opportunity?.participantLimit ?? null,
 
     zltoReward: opportunity?.zltoReward ?? null,
     zltoRewardPool: opportunity?.zltoRewardPool ?? null,
@@ -298,7 +303,7 @@ const OpportunityDetails: NextPageWithLayout<{
     //     id: "",
     //     displayName: "",
     //   })) ?? [],
-    verificationTypes: [],
+    verificationTypes: opportunity?.verificationTypes ?? [],
 
     credentialIssuanceEnabled: opportunity?.credentialIssuanceEnabled ?? false,
     ssiSchemaName: opportunity?.ssiSchemaName ?? null,
@@ -315,6 +320,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
   const onSubmit = useCallback(
     async (data: OpportunityRequestBase) => {
+      return;
       setIsLoading(true);
 
       try {
@@ -394,7 +400,7 @@ const OpportunityDetails: NextPageWithLayout<{
       .min(1, "Opportunity title is required.")
       .max(255, "Opportunity title cannot exceed 255 characters."),
     description: z.string().min(1, "Description is required."),
-    typeId: z.string({ required_error: "Opportunity type is required" }),
+    typeId: z.string().min(1, "Opportunity type is required."),
     categories: z
       .array(z.string(), { required_error: "Category is required" })
       .min(1, "Category is required."),
@@ -403,12 +409,10 @@ const OpportunityDetails: NextPageWithLayout<{
       .min(1, "Opportunity URL is required.")
       .max(2048, "Opportunity URL cannot exceed 2048 characters.")
       .url("Please enter a valid URL (e.g. http://www.example.com)"),
-    //.optional()
-    // .or(z.literal("")),
   });
 
   const schemaStep2 = z.object({
-    difficultyId: z.string({ required_error: "Difficulty is required" }),
+    difficultyId: z.string().min(1, "Difficulty is required."),
     languages: z
       .array(z.string(), { required_error: "Language is required" })
       .min(1, "Language is required."),
@@ -420,21 +424,14 @@ const OpportunityDetails: NextPageWithLayout<{
       .refine((val) => val != null && !isNaN(val), {
         message: "Time Value is required.",
       }),
-    commitmentIntervalId: z.string({
-      required_error: "Time Period is required.",
-    }),
+    commitmentIntervalId: z.string().min(1, "Time frame is required."),
     dateStart: z
       .union([z.null(), z.string(), z.date()])
       .refine((val) => val !== null, {
         message: "Start Time is required.",
       }),
-    //noEndDate: z.boolean(),
     dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
     participantLimit: z.union([z.nan(), z.null(), z.number()]).optional(),
-    // eslint-disable-next-line
-    // .refine((val) => val !== null && !Number.isNaN(val as any), {
-    //   message: "Participant Limit is required.",
-    // }),
   });
 
   const schemaStep3 = z.object({
@@ -458,11 +455,6 @@ const OpportunityDetails: NextPageWithLayout<{
         // eslint-disable-next-line
         return val === null || Number.isNaN(val as any) ? undefined : val;
       }),
-    // skills: z
-    //   .array(z.string(), {
-    //     required_error: "At least one skill is required.",
-    //   })
-    //   .min(1, "At least one skill is required."),
     skills: z.array(z.string()).optional(),
   });
 
@@ -479,8 +471,6 @@ const OpportunityDetails: NextPageWithLayout<{
     .object({
       verificationEnabled: z.union([z.boolean(), z.null()]),
       verificationMethod: z.union([z.number(), z.null()]).optional(),
-      // transform by returning the enum name
-      // .transform((val) => VerificationMethod[val as any]),
       verificationTypes: z
         .array(
           z.object({
@@ -495,7 +485,6 @@ const OpportunityDetails: NextPageWithLayout<{
         .optional(),
     })
     .superRefine((values, ctx) => {
-      //  debugger;
       if (values.verificationEnabled == null) {
         ctx.addIssue({
           message: "Please select an option.",
@@ -619,6 +608,12 @@ const OpportunityDetails: NextPageWithLayout<{
   const watchverificationEnabled = watchStep5("verificationEnabled");
   const watchverificationMethod = watchStep5("verificationMethod");
   const watchVerificationTypes = watchStep5("verificationTypes");
+  // const { fields, append, prepend, remove, swap, move, insert } = useFieldArray(
+  //   {
+  //     control: controlStep5,
+  //     name: "verificationTypes",
+  //   },
+  // );
 
   const {
     register: registerStep6,
@@ -649,21 +644,21 @@ const OpportunityDetails: NextPageWithLayout<{
   }, [step]);
 
   // on change of verificationTypes, update the formData
-  useEffect(() => {
-    formData.verificationTypes =
-      verificationTypes?.map((x) => ({
-        type:
-          opportunity?.verificationTypes?.find((y) => y.type == x.type)?.type ??
-          undefined,
-        description:
-          opportunity?.verificationTypes?.find((y) => y.type == x.type)
-            ?.description ?? x.description,
-        id: "",
-        displayName: "",
-      })) ?? [];
+  // useEffect(() => {
+  //   formData.verificationTypes =
+  //     verificationTypes?.map((x) => ({
+  //       type:
+  //         opportunity?.verificationTypes?.find((y) => y.type == x.type)?.type ??
+  //         undefined,
+  //       description:
+  //         opportunity?.verificationTypes?.find((y) => y.type == x.type)
+  //           ?.description ?? x.description,
+  //       id: "",
+  //       displayName: "",
+  //     })) ?? [];
 
-    resetStep5(formData);
-  }, [formData, opportunity?.verificationTypes, verificationTypes, resetStep5]);
+  //   resetStep5(formData);
+  // }, [formData, opportunity?.verificationTypes, verificationTypes, resetStep5]);
 
   return (
     <>
@@ -1241,7 +1236,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           name="dateStart"
                           render={({ field: { onChange, value } }) => (
                             <DatePicker
-                              className="input input-bordered rounded-md"
+                              className="input input-bordered w-full"
                               onChange={(date) => onChange(date)}
                               selected={value ? new Date(value) : null}
                               placeholderText="Start Date"
@@ -1264,20 +1259,18 @@ const OpportunityDetails: NextPageWithLayout<{
                           </span>
                         </label>
 
-                        <div className="grid grid-cols-2 gap-2">
-                          <Controller
-                            control={controlStep2}
-                            name="dateEnd"
-                            render={({ field: { onChange, value } }) => (
-                              <DatePicker
-                                className="input input-bordered w-full"
-                                onChange={(date) => onChange(date)}
-                                selected={value ? new Date(value) : null}
-                                placeholderText="Select End Date"
-                              />
-                            )}
-                          />
-                        </div>
+                        <Controller
+                          control={controlStep2}
+                          name="dateEnd"
+                          render={({ field: { onChange, value } }) => (
+                            <DatePicker
+                              className="input input-bordered w-full"
+                              onChange={(date) => onChange(date)}
+                              selected={value ? new Date(value) : null}
+                              placeholderText="Select End Date"
+                            />
+                          )}
+                        />
 
                         {errorsStep2.dateEnd && (
                           <label className="label">
@@ -1306,7 +1299,6 @@ const OpportunityDetails: NextPageWithLayout<{
                           })}
                         />
                       </div>
-
                       {errorsStep2.participantLimit && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
@@ -1612,8 +1604,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   <div className="flex flex-col">
                     <h6 className="font-bold">Verification</h6>
                     <p className="my-2 text-sm">
-                      How can young participants confirm they&apos;re
-                      involvement?
+                      How can young participants confirm their involvement?
                     </p>
                   </div>
 
@@ -1734,7 +1725,9 @@ const OpportunityDetails: NextPageWithLayout<{
                               to upload as part of completing the opportuntity.
                             </span>
                           </label>
-
+                          {/* {fields.map((field, index) => (
+                            <div>{JSON.stringify(field)}</div>
+                          ))} */}
                           <div className="flex flex-col gap-2">
                             {verificationTypes?.map((item, index) => (
                               <div className="flex flex-col" key={item.id}>
@@ -1749,6 +1742,10 @@ const OpportunityDetails: NextPageWithLayout<{
                                     )}
                                     type="checkbox"
                                     value={item.type}
+                                    // onChange={(e) => {
+                                    //   if (e.target.checked) remove(index);
+                                    //   else append(item);
+                                    // }}
                                     id={item.id}
                                     className="checkbox-primary checkbox"
                                     disabled={!watchverificationEnabled}
@@ -1768,6 +1765,12 @@ const OpportunityDetails: NextPageWithLayout<{
                                   (x: OpportunityVerificationType) =>
                                     x.type === item.type,
                                 ) && (
+                                  // <Controller
+                                  //   control={controlStep5}
+                                  //   // name="verificationTypes."
+                                  //   render={({
+                                  //     field: { onChange, value },
+                                  //   }) => (
                                   <div className="form-control w-full">
                                     <label className="label">
                                       <span className="label-text">
@@ -1781,12 +1784,37 @@ const OpportunityDetails: NextPageWithLayout<{
                                       {...registerStep5(
                                         `verificationTypes.${index}.description`,
                                       )}
+                                      // onChange={(e) => {
+                                      //   var a =
+                                      //     getValuesStep5(
+                                      //       "verificationTypes",
+                                      //     );
+                                      //   var b = a?.map(
+                                      //     (
+                                      //       x: OpportunityVerificationType,
+                                      //     ) => {
+                                      //       if (x.type === item.type) {
+                                      //         x.description =
+                                      //           e.target.value;
+                                      //       }
+                                      //       return x;
+                                      //     },
+                                      //   );
+
+                                      //   // set description
+                                      //   setValueStep5(
+                                      //     "verificationTypes",
+                                      //     b,
+                                      //   );
+                                      // }}
                                       contentEditable
                                       // value={value ?? item.description}
                                       defaultValue={item.description}
                                       disabled={!watchverificationEnabled}
                                     />
                                   </div>
+                                  //   )}
+                                  // />
                                 )}
                               </div>
                             ))}
@@ -2170,6 +2198,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
+
                     <div className="form-control">
                       <label className="label">
                         <span className="label-text font-bold">End date</span>
