@@ -641,7 +641,7 @@ namespace Yoma.Core.Domain.Entity.Services
             var orgIds = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).Select(o => o.OrganizationId).ToList();
 
             var organizations = _organizationRepository.Query().Where(o => orgIds.Contains(o.Id)).ToList();
-            if(includeComputed) organizations.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId));
+            if (includeComputed) organizations.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId));
             return organizations.Select(o => o.ToInfo()).ToList();
         }
         #endregion

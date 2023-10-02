@@ -163,7 +163,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var results = _opportunityRepository.Contains(_opportunityRepository.Query(), value).ToList();
 
-            if(includeComputed)
+            if (includeComputed)
                 results.ForEach(o =>
                 {
                     o.SetPublished();

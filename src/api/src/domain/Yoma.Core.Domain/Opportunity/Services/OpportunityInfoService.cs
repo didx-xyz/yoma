@@ -38,7 +38,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (opportunity == null) return null;
 
             var result = opportunity.ToOpportunityInfo();
-            if(includeComputed) SetParticipantCounts(result);
+            if (includeComputed) SetParticipantCounts(result);
             return result;
         }
 
