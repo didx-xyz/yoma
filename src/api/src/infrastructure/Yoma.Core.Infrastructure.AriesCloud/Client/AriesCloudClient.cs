@@ -171,7 +171,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
                 var response = await client.CreateTenantAsync(createTenantRequest);
 
-                if(createTenantRequest.Roles.Any()) //issuer and verifier added to trust registry; holder implicitly assigned to a tenant
+                if (createTenantRequest.Roles.Any()) //issuer and verifier added to trust registry; holder implicitly assigned to a tenant
                     _memoryCache.Remove(nameof(TrustRegistry));
                 return response.Tenant_id;
             }
