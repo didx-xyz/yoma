@@ -30,12 +30,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
         #region Private Members
         private bool UserExist(Guid userId)
         {
-            return _userService.GetByIdOrNull(userId, false) != null;
+            return _userService.GetByIdOrNull(userId, false, false) != null;
         }
 
         private bool OpportunityExist(Guid userId)
         {
-            return _opportunityService.GetByIdOrNull(userId, false) != null;
+            return _opportunityService.GetByIdOrNull(userId, false, false) != null;
         }
         #endregion
     }

@@ -122,7 +122,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private async Task SendEmail(List<Models.Opportunity> items, EmailType type)
         {
             var groupedOpportunities = items
-                .SelectMany(op => _organizationService.ListAdmins(op.OrganizationId, false) ?? Enumerable.Empty<UserInfo>(), (op, admin) => new { Administrator = admin, Opportunity = op })
+                .SelectMany(op => _organizationService.ListAdmins(op.OrganizationId, false, false) ?? Enumerable.Empty<UserInfo>(), (op, admin) => new { Administrator = admin, Opportunity = op })
                 .GroupBy(item => item.Administrator, item => item.Opportunity);
 
             foreach (var group in groupedOpportunities)

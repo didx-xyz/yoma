@@ -117,7 +117,7 @@ namespace Yoma.Core.Api.Controllers
                 return;
             }
 
-            var userRequest = _userService.GetByEmailOrNull(kcUser.Username, false)?.ToUserRequest();
+            var userRequest = _userService.GetByEmailOrNull(kcUser.Username, false, false)?.ToUserRequest();
 
             switch (type)
             {

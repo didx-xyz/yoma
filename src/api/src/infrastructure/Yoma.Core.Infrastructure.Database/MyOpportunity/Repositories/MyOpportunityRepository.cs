@@ -34,6 +34,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 OpportunityStatus = Enum.Parse<Status>(entity.Opportunity.Status.Name, true),
                 OpportunityDateStart = entity.Opportunity.DateStart,
                 OrganizationId = entity.Opportunity.OrganizationId,
+                OrganizationName = entity.Opportunity.Organization.Name,
+                OrganizationLogoId = entity.Opportunity.Organization.LogoId,
                 OrganizationStatusId = entity.Opportunity.Organization.StatusId,
                 OrganizationStatus = Enum.Parse<OrganizationStatus>(entity.Opportunity.Organization.Status.Name, true),
                 ActionId = entity.ActionId,
