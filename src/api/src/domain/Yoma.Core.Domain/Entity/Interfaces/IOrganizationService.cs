@@ -7,13 +7,13 @@ namespace Yoma.Core.Domain.Entity.Interfaces
     {
         bool Updatable(Guid id, bool throwNotFound);
 
-        Organization GetById(Guid id, bool includeChildItems, bool ensureOrganizationAuthorization);
+        Organization GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization);
 
-        Organization? GetByIdOrNull(Guid id, bool includeChildItems);
+        Organization? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed);
 
-        Organization? GetByNameOrNull(string name, bool includeChildItems);
+        Organization? GetByNameOrNull(string name, bool includeChildItems, bool includeComputed);
 
-        List<Organization> Contains(string value);
+        List<Organization> Contains(string value, bool includeComputed);
 
         OrganizationSearchResults Search(OrganizationSearchFilter filter, bool ensureOrganizationAuthorization);
 
@@ -37,9 +37,9 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         bool IsAdminsOf(List<Guid> ids, bool throwUnauthorized);
 
-        List<UserInfo>? ListAdmins(Guid id, bool ensureOrganizationAuthorization);
+        List<UserInfo>? ListAdmins(Guid id, bool includeComputed, bool ensureOrganizationAuthorization);
 
-        List<OrganizationInfo> ListAdminsOf();
+        List<OrganizationInfo> ListAdminsOf(bool includeComputed);
 
         Task<Organization> AssignAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization);
 

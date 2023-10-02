@@ -53,18 +53,18 @@ namespace Yoma.Core.Domain.Entity.Services
         #endregion
 
         #region Public Members
-        public User GetByEmail(string? email, bool includeChildItems)
+        public User GetByEmail(string? email, bool includeChildItems, bool includeComputed)
         {
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentNullException(nameof(email));
 
-            var result = GetByEmailOrNull(email, includeChildItems)
+            var result = GetByEmailOrNull(email, includeChildItems, includeComputed)
                 ?? throw new ValidationException($"User with email '{email}' does not exist");
 
             return result;
         }
 
-        public User? GetByEmailOrNull(string email, bool includeChildItems)
+        public User? GetByEmailOrNull(string email, bool includeChildItems, bool includeComputed)
         {
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentNullException(nameof(email));
@@ -73,25 +73,23 @@ namespace Yoma.Core.Domain.Entity.Services
             var result = _userRepository.Query(includeChildItems).SingleOrDefault(o => o.Email == email);
             if (result == null) return null;
 
-            result.PhotoURL = GetBlobObjectURL(result.PhotoId);
+            if (includeComputed) result.PhotoURL = GetBlobObjectURL(result.PhotoId);
 
             return result;
         }
 
-        public User GetById(Guid id, bool includeChildItems)
+        public User GetById(Guid id, bool includeChildItems, bool includeComputed)
         {
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
 
-            var result = GetByIdOrNull(id, includeChildItems)
+            var result = GetByIdOrNull(id, includeChildItems, includeComputed)
                 ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(User)} with id '{id}' does not exist");
-
-            result.PhotoURL = GetBlobObjectURL(result.PhotoId);
 
             return result;
         }
 
-        public User? GetByIdOrNull(Guid id, bool includeChildItems)
+        public User? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed)
         {
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
@@ -99,18 +97,22 @@ namespace Yoma.Core.Domain.Entity.Services
             var result = _userRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
             if (result == null) return null;
 
-            result.PhotoURL = GetBlobObjectURL(result.PhotoId);
+            if (includeComputed) result.PhotoURL = GetBlobObjectURL(result.PhotoId);
 
             return result;
         }
 
-        public List<User> Contains(string value)
+        public List<User> Contains(string value, bool includeComputed)
         {
             if (string.IsNullOrWhiteSpace(value))
                 throw new ArgumentNullException(nameof(value));
             value = value.Trim();
 
-            return _userRepository.Contains(_userRepository.Query(), value).ToList();
+            var results = _userRepository.Contains(_userRepository.Query(), value).ToList();
+
+            if (includeComputed) results.ForEach(o => o.PhotoURL = GetBlobObjectURL(o.PhotoId));
+
+            return results;
         }
 
         public UserSearchResults Search(UserSearchFilter filter)
@@ -150,9 +152,9 @@ namespace Yoma.Core.Domain.Entity.Services
 
             // check if user exists
             var isNew = !request.Id.HasValue;
-            var result = !request.Id.HasValue ? new User { Id = Guid.NewGuid() } : GetById(request.Id.Value, true);
+            var result = !request.Id.HasValue ? new User { Id = Guid.NewGuid() } : GetById(request.Id.Value, true, true);
 
-            var existingByEmail = GetByEmailOrNull(request.Email, false);
+            var existingByEmail = GetByEmailOrNull(request.Email, false, false);
             if (existingByEmail != null && (isNew || result.Id != existingByEmail.Id))
                 throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
 
@@ -184,7 +186,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         public async Task<User> UpsertPhoto(string? email, IFormFile? file)
         {
-            var result = GetByEmail(email, true);
+            var result = GetByEmail(email, true, false);
 
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
@@ -224,7 +226,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         public async Task AssignSkills(Guid id, List<Guid> skillIds)
         {
-            var user = GetById(id, false);
+            var user = GetById(id, false, false);
 
             if (skillIds == null || !skillIds.Any())
                 throw new ArgumentNullException(nameof(skillIds));

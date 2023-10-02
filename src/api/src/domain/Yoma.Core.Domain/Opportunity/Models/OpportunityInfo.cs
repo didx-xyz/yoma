@@ -12,7 +12,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public string Type { get; set; }
 
-        public string Organization { get; set; }
+        public string OrganizationName { get; set; }
+
+        public string? OrganizationLogoURL { get; set; }
 
         public string? Instructions { get; set; }
 

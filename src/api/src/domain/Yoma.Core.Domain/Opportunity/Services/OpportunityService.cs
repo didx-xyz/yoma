@@ -32,6 +32,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly IOpportunityDifficultyService _opportunityDifficultyService;
         private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
         private readonly ITimeIntervalService _timeIntervalService;
+        private readonly IBlobService _blobService;
 
         private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
         private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
@@ -65,6 +66,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             IOpportunityDifficultyService opportunityDifficultyService,
             IOpportunityVerificationTypeService opportunityVerificationTypeService,
             ITimeIntervalService timeIntervalService,
+            IBlobService blobService,
             OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
             OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
             OpportunitySearchFilterValidator searchFilterValidator,
@@ -88,6 +90,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             _opportunityDifficultyService = opportunityDifficultyService;
             _opportunityVerificationTypeService = opportunityVerificationTypeService;
             _timeIntervalService = timeIntervalService;
+            _blobService = blobService;
 
             _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate;
             _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate;
@@ -103,12 +106,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Public Members
-        public Models.Opportunity GetById(Guid id, bool includeChildren, bool ensureOrganizationAuthorization)
+        public Models.Opportunity GetById(Guid id, bool includeChildren, bool includeComputed, bool ensureOrganizationAuthorization)
         {
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
 
-            var result = GetByIdOrNull(id, includeChildren)
+            var result = GetByIdOrNull(id, includeChildren, includeComputed)
                 ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(Models.Opportunity)} with id '{id}' does not exist");
 
             if (ensureOrganizationAuthorization)
@@ -117,7 +120,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return result;
         }
 
-        public Models.Opportunity? GetByIdOrNull(Guid id, bool includeChildItems)
+        public Models.Opportunity? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed)
         {
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
@@ -125,12 +128,16 @@ namespace Yoma.Core.Domain.Opportunity.Services
             var result = _opportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
             if (result == null) return null;
 
-            result.SetPublished();
+            if (includeComputed)
+            {
+                result.SetPublished();
+                result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoId);
+            }
 
             return result;
         }
 
-        public Models.Opportunity? GetByTitleOrNull(string title, bool includeChildItems)
+        public Models.Opportunity? GetByTitleOrNull(string title, bool includeChildItems, bool includeComputed)
         {
             if (string.IsNullOrWhiteSpace(title))
                 throw new ArgumentNullException(nameof(title));
@@ -139,18 +146,31 @@ namespace Yoma.Core.Domain.Opportunity.Services
             var result = _opportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.Title == title);
             if (result == null) return null;
 
-            result.SetPublished();
+            if (includeComputed)
+            {
+                result.SetPublished();
+                result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoId);
+            }
 
             return result;
         }
 
-        public List<Models.Opportunity> Contains(string value)
+        public List<Models.Opportunity> Contains(string value, bool includeComputed)
         {
             if (string.IsNullOrWhiteSpace(value))
                 throw new ArgumentNullException(nameof(value));
             value = value.Trim();
 
-            return _opportunityRepository.Contains(_opportunityRepository.Query(), value).ToList();
+            var results = _opportunityRepository.Contains(_opportunityRepository.Query(), value).ToList();
+
+            if(includeComputed)
+                results.ForEach(o =>
+                {
+                    o.SetPublished();
+                    o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoId);
+                });
+
+            return results;
         }
 
         public OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
@@ -184,7 +204,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                     _organizationService.IsAdminsOf(filter.Organizations, true);
                 }
                 else
-                    filter.Organizations = _organizationService.ListAdminsOf().Select(o => o.Id).ToList();
+                    filter.Organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
             }
 
             if (filter.Organizations != null && filter.Organizations.Any())
@@ -248,7 +268,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 var predicate = PredicateBuilder.False<Models.Opportunity>();
 
                 //organizations
-                var matchedOrganizationIds = _organizationService.Contains(filter.ValueContains).Select(o => o.Id).ToList();
+                var matchedOrganizationIds = _organizationService.Contains(filter.ValueContains, false).Select(o => o.Id).ToList();
                 predicate = predicate.Or(o => matchedOrganizationIds.Contains(o.OrganizationId));
 
                 //types
@@ -282,7 +302,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
             }
 
             results.Items = query.ToList();
-            results.Items.ForEach(o => o.SetPublished());
+            results.Items.ForEach(o =>
+            {
+                o.SetPublished();
+                o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoId);
+            });
 
             return results;
         }
@@ -299,11 +323,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (ensureOrganizationAuthorization)
                 _organizationService.IsAdmin(request.OrganizationId, true);
 
-            var existingByTitle = GetByTitleOrNull(request.Title, false);
+            var existingByTitle = GetByTitleOrNull(request.Title, false, false);
             if (existingByTitle != null)
                 throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' already exists");
 
             var status = request.PostAsActive ? Status.Active : Status.Inactive;
+
+            var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
             var result = new Models.Opportunity
             {
@@ -312,7 +338,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 TypeId = request.TypeId,
                 Type = _opportunityTypeService.GetById(request.TypeId).Name,
                 OrganizationId = request.OrganizationId,
-                Organization = _organizationService.GetById(request.OrganizationId, false, false).Name,
+                OrganizationName = organization.Name,
+                OrganizationLogoId = organization.LogoId,
+                OrganizationLogoURL = organization.LogoURL,
                 Instructions = request.Instructions,
                 URL = request.URL,
                 ZltoReward = request.ZltoReward,
@@ -375,13 +403,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (ensureOrganizationAuthorization)
                 _organizationService.IsAdmin(request.OrganizationId, true);
 
-            var result = GetById(request.Id, true, false);
+            var result = GetById(request.Id, true, true, false);
 
             ValidateUpdatable(result);
 
-            var existingByTitle = GetByTitleOrNull(request.Title, false);
+            var existingByTitle = GetByTitleOrNull(request.Title, false, false);
             if (existingByTitle != null && result.Id != existingByTitle.Id)
                 throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' already exists");
+
+            var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
             //status remains unchanged (status updated via UpdateStatus)
             result.Title = request.Title;
@@ -389,7 +419,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.TypeId = request.TypeId;
             result.Type = _opportunityTypeService.GetById(request.TypeId).Name;
             result.OrganizationId = request.OrganizationId;
-            result.Organization = _organizationService.GetById(request.OrganizationId, false, false).Name;
+            result.OrganizationName = organization.Name;
+            result.OrganizationLogoId = organization.LogoId;
+            result.OrganizationLogoURL = organization.LogoURL;
             result.Instructions = request.Instructions;
             result.URL = request.URL;
             result.ZltoReward = request.ZltoReward;
@@ -443,7 +475,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         public async Task<(decimal? ZltoReward, decimal? YomaReward)> AllocateRewards(Guid id, bool ensureOrganizationAuthorization)
         {
-            var opportunity = GetById(id, false, ensureOrganizationAuthorization);
+            var opportunity = GetById(id, false, false, ensureOrganizationAuthorization);
 
             //can complete, provided published (and started) or expired (action prior to expiration)
             var canComplete = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
@@ -483,7 +515,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         public async Task<Models.Opportunity> UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
 
@@ -530,7 +562,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         public async Task<Models.Opportunity> AssignCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             ValidateUpdatable(result);
 
@@ -541,7 +573,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         public async Task<Models.Opportunity> RemoveCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             if (categoryIds == null || !categoryIds.Any())
                 throw new ArgumentNullException(nameof(categoryIds));
@@ -555,7 +587,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         public async Task<Models.Opportunity> AssignCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             ValidateUpdatable(result);
 
@@ -566,7 +598,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         public async Task<Models.Opportunity> RemoveCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             if (countryIds == null || !countryIds.Any())
                 throw new ArgumentNullException(nameof(countryIds));
@@ -580,7 +612,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         public async Task<Models.Opportunity> AssignLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             ValidateUpdatable(result);
 
@@ -591,7 +623,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         public async Task<Models.Opportunity> RemoveLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             if (languageIds == null || !languageIds.Any())
                 throw new ArgumentNullException(nameof(languageIds));
@@ -605,7 +637,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         public async Task<Models.Opportunity> AssignSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             if (skillIds == null || !skillIds.Any())
                 throw new ArgumentNullException(nameof(skillIds));
@@ -619,7 +651,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         public async Task<Models.Opportunity> RemoveSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             if (skillIds == null || !skillIds.Any())
                 throw new ArgumentNullException(nameof(skillIds));
@@ -633,7 +665,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         public async Task<Models.Opportunity> AssignVerificationTypes(Guid id, List<OpportunityRequestVerificationType> verificationTypes, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             if (verificationTypes == null || !verificationTypes.Any())
                 throw new ArgumentNullException(nameof(verificationTypes));
@@ -647,7 +679,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         public async Task<Models.Opportunity> RemoveVerificationTypes(Guid id, List<VerificationType> verificationTypes, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             if (verificationTypes == null || !verificationTypes.Any())
                 throw new ArgumentNullException(nameof(verificationTypes));
@@ -664,6 +696,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Private Members
+        private string? GetBlobObjectURL(Guid? id)
+        {
+            if (!id.HasValue) return null;
+            return _blobService.GetURL(id.Value);
+        }
+
         private async Task<Models.Opportunity> AssignCountries(Models.Opportunity opportunity, List<Guid> countryIds)
         {
             if (countryIds == null || !countryIds.Any())

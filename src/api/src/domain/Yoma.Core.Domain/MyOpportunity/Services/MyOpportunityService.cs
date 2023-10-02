@@ -95,7 +95,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             //filter validated by SearchAdmin
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
             var filterInternal = new MyOpportunitySearchFilterAdmin
             {
@@ -127,7 +127,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             //ensureOrganizationAuthorization (ensure search only spans authorized organizations)
             if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
             {
-                var organizationIds = _organizationService.ListAdminsOf().Select(o => o.Id).ToList();
+                var organizationIds = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
                 query = query.Where(o => organizationIds.Contains(o.OrganizationId));
             }
 
@@ -147,10 +147,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             {
                 var predicate = PredicateBuilder.False<Models.MyOpportunity>();
 
-                var matchedOpportunityIds = _opportunityService.Contains(filter.ValueContains).Select(o => o.Id).ToList();
+                var matchedOpportunityIds = _opportunityService.Contains(filter.ValueContains, false).Select(o => o.Id).ToList();
                 predicate = predicate.Or(o => matchedOpportunityIds.Contains(o.OpportunityId));
 
-                var matchedUserIds = _userService.Contains(filter.ValueContains).Select(o => o.Id).ToList();
+                var matchedUserIds = _userService.Contains(filter.ValueContains, false).Select(o => o.Id).ToList();
                 predicate = predicate.Or(o => matchedUserIds.Contains(o.UserId));
 
                 query = query.Where(predicate);
@@ -217,19 +217,25 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
             }
 
-            result.Items = query.ToList().Select(o => o.ToInfo()).ToList();
-            result.Items.ForEach(o => o.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileId)));
+            var items = query.ToList();
+            items.ForEach(o =>
+            {
+                o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoId);
+                o.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileId));
+            });
+            result.Items = items.Select(o => o.ToInfo()).ToList();
+
             return result;
         }
 
         public async Task PerformActionViewed(Guid opportunityId)
         {
             //published opportunities (irrespective of started)
-            var opportunity = _opportunityService.GetById(opportunityId, false, false);
+            var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
             if (!opportunity.Published)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
             var actionViewedId = _myOpportunityActionService.GetByName(Action.Viewed.ToString()).Id;
 
@@ -251,11 +257,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         public async Task PerformActionSaved(Guid opportunityId)
         {
             //published opportunities (irrespective of started)
-            var opportunity = _opportunityService.GetById(opportunityId, false, false);
+            var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
             if (!opportunity.Published)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
             var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
 
@@ -277,11 +283,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         public async Task PerformActionSavedRemove(Guid opportunityId)
         {
             //published opportunities (irrespective of started)
-            var opportunity = _opportunityService.GetById(opportunityId, false, false);
+            var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
             if (!opportunity.Published)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
             var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
             var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionSavedId);
@@ -299,7 +305,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             await _myOpportunityRequestValidatorVerify.ValidateAndThrowAsync(request);
 
             //provided opportunity is published (and started) or expired
-            var opportunity = _opportunityService.GetById(opportunityId, true, false);
+            var opportunity = _opportunityService.GetById(opportunityId, true, false, false);
             var canSendForVerification = opportunity.Status == Opportunity.Status.Expired;
             if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
             if (!canSendForVerification)
@@ -320,7 +326,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (request.DateEnd.HasValue && opportunity.DateEnd.HasValue && request.DateEnd.Value > opportunity.DateEnd.Value)
                 throw new ValidationException($"End date can not be later than the opportunity end date of '{opportunity.DateEnd}'");
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
             var verificationStatusPendingId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
@@ -394,10 +400,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             await _myOpportunityRequestValidatorVerifyFinalize.ValidateAndThrowAsync(request);
 
-            var user = _userService.GetById(request.UserId, false);
+            var user = _userService.GetById(request.UserId, false, false);
 
             //can complete, provided opportunity is published (and started) or expired (actioned prior to expiration)
-            var opportunity = _opportunityService.GetById(request.OpportunityId, false, false);
+            var opportunity = _opportunityService.GetById(request.OpportunityId, false, false, false);
             var canFinalize = opportunity.Status == Opportunity.Status.Expired;
             if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
             if (!canFinalize)

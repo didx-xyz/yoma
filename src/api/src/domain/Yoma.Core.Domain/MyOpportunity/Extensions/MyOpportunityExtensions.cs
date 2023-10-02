@@ -20,6 +20,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
                 OpportunityId = value.OpportunityId,
                 OpportunityTitle = value.OpportunityTitle,
                 OpportunityType = value.OpportunityType,
+                OrganizationName = value.OrganizationName,
+                OrganizationLogoURL = value.OrganizationLogoURL,
                 ActionId = value.ActionId,
                 Action = value.Action,
                 VerificationStatusId = value.VerificationStatusId,

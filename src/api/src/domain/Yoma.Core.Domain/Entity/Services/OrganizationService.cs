@@ -92,17 +92,17 @@ namespace Yoma.Core.Domain.Entity.Services
         #region Public Members
         public bool Updatable(Guid id, bool throwNotFound)
         {
-            var org = throwNotFound ? GetById(id, false, false) : GetByIdOrNull(id, false);
+            var org = throwNotFound ? GetById(id, false, false, false) : GetByIdOrNull(id, false, false);
             if (org == null) return false;
             return Statuses_Updatable.Contains(org.Status);
         }
 
-        public Organization GetById(Guid id, bool includeChildItems, bool ensureOrganizationAuthorization)
+        public Organization GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization)
         {
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
 
-            var result = GetByIdOrNull(id, includeChildItems)
+            var result = GetByIdOrNull(id, includeChildItems, includeComputed)
                 ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(Organization)} with id '{id}' does not exist");
 
             if (ensureOrganizationAuthorization)
@@ -111,7 +111,7 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
-        public Organization? GetByIdOrNull(Guid id, bool includeChildItems)
+        public Organization? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed)
         {
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
@@ -119,13 +119,16 @@ namespace Yoma.Core.Domain.Entity.Services
             var result = _organizationRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
             if (result == null) return null;
 
-            result.LogoURL = GetBlobObjectURL(result.LogoId);
-            result.Documents?.ForEach(o => o.Url = _blobService.GetURL(o.FileId));
+            if (includeComputed)
+            {
+                result.LogoURL = GetBlobObjectURL(result.LogoId);
+                result.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileId));
+            }
 
             return result;
         }
 
-        public Organization? GetByNameOrNull(string name, bool includeChildItems)
+        public Organization? GetByNameOrNull(string name, bool includeChildItems, bool includeComputed)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentNullException(nameof(name));
@@ -134,19 +137,27 @@ namespace Yoma.Core.Domain.Entity.Services
             var result = _organizationRepository.Query(includeChildItems).SingleOrDefault(o => o.Name == name);
             if (result == null) return null;
 
-            result.LogoURL = GetBlobObjectURL(result.LogoId);
-            result.Documents?.ForEach(o => o.Url = _blobService.GetURL(o.FileId));
+            if (includeComputed)
+            {
+                result.LogoURL = GetBlobObjectURL(result.LogoId);
+                result.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileId));
+            }
 
             return result;
         }
 
-        public List<Organization> Contains(string value)
+        public List<Organization> Contains(string value, bool includeComputed)
         {
             if (string.IsNullOrWhiteSpace(value))
                 throw new ArgumentNullException(nameof(value));
             value = value.Trim();
 
-            return _organizationRepository.Contains(_organizationRepository.Query(), value).ToList();
+            var results = _organizationRepository.Contains(_organizationRepository.Query(), value).ToList();
+
+            if (includeComputed)
+                results.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId));
+
+            return results;
         }
 
         public OrganizationSearchResults Search(OrganizationSearchFilter filter, bool ensureOrganizationAuthorization)
@@ -160,7 +171,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
             {
-                var organizationIds = ListAdminsOf().Select(o => o.Id).ToList();
+                var organizationIds = ListAdminsOf(false).Select(o => o.Id).ToList();
                 query = query.Where(o => organizationIds.Contains(o.Id));
             }
 
@@ -197,7 +208,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             await _organizationCreateRequestValidator.ValidateAndThrowAsync(request);
 
-            var existingByName = GetByNameOrNull(request.Name, false);
+            var existingByName = GetByNameOrNull(request.Name, false, false);
             if (existingByName != null)
                 throw new ValidationException($"{nameof(Organization)} with the specified name '{request.Name}' already exists");
 
@@ -299,9 +310,9 @@ namespace Yoma.Core.Domain.Entity.Services
 
             await _organizationUpdateRequestValidator.ValidateAndThrowAsync(request);
 
-            var result = GetById(request.Id, true, ensureOrganizationAuthorization);
+            var result = GetById(request.Id, true, true, ensureOrganizationAuthorization);
 
-            var existingByName = GetByNameOrNull(request.Name, false);
+            var existingByName = GetByNameOrNull(request.Name, false, false);
             if (existingByName != null && result.Id != existingByName.Id)
                 throw new ValidationException($"{nameof(Organization)} with the specified name '{request.Name}' already exists");
 
@@ -435,7 +446,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             await _organizationRequestUpdateStatusValidator.ValidateAndThrowAsync(request);
 
-            var result = GetById(id, true, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
 
@@ -503,7 +514,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         public async Task<Organization> AssignProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, true, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             ValidateUpdatable(result);
 
@@ -514,7 +525,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         public async Task<Organization> RemoveProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, true, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             if (providerTypeIds == null || !providerTypeIds.Any())
                 throw new ArgumentNullException(nameof(providerTypeIds));
@@ -531,7 +542,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         public async Task<Organization> UpdateLogo(Guid id, IFormFile? file, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, true, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             ValidateUpdatable(result);
 
@@ -542,7 +553,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         public async Task<Organization> AddDocuments(Guid id, OrganizationDocumentType type, List<IFormFile> documents, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, true, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             ValidateUpdatable(result);
 
@@ -553,7 +564,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         public async Task<Organization> DeleteDocuments(Guid id, OrganizationDocumentType type, List<Guid> documentFileIds, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, true, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             ValidateUpdatable(result);
 
@@ -575,7 +586,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         public async Task<Organization> AssignAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             ValidateUpdatable(result);
 
@@ -586,7 +597,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         public async Task<Organization> RemoveAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization)
         {
-            var result = GetById(id, false, ensureOrganizationAuthorization);
+            var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
             if (emails == null || !emails.Any())
                 throw new ArgumentNullException(nameof(emails));
@@ -600,7 +611,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         public bool IsAdmin(Guid id, bool throwUnauthorized)
         {
-            var org = GetById(id, false, false);
+            var org = GetById(id, false, false, false);
             return IsAdmin(org, throwUnauthorized);
         }
 
@@ -608,7 +619,7 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             if (!ids.Any()) throw new ArgumentNullException(nameof(ids));
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
             var orgIds = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).Select(o => o.OrganizationId).ToList();
 
             var result = !ids.Except(orgIds).Any();
@@ -618,19 +629,19 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
-        public List<UserInfo>? ListAdmins(Guid id, bool ensureOrganizationAuthorization)
+        public List<UserInfo>? ListAdmins(Guid id, bool includeComputed, bool ensureOrganizationAuthorization)
         {
-            var org = GetById(id, true, ensureOrganizationAuthorization);
+            var org = GetById(id, true, includeComputed, ensureOrganizationAuthorization);
             return org.Administrators;
         }
 
-        public List<OrganizationInfo> ListAdminsOf()
+        public List<OrganizationInfo> ListAdminsOf(bool includeComputed)
         {
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
             var orgIds = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).Select(o => o.OrganizationId).ToList();
 
             var organizations = _organizationRepository.Query().Where(o => orgIds.Contains(o.Id)).ToList();
-            organizations.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId));
+            if(includeComputed) organizations.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId));
             return organizations.Select(o => o.ToInfo()).ToList();
         }
         #endregion
@@ -638,7 +649,7 @@ namespace Yoma.Core.Domain.Entity.Services
         #region Private Members
         private bool IsAdmin(Organization organization, bool throwUnauthorized)
         {
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
             OrganizationUser? orgUser = null;
             var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
@@ -766,7 +777,7 @@ namespace Yoma.Core.Domain.Entity.Services
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var email in emails)
             {
-                var user = _userService.GetByEmail(email, false);
+                var user = _userService.GetByEmail(email, false, false);
                 if (!user.ExternalId.HasValue)
                     throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
@@ -801,7 +812,7 @@ namespace Yoma.Core.Domain.Entity.Services
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var email in emails)
             {
-                var user = _userService.GetByEmail(email, false);
+                var user = _userService.GetByEmail(email, false, false);
                 if (!user.ExternalId.HasValue)
                     throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
@@ -866,7 +877,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             organization.Documents ??= new List<OrganizationDocument>();
             organization.Documents.AddRange(itemsNew);
-            organization.Documents?.ForEach(o => o.Url = _blobService.GetURL(o.FileId));
+            organization.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileId));
 
             return (organization, itemsNewBlobs);
         }
@@ -911,10 +922,15 @@ namespace Yoma.Core.Domain.Entity.Services
             return (organization, itemsExisting);
         }
 
+        private string GetBlobObjectURL(Guid id)
+        {
+            return _blobService.GetURL(id);
+        }
+
         private string? GetBlobObjectURL(Guid? id)
         {
             if (!id.HasValue) return null;
-            return _blobService.GetURL(id.Value);
+            return GetBlobObjectURL(id.Value);
         }
 
         private static void ValidateUpdatable(Organization organization)
