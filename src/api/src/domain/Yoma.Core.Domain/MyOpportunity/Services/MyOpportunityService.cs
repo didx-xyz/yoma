@@ -603,13 +603,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     if (!item.FileId.HasValue || item.File == null)
                         throw new InvalidOperationException("File expected");
 
-                    var fileType = item.VerificationType.ToFileType() ?? throw new InvalidOperationException("File type expected");
-                    await _blobService.Create(item.FileId.Value, item.File, fileType);
+                    await _blobService.Create(item.FileId.Value, item.File);
                 }
 
                 //delete newly create items in blob storage
                 foreach (var item in itemsNewBlobs)
-                    await _blobService.Delete(item.Key);
+                    await _blobService.Delete(item);
 
                 throw;
             }

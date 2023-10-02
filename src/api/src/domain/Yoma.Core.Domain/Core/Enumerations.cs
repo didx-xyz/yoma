@@ -16,10 +16,12 @@ namespace Yoma.Core.Domain.Core
     }
 
     [Flags]
-    public enum ReferenceDataType
+    public enum CacheItemType
     {
         None,
-        Lookups //lookup entities i.e. countries; reference data store in lookup db namespace
+        Lookups, //lookup entities i.e. countries; reference data store in lookup db namespace
+        AmazonS3Client,
+        TrustRegistry
     }
 
     public enum FileType

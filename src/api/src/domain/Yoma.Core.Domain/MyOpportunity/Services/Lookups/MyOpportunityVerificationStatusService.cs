@@ -58,13 +58,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services.Lookups
 
         public List<MyOpportunityVerificationStatus> List()
         {
-            if (!_appSettings.CacheEnabledByReferenceDataTypes.HasFlag(Core.ReferenceDataType.Lookups))
+            if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(Core.CacheItemType.Lookups))
                 return _myOpportunityVerificationStatusRepository.Query().ToList();
 
             var result = _memoryCache.GetOrCreate(nameof(MyOpportunityVerificationStatus), entry =>
             {
-                entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationLookupInHours);
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowLookupInDays);
+                entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
                 return _myOpportunityVerificationStatusRepository.Query().OrderBy(o => o.Name).ToList();
             }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(MyOpportunityVerificationStatus)}s'");
             return result;

@@ -54,13 +54,13 @@ namespace Yoma.Core.Domain.Opportunity.Services.Lookups
 
         public List<OpportunityVerificationType> List()
         {
-            if (!_appSettings.CacheEnabledByReferenceDataTypes.HasFlag(Core.ReferenceDataType.Lookups))
+            if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(Core.CacheItemType.Lookups))
                 return _opportunityVerificationTypeRepository.Query().ToList();
 
             var result = _memoryCache.GetOrCreate(nameof(OpportunityVerificationType), entry =>
             {
-                entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationLookupInHours);
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowLookupInDays);
+                entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
                 return _opportunityVerificationTypeRepository.Query().OrderBy(o => o.DisplayName).ToList();
             }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(OpportunityVerificationType)}s'");
             return result;
