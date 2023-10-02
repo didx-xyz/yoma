@@ -12,7 +12,7 @@ namespace Yoma.Core.Domain.Core.Interfaces
         /// <summary>
         /// Create the blob object only, preserving the tracking record; used for rollbacks
         /// </summary>
-        Task<BlobObject> Create(Guid id, IFormFile file, FileType type);
+        Task<BlobObject> Create(Guid id, IFormFile file);
 
         Task<IFormFile> Download(Guid id);
 
@@ -23,6 +23,6 @@ namespace Yoma.Core.Domain.Core.Interfaces
         /// <summary>
         /// Delete the blob object only; used for rollbacks
         /// </summary>
-        Task Delete(string key);
+        Task Delete(BlobObject blobObject);
     }
 }

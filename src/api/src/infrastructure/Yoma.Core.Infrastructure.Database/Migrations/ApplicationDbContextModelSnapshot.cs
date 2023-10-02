@@ -35,6 +35,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<DateTimeOffset>("DateCreated")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("FileType")
+                        .IsRequired()
+                        .HasColumnType("varchar(25)");
+
                     b.Property<string>("Key")
                         .IsRequired()
                         .HasColumnType("varchar(125)");
@@ -43,10 +47,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
+                    b.Property<string>("StorageType")
+                        .IsRequired()
+                        .HasColumnType("varchar(25)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Key")
                         .IsUnique();
+
+                    b.HasIndex("StorageType", "FileType");
 
                     b.ToTable("Blob", "Object");
                 });

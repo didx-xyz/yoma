@@ -283,7 +283,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 //rollback created blobs
                 if (blobObjects.Any())
                     foreach (var blob in blobObjects)
-                        await _blobService.Delete(blob.Key);
+                        await _blobService.Delete(blob);
                 throw;
             }
 
@@ -324,7 +324,7 @@ namespace Yoma.Core.Domain.Entity.Services
             ValidateUpdatable(result);
 
             var itemsAdded = new List<BlobObject>();
-            var itemsDeleted = new List<(Guid FileId, IFormFile File, FileType Type)>();
+            var itemsDeleted = new List<(Guid FileId, IFormFile File)>();
             try
             {
                 using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
@@ -369,7 +369,7 @@ namespace Yoma.Core.Domain.Entity.Services
                         throw new ValidationException("Registration documents are required. Update will result in no associated documents");
 
                     var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocumentsDelete);
-                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File, FileType.Documents)));
+                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File)));
                     result = resultDelete.Organization;
                 }
 
@@ -387,7 +387,7 @@ namespace Yoma.Core.Domain.Entity.Services
                         throw new ValidationException("Education provider type documents are required. Update will result in no associated documents");
 
                     var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocumentsDelete);
-                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File, FileType.Documents)));
+                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File)));
                     result = resultDelete.Organization;
                 }
 
@@ -405,7 +405,7 @@ namespace Yoma.Core.Domain.Entity.Services
                         throw new ValidationException($"Business documents are required. Update will result in no associated documents");
 
                     var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.Business, request.BusinessDocumentsDelete);
-                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File, FileType.Documents)));
+                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File)));
                     result = resultDelete.Organization;
                 }
 
@@ -416,11 +416,11 @@ namespace Yoma.Core.Domain.Entity.Services
                 //rollback created blobs
                 if (itemsAdded.Any())
                     foreach (var blob in itemsAdded)
-                        await _blobService.Delete(blob.Key);
+                        await _blobService.Delete(blob);
 
                 //re-upload deleted items to blob storage
                 foreach (var item in itemsDeleted)
-                    await _blobService.Create(item.FileId, item.File, item.Type);
+                    await _blobService.Create(item.FileId, item.File);
 
                 throw;
             }
@@ -719,15 +719,15 @@ namespace Yoma.Core.Domain.Entity.Services
             return organization;
         }
 
-        private async Task<(Organization Organization, BlobObject ItemAdded, (Guid Id, IFormFile File, FileType Type)? ItemDeleted)> UpdateLogo(
+        private async Task<(Organization Organization, BlobObject ItemAdded, (Guid Id, IFormFile File)? ItemDeleted)> UpdateLogo(
             Organization organization, IFormFile? file)
         {
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
 
-            (Guid Id, IFormFile File, FileType Type)? currentLogo = null;
+            (Guid Id, IFormFile File)? currentLogo = null;
             if (organization.LogoId.HasValue)
-                currentLogo = (organization.LogoId.Value, await _blobService.Download(organization.LogoId.Value), FileType.Photos);
+                currentLogo = (organization.LogoId.Value, await _blobService.Download(organization.LogoId.Value));
 
             BlobObject? blobObject = null;
             try
@@ -745,10 +745,10 @@ namespace Yoma.Core.Domain.Entity.Services
             catch
             {
                 if (blobObject != null)
-                    await _blobService.Delete(blobObject.Key);
+                    await _blobService.Delete(blobObject);
 
                 if (currentLogo != null)
-                    await _blobService.Create(currentLogo.Value.Id, currentLogo.Value.File, currentLogo.Value.Type);
+                    await _blobService.Create(currentLogo.Value.Id, currentLogo.Value.File);
 
                 throw;
             }
@@ -859,7 +859,7 @@ namespace Yoma.Core.Domain.Entity.Services
             {
                 //delete newly create items in blob storage
                 foreach (var item in itemsNewBlobs)
-                    await _blobService.Delete(item.Key);
+                    await _blobService.Delete(item);
 
                 throw;
             }
@@ -901,7 +901,7 @@ namespace Yoma.Core.Domain.Entity.Services
             {
                 //re-upload existing items to blob storage
                 foreach (var item in itemsExistingDeleted)
-                    await _blobService.Create(item.FileId, item.File, FileType.Documents);
+                    await _blobService.Create(item.FileId, item.File);
 
                 throw;
             }

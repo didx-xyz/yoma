@@ -1,23 +1,37 @@
 using Amazon.S3;
 using Amazon.S3.Model;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Infrastructure.AmazonS3.Models;
+using Amazon.Extensions.NETCore.Setup;
+using Amazon.Runtime;
+using Amazon;
+using Flurl;
 
 namespace Yoma.Core.Infrastructure.AmazonS3.Client
 {
     public class AmazonS3Client : IBlobProviderClient
     {
         #region Class Variables
+        private readonly StorageType _storageType;
+        private readonly AWSS3OptionsBucket _optionsBucket;
         private readonly IAmazonS3 _client;
-        private readonly AWSS3Options _options;
         #endregion
 
         #region Constructor
-        public AmazonS3Client(IAmazonS3 client, AWSS3Options options)
+        public AmazonS3Client(StorageType storageType, AWSS3OptionsBucket optionsBucket)
         {
-            _client = client;
-            _options = options;
+            _storageType = storageType;
+            _optionsBucket = optionsBucket;
+
+            var optionsAWS = new AWSOptions
+            {
+                Region = RegionEndpoint.GetBySystemName(_optionsBucket.Region),
+                Credentials = new BasicAWSCredentials(_optionsBucket.AccessKey, _optionsBucket.SecretKey)
+            };
+
+            _client = optionsAWS.CreateServiceClient<IAmazonS3>();
         }
         #endregion
 
@@ -39,7 +53,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
 
             var request = new PutObjectRequest
             {
-                BucketName = _options.BucketName,
+                BucketName = _optionsBucket.BucketName,
                 Key = key,
                 InputStream = stream,
                 ContentType = contentType
@@ -63,7 +77,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
 
             var request = new GetObjectRequest
             {
-                BucketName = _options.BucketName,
+                BucketName = _optionsBucket.BucketName,
                 Key = key
             };
 
@@ -86,22 +100,31 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
                 throw new ArgumentNullException(nameof(key));
             key = key.Trim().ToLower();
 
+            if (_storageType == StorageType.Private && !_optionsBucket.URLExpirationInMinutes.HasValue)
+                throw new InvalidOperationException($"'{AWSS3Options.Section}.{nameof(_optionsBucket.URLExpirationInMinutes)}' required for storage type '{_storageType}'");
+
             var request = new GetPreSignedUrlRequest
             {
-                BucketName = _options.BucketName,
+                BucketName = _optionsBucket.BucketName,
                 Key = key,
                 Verb = HttpVerb.GET,
-                Expires = DateTime.UtcNow.AddMinutes(_options.URLExpirationInMinutes)
+                Expires = DateTime.UtcNow.AddMinutes(_optionsBucket.URLExpirationInMinutes ?? 1)
             };
 
+            string url;
             try
             {
-                return _client.GetPreSignedURL(request);
+                url = _client.GetPreSignedURL(request);
             }
             catch (AmazonS3Exception ex)
             {
                 throw new HttpClientException(ex.StatusCode, $"Failed to retrieve URL for S3 object with key '{key}': {ex.Message}");
             }
+
+            if (_optionsBucket.URLExpirationInMinutes.HasValue) return url;
+
+            url = new Url(url).RemoveQuery();
+            return url;
         }
 
         public async Task Delete(string key)
@@ -112,7 +135,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
 
             var deleteRequest = new DeleteObjectRequest
             {
-                BucketName = _options.BucketName,
+                BucketName = _optionsBucket.BucketName,
                 Key = key
             };
 

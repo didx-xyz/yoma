@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230929085800_ApplicationDb_Initial")]
+    [Migration("20231002095517_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -38,6 +38,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<DateTimeOffset>("DateCreated")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("FileType")
+                        .IsRequired()
+                        .HasColumnType("varchar(25)");
+
                     b.Property<string>("Key")
                         .IsRequired()
                         .HasColumnType("varchar(125)");
@@ -46,10 +50,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
+                    b.Property<string>("StorageType")
+                        .IsRequired()
+                        .HasColumnType("varchar(25)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Key")
                         .IsUnique();
+
+                    b.HasIndex("StorageType", "FileType");
 
                     b.ToTable("Blob", "Object");
                 });

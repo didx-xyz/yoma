@@ -208,10 +208,10 @@ namespace Yoma.Core.Domain.Entity.Services
             {
                 //roll back
                 if (blobObject != null)
-                    await _blobService.Delete(blobObject.Key);
+                    await _blobService.Delete(blobObject);
 
                 if (currentPhoto != null)
-                    await _blobService.Create(currentPhoto.Id, currentPhoto.File, FileType.Photos);
+                    await _blobService.Create(currentPhoto.Id, currentPhoto.File);
 
                 throw;
             }
