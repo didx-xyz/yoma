@@ -13,5 +13,7 @@ namespace Yoma.Core.Domain.SSI.Models
         public ArtifactType ArtifactType { get; set; }
 
         public List<SSISchemaEntity>? Entities { get; set; }
+
+        public int? PropertyCount { get; set; }
     }
 }

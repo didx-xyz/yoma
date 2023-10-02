@@ -66,6 +66,21 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
+        [SwaggerOperation(Summary = "Get the latest version of the configured schema with the specified name (Admin or Organization Admin roles required)", Description = "Results includes the schema's associated entities (objects) and properties")]
+        [HttpGet("schema/{name}")]
+        [ProducesResponseType(typeof(List<SSISchema>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public async Task<IActionResult> GetShemaByName([FromRoute] string name)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(GetShemaByName));
+
+            var result = await _ssiSchemaService.GetByName(name);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(GetShemaByName));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
         [SwaggerOperation(Summary = "Create a new schema with the specified entities (objects) and properties", Description = "If a schema with the specified name already exists, a new version will be automatically created")]
         [HttpPost("schema")]
         [ProducesResponseType(typeof(SSISchema), (int)HttpStatusCode.OK)]
