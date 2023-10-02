@@ -79,16 +79,8 @@ namespace Yoma.Core.Domain.SSI.Services
             // No matches found for schema attributes that match entities
             if (matchedEntitiesGrouped == null || !matchedEntitiesGrouped.Any()) return results;
 
-            results = schemas.Where(o => matchedEntitiesGrouped.ContainsKey(o.Id)).Select(o => new SSISchema
-            {
-                Id = o.Id,
-                Name = o.Name,
-                Version = o.Version.ToString(),
-                ArtifactType = o.ArtifactType,
-                Entities = matchedEntitiesGrouped.TryGetValue(o.Id, out var entities) ? entities : null
-            }).ToList();
-
-            return results;
+            return schemas.Where(o => matchedEntitiesGrouped.ContainsKey(o.Id)).Select(o =>
+                ConvertToSSISchema(o, matchedEntitiesGrouped.TryGetValue(o.Id, out var entities) ? entities : null)).ToList();
         }
 
         public async Task<SSISchema> Create(SSISchemaRequest request)
@@ -128,15 +120,20 @@ namespace Yoma.Core.Domain.SSI.Services
              })
              .ToList();
 
-            var result = new SSISchema
+            return ConvertToSSISchema(schema, matchedEntities);
+        }
+
+        private static SSISchema ConvertToSSISchema(Schema schema, List<SSISchemaEntity>? matchedEntities)
+        {
+            return new SSISchema
             {
                 Id = schema.Id,
                 Name = schema.Name,
                 Version = schema.Version.ToString(),
                 ArtifactType = schema.ArtifactType,
-                Entities = matchedEntities.Any() ? matchedEntities : null
+                Entities = matchedEntities,
+                PropertyCount = matchedEntities?.Sum(o => o.Properties?.Count)
             };
-            return result;
         }
         #endregion
     }

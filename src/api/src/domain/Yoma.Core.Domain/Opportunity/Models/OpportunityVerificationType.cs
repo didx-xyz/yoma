@@ -11,5 +11,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public string? Description { get; set; }
 
         public DateTimeOffset DateCreated { get; set; }
+
+        public DateTimeOffset DateModified { get; set; }
     }
 }
