@@ -11,47 +11,13 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import router from "next/router";
 import { type ParsedUrlQuery } from "querystring";
-import {
-  useCallback,
-  useMemo,
-  useState,
-  type ReactElement,
-  useEffect,
-} from "react";
-import DatePicker from "react-datepicker";
+import { useCallback, useState, type ReactElement, useEffect } from "react";
 import "react-datepicker/dist/react-datepicker.css";
-import {
-  Controller,
-  useForm,
-  type FieldValues,
-  useFieldArray,
-} from "react-hook-form";
+import { Controller, useForm, type FieldValues } from "react-hook-form";
 import Select from "react-select";
-import AsyncSelect from "react-select/async";
 import { toast } from "react-toastify";
 import z from "zod";
-import { type SelectOption } from "~/api/models/lookups";
-import {
-  VerificationMethod,
-  type Opportunity,
-  type OpportunityRequestBase,
-  type OpportunityVerificationType,
-} from "~/api/models/opportunity";
-import {
-  getCountries,
-  getLanguages,
-  getSkills,
-  getTimeIntervals,
-} from "~/api/services/lookups";
-import {
-  updateOpportunity,
-  getDifficulties,
-  getOpportunityById,
-  getTypes,
-  getVerificationTypes,
-  createOpportunity,
-  getCategories,
-} from "~/api/services/opportunities";
+import { type OpportunityRequestBase } from "~/api/models/opportunity";
 import MainLayout from "~/components/Layout/Main";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
@@ -60,18 +26,10 @@ import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
 import { IoMdArrowRoundBack } from "react-icons/io";
-import CreatableSelect from "react-select/creatable";
 import type { NextPageWithLayout } from "~/pages/_app";
-import {
-  createSchema,
-  getSchemaEntities,
-  getSchemas,
-} from "~/api/services/credentials";
-import {
-  ArtifactType,
-  SSISchema,
-  SSISchemaRequest,
-} from "~/api/models/credential";
+import { createSchema, getSchemaByName } from "~/api/services/credentials";
+import { SSISchema, SSISchemaRequest } from "~/api/models/credential";
+import { SchemaAttributesEdit } from "~/components/Schema/SearchInput";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -90,11 +48,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   //   })),
   // );
 
-  // if (id !== "create") {
-  //   await queryClient.prefetchQuery(["schema", id], () =>
-  //     getSchemaById(id, context),
-  //   );
-  // }
+  if (id !== "create") {
+    await queryClient.prefetchQuery(["schema", id], () =>
+      getSchemaByName(id, context),
+    );
+  }
 
   return {
     props: {
@@ -111,22 +69,12 @@ const SchemaCreateEdit: NextPageWithLayout<{
 }> = ({ id }) => {
   const queryClient = useQueryClient();
 
-  const { data: schemaEntities } = useQuery<SelectOption[]>({
-    queryKey: ["schemaEntities"],
-    queryFn: async () =>
-      (await getSchemaEntities()).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
+  const { data: schema } = useQuery<SSISchema>({
+    queryKey: ["schema", id],
+    queryFn: () => getSchemaByName(id),
+    enabled: id !== "create",
   });
 
-  // const { data: schema } = useQuery<Opportunity>({
-  //   queryKey: ["opportunity", id],
-  //   queryFn: () => getOpportunityById(id),
-  //   enabled: id !== "create",
-  // });
-
-  const schema = useState<SSISchema | null>(null);
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -142,13 +90,12 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
   const onSubmit = useCallback(
     async (data: SSISchemaRequest) => {
-      //return;
       setIsLoading(true);
 
       try {
         // update api
         await createSchema(data);
-        toast("Schema created.", {
+        toast(`Schema ${id == "create" ? "created" : "updated"}.`, {
           type: "success",
           toastId: "schema",
         });
@@ -187,7 +134,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
         ...(data as OpportunityRequestBase),
       };
       setFormData(model);
-
       console.log("model", model);
 
       if (id === "create") {
@@ -211,23 +157,22 @@ const SchemaCreateEdit: NextPageWithLayout<{
       .string()
       .min(1, "Schema name is required.")
       .max(255, "Schema name cannot exceed 255 characters."),
+    artifactType: z.number({
+      invalid_type_error: "Artifact type is required.",
+    }),
   });
 
   const schemaStep2 = z.object({
-    schemaEntityId: z.string().optional(),
     attributes: z
-      .array(z.string(), { required_error: "Attribute is required" })
-      .min(1, "Attribute is required."),
+      .array(z.string())
+      .min(1, "At least one attribute is required."),
   });
 
-  const schemaStep3 = z.object({
-    artifactType: z.union([z.number(), z.null()]).optional(),
-  });
+  const schemaStep3 = z.object({});
 
   const {
     register: registerStep1,
     handleSubmit: handleSubmitStep1,
-    setValue: setValueStep1,
     formState: { errors: errorsStep1, isValid: isValidStep1 },
     control: controlStep1,
   } = useForm({
@@ -236,30 +181,17 @@ const SchemaCreateEdit: NextPageWithLayout<{
   });
 
   const {
-    register: registerStep2,
     handleSubmit: handleSubmitStep2,
-    getValues: getValuesStep2,
-    setValue: setValueStep2,
     formState: { errors: errorsStep2, isValid: isValidStep2 },
     control: controlStep2,
-    watch: watchStep2,
-    reset: resetStep2,
   } = useForm({
     resolver: zodResolver(schemaStep2),
     defaultValues: formData,
   });
-  const { fields, append, prepend, remove, swap, move, insert } = useFieldArray(
-    {
-      control: controlStep2,
-      name: "attributes",
-    },
-  );
 
   const {
-    register: registerStep3,
     handleSubmit: handleSubmitStep3,
-    formState: { errors: errorsStep3, isValid: isValidStep3 },
-    control: controlStep3,
+    formState: { isValid: isValidStep3 },
   } = useForm({
     resolver: zodResolver(schemaStep3),
     defaultValues: formData,
@@ -277,10 +209,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
       <div className="container z-10 max-w-5xl px-2 py-4">
         {/* BREADCRUMB */}
-        <div
-          //className="flex flex-row text-xs text-gray"
-          className="breadcrumbs text-sm"
-        >
+        <div className="breadcrumbs text-sm">
           <ul>
             <li>
               <Link
@@ -376,7 +305,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
               </li>
             )}
           </ul>
-
           {/* dropdown menu */}
           <select
             className="select select-bordered select-sm md:hidden"
@@ -442,6 +370,53 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       )}
                     </div>
 
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Artifact type</span>
+                      </label>
+                      <Controller
+                        control={controlStep1}
+                        name="artifactType"
+                        render={({ field: { onChange, value } }) => (
+                          <Select
+                            classNames={{
+                              control: () => "input input-bordered",
+                            }}
+                            isMulti={false}
+                            options={[
+                              {
+                                value: 0,
+                                label: "Indy",
+                              },
+                              {
+                                value: 1,
+                                label: "Ld_proof",
+                              },
+                            ]}
+                            onChange={(val) => onChange(val?.value)}
+                            //value={difficulties?.find((c) => c.value === value)}
+                            value={{
+                              value: value,
+                              label:
+                                value != null
+                                  ? value === 0
+                                    ? "Indy"
+                                    : "Ld_proof"
+                                  : null,
+                            }}
+                          />
+                        )}
+                      />
+
+                      {errorsStep1.artifactType && (
+                        <label className="label">
+                          <span className="label-text-alt italic text-red-500">
+                            {`${errorsStep1.artifactType.message}`}
+                          </span>
+                        </label>
+                      )}
+                    </div>
+
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
                       {id === "create" && (
@@ -463,6 +438,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                   </form>
                 </>
               )}
+
               {step === 2 && (
                 <>
                   <div className="flex flex-col">
@@ -480,77 +456,19 @@ const SchemaCreateEdit: NextPageWithLayout<{
                   >
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text">Data source</span>
-                      </label>
-                      {/* <Controller
-                        control={controlStep2}
-                        name="schemaEntityId"
-                        render={({ field: { onChange, value } }) => ( */}
-                      <Select
-                        classNames={{
-                          control: () => "input input-bordered",
-                        }}
-                        isMulti={false}
-                        options={schemaEntities}
-                        onChange={(val) => {
-                          // clear all the attributes (fields)
-                          resetStep2({ attributes: [] });
-
-                          // add selected schema entity attributes
-                          // to the attributes (fields) array
-                          append(val?.label);
-                        }}
-                        // value={schemaEntities?.filter(
-                        //   (c) => value?.includes(c.value),
-                        // )}
-                      />
-                      {/* )}
-                      /> */}
-
-                      {errorsStep2.attributes && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.attributes.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                    <div className="form-control">
-                      <label className="label">
                         <span className="label-text">Attributes included</span>
                       </label>
 
-                      {/* render each of the attributes (fields) with delete & add button */}
-                      {fields.map((field, index) => (
-                        <div
-                          key={field.id}
-                          className="flex flex-row items-center gap-2"
-                        >
-                          <input
-                            type="text"
-                            className="input input-bordered rounded-md"
-                            placeholder="Enter attribute name"
-                            {...registerStep2(`attributes.${index}`)}
-                            contentEditable
+                      <Controller
+                        control={controlStep2}
+                        name="attributes"
+                        render={({ field: { onChange, value } }) => (
+                          <SchemaAttributesEdit
+                            defaultValue={formData.attributes}
+                            onChange={onChange}
                           />
-                          <button
-                            type="button"
-                            className="btn btn-error btn-sm"
-                            onClick={() => remove(index)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        className="btn btn-success btn-sm"
-                        onClick={() => append({})}
-                      >
-                        Add
-                      </button>
-
-                      {/* add new attribute (field) */}
+                        )}
+                      />
 
                       {errorsStep2.attributes && (
                         <label className="label">
@@ -560,6 +478,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
+
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
                       {id === "create" && (
@@ -587,7 +506,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
               {/* only show preview when creating new schema */}
               {step === 3 && id === "create" && (
                 <>
-                  <div className="flex flex-col">
+                  <div className="mb-2 flex flex-col">
                     <h6 className="font-bold">Review</h6>
                     {/* <p className="my-2 text-sm">
                       Detailed particulars about the opportunity
@@ -602,7 +521,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                   >
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">
+                        <span className="label-text -ml-1 font-bold">
                           Schema name
                         </span>
                       </label>
@@ -621,16 +540,16 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">Attributes</span>
+                        <span className="label-text -ml-1 font-bold">Type</span>
                       </label>
                       <label className="label-text text-sm">
-                        {formData.attributes?.join(", ")}
+                        {formData.artifactType == 0 ? "Indy" : "Ld_proof"}
                       </label>
-                      {errorsStep1.attributes && (
+                      {errorsStep1.artifactType && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
                             {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                            {`${errorsStep1.attributes.message}`}
+                            {`${errorsStep1.artifactType.message}`}
                           </span>
                         </label>
                       )}
@@ -638,18 +557,22 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">
-                          Artifact type
+                        <span className="label-text -ml-1 font-bold">
+                          Attributes
                         </span>
                       </label>
                       <label className="label-text text-sm">
-                        {formData.artifactType}
+                        <ul>
+                          {formData.attributes.map((attr) => (
+                            <li>{attr}</li>
+                          ))}
+                        </ul>
                       </label>
-                      {errorsStep2.difficultyId && (
+                      {errorsStep2.attributes && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
                             {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                            {`${errorsStep2.difficultyId.message}`}
+                            {`${errorsStep2.attributes.message}`}
                           </span>
                         </label>
                       )}
@@ -661,7 +584,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         type="button"
                         className="btn btn-warning btn-sm flex-grow"
                         onClick={() => {
-                          setStep(6);
+                          setStep(2);
                         }}
                       >
                         Back
