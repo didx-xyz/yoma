@@ -165,7 +165,7 @@ const Schemas: NextPageWithLayout<{
                   {schemas.map((schema) => (
                     <tr key={schema.id}>
                       <td>
-                        <Link href={`/admin/schemas/${schema.id}`}>
+                        <Link href={`/admin/schemas/${schema.name}`}>
                           {schema.name}
                         </Link>
                       </td>

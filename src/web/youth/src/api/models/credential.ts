@@ -2,7 +2,9 @@ export interface SSISchema {
   id: string;
   name: string;
   version: string;
+  artifactType: ArtifactType;
   entities: SSISchemaEntity[] | null;
+  propertyCount: number | null;
 }
 
 export interface SSISchemaEntity {
@@ -21,7 +23,7 @@ export interface SSISchemaEntityProperty {
 
 export interface SSISchemaRequest {
   name: string;
-  artifactType: ArtifactType | null;
+  artifactType: ArtifactType | string | null;
   attributes: string[];
 }
 

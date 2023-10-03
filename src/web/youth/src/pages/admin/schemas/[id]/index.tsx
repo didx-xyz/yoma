@@ -28,8 +28,12 @@ import Link from "next/link";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { createSchema, getSchemaByName } from "~/api/services/credentials";
-import { SSISchema, SSISchemaRequest } from "~/api/models/credential";
-import { SchemaAttributesEdit } from "~/components/Schema/SearchInput";
+import {
+  ArtifactType,
+  SSISchema,
+  SSISchemaRequest,
+} from "~/api/models/credential";
+import { SchemaAttributesEdit } from "~/components/Schema/SchemaAttributesEdit";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -83,9 +87,15 @@ const SchemaCreateEdit: NextPageWithLayout<{
   };
 
   const [formData, setFormData] = useState<SSISchemaRequest>({
-    name: "",
-    artifactType: null,
-    attributes: [],
+    name: schema?.name ?? "",
+    // enum value comes as string from server, convert to number
+    artifactType: schema?.artifactType
+      ? ArtifactType[schema.artifactType]
+      : null,
+    attributes:
+      schema?.entities
+        ?.flatMap((x) => x.properties)
+        .map((x) => x?.attributeName!) ?? [],
   });
 
   const onSubmit = useCallback(
