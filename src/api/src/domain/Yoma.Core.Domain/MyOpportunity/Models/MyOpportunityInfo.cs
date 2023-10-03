@@ -16,6 +16,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public string OpportunityType { get; set; }
 
+        public string OrganizationName { get; set; }
+
+        public string? OrganizationLogoURL { get; set; }
+
         public Guid ActionId { get; set; }
 
         public Action Action { get; set; }

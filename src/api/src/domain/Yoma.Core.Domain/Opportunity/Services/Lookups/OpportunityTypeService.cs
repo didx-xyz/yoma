@@ -67,13 +67,13 @@ namespace Yoma.Core.Domain.Opportunity.Services.Lookups
 
         public List<OpportunityType> List()
         {
-            if (!_appSettings.CacheEnabledByReferenceDataTypes.HasFlag(Core.ReferenceDataType.Lookups))
+            if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(Core.CacheItemType.Lookups))
                 return _opportunityTypeRepository.Query().ToList();
 
             var result = _memoryCache.GetOrCreate(nameof(OpportunityType), entry =>
             {
-                entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationLookupInHours);
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowLookupInDays);
+                entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
                 return _opportunityTypeRepository.Query().OrderBy(o => o.Name).ToList();
             }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(OpportunityType)}s'");
             return result;

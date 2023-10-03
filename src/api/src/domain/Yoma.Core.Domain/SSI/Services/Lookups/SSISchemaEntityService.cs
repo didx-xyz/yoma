@@ -66,7 +66,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
 
         public List<SSISchemaEntity> List()
         {
-            if (!_appSettings.CacheEnabledByReferenceDataTypes.HasFlag(Core.ReferenceDataType.Lookups))
+            if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(Core.CacheItemType.Lookups))
             {
                 var entities = _ssiSchemaEntityRepository.Query(true).ToList();
                 ReflectEntityTypeInformation(entities);
@@ -77,8 +77,8 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
 
             var result = _memoryCache.GetOrCreate(nameof(SSISchemaEntity), entry =>
             {
-                entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationLookupInHours);
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowLookupInDays);
+                entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
                 var entities = _ssiSchemaEntityRepository.Query(true).ToList();
                 ReflectEntityTypeInformation(entities);
                 entities = entities.OrderBy(o => o.Name).ToList();
@@ -90,7 +90,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         #endregion
 
         #region Private Members
-        private void ReflectEntityTypeInformation(List<SSISchemaEntity>? entities)
+        private static void ReflectEntityTypeInformation(List<SSISchemaEntity>? entities)
         {
             if (entities == null || !entities.Any()) return;
 

@@ -1,8 +1,6 @@
 using Newtonsoft.Json;
-using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity.Models;
-using Yoma.Core.Domain.Opportunity;
 
 namespace Yoma.Core.Domain.MyOpportunity.Extensions
 {
@@ -22,6 +20,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
                 OpportunityId = value.OpportunityId,
                 OpportunityTitle = value.OpportunityTitle,
                 OpportunityType = value.OpportunityType,
+                OrganizationName = value.OrganizationName,
+                OrganizationLogoURL = value.OrganizationLogoURL,
                 ActionId = value.ActionId,
                 Action = value.Action,
                 VerificationStatusId = value.VerificationStatusId,
@@ -41,17 +41,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
             };
 
             return result;
-        }
-
-        public static FileType? ToFileType(this VerificationType value)
-        {
-            return value switch
-            {
-                VerificationType.FileUpload => (FileType?)FileType.Certificates,
-                VerificationType.Picture => (FileType?)FileType.Photos,
-                VerificationType.VoiceNote => (FileType?)FileType.VoiceNotes,
-                _ => null,
-            };
         }
     }
 }

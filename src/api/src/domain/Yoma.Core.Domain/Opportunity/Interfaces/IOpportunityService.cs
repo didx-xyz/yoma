@@ -4,13 +4,13 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 {
     public interface IOpportunityService
     {
-        Models.Opportunity GetById(Guid id, bool includeChildren, bool ensureOrganizationAuthorization);
+        Models.Opportunity GetById(Guid id, bool includeChildren, bool includeComputed, bool ensureOrganizationAuthorization);
 
-        Models.Opportunity? GetByIdOrNull(Guid id, bool includeChildItems);
+        Models.Opportunity? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed);
 
-        Models.Opportunity? GetByTitleOrNull(string title, bool includeChildItems);
+        Models.Opportunity? GetByTitleOrNull(string title, bool includeChildItems, bool includeComputed);
 
-        List<Models.Opportunity> Contains(string value);
+        List<Models.Opportunity> Contains(string value, bool includeComputed);
 
         OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 

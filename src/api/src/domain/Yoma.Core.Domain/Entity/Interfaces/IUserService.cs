@@ -5,15 +5,15 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 {
     public interface IUserService
     {
-        User GetByEmail(string? email, bool includeChildItems);
+        User GetByEmail(string? email, bool includeChildItems, bool includeComputed);
 
-        User? GetByEmailOrNull(string email, bool includeChildItems);
+        User? GetByEmailOrNull(string email, bool includeChildItems, bool includeComputed);
 
-        User GetById(Guid Id, bool includeChildItems);
+        User GetById(Guid Id, bool includeChildItems, bool includeComputed);
 
-        User? GetByIdOrNull(Guid id, bool includeChildItems);
+        User? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed);
 
-        List<User> Contains(string value);
+        List<User> Contains(string value, bool includeComputed);
 
         UserSearchResults Search(UserSearchFilter filter);
 

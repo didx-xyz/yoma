@@ -18,7 +18,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public Guid OrganizationId { get; set; }
 
-        public string Organization { get; set; }
+        public string OrganizationName { get; set; }
+
+        public Guid? OrganizationLogoId { get; set; }
+
+        public string? OrganizationLogoURL { get; set; }
 
         public Guid OrganizationStatusId { get; set; }
 

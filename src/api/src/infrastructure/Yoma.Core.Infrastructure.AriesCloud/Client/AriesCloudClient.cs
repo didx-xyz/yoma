@@ -4,8 +4,10 @@ using AriesCloudAPI.DotnetSDK.AspCore.Clients.Interfaces;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models;
@@ -17,6 +19,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     public class AriesCloudClient : ISSIProviderClient
     {
         #region Class Variables
+        private readonly AppSettings _appSettings;
         private readonly ClientFactory _clientFactory;
         private readonly IMemoryCache _memoryCache;
         private readonly IRepository<Models.CredentialSchema> _credentialSchemaRepository;
@@ -26,11 +29,13 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         #endregion
 
         #region Constructor
-        public AriesCloudClient(ClientFactory clientFactory,
+        public AriesCloudClient(AppSettings appSettings,
+            ClientFactory clientFactory,
             IMemoryCache memoryCache,
             IRepository<Models.CredentialSchema> credentialSchemaRepository,
             IRepository<Models.Connection> connectionRepository)
         {
+            _appSettings = appSettings;
             _clientFactory = clientFactory;
             _memoryCache = memoryCache;
             _credentialSchemaRepository = credentialSchemaRepository;
@@ -104,6 +109,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
                     var client = _clientFactory.CreateGovernanceClient();
                     var schemaAries = await client.CreateSchemaAsync(schemaCreateRequest);
+                    //schemas added to te trust registry
+                    _memoryCache.Remove(nameof(TrustRegistry));
                     return schemaAries.ToSchema();
 
                 case ArtifactType.Ld_proof:
@@ -163,6 +170,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 };
 
                 var response = await client.CreateTenantAsync(createTenantRequest);
+
+                if (createTenantRequest.Roles.Any()) //issuer and verifier added to trust registry; holder implicitly assigned to a tenant
+                    _memoryCache.Remove(nameof(TrustRegistry));
                 return response.Tenant_id;
             }
 
@@ -296,15 +306,21 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         #region Private Members
         private TrustRegistry GetTrustRegistry()
         {
+            if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(CacheItemType.TrustRegistry))
+            {
+                var client = _clientFactory.CreatePublicClient();
+                return client.GetTrustRegistryAsync().Result;
+            }
+
             var result = _memoryCache.GetOrCreate(nameof(TrustRegistry), entry =>
             {
-                entry.SlidingExpiration = TimeSpan.FromMinutes(1);
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+                entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
                 var client = _clientFactory.CreatePublicClient();
                 return client.GetTrustRegistryAsync().Result;
             });
 
-            return result ?? throw new InvalidOperationException($"Failed to get the '{nameof(TrustRegistry)}' cache item");
+            return result ?? throw new InvalidOperationException($"Failed to retrieve the '{nameof(TrustRegistry)}' cache item");
         }
 
         private static async Task<Tenant?> GetTenantByNameOrNull(string name, ICustomerClient client)
@@ -335,6 +351,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 Tag = schema.Id,
                 Support_revocation = true
             });
+
+            //definitions added to the trust registry
+            _memoryCache.Remove(nameof(TrustRegistry));
 
             return definition.Id;
         }

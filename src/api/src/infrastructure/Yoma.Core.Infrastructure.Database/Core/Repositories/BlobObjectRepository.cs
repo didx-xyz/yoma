@@ -1,3 +1,5 @@
+using Yoma.Core.Domain.BlobProvider;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Entities;
@@ -21,6 +23,8 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
             return _context.BlobObject.Select(entity => new Domain.Core.Models.BlobObject
             {
                 Id = entity.Id,
+                StorageType = Enum.Parse<StorageType>(entity.StorageType),
+                FileType = Enum.Parse<FileType>(entity.FileType),
                 Key = entity.Key,
                 ContentType = entity.ContentType,
                 OriginalFileName = entity.OriginalFileName,
@@ -35,6 +39,8 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
             var entity = new BlobObject
             {
                 Id = item.Id,
+                StorageType = item.StorageType.ToString(),
+                FileType = item.FileType.ToString(),
                 Key = item.Key,
                 ContentType = item.ContentType,
                 OriginalFileName = item.OriginalFileName,

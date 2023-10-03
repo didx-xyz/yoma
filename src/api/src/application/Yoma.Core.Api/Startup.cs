@@ -90,7 +90,7 @@ namespace Yoma.Core.Api
             #region Services & Infrastructure
             services.ConfigureServices_DomainServices();
             services.ConfigureServices_InfrastructureSSIProvider(_configuration, _configuration.Configuration_ConnectionString());
-            services.ConfigureServices_InfrastructureBlobProvider(_configuration);
+            services.ConfigureServices_InfrastructureBlobProvider();
             services.ConfigureServices_InfrastructureIdentityProvider();
             services.ConfigureServices_InfrastructureLaborMarketProvider();
             services.ConfigureServices_InfrastructureEmailProvider(_configuration);

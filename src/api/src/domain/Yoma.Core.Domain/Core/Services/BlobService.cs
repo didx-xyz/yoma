@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using System.Transactions;
+using Yoma.Core.Domain.BlobProvider.Extensions;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -13,7 +14,7 @@ namespace Yoma.Core.Domain.Core.Services
     {
         #region Class Variables
         private readonly IEnvironmentProvider _environmentProvider;
-        private readonly IBlobProviderClient _blobProviderClient;
+        private readonly IBlobProviderClientFactory _blobProviderClientFactory;
         private readonly IRepository<BlobObject> _blobObjectRepository;
         #endregion
 
@@ -21,7 +22,7 @@ namespace Yoma.Core.Domain.Core.Services
         public BlobService(IEnvironmentProvider environmentProvider, IBlobProviderClientFactory blobProviderClientFactory, IRepository<BlobObject> blobObjectRepository)
         {
             _environmentProvider = environmentProvider;
-            _blobProviderClient = blobProviderClientFactory.CreateClient();
+            _blobProviderClientFactory = blobProviderClientFactory;
             _blobObjectRepository = blobObjectRepository;
         }
         #endregion
@@ -38,16 +39,18 @@ namespace Yoma.Core.Domain.Core.Services
         }
 
         // Create the blob object only, preserving the tracking record; used for rollbacks
-        public async Task<BlobObject> Create(Guid id, IFormFile file, FileType type)
+        public async Task<BlobObject> Create(Guid id, IFormFile file)
         {
             var result = GetById(id);
 
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
 
-            new FileValidator(type).Validate(file);
+            new FileValidator(result.FileType).Validate(file);
 
-            await _blobProviderClient.Create(result.Key, file.ContentType, file.ToBinary());
+            var client = _blobProviderClientFactory.CreateClient(result.StorageType);
+
+            await client.Create(result.Key, file.ContentType, file.ToBinary());
 
             return result;
         }
@@ -61,19 +64,24 @@ namespace Yoma.Core.Domain.Core.Services
 
             var id = Guid.NewGuid();
             var key = $"{_environmentProvider.Environment}/{type}/{id}{file.GetExtension()}";
+            var storageType = type.ToStorageType();
 
             var result = new BlobObject
             {
                 Id = id,
+                StorageType = storageType,
+                FileType = type,
                 Key = key,
                 ContentType = file.ContentType,
                 OriginalFileName = file.FileName
             };
 
+            var client = _blobProviderClientFactory.CreateClient(storageType);
+
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
             result = await _blobObjectRepository.Create(result);
-            await _blobProviderClient.Create(key, file.ContentType, file.ToBinary());
+            await client.Create(key, file.ContentType, file.ToBinary());
 
             scope.Complete();
 
@@ -84,7 +92,9 @@ namespace Yoma.Core.Domain.Core.Services
         {
             var item = GetById(id);
 
-            var (ContentType, Data) = await _blobProviderClient.Download(item.Key);
+            var client = _blobProviderClientFactory.CreateClient(item.StorageType);
+
+            var (ContentType, Data) = await client.Download(item.Key);
 
             return FileHelper.FromByteArray(item.OriginalFileName, ContentType, Data);
         }
@@ -93,28 +103,34 @@ namespace Yoma.Core.Domain.Core.Services
         {
             var item = GetById(id);
 
-            return _blobProviderClient.GetUrl(item.Key);
+            var client = _blobProviderClientFactory.CreateClient(item.StorageType);
+
+            return client.GetUrl(item.Key);
         }
 
         public async Task Delete(Guid id)
         {
             var item = GetById(id);
 
+            var client = _blobProviderClientFactory.CreateClient(item.StorageType);
+
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
             await _blobObjectRepository.Delete(item);
-            await _blobProviderClient.Delete(item.Key);
+            await client.Delete(item.Key);
 
             scope.Complete();
         }
 
         // Delete the blob object only; used for rollbacks
-        public async Task Delete(string key)
+        public async Task Delete(BlobObject blobObject)
         {
-            if (string.IsNullOrWhiteSpace(key))
-                throw new ArgumentNullException(nameof(key));
+            if (blobObject == null)
+                throw new ArgumentNullException(nameof(blobObject));
 
-            await _blobProviderClient.Delete(key);
+            var client = _blobProviderClientFactory.CreateClient(blobObject.StorageType);
+
+            await client.Delete(blobObject.Key);
         }
         #endregion
     }

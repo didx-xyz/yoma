@@ -12,11 +12,11 @@ namespace Yoma.Core.Domain.Core.Models
 
         public string SwaggerScopes { get; set; }
 
-        public int CacheSlidingExpirationLookupInHours { get; set; }
+        public int CacheSlidingExpirationInHours { get; set; }
 
-        public int CacheAbsoluteExpirationRelativeToNowLookupInDays { get; set; }
+        public int CacheAbsoluteExpirationRelativeToNowInDays { get; set; }
 
-        public ReferenceDataType CacheEnabledByReferenceDataTypes { get; set; }
+        public CacheItemType CacheEnabledByCacheItemTypes { get; set; }
     }
 
     public class AppSettingsCredentials

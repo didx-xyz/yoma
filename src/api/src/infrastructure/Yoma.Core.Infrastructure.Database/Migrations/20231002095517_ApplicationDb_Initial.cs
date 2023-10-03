@@ -31,6 +31,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    StorageType = table.Column<string>(type: "varchar(25)", nullable: false),
+                    FileType = table.Column<string>(type: "varchar(25)", nullable: false),
                     Key = table.Column<string>(type: "varchar(125)", nullable: false),
                     ContentType = table.Column<string>(type: "varchar(127)", nullable: false),
                     OriginalFileName = table.Column<string>(type: "varchar(255)", nullable: false),
@@ -830,6 +832,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 table: "Blob",
                 column: "Key",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Blob_StorageType_FileType",
+                schema: "Object",
+                table: "Blob",
+                columns: new[] { "StorageType", "FileType" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Country_CodeAlpha2",

@@ -6,8 +6,17 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
 {
     [Table("Blob", Schema = "Object")]
     [Index(nameof(Key), IsUnique = true)]
+    [Index(nameof(StorageType), nameof(FileType))]
     public class BlobObject : BaseEntity<Guid>
     {
+        [Required]
+        [Column(TypeName = "varchar(25)")]
+        public string StorageType { get; set; }
+
+        [Required]
+        [Column(TypeName = "varchar(25)")]
+        public string FileType { get; set; }
+
         [Required]
         [Column(TypeName = "varchar(125)")]
         public string Key { get; set; }

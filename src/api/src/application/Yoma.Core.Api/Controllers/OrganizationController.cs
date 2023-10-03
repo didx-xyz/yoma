@@ -45,7 +45,7 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
-            var result = _organizationService.GetById(id, true, true);
+            var result = _organizationService.GetById(id, true, true, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetById));
 
@@ -241,7 +241,7 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListAdmins));
 
-            var result = _organizationService.ListAdmins(id, true);
+            var result = _organizationService.ListAdmins(id, true, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListAdmins));
 
@@ -256,7 +256,7 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListAdminsOf));
 
-            var result = _organizationService.ListAdminsOf();
+            var result = _organizationService.ListAdminsOf(true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListAdminsOf));
 

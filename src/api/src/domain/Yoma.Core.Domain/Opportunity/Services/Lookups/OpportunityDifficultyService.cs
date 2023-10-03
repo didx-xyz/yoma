@@ -58,13 +58,13 @@ namespace Yoma.Core.Domain.Opportunity.Services.Lookups
 
         public List<OpportunityDifficulty> List()
         {
-            if (!_appSettings.CacheEnabledByReferenceDataTypes.HasFlag(Core.ReferenceDataType.Lookups))
+            if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(Core.CacheItemType.Lookups))
                 return _opportunityDifficultyRepository.Query().ToList();
 
             var result = _memoryCache.GetOrCreate(nameof(OpportunityDifficulty), entry =>
             {
-                entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationLookupInHours);
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowLookupInDays);
+                entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
                 return _opportunityDifficultyRepository.Query().OrderBy(o => o.Name).ToList();
             }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(OpportunityDifficulty)}s'");
             return result;

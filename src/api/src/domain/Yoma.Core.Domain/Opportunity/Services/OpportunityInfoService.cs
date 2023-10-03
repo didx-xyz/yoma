@@ -23,21 +23,23 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Public Members
-        public OpportunityInfo GetInfoById(Guid id, bool includeChildren)
+        public OpportunityInfo GetInfoById(Guid id, bool includeChildren, bool includeComputed)
         {
-            var result = _opportunityService.GetById(id, includeChildren, false);
+            var opportunity = _opportunityService.GetById(id, includeChildren, includeComputed, false);
 
-            return result.ToOpportunityInfo();
+            var result = opportunity.ToOpportunityInfo();
+            if (includeComputed) SetParticipantCounts(result);
+            return result;
         }
 
-        public OpportunityInfo? GetInfoByTitleOrNull(string title, bool includeChildItems)
+        public OpportunityInfo? GetInfoByTitleOrNull(string title, bool includeChildItems, bool includeComputed)
         {
-            var opportunity = _opportunityService.GetByTitleOrNull(title, includeChildItems);
+            var opportunity = _opportunityService.GetByTitleOrNull(title, includeChildItems, includeComputed);
             if (opportunity == null) return null;
 
             var result = opportunity.ToOpportunityInfo();
-            SetParticipantCounts(result);
-            return opportunity.ToOpportunityInfo();
+            if (includeComputed) SetParticipantCounts(result);
+            return result;
         }
 
         public OpportunitySearchResultsInfo Search(OpportunitySearchFilter filter)

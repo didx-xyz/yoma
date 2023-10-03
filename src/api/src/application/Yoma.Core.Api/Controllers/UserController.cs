@@ -43,7 +43,7 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
-            var result = _userService.GetById(id, true);
+            var result = _userService.GetById(id, true, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetById));
 

@@ -55,7 +55,7 @@ namespace Yoma.Core.Domain.Entity.Services
         public UserProfile Get()
         {
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-            var user = _userService.GetByEmail(username, true);
+            var user = _userService.GetByEmail(username, true, true);
             return ToProfile(user);
         }
 
@@ -75,7 +75,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
 
-            var user = _userService.GetByEmail(username, true);
+            var user = _userService.GetByEmail(username, true, true);
 
             if (!user.ExternalId.HasValue)
                 throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
@@ -83,7 +83,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var emailUpdated = !string.Equals(user.Email, request.Email, StringComparison.CurrentCultureIgnoreCase);
             if (emailUpdated)
-                if (_userService.GetByEmailOrNull(request.Email, false) != null)
+                if (_userService.GetByEmailOrNull(request.Email, false, false) != null)
                     throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
 
             user.Email = request.Email;
@@ -130,7 +130,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private UserProfile ToProfile(User user)
         {
             var result = user.ToProfile();
-            result.AdminsOf = _organizationService.ListAdminsOf();
+            result.AdminsOf = _organizationService.ListAdminsOf(true);
 
             var filter = new MyOpportunitySearchFilter
             {
