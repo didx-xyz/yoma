@@ -14,10 +14,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
         Task PerformActionSavedRemove(Guid opportunityId);
 
-        Task PerformActionSendForVerification(Guid opportunityId, MyOpportunityRequestVerify request);
+        Task PerformActionSendForVerificationManual(Guid opportunityId, MyOpportunityRequestVerify request);
 
-        Task FinalizeVerification(MyOpportunityRequestVerifyFinalizeBatch request);
+        Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalizeBatch request);
 
-        Task FinalizeVerification(MyOpportunityRequestVerifyFinalize request);
+        Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalize request);
     }
 }
