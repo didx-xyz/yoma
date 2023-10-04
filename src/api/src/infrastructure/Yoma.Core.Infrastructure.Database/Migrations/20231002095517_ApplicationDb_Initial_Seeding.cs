@@ -1107,7 +1107,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"755B1F54-1365-4D2F-AF29-8AEC57CC7B4C","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Type","i.e. Learning",true,DateTimeOffset.Now}
                     ,
-                    {"E763C235-F1B8-4D12-B60F-117AF7948355","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Organization","Organization Name",true,DateTimeOffset.Now}
+                    {"E763C235-F1B8-4D12-B60F-117AF7948355","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","OrganizationName","Organization Name",true,DateTimeOffset.Now}
                     ,
                     {"FF423D0C-2E91-48A6-9245-28EEF6E96B01","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Difficulty","i.e. Intermediate",true,DateTimeOffset.Now}
                     ,
