@@ -307,9 +307,9 @@ namespace Yoma.Core.Api
                                 Type = ReferenceType.SecurityScheme,
                                 Id = Common.Constants.RequestHeader_ApiKey
                             },
-                            Type = SecuritySchemeType.ApiKey, 
+                            Type = SecuritySchemeType.ApiKey,
                             Name = Common.Constants.RequestHeader_ApiKey,
-                            In = ParameterLocation.Header 
+                            In = ParameterLocation.Header
                         },
                         new List<string>()
                     }
