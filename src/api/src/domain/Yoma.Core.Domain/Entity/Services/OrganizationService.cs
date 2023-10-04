@@ -146,6 +146,16 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
+        public Organization GetByApiKey(string apiKey)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Organization GetByApiKeyOrNull(string apiKey)
+        {
+            throw new NotImplementedException();
+        }
+
         public List<Organization> Contains(string value, bool includeComputed)
         {
             if (string.IsNullOrWhiteSpace(value))

@@ -6,8 +6,8 @@ namespace Yoma.Core.Domain.Core
         public const string Role_Admin = "Admin";
         public const string Role_OrganizationAdmin = "OrganisationAdmin";
 
-        public const string ModifiedBy_System_Username = "System";
-
         public static readonly string[] Roles_Supported = { Role_User, Role_Admin, Role_OrganizationAdmin };
+
+        public const string ModifiedBy_System_Username = "System";
     }
 }
