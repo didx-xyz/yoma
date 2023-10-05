@@ -98,7 +98,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
         public DbSet<SSISchemaType> SSISchemaType { get; set; }
         #endregion Lookups
 
-        public DbSet<SSISchemaSchemaType> SSISchemaTypeSchemas { get; set; }    
+        public DbSet<SSISchemaSchemaType> SSISchemaTypeSchemas { get; set; }
         #endregion SSI
 
         #endregion
