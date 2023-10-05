@@ -11,7 +11,7 @@
     "analyze": "cross-env ANALYZE=true next build"
   },
   "dependencies": {
-    "@fontsource/open-sans": "^5.0.9",
+    "@fontsource/open-sans": "^5.0.14",
     "@hookform/resolvers": "^3.3.0",
     "@sentry/nextjs": "^7.64.0",
     "@t3-oss/env-nextjs": "^0.6.1",
