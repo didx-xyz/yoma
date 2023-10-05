@@ -157,13 +157,13 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
             var client = _clientFactory.CreateCustomerClient();
 
-            //try and find the tenant by name (TODO client reference)
+            //try and find the tenant by name (TODO use wallet_name)
             var tenant = await GetTenantByNameOrNull(request.Name, client);
             if (tenant == null)
             {
                 var createTenantRequest = new CreateTenantRequest
                 {
-                    //TODO: client reference
+                    //TODO: wallet_name
                     Name = request.Name,
                     Roles = request.Roles.ToAriesRoles(),
                     Image_url = imageUri

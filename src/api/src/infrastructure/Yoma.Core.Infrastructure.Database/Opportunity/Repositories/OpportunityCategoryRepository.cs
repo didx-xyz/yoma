@@ -33,7 +33,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 OpportunityId = item.OpportunityId,
                 CategoryId = item.CategoryId,
                 DateCreated = item.DateCreated,
-
             };
 
             _context.OpportunityCategories.Add(entity);

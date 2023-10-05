@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231002095517_ApplicationDb_Initial")]
+    [Migration("20231005065805_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -337,6 +337,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Property<string>("TenantId")
                         .HasColumnType("varchar(50)");
+
+                    b.Property<bool?>("YoIDOnboarded")
+                        .HasColumnType("bit");
 
                     b.Property<string>("ZltoWalletId")
                         .HasColumnType("varchar(50)");
@@ -1081,6 +1084,57 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.ToTable("SchemaEntityProperty", "SSI");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(125)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("SchemaType", "SSI");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.SSI.Entities.SSISchemaSchemaType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("SSISchemaName")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<Guid>("SSISchemaTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SSISchemaName")
+                        .IsUnique();
+
+                    b.HasIndex("SSISchemaTypeId");
+
+                    b.ToTable("SSISchemaSchemaType", "SSI");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>
                 {
                     b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "Country")
@@ -1412,6 +1466,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("SSISchemaObject");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.SSI.Entities.SSISchemaSchemaType", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaType", "SSISchemaType")
+                        .WithMany()
+                        .HasForeignKey("SSISchemaTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SSISchemaType");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>

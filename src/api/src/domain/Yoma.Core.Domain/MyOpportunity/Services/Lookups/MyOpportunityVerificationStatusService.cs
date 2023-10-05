@@ -59,7 +59,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services.Lookups
         public List<MyOpportunityVerificationStatus> List()
         {
             if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(Core.CacheItemType.Lookups))
-                return _myOpportunityVerificationStatusRepository.Query().ToList();
+                return _myOpportunityVerificationStatusRepository.Query().OrderBy(o => o.Name).ToList();
 
             var result = _memoryCache.GetOrCreate(nameof(MyOpportunityVerificationStatus), entry =>
             {

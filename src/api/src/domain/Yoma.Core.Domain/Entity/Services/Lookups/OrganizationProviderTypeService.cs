@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.Entity.Services.Lookups
         public List<Models.Lookups.OrganizationProviderType> List()
         {
             if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(Core.CacheItemType.Lookups))
-                return _providerTypeRepository.Query().ToList();
+                return _providerTypeRepository.Query().OrderBy(o => o.Name).ToList();
 
             var result = _memoryCache.GetOrCreate(nameof(Models.Lookups.OrganizationProviderType), entry =>
             {

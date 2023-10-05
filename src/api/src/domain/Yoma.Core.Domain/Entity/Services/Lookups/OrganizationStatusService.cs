@@ -58,7 +58,7 @@ namespace Yoma.Core.Domain.Entity.Services.Lookups
         public List<Models.Lookups.OrganizationStatus> List()
         {
             if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(Core.CacheItemType.Lookups))
-                return _organizationStatusRepository.Query().ToList();
+                return _organizationStatusRepository.Query().OrderBy(o => o.Name).ToList();
 
             var result = _memoryCache.GetOrCreate(nameof(Models.Lookups.OrganizationStatus), entry =>
             {

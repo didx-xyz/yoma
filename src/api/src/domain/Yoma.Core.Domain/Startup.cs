@@ -87,6 +87,7 @@ namespace Yoma.Core.Domain
             #region SSI
             #region Lookups
             services.AddScoped<ISSISchemaEntityService, SSISchemaEntityService>();
+            services.AddScoped<ISSISchemaTypeService, SSISchemaTypeService>();
             #endregion Lookups
             services.AddScoped<ISSISchemaService, SSISchemaService>();
             #endregion SSI
