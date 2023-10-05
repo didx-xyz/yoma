@@ -5,6 +5,7 @@ import type {
   SSISchema,
   SSISchemaEntity,
   SSISchemaRequest,
+  SSISchemaType,
 } from "../models/credential";
 
 export const getSchemas = async (
@@ -38,5 +39,13 @@ export const getSchemaByName = async (
 ): Promise<SSISchema> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<SSISchema>(`/ssi/schema/${name}`);
+  return data;
+};
+
+export const getSchemaTypes = async (
+  context?: GetServerSidePropsContext,
+): Promise<SSISchemaType[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<SSISchemaType[]>("/ssi/schema/types");
   return data;
 };

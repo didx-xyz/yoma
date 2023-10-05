@@ -1,11 +1,4 @@
-export interface SSISchema {
-  id: string;
-  name: string;
-  version: string;
-  artifactType: ArtifactType;
-  entities: SSISchemaEntity[] | null;
-  propertyCount: number | null;
-}
+
 
 export interface SSISchemaEntity {
   id: string;
@@ -23,6 +16,7 @@ export interface SSISchemaEntityProperty {
 
 export interface SSISchemaRequest {
   name: string;
+  typeId: string;
   artifactType: ArtifactType | string | null;
   attributes: string[];
 }
@@ -30,4 +24,22 @@ export interface SSISchemaRequest {
 export enum ArtifactType {
   Indy,
   Ld_proof,
+}
+
+export interface SSISchemaType {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface SSISchema {
+  id: string;
+  name: string;
+  typeId: string;
+  //type: SchemaType;
+  typeDescription: string;
+  version: string;
+  artifactType: ArtifactType;
+  entities: SSISchemaEntity[] | null;
+  propertyCount: number | null;
 }

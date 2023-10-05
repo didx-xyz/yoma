@@ -11,7 +11,7 @@ import { type NextPageWithLayout } from "~/pages/_app";
 import { type ParsedUrlQuery } from "querystring";
 import Link from "next/link";
 import { PageBackground } from "~/components/PageBackground";
-import { IoIosAdd } from "react-icons/io";
+import { IoIosAdd, IoMdSettings } from "react-icons/io";
 import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { getSchemas } from "~/api/services/credentials";
@@ -156,6 +156,7 @@ const Schemas: NextPageWithLayout<{
                     <th>Name</th>
                     <th>Version</th>
                     <th>Attributes</th>
+                    <th>Type</th>
                     <th>Manage</th>
                   </tr>
                 </thead>
@@ -169,6 +170,12 @@ const Schemas: NextPageWithLayout<{
                       </td>
                       <td>{schema.version}</td>
                       <td>{schema.entities?.length}</td>
+                      <td>{schema.typeDescription}</td>
+                      <td>
+                        <Link href={`/admin/schemas/${schema.name}`}>
+                          <IoMdSettings className="h-2 w-2" />
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

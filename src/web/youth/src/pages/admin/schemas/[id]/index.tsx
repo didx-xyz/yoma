@@ -34,6 +34,8 @@ import {
   type SSISchemaRequest,
 } from "~/api/models/credential";
 import { SchemaAttributesEdit } from "~/components/Schema/SchemaAttributesEdit";
+import { getSchemaTypes } from "~/api/services/credentials";
+import { SelectOption } from "~/api/models/lookups";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -78,6 +80,14 @@ const SchemaCreateEdit: NextPageWithLayout<{
     queryFn: () => getSchemaByName(id),
     enabled: id !== "create",
   });
+  const { data: schemaTypes } = useQuery<SelectOption[]>({
+    queryKey: ["schemaTypes"],
+    queryFn: async () =>
+      (await getSchemaTypes()).map((c) => ({
+        value: c.id,
+        label: c.name,
+      })),
+  });
 
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -97,6 +107,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
       schema?.entities
         ?.flatMap((x) => x.properties)
         .map((x) => x?.attributeName!) ?? [],
+    typeId: schema?.typeId!,
   });
   /* eslint-enable */
 
@@ -173,6 +184,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
     artifactType: z.number({
       invalid_type_error: "Artifact type is required.",
     }),
+    typeId: z.string().min(1, "Schema type is required."),
   });
 
   const schemaStep2 = z.object({
@@ -445,6 +457,44 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
                             Artifact type cannot be changed for existing schemas
+                          </span>
+                        </label>
+                      )}
+                    </div>
+
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Schema type</span>
+                      </label>
+                      <Controller
+                        control={controlStep1}
+                        name="typeId"
+                        render={({ field: { onChange, value } }) => (
+                          <Select
+                            classNames={{
+                              control: () => "input input-bordered",
+                            }}
+                            options={schemaTypes}
+                            onChange={(val) => onChange(val?.value)}
+                            value={schemaTypes?.find((c) => c.value === value)}
+                            isDisabled={id !== "create"}
+                          />
+                        )}
+                      />
+
+                      {errorsStep1.typeId && (
+                        <label className="label">
+                          <span className="label-text-alt italic text-red-500">
+                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                            {`${errorsStep1.typeId.message}`}
+                          </span>
+                        </label>
+                      )}
+
+                      {id !== "create" && (
+                        <label className="label">
+                          <span className="label-text-alt italic text-red-500">
+                            Schema type cannot be changed for existing schemas
                           </span>
                         </label>
                       )}
