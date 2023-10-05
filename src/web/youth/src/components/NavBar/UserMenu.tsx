@@ -1,17 +1,17 @@
 import { useAtomValue } from "jotai";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { IoMdImage, IoMdPerson } from "react-icons/io";
 import ReactModal from "react-modal";
 import { shimmer, toBase64 } from "~/lib/image";
-import { navbarColorAtom, userProfileAtom } from "~/lib/store";
+import { userProfileAtom } from "~/lib/store";
 
 export const UserMenu: React.FC = () => {
-  const navbarColor = useAtomValue(navbarColorAtom);
   const [userMenuVisible, setUserMenuVisible] = useState(false);
   const userProfile = useAtomValue(userProfileAtom);
+  const { data: session } = useSession();
 
   const handleLogout = () => {
     signOut(); // eslint-disable-line @typescript-eslint/no-floating-promises
@@ -78,12 +78,14 @@ export const UserMenu: React.FC = () => {
             User settings
           </Link>
 
-          {/* <Link
-            href="/organisations/register"
-            className="px-7 py-3 text-white hover:brightness-50"
-          >
-            Register Organisation
-          </Link> */}
+          {session?.user.roles.includes("Admin") && (
+            <Link
+              href="/admin"
+              className="px-7 py-3 text-gray-dark hover:brightness-50"
+            >
+              Admin
+            </Link>
+          )}
 
           <div className="divider m-0" />
 
