@@ -232,6 +232,21 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SchemaType",
+                schema: "SSI",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "varchar(125)", nullable: false),
+                    Description = table.Column<string>(type: "varchar(255)", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SchemaType", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Skill",
                 schema: "Lookup",
                 columns: table => new
@@ -283,6 +298,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ExternalId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ZltoWalletId = table.Column<string>(type: "varchar(50)", nullable: true),
                     DateZltoWalletCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    YoIDOnboarded = table.Column<bool>(type: "bit", nullable: true),
                     TenantId = table.Column<string>(type: "varchar(50)", nullable: true),
                     DateTenantCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
@@ -391,6 +407,28 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         column: x => x.SSISchemaObjectId,
                         principalSchema: "SSI",
                         principalTable: "SchemaEntity",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SSISchemaSchemaType",
+                schema: "SSI",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SSISchemaName = table.Column<string>(type: "varchar(255)", nullable: false),
+                    SSISchemaTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SSISchemaSchemaType", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SSISchemaSchemaType_SchemaType_SSISchemaTypeId",
+                        column: x => x.SSISchemaTypeId,
+                        principalSchema: "SSI",
+                        principalTable: "SchemaType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1176,6 +1214,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_SchemaType_Name",
+                schema: "SSI",
+                table: "SchemaType",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Skill_ExternalId",
                 schema: "Lookup",
                 table: "Skill",
@@ -1188,6 +1233,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 table: "Skill",
                 column: "Name",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SSISchemaSchemaType_SSISchemaName",
+                schema: "SSI",
+                table: "SSISchemaSchemaType",
+                column: "SSISchemaName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SSISchemaSchemaType_SSISchemaTypeId",
+                schema: "SSI",
+                table: "SSISchemaSchemaType",
+                column: "SSISchemaTypeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TimeInterval_Name",
@@ -1293,6 +1351,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI");
 
             migrationBuilder.DropTable(
+                name: "SSISchemaSchemaType",
+                schema: "SSI");
+
+            migrationBuilder.DropTable(
                 name: "UserSkills",
                 schema: "Entity");
 
@@ -1318,6 +1380,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.DropTable(
                 name: "SchemaEntity",
+                schema: "SSI");
+
+            migrationBuilder.DropTable(
+                name: "SchemaType",
                 schema: "SSI");
 
             migrationBuilder.DropTable(

@@ -9,7 +9,7 @@ namespace Yoma.Core.Domain.SSI.Interfaces
 
         Task<SSISchema?> GetByNameOrNull(string name);
 
-        Task<List<SSISchema>> List();
+        Task<List<SSISchema>> List(SchemaType? type);
 
         Task<SSISchema> Create(SSISchemaRequest request);
     }

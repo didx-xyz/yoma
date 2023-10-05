@@ -8,6 +8,12 @@ namespace Yoma.Core.Domain.SSI.Models
 
         public string Name { get; set; }
 
+        public Guid TypeId { get; set; }
+
+        public SchemaType Type { get; set; }
+
+        public string TypeDescription { get; set; }
+
         public string Version { get; set; }
 
         public ArtifactType ArtifactType { get; set; }

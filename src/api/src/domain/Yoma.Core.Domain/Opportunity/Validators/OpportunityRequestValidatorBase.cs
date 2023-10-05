@@ -85,7 +85,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
                 .When(x => x.CredentialIssuanceEnabled)
                 .WithMessage("SSI schema name is required when credential issuance is enabled.");
             RuleFor(x => x.SSISchemaName)
-                .Must(SSISchemaExists)
+                .Must(SSISchemaExistsAndOfTypeOpportunity)
                 .When(x => !string.IsNullOrEmpty(x.SSISchemaName))
                 .WithMessage("SSI schema does not exist.");
             RuleFor(x => x.Categories).Must(categories => categories != null && categories.Any() && categories.All(id => id != Guid.Empty && CategoryExist(id)))
@@ -170,10 +170,12 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             return _opportunityVerificationTypeService.GetByTypeOrNull(type) != null;
         }
 
-        private bool SSISchemaExists(string? name)
+        private bool SSISchemaExistsAndOfTypeOpportunity(string? name)
         {
             if (string.IsNullOrEmpty(name)) return false;
-            return _ssiSchemaService.GetByNameOrNull(name).Result != null;
+            var result = _ssiSchemaService.GetByNameOrNull(name).Result;
+
+            return result != null && result.Type == SSI.Models.SchemaType.Opportunity;
         }
         #endregion
     }

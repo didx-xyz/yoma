@@ -12,4 +12,10 @@ namespace Yoma.Core.Domain.SSI.Models
         Issuer,
         Verifier
     }
+
+    public enum SchemaType
+    {
+        Opportunity,
+        YoID
+    }
 }
