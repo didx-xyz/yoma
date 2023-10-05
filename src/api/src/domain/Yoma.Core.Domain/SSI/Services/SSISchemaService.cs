@@ -6,8 +6,6 @@ using Yoma.Core.Domain.SSI.Models.Lookups;
 using Yoma.Core.Domain.SSI.Models.Provider;
 using Yoma.Core.Domain.SSI.Validators;
 using FluentValidation;
-using Yoma.Core.Domain.Core.Interfaces;
-using Yoma.Core.Domain.Exceptions;
 using System.Transactions;
 
 namespace Yoma.Core.Domain.SSI.Services
@@ -18,22 +16,25 @@ namespace Yoma.Core.Domain.SSI.Services
         private readonly ISSIProviderClient _ssiProviderClient;
         private readonly ISSISchemaEntityService _ssiSchemaEntityService;
         private readonly ISSISchemaTypeService _ssiSchemaTypeService;
-        private readonly SchemaRequestValidator _schemaRequestValidator;
-        private readonly IRepository<SSISchemaSchemaType> _ssiSchemaSchemaTypeRepository;
+        private readonly SchemaRequestValidatorCreate _schemaRequestValidatorCreate;
+        private readonly SchemaRequestValidatorUpdate _schemaRequestValidatorUpdate;
+
+        public static readonly char[] SchemaName_SystemCharacters = { ':' };
+        public const char SchemaName_TypeDelimiter = '|';
         #endregion
 
         #region Constructor
         public SSISchemaService(ISSIProviderClientFactory ssiProviderClientFactory,
             ISSISchemaEntityService ssiSchemaEntityService,
             ISSISchemaTypeService ssiSchemaTypeService,
-            SchemaRequestValidator schemaRequestValidator,
-            IRepository<SSISchemaSchemaType> ssiSchemaSchemaTypeRepository)
+            SchemaRequestValidatorCreate schemaRequestValidatorCreate,
+            SchemaRequestValidatorUpdate schemaRequestValidatorUpdate)
         {
             _ssiProviderClient = ssiProviderClientFactory.CreateClient();
             _ssiSchemaEntityService = ssiSchemaEntityService;
             _ssiSchemaTypeService = ssiSchemaTypeService;
-            _schemaRequestValidator = schemaRequestValidator;
-            _ssiSchemaSchemaTypeRepository = ssiSchemaSchemaTypeRepository;
+            _schemaRequestValidatorCreate = schemaRequestValidatorCreate;
+            _schemaRequestValidatorUpdate = schemaRequestValidatorUpdate;
         }
         #endregion
 
@@ -41,20 +42,18 @@ namespace Yoma.Core.Domain.SSI.Services
         public async Task<SSISchema> GetByName(string name)
         {
             var schema = await _ssiProviderClient.GetSchemaByName(name);
-            return ConvertToSSISchema(schema, null);
+            return ConvertToSSISchema(schema);
         }
 
         public async Task<SSISchema?> GetByNameOrNull(string name)
         {
             var schema = await _ssiProviderClient.GetSchemaByNameOrNull(name);
             if (schema == null) return null;
-            return ConvertToSSISchema(schema, null);
+            return ConvertToSSISchema(schema);
         }
 
         public async Task<List<SSISchema>> List(SchemaType? type)
         {
-            var schemaType = type == null ? null : _ssiSchemaTypeService.GetByName(type.Value.ToString());
-
             var schemas = await _ssiProviderClient.ListSchemas(true);
 
             var results = new List<SSISchema>();
@@ -90,61 +89,80 @@ namespace Yoma.Core.Domain.SSI.Services
             // No matches found for schema attributes that match entities
             if (matchedEntitiesGrouped == null || !matchedEntitiesGrouped.Any()) return results;
 
-            //TODO: Remove; skip schemas not mapped in Yoma
-            schemas = schemas.Where(o => _ssiSchemaSchemaTypeRepository.Query().Select(o => o.SSISchemaName).ToList().Contains(o.Name)).ToList();
+            //TODO: Remove; skip schemas not created via Yoma
+            schemas = schemas.Where(o => o.Name.Split(SchemaName_TypeDelimiter).Length == 2).ToList();
 
             results = schemas.Where(o => matchedEntitiesGrouped.ContainsKey(o.Id)).Select(o =>
-                ConvertToSSISchema(o, matchedEntitiesGrouped.TryGetValue(o.Id, out var entities) ? entities : null, null)).ToList();
+                ConvertToSSISchema(o, matchedEntitiesGrouped.TryGetValue(o.Id, out var entities) ? entities : null)).ToList();
 
-            if (schemaType == null) return results;
+            if (type == null) return results;
 
-            return results.Where(o => o.TypeId == schemaType.Id).ToList();
+            return results.Where(o => o.Type == type).ToList();
         }
 
-        public async Task<SSISchema> Create(SSISchemaRequest request)
+        public async Task<List<SSISchema>> List(Guid? typeId)
+        {
+            var schemaType = typeId == null ? (SchemaType?)null : Enum.Parse<SchemaType>(_ssiSchemaTypeService.GetById(typeId.Value).Name, true);
+            return await List(schemaType);
+        }
+
+        public async Task<SSISchema> Update(SSISchemaRequestUpdate request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            await _schemaRequestValidator.ValidateAndThrowAsync(request);
+            await _schemaRequestValidatorUpdate.ValidateAndThrowAsync(request);
 
-            var schemaType = _ssiSchemaTypeService.GetById(request.TypeId);
-            var schemaTypeMapping = _ssiSchemaSchemaTypeRepository.Query().SingleOrDefault(o => o.SSISchemaName == request.Name);
+            if (await GetByNameOrNull(request.Name) == null)
+                throw new ValidationException($"Schema '{request.Name}' does not exist");
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-
-            if (schemaTypeMapping != null && schemaTypeMapping.Id != schemaType.Id)
-                throw new ValidationException(
-                    $"Schema type mismatch detected. A schema can only be mapped to a single type: Mapped type '{schemaTypeMapping.SSISchemaName}' vs. requested type '{schemaType.Name}'");
-
-            if (schemaTypeMapping == null)
-            {
-                schemaTypeMapping = new SSISchemaSchemaType
-                {
-                    SSISchemaName = request.Name,
-                    SSISSchemaTypeName = schemaType.Name,
-                    SSISchemaTypeDescription = schemaType.Description,
-                    SSISchemaTypeId = schemaType.Id,
-                };
-
-                schemaTypeMapping = await _ssiSchemaSchemaTypeRepository.Create(schemaTypeMapping);
-            }
-
-            var schema = await _ssiProviderClient.CreateSchema(new SchemaRequest
+            var schema = await _ssiProviderClient.UpsertSchema(new SchemaRequest
             {
                 Name = request.Name,
                 ArtifactType = request.ArtifactType,
                 Attributes = request.Attributes
             });
 
+            return ConvertToSSISchema(schema);
+        }
+
+        public async Task<SSISchema> Create(SSISchemaRequestCreate request)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            await _schemaRequestValidatorCreate.ValidateAndThrowAsync(request);
+
+            var schemaType = _ssiSchemaTypeService.GetById(request.TypeId);
+            var nameFull = $"{schemaType.Name}{SchemaName_TypeDelimiter}{request.Name}";
+
+            if (await GetByNameOrNull(nameFull) != null)
+                throw new ValidationException($"Schema '{nameFull}' already exists");
+
+            if (!schemaType.SupportMultiple)
+            {
+                var existing = await List(schemaType.Id);
+                if (existing.Any())
+                    throw new ValidationException($"Schema type '{schemaType.Name}' does not support multiple schemas. Existing schemas: {string.Join(", ", existing.Select(o => o.Name))}");
+            }
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+            var schema = await _ssiProviderClient.UpsertSchema(new SchemaRequest
+            {
+                Name = nameFull,
+                ArtifactType = request.ArtifactType,
+                Attributes = request.Attributes
+            });
+
             scope.Complete();
 
-            return ConvertToSSISchema(schema, schemaTypeMapping);
+            return ConvertToSSISchema(schema);
         }
         #endregion
 
         #region Private Members
-        private SSISchema ConvertToSSISchema(Schema schema, SSISchemaSchemaType? schemaTypeMapping)
+        private SSISchema ConvertToSSISchema(Schema schema)
         {
             var matchedEntities = _ssiSchemaEntityService.List()
              .Where(entity =>
@@ -162,21 +180,25 @@ namespace Yoma.Core.Domain.SSI.Services
              })
              .ToList();
 
-            return ConvertToSSISchema(schema, matchedEntities, schemaTypeMapping);
+            return ConvertToSSISchema(schema, matchedEntities);
         }
 
-        private SSISchema ConvertToSSISchema(Schema schema, List<SSISchemaEntity>? matchedEntities, SSISchemaSchemaType? schemaTypeMapping)
+        private SSISchema ConvertToSSISchema(Schema schema, List<SSISchemaEntity>? matchedEntities)
         {
-            schemaTypeMapping ??= _ssiSchemaSchemaTypeRepository.Query().SingleOrDefault(o => o.SSISchemaName == schema.Name)
-                ?? throw new DataInconsistencyException($"Schema type mapping does not exists for schema with name '{schema.Name}'");
+            var nameParts = schema.Name.Split(SchemaName_TypeDelimiter);
+            if (nameParts.Length != 2)
+                throw new ArgumentException("Schema name of '{}' is invalid. Expecting [type]:[name]", nameof(schema));
+
+            var schemaType = _ssiSchemaTypeService.GetByName(nameParts.First());
 
             return new SSISchema
             {
                 Id = schema.Id,
                 Name = schema.Name,
-                TypeId = schemaTypeMapping.SSISchemaTypeId,
-                Type = Enum.Parse<SchemaType>(schemaTypeMapping.SSISSchemaTypeName, true),
-                TypeDescription = schemaTypeMapping.SSISchemaTypeDescription,
+                DisplayName = nameParts.Last(),
+                TypeId = schemaType.Id,
+                Type = Enum.Parse<SchemaType>(schemaType.Name, true),
+                TypeDescription = schemaType.Description,
                 Version = schema.Version.ToString(),
                 ArtifactType = schema.ArtifactType,
                 Entities = matchedEntities,

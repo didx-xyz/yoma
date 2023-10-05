@@ -1,10 +1,8 @@
 namespace Yoma.Core.Domain.SSI.Models.Lookups
 {
-    public class SSISchemaRequest
+    public abstract class SSISchemaRequestBase
     {
         public string Name { get; set; }
-
-        public Guid TypeId { get; set; }
 
         public ArtifactType ArtifactType { get; set; }
 

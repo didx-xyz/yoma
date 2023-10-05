@@ -14,7 +14,6 @@ using Yoma.Core.Infrastructure.Database.Entity.Repositories;
 using Yoma.Core.Infrastructure.Database.Lookups.Repositories;
 using Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories;
 using Yoma.Core.Infrastructure.Database.Opportunity.Repositories;
-using Yoma.Core.Infrastructure.Database.SSI.Repositories;
 using Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups;
 
 namespace Yoma.Core.Infrastructure.Database
@@ -97,8 +96,6 @@ namespace Yoma.Core.Infrastructure.Database
             services.AddScoped<IRepositoryWithNavigation<SSISchemaEntity>, SSISchemaEntityRepository>();
             services.AddScoped<IRepository<SSISchemaType>, SSISchemaTypeRepository>();
             #endregion Lookups
-
-            services.AddScoped<IRepository<Domain.SSI.Models.SSISchemaSchemaType>, SSISchemaSchemaTypeRepository>();
             #endregion
         }
 
