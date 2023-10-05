@@ -148,7 +148,7 @@ const Schemas: NextPageWithLayout<{
           )}
 
           {/* GRID */}
-          {schemas && schemas?.length > 10 && (
+          {schemas && schemas?.length > 0 && (
             <div className="overflow-x-auto">
               <table className="table">
                 <thead>

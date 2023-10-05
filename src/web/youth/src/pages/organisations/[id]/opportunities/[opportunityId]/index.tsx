@@ -291,18 +291,6 @@ const OpportunityDetails: NextPageWithLayout<{
     verificationMethod: opportunity?.verificationMethod
       ? VerificationMethod[opportunity.verificationMethod]
       : null,
-    // map the verification types from the opportunity. ensure all types are included
-    // verificationTypes:
-    //   verificationTypes?.map((x) => ({
-    //     type:
-    //       opportunity?.verificationTypes?.find((y) => y.type == x.type)?.type ??
-    //       undefined,
-    //     description:
-    //       opportunity?.verificationTypes?.find((y) => y.type == x.type)
-    //         ?.description ?? x.description,
-    //     id: "",
-    //     displayName: "",
-    //   })) ?? [],
     verificationTypes: opportunity?.verificationTypes ?? [],
 
     credentialIssuanceEnabled: opportunity?.credentialIssuanceEnabled ?? false,
@@ -592,14 +580,12 @@ const OpportunityDetails: NextPageWithLayout<{
   });
 
   const {
-    register: registerStep5,
     handleSubmit: handleSubmitStep5,
     getValues: getValuesStep5,
     setValue: setValueStep5,
     formState: { errors: errorsStep5, isValid: isValidStep5 },
     control: controlStep5,
     watch: watchStep5,
-    reset: resetStep5,
   } = useForm({
     resolver: zodResolver(schemaStep5),
     defaultValues: formData,
@@ -607,12 +593,10 @@ const OpportunityDetails: NextPageWithLayout<{
   const watchVerificationEnabled = watchStep5("verificationEnabled");
   const watchVerificationMethod = watchStep5("verificationMethod");
   const watchVerificationTypes = watchStep5("verificationTypes");
-  const { fields, append, prepend, remove, swap, move, insert } = useFieldArray(
-    {
-      control: controlStep5,
-      name: "verificationTypes",
-    },
-  );
+  const { append, remove } = useFieldArray({
+    control: controlStep5,
+    name: "verificationTypes",
+  });
 
   const {
     register: registerStep6,
@@ -642,23 +626,6 @@ const OpportunityDetails: NextPageWithLayout<{
     window.scrollTo(0, 0);
   }, [step]);
 
-  // on change of verificationTypes, update the formData
-  // useEffect(() => {
-  //   formData.verificationTypes =
-  //     verificationTypes?.map((x) => ({
-  //       type:
-  //         opportunity?.verificationTypes?.find((y) => y.type == x.type)?.type ??
-  //         undefined,
-  //       description:
-  //         opportunity?.verificationTypes?.find((y) => y.type == x.type)
-  //           ?.description ?? x.description,
-  //       id: "",
-  //       displayName: "",
-  //     })) ?? [];
-
-  //   resetStep5(formData);
-  // }, [formData, opportunity?.verificationTypes, verificationTypes, resetStep5]);
-
   return (
     <>
       {isLoading && <Loading />}
@@ -666,10 +633,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
       <div className="container z-10 max-w-5xl px-2 py-4">
         {/* BREADCRUMB */}
-        <div
-          //className="flex flex-row text-xs text-gray"
-          className="breadcrumbs text-sm"
-        >
+        <div className="breadcrumbs text-sm">
           <ul>
             <li>
               <Link
@@ -1726,7 +1690,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           </label>
 
                           <div className="flex flex-col gap-2">
-                            {verificationTypes?.map((item, index) => (
+                            {verificationTypes?.map((item) => (
                               <div className="flex flex-col" key={item.id}>
                                 {/* verification type: checkbox label */}
                                 <label

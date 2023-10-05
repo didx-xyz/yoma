@@ -6,10 +6,9 @@ import { useState } from "react";
 import { IoMdImage, IoMdPerson } from "react-icons/io";
 import ReactModal from "react-modal";
 import { shimmer, toBase64 } from "~/lib/image";
-import { navbarColorAtom, userProfileAtom } from "~/lib/store";
+import { userProfileAtom } from "~/lib/store";
 
 export const UserMenu: React.FC = () => {
-  const navbarColor = useAtomValue(navbarColorAtom);
   const [userMenuVisible, setUserMenuVisible] = useState(false);
   const userProfile = useAtomValue(userProfileAtom);
   const { data: session } = useSession();

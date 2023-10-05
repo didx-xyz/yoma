@@ -2,7 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import type { ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
-import { NextPageWithLayout } from "../_app";
+import type { NextPageWithLayout } from "../_app";
 
 const AdminHome: NextPageWithLayout = () => {
   return (

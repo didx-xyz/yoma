@@ -495,7 +495,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       <Controller
                         control={controlStep2}
                         name="attributes"
-                        render={({ field: { onChange, value } }) => (
+                        render={({ field: { onChange } }) => (
                           <SchemaAttributesEdit
                             defaultValue={formData.attributes}
                             onChange={onChange}

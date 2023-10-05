@@ -20,7 +20,7 @@ import {
   IoMdPerson,
   IoMdPricetag,
 } from "react-icons/io";
-import { NextPageWithLayout } from "~/pages/_app";
+import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
 import {
   FaArrowCircleUp,
@@ -104,7 +104,7 @@ const OpportunityDetails: NextPageWithLayout<{
   id: string;
   opportunityId: string;
   user: User;
-}> = ({ id, opportunityId, user }) => {
+}> = ({ id, opportunityId }) => {
   const { data: opportunity } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
     queryFn: () => getOpportunityInfoById(opportunityId),
