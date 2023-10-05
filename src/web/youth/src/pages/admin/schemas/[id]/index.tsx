@@ -27,7 +27,11 @@ import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
-import { createSchema, getSchemaByName } from "~/api/services/credentials";
+import {
+  createSchema,
+  updateSchema,
+  getSchemaByName,
+} from "~/api/services/credentials";
 import {
   ArtifactType,
   type SSISchema,
@@ -117,7 +121,9 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
       try {
         // update api
-        await createSchema(data);
+        if (id === "create") await createSchema(data);
+        else await updateSchema(data);
+
         toast(`Schema ${id == "create" ? "created" : "updated"}.`, {
           type: "success",
           toastId: "schema",

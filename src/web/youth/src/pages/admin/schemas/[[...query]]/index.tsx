@@ -24,7 +24,6 @@ interface IParams extends ParsedUrlQuery {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id } = context.params as IParams;
   const { query, page } = context.query;
 
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -33,7 +32,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   if (session) {
     // 👇 prefetch queries (on server)
     await queryClient.prefetchQuery(
-      [`Schemas_${id}_${query?.toString()}_${page?.toString()}`],
+      [`Schemas_${query?.toString()}_${page?.toString()}`],
       () =>
         getSchemas(
           // {
@@ -58,7 +57,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null, // (required for 'withAuth' HOC component)
-      id: id ?? null,
+
       query: query ?? null,
       page: page ?? null,
     },
@@ -66,15 +65,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 }
 
 const Schemas: NextPageWithLayout<{
-  id: string;
   query?: string;
   page?: string;
-}> = ({ id, query, page }) => {
+}> = ({ query, page }) => {
   const router = useRouter();
 
   // 👇 use prefetched queries (from server)
   const { data: schemas } = useQuery<SSISchema[]>({
-    queryKey: [`Schemas_${id}_${query?.toString()}_${page?.toString()}`],
+    queryKey: [`Schemas_${query?.toString()}_${page?.toString()}`],
     queryFn: () => getSchemas(),
     //   {
     //   organizations: [id],
@@ -91,20 +89,20 @@ const Schemas: NextPageWithLayout<{
     // }
   });
 
-  const onSearch = useCallback(
-    (query: string) => {
-      if (query && query.length > 2) {
-        // uri encode the search value
-        const queryEncoded = encodeURIComponent(query);
+  // const onSearch = useCallback(
+  //   (query: string) => {
+  //     if (query && query.length > 2) {
+  //       // uri encode the search value
+  //       const queryEncoded = encodeURIComponent(query);
 
-        // redirect to the search page
-        void router.push(`/admin/schemas?query=${queryEncoded}`);
-      } else {
-        void router.push(`/admin/schemas`);
-      }
-    },
-    [router],
-  );
+  //       // redirect to the search page
+  //       void router.push(`/admin/schemas?query=${queryEncoded}`);
+  //     } else {
+  //       void router.push(`/admin/schemas`);
+  //     }
+  //   },
+  //   [router],
+  // );
 
   return (
     <>

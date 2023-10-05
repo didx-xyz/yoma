@@ -26,6 +26,11 @@ export enum ArtifactType {
   Ld_proof,
 }
 
+export enum SchemaType {
+  Opportunity,
+  YoID
+}
+
 export interface SSISchemaType {
   id: string;
   name: string;
@@ -36,7 +41,7 @@ export interface SSISchema {
   id: string;
   name: string;
   typeId: string;
-  //type: SchemaType;
+  type: SchemaType;
   typeDescription: string;
   version: string;
   artifactType: ArtifactType;

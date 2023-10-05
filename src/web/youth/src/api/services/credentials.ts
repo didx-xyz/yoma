@@ -33,6 +33,13 @@ export const createSchema = async (
   return data;
 };
 
+export const updateSchema = async (
+  model: SSISchemaRequest,
+): Promise<SSISchema> => {
+  const { data } = await (await ApiClient).patch<SSISchema>("/ssi/schema", model);
+  return data;
+};
+
 export const getSchemaByName = async (
   name: string,
   context?: GetServerSidePropsContext,
