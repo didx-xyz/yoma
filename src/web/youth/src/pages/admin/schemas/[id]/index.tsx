@@ -103,6 +103,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
   /* eslint-disable */
   const [formData, setFormData] = useState<SSISchemaRequest>({
     name: schema?.name ?? "",
+    typeId: schema?.typeId!,
     // enum value comes as string from server, convert to number
     artifactType: schema?.artifactType
       ? ArtifactType[schema.artifactType]
@@ -111,7 +112,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
       schema?.entities
         ?.flatMap((x) => x.properties)
         .map((x) => x?.attributeName!) ?? [],
-    typeId: schema?.typeId!,
   });
   /* eslint-enable */
 
@@ -187,10 +187,10 @@ const SchemaCreateEdit: NextPageWithLayout<{
       .string()
       .min(1, "Schema name is required.")
       .max(255, "Schema name cannot exceed 255 characters."),
+    typeId: z.string().min(1, "Schema type is required."),
     artifactType: z.number({
       invalid_type_error: "Artifact type is required.",
     }),
-    typeId: z.string().min(1, "Schema type is required."),
   });
 
   const schemaStep2 = z.object({
@@ -240,7 +240,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
       <div className="container z-10 max-w-5xl px-2 py-4">
         {/* BREADCRUMB */}
-        <div className="breadcrumbs text-sm">
+        <div className="breadcrumbs text-sm text-white">
           <ul>
             <li>
               <Link
@@ -253,23 +253,14 @@ const SchemaCreateEdit: NextPageWithLayout<{
             </li>
             <li>
               <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
-                {id == "create" ? (
-                  "Create"
-                ) : (
-                  <Link
-                    className="text-white hover:text-gray"
-                    href={`/organisations/${id}/opportunities/${id}/info`}
-                  >
-                    {schema?.name}
-                  </Link>
-                )}
+                {id == "create" ? "Create" : <>{schema?.displayName}</>}
               </div>
             </li>
           </ul>
         </div>
 
         <h4 className="pb-2 pl-5 text-white">
-          {id == "create" ? "New schema" : schema?.name}
+          {id == "create" ? "New schema" : schema?.displayName}
         </h4>
 
         <div className="flex flex-col gap-2 md:flex-row">
@@ -384,14 +375,24 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       <label className="label">
                         <span className="label-text">Schema name</span>
                       </label>
-                      <input
-                        type="text"
-                        className="input input-bordered rounded-md"
-                        placeholder="Enter schema name"
-                        {...registerStep1("name")}
-                        contentEditable
-                        disabled={id !== "create"}
-                      />
+                      {id == "create" && (
+                        <input
+                          type="text"
+                          className="input input-bordered rounded-md"
+                          placeholder="Enter schema name"
+                          {...registerStep1("name")}
+                          contentEditable
+                        />
+                      )}
+                      {id != "create" && (
+                        <input
+                          type="text"
+                          className="input input-bordered rounded-md"
+                          value={schema?.displayName}
+                          contentEditable
+                          disabled={true}
+                        />
+                      )}
                       {errorsStep1.name && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
@@ -405,6 +406,44 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
                             Schema name cannot be changed for existing schemas
+                          </span>
+                        </label>
+                      )}
+                    </div>
+
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Schema type</span>
+                      </label>
+                      <Controller
+                        control={controlStep1}
+                        name="typeId"
+                        render={({ field: { onChange, value } }) => (
+                          <Select
+                            classNames={{
+                              control: () => "input input-bordered",
+                            }}
+                            options={schemaTypes}
+                            onChange={(val) => onChange(val?.value)}
+                            value={schemaTypes?.find((c) => c.value === value)}
+                            isDisabled={id !== "create"}
+                          />
+                        )}
+                      />
+
+                      {errorsStep1.typeId && (
+                        <label className="label">
+                          <span className="label-text-alt italic text-red-500">
+                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                            {`${errorsStep1.typeId.message}`}
+                          </span>
+                        </label>
+                      )}
+
+                      {id !== "create" && (
+                        <label className="label">
+                          <span className="label-text-alt italic text-red-500">
+                            Schema type cannot be changed for existing schemas
                           </span>
                         </label>
                       )}
@@ -463,44 +502,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
                             Artifact type cannot be changed for existing schemas
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text">Schema type</span>
-                      </label>
-                      <Controller
-                        control={controlStep1}
-                        name="typeId"
-                        render={({ field: { onChange, value } }) => (
-                          <Select
-                            classNames={{
-                              control: () => "input input-bordered",
-                            }}
-                            options={schemaTypes}
-                            onChange={(val) => onChange(val?.value)}
-                            value={schemaTypes?.find((c) => c.value === value)}
-                            isDisabled={id !== "create"}
-                          />
-                        )}
-                      />
-
-                      {errorsStep1.typeId && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                            {`${errorsStep1.typeId.message}`}
-                          </span>
-                        </label>
-                      )}
-
-                      {id !== "create" && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            Schema type cannot be changed for existing schemas
                           </span>
                         </label>
                       )}
@@ -570,17 +571,16 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
-                      {id === "create" && (
-                        <button
-                          type="button"
-                          className="btn btn-warning btn-sm flex-grow"
-                          onClick={() => {
-                            setStep(1);
-                          }}
-                        >
-                          Back
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        className="btn btn-warning btn-sm flex-grow"
+                        onClick={() => {
+                          setStep(1);
+                        }}
+                      >
+                        Back
+                      </button>
+
                       <button
                         type="submit"
                         className="btn btn-success btn-sm flex-grow"
@@ -627,10 +627,34 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       )}
                     </div>
 
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text -ml-1 font-bold">
+                          Schema type
+                        </span>
+                      </label>
+                      <label className="label-text text-sm">
+                        {
+                          schemaTypes?.find((x) => x.value == formData.typeId)
+                            ?.label
+                        }
+                      </label>
+                      {errorsStep1.name && (
+                        <label className="label">
+                          <span className="label-text-alt italic text-red-500">
+                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                            {`${errorsStep1.name.message}`}
+                          </span>
+                        </label>
+                      )}
+                    </div>
+
                     {/* eslint-disable */}
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text -ml-1 font-bold">Type</span>
+                        <span className="label-text -ml-1 font-bold">
+                          Artifact type
+                        </span>
                       </label>
                       <label className="label-text text-sm">
                         {formData.artifactType != null
