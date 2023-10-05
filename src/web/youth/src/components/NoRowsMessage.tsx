@@ -1,4 +1,6 @@
 import React from "react";
+import noRowsImage from "public/images/no-rows.svg";
+import Image from "next/image";
 
 interface InputProps {
   title?: string | null;
@@ -7,20 +9,19 @@ interface InputProps {
 
 const NoRowsMessage: React.FC<InputProps> = ({ title, description }) => {
   return (
-    <div className="flex h-full flex-col items-center justify-center">
-      <svg
-        className="text-gray-400 mb-4 h-16 w-16"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M6 18L18 6M6 6l12 12"
-        />
-      </svg>
+    <div className="flex h-full flex-col items-center justify-center gap-2">
+      {/* eslint-disable */}
+      <Image
+        src={noRowsImage}
+        alt="Logo"
+        priority={true}
+        width={0}
+        height={0}
+        sizes="100vw"
+        style={{ width: "100%", height: "auto", maxWidth: "300px" }}
+      />
+      {/* eslint-enable */}
+
       <h2 className="text-gray-900 mb-2 text-lg font-medium">
         {title ?? "No rows found"}
       </h2>
