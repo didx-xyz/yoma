@@ -10,7 +10,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     public class OpportunityCategory : BaseEntity<Guid>
     {
         [Required]
-        [ForeignKey("OpportunityID")]
+        [ForeignKey("OpportunityId")]
         public Guid OpportunityId { get; set; }
         public Opportunity Opportunity { get; set; }
 

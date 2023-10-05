@@ -20,22 +20,40 @@ namespace Yoma.Core.Api.Controllers
         private readonly ILogger<SSIController> _logger;
         private readonly ISSISchemaEntityService _ssiSchemaEntityService;
         private readonly ISSISchemaService _ssiSchemaService;
+        private readonly ISSISchemaTypeService _ssiSchemaTypeService;
         #endregion
 
         #region Constructor
         public SSIController(
           ILogger<SSIController> logger,
           ISSISchemaEntityService ssiSchemaEntityService,
-          ISSISchemaService ssiSchemaService)
+          ISSISchemaService ssiSchemaService,
+          ISSISchemaTypeService ssiSchemaTypeService)
         {
             _logger = logger;
             _ssiSchemaEntityService = ssiSchemaEntityService;
             _ssiSchemaService = ssiSchemaService;
+            _ssiSchemaTypeService = ssiSchemaTypeService;
         }
         #endregion
 
         #region Public Members
         #region Administrative Actions
+        [SwaggerOperation(Summary = "Return a list of schema types")]
+        [HttpGet("schema/types")]
+        [ProducesResponseType(typeof(List<SSISchemaType>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = Constants.Role_Admin)]
+        public IActionResult ListSchemaTypes()
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListSchemaTypes));
+
+            var result = _ssiSchemaTypeService.List();
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListSchemaTypes));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
         [SwaggerOperation(Summary = "Return a list of schema entities (objects) and their associated properties that serve as data sources when creating a schema")]
         [HttpGet("schema/entity")]
         [ProducesResponseType(typeof(List<SSISchemaEntity>), (int)HttpStatusCode.OK)]
@@ -51,15 +69,15 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Return a list of configured schemas, providing only the latest version of each schema (Admin or Organization Admin roles required)", Description = "Results includes the schema's associated entities (objects) and properties")]
+        [SwaggerOperation(Summary = "Return a list of configured schemas, providing only the latest version of each schema, optionally filtered by type (Admin or Organization Admin roles required)", Description = "Results includes the schema's associated entities (objects) and properties")]
         [HttpGet("schema")]
         [ProducesResponseType(typeof(List<SSISchema>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> ListSchemas()
+        public async Task<IActionResult> ListSchemas([FromQuery] SchemaType? schemaType)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListSchemas));
 
-            var result = await _ssiSchemaService.List();
+            var result = await _ssiSchemaService.List(schemaType);
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListSchemas));
 

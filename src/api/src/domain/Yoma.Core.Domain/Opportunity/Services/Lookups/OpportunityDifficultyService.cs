@@ -59,7 +59,7 @@ namespace Yoma.Core.Domain.Opportunity.Services.Lookups
         public List<OpportunityDifficulty> List()
         {
             if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(Core.CacheItemType.Lookups))
-                return _opportunityDifficultyRepository.Query().ToList();
+                return _opportunityDifficultyRepository.Query().OrderBy(o => o.Name).ToList();
 
             var result = _memoryCache.GetOrCreate(nameof(OpportunityDifficulty), entry =>
             {

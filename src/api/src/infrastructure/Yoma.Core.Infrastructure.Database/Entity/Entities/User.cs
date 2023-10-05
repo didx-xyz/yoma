@@ -60,6 +60,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 
         public DateTimeOffset? DateZltoWalletCreated { get; set; }
 
+        public bool? YoIDOnboarded { get; set; }
+
         [Column(TypeName = "varchar(50)")]
         public string? TenantId { get; set; }
 
