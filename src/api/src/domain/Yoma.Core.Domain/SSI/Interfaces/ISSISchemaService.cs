@@ -11,6 +11,10 @@ namespace Yoma.Core.Domain.SSI.Interfaces
 
         Task<List<SSISchema>> List(SchemaType? type);
 
-        Task<SSISchema> Create(SSISchemaRequest request);
+        Task<List<SSISchema>> List(Guid? typeId);
+
+        Task<SSISchema> Create(SSISchemaRequestCreate request);
+
+        Task<SSISchema> Update(SSISchemaRequestUpdate request);
     }
 }

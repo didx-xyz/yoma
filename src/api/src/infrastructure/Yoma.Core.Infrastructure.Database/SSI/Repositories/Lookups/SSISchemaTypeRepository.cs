@@ -20,7 +20,8 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
             {
                 Id = entity.Id,
                 Name = entity.Name,
-                Description = entity.Description
+                Description = entity.Description,
+                SupportMultiple = entity.SupportMultiple
             });
         }
 

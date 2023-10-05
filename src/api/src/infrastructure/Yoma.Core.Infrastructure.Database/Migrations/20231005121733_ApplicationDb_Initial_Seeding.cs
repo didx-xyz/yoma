@@ -1123,12 +1123,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.InsertData(
             table: "SchemaType",
-            columns: new[] { "Id", "Name", "Description", "DateCreated" },
+            columns: new[] { "Id", "Name", "Description", "SupportMultiple", "DateCreated" },
             values: new object[,]
             {
-                    {"7818B5C3-3D57-4264-B90B-DF53EAA9F749","Opportunity","Opportunity",DateTimeOffset.Now}
+                    {"7818B5C3-3D57-4264-B90B-DF53EAA9F749","Opportunity","Opportunity",true,DateTimeOffset.Now}
                     ,
-                    {"EC978798-AAC0-4577-846E-1B5B2E6663CE","YoID","Yoma Member (YoID)",DateTimeOffset.Now}
+                    {"EC978798-AAC0-4577-846E-1B5B2E6663CE","YoID","Yoma Member (YoID)",false,DateTimeOffset.Now}
             },
             schema: "SSI");
             #endregion SSI

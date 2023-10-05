@@ -22,6 +22,6 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Provider
         /// <summary>
         /// Create a new schema with the specified name and attributes. If a schema with the same name already exists, a new version will automatically be created
         /// </summary>
-        Task<Schema> CreateSchema(SchemaRequest request);
+        Task<Schema> UpsertSchema(SchemaRequest request);
     }
 }

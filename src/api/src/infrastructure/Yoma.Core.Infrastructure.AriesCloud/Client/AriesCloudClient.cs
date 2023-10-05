@@ -78,7 +78,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             return results.SingleOrDefault();
         }
 
-        public async Task<Schema> CreateSchema(SchemaRequest request)
+        public async Task<Schema> UpsertSchema(SchemaRequest request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));

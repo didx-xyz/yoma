@@ -99,17 +99,32 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Create a new schema with the specified entities (objects) and properties", Description = "If a schema with the specified name already exists, a new version will be automatically created")]
+        [SwaggerOperation(Summary = "Create a new schema with the specified entities (objects) and properties")]
         [HttpPost("schema")]
         [ProducesResponseType(typeof(SSISchema), (int)HttpStatusCode.OK)]
         [Authorize(Roles = Constants.Role_Admin)]
-        public async Task<IActionResult> CreateSchema([FromBody] SSISchemaRequest request)
+        public async Task<IActionResult> CreateSchema([FromBody] SSISchemaRequestCreate request)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(CreateSchema));
 
             var result = await _ssiSchemaService.Create(request);
 
             _logger.LogInformation("Request {requestName} handled", nameof(CreateSchema));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Update the schema with the specified entities (objects) and properties",  Description = "This operation will create a new version of the schema automatically")]
+        [HttpPatch("schema")]
+        [ProducesResponseType(typeof(SSISchema), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = Constants.Role_Admin)]
+        public async Task<IActionResult> UpdateSchema([FromBody] SSISchemaRequestUpdate request)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(UpdateSchema));
+
+            var result = await _ssiSchemaService.Update(request);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(UpdateSchema));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

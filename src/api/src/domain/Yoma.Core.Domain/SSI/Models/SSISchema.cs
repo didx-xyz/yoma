@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.SSI.Models
 
         public string Name { get; set; }
 
+        public string DisplayName { get; set; }
+
         public Guid TypeId { get; set; }
 
         public SchemaType Type { get; set; }

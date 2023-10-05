@@ -1098,38 +1098,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(125)");
 
+                    b.Property<bool>("SupportMultiple")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
                         .IsUnique();
 
                     b.ToTable("SchemaType", "SSI");
-                });
-
-            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.SSI.Entities.SSISchemaSchemaType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset>("DateCreated")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("SSISchemaName")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<Guid>("SSISchemaTypeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SSISchemaName")
-                        .IsUnique();
-
-                    b.HasIndex("SSISchemaTypeId");
-
-                    b.ToTable("SSISchemaSchemaType", "SSI");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>
@@ -1463,17 +1440,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("SSISchemaObject");
-                });
-
-            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.SSI.Entities.SSISchemaSchemaType", b =>
-                {
-                    b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaType", "SSISchemaType")
-                        .WithMany()
-                        .HasForeignKey("SSISchemaTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SSISchemaType");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>

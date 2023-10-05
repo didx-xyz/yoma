@@ -19,6 +19,9 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups
         public string Description { get; set; }
 
         [Required]
+        public bool SupportMultiple { get; set; }
+
+        [Required]
         public DateTimeOffset DateCreated { get; set; }
     }
 }

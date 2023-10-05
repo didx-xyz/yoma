@@ -97,8 +97,6 @@ namespace Yoma.Core.Infrastructure.Database
             services.AddScoped<IRepositoryWithNavigation<SSISchemaEntity>, SSISchemaEntityRepository>();
             services.AddScoped<IRepository<SSISchemaType>, SSISchemaTypeRepository>();
             #endregion Lookups
-
-            services.AddScoped<IRepository<Domain.SSI.Models.SSISchemaSchemaType>, SSISchemaSchemaTypeRepository>();
             #endregion
         }
 
