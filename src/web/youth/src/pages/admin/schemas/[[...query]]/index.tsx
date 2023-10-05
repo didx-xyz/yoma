@@ -3,7 +3,7 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useCallback, type ReactElement } from "react";
+import { type ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
 import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";

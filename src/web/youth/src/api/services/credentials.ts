@@ -36,7 +36,9 @@ export const createSchema = async (
 export const updateSchema = async (
   model: SSISchemaRequest,
 ): Promise<SSISchema> => {
-  const { data } = await (await ApiClient).patch<SSISchema>("/ssi/schema", model);
+  const { data } = await (
+    await ApiClient
+  ).patch<SSISchema>("/ssi/schema", model);
   return data;
 };
 

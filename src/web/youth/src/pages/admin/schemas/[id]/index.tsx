@@ -31,6 +31,7 @@ import {
   createSchema,
   updateSchema,
   getSchemaByName,
+  getSchemaTypes,
 } from "~/api/services/credentials";
 import {
   ArtifactType,
@@ -38,8 +39,7 @@ import {
   type SSISchemaRequest,
 } from "~/api/models/credential";
 import { SchemaAttributesEdit } from "~/components/Schema/SchemaAttributesEdit";
-import { getSchemaTypes } from "~/api/services/credentials";
-import { SelectOption } from "~/api/models/lookups";
+import type { SelectOption } from "~/api/models/lookups";
 
 interface IParams extends ParsedUrlQuery {
   id: string;

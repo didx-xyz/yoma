@@ -1,5 +1,3 @@
-
-
 export interface SSISchemaEntity {
   id: string;
   name: string;
@@ -28,7 +26,7 @@ export enum ArtifactType {
 
 export enum SchemaType {
   Opportunity,
-  YoID
+  YoID,
 }
 
 export interface SSISchemaType {
