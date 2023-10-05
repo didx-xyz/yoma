@@ -238,6 +238,9 @@ jobs:
           path: cypress/videos
           if-no-files-found: ignore
 
+      - name: Keycloak Config logs
+        if: always()
+        run: docker logs keycloak-config
       - name: Keycloak logs
         if: always()
         run: docker logs keycloak
