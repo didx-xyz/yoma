@@ -114,7 +114,7 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Update the schema with the specified entities (objects) and properties",  Description = "This operation will create a new version of the schema automatically")]
+        [SwaggerOperation(Summary = "Update the schema with the specified entities (objects) and properties", Description = "This operation will create a new version of the schema automatically")]
         [HttpPatch("schema")]
         [ProducesResponseType(typeof(SSISchema), (int)HttpStatusCode.OK)]
         [Authorize(Roles = Constants.Role_Admin)]

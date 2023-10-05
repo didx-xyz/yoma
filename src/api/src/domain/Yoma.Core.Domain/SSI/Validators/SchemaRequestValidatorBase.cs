@@ -9,7 +9,7 @@ namespace Yoma.Core.Domain.SSI.Validators
     {
         #region Class Variables
         private readonly ISSISchemaEntityService _ssiSchemaEntityService;
-        
+
         #endregion
 
         #region Constructor
