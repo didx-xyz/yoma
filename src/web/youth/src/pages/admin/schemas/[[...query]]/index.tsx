@@ -2,26 +2,17 @@ import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
-import { useRouter } from "next/router";
 import { type ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
 import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { type ParsedUrlQuery } from "querystring";
 import Link from "next/link";
 import { PageBackground } from "~/components/PageBackground";
 import { IoIosAdd, IoMdSettings } from "react-icons/io";
-import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { getSchemas } from "~/api/services/credentials";
 import type { SSISchema } from "~/api/models/credential";
-
-interface IParams extends ParsedUrlQuery {
-  id: string;
-  query?: string;
-  page?: string;
-}
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query, page } = context.query;
@@ -33,23 +24,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     // 👇 prefetch queries (on server)
     await queryClient.prefetchQuery(
       [`Schemas_${query?.toString()}_${page?.toString()}`],
-      () =>
-        getSchemas(
-          // {
-          //   organizations: [id],
-          //   pageNumber: page ? parseInt(page.toString()) : 1,
-          //   pageSize: 10,
-          //   startDate: null,
-          //   endDate: null,
-          //   statuses: null,
-          //   types: null,
-          //   categories: null,
-          //   languages: null,
-          //   countries: null,
-          //   valueContains: query?.toString() ?? null,
-          // },
-          context,
-        ),
+      () => getSchemas(context),
     );
   }
 
@@ -57,7 +32,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null, // (required for 'withAuth' HOC component)
-
       query: query ?? null,
       page: page ?? null,
     },
@@ -68,41 +42,11 @@ const Schemas: NextPageWithLayout<{
   query?: string;
   page?: string;
 }> = ({ query, page }) => {
-  const router = useRouter();
-
   // 👇 use prefetched queries (from server)
   const { data: schemas } = useQuery<SSISchema[]>({
     queryKey: [`Schemas_${query?.toString()}_${page?.toString()}`],
     queryFn: () => getSchemas(),
-    //   {
-    //   organizations: [id],
-    //   pageNumber: page ? parseInt(page.toString()) : 1,
-    //   pageSize: 10,
-    //   startDate: null,
-    //   endDate: null,
-    //   statuses: null,
-    //   types: null,
-    //   categories: null,
-    //   languages: null,
-    //   countries: null,
-    //   valueContains: query?.toString() ?? null,
-    // }
   });
-
-  // const onSearch = useCallback(
-  //   (query: string) => {
-  //     if (query && query.length > 2) {
-  //       // uri encode the search value
-  //       const queryEncoded = encodeURIComponent(query);
-
-  //       // redirect to the search page
-  //       void router.push(`/admin/schemas?query=${queryEncoded}`);
-  //     } else {
-  //       void router.push(`/admin/schemas`);
-  //     }
-  //   },
-  //   [router],
-  // );
 
   return (
     <>
@@ -117,9 +61,6 @@ const Schemas: NextPageWithLayout<{
           <h3 className="flex flex-grow text-white">Schemas</h3>
 
           <div className="flex gap-2 sm:justify-end">
-            {/* search disabled */}
-            {/* <SearchInput defaultValue={query} onSearch={onSearch} /> */}
-
             <Link
               href={`/admin/schemas/create`}
               className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
@@ -163,15 +104,15 @@ const Schemas: NextPageWithLayout<{
                     <tr key={schema.id}>
                       <td>
                         <Link href={`/admin/schemas/${schema.name}`}>
-                          {schema.name}
+                          {schema.displayName}
                         </Link>
                       </td>
                       <td>{schema.version}</td>
                       <td>{schema.entities?.length}</td>
                       <td>{schema.typeDescription}</td>
-                      <td>
+                      <td className="flex justify-center">
                         <Link href={`/admin/schemas/${schema.name}`}>
-                          <IoMdSettings className="h-2 w-2" />
+                          <IoMdSettings className="h-4 w-4" />
                         </Link>
                       </td>
                     </tr>
