@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { IoIosAdd, IoIosRemove } from "react-icons/io";
-import { SelectOption } from "~/api/models/lookups";
+import type { SelectOption } from "~/api/models/lookups";
 import { getSchemaEntities } from "~/api/services/credentials";
 import Select from "react-select";
 
@@ -37,8 +37,17 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
     [schemaEntities],
   );
 
-  const { control } = useForm<ISchemaViewModel>({
-    defaultValues: {
+  const { control, reset } = useForm<ISchemaViewModel>();
+  const { fields, append, remove, update } = useFieldArray<ISchemaViewModel>({
+    control,
+    name: "attributes",
+  });
+
+  // reset form when schemaEntities changes (initially null)
+  useEffect(() => {
+    if (!schemaEntities) return;
+
+    reset({
       attributes: defaultValue?.map((x) => ({
         attribute: x,
         dataSource: schemaEntities?.find(
@@ -51,21 +60,20 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
             label: x.attributeName,
           })),
       })),
-    },
-  });
-  const { fields, append, remove, update } = useFieldArray<ISchemaViewModel>({
-    control,
-    name: "attributes",
-  });
+    });
+  }, [schemaEntities, defaultValue, reset]);
 
   // call onChange each time fields changes
   useEffect(() => {
     if (onChange)
+      // eslint-disable-next-line
       onChange(fields.map((x: any) => x.attribute).filter((x) => x != ""));
+    // eslint-enable-next-line
   }, [fields, onChange]);
 
   return (
     <div className="flex flex-col gap-2">
+      {/* eslint-disable */}
       {fields.map((field: any, index) => (
         <div key={field.id} className="flex flex-row gap-2">
           <Select
@@ -81,7 +89,7 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
             placeholder="Select data source"
             isMulti={false}
             options={schemaEntitiesSelectOptions}
-            onChange={(val, e) => {
+            onChange={(val) => {
               update(index, {
                 dataSource: val?.value!,
                 attribute: "", // clear
@@ -135,6 +143,7 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
           </div>
         </div>
       ))}
+      {/* eslint-enable */}
       <div className="flex justify-center">
         <button
           type="button"

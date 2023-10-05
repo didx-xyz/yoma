@@ -30,8 +30,8 @@ import type { NextPageWithLayout } from "~/pages/_app";
 import { createSchema, getSchemaByName } from "~/api/services/credentials";
 import {
   ArtifactType,
-  SSISchema,
-  SSISchemaRequest,
+  type SSISchema,
+  type SSISchemaRequest,
 } from "~/api/models/credential";
 import { SchemaAttributesEdit } from "~/components/Schema/SchemaAttributesEdit";
 
@@ -86,6 +86,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
     void router.push(`/admin/schemas`);
   };
 
+  /* eslint-disable */
   const [formData, setFormData] = useState<SSISchemaRequest>({
     name: schema?.name ?? "",
     // enum value comes as string from server, convert to number
@@ -97,6 +98,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
         ?.flatMap((x) => x.properties)
         .map((x) => x?.attributeName!) ?? [],
   });
+  /* eslint-enable */
 
   const onSubmit = useCallback(
     async (data: SSISchemaRequest) => {
@@ -144,7 +146,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
         ...(data as OpportunityRequestBase),
       };
       setFormData(model);
-      console.log("model", model);
 
       if (id === "create") {
         if (step === 4) {
@@ -153,9 +154,11 @@ const SchemaCreateEdit: NextPageWithLayout<{
           return;
         }
       } else {
-        // submit on each page when updating schema
-        await onSubmit(model);
-        return;
+        if (step === 3) {
+          // submit on last page when updating schema
+          await onSubmit(model);
+          return;
+        }
       }
       setStep(step);
     },
@@ -369,6 +372,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         placeholder="Enter schema name"
                         {...registerStep1("name")}
                         contentEditable
+                        disabled={id !== "create"}
                       />
                       {errorsStep1.name && (
                         <label className="label">
@@ -378,12 +382,22 @@ const SchemaCreateEdit: NextPageWithLayout<{
                           </span>
                         </label>
                       )}
+
+                      {id !== "create" && (
+                        <label className="label">
+                          <span className="label-text-alt italic text-red-500">
+                            Schema name cannot be changed for existing schemas
+                          </span>
+                        </label>
+                      )}
                     </div>
 
                     <div className="form-control">
                       <label className="label">
                         <span className="label-text">Artifact type</span>
                       </label>
+
+                      {/* eslint-disable */}
                       <Controller
                         control={controlStep1}
                         name="artifactType"
@@ -404,7 +418,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                               },
                             ]}
                             onChange={(val) => onChange(val?.value)}
-                            //value={difficulties?.find((c) => c.value === value)}
                             value={{
                               value: value,
                               label:
@@ -414,14 +427,24 @@ const SchemaCreateEdit: NextPageWithLayout<{
                                     : "Ld_proof"
                                   : null,
                             }}
+                            isDisabled={id !== "create"}
                           />
                         )}
                       />
+                      {/* eslint-enable */}
 
                       {errorsStep1.artifactType && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep1.artifactType.message}`}
+                          </span>
+                        </label>
+                      )}
+
+                      {id !== "create" && (
+                        <label className="label">
+                          <span className="label-text-alt italic text-red-500">
+                            Artifact type cannot be changed for existing schemas
                           </span>
                         </label>
                       )}
@@ -442,7 +465,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         type="submit"
                         className="btn btn-success btn-sm flex-grow"
                       >
-                        {id === "create" ? "Next" : "Submit"}
+                        Next
                       </button>
                     </div>
                   </form>
@@ -548,12 +571,17 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       )}
                     </div>
 
+                    {/* eslint-disable */}
                     <div className="form-control">
                       <label className="label">
                         <span className="label-text -ml-1 font-bold">Type</span>
                       </label>
                       <label className="label-text text-sm">
-                        {formData.artifactType == 0 ? "Indy" : "Ld_proof"}
+                        {formData.artifactType != null
+                          ? formData.artifactType == 0
+                            ? "Indy"
+                            : "Ld_proof"
+                          : ""}
                       </label>
                       {errorsStep1.artifactType && (
                         <label className="label">
@@ -564,6 +592,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
+                    {/* eslint-enable */}
 
                     <div className="form-control">
                       <label className="label">
@@ -574,7 +603,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       <label className="label-text text-sm">
                         <ul>
                           {formData.attributes.map((attr) => (
-                            <li>{attr}</li>
+                            <li key={`review_${attr}`}>{attr}</li>
                           ))}
                         </ul>
                       </label>

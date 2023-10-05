@@ -4,11 +4,9 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, type ReactElement } from "react";
-import { getOpportunitiesAdmin } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
-import { type OpportunitySearchResults } from "~/api/models/opportunity";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { type ParsedUrlQuery } from "querystring";
 import Link from "next/link";
@@ -17,8 +15,7 @@ import { IoIosAdd } from "react-icons/io";
 import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { getSchemas } from "~/api/services/credentials";
-import { Schema } from "zod";
-import { SSISchema } from "~/api/models/credential";
+import type { SSISchema } from "~/api/models/credential";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -122,7 +119,8 @@ const Schemas: NextPageWithLayout<{
           <h3 className="flex flex-grow text-white">Schemas</h3>
 
           <div className="flex gap-2 sm:justify-end">
-            <SearchInput defaultValue={query} onSearch={onSearch} />
+            {/* search disabled */}
+            {/* <SearchInput defaultValue={query} onSearch={onSearch} /> */}
 
             <Link
               href={`/admin/schemas/create`}
@@ -138,19 +136,19 @@ const Schemas: NextPageWithLayout<{
           {/* NO ROWS */}
           {schemas && schemas.length === 0 && !query && (
             <NoRowsMessage
-              title={"No opportunities found"}
-              description={"Opportunities that you add will be displayed here."}
+              title={"No schemas found"}
+              description={"Schemas that you add will be displayed here."}
             />
           )}
           {schemas && schemas?.length === 0 && query && (
             <NoRowsMessage
-              title={"No opportunities found"}
+              title={"No schemas found"}
               description={"Please try refining your search query."}
             />
           )}
 
           {/* GRID */}
-          {schemas && schemas?.length > 0 && (
+          {schemas && schemas?.length > 10 && (
             <div className="overflow-x-auto">
               <table className="table">
                 <thead>
@@ -171,37 +169,11 @@ const Schemas: NextPageWithLayout<{
                       </td>
                       <td>{schema.version}</td>
                       <td>{schema.entities?.length}</td>
-
-                      {/* <td>{opportunity.ver}</td>  */}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-
-            // <ReactDataGrid
-            //   columns={[
-            //     { key: "title", name: "Title" },
-            //     { key: "type", name: "Type" },
-            //     { key: "skills", name: "Skills", renderCell: SkillsFormatter },
-            //     { key: "status", name: "Status", renderCell: StatusFormatter },
-            //     { key: "zltoReward", name: "ZLTO" },
-            //     {
-            //       key: "unverifiedCredentials",
-            //       name: "Participants (verifications)",
-            //       renderCell: UnverifiedCredentialsFormatter,
-            //     },
-            //     { key: "opportunityURL", name: "Short Link" },
-            //     { key: "opportunityURL1", name: "Magic Link" },
-            //     {
-            //       key: "opportunityURL2",
-            //       name: "Manage",
-            //       renderCell: ManageFormatter,
-            //       cellClass: "flex justify-center items-center",
-            //     },
-            //   ]}
-            //   rows={opportunities}
-            // />
           )}
         </div>
       </div>
