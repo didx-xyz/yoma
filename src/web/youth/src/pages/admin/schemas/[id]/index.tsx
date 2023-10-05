@@ -375,7 +375,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       <label className="label">
                         <span className="label-text">Schema name</span>
                       </label>
-                      {id == "create" && (
+                      {id === "create" && (
                         <input
                           type="text"
                           className="input input-bordered rounded-md"
@@ -384,15 +384,19 @@ const SchemaCreateEdit: NextPageWithLayout<{
                           contentEditable
                         />
                       )}
-                      {id != "create" && (
+
+                      {/* eslint-disable */}
+                      {id !== "create" && (
                         <input
                           type="text"
                           className="input input-bordered rounded-md"
-                          value={schema?.displayName}
+                          value={schema?.displayName ?? ""}
                           contentEditable
                           disabled={true}
                         />
                       )}
+                      {/* eslint-enable */}
+
                       {errorsStep1.name && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">

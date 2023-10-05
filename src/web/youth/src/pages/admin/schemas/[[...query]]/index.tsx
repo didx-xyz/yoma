@@ -7,19 +7,12 @@ import MainLayout from "~/components/Layout/Main";
 import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { type ParsedUrlQuery } from "querystring";
 import Link from "next/link";
 import { PageBackground } from "~/components/PageBackground";
 import { IoIosAdd, IoMdSettings } from "react-icons/io";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { getSchemas } from "~/api/services/credentials";
 import type { SSISchema } from "~/api/models/credential";
-
-interface IParams extends ParsedUrlQuery {
-  id: string;
-  query?: string;
-  page?: string;
-}
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query, page } = context.query;
@@ -39,7 +32,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null, // (required for 'withAuth' HOC component)
-
       query: query ?? null,
       page: page ?? null,
     },
