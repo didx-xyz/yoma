@@ -113,13 +113,15 @@ namespace Yoma.Core.Domain.SSI.Services
 
             await _schemaRequestValidatorUpdate.ValidateAndThrowAsync(request);
 
-            if (await GetByNameOrNull(request.Name) == null)
+            var schemaExisting = await GetByNameOrNull(request.Name);
+
+            if (schemaExisting == null)
                 throw new ValidationException($"Schema '{request.Name}' does not exist");
 
             var schema = await _ssiProviderClient.UpsertSchema(new SchemaRequest
             {
                 Name = request.Name,
-                ArtifactType = request.ArtifactType,
+                ArtifactType = schemaExisting.ArtifactType,
                 Attributes = request.Attributes
             });
 
