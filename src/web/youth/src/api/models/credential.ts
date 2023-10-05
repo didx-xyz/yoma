@@ -33,11 +33,13 @@ export interface SSISchemaType {
   id: string;
   name: string;
   description: string;
+  supportMultiple: boolean;
 }
 
 export interface SSISchema {
   id: string;
   name: string;
+  displayName: string;
   typeId: string;
   type: SchemaType;
   typeDescription: string;
