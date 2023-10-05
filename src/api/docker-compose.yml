@@ -81,7 +81,8 @@ services:
       retries: 3
 
   keycloak: # Local Keycloak server
-    image: quay.io/keycloak/keycloak:22.0
+    # https://github.com/adorsys/keycloak-config-cli/pull/928
+    image: quay.io/keycloak/keycloak:22.0.3
     container_name: keycloak
     environment:
       WEBHOOK_EVENTS_TAKEN: "LOGIN,REGISTER,LOGOUT,UPDATE_PROFILE"
