@@ -297,7 +297,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             await _myOpportunityRepository.Delete(myOpportunity);
         }
 
-        public async Task PerformActionSendForVerification(Guid opportunityId, MyOpportunityRequestVerify request)
+        public async Task PerformActionSendForVerificationManual(Guid opportunityId, MyOpportunityRequestVerify request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -364,10 +364,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             myOpportunity.DateStart = request.DateStart.RemoveTime();
             myOpportunity.DateEnd = request.DateEnd.ToEndOfDay();
 
-            await PerformActionSendForVerification(request, opportunity, myOpportunity, isNew);
+            await PerformActionSendForVerificationManual(request, opportunity, myOpportunity, isNew);
         }
 
-        public async Task FinalizeVerification(MyOpportunityRequestVerifyFinalizeBatch request)
+        public async Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalizeBatch request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -380,7 +380,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             foreach (var item in request.Items)
             {
-                await FinalizeVerification(new MyOpportunityRequestVerifyFinalize
+                await FinalizeVerificationManual(new MyOpportunityRequestVerifyFinalize
                 {
                     OpportunityId = item.OpportunityId,
                     UserId = item.UserId,
@@ -393,7 +393,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         }
 
         //supported statuses: Rejected or Completed
-        public async Task FinalizeVerification(MyOpportunityRequestVerifyFinalize request)
+        public async Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalize request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -500,7 +500,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             return _blobService.GetURL(id.Value);
         }
 
-        private async Task PerformActionSendForVerification(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity myOpportunity, bool isNew)
+        private async Task PerformActionSendForVerificationManual(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity myOpportunity, bool isNew)
         {
             var itemsExisting = new List<MyOpportunityVerification>();
             var itemsExistingDeleted = new List<MyOpportunityVerification>();

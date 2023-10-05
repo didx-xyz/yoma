@@ -1107,7 +1107,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"755B1F54-1365-4D2F-AF29-8AEC57CC7B4C","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Type","i.e. Learning",true,DateTimeOffset.Now}
                     ,
-                    {"E763C235-F1B8-4D12-B60F-117AF7948355","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Organization","Organization Name",true,DateTimeOffset.Now}
+                    {"E763C235-F1B8-4D12-B60F-117AF7948355","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","OrganizationName","Organization Name",true,DateTimeOffset.Now}
                     ,
                     {"FF423D0C-2E91-48A6-9245-28EEF6E96B01","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Difficulty","i.e. Intermediate",true,DateTimeOffset.Now}
                     ,
@@ -1118,6 +1118,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     {"682974E4-7AAB-4060-8A27-426F91C02ADD","CA11D9D0-39F6-46D8-A0D3-350EC41402F5","ZltoReward","Zlto Reward",false,DateTimeOffset.Now}
                     ,
                     {"35632B44-19A1-4763-A92B-22E72B1BA4A3","CA11D9D0-39F6-46D8-A0D3-350EC41402F5","YomaReward","Yoma Reward",false,DateTimeOffset.Now}
+            },
+            schema: "SSI");
+
+            migrationBuilder.InsertData(
+            table: "SchemaType",
+            columns: new[] { "Id", "Name", "Description", "DateCreated" },
+            values: new object[,]
+            {
+                    {"7818B5C3-3D57-4264-B90B-DF53EAA9F749","Opportunity","Opportunity",DateTimeOffset.Now}
+                    ,
+                    {"EC978798-AAC0-4577-846E-1B5B2E6663CE","YoID","Yoma Member (YoID)",DateTimeOffset.Now}
             },
             schema: "SSI");
             #endregion SSI

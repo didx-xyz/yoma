@@ -46,33 +46,33 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Reject or complete verification for the specified 'my' opportunity batch (Admin or Organization Admin roles required)")]
+        [SwaggerOperation(Summary = "Reject or complete manual verification for the specified 'my' opportunity batch (Admin or Organization Admin roles required)")]
         [HttpPatch("verification/finalize/batch")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> FinalizeVerification([FromBody] MyOpportunityRequestVerifyFinalizeBatch request)
+        public async Task<IActionResult> FinalizeVerificationManual([FromBody] MyOpportunityRequestVerifyFinalizeBatch request)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(FinalizeVerification));
+            _logger.LogInformation("Handling request {requestName}", nameof(FinalizeVerificationManual));
 
-            await _myOpportunityService.FinalizeVerification(request);
+            await _myOpportunityService.FinalizeVerificationManual(request);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(FinalizeVerification));
+            _logger.LogInformation("Request {requestName} handled", nameof(FinalizeVerificationManual));
 
             return StatusCode((int)HttpStatusCode.OK);
         }
 
 
-        [SwaggerOperation(Summary = "Reject or complete verification for the specified 'my' opportunity (Admin or Organization Admin roles required)")]
+        [SwaggerOperation(Summary = "Reject or complete manual verification for the specified 'my' opportunity (Admin or Organization Admin roles required)")]
         [HttpPatch("verification/finalize")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> FinalizeVerification([FromBody] MyOpportunityRequestVerifyFinalize request)
+        public async Task<IActionResult> FinalizeVerificationManual([FromBody] MyOpportunityRequestVerifyFinalize request)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(FinalizeVerification));
+            _logger.LogInformation("Handling request {requestName}", nameof(FinalizeVerificationManual));
 
-            await _myOpportunityService.FinalizeVerification(request);
+            await _myOpportunityService.FinalizeVerificationManual(request);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(FinalizeVerification));
+            _logger.LogInformation("Request {requestName} handled", nameof(FinalizeVerificationManual));
 
             return StatusCode((int)HttpStatusCode.OK);
         }
@@ -132,7 +132,7 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSendForVerification));
 
-            await _myOpportunityService.PerformActionSendForVerification(opportunityId, request);
+            await _myOpportunityService.PerformActionSendForVerificationManual(opportunityId, request);
 
             _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSendForVerification));
 

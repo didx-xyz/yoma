@@ -260,6 +260,15 @@ namespace Yoma.Core.Api
                         }
                     }
                 });
+
+                c.AddSecurityDefinition(Common.Constants.RequestHeader_ApiKey, new OpenApiSecurityScheme
+                {
+                    Description = $"Api key authorization by {Common.Constants.RequestHeader_ApiKey} header. Example: \"{Common.Constants.RequestHeader_ApiKey} MyOrganizationApiKey\"",
+                    Name = Common.Constants.RequestHeader_ApiKey,
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                });
+
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
@@ -270,6 +279,7 @@ namespace Yoma.Core.Api
                         new[] { string.Join(_oAuth_Scope_Separator, scopes) }
                     }
                 });
+
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement()
                 {
                     {
@@ -278,11 +288,28 @@ namespace Yoma.Core.Api
                             Reference = new OpenApiReference
                             {
                                 Type = ReferenceType.SecurityScheme,
-                                Id = JwtBearerDefaults.AuthenticationScheme
+                                Id = Common.Constants.RequestHeader_ApiKey
                             },
-                            Scheme = SecuritySchemeType.OAuth2.ToString(),
-                            Name = JwtBearerDefaults.AuthenticationScheme,
+                            Name = Common.Constants.RequestHeader_ApiKey,
                             In = ParameterLocation.Header,
+                        },
+                        new List<string>()
+                    }
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = Common.Constants.RequestHeader_ApiKey
+                            },
+                            Type = SecuritySchemeType.ApiKey,
+                            Name = Common.Constants.RequestHeader_ApiKey,
+                            In = ParameterLocation.Header
                         },
                         new List<string>()
                     }
