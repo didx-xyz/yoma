@@ -16,7 +16,7 @@ export const getSchemas = async (
   const instance = context ? ApiServer(context) : await ApiClient;
   // construct querystring parameters from filter
   const params = new URLSearchParams();
-  if (schemaType !== undefined)
+  if (schemaType !== undefined && schemaType !== null)
     params.append("schemaType", schemaType.toString());
   const { data } = await instance.get<SSISchema[]>(
     `/ssi/schema?${params.toString()}`,

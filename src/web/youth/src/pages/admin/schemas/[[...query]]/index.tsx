@@ -24,7 +24,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     // 👇 prefetch queries (on server)
     await queryClient.prefetchQuery(
       [`Schemas_${query?.toString()}_${page?.toString()}`],
-      () => getSchemas(context),
+      () => getSchemas(undefined, context),
     );
   }
 
