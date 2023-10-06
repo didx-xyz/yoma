@@ -6,13 +6,21 @@ import type {
   SSISchemaEntity,
   SSISchemaRequest,
   SSISchemaType,
+  SchemaType,
 } from "../models/credential";
 
 export const getSchemas = async (
+  schemaType?: SchemaType,
   context?: GetServerSidePropsContext,
 ): Promise<SSISchema[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.get<SSISchema[]>("/ssi/schema");
+  // construct querystring parameters from filter
+  const params = new URLSearchParams();
+  if (schemaType !== undefined)
+    params.append("schemaType", schemaType.toString());
+  const { data } = await instance.get<SSISchema[]>(
+    `/ssi/schema?${params.toString()}`,
+  );
   return data;
 };
 
