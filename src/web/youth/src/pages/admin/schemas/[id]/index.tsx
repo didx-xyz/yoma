@@ -187,7 +187,9 @@ const SchemaCreateEdit: NextPageWithLayout<{
       .string()
       .min(1, "Schema name is required.")
       .max(255, "Schema name cannot exceed 255 characters."),
-    typeId: z.string().min(1, "Schema type is required."),
+    typeId: z
+      .string({ required_error: "Schema type is required." })
+      .min(1, "Schema type is required."),
     artifactType: z.number({
       invalid_type_error: "Artifact type is required.",
     }),
@@ -431,6 +433,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                             onChange={(val) => onChange(val?.value)}
                             value={schemaTypes?.find((c) => c.value === value)}
                             isDisabled={id !== "create"}
+                            placeholder="Select schema type"
                           />
                         )}
                       />
@@ -479,16 +482,16 @@ const SchemaCreateEdit: NextPageWithLayout<{
                               },
                             ]}
                             onChange={(val) => onChange(val?.value)}
-                            value={{
-                              value: value,
-                              label:
-                                value != null
-                                  ? value === 0
-                                    ? "Indy"
-                                    : "Ld_proof"
-                                  : null,
-                            }}
+                            value={
+                              value != null
+                                ? {
+                                    value: value,
+                                    label: value === 0 ? "Indy" : "Ld_proof",
+                                  }
+                                : null
+                            }
                             isDisabled={id !== "create"}
+                            placeholder="Select artifact type"
                           />
                         )}
                       />
