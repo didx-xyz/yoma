@@ -173,7 +173,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             return results;
         }
-        
+
         public List<Models.Lookups.OpportunityCategory> ListFilterOpportunityCategories()
         {
             var statuses = new List<Status> { Status.Active & Status.Expired };
@@ -215,7 +215,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             var statuses = new List<Status> { Status.Active & Status.Expired };
             var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
 
-            var organizationIds = _opportunityRepository.Query().Where( o => statusIds.Contains(o.StatusId)).Select(o => o.OrganizationId).Distinct().ToList();
+            var organizationIds = _opportunityRepository.Query().Where(o => statusIds.Contains(o.StatusId)).Select(o => o.OrganizationId).Distinct().ToList();
 
             var filter = new OrganizationSearchFilter
             {
