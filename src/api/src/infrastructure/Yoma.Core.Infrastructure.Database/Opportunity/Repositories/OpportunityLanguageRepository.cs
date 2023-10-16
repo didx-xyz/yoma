@@ -1,4 +1,6 @@
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Entity;
+using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
@@ -18,6 +20,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
             {
                 Id = entity.Id,
                 OpportunityId = entity.OpportunityId,
+                OpportunityStatusId = entity.Opportunity.Status.Id,
+                OrganizationStatusId = entity.Opportunity.Organization.Status.Id,
                 LanguageId = entity.LanguageId,
                 DateCreated = entity.DateCreated
             });

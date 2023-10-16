@@ -79,6 +79,66 @@ namespace Yoma.Core.Api.Controllers
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
+
+        [SwaggerOperation(Summary = "Return a list of opportunity categories associated with an active or expired opportunity linked to an active organization (Anonymous)")]
+        [HttpGet("search/filter/category")]
+        [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityCategory>), (int)HttpStatusCode.OK)]
+        [AllowAnonymous]
+        public IActionResult ListFilterOpportunityCategories()
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListFilterOpportunityCategories));
+
+            var result = _opportunityService.ListFilterOpportunityCategories();
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListFilterOpportunityCategories));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Return a list of countries associated with an active or expired opportunity linked to an active organization (Anonymous)")]
+        [HttpGet("search/filter/country")]
+        [ProducesResponseType(typeof(List<Domain.Lookups.Models.Country>), (int)HttpStatusCode.OK)]
+        [AllowAnonymous]
+        public IActionResult ListFilterOpportunityCountries()
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListFilterOpportunityCountries));
+
+            var result = _opportunityService.ListFilterOpportunityCountries();
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListFilterOpportunityCountries));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Return a list of languages associated with an active or expired opportunity linked to an active organization (Anonymous)")]
+        [HttpGet("search/filter/language")]
+        [ProducesResponseType(typeof(List<Domain.Lookups.Models.Language>), (int)HttpStatusCode.OK)]
+        [AllowAnonymous]
+        public IActionResult ListFilterOpportunityLanguages()
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListFilterOpportunityLanguages));
+
+            var result = _opportunityService.ListFilterOpportunityLanguages();
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListFilterOpportunityLanguages));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Return a list of active organizations associated with an active or expired opportunity (Anonymous)")]
+        [HttpGet("search/filter/organization")]
+        [ProducesResponseType(typeof(List<Domain.Lookups.Models.Language>), (int)HttpStatusCode.OK)]
+        [AllowAnonymous]
+        public IActionResult ListFilterOpportunityOrganizations()
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListFilterOpportunityOrganizations));
+
+            var result = _opportunityService.ListFilterOpportunityOrganizations();
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListFilterOpportunityOrganizations));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
         #endregion
 
         #region Administrative Actions

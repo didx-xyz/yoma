@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Interfaces
@@ -11,6 +12,14 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
         Models.Opportunity? GetByTitleOrNull(string title, bool includeChildItems, bool includeComputed);
 
         List<Models.Opportunity> Contains(string value, bool includeComputed);
+
+        List<Models.Lookups.OpportunityCategory> ListFilterOpportunityCategories();
+
+        List<Domain.Lookups.Models.Country> ListFilterOpportunityCountries();
+
+        List<Domain.Lookups.Models.Language> ListFilterOpportunityLanguages();
+
+        List<OrganizationInfo> ListFilterOpportunityOrganizations();
 
         OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 

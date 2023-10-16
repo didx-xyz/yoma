@@ -179,11 +179,9 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var query = _organizationRepository.Query();
 
+            var organizationIds = new List<Guid>();
             if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
-            {
-                var organizationIds = ListAdminsOf(false).Select(o => o.Id).ToList();
-                query = query.Where(o => organizationIds.Contains(o.Id));
-            }
+                organizationIds.AddRange(ListAdminsOf(false).Select(o => o.Id).ToList());
 
             if (filter.Statuses != null && filter.Statuses.Any())
             {
@@ -194,6 +192,15 @@ namespace Yoma.Core.Domain.Entity.Services
 
             if (!string.IsNullOrEmpty(filter.ValueContains))
                 query = _organizationRepository.Contains(query, filter.ValueContains);
+
+            if (filter.Organizations != null && filter.Organizations.Any())
+            {
+                filter.Organizations = filter.Organizations.Distinct().ToList();
+                organizationIds = organizationIds.Any() ? organizationIds.Intersect(filter.Organizations).ToList() : filter.Organizations;
+            }
+
+            if (organizationIds.Any())
+                query = query.Where(o => organizationIds.Contains(o.Id));
 
             var results = new OrganizationSearchResults();
             query = query.OrderBy(o => o.Name);

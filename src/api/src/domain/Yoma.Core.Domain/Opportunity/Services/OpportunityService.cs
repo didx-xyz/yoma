@@ -7,6 +7,7 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
+using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
@@ -171,6 +172,59 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 });
 
             return results;
+        }
+        
+        public List<Models.Lookups.OpportunityCategory> ListFilterOpportunityCategories()
+        {
+            var statuses = new List<Status> { Status.Active & Status.Expired };
+            var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+            var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+
+            var categoryIds = _opportunityCategoryRepository.Query().Where(
+                o => statusIds.Contains(o.OpportunityStatusId) && o.OrganizationStatusId == organizationStatusActiveId).Select(o => o.CategoryId).Distinct().ToList();
+
+            return _opportunityCategoryService.List().Where(o => categoryIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
+        }
+
+        public List<Domain.Lookups.Models.Country> ListFilterOpportunityCountries()
+        {
+            var statuses = new List<Status> { Status.Active & Status.Expired };
+            var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+            var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+
+            var countryIds = _opportunityCountryRepository.Query().Where(
+                o => statusIds.Contains(o.OpportunityStatusId) && o.OrganizationStatusId == organizationStatusActiveId).Select(o => o.CountryId).Distinct().ToList();
+
+            return _countryService.List().Where(o => countryIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
+        }
+
+        public List<Domain.Lookups.Models.Language> ListFilterOpportunityLanguages()
+        {
+            var statuses = new List<Status> { Status.Active & Status.Expired };
+            var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+            var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+
+            var languageIds = _opportunityLanguageRepository.Query().Where(
+                o => statusIds.Contains(o.OpportunityStatusId) && o.OrganizationStatusId == organizationStatusActiveId).Select(o => o.LanguageId).Distinct().ToList();
+
+            return _languageService.List().Where(o => languageIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
+        }
+
+        public List<OrganizationInfo> ListFilterOpportunityOrganizations()
+        {
+            var statuses = new List<Status> { Status.Active & Status.Expired };
+            var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+
+            var organizationIds = _opportunityRepository.Query().Where( o => statusIds.Contains(o.StatusId)).Select(o => o.OrganizationId).Distinct().ToList();
+
+            var filter = new OrganizationSearchFilter
+            {
+                Organizations = organizationIds,
+                Statuses = new List<Status> { Status.Active },
+                InternalUse = true
+            };
+
+            return _organizationService.Search(filter, false).Items;
         }
 
         public OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
