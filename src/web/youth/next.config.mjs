@@ -42,6 +42,7 @@ const config = {
     domains: [
       "yoma-test-file-storage.s3.eu-west-1.amazonaws.com",
       "yoma-v3-private-storage.s3.eu-west-1.amazonaws.com",
+      "yoma-v3-public-storage.s3.eu-west-1.amazonaws.com",
     ],
   },
 

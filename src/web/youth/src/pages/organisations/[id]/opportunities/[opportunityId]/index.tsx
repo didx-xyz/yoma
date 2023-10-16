@@ -31,6 +31,7 @@ import AsyncSelect from "react-select/async";
 import { toast } from "react-toastify";
 import z from "zod";
 import { type SelectOption } from "~/api/models/lookups";
+import { SchemaType } from "~/api/models/credential";
 import {
   VerificationMethod,
   type Opportunity,
@@ -206,9 +207,9 @@ const OpportunityDetails: NextPageWithLayout<{
   const { data: schemas } = useQuery<SelectOption[]>({
     queryKey: ["schemas"],
     queryFn: async () =>
-      (await getSchemas()).map((c) => ({
-        value: c.id,
-        label: c.name,
+      (await getSchemas(SchemaType.Opportunity)).map((c) => ({
+        value: c.name,
+        label: c.displayName,
       })),
   });
   // skills cache. searched items are added to this cache
@@ -1872,8 +1873,8 @@ const OpportunityDetails: NextPageWithLayout<{
                                 control: () => "input input-bordered",
                               }}
                               options={schemas}
-                              onChange={(val) => onChange(val?.label)}
-                              value={schemas?.find((c) => c.label === value)}
+                              onChange={(val) => onChange(val?.value)}
+                              value={schemas?.find((c) => c.value === value)}
                             />
                           )}
                         />
