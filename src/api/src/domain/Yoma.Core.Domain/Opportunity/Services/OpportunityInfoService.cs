@@ -57,6 +57,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 Categories = filter.Categories,
                 Languages = filter.Languages,
                 Countries = filter.Countries,
+                Organizations = filter.Organizations,
+                CommitmentIntervals = filter.CommitmentIntervals,
+                ZltoRewardRanges = filter.ZltoRewardRanges,
                 ValueContains = filter.ValueContains,
                 PageNumber = filter.PageNumber,
                 PageSize = filter.PageSize

@@ -1,5 +1,3 @@
-using Yoma.Core.Domain.Entity;
-
 namespace Yoma.Core.Domain.Opportunity.Models
 {
     public class OpportunityCountry
