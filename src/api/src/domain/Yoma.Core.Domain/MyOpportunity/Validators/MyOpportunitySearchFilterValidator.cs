@@ -12,6 +12,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
         #region Constructor
         public MyOpportunitySearchFilterValidator()
         {
+            RuleFor(x => x.PaginationEnabled).Equal(true).When(x => !x.TotalCountOnly).WithMessage("Pagination required");
             RuleFor(x => x.UserId).Must(guid => guid == null || guid != Guid.Empty).WithMessage("{PropertyName} contains an empty value.");
             RuleFor(x => x.OpportunityId).Must(guid => guid == null || guid != Guid.Empty).WithMessage("{PropertyName} contains an empty value.");
             RuleFor(x => x.ValueContains).Length(3, 50).When(x => !string.IsNullOrEmpty(x.ValueContains));

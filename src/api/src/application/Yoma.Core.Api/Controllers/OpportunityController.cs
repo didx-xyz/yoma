@@ -84,11 +84,11 @@ namespace Yoma.Core.Api.Controllers
         [HttpGet("search/filter/category")]
         [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityCategory>), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
-        public IActionResult ListFilterOpportunityCategories()
+        public IActionResult ListFilterOpportunityCategories([FromQuery] bool? includeExpired)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListFilterOpportunityCategories));
 
-            var result = _opportunityService.ListFilterOpportunityCategories();
+            var result = _opportunityService.ListFilterOpportunityCategories(includeExpired);
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListFilterOpportunityCategories));
 
@@ -99,11 +99,11 @@ namespace Yoma.Core.Api.Controllers
         [HttpGet("search/filter/country")]
         [ProducesResponseType(typeof(List<Domain.Lookups.Models.Country>), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
-        public IActionResult ListFilterOpportunityCountries()
+        public IActionResult ListFilterOpportunityCountries([FromQuery] bool? includeExpired)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListFilterOpportunityCountries));
 
-            var result = _opportunityService.ListFilterOpportunityCountries();
+            var result = _opportunityService.ListFilterOpportunityCountries(includeExpired);
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListFilterOpportunityCountries));
 
@@ -114,11 +114,11 @@ namespace Yoma.Core.Api.Controllers
         [HttpGet("search/filter/language")]
         [ProducesResponseType(typeof(List<Domain.Lookups.Models.Language>), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
-        public IActionResult ListFilterOpportunityLanguages()
+        public IActionResult ListFilterOpportunityLanguages([FromQuery] bool? includeExpired)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListFilterOpportunityLanguages));
 
-            var result = _opportunityService.ListFilterOpportunityLanguages();
+            var result = _opportunityService.ListFilterOpportunityLanguages(includeExpired);
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListFilterOpportunityLanguages));
 
@@ -129,11 +129,11 @@ namespace Yoma.Core.Api.Controllers
         [HttpGet("search/filter/organization")]
         [ProducesResponseType(typeof(List<Domain.Lookups.Models.Language>), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
-        public IActionResult ListFilterOpportunityOrganizations()
+        public IActionResult ListFilterOpportunityOrganizations([FromQuery] bool? includeExpired)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListFilterOpportunityOrganizations));
 
-            var result = _opportunityService.ListFilterOpportunityOrganizations();
+            var result = _opportunityService.ListFilterOpportunityOrganizations(includeExpired);
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListFilterOpportunityOrganizations));
 
