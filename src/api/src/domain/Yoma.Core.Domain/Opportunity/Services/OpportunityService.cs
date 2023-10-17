@@ -175,21 +175,40 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results;
         }
 
-        public List<Models.Lookups.OpportunityCategory> ListFilterOpportunityCategories()
+        public List<Models.Lookups.OpportunityCategory> ListFilterOpportunityCategories(bool? includeExpired)
         {
-            var statuses = new List<Status> { Status.Active & Status.Expired };
+            var statuses = new List<Status> { Status.Active };
+            if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
+
             var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
             var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
 
             var categoryIds = _opportunityCategoryRepository.Query().Where(
                 o => statusIds.Contains(o.OpportunityStatusId) && o.OrganizationStatusId == organizationStatusActiveId).Select(o => o.CategoryId).Distinct().ToList();
 
-            return _opportunityCategoryService.List().Where(o => categoryIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
+            var results = _opportunityCategoryService.List().Where(o => categoryIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
+
+            foreach (var item in results)
+            {
+                var filter = new OpportunitySearchFilterAdmin
+                {
+                    Categories = new List<Guid> { item.Id },
+                    Published = true,
+                    IncludeExpired = includeExpired.HasValue && includeExpired.Value,
+                    TotalCountOnly = true
+                };
+
+                item.Count = Search(filter, false).TotalCount;
+            }
+
+            return results;
         }
 
-        public List<Domain.Lookups.Models.Country> ListFilterOpportunityCountries()
+        public List<Domain.Lookups.Models.Country> ListFilterOpportunityCountries(bool? includeExpired)
         {
-            var statuses = new List<Status> { Status.Active & Status.Expired };
+            var statuses = new List<Status> { Status.Active };
+            if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
+
             var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
             var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
 
@@ -199,9 +218,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return _countryService.List().Where(o => countryIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
         }
 
-        public List<Domain.Lookups.Models.Language> ListFilterOpportunityLanguages()
+        public List<Domain.Lookups.Models.Language> ListFilterOpportunityLanguages(bool? includeExpired)
         {
-            var statuses = new List<Status> { Status.Active & Status.Expired };
+            var statuses = new List<Status> { Status.Active };
+            if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
+
             var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
             var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
 
@@ -211,9 +232,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return _languageService.List().Where(o => languageIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
         }
 
-        public List<OrganizationInfo> ListFilterOpportunityOrganizations()
+        public List<OrganizationInfo> ListFilterOpportunityOrganizations(bool? includeExpired)
         {
-            var statuses = new List<Status> { Status.Active & Status.Expired };
+            var statuses = new List<Status> { Status.Active };
+            if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
+
             var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
 
             var organizationIds = _opportunityRepository.Query().Where(o => statusIds.Contains(o.StatusId)).Select(o => o.OrganizationId).Distinct().ToList();
@@ -353,24 +376,31 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 query = query.Where(predicate);
             }
 
-            var results = new OpportunitySearchResults();
+            var result = new OpportunitySearchResults();
+
+            if (filter.TotalCountOnly)
+            {
+                result.TotalCount = query.Count();
+                return result;
+            }
+
             query = query.OrderByDescending(o => o.DateCreated);
 
             //pagination
             if (filter.PaginationEnabled)
             {
-                results.TotalCount = query.Count();
+                result.TotalCount = query.Count();
                 query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
             }
 
-            results.Items = query.ToList();
-            results.Items.ForEach(o =>
+            result.Items = query.ToList();
+            result.Items.ForEach(o =>
             {
                 o.SetPublished();
                 o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoId);
             });
 
-            return results;
+            return result;
         }
 
         public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization)

@@ -37,5 +37,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
         /// </summary>
         [JsonIgnore]
         internal List<Guid>? Opportunities { get; set; }
+
+
+        [JsonIgnore]
+        internal bool TotalCountOnly { get; set; }
     }
 }

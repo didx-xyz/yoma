@@ -7,5 +7,7 @@ namespace Yoma.Core.Domain.Opportunity.Models.Lookups
         public string Name { get; set; }
 
         public string ImageURL { get; set; }
+
+        public int? Count { get; set; }
     }
 }
