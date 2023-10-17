@@ -14,6 +14,10 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups
         public string Name { get; set; }
 
         [Required]
+        [Column(TypeName = "varchar(2048)")]
+        public string ImageURL { get; set; }
+
+        [Required]
         public DateTimeOffset DateCreated { get; set; }
     }
 }

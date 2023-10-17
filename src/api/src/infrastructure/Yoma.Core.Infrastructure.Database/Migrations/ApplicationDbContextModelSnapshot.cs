@@ -676,6 +676,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<DateTimeOffset>("DateCreated")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("ImageURL")
+                        .IsRequired()
+                        .HasColumnType("varchar(2048)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("varchar(125)");

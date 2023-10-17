@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231005121733_ApplicationDb_Initial")]
+    [Migration("20231017082928_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -678,6 +678,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Property<DateTimeOffset>("DateCreated")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ImageURL")
+                        .IsRequired()
+                        .HasColumnType("varchar(2048)");
 
                     b.Property<string>("Name")
                         .IsRequired()

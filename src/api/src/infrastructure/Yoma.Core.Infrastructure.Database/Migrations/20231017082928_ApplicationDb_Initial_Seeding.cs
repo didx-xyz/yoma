@@ -964,20 +964,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             #region Opportunity
             migrationBuilder.InsertData(
             table: "OpportunityCategory",
-            columns: new[] { "Id", "Name", "DateCreated" },
+            columns: new[] { "Id", "Name", "ImageURL", "DateCreated" },
             values: new object[,]
             {
-                    {"2CCBACF7-1ED9-4E20-BB7C-43EDFDB3F950","Agriculture",DateTimeOffset.Now}
+                    {"2CCBACF7-1ED9-4E20-BB7C-43EDFDB3F950","Agriculture","https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/opportunity/category/Agriculture.svg",DateTimeOffset.Now}
                     ,
-                    {"89F4AB46-0767-494F-A18C-3037F698133A","Career and Personal Development",DateTimeOffset.Now}
+                    {"89F4AB46-0767-494F-A18C-3037F698133A","Career and Personal Development","https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/opportunity/category/CareerAndPersonalDevelopment.svg",DateTimeOffset.Now}
                     ,
-                    {"C76786FD-FCA9-4633-85B3-11E53486D708","Business and Entrepreneurship",DateTimeOffset.Now}
+                    {"C76786FD-FCA9-4633-85B3-11E53486D708","Business and Entrepreneurship","https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/opportunity/category/BusinessAndEntrepreneurship.svg", DateTimeOffset.Now}
                     ,
-                    {"D0D322AB-D1D7-44B6-94E8-7B85246AA42E","Environment and Climate",DateTimeOffset.Now}
+                    {"D0D322AB-D1D7-44B6-94E8-7B85246AA42E","Environment and Climate","https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/opportunity/category/EnvironmentAndClimate.svg",DateTimeOffset.Now}
                     ,
-                    {"FA564C1C-591A-4A6D-8294-20165DA8866B","Technology and Digitization",DateTimeOffset.Now}
+                    {"FA564C1C-591A-4A6D-8294-20165DA8866B","Technology and Digitization","https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/opportunity/category/TechnologyAndDigitization.svg",DateTimeOffset.Now}
                     ,
-                    {"F36051C9-9057-4765-BC2F-9DEE82EF60D6","Tourism and Hospitality",DateTimeOffset.Now}
+                    {"F36051C9-9057-4765-BC2F-9DEE82EF60D6","Tourism and Hospitality","https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/opportunity/category/TourismAndHospitality.svg",DateTimeOffset.Now}
             },
             schema: "Opportunity");
 

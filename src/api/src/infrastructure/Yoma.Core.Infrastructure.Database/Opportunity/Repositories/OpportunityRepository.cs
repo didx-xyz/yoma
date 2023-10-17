@@ -65,7 +65,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 DateModified = entity.DateModified,
                 ModifiedBy = entity.ModifiedBy,
                 Categories = includeChildItems ?
-                    entity.Categories.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityCategory { Id = o.CategoryId, Name = o.Category.Name }).ToList() : null,
+                    entity.Categories.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityCategory { Id = o.CategoryId, Name = o.Category.Name, ImageURL = o.Category.ImageURL }).ToList() : null,
                 Countries = includeChildItems ?
                     entity.Countries.Select(o => new Domain.Lookups.Models.Country
                     {
