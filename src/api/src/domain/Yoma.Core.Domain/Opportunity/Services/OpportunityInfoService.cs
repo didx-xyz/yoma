@@ -62,7 +62,21 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 PageSize = filter.PageSize
             };
 
+            var mostViewed = filter.MostViewed.HasValue && filter.MostViewed.Value;
+            Dictionary<Guid, int>? aggregatedByViewed = null;
+            if (mostViewed)
+            {
+                aggregatedByViewed = _myOpportunityService.ListAggregatedOpportunityByViewed(filter, filterInternal.IncludeExpired);
+                filterInternal.Opportunities = aggregatedByViewed?.Keys.ToList() ?? new List<Guid>();
+            }
+
             var searchResult = _opportunityService.Search(filterInternal, false);
+
+            if (mostViewed)
+                searchResult.Items = searchResult.Items
+                    .OrderBy(opportunity => aggregatedByViewed?.Keys.ToList().IndexOf(opportunity.Id)) //preserver order of aggregatedByViewed, which is ordered by count and then by last viewed date
+                    .ToList();
+
             var results = new OpportunitySearchResultsInfo
             {
                 TotalCount = searchResult.TotalCount,

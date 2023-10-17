@@ -45,6 +45,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly IRepository<OpportunityLanguage> _opportunityLanguageRepository;
         private readonly IRepository<OpportunitySkill> _opportunitySkillRepository;
         private readonly IRepository<OpportunityVerificationType> _opportunityVerificationTypeRepository;
+        private readonly IRepositoryBatchedWithNavigation<Domain.MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
 
         public const string Keywords_Separator = ",";
         public const int Keywords_CombinedMaxLength = 500;
@@ -314,6 +315,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 filter.Statuses = filter.Statuses.Distinct().ToList();
                 var statusIds = filter.Statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
                 query = query.Where(o => statusIds.Contains(o.StatusId));
+            }
+
+            //opportunities (explicit internal filter; if specified and empty, no results will be returned)
+            if (filter.Opportunities != null)
+            {
+                filter.Opportunities = filter.Opportunities.Distinct().ToList();
+                query = query.Where(o => filter.Opportunities.Contains(o.Id));
             }
 
             //valueContains (includes organizations, types, categories, opportunities and skills)

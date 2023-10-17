@@ -7,11 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Entity\Services\fdqkdurf.2gf~" />
-    <None Remove="Entity\Validators\OrganizationRequestValidatorBase.cs~RF2a69f053.TMP" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
     <PackageReference Include="Flurl.Http" Version="3.2.4" />
     <PackageReference Include="Hangfire.Core" Version="1.8.5" />

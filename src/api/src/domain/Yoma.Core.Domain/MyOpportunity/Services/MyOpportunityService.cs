@@ -21,6 +21,7 @@ using Yoma.Core.Domain.MyOpportunity.Extensions;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.MyOpportunity.Validators;
+using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 
@@ -163,7 +164,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     //published: relating to active opportunities (irrespective of started) that relates to active organizations
                     query = query.Where(o => o.OpportunityStatusId == opportunityStatusActiveId);
                     query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
-                    query.OrderByDescending(o => o.DateModified);
+                    query = query.OrderByDescending(o => o.DateModified);
                     break;
 
                 case Action.Verification:
@@ -180,17 +181,17 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                             query = query.Where(o => (o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.Now)
                                 || o.OpportunityStatusId == opportunityStatusExpiredId);
                             query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
-                            query.OrderByDescending(o => o.DateModified);
+                            query = query.OrderByDescending(o => o.DateModified);
                             break;
 
                         case VerificationStatus.Completed:
                             //all, irrespective of related opportunity and organization status
-                            query.OrderByDescending(o => o.DateCompleted);
+                            query = query.OrderByDescending(o => o.DateCompleted);
                             break;
 
                         case VerificationStatus.Rejected:
                             //all, irrespective of related opportunity and organization status
-                            query.OrderByDescending(o => o.DateModified);
+                            query = query.OrderByDescending(o => o.DateModified);
                             break;
 
                         default:
@@ -490,6 +491,36 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             {
                 _logger.LogError(ex, "Failed to send '{emailType}' email", emailType);
             }
+        }
+
+        public Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(PaginationFilter filter, bool includeExpired)
+        {
+            var actionId = _myOpportunityActionService.GetByName(Action.Viewed.ToString()).Id;
+            var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+            var statuses = new List<Status> { Status.Active };
+            if (includeExpired) statuses.Add(Status.Expired);
+
+            var query = _myOpportunityRepository.Query();
+
+            query = query.Where(o => o.ActionId == actionId);
+            query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
+
+            var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+            query = query.Where(o => statusIds.Contains(o.OpportunityStatusId));
+
+            var queryGrouped = query.GroupBy(o => o.OpportunityId)
+            .Select(group => new
+            {
+                OpportunityId = group.Key,
+                Count = group.Count(),
+                MaxDateModified = group.Max(o => o.DateModified) //max last viewed date
+            });
+            queryGrouped = queryGrouped.OrderByDescending(result => result.Count).ThenByDescending(result => result.MaxDateModified); //ordered by count and then by max last viewed date
+
+            if (filter.PaginationEnabled)
+                queryGrouped = queryGrouped.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+
+            return queryGrouped.ToDictionary(o => o.OpportunityId, o => o.Count);
         }
         #endregion
 

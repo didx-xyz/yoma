@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Interfaces
@@ -19,5 +20,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
         Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalizeBatch request);
 
         Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalize request);
+
+        Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(PaginationFilter filter, bool includeExpired);
     }
 }

@@ -7,5 +7,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
         /// If flagged, the search results will also included expired opportunities (expired that relates to an active organization)
         /// </summary>
         public new bool? IncludeExpired { get; set; }
+
+        /// <summary>
+        /// Filter results by the most viewed / popular opportunities
+        /// </summary>
+        public bool? MostViewed { get; set; }
     }
 }

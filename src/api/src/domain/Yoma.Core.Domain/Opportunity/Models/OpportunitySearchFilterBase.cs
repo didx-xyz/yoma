@@ -29,5 +29,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
         /// </summary>
         [JsonIgnore]
         internal bool IncludeExpired { get; set; }
+
+        /// <summary>
+        /// Filter based on the supplied list of opportunities. Explicit internal filter; if specified and empty no results will be returned
+        /// </summary>
+        [JsonIgnore]
+        internal List<Guid>? Opportunities { get; set; }
     }
 }
