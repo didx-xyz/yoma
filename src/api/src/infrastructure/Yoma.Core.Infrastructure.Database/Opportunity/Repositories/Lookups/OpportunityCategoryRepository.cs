@@ -19,7 +19,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories.Lookups
             return _context.OpportunityCategory.Select(entity => new OpportunityCategory
             {
                 Id = entity.Id,
-                Name = entity.Name
+                Name = entity.Name,
+                ImageURL = entity.ImageURL
             });
         }
 

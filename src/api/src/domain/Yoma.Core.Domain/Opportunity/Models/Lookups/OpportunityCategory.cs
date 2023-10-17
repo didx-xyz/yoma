@@ -5,5 +5,7 @@ namespace Yoma.Core.Domain.Opportunity.Models.Lookups
         public Guid Id { get; set; }
 
         public string Name { get; set; }
+
+        public string ImageURL { get; set; }
     }
 }
