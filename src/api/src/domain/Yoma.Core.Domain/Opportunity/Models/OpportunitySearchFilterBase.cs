@@ -15,6 +15,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public List<Guid>? Organizations { get; set; }
 
+        public List<OpportunitySearchFilterCommitmentInterval>? CommitmentIntervals { get; set; }
+
+        public List<OpportunitySearchFilterZltoReward>? ZltoRewardRanges { get; set; }
+
         /// <summary>
         /// Includes organizations (name), opportunities (title, keywords, description), opportunity types (name), opportunity categories (name) and skills (name) matched on search text
         /// </summary>

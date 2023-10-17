@@ -408,6 +408,31 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 query = query.Where(o => filter.Opportunities.Contains(o.Id));
             }
 
+            //commitmentIntervals
+            if (filter.CommitmentIntervals != null && filter.CommitmentIntervals.Any())
+            {
+                var intervalIds = filter.CommitmentIntervals.Select(item => item.Id).Distinct().ToList();
+                var intervalCounts = filter.CommitmentIntervals.Select(item => item.Count).Distinct().ToList();
+                query = query.Where(o => intervalIds.Contains(o.CommitmentIntervalId) && intervalCounts.Contains(o.CommitmentIntervalCount));
+            }
+
+            //zltoRewardRanges
+            if (filter.ZltoRewardRanges != null && filter.ZltoRewardRanges.Any())
+            {
+                var distinctItems = filter.ZltoRewardRanges
+                    .Select(item => new { item.From, item.To })
+                    .Distinct()
+                    .ToList();
+
+                query = query.Where(o => o.ZltoReward.HasValue);
+
+                var predicate = PredicateBuilder.False<Models.Opportunity>();
+                foreach (var item in distinctItems)
+                    predicate = predicate.Or(o => o.ZltoReward >= item.From && o.ZltoReward <= item.To);
+
+                query = query.Where(predicate);
+            }
+
             //valueContains (includes organizations, types, categories, opportunities and skills)
             if (!string.IsNullOrEmpty(filter.ValueContains))
             {
