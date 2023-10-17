@@ -1138,10 +1138,10 @@
   resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.1.1.tgz#1a5b1959a528e374e8037c4396c3e825d6cf4a83"
   integrity sha512-m0G6wlnhm/AX0H12IOWtK8gASEMffnX08RtKkCgTdHb9JpHKGloI7icFfLg9ZmQeavcvR0PKmzxClyuFPSjKWw==
 
-"@fontsource/open-sans@^5.0.9":
-  version "5.0.9"
-  resolved "https://registry.yarnpkg.com/@fontsource/open-sans/-/open-sans-5.0.9.tgz#e5d6216cd32f3489940f5348945b11c65191d5a6"
-  integrity sha512-u3P37qsYLuYTkQjevTInS8cwvhZznS08jauNkbzzyFBLSLogEdHqLmP/PyE8Bnrff+hVguA5WwtWThiy1m4Eaw==
+"@fontsource/open-sans@^5.0.15":
+  version "5.0.15"
+  resolved "https://registry.yarnpkg.com/@fontsource/open-sans/-/open-sans-5.0.15.tgz#9afe2fab06e151772832b5bee30fb9318ddbf9c0"
+  integrity sha512-gnvxTADG72CWWN57//x5leVJqQthgkhHao3/dK6wkn5wO7uTLYpiViLfUJYeV274juC73EvGQnc/3Y+9IEST2A==
 
 "@hookform/resolvers@^3.3.0":
   version "3.3.1"
