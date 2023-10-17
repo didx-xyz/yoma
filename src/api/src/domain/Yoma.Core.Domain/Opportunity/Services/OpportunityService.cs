@@ -847,7 +847,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 await _opportunityCategoryRepository.Create(item);
 
                 opportunity.Categories ??= new List<Models.Lookups.OpportunityCategory>();
-                opportunity.Categories.Add(new Models.Lookups.OpportunityCategory { Id = category.Id, Name = category.Name , ImageURL = category.ImageURL });
+                opportunity.Categories.Add(new Models.Lookups.OpportunityCategory { Id = category.Id, Name = category.Name, ImageURL = category.ImageURL });
             }
 
             scope.Complete();
