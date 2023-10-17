@@ -64,7 +64,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
                 .WithMessage("A verification method is required when verification is enabled.");
             RuleFor(x => x.DifficultyId).NotEmpty().Must(DifficultyExists).WithMessage($"Specified difficulty is invalid / does not exist.");
             RuleFor(x => x.CommitmentIntervalId).NotEmpty().Must(TimeIntervalExists).WithMessage($"Specified time interval is invalid / does not exist.");
-            RuleFor(x => x.CommitmentIntervalCount).Must(x => x.HasValue && x > 0).When(x => x.CommitmentIntervalCount.HasValue).WithMessage("'{PropertyName}' must be greater than 0.");
+            RuleFor(x => x.CommitmentIntervalCount).Must(x => x > 0).WithMessage("'{PropertyName}' must be greater than 0.");
             RuleFor(x => x.ParticipantLimit).Must(x => x.HasValue && x > 0).When(x => x.ParticipantLimit.HasValue).WithMessage("'{PropertyName}' must be greater than 0.");
             RuleFor(x => x.Keywords).Must(keywords => keywords == null || keywords.All(x => !string.IsNullOrWhiteSpace(x) && !x.Contains(OpportunityService.Keywords_Separator))).WithMessage("{PropertyName} contains empty value(s) or keywords with ',' character.");
             RuleFor(model => model.Keywords).Must(list => list == null || CalculateCombinedLength(list) >= 1 && CalculateCombinedLength(list) <= OpportunityService.Keywords_CombinedMaxLength).WithMessage("The combined length of keywords must be between 1 and 500 characters.");

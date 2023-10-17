@@ -790,7 +790,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<short?>("CommitmentIntervalCount")
+                    b.Property<short>("CommitmentIntervalCount")
                         .HasColumnType("smallint");
 
                     b.Property<Guid>("CommitmentIntervalId")

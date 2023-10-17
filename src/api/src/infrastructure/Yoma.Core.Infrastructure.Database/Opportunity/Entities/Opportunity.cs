@@ -79,7 +79,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
         public Guid CommitmentIntervalId { get; set; }
         public TimeInterval CommitmentInterval { get; set; }
 
-        public short? CommitmentIntervalCount { get; set; }
+        [Required]
+        public short CommitmentIntervalCount { get; set; }
 
         public int? ParticipantLimit { get; set; }
 

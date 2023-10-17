@@ -39,7 +39,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
         [Required]
         public Guid CommitmentIntervalId { get; set; }
 
-        public short? CommitmentIntervalCount { get; set; }
+        [Required]
+        public short CommitmentIntervalCount { get; set; }
 
         public int? ParticipantLimit { get; set; }
 

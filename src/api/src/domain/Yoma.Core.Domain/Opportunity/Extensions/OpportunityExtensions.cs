@@ -32,6 +32,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
                 Difficulty = value.Difficulty,
                 CommitmentInterval = value.CommitmentInterval,
                 CommitmentIntervalCount = value.CommitmentIntervalCount,
+                CommitmentIntervalDescription = value.CommitmentIntervalDescription,
                 ParticipantLimit = value.ParticipantLimit,
                 ParticipantCountVerificationCompleted = value.ParticipantCount ?? default,
                 Keywords = value.Keywords,

@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231017082928_ApplicationDb_Initial")]
+    [Migration("20231017122153_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -793,7 +793,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<short?>("CommitmentIntervalCount")
+                    b.Property<short>("CommitmentIntervalCount")
                         .HasColumnType("smallint");
 
                     b.Property<Guid>("CommitmentIntervalId")

@@ -58,7 +58,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public string CommitmentInterval { get; set; }
 
-        public short? CommitmentIntervalCount { get; set; }
+        public short CommitmentIntervalCount { get; set; }
+
+        public string CommitmentIntervalDescription { get; set; }
 
         public int? ParticipantLimit { get; set; }
 
