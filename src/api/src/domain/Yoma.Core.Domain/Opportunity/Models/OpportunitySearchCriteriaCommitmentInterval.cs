@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Opportunity.Models
 {
-    public  class OpportunitySearchCriteriaCommitmentInterval
+    public class OpportunitySearchCriteriaCommitmentInterval
     {
         public Guid Id { get; set; }
 
