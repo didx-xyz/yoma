@@ -996,10 +996,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Opportunity_TypeId_OrganizationId_DifficultyId_CommitmentIntervalId_StatusId_Keywords_DateStart_DateEnd_DateCreated_DateModi~",
+                name: "IX_Opportunity_TypeId_OrganizationId_ZltoReward_DifficultyId_CommitmentIntervalId_CommitmentIntervalCount_StatusId_Keywords_Dat~",
                 schema: "Opportunity",
                 table: "Opportunity",
-                columns: new[] { "TypeId", "OrganizationId", "DifficultyId", "CommitmentIntervalId", "StatusId", "Keywords", "DateStart", "DateEnd", "DateCreated", "DateModified" });
+                columns: new[] { "TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "DateCreated", "DateModified" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityCategories_CategoryId",
@@ -1270,6 +1270,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 table: "UserSkills",
                 columns: new[] { "UserId", "SkillId" },
                 unique: true);
+
 
             ApplicationDb_Initial_Seeding.Seed(migrationBuilder);
         }
