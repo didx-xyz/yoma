@@ -13,13 +13,17 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
         List<Models.Opportunity> Contains(string value, bool includeComputed);
 
-        List<Models.Lookups.OpportunityCategory> ListFilterOpportunityCategories(bool? includeExpired);
+        List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategories(bool? includeExpired);
 
-        List<Domain.Lookups.Models.Country> ListFilterOpportunityCountries(bool? includeExpired);
+        List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountries(bool? includeExpired);
 
-        List<Domain.Lookups.Models.Language> ListFilterOpportunityLanguages(bool? includeExpired);
+        List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(bool? includeExpired);
 
-        List<OrganizationInfo> ListFilterOpportunityOrganizations(bool? includeExpired);
+        List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizations(bool? includeExpired);
+
+        List<OpportunitySearchCriteriaCommitmentInterval> ListOpportunitySearchCriteriaCommitmentInterval(bool? includeExpired);
+
+        List<OpportunitySearchCriteriaZltoReward> ListOpportunitySearchCriteriaZltoReward(bool? includeExpired);
 
         OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 

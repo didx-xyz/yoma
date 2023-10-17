@@ -50,6 +50,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 CommitmentIntervalId = entity.CommitmentIntervalId,
                 CommitmentInterval = entity.CommitmentInterval.Name,
                 CommitmentIntervalCount = entity.CommitmentIntervalCount,
+                CommitmentIntervalDescription = $"{entity.CommitmentIntervalCount} {entity.CommitmentInterval.Name}{(entity.CommitmentIntervalCount > 1 ? "s" : string.Empty)}",
                 ParticipantLimit = entity.ParticipantLimit,
                 ParticipantCount = entity.ParticipantCount,
                 StatusId = entity.StatusId,

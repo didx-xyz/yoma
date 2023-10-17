@@ -175,7 +175,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results;
         }
 
-        public List<Models.Lookups.OpportunityCategory> ListFilterOpportunityCategories(bool? includeExpired)
+        public List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategories(bool? includeExpired)
         {
             var statuses = new List<Status> { Status.Active };
             if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
@@ -204,7 +204,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results;
         }
 
-        public List<Domain.Lookups.Models.Country> ListFilterOpportunityCountries(bool? includeExpired)
+        public List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountries(bool? includeExpired)
         {
             var statuses = new List<Status> { Status.Active };
             if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
@@ -218,7 +218,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return _countryService.List().Where(o => countryIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
         }
 
-        public List<Domain.Lookups.Models.Language> ListFilterOpportunityLanguages(bool? includeExpired)
+        public List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(bool? includeExpired)
         {
             var statuses = new List<Status> { Status.Active };
             if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
@@ -232,14 +232,16 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return _languageService.List().Where(o => languageIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
         }
 
-        public List<OrganizationInfo> ListFilterOpportunityOrganizations(bool? includeExpired)
+        public List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizations(bool? includeExpired)
         {
             var statuses = new List<Status> { Status.Active };
             if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
 
             var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+            //active organizations filtered below
 
-            var organizationIds = _opportunityRepository.Query().Where(o => statusIds.Contains(o.StatusId)).Select(o => o.OrganizationId).Distinct().ToList();
+            var organizationIds = _opportunityRepository.Query().Where(
+                o => statusIds.Contains(o.StatusId)).Select(o => o.OrganizationId).Distinct().ToList();
 
             var filter = new OrganizationSearchFilter
             {
@@ -249,6 +251,65 @@ namespace Yoma.Core.Domain.Opportunity.Services
             };
 
             return _organizationService.Search(filter, false).Items;
+        }
+
+        public List<OpportunitySearchCriteriaCommitmentInterval> ListOpportunitySearchCriteriaCommitmentInterval(bool? includeExpired)
+        {
+            var statuses = new List<Status> { Status.Active };
+            if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
+
+            var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+            var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+
+            var results = _opportunityRepository.Query().Where(
+                o => statusIds.Contains(o.StatusId) && o.OrganizationStatusId == organizationStatusActiveId)
+                    .Select(item => new OpportunitySearchCriteriaCommitmentInterval
+                    {
+                        Id = item.CommitmentIntervalId,
+                        Interval = item.CommitmentInterval,
+                        Count = item.CommitmentIntervalCount
+                    })
+                .Distinct()
+                .ToList();
+
+            results.ForEach(o => o.Description = $"{o.Count} {o.Interval}{(o.Count > 1 ? "s" : string.Empty)}");
+            return results.OrderBy(o => o.Description).ToList();
+        }
+
+        public List<OpportunitySearchCriteriaZltoReward> ListOpportunitySearchCriteriaZltoReward(bool? includeExpired)
+        {
+            var statuses = new List<Status> { Status.Active };
+            if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
+
+            var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+            var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+
+            var query = _opportunityRepository.Query().Where(
+                o => o.ZltoReward.HasValue && statusIds.Contains(o.StatusId) && o.OrganizationStatusId == organizationStatusActiveId);
+
+            var minValue = query.Min(o => o.ZltoReward);
+            var maxValue = query.Max(o => o.ZltoReward);
+            var increment = new decimal(50);
+
+            var roundedMinValue = Math.Floor((minValue ?? 0) / increment) * increment;
+            var roundedMaxValue = Math.Ceiling((maxValue ?? 0) / increment) * increment;
+
+            var results = new List<OpportunitySearchCriteriaZltoReward>();
+            for (decimal i = roundedMinValue; i < roundedMaxValue; i += increment)
+            {
+                var from = i;
+                var to = Math.Min(i + increment, roundedMaxValue);
+                var description = $"Z{from} - Z{to}";
+
+                results.Add(new OpportunitySearchCriteriaZltoReward
+                {
+                    From = from,
+                    To = to,
+                    Description = description
+                });
+            }
+
+            return results;
         }
 
         public OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
@@ -446,6 +507,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 CommitmentIntervalId = request.CommitmentIntervalId,
                 CommitmentInterval = _timeIntervalService.GetById(request.CommitmentIntervalId).Name,
                 CommitmentIntervalCount = request.CommitmentIntervalCount,
+                CommitmentIntervalDescription = $"{request.CommitmentIntervalCount} {_timeIntervalService.GetById(request.CommitmentIntervalId).Name}{(request.CommitmentIntervalCount > 1 ? "s" : string.Empty)}",
                 ParticipantLimit = request.ParticipantLimit,
                 KeywordsFlatten = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords),
                 Keywords = request.Keywords,
@@ -527,6 +589,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.CommitmentIntervalId = request.CommitmentIntervalId;
             result.CommitmentInterval = _timeIntervalService.GetById(request.CommitmentIntervalId).Name;
             result.CommitmentIntervalCount = request.CommitmentIntervalCount;
+            result.CommitmentIntervalDescription = $"{request.CommitmentIntervalCount} {_timeIntervalService.GetById(request.CommitmentIntervalId).Name}{(request.CommitmentIntervalCount > 1 ? "s" : string.Empty)}";
             result.ParticipantLimit = request.ParticipantLimit;
             result.KeywordsFlatten = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords);
             result.Keywords = request.Keywords;

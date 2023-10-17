@@ -1,4 +1,3 @@
-using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -466,7 +465,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     VerificationMethod = table.Column<string>(type: "varchar(20)", nullable: true),
                     DifficultyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CommitmentIntervalId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CommitmentIntervalCount = table.Column<short>(type: "smallint", nullable: true),
+                    CommitmentIntervalCount = table.Column<short>(type: "smallint", nullable: false),
                     ParticipantLimit = table.Column<int>(type: "int", nullable: true),
                     ParticipantCount = table.Column<int>(type: "int", nullable: true),
                     StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),

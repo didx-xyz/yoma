@@ -80,62 +80,92 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Return a list of opportunity categories associated with an active or expired opportunity linked to an active organization (Anonymous)")]
+        [SwaggerOperation(Summary = "Return a list of opportunity categories for active or expired opportunities associated with an active organization (Anonymous)")]
         [HttpGet("search/filter/category")]
         [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityCategory>), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
-        public IActionResult ListFilterOpportunityCategories([FromQuery] bool? includeExpired)
+        public IActionResult ListOpportunitySearchCriteriaCategories([FromQuery] bool? includeExpired)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(ListFilterOpportunityCategories));
+            _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCategories));
 
-            var result = _opportunityService.ListFilterOpportunityCategories(includeExpired);
+            var result = _opportunityService.ListOpportunitySearchCriteriaCategories(includeExpired);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(ListFilterOpportunityCategories));
+            _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCategories));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Return a list of countries associated with an active or expired opportunity linked to an active organization (Anonymous)")]
+        [SwaggerOperation(Summary = "Return a list of countries for active or expired opportunities associated with an active organization (Anonymous)")]
         [HttpGet("search/filter/country")]
         [ProducesResponseType(typeof(List<Domain.Lookups.Models.Country>), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
-        public IActionResult ListFilterOpportunityCountries([FromQuery] bool? includeExpired)
+        public IActionResult ListOpportunitySearchCriteriaCountries([FromQuery] bool? includeExpired)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(ListFilterOpportunityCountries));
+            _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCountries));
 
-            var result = _opportunityService.ListFilterOpportunityCountries(includeExpired);
+            var result = _opportunityService.ListOpportunitySearchCriteriaCountries(includeExpired);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(ListFilterOpportunityCountries));
+            _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCountries));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Return a list of languages associated with an active or expired opportunity linked to an active organization (Anonymous)")]
+        [SwaggerOperation(Summary = "Return a list of languages for active or expired opportunities associated with an active organization (Anonymous)")]
         [HttpGet("search/filter/language")]
         [ProducesResponseType(typeof(List<Domain.Lookups.Models.Language>), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
-        public IActionResult ListFilterOpportunityLanguages([FromQuery] bool? includeExpired)
+        public IActionResult ListOpportunitySearchCriteriaLanguages([FromQuery] bool? includeExpired)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(ListFilterOpportunityLanguages));
+            _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaLanguages));
 
-            var result = _opportunityService.ListFilterOpportunityLanguages(includeExpired);
+            var result = _opportunityService.ListOpportunitySearchCriteriaLanguages(includeExpired);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(ListFilterOpportunityLanguages));
+            _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaLanguages));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Return a list of active organizations associated with an active or expired opportunity (Anonymous)")]
+        [SwaggerOperation(Summary = "Return a list of active organizations for active or expired opportunities (Anonymous)")]
         [HttpGet("search/filter/organization")]
+        [ProducesResponseType(typeof(List<Domain.Entity.Models.OrganizationInfo>), (int)HttpStatusCode.OK)]
+        [AllowAnonymous]
+        public IActionResult ListOpportunitySearchCriteriaOrganizations([FromQuery] bool? includeExpired)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaOrganizations));
+
+            var result = _opportunityService.ListOpportunitySearchCriteriaOrganizations(includeExpired);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaOrganizations));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Return a list of commitment intervals for active or expired opportunities associated with an active organization (Anonymous)")]
+        [HttpGet("search/filter/commitmentInterval")]
         [ProducesResponseType(typeof(List<Domain.Lookups.Models.Language>), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
-        public IActionResult ListFilterOpportunityOrganizations([FromQuery] bool? includeExpired)
+        public IActionResult ListOpportunitySearchCriteriaCommitmentInterval([FromQuery] bool? includeExpired)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(ListFilterOpportunityOrganizations));
+            _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCommitmentInterval));
 
-            var result = _opportunityService.ListFilterOpportunityOrganizations(includeExpired);
+            var result = _opportunityService.ListOpportunitySearchCriteriaCommitmentInterval(includeExpired);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(ListFilterOpportunityOrganizations));
+            _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCommitmentInterval));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Retrieve a list of Zlto reward ranges for active or expired opportunities associated with an active organization (Anonymous)")]
+        [HttpGet("search/filter/zltoReward")]
+        [ProducesResponseType(typeof(List<Domain.Lookups.Models.Language>), (int)HttpStatusCode.OK)]
+        [AllowAnonymous]
+        public IActionResult ListOpportunitySearchCriteriaZltoReward([FromQuery] bool? includeExpired)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaZltoReward));
+
+            var result = _opportunityService.ListOpportunitySearchCriteriaZltoReward(includeExpired);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaZltoReward));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
