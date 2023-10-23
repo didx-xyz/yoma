@@ -78,7 +78,7 @@ jobs:
             web:
               - './src/web/**'
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         if: (steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
           node-version: 18
@@ -218,7 +218,7 @@ jobs:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web-youth == 'true' && needs.build.outputs.image_version || 'latest' }}
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: yarn
