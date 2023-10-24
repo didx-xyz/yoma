@@ -112,7 +112,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                     : item.ZltoWalletId != entity.ZltoWalletId ? DateTimeOffset.Now : entity.DateZltoWalletCreated;
             item.DateTenantCreated = string.IsNullOrEmpty(item.TenantId)
                     ? null
-                    : item.TenantId != entity.TenantId ? DateTimeOffset.Now : entity.DateTenantCreated;
+                    : item.SSITenantId != entity.SSITenantId ? DateTimeOffset.Now : entity.DateTenantCreated;
             item.DateModified = DateTimeOffset.Now;
 
             entity.Email = item.Email;
