@@ -3,7 +3,11 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { getUserProfile } from "~/api/services/user";
-import { navbarColorAtom, userProfileAtom } from "~/lib/store";
+import {
+  navbarColorAtom,
+  smallDisplayAtom,
+  userProfileAtom,
+} from "~/lib/store";
 
 // * global app concerns
 // * needs to be done here as jotai atoms are not available in _app.tsx
@@ -22,6 +26,22 @@ export const Global: React.FC = () => {
         .catch((e) => console.error(e));
     }
   }, [session, userProfile, setUserProfile]);
+
+  // 🔔 SMALL DISPLAY ATOM
+  const setSmallDisplay = useSetAtom(smallDisplayAtom);
+
+  // 🔔 track the screen size for responsive elements
+  useEffect(() => {
+    function onResize() {
+      const small = window.innerWidth < 768;
+      setSmallDisplay(small);
+    }
+    onResize();
+    window.addEventListener("resize", onResize);
+
+    // 👇️ remove the event listener when component unmounts
+    return () => window.removeEventListener("resize", onResize);
+  }, [setSmallDisplay]);
 
   // 🔔 ROUTE CHANGE HANDLER
   // set navbarColor atom on route change

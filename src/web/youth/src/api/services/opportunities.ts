@@ -11,7 +11,13 @@ import type {
   OpportunityRequestBase,
   Opportunity,
   OpportunityInfo,
+  OpportunitySearchResultsInfo,
+  OpportunitySearchFilter,
+  OpportunitySearchCriteriaZltoReward,
+  OpportunitySearchCriteriaCommitmentInterval,
 } from "../models/opportunity";
+import type { Country, Language } from "../models/lookups";
+import type { OrganizationInfo } from "../models/organisation";
 
 export const getOpportunitiesAdmin = async (
   filter: OpportunitySearchFilterAdmin,
@@ -99,5 +105,93 @@ export const getOpportunityInfoById = async (
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.get<OpportunityInfo>(`/opportunity/${id}`);
+  return data;
+};
+
+export const searchOpportunities = async (
+  filter: OpportunitySearchFilter,
+  context?: GetServerSidePropsContext,
+): Promise<OpportunitySearchResultsInfo> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.post<OpportunitySearchResultsInfo>(
+    `/opportunity/search`,
+    filter,
+  );
+  return data;
+};
+
+export const getOpportunityCategories = async (
+  context?: GetServerSidePropsContext,
+): Promise<OpportunityCategory[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<OpportunityCategory[]>(
+    `/opportunity/search/filter/category`,
+  );
+  return data;
+};
+
+export const getOpportunityCountries = async (
+  context?: GetServerSidePropsContext,
+): Promise<Country[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<Country[]>(
+    `/opportunity/search/filter/country`,
+  );
+  return data;
+};
+
+export const getOpportunityLanguages = async (
+  context?: GetServerSidePropsContext,
+): Promise<Language[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<Language[]>(
+    `/opportunity/search/filter/language`,
+  );
+  return data;
+};
+
+export const getOpportunityOrganizations = async (
+  context?: GetServerSidePropsContext,
+): Promise<OrganizationInfo[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<OrganizationInfo[]>(
+    `/opportunity/search/filter/organization`,
+  );
+  return data;
+};
+
+export const getOpportunityTypes = async (
+  context?: GetServerSidePropsContext,
+): Promise<OpportunityType[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<OpportunityType[]>(`/opportunity/type`);
+  return data;
+};
+
+export const getCommitmentIntervals = async (
+  context?: GetServerSidePropsContext,
+): Promise<OpportunitySearchCriteriaCommitmentInterval[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<
+    OpportunitySearchCriteriaCommitmentInterval[]
+  >(`/opportunity/search/filter/commitmentInterval`);
+  return data;
+};
+
+export const getZltoRewardRanges = async (
+  context?: GetServerSidePropsContext,
+): Promise<OpportunitySearchCriteriaZltoReward[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<OpportunitySearchCriteriaZltoReward[]>(
+    `/opportunity/search/filter/zltoReward`,
+  );
   return data;
 };

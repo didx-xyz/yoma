@@ -60,9 +60,9 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
     removed: any[] | undefined,
     added: any[] | undefined,
   ) {
-    var count = (existing?.length ?? 0) - (removed?.length ?? 0);
+    let count = (existing?.length ?? 0) - (removed?.length ?? 0);
     if (count < 0) count = 0;
-    var docCount = count + (added?.length ?? 0);
+    const docCount = count + (added?.length ?? 0);
     return docCount;
   }
 
@@ -71,22 +71,6 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
       providerTypes: zod
         .array(zod.string().uuid())
         .min(1, "Please select at least one option."),
-      // registrationDocuments: zod
-      //   .any()
-      //   .refine(
-      //     (files: File[]) => files?.length == 1,
-      //     "At least one registration document is required.",
-      //   )
-      //   .refine(
-      //     // eslint-disable-next-line
-      //     (files) => files?.[0]?.size <= MAX_DOC_SIZE,
-      //     `Maximum file size is ${MAX_DOC_SIZE_LABEL}.`,
-      //   )
-      //   .refine(
-      //     // eslint-disable-next-line
-      //     (files) => ACCEPTED_DOC_TYPES.includes(files?.[0]?.type),
-      //     "${ACCEPTED_DOC_TYPES_LABEL} files are accepted.",
-      //   ),
       // new documents to upload
       registrationDocuments: zod.array(zod.any()).optional(),
       educationProviderDocuments: zod.array(zod.any()).optional(),
@@ -102,7 +86,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
     })
     .superRefine((values, ctx) => {
       // registration documents are required
-      var docCount = getActualDocumentCount(
+      const docCount = getActualDocumentCount(
         values.registrationDocumentsExisting,
         values.registrationDocumentsDelete,
         values.registrationDocuments,
@@ -125,7 +109,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
         values.providerTypes?.findIndex((x: string) => x == educationPT?.id) >
         -1
       ) {
-        var docCount = getActualDocumentCount(
+        const docCount = getActualDocumentCount(
           values.educationProviderDocumentsExisting,
           values.educationProviderDocumentsDelete,
           values.educationProviderDocuments,
@@ -148,7 +132,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
         values.providerTypes?.findIndex((x: string) => x == marketplacePT?.id) >
         -1
       ) {
-        var docCount = getActualDocumentCount(
+        const docCount = getActualDocumentCount(
           values.businessDocumentsExisting,
           values.businessDocumentsDelete,
           values.businessDocuments,
@@ -283,13 +267,13 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
   const onRemoveEducationProviderDocument = useCallback(
     (doc: OrganizationDocument) => {
       // remove from existing array
-      var arr1 = getValues("educationProviderDocumentsExisting");
+      let arr1 = getValues("educationProviderDocumentsExisting");
       if (!arr1) arr1 = [];
       arr1 = arr1.filter((x: OrganizationDocument) => x.fileId != doc.fileId);
       setValue("educationProviderDocumentsExisting", arr1);
 
       // add to deleted array
-      var arr2 = getValues("educationProviderDocumentsDelete");
+      let arr2 = getValues("educationProviderDocumentsDelete");
       if (!arr2) arr2 = [];
       arr2.push(doc.fileId);
       setValue("educationProviderDocumentsDelete", arr2);
@@ -299,13 +283,13 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
   const onRemoveBusinessDocument = useCallback(
     (doc: OrganizationDocument) => {
       // remove from existing array
-      var arr1 = getValues("businessDocumentsExisting");
+      let arr1 = getValues("businessDocumentsExisting");
       if (!arr1) arr1 = [];
       arr1 = arr1.filter((x: OrganizationDocument) => x.fileId != doc.fileId);
       setValue("businessDocumentsExisting", arr1);
 
       // add to deleted array
-      var arr2 = getValues("businessDocumentsDelete");
+      let arr2 = getValues("businessDocumentsDelete");
       if (!arr2) arr2 = [];
       arr2.push(doc.fileId);
       setValue("businessDocumentsDelete", arr2);
@@ -335,7 +319,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
                 {...register("providerTypes")}
                 type="checkbox"
                 value={item.id}
-                // id={item.id}
+                id={item.id}
                 className="checkbox-primary checkbox"
                 // checked={
                 //   formData
