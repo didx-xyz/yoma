@@ -80,6 +80,21 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
+        [SwaggerOperation(Summary = "Return a list of opportunity types (Anonymous)")]
+        [HttpGet("type")]
+        [ProducesResponseType(typeof(List<OpportunityType>), (int)HttpStatusCode.OK)]
+        [AllowAnonymous]
+        public IActionResult ListOpportunityTypes()
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityTypes));
+
+            var result = _opportunityTypeService.List();
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityTypes));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
         [SwaggerOperation(Summary = "Return a list of opportunity categories for active or expired opportunities associated with an active organization (Anonymous)")]
         [HttpGet("search/filter/category")]
         [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityCategory>), (int)HttpStatusCode.OK)]
@@ -198,21 +213,6 @@ namespace Yoma.Core.Api.Controllers
             var result = _opportunityDifficultyService.List();
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityDifficulties));
-
-            return StatusCode((int)HttpStatusCode.OK, result);
-        }
-
-        [SwaggerOperation(Summary = "Return a list of opportunity types")]
-        [HttpGet("type")]
-        [ProducesResponseType(typeof(List<OpportunityType>), (int)HttpStatusCode.OK)]
-        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public IActionResult ListOpportunityTypes()
-        {
-            _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityTypes));
-
-            var result = _opportunityTypeService.List();
-
-            _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityTypes));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
