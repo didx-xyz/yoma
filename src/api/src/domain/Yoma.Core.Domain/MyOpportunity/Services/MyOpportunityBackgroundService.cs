@@ -47,6 +47,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
             lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
+                _logger.LogInformation("Processing 'my' opportunity verification rejection");
+
                 var statusRejectedId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Rejected.ToString()).Id;
                 var statusRejectableIds = Statuses_Rejectable.Select(o => _myOpportunityVerificationStatusService.GetByName(o.ToString()).Id).ToList();
 
@@ -61,6 +63,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     {
                         item.CommentVerification = $"Auto-Rejected due to being {string.Join("/", Statuses_Rejectable).ToLower()} for more than {_scheduleJobOptions.MyOpportunityRejectionIntervalInDays} days";
                         item.VerificationStatusId = statusRejectedId;
+                        _logger.LogInformation("'My' opportunity with id '{id}' flagged for verification rejection", item.Id);
                     }
 
                     items = _myOpportunityRepository.Update(items).Result;
@@ -107,6 +110,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     }
 
                 } while (true);
+
+                _logger.LogInformation("Processed 'my' opportunity verification rejection");
             }
         }
         #endregion

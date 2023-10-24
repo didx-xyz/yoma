@@ -682,8 +682,6 @@ namespace Yoma.Core.Domain.Entity.Services
             if (providerTypeIds == null || !providerTypeIds.Any())
                 throw new ArgumentNullException(nameof(providerTypeIds));
 
-            ValidateUpdatable(organization);
-
             var typesAdded = false;
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var typeId in providerTypeIds)

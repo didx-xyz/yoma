@@ -43,5 +43,11 @@ namespace Yoma.Core.Domain.Core.Models
         public int MyOpportunityRejectionBatchSize { get; set; }
 
         public int MyOpportunityRejectionIntervalInDays { get; set; }
+
+        public string SSITenantCreationSchedule { get; set; }
+
+        public int SSITenantCreationScheduleBatchSize { get; set; }
+
+        public int SSITenantCreationScheduleMaxIntervalInHours { get; set; }
     }
 }
