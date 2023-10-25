@@ -17,7 +17,7 @@ import { IoIosAdd } from "react-icons/io";
 import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PAGE_SIZE } from "~/lib/constants";
-import { PaginationButtonsComponent } from "~/components/PaginationButtons";
+import { PaginationButtons } from "~/components/PaginationButtons";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -244,7 +244,7 @@ const Opportunities: NextPageWithLayout<{
 
           <div className="mt-2 grid place-items-center justify-center">
             {/* PAGINATION */}
-            <PaginationButtonsComponent
+            <PaginationButtons
               currentPage={page ? parseInt(page) : 1}
               totalItems={opportunities?.totalCount ?? 0}
               pageSize={PAGE_SIZE}
