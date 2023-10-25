@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback } from "react";
 import { IoMdClock, IoMdPerson } from "react-icons/io";
 import { shimmer, toBase64 } from "src/lib/image";
 import type { OpportunityInfo } from "~/api/models/opportunity";
@@ -9,26 +8,26 @@ import iconRocket from "public/images/icon-rocket.svg";
 interface InputProps {
   data: OpportunityInfo;
   showGreenTopBorder?: boolean;
-  onClick?: (certificate: OpportunityInfo) => void;
+  //onClick?: (certificate: OpportunityInfo) => void;
   [key: string]: any;
 }
 
 const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   data,
   showGreenTopBorder,
-  onClick,
+  //onClick,
 }) => {
-  // 🔔 click handler: use callback parameter
-  const handleClick = useCallback(() => {
-    if (!onClick) return;
-    onClick(data);
-  }, [data, onClick]);
+  // // 🔔 click handler: use callback parameter
+  // const handleClick = useCallback(() => {
+  //   if (!onClick) return;
+  //   onClick(data);
+  // }, [data, onClick]);
 
   return (
     <Link
       href={`/opportunities/opportunity/${data.id}`}
-      onClick={handleClick}
-      className="flex h-[290px] max-w-[320px] flex-col rounded-lg bg-white p-4"
+      //onClick={handleClick}
+      className="flex h-[290px] min-w-[310px] flex-col rounded-lg bg-white p-3"
     >
       <div className="flex flex-row">
         <div className="flex flex-grow flex-row">
@@ -93,7 +92,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
         {data.description}
       </div>
 
-      <div className="flex flex-row items-end gap-1 whitespace-nowrap pt-2 text-xs font-normal text-green-dark">
+      <div className="flex flex-row items-end gap-1 overflow-hidden whitespace-nowrap pt-2 text-xs font-normal text-green-dark">
         <div className="badge bg-green-light">
           <IoMdClock className="mr-2 h-4 w-4" />
           {`${data?.commitmentIntervalCount} ${data?.commitmentInterval}`}

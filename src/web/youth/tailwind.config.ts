@@ -22,6 +22,7 @@ export default {
         "gray-dark": "#565B6F",
         gray: "#DCE0E5",
         "gray-light": "#F3F6FA",
+        overlay: "rgba(0, 0, 0, 0.5)",
       },
       fontFamily: {
         openSans: ["var(--font-open-sans)"],

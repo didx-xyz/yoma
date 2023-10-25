@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface InputProps {
   defaultValue?: string | null;
@@ -11,16 +11,25 @@ export const SearchInputLarge: React.FC<InputProps> = ({
   placeholder,
   onSearch,
 }) => {
-  const [searchInputValue] = useState(defaultValue);
+  const [searchInputValue, setSearchInputValue] = useState(defaultValue);
 
-  const handleSubmit = (e: React.SyntheticEvent) => {
-    e.preventDefault(); // 👈️ prevent page refresh
+  // hack: reset searchInputValue when defaultValue changes
+  // the initialValue on the useState ain't working
+  useEffect(() => {
+    setSearchInputValue(defaultValue);
+  }, [defaultValue, setSearchInputValue]);
 
-    // trim whitespace
-    const searchValue = searchInputValue?.trim() ?? "";
+  const handleSubmit = useCallback(
+    (e: React.SyntheticEvent) => {
+      e.preventDefault(); // 👈️ prevent page refresh
 
-    if (onSearch) onSearch(searchValue);
-  };
+      // trim whitespace
+      const searchValue = searchInputValue?.trim() ?? "";
+
+      if (onSearch) onSearch(searchValue);
+    },
+    [onSearch, searchInputValue],
+  );
 
   return (
     <form onSubmit={handleSubmit} className="w-full md:max-w-[600px]">
@@ -42,12 +51,15 @@ export const SearchInputLarge: React.FC<InputProps> = ({
           </svg>
         </div>
         <input
-          type="text"
+          type="search"
           placeholder={placeholder ?? "Search..."}
           className="input-sm w-full bg-[#653A72]  text-white md:input-lg focus:outline-0"
+          value={searchInputValue ?? ""}
+          onChange={(e) => setSearchInputValue(e.target.value)}
+          onFocus={(e) => (e.target.placeholder = "")}
+          onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
         />
       </div>
-
       {/* <div className="search flex">
         <input
           type="search"

@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { useCallback } from "react";
 import { shimmer, toBase64 } from "src/lib/image";
 import type { OpportunityCategory } from "~/api/models/opportunity";
@@ -7,15 +6,14 @@ import iconRocket from "public/images/icon-rocket.svg";
 
 interface InputProps {
   data: OpportunityCategory;
-  showGreenTopBorder?: boolean;
-  onClick?: (certificate: OpportunityCategory) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  selected?: boolean;
+  onClick?: (item: OpportunityCategory) => void;
   [key: string]: any;
 }
 
 const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
   data,
-  showGreenTopBorder,
+  selected,
   onClick,
 }) => {
   // 🔔 click handler: use callback parameter
@@ -25,12 +23,13 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
   }, [data, onClick]);
 
   return (
-    <Link
-      href={`/opportunities/opportunity/${data.id}`}
+    <button
       onClick={handleClick}
-      className="flex h-[140px] w-[140px] flex-col rounded-lg bg-white p-2"
+      className={`flex h-[140px] w-[140px] flex-col items-center rounded-lg p-2 ${
+        selected ? "bg-gray" : "bg-white"
+      }`}
     >
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
         <div className="flex items-center justify-center">
           {!data.imageURL && (
             <Image
@@ -45,10 +44,6 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
                 shimmer(288, 182),
               )}`}
               style={{
-                borderTopLeftRadius:
-                  showGreenTopBorder === true ? "none" : "8px",
-                borderTopRightRadius:
-                  showGreenTopBorder === true ? "none" : "8px",
                 width: "60px",
                 height: "60px",
               }}
@@ -67,10 +62,6 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
                 shimmer(288, 182),
               )}`}
               style={{
-                borderTopLeftRadius:
-                  showGreenTopBorder === true ? "none" : "8px",
-                borderTopRightRadius:
-                  showGreenTopBorder === true ? "none" : "8px",
                 width: "60px",
                 height: "60px",
               }}
@@ -83,11 +74,13 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
             <h1 className="h-10 overflow-hidden text-ellipsis text-center text-sm font-semibold text-black">
               {data.name}
             </h1>
-            <h6 className="text-center text-sm text-gray-dark">43 available</h6>
+            <h6 className="text-center text-sm text-gray-dark">
+              {data.count} available
+            </h6>
           </div>
         </div>
       </div>
-    </Link>
+    </button>
   );
 };
 

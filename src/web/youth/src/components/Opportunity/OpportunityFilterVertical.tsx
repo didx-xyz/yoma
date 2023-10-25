@@ -35,7 +35,7 @@ export interface InputProps {
   submitButtonText?: string;
 }
 
-export const OpportunityFilter: React.FC<InputProps> = ({
+export const OpportunityFilterVertical: React.FC<InputProps> = ({
   htmlRef,
   opportunitySearchFilter,
   lookups_categories,
@@ -171,7 +171,7 @@ export const OpportunityFilter: React.FC<InputProps> = ({
                           className="flex h-[70px] flex-grow flex-row items-center justify-center gap-2 p-2"
                         >
                           <label
-                            className="flex items-center justify-center"
+                            className="flex cursor-pointer items-center justify-center"
                             htmlFor={`checkbox_${item.id}`}
                           >
                             {!item.imageURL && (
@@ -217,7 +217,7 @@ export const OpportunityFilter: React.FC<InputProps> = ({
                           </label>
 
                           <label
-                            className="flex w-full flex-grow flex-col"
+                            className="flex w-full flex-grow cursor-pointer flex-col"
                             htmlFor={`checkbox_${item.id}`}
                           >
                             <div className="flex flex-grow flex-col">
@@ -230,15 +230,13 @@ export const OpportunityFilter: React.FC<InputProps> = ({
                             </div>
                           </label>
 
-                          <div className=" ">
-                            <input
-                              type="checkbox"
-                              className="checkbox-primary checkbox"
-                              id={`checkbox_${item.id}`}
-                              {...register("categories")}
-                              value={item.id}
-                            />
-                          </div>
+                          <input
+                            type="checkbox"
+                            className="checkbox-primary checkbox"
+                            id={`checkbox_${item.id}`}
+                            {...register("categories")}
+                            value={item.id}
+                          />
                         </div>
                       ))}
                     </div>

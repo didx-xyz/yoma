@@ -5,14 +5,16 @@ interface InputProps {
   currentPage: number;
   totalItems: number;
   pageSize: number;
-  showPages: boolean;
+  showPages?: boolean;
+  showInfo?: boolean;
   onClick: (page: number) => void;
 }
-export const PaginationButtonsComponent: React.FC<InputProps> = ({
+export const PaginationButtons: React.FC<InputProps> = ({
   currentPage,
   totalItems,
   pageSize,
   showPages,
+  showInfo,
   onClick,
 }) => {
   // 🧮 calculated fields
@@ -52,13 +54,13 @@ export const PaginationButtonsComponent: React.FC<InputProps> = ({
   return (
     <>
       {totalPages > 1 && (
-        <div className="flex gap-2">
+        <div className="flex items-center justify-center gap-2">
           {/* PREVIOUS BUTTON */}
           {!(currentPage > 1 && totalPages >= currentPage) && (
             <button
               key={`PaginationItem_Prev`}
               type="button"
-              className="btn btn-circle btn-secondary "
+              className="btn btn-square btn-primary btn-sm border-0 bg-white text-black hover:bg-gray"
               style={{ borderWidth: "0px" }}
               disabled
             >
@@ -69,7 +71,7 @@ export const PaginationButtonsComponent: React.FC<InputProps> = ({
             <button
               key={`PaginationItem_Prev`}
               type="button"
-              className="btn btn-primary border-none bg-transparent hover:border-none hover:bg-transparent"
+              className="btn btn-square btn-primary btn-sm border-0 bg-white text-black hover:bg-gray"
               onClick={(e) => handlePagerChange(e, currentPage - 1)}
             >
               «
@@ -84,7 +86,7 @@ export const PaginationButtonsComponent: React.FC<InputProps> = ({
                   {pageNumber === currentPage && (
                     <button
                       type="button"
-                      className="btn-bg-primary btn btn-circle btn-primary"
+                      className="btn btn-square btn-primary btn-sm border-0 bg-white text-black hover:bg-gray"
                       disabled
                     >
                       {pageNumber}
@@ -94,7 +96,7 @@ export const PaginationButtonsComponent: React.FC<InputProps> = ({
                   {pageNumber !== currentPage && (
                     <button
                       type="button"
-                      className="btn btn-primary border-none bg-transparent hover:border-none hover:bg-transparent"
+                      className="btn btn-square btn-primary btn-sm border-0 bg-white text-black hover:bg-gray"
                       onClick={(e) => handlePagerChange(e, pageNumber)}
                     >
                       {pageNumber}
@@ -104,13 +106,19 @@ export const PaginationButtonsComponent: React.FC<InputProps> = ({
               );
             })}
 
+          {/* info */}
+          {showInfo && (
+            <div className="text-sm font-bold">
+              {currentPage} of {totalPages}
+            </div>
+          )}
+
           {/* NEXT BUTTON */}
           {totalPages <= currentPage && (
             <button
               key={`PaginationItem_Next`}
               type="button"
-              className="btn btn-secondary border-none bg-transparent hover:border-none hover:bg-transparent"
-              style={{ borderWidth: "0px" }}
+              className="btn btn-square btn-primary btn-sm border-0 bg-white text-black hover:bg-gray"
               disabled
             >
               »
@@ -120,7 +128,7 @@ export const PaginationButtonsComponent: React.FC<InputProps> = ({
             <button
               key={`PaginationItem_Next`}
               type="button"
-              className="btn btn-primary border-none bg-transparent hover:border-none hover:bg-transparent"
+              className="btn btn-square btn-primary btn-sm border-0 bg-white text-black hover:bg-gray"
               onClick={(e) => handlePagerChange(e, currentPage + 1)}
             >
               »
