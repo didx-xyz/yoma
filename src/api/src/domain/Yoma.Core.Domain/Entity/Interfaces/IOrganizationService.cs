@@ -48,5 +48,9 @@ namespace Yoma.Core.Domain.Entity.Interfaces
         Task<Organization> AssignAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization);
 
         Task<Organization> RemoveAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization);
+
+        List<Organization> ListPendingSSITenantCreation(int batchSize);
+
+        Task<Organization> UpdateSSITenantReference(Guid id, string tenantId);
     }
 }

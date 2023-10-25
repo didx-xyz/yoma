@@ -255,6 +255,37 @@ namespace Yoma.Core.Domain.Entity.Services
 
             scope.Complete();
         }
+
+        public List<User> ListPendingSSITenantCreation(int batchSize)
+        {
+            if (batchSize <= default(int))
+                throw new ArgumentOutOfRangeException(nameof(batchSize));
+
+            var results = _userRepository.Query().Where(o => o.YoIDOnboarded.HasValue && o.YoIDOnboarded.Value && !o.DateSSITenantCreated.HasValue)
+                       .OrderBy(o => o.DateModified).Take(batchSize).ToList();
+
+            return results;
+        }
+
+        public async Task<User> UpdateSSITenantReference(Guid id, string tenantId)
+        {
+            var user = GetById(id, false, false);
+
+            if (string.IsNullOrWhiteSpace(tenantId))
+                throw new ArgumentNullException(nameof(tenantId));
+            tenantId = tenantId.Trim();
+
+            if (user.DateSSITenantCreated.HasValue || !user.YoIDOnboarded.HasValue || !user.YoIDOnboarded.Value)
+                throw new InvalidOperationException($"Tenant creation criteria not met for user with id '{user.Id}': " +
+                    $"YoID Onboarded '{user.YoIDOnboarded.HasValue && user.YoIDOnboarded.Value}' " +
+                    $"| Date SSI Tenant Created '{(user.DateSSITenantCreated.HasValue ? user.DateSSITenantCreated.Value : "n/a")}'");
+
+            user.SSITenantId = tenantId;
+
+            user = await _userRepository.Update(user);
+
+            return user;
+        }
         #endregion
 
         #region Private Members

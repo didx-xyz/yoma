@@ -661,6 +661,38 @@ namespace Yoma.Core.Domain.Entity.Services
             if (includeComputed) organizations.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId));
             return organizations.Select(o => o.ToInfo()).ToList();
         }
+
+        public List<Organization> ListPendingSSITenantCreation(int batchSize)
+        {
+            if (batchSize <= default(int))
+                throw new ArgumentOutOfRangeException(nameof(batchSize));
+
+            var statusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+
+            var results = _organizationRepository.Query().Where(o => o.StatusId == statusActiveId && !o.DateSSITenantCreated.HasValue)
+                     .OrderBy(o => o.DateModified).Take(batchSize).ToList();
+
+            return results;
+        }
+
+        public async Task<Organization> UpdateSSITenantReference(Guid id, string tenantId)
+        {
+            var org = GetById(id, false, false, false);
+
+            if (string.IsNullOrWhiteSpace(tenantId))
+                throw new ArgumentNullException(nameof(tenantId));
+            tenantId = tenantId.Trim();
+
+            if (org.Status != OrganizationStatus.Active || org.DateSSITenantCreated.HasValue)
+                throw new InvalidOperationException($"Tenant creation criteria not met for organization with id '{org.Id}': " +
+                    $"Status '{org.Status}' " +
+                    $"| Date SSI Tenant Created '{(org.DateSSITenantCreated.HasValue ? org.DateSSITenantCreated.Value : "n/a")}'");
+
+            org.SSITenantId = tenantId;
+            org = await _organizationRepository.Update(org);
+
+            return org;
+        }
         #endregion
 
         #region Private Members

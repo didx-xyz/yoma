@@ -9,7 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Table("User", Schema = "Entity")]
     [Index(nameof(Email), IsUnique = true)]
     [Index(nameof(FirstName), nameof(Surname), nameof(EmailConfirmed), nameof(PhoneNumber), nameof(ExternalId),
-        nameof(ZltoWalletId), nameof(DateZltoWalletCreated), nameof(SSITenantId), nameof(DateSSITenantCreated), nameof(DateCreated), nameof(DateModified))]
+        nameof(ZltoWalletId), nameof(DateZltoWalletCreated), nameof(YoIDOnboarded), nameof(SSITenantId), nameof(DateSSITenantCreated), nameof(DateCreated), nameof(DateModified))]
     public class User : BaseEntity<Guid>
     {
         [Required]

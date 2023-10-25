@@ -49,5 +49,11 @@ namespace Yoma.Core.Domain.Core.Models
         public int SSITenantCreationScheduleBatchSize { get; set; }
 
         public int SSITenantCreationScheduleMaxIntervalInHours { get; set; }
+
+        public string SSICredentialIssuanceSchedule { get; set; }
+
+        public int SSICredentialIssuanceScheduleBatchSize { get; set; }
+
+        public int SSICredentialIssuanceScheduleMaxIntervalInHours { get; set; }
     }
 }

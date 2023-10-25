@@ -12,6 +12,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public string? UserDisplayName { get; set; }
 
+        public string? UserSSITenantId { get; set; }
+
         public Guid OpportunityId { get; set; }
 
         public string OpportunityTitle { get; set; }
@@ -24,6 +26,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public DateTimeOffset OpportunityDateStart { get; set; }
 
+        public bool OpportunityCredentialIssuanceEnabled { get; set; }
+
+        public string? OpportunitySSISchemaName { get; set; }
+
         public Guid OrganizationId { get; set; }
 
         public string OrganizationName { get; set; }
@@ -35,6 +41,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
         public Guid OrganizationStatusId { get; set; }
 
         public OrganizationStatus OrganizationStatus { get; set; }
+
+        public string? OrganizationSSITenantId { get; set; }
 
         public Guid ActionId { get; set; }
 
@@ -56,9 +64,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public decimal? YomaReward { get; set; }
 
-        public string? CredentialId { get; set; }
+        public string? SSICredentialId { get; set; }
 
-        public DateTimeOffset? DateCredentialIssued { get; set; }
+        public DateTimeOffset? DateSSICredentialIssued { get; set; }
 
         public DateTimeOffset DateCreated { get; set; }
 

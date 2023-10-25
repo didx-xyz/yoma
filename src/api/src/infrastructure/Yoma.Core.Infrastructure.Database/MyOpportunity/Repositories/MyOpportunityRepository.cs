@@ -27,17 +27,21 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 UserId = entity.UserId,
                 UserEmail = entity.User.Email,
                 UserDisplayName = entity.User.DisplayName,
+                UserSSITenantId = entity.User.SSITenantId,
                 OpportunityId = entity.OpportunityId,
                 OpportunityTitle = entity.Opportunity.Title,
                 OpportunityType = entity.Opportunity.Type.Name,
                 OpportunityStatusId = entity.Opportunity.StatusId,
                 OpportunityStatus = Enum.Parse<Status>(entity.Opportunity.Status.Name, true),
                 OpportunityDateStart = entity.Opportunity.DateStart,
+                OpportunityCredentialIssuanceEnabled = entity.Opportunity.CredentialIssuanceEnabled,
+                OpportunitySSISchemaName = entity.Opportunity.SSISchemaName,
                 OrganizationId = entity.Opportunity.OrganizationId,
                 OrganizationName = entity.Opportunity.Organization.Name,
                 OrganizationLogoId = entity.Opportunity.Organization.LogoId,
                 OrganizationStatusId = entity.Opportunity.Organization.StatusId,
                 OrganizationStatus = Enum.Parse<OrganizationStatus>(entity.Opportunity.Organization.Status.Name, true),
+                OrganizationSSITenantId = entity.Opportunity.Organization.SSITenantId,
                 ActionId = entity.ActionId,
                 Action = Enum.Parse<Domain.MyOpportunity.Action>(entity.Action.Name, true),
                 VerificationStatusId = entity.VerificationStatusId,
@@ -48,6 +52,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 DateCompleted = entity.DateCompleted,
                 ZltoReward = entity.ZltoReward,
                 YomaReward = entity.YomaReward,
+                SSICredentialId = entity.SSICredentialId,
+                DateSSICredentialIssued = entity.DateSSICredentialIssued,
                 DateCreated = entity.DateCreated,
                 DateModified = entity.DateModified,
                 Verifications = entity.Verifications == null ? null : includeChildItems ?
@@ -66,7 +72,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
 
         public async Task<Domain.MyOpportunity.Models.MyOpportunity> Create(Domain.MyOpportunity.Models.MyOpportunity item)
         {
-            item.DateCredentialIssued = string.IsNullOrEmpty(item.CredentialId) ? null : DateTimeOffset.Now;
+            item.DateSSICredentialIssued = string.IsNullOrEmpty(item.SSICredentialId) ? null : DateTimeOffset.Now;
             item.DateCreated = DateTimeOffset.Now;
             item.DateModified = DateTimeOffset.Now;
 
@@ -83,8 +89,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 DateCompleted = item.DateCompleted,
                 ZltoReward = item.ZltoReward,
                 YomaReward = item.YomaReward,
-                SSICredentialId = item.CredentialId,
-                DateSSICredentialIssued = item.DateCredentialIssued,
+                SSICredentialId = item.SSICredentialId,
+                DateSSICredentialIssued = item.DateSSICredentialIssued,
                 DateCreated = item.DateCreated,
                 DateModified = item.DateModified,
             };
@@ -115,8 +121,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                   DateCompleted = item.DateCompleted,
                   ZltoReward = item.ZltoReward,
                   YomaReward = item.YomaReward,
-                  SSICredentialId = item.CredentialId,
-                  DateSSICredentialIssued = string.IsNullOrEmpty(item.CredentialId) ? null : DateTimeOffset.Now,
+                  SSICredentialId = item.SSICredentialId,
+                  DateSSICredentialIssued = string.IsNullOrEmpty(item.SSICredentialId) ? null : DateTimeOffset.Now,
                   DateCreated = DateTimeOffset.Now,
                   DateModified = DateTimeOffset.Now,
               });
@@ -127,7 +133,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
             items = items.Zip(entities, (item, entity) =>
             {
                 item.Id = entity.Id;
-                item.DateCredentialIssued = entity.DateSSICredentialIssued;
+                item.DateSSICredentialIssued = entity.DateSSICredentialIssued;
                 item.DateCreated = entity.DateCreated;
                 item.DateModified = entity.DateModified;
                 return item;
@@ -141,9 +147,9 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
             var entity = _context.MyOpportunity.Where(o => o.Id == item.Id).SingleOrDefault()
                 ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.MyOpportunity)} with id '{item.Id}' does not exist");
 
-            item.DateCredentialIssued = string.IsNullOrEmpty(item.CredentialId)
+            item.DateSSICredentialIssued = string.IsNullOrEmpty(item.SSICredentialId)
                 ? null
-                : item.CredentialId != entity.SSICredentialId ? DateTimeOffset.Now : entity.DateSSICredentialIssued;
+                : item.SSICredentialId != entity.SSICredentialId ? DateTimeOffset.Now : entity.DateSSICredentialIssued;
             item.DateModified = DateTimeOffset.Now;
 
             entity.ActionId = item.ActionId;
@@ -154,8 +160,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
             entity.DateCompleted = item.DateCompleted;
             entity.ZltoReward = item.ZltoReward;
             entity.YomaReward = item.YomaReward;
-            entity.SSICredentialId = item.CredentialId;
-            entity.DateSSICredentialIssued = item.DateCredentialIssued;
+            entity.SSICredentialId = item.SSICredentialId;
+            entity.DateSSICredentialIssued = item.DateSSICredentialIssued;
             entity.DateModified = item.DateModified;
 
             await _context.SaveChangesAsync();
@@ -175,9 +181,9 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
             {
                 var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Entities.MyOpportunity)} with id '{item.Id}' does not exist");
 
-                item.DateCredentialIssued = string.IsNullOrEmpty(item.CredentialId)
+                item.DateSSICredentialIssued = string.IsNullOrEmpty(item.SSICredentialId)
                     ? null
-                    : item.CredentialId != entity.SSICredentialId ? DateTimeOffset.Now : entity.DateSSICredentialIssued;
+                    : item.SSICredentialId != entity.SSICredentialId ? DateTimeOffset.Now : entity.DateSSICredentialIssued;
                 item.DateModified = DateTimeOffset.Now;
 
                 entity.ActionId = item.ActionId;
@@ -188,8 +194,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 entity.DateCompleted = item.DateCompleted;
                 entity.ZltoReward = item.ZltoReward;
                 entity.YomaReward = item.YomaReward;
-                entity.SSICredentialId = item.CredentialId;
-                entity.DateSSICredentialIssued = item.DateCredentialIssued;
+                entity.SSICredentialId = item.SSICredentialId;
+                entity.DateSSICredentialIssued = item.DateSSICredentialIssued;
                 entity.DateModified = item.DateModified;
             }
 

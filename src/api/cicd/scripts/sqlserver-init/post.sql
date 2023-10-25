@@ -6,21 +6,21 @@ GO
 --testuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO [Entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
 			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[DateZltoWalletCreated],[YoIDOnboarded],[SSITenantId],[DateSSITenantCreated],[DateCreated],[DateModified])
-VALUES('FC414B15-7FA8-441C-8EE8-B9C4A8AF0DA5','testuser@gmail.com',1,'Test','User','Test User','+27125555555',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),
+VALUES(NEWID(),'testuser@gmail.com',1,'Test','User','Test User','+27125555555',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),
 		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -20, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,1,NULL,NULL,GETDATE(),GETDATE())
 GO
 
 --testadminuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO [Entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
 			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[DateZltoWalletCreated],[YoIDOnboarded],[SSITenantId],[DateSSITenantCreated],[DateCreated],[DateModified])
-VALUES('EB2E1F02-5AA0-41F3-B724-9307977D5E7B','testadminuser@gmail.com',1,'Test Admin','User','Test Admin User','+27125555555',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),
+VALUES(NEWID(),'testadminuser@gmail.com',1,'Test Admin','User','Test Admin User','+27125555555',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),
 		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -21, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,1,NULL,NULL,GETDATE(),GETDATE())
 GO
 
 --testorgadminuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO [Entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
 			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[DateZltoWalletCreated],[YoIDOnboarded],[SSITenantId],[DateSSITenantCreated],[DateCreated],[DateModified])
-VALUES('AFC2C62C-EBBF-43AC-9868-F05BBED70AA0','testorgadminuser@gmail.com',1,'Test Organization Admin','User','Test Organization Admin User','+27125555555',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),
+VALUES(NEWID(),'testorgadminuser@gmail.com',1,'Test Organization Admin','User','Test Organization Admin User','+27125555555',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),
 		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -22, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,1,NULL,NULL,GETDATE(),GETDATE())
 GO
 

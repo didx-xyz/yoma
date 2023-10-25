@@ -90,7 +90,7 @@ namespace Yoma.Core.Domain
             services.AddScoped<ISSISchemaTypeService, SSISchemaTypeService>();
             #endregion Lookups
             services.AddScoped<ISSISchemaService, SSISchemaService>();
-            services.AddSingleton<ISSITenantBackgroundService, SSITenantBackgroundService>();
+            services.AddSingleton<ISSIBackgroundService, SSIBackgroundService>();
             #endregion SSI
         }
 
@@ -127,9 +127,12 @@ namespace Yoma.Core.Domain
                () => organizationBackgroundService.ProcessDeletion(), options.OrganizationDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
             //ssi
-            var ssiTenantBackgroundService = scope.ServiceProvider.GetRequiredService<ISSITenantBackgroundService>();
-            RecurringJob.AddOrUpdate($"SSI Tenant Creation (Users & Organizations)",
+            var ssiTenantBackgroundService = scope.ServiceProvider.GetRequiredService<ISSIBackgroundService>();
+            RecurringJob.AddOrUpdate($"SSI Tenant Creation",
                () => ssiTenantBackgroundService.ProcessTenantCreation(), options.SSITenantCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+            RecurringJob.AddOrUpdate($"SSI Credential Issuance",
+               () => ssiTenantBackgroundService.ProcessCredentialIssuance(), options.SSICredentialIssuanceSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
         }
         #endregion
     }

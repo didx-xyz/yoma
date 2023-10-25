@@ -22,5 +22,9 @@ namespace Yoma.Core.Domain.Entity.Interfaces
         Task<User> UpsertPhoto(string? email, IFormFile? file);
 
         Task AssignSkills(Guid id, List<Guid> skillIds);
+
+        List<User> ListPendingSSITenantCreation(int batchSize);
+
+        Task<User> UpdateSSITenantReference(Guid id, string tenantId);
     }
 }
