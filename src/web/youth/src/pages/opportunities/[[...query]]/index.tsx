@@ -54,6 +54,7 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 // It may be called again, on a serverless function, if
 // revalidation is enabled and a new request comes in
 export const getStaticProps: GetStaticProps = async () => {
+  console.log("***a");
   const opportunities_popular = await searchOpportunities({
     pageNumber: 1,
     pageSize: 4,
@@ -68,6 +69,8 @@ export const getStaticProps: GetStaticProps = async () => {
     organizations: null,
     zltoRewardRanges: null,
   });
+
+  console.log("***b");
   const opportunities_latestCourses = await searchOpportunities({
     pageNumber: 1,
     pageSize: 4,
@@ -82,6 +85,7 @@ export const getStaticProps: GetStaticProps = async () => {
     organizations: null,
     zltoRewardRanges: null,
   });
+  console.log("***c");
   const opportunities_allCourses = await searchOpportunities({
     pageNumber: 1,
     pageSize: 4,
@@ -96,14 +100,21 @@ export const getStaticProps: GetStaticProps = async () => {
     organizations: null,
     zltoRewardRanges: null,
   });
-
+  console.log("***1");
   const lookups_categories = await getOpportunityCategories();
+  console.log("***2");
   const lookups_countries = await getOpportunityCountries();
+  console.log("***3");
   const lookups_languages = await getOpportunityLanguages();
+  console.log("***4");
   const lookups_organisations = await getOpportunityOrganizations();
+  console.log("***5");
   const lookups_types = await getOpportunityTypes();
+  console.log("***6");
   const lookups_commitmentIntervals = await getCommitmentIntervals();
+  console.log("***7");
   const lookups_zltoRewardRanges = await getZltoRewardRanges();
+  console.log("***8");
 
   return {
     props: {

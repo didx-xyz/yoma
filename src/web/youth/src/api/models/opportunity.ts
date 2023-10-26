@@ -67,17 +67,6 @@ export interface Opportunity {
   verificationTypes: OpportunityVerificationType[] | null;
 }
 
-export interface OpportunitySearchFilterBase extends PaginationFilter {
-  types: string[] | null;
-  categories: string[] | null;
-  languages: string[] | null;
-  countries: string[] | null;
-  organizations: string[] | null;
-  commitmentIntervals: OpportunitySearchFilterCommitmentInterval[] | null;
-  zltoRewardRanges: OpportunitySearchFilterZltoReward[] | null;
-  valueContains: string | null;
-}
-
 export interface OpportunityInfo {
   id: string;
   title: string;
@@ -125,8 +114,8 @@ export interface OpportunitySearchFilterBase extends PaginationFilter {
   languages: string[] | null;
   countries: string[] | null;
   organizations: string[] | null;
-  commitmentIntervals: OpportunitySearchFilterCommitmentInterval[] | null;
-  zltoRewardRanges: OpportunitySearchFilterZltoReward[] | null;
+  commitmentIntervals: string[] | null;
+  zltoRewardRanges: string[] | null;
   valueContains: string | null;
 }
 
@@ -259,14 +248,11 @@ export interface OpportunitySearchFilterZltoReward {
 }
 
 export interface OpportunitySearchCriteriaZltoReward {
-  description: string;
-  from: number;
-  to: number;
+  id: string;
+  name: string;
 }
 
 export interface OpportunitySearchCriteriaCommitmentInterval {
   id: string;
-  description: string;
-  interval: string;
-  count: number;
+  name: string;
 }

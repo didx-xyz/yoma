@@ -70,48 +70,26 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
     languages: zod.array(zod.string()).optional().nullable(),
     countries: zod.array(zod.string()).optional().nullable(),
     organizations: zod.array(zod.string()).optional().nullable(),
-    commitmentIntervals: zod
-      .array(zod.object({ id: zod.string(), count: zod.number() }))
-      .optional()
-      .nullable(),
-    zltoRewardRanges: zod
-      .array(zod.any())
-      .optional()
-      .nullable()
-      // NB: zltoRewardRanges needs special treatment
-      // map it to array of OpportunitySearchCriteriaZltoReward
-      .transform((val) => {
-        if (val == null) return null;
-
-        return lookups_zltoRewardRanges.filter((c) =>
-          val.includes(c.description),
-        );
-      }),
+    commitmentIntervals: zod.array(zod.string()).optional().nullable(),
+    zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
   });
 
   const form = useForm({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { handleSubmit, formState, reset, watch } = form;
+  const { handleSubmit, formState, reset } = form;
 
   // set default values
   useEffect(() => {
     if (opportunitySearchFilter == null || opportunitySearchFilter == undefined)
       return;
-    // NB: zltoRewardRanges needs special treatment
-    // map it to an aray of descriptions (there's no id field on the model)
-    const model = {
-      ...opportunitySearchFilter,
-      zltoRewardRanges: opportunitySearchFilter?.zltoRewardRanges?.map(
-        (c) => `Z${c.from} - Z${c.to}`,
-      ),
-    };
+
     // reset form
     // setTimeout is needed to prevent the form from being reset before the default values are set
     setTimeout(() => {
       reset({
-        ...model,
+        ...opportunitySearchFilter,
       });
     }, 100);
   }, [reset, opportunitySearchFilter]);
@@ -243,7 +221,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   }}
                   isMulti={true}
                   options={lookups_types.map((c) => ({
-                    value: c.id,
+                    value: c.name,
                     label: c.name,
                   }))}
                   // fix menu z-index issue
@@ -256,8 +234,8 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                     handleSubmit(onSubmitHandler)();
                   }}
                   value={lookups_types
-                    .filter((c) => value?.includes(c.id))
-                    .map((c) => ({ value: c.id, label: c.name }))}
+                    .filter((c) => value?.includes(c.name))
+                    .map((c) => ({ value: c.name, label: c.name }))}
                   placeholder="Type"
                   components={{
                     ValueContainer,
@@ -402,6 +380,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               </label>
             )}
           </div>
+
           <div className="">
             <Controller
               name="commitmentIntervals"
@@ -414,8 +393,8 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   }}
                   isMulti={true}
                   options={lookups_commitmentIntervals.map((c) => ({
-                    value: c.description,
-                    label: c.description,
+                    value: c.id,
+                    label: c.name,
                   }))}
                   // fix menu z-index issue
                   menuPortalTarget={htmlRef}
@@ -427,12 +406,9 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                     handleSubmit(onSubmitHandler)();
                   }}
                   value={lookups_commitmentIntervals
-                    .filter((c) => value?.includes(c.description))
-                    .map((c) => ({
-                      value: c.description,
-                      label: c.description,
-                    }))}
-                  placeholder="Time"
+                    .filter((c) => value?.includes(c.id))
+                    .map((c) => ({ value: c.id, label: c.name }))}
+                  placeholder="Effort"
                   components={{
                     ValueContainer,
                   }}
@@ -448,11 +424,12 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               </label>
             )}
           </div>
+
           <div className="">
             <Controller
               name="zltoRewardRanges"
               control={form.control}
-              defaultValue={opportunitySearchFilter?.organizations}
+              defaultValue={opportunitySearchFilter?.zltoRewardRanges}
               render={({ field: { onChange, value } }) => (
                 <Select
                   classNames={{
@@ -460,8 +437,8 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   }}
                   isMulti={true}
                   options={lookups_zltoRewardRanges.map((c) => ({
-                    value: c.description,
-                    label: c.description,
+                    value: c.id,
+                    label: c.name,
                   }))}
                   // fix menu z-index issue
                   menuPortalTarget={htmlRef}
@@ -473,11 +450,8 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                     handleSubmit(onSubmitHandler)();
                   }}
                   value={lookups_zltoRewardRanges
-                    .filter((c) => value?.includes(c.description))
-                    .map((c) => ({
-                      value: c.description,
-                      label: c.description,
-                    }))}
+                    .filter((c) => value?.includes(c.id))
+                    .map((c) => ({ value: c.id, label: c.name }))}
                   placeholder="Reward"
                   components={{
                     ValueContainer,
@@ -494,6 +468,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               </label>
             )}
           </div>
+
           <div className="flex items-center text-xs text-gray-dark">
             <button type="button" onClick={onClear}>
               {clearButtonText}
