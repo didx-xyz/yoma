@@ -53,6 +53,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
             lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
+                _logger.LogInformation("Processing opportunity expiration");
+
                 var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
                 var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
 
@@ -63,13 +65,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
                     if (!items.Any()) break;
 
                     foreach (var item in items)
+                    {
                         item.StatusId = statusExpiredId;
+                        _logger.LogInformation("Opportunity with id '{id}' flagged for expiration", item.Id);
+                    }
 
                     items = _opportunityRepository.Update(items).Result;
 
                     SendEmail(items, EmailType.Opportunity_Expiration_Expired).Wait();
 
                 } while (true);
+
+                _logger.LogInformation("Processed opportunity expiration");
             }
         }
 
@@ -77,6 +84,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
             lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
+                _logger.LogInformation("Processing opportunity expiration notifications");
+
                 var datetimeFrom = new DateTimeOffset(DateTime.Today);
                 var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.OpportunityExpirationNotificationIntervalInDays);
                 var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
@@ -91,6 +100,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
                     SendEmail(items, EmailType.Opportunity_Expiration_WithinNextDays).Wait();
 
                 } while (true);
+
+                _logger.LogInformation("Processed opportunity expiration notifications");
             }
         }
 
@@ -98,6 +109,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
             lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
+                _logger.LogInformation("Processing opportunity deletion");
+
                 var statusDeletionIds = Statuses_Deletion.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
                 var statusDeletedId = _opportunityStatusService.GetByName(Status.Deleted.ToString()).Id;
 
@@ -109,7 +122,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
                     if (!items.Any()) break;
 
                     foreach (var item in items)
+                    {
                         item.StatusId = statusDeletedId;
+                        _logger.LogInformation("Opportunity with id '{id}' flagged for deletion", item.Id);
+                    }
 
                     _opportunityRepository.Update(items).Wait();
 

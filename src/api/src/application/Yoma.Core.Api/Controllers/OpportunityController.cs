@@ -157,7 +157,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Return a list of commitment intervals for active or expired opportunities associated with an active organization (Anonymous)")]
         [HttpGet("search/filter/commitmentInterval")]
-        [ProducesResponseType(typeof(List<Domain.Lookups.Models.Language>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(List<OpportunitySearchCriteriaCommitmentInterval>), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
         public IActionResult ListOpportunitySearchCriteriaCommitmentInterval([FromQuery] bool? includeExpired)
         {
@@ -172,7 +172,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Retrieve a list of Zlto reward ranges for active or expired opportunities associated with an active organization (Anonymous)")]
         [HttpGet("search/filter/zltoReward")]
-        [ProducesResponseType(typeof(List<Domain.Lookups.Models.Language>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(List<OpportunitySearchCriteriaZltoReward>), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
         public IActionResult ListOpportunitySearchCriteriaZltoReward([FromQuery] bool? includeExpired)
         {

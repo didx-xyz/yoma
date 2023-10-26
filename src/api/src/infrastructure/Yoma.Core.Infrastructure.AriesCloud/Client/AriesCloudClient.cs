@@ -138,9 +138,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            if (string.IsNullOrWhiteSpace(request.Reference))
-                throw new ArgumentException($"'{nameof(request.Reference)}' is required", nameof(request));
-            request.Reference = request.Reference.Trim();
+            if (string.IsNullOrWhiteSpace(request.Referent))
+                throw new ArgumentException($"'{nameof(request.Referent)}' is required", nameof(request));
+            request.Referent = request.Referent.Trim();
 
             if (string.IsNullOrWhiteSpace(request.Name))
                 throw new ArgumentException($"'{nameof(request.Name)}' is required", nameof(request));
@@ -157,14 +157,15 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
             var client = _clientFactory.CreateCustomerClient();
 
-            //try and find the tenant by name (TODO use wallet_name)
-            var tenant = await GetTenantByNameOrNull(request.Name, client);
+            var tenant = await GetTenantByWalletNameOrNull(request.Referent, client);
             if (tenant == null)
             {
                 var createTenantRequest = new CreateTenantRequest
                 {
-                    //TODO: wallet_name
-                    Name = request.Name,
+                    //TODO
+                    //WalletName = request.Referent,
+                    //Name = request.Name,
+                    Name = request.Referent,
                     Roles = request.Roles.ToAriesRoles(),
                     Image_url = imageUri
                 };
@@ -323,11 +324,11 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             return result ?? throw new InvalidOperationException($"Failed to retrieve the '{nameof(TrustRegistry)}' cache item");
         }
 
-        private static async Task<Tenant?> GetTenantByNameOrNull(string name, ICustomerClient client)
+        private static async Task<Tenant?> GetTenantByWalletNameOrNull(string walletName, ICustomerClient client)
         {
             //TODO: currently the client unique reference is the name; requested introduction of client reference and GetTenantByClientReferenceAsync capability
             var tenants = await client.GetTenantsAsync();
-            return tenants.FirstOrDefault(o => string.Equals(name, o.Tenant_name, StringComparison.InvariantCultureIgnoreCase));
+            return tenants.FirstOrDefault(o => string.Equals(walletName, o.Tenant_name, StringComparison.InvariantCultureIgnoreCase));
         }
 
         /// <summary>

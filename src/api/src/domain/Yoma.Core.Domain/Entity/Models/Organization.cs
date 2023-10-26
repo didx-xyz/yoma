@@ -46,9 +46,9 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public string? LogoURL { get; set; }
 
-        public string? TenantId { get; set; }
+        public string? SSITenantId { get; set; }
 
-        public DateTimeOffset? DateTenantCreated { get; set; }
+        public DateTimeOffset? DateSSITenantCreated { get; set; }
 
         public DateTimeOffset DateCreated { get; set; }
 

@@ -14,7 +14,7 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public string Surname { get; set; }
 
-        public string? DisplayName { get; set; }
+        public string DisplayName { get; set; }
 
         public string? PhoneNumber { get; set; }
 
@@ -44,9 +44,11 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public DateTimeOffset? DateZltoWalletCreated { get; set; }
 
-        public string? TenantId { get; set; }
+        public bool? YoIDOnboarded { get; set; }
 
-        public DateTimeOffset? DateTenantCreated { get; set; }
+        public string? SSITenantId { get; set; }
+
+        public DateTimeOffset? DateSSITenantCreated { get; set; }
 
         public DateTimeOffset DateCreated { get; set; }
 
