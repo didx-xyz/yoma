@@ -55,7 +55,11 @@ export const OpportunityRow: React.FC<InputProps> = ({
       {(data?.items?.length ?? 0) > 0 && (
         <div className="flex flex-col gap-4">
           <div className="flex flex-row">
-            <div className="flex-grow text-xl text-black">{title}</div>
+            <div className="flex-grow">
+              <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl text-black md:max-w-[800px]">
+                {title}
+              </div>{" "}
+            </div>
             {viewAllUrl && (
               <Link
                 href={viewAllUrl}
