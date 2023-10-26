@@ -38,6 +38,7 @@ namespace Yoma.Core.Infrastructure.Database
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString(ConnectionStrings_SQLConnection)), ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
+            //<PackageReference Include="EntityFrameworkProfiler.Appender" Version="6.0.6040" />
             //if (environment == Domain.Core.Environment.Local)
             //    HibernatingRhinos.Profiler.Appender.EntityFramework.EntityFrameworkProfiler.Initialize();
 
