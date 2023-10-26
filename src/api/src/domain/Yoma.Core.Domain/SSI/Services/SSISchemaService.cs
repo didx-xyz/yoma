@@ -6,7 +6,7 @@ using Yoma.Core.Domain.SSI.Models.Lookups;
 using Yoma.Core.Domain.SSI.Models.Provider;
 using Yoma.Core.Domain.SSI.Validators;
 using FluentValidation;
-using System.Transactions;
+using Yoma.Core.Domain.Exceptions;
 
 namespace Yoma.Core.Domain.SSI.Services
 {
@@ -82,6 +82,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 {
                     Id = item.Entity.Id,
                     Name = item.Entity.Name,
+                    TypeName = item.Entity.TypeName,
                     Properties = item.MatchedProperties
                 })
                 .ToDictionary(group => group.Key, group => group.ToList());
@@ -97,7 +98,8 @@ namespace Yoma.Core.Domain.SSI.Services
 
             if (type == null) return results;
 
-            return results.Where(o => o.Type == type).ToList();
+            results = results.Where(o => o.Type == type).ToList();
+            return results;
         }
 
         public async Task<List<SSISchema>> List(Guid? typeId)
@@ -148,16 +150,12 @@ namespace Yoma.Core.Domain.SSI.Services
                     throw new ValidationException($"Schema type '{schemaType.Name}' does not support multiple schemas. Existing schemas: {string.Join(", ", existing.Select(o => o.Name))}");
             }
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-
             var schema = await _ssiProviderClient.UpsertSchema(new SchemaRequest
             {
                 Name = nameFull,
                 ArtifactType = request.ArtifactType,
                 Attributes = request.Attributes
             });
-
-            scope.Complete();
 
             return ConvertToSSISchema(schema);
         }
@@ -175,6 +173,7 @@ namespace Yoma.Core.Domain.SSI.Services
              {
                  Id = entity.Id,
                  Name = entity.Name,
+                 TypeName = entity.TypeName,
                  Properties = entity.Properties?
                      .Where(property =>
                          schema.AttributeNames.Contains(property.AttributeName, StringComparer.InvariantCultureIgnoreCase))
@@ -189,7 +188,12 @@ namespace Yoma.Core.Domain.SSI.Services
         {
             var nameParts = schema.Name.Split(SchemaName_TypeDelimiter);
             if (nameParts.Length != 2)
-                throw new ArgumentException("Schema name of '{}' is invalid. Expecting [type]:[name]", nameof(schema));
+                throw new ArgumentException($"Schema name of '{schema.Name}' is invalid. Expecting [type]:[name]", nameof(schema));
+
+            var countEntityProperties = matchedEntities?.Sum(o => o.Properties?.Count);
+
+            if (countEntityProperties != schema.AttributeNames?.Count)
+                throw new DataInconsistencyException($"Schema '{schema.Name}': Attribute (count '{matchedEntities?.Count}') vs entity property mismatch detected (count '{countEntityProperties}')");
 
             var schemaType = _ssiSchemaTypeService.GetByName(nameParts.First());
 
@@ -203,7 +207,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 TypeDescription = schemaType.Description,
                 Version = schema.Version.ToString(),
                 ArtifactType = schema.ArtifactType,
-                Entities = matchedEntities,
+                Entities = matchedEntities ?? new List<SSISchemaEntity>(),
                 PropertyCount = matchedEntities?.Sum(o => o.Properties?.Count)
             };
         }

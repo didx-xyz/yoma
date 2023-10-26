@@ -9,7 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Table("User", Schema = "Entity")]
     [Index(nameof(Email), IsUnique = true)]
     [Index(nameof(FirstName), nameof(Surname), nameof(EmailConfirmed), nameof(PhoneNumber), nameof(ExternalId),
-        nameof(ZltoWalletId), nameof(DateZltoWalletCreated), nameof(TenantId), nameof(DateTenantCreated), nameof(DateCreated), nameof(DateModified))]
+        nameof(ZltoWalletId), nameof(DateZltoWalletCreated), nameof(YoIDOnboarded), nameof(SSITenantId), nameof(DateSSITenantCreated), nameof(DateCreated), nameof(DateModified))]
     public class User : BaseEntity<Guid>
     {
         [Required]
@@ -27,8 +27,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
         [Column(TypeName = "varchar(125)")]
         public string Surname { get; set; }
 
+        [Required]
         [Column(TypeName = "varchar(255)")]
-        public string? DisplayName { get; set; }
+        public string DisplayName { get; set; }
 
         [Column(TypeName = "varchar(50)")]
         public string? PhoneNumber { get; set; }
@@ -63,9 +64,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
         public bool? YoIDOnboarded { get; set; }
 
         [Column(TypeName = "varchar(50)")]
-        public string? TenantId { get; set; }
+        public string? SSITenantId { get; set; }
 
-        public DateTimeOffset? DateTenantCreated { get; set; }
+        public DateTimeOffset? DateSSITenantCreated { get; set; }
 
         [Required]
         public DateTimeOffset DateCreated { get; set; }

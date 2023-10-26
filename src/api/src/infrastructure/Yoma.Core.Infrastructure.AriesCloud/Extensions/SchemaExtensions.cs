@@ -36,7 +36,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
         {
             if (!schemas.Any()) return null;
 
-            var results = schemas.Select(o => ToSchema(o)).ToList();
+            var results = schemas.Select(ToSchema).ToList();
 
             results = FilterByLatestVersion(latestVersion, results);
 

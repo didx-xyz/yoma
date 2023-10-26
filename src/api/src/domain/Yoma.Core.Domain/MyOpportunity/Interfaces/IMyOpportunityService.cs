@@ -22,5 +22,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
         Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalize request);
 
         Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(PaginationFilter filter, bool includeExpired);
+
+        List<Models.MyOpportunity> ListPendingSSICredentialIssuance(int batchSize);
+
+        Task<Models.MyOpportunity> UpdateSSICredentialReference(Guid id, string credentialId);
     }
 }

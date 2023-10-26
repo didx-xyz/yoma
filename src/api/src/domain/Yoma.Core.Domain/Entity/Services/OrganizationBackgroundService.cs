@@ -48,6 +48,8 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
+                _logger.LogInformation("Processing organization declination");
+
                 var statusDeclinationIds = Statuses_Declination.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
                 var statusDeclinedId = _organizationStatusService.GetByName(OrganizationStatus.Declined.ToString()).Id;
 
@@ -62,6 +64,7 @@ namespace Yoma.Core.Domain.Entity.Services
                     {
                         item.CommentApproval = $"Auto-Declined due to being {string.Join("/", Statuses_Declination).ToLower()} for more than {_scheduleJobOptions.OrganizationDeclinationIntervalInDays} days";
                         item.StatusId = statusDeclinedId;
+                        _logger.LogInformation("Organization with id '{id}' flagged for declination", item.Id);
                     }
 
                     items = _organizationRepository.Update(items).Result;
@@ -101,6 +104,8 @@ namespace Yoma.Core.Domain.Entity.Services
                         }
                     }
                 } while (true);
+
+                _logger.LogInformation("Processed organization declination");
             }
         }
 
@@ -108,6 +113,8 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same transactions on multiple threads
             {
+                _logger.LogInformation("Processing organization deletion");
+
                 var statusDeletionIds = Statuses_Deletion.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
                 var statusDeletedId = _organizationStatusService.GetByName(OrganizationStatus.Deleted.ToString()).Id;
 
@@ -119,11 +126,16 @@ namespace Yoma.Core.Domain.Entity.Services
                     if (!items.Any()) break;
 
                     foreach (var item in items)
+                    {
                         item.StatusId = statusDeletedId;
+                        _logger.LogInformation("Organization with id '{id}' flagged for deletion", item.Id);
+                    }
 
                     _organizationRepository.Update(items).Wait();
 
                 } while (true);
+
+                _logger.LogInformation("Processed organization deletion");
             }
         }
         #endregion

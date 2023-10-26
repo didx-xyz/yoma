@@ -119,8 +119,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             _myOpportunitySearchFilterValidator.ValidateAndThrow(filter);
 
             var actionId = _myOpportunityActionService.GetByName(filter.Action.ToString()).Id;
-            var opportunityStatusActiveId = _opportunityStatusService.GetByName(Opportunity.Status.Active.ToString()).Id;
-            var opportunityStatusExpiredId = _opportunityStatusService.GetByName(Opportunity.Status.Expired.ToString()).Id;
+            var opportunityStatusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+            var opportunityStatusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
             var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
 
             var query = _myOpportunityRepository.Query(true);
@@ -234,7 +234,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             //published opportunities (irrespective of started)
             var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
             if (!opportunity.Published)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' | status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -260,7 +260,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             //published opportunities (irrespective of started)
             var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
             if (!opportunity.Published)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' | status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -286,7 +286,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             //published opportunities (irrespective of started)
             var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
             if (!opportunity.Published)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' | status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -307,15 +307,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             //provided opportunity is published (and started) or expired
             var opportunity = _opportunityService.GetById(opportunityId, true, false, false);
-            var canSendForVerification = opportunity.Status == Opportunity.Status.Expired;
+            var canSendForVerification = opportunity.Status == Status.Expired;
             if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
             if (!canSendForVerification)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can no longer be send for verification (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can no longer be send for verification (published '{opportunity.Published}' status | '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
             if (!opportunity.VerificationEnabled)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / verification is not enabled");
 
-            if (opportunity.VerificationMethod == null || opportunity.VerificationMethod != Opportunity.VerificationMethod.Manual)
+            if (opportunity.VerificationMethod == null || opportunity.VerificationMethod != VerificationMethod.Manual)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / requires verification method manual");
 
             if (opportunity.VerificationTypes == null || !opportunity.VerificationTypes.Any())
@@ -405,10 +405,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             //can complete, provided opportunity is published (and started) or expired (actioned prior to expiration)
             var opportunity = _opportunityService.GetById(request.OpportunityId, false, false, false);
-            var canFinalize = opportunity.Status == Opportunity.Status.Expired;
+            var canFinalize = opportunity.Status == Status.Expired;
             if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
             if (!canFinalize)
-                throw new ValidationException($"Verification for opportunity '{opportunity.Title}' can no longer be finalized (published '{opportunity.Published}' status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+                throw new ValidationException($"Verification for opportunity '{opportunity.Title}' can no longer be finalized (published '{opportunity.Published}' | status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
             var item = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
@@ -522,6 +522,50 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             return queryGrouped.ToDictionary(o => o.OpportunityId, o => o.Count);
         }
+
+        public List<Models.MyOpportunity> ListPendingSSICredentialIssuance(int batchSize)
+        {
+            if (batchSize <= default(int))
+                throw new ArgumentOutOfRangeException(nameof(batchSize));
+
+            var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+            var statusVerificationCompletedId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Completed.ToString()).Id;
+
+            var results = _myOpportunityRepository.Query(true).Where(
+                o => o.ActionId == actionVerificationId && o.VerificationStatusId == statusVerificationCompletedId && !o.DateSSICredentialIssued.HasValue //completed verification and credential not issued
+                 && !string.IsNullOrEmpty(o.OrganizationSSITenantId) && !string.IsNullOrEmpty(o.UserSSITenantId) //ssi tenants created
+                 && o.OpportunityCredentialIssuanceEnabled //credential issuance enabled
+                ).OrderBy(o => o.DateModified).Take(batchSize).ToList(); //user YoID onboarded
+
+            return results;
+        }
+
+        public async Task<Models.MyOpportunity> UpdateSSICredentialReference(Guid id, string credentialId)
+        {
+            var item = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.Id == id)
+                ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(Models.MyOpportunity)} with id '{id}' does not exist");
+
+            var canIssueCredential = item.Action == Action.Verification && item.VerificationStatus == VerificationStatus.Completed; //completed verification
+            if (canIssueCredential) canIssueCredential = !item.DateSSICredentialIssued.HasValue; //credential not issued
+            if (canIssueCredential) canIssueCredential = item.OpportunityCredentialIssuanceEnabled; //credential issuance enabled
+            if (canIssueCredential) canIssueCredential = !string.IsNullOrEmpty(item.OrganizationSSITenantId) && !string.IsNullOrEmpty(item.UserSSITenantId); //ssi tenants created
+
+            if (!canIssueCredential)
+                throw new InvalidOperationException($"Credential issuance criteria not met for 'my' opportunity with id '{item.Id}': " +
+                    $"Action '{item.Action}' | Verification Status '{item.VerificationStatus}' | Date SSI Credential Issued " +
+                    $"'{(item.DateSSICredentialIssued.HasValue ? item.DateSSICredentialIssued.Value : "n/a")} | Organization SSI Tenant Created " +
+                    $"'{!string.IsNullOrEmpty(item.OrganizationSSITenantId)}' | User SSI Tenant Created '{!string.IsNullOrEmpty(item.UserSSITenantId)}' " +
+                    $"| Credential Issuance Enabled '{item.OpportunityCredentialIssuanceEnabled}'");
+
+            if (string.IsNullOrWhiteSpace(credentialId))
+                throw new ArgumentNullException(nameof(credentialId));
+            credentialId = credentialId.Trim();
+
+            item.SSICredentialId = credentialId;
+            item = await _myOpportunityRepository.Update(item);
+
+            return item;
+        }
         #endregion
 
         #region Private Members
@@ -574,28 +618,28 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         BlobObject? blobObject = null;
                         switch (verificationType.Type)
                         {
-                            case Opportunity.VerificationType.FileUpload:
+                            case VerificationType.FileUpload:
                                 if (request.Certificate == null)
                                     throw new ValidationException($"Verification type '{verificationType.Type}': Certificate required");
 
                                 blobObject = await _blobService.Create(request.Certificate, FileType.Certificates);
                                 break;
 
-                            case Opportunity.VerificationType.Picture:
+                            case VerificationType.Picture:
                                 if (request.Picture == null)
                                     throw new ValidationException($"Verification type '{verificationType.Type}': Picture required");
 
                                 blobObject = await _blobService.Create(request.Picture, FileType.Photos);
                                 break;
 
-                            case Opportunity.VerificationType.VoiceNote:
+                            case VerificationType.VoiceNote:
                                 if (request.VoiceNote == null)
                                     throw new ValidationException($"Verification type '{verificationType.Type}': Voice note required");
 
                                 blobObject = await _blobService.Create(request.VoiceNote, FileType.VoiceNotes);
                                 break;
 
-                            case Opportunity.VerificationType.Location:
+                            case VerificationType.Location:
                                 if (request.Geometry == null)
                                     throw new ValidationException($"Verification type '{verificationType.Type}': Geometry required");
 
@@ -606,7 +650,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                                 break;
 
                             default:
-                                throw new InvalidOperationException($"Unknown / unsupported '{nameof(Opportunity.VerificationType)}' of '{verificationType.Type}'");
+                                throw new InvalidOperationException($"Unknown / unsupported '{nameof(VerificationType)}' of '{verificationType.Type}'");
                         }
 
                         //create new item in db
