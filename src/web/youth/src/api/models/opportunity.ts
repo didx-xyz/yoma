@@ -24,7 +24,9 @@ export interface Opportunity {
   typeId: string;
   type: string;
   organizationId: string;
-  organization: string;
+  organizationName: string;
+  organizationLogoId: string | null;
+  organizationLogoURL: string | null;
   organizationStatusId: string;
   organizationStatus: OrganizationStatus;
   summary: string | null;
@@ -42,7 +44,8 @@ export interface Opportunity {
   difficulty: string;
   commitmentIntervalId: string;
   commitmentInterval: string;
-  commitmentIntervalCount: number | null;
+  commitmentIntervalCount: number;
+  commitmentIntervalDescription: string;
   participantLimit: number | null;
   participantCount: number | null;
   statusId: string;
@@ -69,6 +72,9 @@ export interface OpportunitySearchFilterBase extends PaginationFilter {
   categories: string[] | null;
   languages: string[] | null;
   countries: string[] | null;
+  organizations: string[] | null;
+  commitmentIntervals: OpportunitySearchFilterCommitmentInterval[] | null;
+  zltoRewardRanges: OpportunitySearchFilterZltoReward[] | null;
   valueContains: string | null;
 }
 
@@ -77,14 +83,16 @@ export interface OpportunityInfo {
   title: string;
   description: string;
   type: string;
-  organization: string;
+  organizationName: string;
+  organizationLogoURL: string | null;
   instructions: string | null;
   uRL: string | null;
   zltoReward: number | null;
   yomaReward: number | null;
   difficulty: string;
   commitmentInterval: string;
-  commitmentIntervalCount: number | null;
+  commitmentIntervalCount: number;
+  commitmentIntervalDescription: string;
   participantLimit: number | null;
   participantCountVerificationCompleted: number;
   participantCountVerificationPending: number;
@@ -99,6 +107,37 @@ export interface OpportunityInfo {
   skills: Skill[] | null;
 }
 
+export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
+  includeExpired: boolean | null;
+  mostViewed: boolean | null;
+}
+
+export interface OpportunitySearchFilterAdmin
+  extends OpportunitySearchFilterBase {
+  startDate: string | null;
+  endDate: string | null;
+  statuses: Status[] | null;
+}
+
+export interface OpportunitySearchFilterBase extends PaginationFilter {
+  types: string[] | null;
+  categories: string[] | null;
+  languages: string[] | null;
+  countries: string[] | null;
+  organizations: string[] | null;
+  commitmentIntervals: OpportunitySearchFilterCommitmentInterval[] | null;
+  zltoRewardRanges: OpportunitySearchFilterZltoReward[] | null;
+  valueContains: string | null;
+}
+
+export interface OpportunitySearchResultsInfo
+  extends OpportunitySearchResultsBase {
+  items: OpportunityInfo[];
+}
+
+export interface OpportunitySearchResultsBase {
+  totalCount: number | null;
+}
 export enum Status {
   Active,
   Deleted,
@@ -134,10 +173,6 @@ export enum OrganizationDocumentType {
 export enum OrganizationProviderType {
   Education,
   Marketplace,
-}
-export interface OpportunityCategory {
-  id: string;
-  name: string;
 }
 
 export interface OpportunityVerificationType {
@@ -181,7 +216,28 @@ export interface OpportunityRequestBase {
 export interface OpportunityCategory {
   id: string;
   name: string;
+  imageURL: string;
+  count: number | null;
 }
+
+export interface OpportunityCountry {
+  id: string;
+  opportunityId: string;
+  opportunityStatusId: string;
+  organizationStatusId: string;
+  countryId: string;
+  dateCreated: string;
+}
+
+export interface OpportunityLanguage {
+  id: string;
+  opportunityId: string;
+  opportunityStatusId: string;
+  organizationStatusId: string;
+  languageId: string;
+  dateCreated: string;
+}
+
 export interface OpportunityDifficulty {
   id: string;
   name: string;
@@ -190,4 +246,27 @@ export interface OpportunityDifficulty {
 export interface OpportunityType {
   id: string;
   name: string;
+}
+
+export interface OpportunitySearchFilterCommitmentInterval {
+  id: string;
+  count: number;
+}
+
+export interface OpportunitySearchFilterZltoReward {
+  from: number;
+  to: number;
+}
+
+export interface OpportunitySearchCriteriaZltoReward {
+  description: string;
+  from: number;
+  to: number;
+}
+
+export interface OpportunitySearchCriteriaCommitmentInterval {
+  id: string;
+  description: string;
+  interval: string;
+  count: number;
 }

@@ -1,5 +1,6 @@
 import React from "react";
-import noRowsImage from "public/images/no-rows.svg";
+// import noRowsImage from "public/images/no-rows.svg";
+import iconImage from "public/images/icon-rocket.svg";
 import Image from "next/image";
 
 interface InputProps {
@@ -9,16 +10,16 @@ interface InputProps {
 
 const NoRowsMessage: React.FC<InputProps> = ({ title, description }) => {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-2">
+    <div className="flex h-full flex-col items-center justify-center gap-1">
       {/* eslint-disable */}
       <Image
-        src={noRowsImage}
+        src={iconImage}
         alt="Logo"
         priority={true}
         width={0}
         height={0}
         sizes="100vw"
-        style={{ width: "100%", height: "auto", maxWidth: "300px" }}
+        style={{ width: "100%", height: "auto", maxWidth: "100px" }}
       />
       {/* eslint-enable */}
 

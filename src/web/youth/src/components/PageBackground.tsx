@@ -6,6 +6,8 @@ export const PageBackground: React.FC = () => {
 
   // return an absolute positioned page header background based on the color navbarColorAtom
   return (
-    <div className={`absolute left-0 top-0 z-0 h-56 w-full ${navbarColor}`} />
+    <div
+      className={`absolute left-0 top-0 z-0 h-64 w-full md:h-80 ${navbarColor}`}
+    />
   );
 };

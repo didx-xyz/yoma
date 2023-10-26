@@ -8,4 +8,7 @@ const navbarColorAtom = atom("bg-white");
 // user profile atom
 const userProfileAtom = atom<UserProfile | null>(null);
 
-export { navbarColorAtom, userProfileAtom };
+// small display state used by search results (show/hide filter)
+const smallDisplayAtom = atom(true);
+
+export { navbarColorAtom, userProfileAtom, smallDisplayAtom };

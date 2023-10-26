@@ -4,7 +4,7 @@ import { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import router from "next/router";
-import { useCallback, useState, type ReactElement } from "react";
+import { useCallback, useState, type ReactElement, useEffect } from "react";
 import { type FieldValues } from "react-hook-form";
 import { toast } from "react-toastify";
 import { type OrganizationRequestBase } from "~/api/models/organisation";
@@ -130,6 +130,11 @@ const OrganisationCreate: NextPageWithLayout = () => {
   const handleCancel = () => {
     router.back();
   };
+
+  // scroll to top on step change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [step]);
 
   return (
     <div className="container max-w-5xl px-2 py-8">

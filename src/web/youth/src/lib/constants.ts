@@ -13,3 +13,4 @@ export const ACCEPTED_DOC_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 export const ACCEPTED_DOC_TYPES_LABEL = ".jpg, .jpeg, .png and .webp";
+export const PAGE_SIZE = 10;

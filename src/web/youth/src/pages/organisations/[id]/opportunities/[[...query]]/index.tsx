@@ -16,6 +16,8 @@ import { PageBackground } from "~/components/PageBackground";
 import { IoIosAdd } from "react-icons/io";
 import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import { PAGE_SIZE } from "~/lib/constants";
+import { PaginationButtons } from "~/components/PaginationButtons";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -48,6 +50,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             languages: null,
             countries: null,
             valueContains: query?.toString() ?? null,
+            commitmentIntervals: null,
+            zltoRewardRanges: null,
           },
           context,
         ),
@@ -90,6 +94,8 @@ const Opportunities: NextPageWithLayout<{
         languages: null,
         countries: null,
         valueContains: query?.toString() ?? null,
+        commitmentIntervals: null,
+        zltoRewardRanges: null,
       }),
   });
 
@@ -108,6 +114,21 @@ const Opportunities: NextPageWithLayout<{
       }
     },
     [router, id],
+  );
+
+  // 🔔 pager change event
+  const handlePagerChange = useCallback(
+    (value: number) => {
+      // redirect
+      void router.push({
+        pathname: `/organisations/${id}/opportunities`,
+        query: { query: query, page: value },
+      });
+
+      // reset scroll position
+      window.scrollTo(0, 0);
+    },
+    [query, id, router],
   );
 
   return (
@@ -139,8 +160,10 @@ const Opportunities: NextPageWithLayout<{
           {/* NO ROWS */}
           {opportunities && opportunities.items?.length === 0 && !query && (
             <NoRowsMessage
-              title={"No opportunities found"}
-              description={"Opportunities that you add will be displayed here."}
+              title={"You will find your active opportunities here"}
+              description={
+                "This is where you will find all the awesome opportunities you have shared"
+              }
             />
           )}
           {opportunities && opportunities.items?.length === 0 && query && (
@@ -149,7 +172,6 @@ const Opportunities: NextPageWithLayout<{
               description={"Please try refining your search query."}
             />
           )}
-
           {/* GRID */}
           {opportunities && opportunities.items?.length > 0 && (
             <div className="overflow-x-auto">
@@ -219,6 +241,17 @@ const Opportunities: NextPageWithLayout<{
             //   rows={opportunities}
             // />
           )}
+
+          <div className="mt-2 grid place-items-center justify-center">
+            {/* PAGINATION */}
+            <PaginationButtons
+              currentPage={page ? parseInt(page) : 1}
+              totalItems={opportunities?.totalCount ?? 0}
+              pageSize={PAGE_SIZE}
+              onClick={handlePagerChange}
+              showPages={false}
+            />
+          </div>
         </div>
       </div>
     </>
