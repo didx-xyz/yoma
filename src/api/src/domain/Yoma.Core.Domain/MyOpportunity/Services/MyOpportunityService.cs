@@ -112,19 +112,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             return Search(filterInternal, false);
         }
 
-        private void SetParticipantCounts(MyOpportunityInfo result)
-        {
-            var filter = new MyOpportunitySearchFilterAdmin
-            {
-                TotalCountOnly = true,
-                Action = Action.Verification,
-                VerificationStatus = VerificationStatus.Pending
-            };
-
-            var searchResult = Search(filter, false);
-            result.OpportunityParticipantCountTotal += searchResult.TotalCount ?? default;
-        }
-
         public MyOpportunitySearchResults Search(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
         {
             if (filter == null)
@@ -584,6 +571,19 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         #endregion
 
         #region Private Members
+        private void SetParticipantCounts(MyOpportunityInfo result)
+        {
+            var filter = new MyOpportunitySearchFilterAdmin
+            {
+                TotalCountOnly = true,
+                Action = Action.Verification,
+                VerificationStatus = VerificationStatus.Pending
+            };
+
+            var searchResult = Search(filter, false);
+            result.OpportunityParticipantCountTotal += searchResult.TotalCount ?? default;
+        }
+
         private string? GetBlobObjectURL(Guid? id)
         {
             if (!id.HasValue) return null;
