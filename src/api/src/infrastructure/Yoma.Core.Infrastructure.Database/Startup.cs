@@ -32,11 +32,15 @@ namespace Yoma.Core.Infrastructure.Database
             return result;
         }
 
-        public static void ConfigureServices_InfrastructureDatabase(this IServiceCollection services, IConfiguration configuration)
+        public static void ConfigureServices_InfrastructureDatabase(this IServiceCollection services, IConfiguration configuration, Domain.Core.Environment environment)
         {
             // infrastructure
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString(ConnectionStrings_SQLConnection)), ServiceLifetime.Scoped, ServiceLifetime.Scoped);
+
+            //<PackageReference Include="EntityFrameworkProfiler.Appender" Version="6.0.6040" />
+            //if (environment == Domain.Core.Environment.Local)
+            //    HibernatingRhinos.Profiler.Appender.EntityFramework.EntityFrameworkProfiler.Initialize();
 
             // repositories
             #region Core
