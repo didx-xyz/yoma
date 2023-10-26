@@ -14,7 +14,17 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public string OpportunityTitle { get; set; }
 
+        public string OpportunityDescription { get; set; }
+
         public string OpportunityType { get; set; }
+
+        public string OpportunityCommitmentIntervalDescription { get; set; }
+
+        public int OpportunityParticipantCountTotal { get; set; }
+
+        public DateTimeOffset OpportunityDateStart { get; set; }
+
+        public DateTimeOffset? OpportunityDateEnd { get; set; }
 
         public string OrganizationName { get; set; }
 
