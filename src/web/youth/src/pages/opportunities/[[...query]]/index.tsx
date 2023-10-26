@@ -448,10 +448,10 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       opportunitySearchFilter.languages?.map((c) => `'${c}'`).join(", "),
       opportunitySearchFilter.types?.map((c) => `'${c}'`).join(", "),
       opportunitySearchFilter.organizations?.map((c) => `'${c}'`).join(", "),
-      opportunitySearchFilter.commitmentIntervals
-        ?.map((c) => `'${c}'`)
-        .join(", "),
-      opportunitySearchFilter.zltoRewardRanges?.map((c) => `'${c}'`).join(", "),
+      // opportunitySearchFilter.commitmentIntervals
+      //   ?.map((c) => `'${c}'`)
+      //   .join(", "),
+      // opportunitySearchFilter.zltoRewardRanges?.map((c) => `'${c}'`).join(", "),
     ]
       .filter(Boolean)
       .join(", ");

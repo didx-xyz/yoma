@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { type ParsedUrlQuery } from "querystring";
 import { useState, type ReactElement } from "react";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-
 import { getOpportunityInfoById } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import withAuth from "~/context/withAuth";
@@ -14,11 +13,8 @@ import Link from "next/link";
 import {
   IoIosSettings,
   IoMdArrowRoundBack,
-  IoMdClipboard,
   IoMdClock,
-  IoMdGlobe,
   IoMdPerson,
-  IoMdPricetag,
 } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
@@ -30,6 +26,14 @@ import {
   FaPencilAlt,
   FaTrash,
 } from "react-icons/fa";
+import Image from "next/image";
+import iconClock from "public/images/icon-clock.svg";
+import iconUser from "public/images/icon-user.svg";
+import iconDifficulty from "public/images/icon-difficulty.svg";
+import iconLanguage from "public/images/icon-language.svg";
+import iconTopics from "public/images/icon-topics.svg";
+import iconSkills from "public/images/icon-skills.svg";
+
 interface IParams extends ParsedUrlQuery {
   id: string;
   opportunityId: string;
@@ -213,108 +217,185 @@ const OpportunityDetails: NextPageWithLayout<{
           </ReactModal>
         </div>
 
-        <div className="flex flex-col gap-1 rounded-lg bg-white p-6">
-          <h4 className="text-black">{opportunity?.title}</h4>
-          {/* <h6 className="text-sm text-gray">by {opportunity?.}</h6> */}
-          <div className="flex flex-row gap-1 text-xs font-bold text-green-dark">
-            <div className="badge bg-green-light">
-              <IoMdClock className="mr-2 h-4 w-4" />
-              {`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}`}
-            </div>
-            {(opportunity?.participantCountTotal ?? 0) > 0 && (
-              <div className="badge bg-green-light">
-                <IoMdPerson className="mr-2 h-4 w-4" />
-                {opportunity?.participantCountTotal} enrolled
-              </div>
-            )}
-            <div className="badge bg-green-light">Ongoing</div>
-          </div>
-        </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1 rounded-lg bg-white p-6">
+            <h4 className="text-black">{opportunity?.title}</h4>
+            {/* <h6 className="text-sm text-gray">by {opportunity?.}</h6> */}
+            <div className="flex flex-row gap-1 text-xs font-bold text-green-dark">
+              <div className="badge h-6 rounded-md bg-green-light text-green">
+                <Image
+                  src={iconClock}
+                  alt="Icon Clock"
+                  width={20}
+                  height={20}
+                  sizes="100vw"
+                  priority={true}
+                  style={{ width: "20px", height: "20px" }}
+                />
 
-        <div className="flex flex-col gap-2 md:flex-row">
-          <div className="w-[66%] flex-grow rounded-lg bg-white p-6">
-            {opportunity?.description}
-          </div>
-          <div className="flex w-[33%] flex-col gap-2">
-            <div className="flex flex-col rounded-lg bg-white p-6">
-              <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                <IoMdPerson className="h-6 w-6 text-gray" />
-                Participants
+                <span className="ml-1">{`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}`}</span>
               </div>
-              <div className="flex flex-row items-center gap-4 rounded-lg bg-gray p-4">
-                <div className="text-3xl font-bold text-gray-dark">
-                  {opportunity?.participantCountTotal ?? 0}
+              {(opportunity?.participantCountTotal ?? 0) > 0 && (
+                <div className="badge h-6 rounded-md bg-green-light text-green">
+                  <Image
+                    src={iconUser}
+                    alt="Icon User"
+                    width={20}
+                    height={20}
+                    sizes="100vw"
+                    priority={true}
+                    style={{ width: "20px", height: "20px" }}
+                  />
+
+                  <span className="ml-1">
+                    {opportunity?.participantCountTotal} enrolled
+                  </span>
                 </div>
-                {opportunity?.participantCountVerificationPending &&
-                  opportunity?.participantCountVerificationPending > 0 && (
-                    <div className="flex flex-row items-center gap-2 rounded-lg bg-yellow-light p-1">
-                      <div className="badge badge-warning rounded-lg bg-yellow text-white">
-                        {opportunity?.participantCountVerificationPending}
-                      </div>
-                      <div className="text-xs font-bold text-yellow">
-                        to be verified
-                      </div>
-                    </div>
-                  )}
+              )}
+              <div className="badge h-6 rounded-md bg-green-light text-green">
+                Ongoing
               </div>
             </div>
-            <div className="flex flex-col gap-1 rounded-lg bg-white p-6">
-              <div>
+          </div>
+
+          <div className="flex flex-col gap-2 md:flex-row">
+            <div className="w-[66%] flex-grow rounded-lg bg-white p-6">
+              {opportunity?.description}
+            </div>
+            <div className="flex w-[33%] flex-col gap-2">
+              <div className="flex flex-col rounded-lg bg-white p-6">
                 <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                  <IoMdClipboard className="h-6 w-6 text-gray" />
-                  Skills you will learn
+                  <IoMdPerson className="h-6 w-6 text-gray" />
+                  Participants
                 </div>
-                <div className="">
-                  {opportunity?.skills?.map((item) => (
-                    <div
-                      key={item.id}
-                      className="badge mr-2 h-auto rounded-lg border-0 bg-green text-white"
-                    >
-                      {item.name}
-                    </div>
-                  ))}
+                <div className="flex flex-row items-center gap-4 rounded-lg bg-gray p-4">
+                  <div className="text-3xl font-bold text-gray-dark">
+                    {opportunity?.participantCountTotal ?? 0}
+                  </div>
+                  {opportunity?.participantCountVerificationPending &&
+                    opportunity?.participantCountVerificationPending > 0 && (
+                      <div className="flex flex-row items-center gap-2 rounded-lg bg-yellow-light p-1">
+                        <div className="badge badge-warning rounded-lg bg-yellow text-white">
+                          {opportunity?.participantCountVerificationPending}
+                        </div>
+                        <div className="text-xs font-bold text-yellow">
+                          to be verified
+                        </div>
+                      </div>
+                    )}
                 </div>
               </div>
-              <div className="divider m-0" />
-              <div>
-                <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                  <IoMdClock className="h-6 w-6 text-gray" />
-                  How much time you will need
+              <div className="flex flex-col gap-1 rounded-lg bg-white p-6">
+                <div>
+                  <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                    <Image
+                      src={iconSkills}
+                      alt="Icon Skills"
+                      width={20}
+                      height={20}
+                      sizes="100vw"
+                      priority={true}
+                      style={{ width: "20px", height: "20px" }}
+                    />
+
+                    <span className="ml-1">Skills you will learn</span>
+                  </div>
+                  <div className="my-2">
+                    {opportunity?.skills?.map((item) => (
+                      <div
+                        key={item.id}
+                        className="badge mr-2 h-auto rounded-lg border-0 bg-green text-white"
+                      >
+                        {item.name}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="">{`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}`}</div>
-              </div>
-              <div className="divider m-0" />
-              <div>
-                <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                  <IoMdPricetag className="h-6 w-6 text-gray" />
-                  Topics
+                <div className="divider mt-1" />
+                <div>
+                  <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                    <Image
+                      src={iconClock}
+                      alt="Icon Clock"
+                      width={20}
+                      height={20}
+                      sizes="100vw"
+                      priority={true}
+                      style={{ width: "20px", height: "20px" }}
+                    />
+
+                    <span className="ml-1">How much time you will need</span>
+                  </div>
+                  <div className="my-2">{`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}`}</div>
                 </div>
-                <div className="">
-                  {opportunity?.categories?.map((item) => (
-                    <div
-                      key={item.id}
-                      className="badge mr-2 h-auto rounded-lg bg-green text-white"
-                    >
-                      {item.name}
-                    </div>
-                  ))}
+                <div className="divider mt-1" />
+                <div>
+                  <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                    <Image
+                      src={iconTopics}
+                      alt="Icon Topics"
+                      width={20}
+                      height={20}
+                      sizes="100vw"
+                      priority={true}
+                      style={{ width: "20px", height: "20px" }}
+                    />
+
+                    <span className="ml-1">Topics</span>
+                  </div>
+                  <div className="my-2">
+                    {opportunity?.categories?.map((item) => (
+                      <div
+                        key={item.id}
+                        className="badge mr-2 h-auto rounded-lg bg-green text-white"
+                      >
+                        {item.name}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="divider m-0" />
-              <div>
-                <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                  <IoMdGlobe className="h-6 w-6 text-gray" />
-                  Languages
+                <div className="divider mt-1" />
+                <div>
+                  <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                    <Image
+                      src={iconLanguage}
+                      alt="Icon Language"
+                      width={20}
+                      height={20}
+                      sizes="100vw"
+                      priority={true}
+                      style={{ width: "20px", height: "20px" }}
+                    />
+
+                    <span className="ml-1">Languages</span>
+                  </div>
+                  <div className="my-2">
+                    {opportunity?.languages?.map((item) => (
+                      <div
+                        key={item.id}
+                        className="badge mr-2 h-auto rounded-lg bg-green text-white"
+                      >
+                        {item.name}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="">
-                  {opportunity?.languages?.map((item) => (
-                    <div
-                      key={item.id}
-                      className="badge mr-2 h-auto rounded-lg bg-green text-white"
-                    >
-                      {item.name}
-                    </div>
-                  ))}
+                <div className="divider mt-1" />
+                <div>
+                  <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                    <Image
+                      src={iconDifficulty}
+                      alt="Icon Difficulty"
+                      width={20}
+                      height={20}
+                      sizes="100vw"
+                      priority={true}
+                      style={{ width: "20px", height: "20px" }}
+                    />
+
+                    <span className="ml-1">Course difficulty</span>
+                  </div>
+                  <div className="my-2">{opportunity?.difficulty}</div>
                 </div>
               </div>
             </div>

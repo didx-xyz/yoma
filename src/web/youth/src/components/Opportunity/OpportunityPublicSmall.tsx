@@ -25,7 +25,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
 
   return (
     <Link
-      href={`/opportunities/opportunity/${data.id}`}
+      href={`/opportunities/${data.id}`}
       //onClick={handleClick}
       className="flex h-[285px] min-w-[310px] flex-col rounded-lg bg-white p-3"
     >
