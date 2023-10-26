@@ -15,9 +15,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public List<Guid>? Organizations { get; set; }
 
-        public List<string> CommitmentIntervals { get; set; }
+        public List<string>? CommitmentIntervals { get; set; }
 
-        public List<string> ZltoRewardRanges { get; set; }
+        public List<string>? ZltoRewardRanges { get; set; }
 
         [JsonIgnore]
         internal List<OpportunitySearchFilterCommitmentInterval>? CommitmentIntervalsParsed { get; set; }
