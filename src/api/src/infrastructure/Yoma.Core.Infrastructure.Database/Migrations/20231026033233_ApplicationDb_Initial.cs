@@ -289,7 +289,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
                     FirstName = table.Column<string>(type: "varchar(125)", nullable: false),
                     Surname = table.Column<string>(type: "varchar(125)", nullable: false),
-                    DisplayName = table.Column<string>(type: "varchar(255)", nullable: true),
+                    DisplayName = table.Column<string>(type: "varchar(255)", nullable: false),
                     PhoneNumber = table.Column<string>(type: "varchar(50)", nullable: true),
                     CountryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CountryOfResidenceId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -999,7 +999,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 name: "IX_Opportunity_TypeId_OrganizationId_ZltoReward_DifficultyId_CommitmentIntervalId_CommitmentIntervalCount_StatusId_Keywords_Dat~",
                 schema: "Opportunity",
                 table: "Opportunity",
-                columns: new[] { "TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "DateCreated", "DateModified" });
+                columns: new[] { "TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "DateCreated", "DateModified" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityCategories_CategoryId",
@@ -1241,10 +1241,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_ExternalId_ZltoWalletId_DateZltoWalletCreated_SSITenantId_DateSSITenantCre~",
+                name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_ExternalId_ZltoWalletId_DateZltoWalletCreated_YoIDOnboarded_SSITenantId_Da~",
                 schema: "Entity",
                 table: "User",
-                columns: new[] { "FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "ZltoWalletId", "DateZltoWalletCreated", "SSITenantId", "DateSSITenantCreated", "DateCreated", "DateModified" });
+                columns: new[] { "FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "ZltoWalletId", "DateZltoWalletCreated", "YoIDOnboarded", "SSITenantId", "DateSSITenantCreated", "DateCreated", "DateModified" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_User_GenderId",
@@ -1270,7 +1270,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 table: "UserSkills",
                 columns: new[] { "UserId", "SkillId" },
                 unique: true);
-
 
             ApplicationDb_Initial_Seeding.Seed(migrationBuilder);
         }

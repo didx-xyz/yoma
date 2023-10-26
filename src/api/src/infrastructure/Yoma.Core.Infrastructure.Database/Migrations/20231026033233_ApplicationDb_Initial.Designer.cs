@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231024105652_ApplicationDb_Initial")]
+    [Migration("20231026033233_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -306,6 +306,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("DisplayName")
+                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("Email")
@@ -357,7 +358,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("PhotoId");
 
-                    b.HasIndex("FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "ZltoWalletId", "DateZltoWalletCreated", "SSITenantId", "DateSSITenantCreated", "DateCreated", "DateModified");
+                    b.HasIndex("FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "ZltoWalletId", "DateZltoWalletCreated", "YoIDOnboarded", "SSITenantId", "DateSSITenantCreated", "DateCreated", "DateModified");
 
                     b.ToTable("User", "Entity");
                 });
@@ -900,7 +901,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Title")
                         .IsUnique();
 
-                    b.HasIndex("TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "DateCreated", "DateModified");
+                    b.HasIndex("TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "DateCreated", "DateModified");
 
                     b.ToTable("Opportunity", "Opportunity");
                 });
