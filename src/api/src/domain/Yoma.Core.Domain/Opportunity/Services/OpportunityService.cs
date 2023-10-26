@@ -361,24 +361,24 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (filter.Categories != null && filter.Categories.Any())
             {
                 filter.Categories = filter.Categories.Distinct().ToList();
-                var matchedOpportunities = _opportunityCategoryRepository.Query().Where(o => filter.Categories.Contains(o.CategoryId)).Select(o => o.OpportunityId).ToList();
-                query = query.Where(o => matchedOpportunities.Contains(o.Id));
+                query = query.Where(opportunity => _opportunityCategoryRepository.Query().Any(
+                    opportunityCategory => filter.Categories.Contains(opportunityCategory.CategoryId) && opportunityCategory.OpportunityId == opportunity.Id));
             }
 
             //languages
             if (filter.Languages != null && filter.Languages.Any())
             {
                 filter.Languages = filter.Languages.Distinct().ToList();
-                var matchedOpportunityIds = _opportunityLanguageRepository.Query().Where(o => filter.Languages.Contains(o.LanguageId)).Select(o => o.OpportunityId).ToList();
-                query = query.Where(o => matchedOpportunityIds.Contains(o.Id));
+                query = query.Where(opportunity => _opportunityLanguageRepository.Query().Any(
+                   opportunityLanguage => filter.Languages.Contains(opportunityLanguage.LanguageId) && opportunityLanguage.OpportunityId == opportunity.Id));
             }
 
             //countries
             if (filter.Countries != null && filter.Countries.Any())
             {
                 filter.Countries = filter.Countries.Distinct().ToList();
-                var matchedOpportunityIds = _opportunityCountryRepository.Query().Where(o => filter.Countries.Contains(o.CountryId)).Select(o => o.OpportunityId).ToList();
-                query = query.Where(o => matchedOpportunityIds.Contains(o.Id));
+                query = query.Where(opportunity => _opportunityCountryRepository.Query().Any(
+                  opportunityCountry => filter.Countries.Contains(opportunityCountry.CountryId) && opportunityCountry.OpportunityId == opportunity.Id));
             }
 
             //statuses
@@ -440,25 +440,25 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 var predicate = PredicateBuilder.False<Models.Opportunity>();
 
                 //organizations
-                var matchedOrganizationIds = _organizationService.Contains(filter.ValueContains, false).Select(o => o.Id).ToList();
+                var matchedOrganizationIds = _organizationService.Contains(filter.ValueContains, false).Select(o => o.Id).Distinct().ToList();
                 predicate = predicate.Or(o => matchedOrganizationIds.Contains(o.OrganizationId));
 
                 //types
-                var matchedTypeIds = _opportunityTypeService.Contains(filter.ValueContains).Select(o => o.Id).ToList();
+                var matchedTypeIds = _opportunityTypeService.Contains(filter.ValueContains).Select(o => o.Id).Distinct().ToList();
                 predicate = predicate.Or(o => matchedTypeIds.Contains(o.TypeId));
 
                 //categories
-                var matchedCategoryIds = _opportunityCategoryService.Contains(filter.ValueContains).Select(o => o.Id).ToList();
-                var matchedOpportunityIds = _opportunityCategoryRepository.Query().Where(o => matchedCategoryIds.Contains(o.CategoryId)).Select(o => o.OpportunityId).ToList();
-                predicate = predicate.Or(o => matchedOpportunityIds.Contains(o.Id));
+                var matchedCategoryIds = _opportunityCategoryService.Contains(filter.ValueContains).Select(o => o.Id).Distinct().ToList();
+                predicate = predicate.Or(opportunity => _opportunityCategoryRepository.Query().Any(
+                   opportunityCategory => matchedCategoryIds.Contains(opportunityCategory.CategoryId) && opportunityCategory.OpportunityId == opportunity.Id));
 
                 //opportunities
                 predicate = _opportunityRepository.Contains(predicate, filter.ValueContains);
 
                 //skills
-                var matchedSkillIds = _skillService.Contains(filter.ValueContains).Select(o => o.Id).ToList();
-                matchedOpportunityIds = _opportunitySkillRepository.Query().Where(o => matchedSkillIds.Contains(o.SkillId)).Select(o => o.OpportunityId).ToList();
-                predicate = predicate.Or(o => matchedOpportunityIds.Contains(o.Id));
+                var matchedSkillIds = _skillService.Contains(filter.ValueContains).Select(o => o.Id).Distinct().ToList();
+                predicate = predicate.Or(opportunity => _opportunitySkillRepository.Query().Any(
+                   opportunitySkill => matchedSkillIds.Contains(opportunitySkill.SkillId) && opportunitySkill.OpportunityId == opportunity.Id));
 
                 query = query.Where(predicate);
             }
