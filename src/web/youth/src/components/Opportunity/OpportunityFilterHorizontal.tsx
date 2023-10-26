@@ -1,7 +1,6 @@
-/* eslint-disable */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
-import { Controller, FieldValues, useForm } from "react-hook-form";
+import { type FieldValues, Controller, useForm } from "react-hook-form";
 import zod from "zod";
 import type {
   OpportunityCategory,
@@ -11,9 +10,12 @@ import type {
   OpportunityType,
 } from "~/api/models/opportunity";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
-import Select, { components, ValueContainerProps } from "react-select";
+import Select, { components, type ValueContainerProps } from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
-import { OpportunityFilterCommitmentIntervals } from "./OpportunityFilterCommitmentIntervals";
+import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizontalCard";
+import iconNextArrow from "public/images/icon-next-arrow.svg";
+import { toBase64, shimmer } from "~/lib/image";
+import Image from "next/image";
 
 export interface InputProps {
   htmlRef: HTMLDivElement;
@@ -26,16 +28,17 @@ export interface InputProps {
   lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
   lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
   onSubmit?: (fieldValues: OpportunitySearchFilter) => void;
-  onCancel?: () => void;
-  cancelButtonText?: string;
-  submitButtonText?: string;
+  onClear?: () => void;
+  onOpenFilterFullWindow?: () => void;
+  clearButtonText?: string;
 }
 
 const ValueContainer = ({
   children,
   ...props
 }: ValueContainerProps<SelectOption>) => {
-  let [values, input] = children as any;
+  // eslint-disable-next-line prefer-const
+  let [values, input] = children as any[];
   if (Array.isArray(values)) {
     const plural = values.length === 1 ? "" : "s";
     values = `${values.length} item${plural}`;
@@ -60,9 +63,9 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
   lookups_commitmentIntervals,
   lookups_zltoRewardRanges,
   onSubmit,
-  onCancel,
-  cancelButtonText = "Cancel",
-  submitButtonText = "Submit",
+  onClear,
+  onOpenFilterFullWindow,
+  clearButtonText = "Clear",
 }) => {
   const schema = zod.object({
     types: zod.array(zod.string()).optional().nullable(),
@@ -70,48 +73,26 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
     languages: zod.array(zod.string()).optional().nullable(),
     countries: zod.array(zod.string()).optional().nullable(),
     organizations: zod.array(zod.string()).optional().nullable(),
-    commitmentIntervals: zod
-      .array(zod.object({ id: zod.string(), count: zod.number() }))
-      .optional()
-      .nullable(),
-    zltoRewardRanges: zod
-      .array(zod.any())
-      .optional()
-      .nullable()
-      // NB: zltoRewardRanges needs special treatment
-      // map it to array of OpportunitySearchCriteriaZltoReward
-      .transform((val) => {
-        if (val == null) return null;
-
-        return lookups_zltoRewardRanges.filter((c) =>
-          val.includes(c.description),
-        );
-      }),
+    commitmentIntervals: zod.array(zod.string()).optional().nullable(),
+    zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
   });
 
   const form = useForm({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { handleSubmit, formState, reset, watch } = form;
+  const { handleSubmit, formState, reset } = form;
 
   // set default values
   useEffect(() => {
     if (opportunitySearchFilter == null || opportunitySearchFilter == undefined)
       return;
-    // NB: zltoRewardRanges needs special treatment
-    // map it to an aray of descriptions (there's no id field on the model)
-    const model = {
-      ...opportunitySearchFilter,
-      zltoRewardRanges: opportunitySearchFilter?.zltoRewardRanges?.map(
-        (c) => `Z${c.from} - Z${c.to}`,
-      ),
-    };
+
     // reset form
     // setTimeout is needed to prevent the form from being reset before the default values are set
     setTimeout(() => {
       reset({
-        ...model,
+        ...opportunitySearchFilter,
       });
     }, 100);
   }, [reset, opportunitySearchFilter]);
@@ -124,110 +105,87 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
     [onSubmit],
   );
 
+  const onClickCategoryFilter = useCallback(
+    (cat: OpportunityCategory) => {
+      if (!opportunitySearchFilter || !onSubmit) return;
+
+      const prev = { ...opportunitySearchFilter };
+      prev.categories = prev.categories ?? [];
+
+      if (prev.categories.includes(cat.id)) {
+        prev.categories = prev.categories.filter((x) => x !== cat.id);
+      } else {
+        prev.categories.push(cat.name);
+      }
+
+      onSubmit(prev);
+    },
+    [opportunitySearchFilter, onSubmit],
+  );
+
   return (
-    <>
+    <div className="flex flex-grow flex-col">
+      {lookups_categories && lookups_categories.length > 0 && (
+        <div className="flex-col items-center justify-center gap-2 pb-8">
+          <div className="flex justify-center gap-2">
+            <div className="flex gap-2 overflow-hidden md:w-[800px]">
+              {lookups_categories.map((item) => (
+                <OpportunityCategoryHorizontalCard
+                  key={item.id}
+                  data={item}
+                  selected={opportunitySearchFilter?.categories?.includes(
+                    item.name,
+                  )}
+                  onClick={onClickCategoryFilter}
+                />
+              ))}
+            </div>
+            {/* VIEW ALL: OPEN FILTERS */}
+            <button
+              type="button"
+              onClick={onOpenFilterFullWindow}
+              className="flex h-[140px] w-[140px] flex-col items-center rounded-lg bg-white p-2"
+            >
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-center">
+                  <Image
+                    src={iconNextArrow}
+                    alt="Icon View All"
+                    width={60}
+                    height={60}
+                    sizes="100vw"
+                    priority={true}
+                    placeholder="blur"
+                    blurDataURL={`data:image/svg+xml;base64,${toBase64(
+                      shimmer(288, 182),
+                    )}`}
+                    style={{
+                      width: "60px",
+                      height: "60px",
+                    }}
+                  />
+                </div>
+
+                <div className="flex flex-grow flex-row">
+                  <div className="flex flex-grow flex-col gap-1">
+                    <h1 className="h-10 overflow-hidden text-ellipsis text-center text-sm font-semibold text-black">
+                      View all
+                      <br />
+                      Topics
+                    </h1>
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
       <form
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
-        className="flex flex-row gap-2"
+        className="flex flex-col gap-2"
       >
         <div className="flex flex-row gap-2">
-          {/* <div className="collapse join-item collapse-arrow border border-base-300">
-              <input type="radio" name="my-accordion-1" checked={true} />
-              <div className="collapse-title text-xl font-medium">Topics</div>
-              <div className="">
-                  CATEGORIES
-                {lookups_categories && lookups_categories.length > 0 && (
-                  <div className="flex flex-col items-center justify-center gap-2 pb-8">
-                    <div className="flex w-full flex-col">
-                      {lookups_categories.map((item) => (
-                        <div
-                          key={`fs_searchfilter_categories_${item.id}`}
-                          className="flex h-[70px] flex-grow flex-row items-center justify-center gap-2 p-2"
-                        >
-                          <label
-                            className="flex items-center justify-center"
-                            htmlFor={`checkbox_${item.id}`}
-                          >
-                            {!item.imageURL && (
-                              <Image
-                                src={iconRocket}
-                                alt="Icon Rocket"
-                                width={60}
-                                height={60}
-                                sizes="100vw"
-                                priority={true}
-                                placeholder="blur"
-                                blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                                  shimmer(288, 182),
-                                )}`}
-                                style={{
-                                  borderTopLeftRadius: "8px",
-                                  borderTopRightRadius: "8px",
-                                  width: "60px",
-                                  height: "60px",
-                                }}
-                              />
-                            )}
-                            {item.imageURL && (
-                              <Image
-                                src={item.imageURL}
-                                alt="Organization Logo"
-                                width={60}
-                                height={60}
-                                sizes="100vw"
-                                priority={true}
-                                placeholder="blur"
-                                blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                                  shimmer(288, 182),
-                                )}`}
-                                style={{
-                                  borderTopLeftRadius: "8px",
-                                  borderTopRightRadius: "8px",
-                                  width: "60px",
-                                  height: "60px",
-                                }}
-                              />
-                            )}
-                          </label>
-
-                          <label
-                            className="flex w-full flex-grow flex-col"
-                            htmlFor={`checkbox_${item.id}`}
-                          >
-                            <div className="flex flex-grow flex-col">
-                              <h1 className="h-7 overflow-hidden text-ellipsis text-lg font-semibold text-black">
-                                {item.name}
-                              </h1>
-                              <h6 className="text-sm text-gray-dark">
-                                {item.count} available
-                              </h6>
-                            </div>
-                          </label>
-
-                          <div className=" ">
-                            <input
-                              type="checkbox"
-                              className="checkbox-primary checkbox"
-                              id={`checkbox_${item.id}`}
-                              {...register("categories")}
-                              value={item.id}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {formState.errors.categories && (
-                  <label className="label font-bold">
-                    <span className="label-text-alt italic text-red-500">
-                      {`${formState.errors.categories.message}`}
-                    </span>
-                  </label>
-                )}
-              </div>
-            </div> */}
           <div className="mr-4 flex items-center text-sm font-bold text-gray-dark">
             Filter by:
           </div>
@@ -243,7 +201,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   }}
                   isMulti={true}
                   options={lookups_types.map((c) => ({
-                    value: c.id,
+                    value: c.name,
                     label: c.name,
                   }))}
                   // fix menu z-index issue
@@ -253,11 +211,11 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   }}
                   onChange={(val) => {
                     onChange(val.map((c) => c.value));
-                    handleSubmit(onSubmitHandler)();
+                    void handleSubmit(onSubmitHandler)();
                   }}
                   value={lookups_types
-                    .filter((c) => value?.includes(c.id))
-                    .map((c) => ({ value: c.id, label: c.name }))}
+                    .filter((c) => value?.includes(c.name))
+                    .map((c) => ({ value: c.name, label: c.name }))}
                   placeholder="Type"
                   components={{
                     ValueContainer,
@@ -286,7 +244,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   }}
                   isMulti={true}
                   options={lookups_countries.map((c) => ({
-                    value: c.id,
+                    value: c.name,
                     label: c.name,
                   }))}
                   // fix menu z-index issue
@@ -296,11 +254,11 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   }}
                   onChange={(val) => {
                     onChange(val.map((c) => c.value));
-                    handleSubmit(onSubmitHandler)();
+                    void handleSubmit(onSubmitHandler)();
                   }}
                   value={lookups_countries
-                    .filter((c) => value?.includes(c.id))
-                    .map((c) => ({ value: c.id, label: c.name }))}
+                    .filter((c) => value?.includes(c.name))
+                    .map((c) => ({ value: c.name, label: c.name }))}
                   placeholder="Location"
                   components={{
                     ValueContainer,
@@ -328,7 +286,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   }}
                   isMulti={true}
                   options={lookups_languages.map((c) => ({
-                    value: c.id,
+                    value: c.name,
                     label: c.name,
                   }))}
                   // fix menu z-index issue
@@ -338,11 +296,11 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   }}
                   onChange={(val) => {
                     onChange(val.map((c) => c.value));
-                    handleSubmit(onSubmitHandler)();
+                    void handleSubmit(onSubmitHandler)();
                   }}
                   value={lookups_languages
-                    .filter((c) => value?.includes(c.id))
-                    .map((c) => ({ value: c.id, label: c.name }))}
+                    .filter((c) => value?.includes(c.name))
+                    .map((c) => ({ value: c.name, label: c.name }))}
                   placeholder="Language"
                   components={{
                     ValueContainer,
@@ -359,7 +317,6 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               </label>
             )}
           </div>
-
           <div className="">
             <Controller
               name="organizations"
@@ -372,7 +329,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   }}
                   isMulti={true}
                   options={lookups_organisations.map((c) => ({
-                    value: c.id,
+                    value: c.name,
                     label: c.name,
                   }))}
                   // fix menu z-index issue
@@ -382,11 +339,11 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   }}
                   onChange={(val) => {
                     onChange(val.map((c) => c.value));
-                    handleSubmit(onSubmitHandler)();
+                    void handleSubmit(onSubmitHandler)();
                   }}
                   value={lookups_organisations
-                    .filter((c) => value?.includes(c.id))
-                    .map((c) => ({ value: c.id, label: c.name }))}
+                    .filter((c) => value?.includes(c.name))
+                    .map((c) => ({ value: c.name, label: c.name }))}
                   placeholder="Organisation"
                   components={{
                     ValueContainer,
@@ -404,20 +361,40 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
             )}
           </div>
 
-          {/* <div className="">
+          <div className="">
             <Controller
               name="commitmentIntervals"
               control={form.control}
+              defaultValue={opportunitySearchFilter?.commitmentIntervals}
               render={({ field: { onChange, value } }) => (
-                <OpportunityFilterCommitmentIntervals
-                  htmlRef={htmlRef}
-                  lookups_commitmentIntervals={lookups_commitmentIntervals}
-                  onChange={onChange}
-                  defaultValue={opportunitySearchFilter?.commitmentIntervals}
+                <Select
+                  classNames={{
+                    control: () => "input input-bordered input-xs",
+                  }}
+                  isMulti={true}
+                  options={lookups_commitmentIntervals.map((c) => ({
+                    value: c.id,
+                    label: c.name,
+                  }))}
+                  // fix menu z-index issue
+                  menuPortalTarget={htmlRef}
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                  }}
+                  onChange={(val) => {
+                    onChange(val.map((c) => c.value));
+                    void handleSubmit(onSubmitHandler)();
+                  }}
+                  value={lookups_commitmentIntervals
+                    .filter((c) => value?.includes(c.id))
+                    .map((c) => ({ value: c.id, label: c.name }))}
+                  placeholder="Effort"
+                  components={{
+                    ValueContainer,
+                  }}
                 />
               )}
             />
-
             {formState.errors.commitmentIntervals && (
               <label className="label font-bold">
                 <span className="label-text-alt italic text-red-500">
@@ -425,13 +402,13 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                 </span>
               </label>
             )}
-          </div> */}
+          </div>
 
           <div className="">
             <Controller
               name="zltoRewardRanges"
               control={form.control}
-              //defaultValue={opportunitySearchFilter?.zltoRewardRanges}
+              defaultValue={opportunitySearchFilter?.zltoRewardRanges}
               render={({ field: { onChange, value } }) => (
                 <Select
                   classNames={{
@@ -439,25 +416,21 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   }}
                   isMulti={true}
                   options={lookups_zltoRewardRanges.map((c) => ({
-                    value: c.description,
-                    label: c.description,
+                    value: c.id,
+                    label: c.name,
                   }))}
                   // fix menu z-index issue
                   menuPortalTarget={htmlRef}
                   styles={{
                     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                   }}
-                  //onChange={(val) => onChange(val.map((c) => c.value))}
                   onChange={(val) => {
                     onChange(val.map((c) => c.value));
-                    handleSubmit(onSubmitHandler)();
+                    void handleSubmit(onSubmitHandler)();
                   }}
                   value={lookups_zltoRewardRanges
-                    .filter((c) => value?.includes(c.description))
-                    .map((c) => ({
-                      value: c.description,
-                      label: c.description,
-                    }))}
+                    .filter((c) => value?.includes(c.id))
+                    .map((c) => ({ value: c.id, label: c.name }))}
                   placeholder="Reward"
                   components={{
                     ValueContainer,
@@ -474,9 +447,14 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               </label>
             )}
           </div>
+
+          <div className="flex items-center text-xs text-gray-dark">
+            <button type="button" onClick={onClear}>
+              {clearButtonText}
+            </button>
+          </div>
         </div>
       </form>
-    </>
+    </div>
   );
 };
-/* eslint-enable */
