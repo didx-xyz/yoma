@@ -235,7 +235,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                             className="checkbox-primary checkbox"
                             id={`checkbox_${item.id}`}
                             {...register("categories")}
-                            value={item.id}
+                            value={item.name}
                           />
                         </div>
                       ))}

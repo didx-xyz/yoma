@@ -27,7 +27,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
     <Link
       href={`/opportunities/opportunity/${data.id}`}
       //onClick={handleClick}
-      className="flex h-[290px] min-w-[310px] flex-col rounded-lg bg-white p-3"
+      className="flex h-[285px] min-w-[310px] flex-col rounded-lg bg-white p-3"
     >
       <div className="flex flex-row">
         <div className="flex flex-grow flex-row">

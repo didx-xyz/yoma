@@ -26,8 +26,8 @@ export interface InputProps {
   lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
   lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
   onSubmit?: (fieldValues: OpportunitySearchFilter) => void;
-  onCancel?: () => void;
-  cancelButtonText?: string;
+  onClear?: () => void;
+  clearButtonText?: string;
   submitButtonText?: string;
 }
 
@@ -60,8 +60,8 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
   lookups_commitmentIntervals,
   lookups_zltoRewardRanges,
   onSubmit,
-  onCancel,
-  cancelButtonText = "Cancel",
+  onClear,
+  clearButtonText = "Clear",
   submitButtonText = "Submit",
 }) => {
   const schema = zod.object({
@@ -359,7 +359,6 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               </label>
             )}
           </div>
-
           <div className="">
             <Controller
               name="organizations"
@@ -403,7 +402,103 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               </label>
             )}
           </div>
+          <div className="">
+            <Controller
+              name="commitmentIntervals"
+              control={form.control}
+              defaultValue={opportunitySearchFilter?.commitmentIntervals}
+              render={({ field: { onChange, value } }) => (
+                <Select
+                  classNames={{
+                    control: () => "input input-bordered input-xs",
+                  }}
+                  isMulti={true}
+                  options={lookups_commitmentIntervals.map((c) => ({
+                    value: c.description,
+                    label: c.description,
+                  }))}
+                  // fix menu z-index issue
+                  menuPortalTarget={htmlRef}
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                  }}
+                  onChange={(val) => {
+                    onChange(val.map((c) => c.value));
+                    handleSubmit(onSubmitHandler)();
+                  }}
+                  value={lookups_commitmentIntervals
+                    .filter((c) => value?.includes(c.description))
+                    .map((c) => ({
+                      value: c.description,
+                      label: c.description,
+                    }))}
+                  placeholder="Time"
+                  components={{
+                    ValueContainer,
+                  }}
+                />
+              )}
+            />
 
+            {formState.errors.commitmentIntervals && (
+              <label className="label font-bold">
+                <span className="label-text-alt italic text-red-500">
+                  {`${formState.errors.commitmentIntervals.message}`}
+                </span>
+              </label>
+            )}
+          </div>
+          <div className="">
+            <Controller
+              name="zltoRewardRanges"
+              control={form.control}
+              defaultValue={opportunitySearchFilter?.organizations}
+              render={({ field: { onChange, value } }) => (
+                <Select
+                  classNames={{
+                    control: () => "input input-bordered input-xs",
+                  }}
+                  isMulti={true}
+                  options={lookups_zltoRewardRanges.map((c) => ({
+                    value: c.description,
+                    label: c.description,
+                  }))}
+                  // fix menu z-index issue
+                  menuPortalTarget={htmlRef}
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                  }}
+                  onChange={(val) => {
+                    onChange(val.map((c) => c.value));
+                    handleSubmit(onSubmitHandler)();
+                  }}
+                  value={lookups_zltoRewardRanges
+                    .filter((c) => value?.includes(c.description))
+                    .map((c) => ({
+                      value: c.description,
+                      label: c.description,
+                    }))}
+                  placeholder="Reward"
+                  components={{
+                    ValueContainer,
+                  }}
+                />
+              )}
+            />
+
+            {formState.errors.zltoRewardRanges && (
+              <label className="label font-bold">
+                <span className="label-text-alt italic text-red-500">
+                  {`${formState.errors.zltoRewardRanges.message}`}
+                </span>
+              </label>
+            )}
+          </div>
+          <div className="flex items-center text-xs text-gray-dark">
+            <button type="button" onClick={onClear}>
+              {clearButtonText}
+            </button>
+          </div>
           {/* <div className="">
             <Controller
               name="commitmentIntervals"
@@ -427,7 +522,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
             )}
           </div> */}
 
-          <div className="">
+          {/* <div className="">
             <Controller
               name="zltoRewardRanges"
               control={form.control}
@@ -464,16 +559,15 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   }}
                 />
               )}
-            />
+            /> */}
 
-            {formState.errors.zltoRewardRanges && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.zltoRewardRanges.message}`}
-                </span>
-              </label>
-            )}
-          </div>
+          {/* {formState.errors.zltoRewardRanges && (
+            <label className="label font-bold">
+              <span className="label-text-alt italic text-red-500">
+                {`${formState.errors.zltoRewardRanges.message}`}
+              </span>
+            </label>
+          )} */}
         </div>
       </form>
     </>

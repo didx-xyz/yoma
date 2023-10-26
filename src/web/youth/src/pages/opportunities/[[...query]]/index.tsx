@@ -337,10 +337,38 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       ],
       queryFn: async () =>
         await searchOpportunities({
+          // pageNumber: page ? parseInt(page.toString()) : 1,
+          // pageSize: PAGE_SIZE,
+          // categories:
+          //   categories != undefined ? categories?.toString().split(",") : null,
+          // includeExpired: false,
+          // countries:
+          //   countries != undefined ? countries?.toString().split(",") : null,
+          // languages:
+          //   languages != undefined ? languages?.toString().split(",") : null,
+          // types: types != undefined ? types?.toString().split(",") : null,
+          // valueContains: query?.toString() ?? null,
+          // commitmentIntervals: null, // commitmentIntervals as string[],
+          // mostViewed: mostViewed ? Boolean(mostViewed) : null,
+          // organizations:
+          //   organizations != undefined
+          //     ? organizations?.toString().split(",")
+          //     : null,
+          // zltoRewardRanges: null, // zltoRewardRanges as string[],
           pageNumber: page ? parseInt(page.toString()) : 1,
           pageSize: PAGE_SIZE,
+          // categories is string[] of category names. lookup each category name in the lookups_categories array and return the id
           categories:
-            categories != undefined ? categories?.toString().split(",") : null,
+            categories != undefined
+              ? categories
+                  ?.toString()
+                  .split(",")
+                  .map((x) => {
+                    const cat = lookups_categories.find((y) => y.name === x);
+                    return cat ? cat?.id : "";
+                  })
+                  .filter((x) => x != "")
+              : null,
           includeExpired: false,
           countries:
             countries != undefined ? countries?.toString().split(",") : null,
@@ -458,7 +486,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         if (prev.categories.includes(cat.id)) {
           prev.categories = prev.categories.filter((x) => x !== cat.id);
         } else {
-          prev.categories.push(cat.id);
+          prev.categories.push(cat.name);
         }
         return prev;
       });
@@ -466,6 +494,10 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     },
     [opportunitySearchFilter, setOpportunitySearchFilter, redirectSearchFilter],
   );
+
+  const onClearFilter = useCallback(() => {
+    void router.push("/opportunities", undefined, { scroll: true });
+  }, [router]);
 
   // 🧮 calculated fields
   const currentPage = useMemo(() => {
@@ -565,7 +597,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
                       key={item.id}
                       data={item}
                       selected={opportunitySearchFilter.categories?.includes(
-                        item.id,
+                        item.name,
                       )}
                       onClick={onClickCategoryFilter}
                     />
@@ -629,9 +661,9 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
               lookups_organisations={lookups_organisations}
               lookups_commitmentIntervals={lookups_commitmentIntervals}
               lookups_zltoRewardRanges={lookups_zltoRewardRanges}
-              cancelButtonText="Close"
+              clearButtonText="Clear"
               submitButtonText="Done"
-              onCancel={onCloseFilter}
+              onClear={onClearFilter}
               onSubmit={onSubmitFilter}
             />
           </div>
