@@ -94,6 +94,21 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
+        [SwaggerOperation(Summary = "Track viewing of an opportunity (Authenticated User)")]
+        [HttpPut("action/{opportunityId}/view")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_User}")]
+        public async Task<IActionResult> PerformActionViewed([FromRoute] Guid opportunityId)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(PerformActionViewed));
+
+            await _myOpportunityService.PerformActionViewed(opportunityId);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(PerformActionViewed));
+
+            return StatusCode((int)HttpStatusCode.OK);
+        }
+
         [SwaggerOperation(Summary = "Save an opportunity (Authenticated User)")]
         [HttpPut("action/{opportunityId}/save")]
         [ProducesResponseType((int)HttpStatusCode.OK)]

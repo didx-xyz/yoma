@@ -1,7 +1,6 @@
-/* eslint-disable */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
-import { Controller, FieldValues, useForm } from "react-hook-form";
+import { Controller, type FieldValues, useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import zod from "zod";
 import type {
@@ -17,7 +16,6 @@ import { shimmer, toBase64 } from "src/lib/image";
 import iconRocket from "public/images/icon-rocket.svg";
 import Select from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
-import { OpportunityFilterCommitmentIntervals } from "./OpportunityFilterCommitmentIntervals";
 
 export interface InputProps {
   htmlRef: HTMLDivElement;
@@ -56,56 +54,9 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
     languages: zod.array(zod.string()).optional().nullable(),
     countries: zod.array(zod.string()).optional().nullable(),
     organizations: zod.array(zod.string()).optional().nullable(),
-    commitmentIntervals: zod
-      .array(zod.object({ id: zod.string(), count: zod.number() }))
-      .optional()
-      .nullable(),
-    zltoRewardRanges: zod
-      .array(zod.any())
-      .optional()
-      .nullable()
-      // NB: zltoRewardRanges needs special treatment
-      // map it to array of OpportunitySearchCriteriaZltoReward
-      .transform((val) => {
-        if (val == null) return null;
-
-        return lookups_zltoRewardRanges.filter((c) =>
-          val.includes(c.description),
-        );
-      }),
-    //startDate: string | null;
-    //endDate: string | null;
-    //statuses: Status[] | null;
-    //includeExpired: boolean | null;
-    //mostViewed: boolean | null;
+    commitmentIntervals: zod.array(zod.string()).optional().nullable(),
+    zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
   });
-  // .nonstrict();
-
-  // .superRefine((values, ctx) => {
-  //   // adminEmails is required if addCurrentUserAsAdmin is false
-  //   if (
-  //     !values.addCurrentUserAsAdmin &&
-  //     (values.adminEmails == null || values.adminEmails?.length < 1)
-  //   ) {
-  //     ctx.addIssue({
-  //       message:
-  //         "At least one Admin Additional Email is required if you are not the organisation admin.",
-  //       code: zod.ZodIssueCode.custom,
-  //       path: ["adminEmails"],
-  //     });
-  //   }
-  // })
-  // .refine(
-  //   (data) => {
-  //     // validate all items are valid email addresses
-  //     return data.adminEmails?.every((email) => validateEmail(email));
-  //   },
-  //   {
-  //     message:
-  //       "Please enter valid email addresses e.g. name@gmail.com. One or more email address are wrong.",
-  //     path: ["adminEmails"],
-  //   },
-  // )
   const form = useForm({
     mode: "all",
     resolver: zodResolver(schema),
@@ -114,22 +65,14 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
 
   // set default values
   useEffect(() => {
-    // NB: zltoRewardRanges needs special treatment
-    // map it to an aray of descriptions (there's no id field on the model)
-    const model = {
-      ...opportunitySearchFilter,
-      zltoRewardRanges: opportunitySearchFilter?.zltoRewardRanges?.map(
-        (c) => `Z${c.from} - Z${c.to}`,
-      ),
-    };
     // reset form
     // setTimeout is needed to prevent the form from being reset before the default values are set
     setTimeout(() => {
       reset({
-        ...model,
+        ...opportunitySearchFilter,
       });
     }, 100);
-  }, [reset]);
+  }, [reset, opportunitySearchFilter]);
 
   // form submission handler
   const onSubmitHandler = useCallback(
@@ -235,7 +178,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                             className="checkbox-primary checkbox"
                             id={`checkbox_${item.id}`}
                             {...register("categories")}
-                            value={item.id}
+                            value={item.name}
                           />
                         </div>
                       ))}
@@ -246,7 +189,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 {formState.errors.categories && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                       {`${formState.errors.categories.message}`}
                     </span>
                   </label>
@@ -263,7 +205,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                   name="types"
                   control={form.control}
                   defaultValue={opportunitySearchFilter?.countries}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   render={({ field: { onChange, value } }) => (
                     <Select
                       classNames={{
@@ -271,7 +212,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       isMulti={true}
                       options={lookups_types.map((c) => ({
-                        value: c.id,
+                        value: c.name,
                         label: c.name,
                       }))}
                       // fix menu z-index issue
@@ -281,8 +222,8 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       onChange={(val) => onChange(val.map((c) => c.value))}
                       value={lookups_types
-                        .filter((c) => value?.includes(c.id))
-                        .map((c) => ({ value: c.id, label: c.name }))}
+                        .filter((c) => value?.includes(c.name))
+                        .map((c) => ({ value: c.name, label: c.name }))}
                     />
                   )}
                 />
@@ -290,7 +231,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 {formState.errors.types && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                       {`${formState.errors.types.message}`}
                     </span>
                   </label>
@@ -305,7 +245,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                   name="countries"
                   control={form.control}
                   defaultValue={opportunitySearchFilter?.countries}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   render={({ field: { onChange, value } }) => (
                     <Select
                       classNames={{
@@ -313,7 +252,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       isMulti={true}
                       options={lookups_countries.map((c) => ({
-                        value: c.id,
+                        value: c.name,
                         label: c.name,
                       }))}
                       // fix menu z-index issue
@@ -323,8 +262,8 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       onChange={(val) => onChange(val.map((c) => c.value))}
                       value={lookups_countries
-                        .filter((c) => value?.includes(c.id))
-                        .map((c) => ({ value: c.id, label: c.name }))}
+                        .filter((c) => value?.includes(c.name))
+                        .map((c) => ({ value: c.name, label: c.name }))}
                     />
                   )}
                 />
@@ -332,7 +271,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 {formState.errors.countries && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                       {`${formState.errors.countries.message}`}
                     </span>
                   </label>
@@ -347,7 +285,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                   name="languages"
                   control={form.control}
                   defaultValue={opportunitySearchFilter?.languages}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   render={({ field: { onChange, value } }) => (
                     <Select
                       classNames={{
@@ -355,7 +292,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       isMulti={true}
                       options={lookups_languages.map((c) => ({
-                        value: c.id,
+                        value: c.name,
                         label: c.name,
                       }))}
                       // fix menu z-index issue
@@ -365,8 +302,8 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       onChange={(val) => onChange(val.map((c) => c.value))}
                       value={lookups_languages
-                        .filter((c) => value?.includes(c.id))
-                        .map((c) => ({ value: c.id, label: c.name }))}
+                        .filter((c) => value?.includes(c.name))
+                        .map((c) => ({ value: c.name, label: c.name }))}
                     />
                   )}
                 />
@@ -374,7 +311,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 {formState.errors.languages && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                       {`${formState.errors.languages.message}`}
                     </span>
                   </label>
@@ -391,7 +327,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                   name="organizations"
                   control={form.control}
                   defaultValue={opportunitySearchFilter?.organizations}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   render={({ field: { onChange, value } }) => (
                     <Select
                       classNames={{
@@ -399,7 +334,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       isMulti={true}
                       options={lookups_organisations.map((c) => ({
-                        value: c.id,
+                        value: c.name,
                         label: c.name,
                       }))}
                       // fix menu z-index issue
@@ -409,8 +344,8 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       onChange={(val) => onChange(val.map((c) => c.value))}
                       value={lookups_organisations
-                        .filter((c) => value?.includes(c.id))
-                        .map((c) => ({ value: c.id, label: c.name }))}
+                        .filter((c) => value?.includes(c.name))
+                        .map((c) => ({ value: c.name, label: c.name }))}
                     />
                   )}
                 />
@@ -418,7 +353,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 {formState.errors.organizations && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                       {`${formState.errors.organizations.message}`}
                     </span>
                   </label>
@@ -427,22 +361,31 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
             </div>
             <div className="collapse-arrow collapse join-item border border-base-300">
               <input type="radio" name="my-accordion-6" />
-              <div className="collapse-title text-xl font-medium">
-                Date posted
-              </div>
+              <div className="collapse-title text-xl font-medium">Effort</div>
               <div className="collapse-content">
                 <Controller
                   name="commitmentIntervals"
                   control={form.control}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  defaultValue={opportunitySearchFilter?.commitmentIntervals}
                   render={({ field: { onChange, value } }) => (
-                    <OpportunityFilterCommitmentIntervals
-                      htmlRef={htmlRef}
-                      lookups_commitmentIntervals={lookups_commitmentIntervals}
-                      onChange={onChange}
-                      defaultValue={
-                        opportunitySearchFilter?.commitmentIntervals
-                      }
+                    <Select
+                      classNames={{
+                        control: () => "input input-bordered",
+                      }}
+                      isMulti={true}
+                      options={lookups_commitmentIntervals.map((c) => ({
+                        value: c.id,
+                        label: c.name,
+                      }))}
+                      // fix menu z-index issue
+                      menuPortalTarget={htmlRef}
+                      styles={{
+                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                      }}
+                      onChange={(val) => onChange(val.map((c) => c.value))}
+                      value={lookups_commitmentIntervals
+                        .filter((c) => value?.includes(c.id))
+                        .map((c) => ({ value: c.id, label: c.name }))}
                     />
                   )}
                 />
@@ -450,7 +393,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 {formState.errors.commitmentIntervals && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                       {`${formState.errors.commitmentIntervals.message}`}
                     </span>
                   </label>
@@ -458,16 +400,13 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
               </div>
             </div>
             <div className="collapse-arrow collapse join-item border border-base-300">
-              <input type="radio" name="my-accordion-65" />
-              <div className="collapse-title text-xl font-medium">
-                Zlto Reward
-              </div>
+              <input type="radio" name="my-accordion-7" />
+              <div className="collapse-title text-xl font-medium">Reward</div>
               <div className="collapse-content">
                 <Controller
                   name="zltoRewardRanges"
                   control={form.control}
                   defaultValue={opportunitySearchFilter?.zltoRewardRanges}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   render={({ field: { onChange, value } }) => (
                     <Select
                       classNames={{
@@ -475,8 +414,8 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       isMulti={true}
                       options={lookups_zltoRewardRanges.map((c) => ({
-                        value: c.description,
-                        label: c.description,
+                        value: c.id,
+                        label: c.name,
                       }))}
                       // fix menu z-index issue
                       menuPortalTarget={htmlRef}
@@ -485,11 +424,8 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       onChange={(val) => onChange(val.map((c) => c.value))}
                       value={lookups_zltoRewardRanges
-                        .filter((c) => value?.includes(c.description))
-                        .map((c) => ({
-                          value: c.description,
-                          label: c.description,
-                        }))}
+                        .filter((c) => value?.includes(c.id))
+                        .map((c) => ({ value: c.id, label: c.name }))}
                     />
                   )}
                 />
@@ -497,7 +433,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 {formState.errors.zltoRewardRanges && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                       {`${formState.errors.zltoRewardRanges.message}`}
                     </span>
                   </label>
@@ -531,4 +466,3 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
     </>
   );
 };
-/* eslint-enable */
