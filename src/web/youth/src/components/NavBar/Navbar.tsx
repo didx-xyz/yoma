@@ -50,13 +50,13 @@ export const Navbar: React.FC = () => {
                 About
               </Link>
               <Link
-                href="/learning"
+                href="/opportunities?types=Learning"
                 className="px-7 py-3 text-white hover:brightness-50"
               >
                 Learning
               </Link>
               <Link
-                href="/tasks"
+                href="/opportunities?types=Task"
                 className="px-7 py-3 text-white hover:brightness-50"
               >
                 Tasks
@@ -90,12 +90,18 @@ export const Navbar: React.FC = () => {
               </Link>
             </li>
             <li tabIndex={2}>
-              <Link href="/learning" className="text-white hover:brightness-50">
+              <Link
+                href="/opportunities?types=Learning"
+                className="text-white hover:brightness-50"
+              >
                 Learning
               </Link>
             </li>
             <li tabIndex={3}>
-              <Link href="/tasks" className="text-white hover:brightness-50">
+              <Link
+                href="/opportunities?types=Task"
+                className="text-white hover:brightness-50"
+              >
                 Tasks
               </Link>
             </li>

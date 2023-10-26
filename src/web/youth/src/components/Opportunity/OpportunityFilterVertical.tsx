@@ -1,7 +1,6 @@
-/* eslint-disable */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
-import { Controller, FieldValues, useForm } from "react-hook-form";
+import { Controller, type FieldValues, useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import zod from "zod";
 import type {
@@ -17,7 +16,6 @@ import { shimmer, toBase64 } from "src/lib/image";
 import iconRocket from "public/images/icon-rocket.svg";
 import Select from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
-import { OpportunityFilterCommitmentIntervals } from "./OpportunityFilterCommitmentIntervals";
 
 export interface InputProps {
   htmlRef: HTMLDivElement;
@@ -74,7 +72,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
         ...opportunitySearchFilter,
       });
     }, 100);
-  }, [reset,opportunitySearchFilter]);
+  }, [reset, opportunitySearchFilter]);
 
   // form submission handler
   const onSubmitHandler = useCallback(
@@ -191,7 +189,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 {formState.errors.categories && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                       {`${formState.errors.categories.message}`}
                     </span>
                   </label>
@@ -208,7 +205,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                   name="types"
                   control={form.control}
                   defaultValue={opportunitySearchFilter?.countries}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   render={({ field: { onChange, value } }) => (
                     <Select
                       classNames={{
@@ -216,7 +212,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       isMulti={true}
                       options={lookups_types.map((c) => ({
-                        value: c.id,
+                        value: c.name,
                         label: c.name,
                       }))}
                       // fix menu z-index issue
@@ -226,8 +222,8 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       onChange={(val) => onChange(val.map((c) => c.value))}
                       value={lookups_types
-                        .filter((c) => value?.includes(c.id))
-                        .map((c) => ({ value: c.id, label: c.name }))}
+                        .filter((c) => value?.includes(c.name))
+                        .map((c) => ({ value: c.name, label: c.name }))}
                     />
                   )}
                 />
@@ -235,7 +231,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 {formState.errors.types && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                       {`${formState.errors.types.message}`}
                     </span>
                   </label>
@@ -250,7 +245,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                   name="countries"
                   control={form.control}
                   defaultValue={opportunitySearchFilter?.countries}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   render={({ field: { onChange, value } }) => (
                     <Select
                       classNames={{
@@ -258,7 +252,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       isMulti={true}
                       options={lookups_countries.map((c) => ({
-                        value: c.id,
+                        value: c.name,
                         label: c.name,
                       }))}
                       // fix menu z-index issue
@@ -268,8 +262,8 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       onChange={(val) => onChange(val.map((c) => c.value))}
                       value={lookups_countries
-                        .filter((c) => value?.includes(c.id))
-                        .map((c) => ({ value: c.id, label: c.name }))}
+                        .filter((c) => value?.includes(c.name))
+                        .map((c) => ({ value: c.name, label: c.name }))}
                     />
                   )}
                 />
@@ -277,7 +271,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 {formState.errors.countries && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                       {`${formState.errors.countries.message}`}
                     </span>
                   </label>
@@ -292,7 +285,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                   name="languages"
                   control={form.control}
                   defaultValue={opportunitySearchFilter?.languages}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   render={({ field: { onChange, value } }) => (
                     <Select
                       classNames={{
@@ -300,7 +292,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       isMulti={true}
                       options={lookups_languages.map((c) => ({
-                        value: c.id,
+                        value: c.name,
                         label: c.name,
                       }))}
                       // fix menu z-index issue
@@ -310,8 +302,8 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       onChange={(val) => onChange(val.map((c) => c.value))}
                       value={lookups_languages
-                        .filter((c) => value?.includes(c.id))
-                        .map((c) => ({ value: c.id, label: c.name }))}
+                        .filter((c) => value?.includes(c.name))
+                        .map((c) => ({ value: c.name, label: c.name }))}
                     />
                   )}
                 />
@@ -319,7 +311,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 {formState.errors.languages && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                       {`${formState.errors.languages.message}`}
                     </span>
                   </label>
@@ -336,7 +327,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                   name="organizations"
                   control={form.control}
                   defaultValue={opportunitySearchFilter?.organizations}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   render={({ field: { onChange, value } }) => (
                     <Select
                       classNames={{
@@ -344,7 +334,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       isMulti={true}
                       options={lookups_organisations.map((c) => ({
-                        value: c.id,
+                        value: c.name,
                         label: c.name,
                       }))}
                       // fix menu z-index issue
@@ -354,8 +344,8 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       }}
                       onChange={(val) => onChange(val.map((c) => c.value))}
                       value={lookups_organisations
-                        .filter((c) => value?.includes(c.id))
-                        .map((c) => ({ value: c.id, label: c.name }))}
+                        .filter((c) => value?.includes(c.name))
+                        .map((c) => ({ value: c.name, label: c.name }))}
                     />
                   )}
                 />
@@ -363,7 +353,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 {formState.errors.organizations && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                       {`${formState.errors.organizations.message}`}
                     </span>
                   </label>
@@ -371,16 +360,13 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
               </div>
             </div>
             <div className="collapse-arrow collapse join-item border border-base-300">
-              <input type="radio" name="my-accordion-5" />
-              <div className="collapse-title text-xl font-medium">
-                Effort
-              </div>
+              <input type="radio" name="my-accordion-6" />
+              <div className="collapse-title text-xl font-medium">Effort</div>
               <div className="collapse-content">
                 <Controller
                   name="commitmentIntervals"
                   control={form.control}
                   defaultValue={opportunitySearchFilter?.commitmentIntervals}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   render={({ field: { onChange, value } }) => (
                     <Select
                       classNames={{
@@ -407,7 +393,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 {formState.errors.commitmentIntervals && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                       {`${formState.errors.commitmentIntervals.message}`}
                     </span>
                   </label>
@@ -415,16 +400,13 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
               </div>
             </div>
             <div className="collapse-arrow collapse join-item border border-base-300">
-              <input type="radio" name="my-accordion-5" />
-              <div className="collapse-title text-xl font-medium">
-              Reward
-              </div>
+              <input type="radio" name="my-accordion-7" />
+              <div className="collapse-title text-xl font-medium">Reward</div>
               <div className="collapse-content">
                 <Controller
                   name="zltoRewardRanges"
                   control={form.control}
                   defaultValue={opportunitySearchFilter?.zltoRewardRanges}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   render={({ field: { onChange, value } }) => (
                     <Select
                       classNames={{
@@ -451,7 +433,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 {formState.errors.zltoRewardRanges && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                       {`${formState.errors.zltoRewardRanges.message}`}
                     </span>
                   </label>
@@ -485,4 +466,3 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
     </>
   );
 };
-/* eslint-enable */

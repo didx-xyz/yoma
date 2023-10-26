@@ -33,7 +33,6 @@ import {
   searchOpportunities,
 } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
-import { OpportunityCategoryHorizontalCard } from "~/components/Opportunity/OpportunityCategoryHorizontalCard";
 import { OpportunityRow } from "~/components/Opportunity/OpportunityRow";
 import { PageBackground } from "~/components/PageBackground";
 import { SearchInputLarge } from "~/components/SearchInputLarge";
@@ -44,9 +43,6 @@ import { PAGE_SIZE } from "~/lib/constants";
 import { useQuery } from "@tanstack/react-query";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { OpportunityFilterHorizontal } from "~/components/Opportunity/OpportunityFilterHorizontal";
-import iconNextArrow from "public/images/icon-next-arrow.svg";
-import { toBase64, shimmer } from "~/lib/image";
-import Image from "next/image";
 import { Loading } from "~/components/Status/Loading";
 import { PaginationButtons } from "~/components/PaginationButtons";
 
@@ -54,7 +50,6 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 // It may be called again, on a serverless function, if
 // revalidation is enabled and a new request comes in
 export const getStaticProps: GetStaticProps = async () => {
-  console.log("***a");
   const opportunities_popular = await searchOpportunities({
     pageNumber: 1,
     pageSize: 4,
@@ -69,8 +64,6 @@ export const getStaticProps: GetStaticProps = async () => {
     organizations: null,
     zltoRewardRanges: null,
   });
-
-  console.log("***b");
   const opportunities_latestCourses = await searchOpportunities({
     pageNumber: 1,
     pageSize: 4,
@@ -85,7 +78,6 @@ export const getStaticProps: GetStaticProps = async () => {
     organizations: null,
     zltoRewardRanges: null,
   });
-  console.log("***c");
   const opportunities_allCourses = await searchOpportunities({
     pageNumber: 1,
     pageSize: 4,
@@ -100,21 +92,13 @@ export const getStaticProps: GetStaticProps = async () => {
     organizations: null,
     zltoRewardRanges: null,
   });
-  console.log("***1");
   const lookups_categories = await getOpportunityCategories();
-  console.log("***2");
   const lookups_countries = await getOpportunityCountries();
-  console.log("***3");
   const lookups_languages = await getOpportunityLanguages();
-  console.log("***4");
   const lookups_organisations = await getOpportunityOrganizations();
-  console.log("***5");
   const lookups_types = await getOpportunityTypes();
-  console.log("***6");
   const lookups_commitmentIntervals = await getCommitmentIntervals();
-  console.log("***7");
   const lookups_zltoRewardRanges = await getZltoRewardRanges();
-  console.log("***8");
 
   return {
     props: {
@@ -238,12 +222,6 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       )
         params.append("query", opportunitySearchFilter.valueContains);
       if (
-        opportunitySearchFilter.pageNumber !== null &&
-        opportunitySearchFilter.pageNumber !== undefined &&
-        opportunitySearchFilter.pageNumber !== 1
-      )
-        params.append("page", opportunitySearchFilter.pageNumber.toString());
-      if (
         opportunitySearchFilter?.categories?.length !== undefined &&
         opportunitySearchFilter.categories.length > 0
       )
@@ -298,6 +276,12 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
           "mostViewed",
           opportunitySearchFilter?.mostViewed ? "true" : "false",
         );
+      if (
+        opportunitySearchFilter.pageNumber !== null &&
+        opportunitySearchFilter.pageNumber !== undefined &&
+        opportunitySearchFilter.pageNumber !== 1
+      )
+        params.append("page", opportunitySearchFilter.pageNumber.toString());
 
       if (params.size === 0) return null;
       return params;
@@ -305,31 +289,8 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     [],
   );
 
-  // memo for results info based on filter parameters
-  const searchFilterText = useMemo<string>(() => {
-    let result = "";
-    if (opportunitySearchFilter.valueContains != undefined)
-      result = `'${opportunitySearchFilter.valueContains}'`;
-    if (
-      opportunitySearchFilter.mostViewed != undefined &&
-      opportunitySearchFilter.mostViewed
-    )
-      result += ` 'Most Viewed'`;
-
-    const params = getSearchFilterAsQueryString(opportunitySearchFilter);
-    if (params != null && params.size > 0) {
-      // exclude page and mostViewed from param count
-      params.delete("page");
-      params.delete("mostViewed");
-      if (params != null && params.size > 0) {
-        if (result.length > 0) result += " and ";
-        const plural = params.size > 1 ? "s" : "";
-        result += ` ${params.size} filter${plural}`;
-      }
-    }
-    return result;
-  }, [opportunitySearchFilter, getSearchFilterAsQueryString]);
-
+  // QUERY: SEARCH RESULTS
+  // the filter values from the querystring are mapped to it's corresponding id
   const { data: searchResults, isLoading } =
     useQuery<OpportunitySearchResultsInfo>({
       // queryKey: [`OpportunitiesSearch_${query?.toString()}_${page?.toString()}_${categories}`],
@@ -348,52 +309,76 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       ],
       queryFn: async () =>
         await searchOpportunities({
-          // pageNumber: page ? parseInt(page.toString()) : 1,
-          // pageSize: PAGE_SIZE,
-          // categories:
-          //   categories != undefined ? categories?.toString().split(",") : null,
-          // includeExpired: false,
-          // countries:
-          //   countries != undefined ? countries?.toString().split(",") : null,
-          // languages:
-          //   languages != undefined ? languages?.toString().split(",") : null,
-          // types: types != undefined ? types?.toString().split(",") : null,
-          // valueContains: query?.toString() ?? null,
-          // commitmentIntervals: null, // commitmentIntervals as string[],
-          // mostViewed: mostViewed ? Boolean(mostViewed) : null,
-          // organizations:
-          //   organizations != undefined
-          //     ? organizations?.toString().split(",")
-          //     : null,
-          // zltoRewardRanges: null, // zltoRewardRanges as string[],
           pageNumber: page ? parseInt(page.toString()) : 1,
           pageSize: PAGE_SIZE,
-          // categories is string[] of category names. lookup each category name in the lookups_categories array and return the id
+          valueContains: query?.toString() ?? null,
+          includeExpired: false,
+          mostViewed: mostViewed ? Boolean(mostViewed) : null,
+          types:
+            types != undefined
+              ? types
+                  ?.toString()
+                  .split(",")
+                  .map((x) => {
+                    const item = lookups_types.find((y) => y.name === x);
+                    return item ? item?.id : "";
+                  })
+                  .filter((x) => x != "")
+              : null,
           categories:
             categories != undefined
               ? categories
                   ?.toString()
                   .split(",")
                   .map((x) => {
-                    const cat = lookups_categories.find((y) => y.name === x);
-                    return cat ? cat?.id : "";
+                    const item = lookups_categories.find((y) => y.name === x);
+                    return item ? item?.id : "";
                   })
                   .filter((x) => x != "")
               : null,
-          includeExpired: false,
           countries:
-            countries != undefined ? countries?.toString().split(",") : null,
+            countries != undefined
+              ? countries
+                  ?.toString()
+                  .split(",")
+                  .map((x) => {
+                    const item = lookups_countries.find((y) => y.name === x);
+                    return item ? item?.id : "";
+                  })
+                  .filter((x) => x != "")
+              : null,
           languages:
-            languages != undefined ? languages?.toString().split(",") : null,
-          types: types != undefined ? types?.toString().split(",") : null,
-          valueContains: query?.toString() ?? null,
-          commitmentIntervals: null, // commitmentIntervals as string[],
-          mostViewed: mostViewed ? Boolean(mostViewed) : null,
+            languages != undefined
+              ? languages
+                  ?.toString()
+                  .split(",")
+                  .map((x) => {
+                    const item = lookups_languages.find((y) => y.name === x);
+                    return item ? item?.id : "";
+                  })
+                  .filter((x) => x != "")
+              : null,
           organizations:
             organizations != undefined
-              ? organizations?.toString().split(",")
+              ? organizations
+                  ?.toString()
+                  .split(",")
+                  .map((x) => {
+                    const item = lookups_organisations.find(
+                      (y) => y.name === x,
+                    );
+                    return item ? item?.id : "";
+                  })
+                  .filter((x) => x != "")
               : null,
-          zltoRewardRanges: null, // zltoRewardRanges as string[],
+          commitmentIntervals:
+            commitmentIntervals != undefined
+              ? commitmentIntervals?.toString().split(",")
+              : null,
+          zltoRewardRanges:
+            zltoRewardRanges != undefined
+              ? zltoRewardRanges?.toString().split(",")
+              : null,
         }),
       enabled: isSearchExecuted, // only run query if search is executed
     });
@@ -403,24 +388,31 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       setOpportunitySearchFilter({
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
+        valueContains: query?.toString() ?? null,
+
+        includeExpired: false,
+        mostViewed: mostViewed ? Boolean(mostViewed) : null,
+        types: types != undefined ? types?.toString().split(",") : [],
         categories:
           categories != undefined ? categories?.toString().split(",") : [],
-        includeExpired: false,
         countries:
           countries != undefined && countries != null
             ? countries?.toString().split(",")
             : [],
         languages:
           languages != undefined ? languages?.toString().split(",") : [],
-        types: types != undefined ? types?.toString().split(",") : [],
-        valueContains: query?.toString() ?? null,
-        commitmentIntervals: [], // commitmentIntervals as string[],
-        mostViewed: mostViewed ? Boolean(mostViewed) : null,
         organizations:
           organizations != undefined
             ? organizations?.toString().split(",")
             : [],
-        zltoRewardRanges: [], // zltoRewardRanges as string[],
+        commitmentIntervals:
+          commitmentIntervals != undefined
+            ? commitmentIntervals?.toString().split(",")
+            : [],
+        zltoRewardRanges:
+          zltoRewardRanges != undefined
+            ? zltoRewardRanges?.toString().split(",")
+            : [],
       });
   }, [
     setOpportunitySearchFilter,
@@ -437,7 +429,99 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     mostViewed,
   ]);
 
-  const redirectSearchFilter = useCallback(
+  // memo for results info based on filter parameters
+  const searchFilterText = useMemo(() => {
+    if (!searchResults) {
+      return "0 results";
+    }
+
+    const { totalCount } = searchResults;
+    const resultText = totalCount === 1 ? "result" : "results";
+    const countText = `${totalCount} ${resultText}`;
+
+    const filterText = [
+      opportunitySearchFilter.valueContains &&
+        `'${opportunitySearchFilter.valueContains}'`,
+      opportunitySearchFilter.mostViewed && `'Most Viewed'`,
+      opportunitySearchFilter.categories?.map((c) => `'${c}'`)?.join(", "),
+      opportunitySearchFilter.countries?.map((c) => `'${c}'`)?.join(", "),
+      opportunitySearchFilter.languages?.map((c) => `'${c}'`).join(", "),
+      opportunitySearchFilter.types?.map((c) => `'${c}'`).join(", "),
+      opportunitySearchFilter.organizations?.map((c) => `'${c}'`).join(", "),
+      opportunitySearchFilter.commitmentIntervals
+        ?.map((c) => `'${c}'`)
+        .join(", "),
+      opportunitySearchFilter.zltoRewardRanges?.map((c) => `'${c}'`).join(", "),
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    return `${countText} for ${filterText}`;
+  }, [opportunitySearchFilter, searchResults]);
+
+  // const searchFilterText = useMemo<string>(() => {
+  //   if (searchResults == undefined) return "0 results";
+
+  //   let sb = [searchResults?.totalCount?.toString()];
+
+  //   if (searchResults?.totalCount === 0) sb.push("result");
+  //   else sb.push("results");
+
+  //   let sb2 = [];
+
+  //   if (opportunitySearchFilter.valueContains != undefined)
+  //     sb2.push(`'${opportunitySearchFilter.valueContains}'`);
+  //   if (
+  //     opportunitySearchFilter.mostViewed != undefined &&
+  //     opportunitySearchFilter.mostViewed
+  //   )
+  //     sb2.push(`'Most Viewed'`);
+
+  //   if (
+  //     opportunitySearchFilter.categories &&
+  //     opportunitySearchFilter.categories.length > 0
+  //   )
+  //     sb2.push(opportunitySearchFilter.categories.join(", "));
+  //   if (
+  //     opportunitySearchFilter.countries &&
+  //     opportunitySearchFilter.countries.length > 0
+  //   )
+  //     sb2.push(opportunitySearchFilter.countries.join(", "));
+  //   if (
+  //     opportunitySearchFilter.languages &&
+  //     opportunitySearchFilter.languages.length > 0
+  //   )
+  //     sb2.push(opportunitySearchFilter.languages.join(", "));
+  //   if (
+  //     opportunitySearchFilter.types &&
+  //     opportunitySearchFilter.types.length > 0
+  //   )
+  //     sb2.push(opportunitySearchFilter.types.join(", "));
+  //   if (
+  //     opportunitySearchFilter.organizations &&
+  //     opportunitySearchFilter.organizations.length > 0
+  //   )
+  //     sb2.push(opportunitySearchFilter.organizations.join(", "));
+  //   if (
+  //     opportunitySearchFilter.commitmentIntervals &&
+  //     opportunitySearchFilter.commitmentIntervals.length > 0
+  //   )
+  //     sb2.push(opportunitySearchFilter.commitmentIntervals.join(", "));
+  //   if (
+  //     opportunitySearchFilter.zltoRewardRanges &&
+  //     opportunitySearchFilter.zltoRewardRanges.length > 0
+  //   )
+  //     sb2.push(opportunitySearchFilter.zltoRewardRanges.join(", "));
+
+  //   if (sb2.length > 0) {
+  //     sb.push("for");
+  //     sb.push(sb2.join(" and "));
+  //   }
+
+  //   return sb.join(" ");
+  // }, [opportunitySearchFilter, searchResults]);
+
+  const redirectwithSearchFilterParams = useCallback(
     (item: OpportunitySearchFilter) => {
       let url = "/opportunities";
       const params = getSearchFilterAsQueryString(item);
@@ -450,7 +534,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     [router, getSearchFilterAsQueryString],
   );
 
-  const onSearch = useCallback(
+  const onSearchInputSubmit = useCallback(
     (query: string) => {
       if (query && query.length > 2) {
         // uri encode the search value
@@ -458,10 +542,10 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         query = searchValueEncoded;
 
         opportunitySearchFilter.valueContains = query;
-        redirectSearchFilter(opportunitySearchFilter);
+        redirectwithSearchFilterParams(opportunitySearchFilter);
       } else void router.push("/opportunities", undefined, { scroll: false });
     },
-    [router, opportunitySearchFilter, redirectSearchFilter],
+    [router, opportunitySearchFilter, redirectwithSearchFilterParams],
   );
 
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
@@ -481,29 +565,13 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     (val: OpportunitySearchFilter) => {
       setFilterFullWindowVisible(false);
       setOpportunitySearchFilter(val);
-      redirectSearchFilter(val);
+      redirectwithSearchFilterParams(val);
     },
     [
       setFilterFullWindowVisible,
       setOpportunitySearchFilter,
-      redirectSearchFilter,
+      redirectwithSearchFilterParams,
     ],
-  );
-
-  const onClickCategoryFilter = useCallback(
-    (cat: OpportunityCategory) => {
-      setOpportunitySearchFilter((prev) => {
-        if (!prev.categories) prev.categories = [];
-        if (prev.categories.includes(cat.id)) {
-          prev.categories = prev.categories.filter((x) => x !== cat.id);
-        } else {
-          prev.categories.push(cat.name);
-        }
-        return prev;
-      });
-      redirectSearchFilter(opportunitySearchFilter);
-    },
-    [opportunitySearchFilter, setOpportunitySearchFilter, redirectSearchFilter],
   );
 
   const onClearFilter = useCallback(() => {
@@ -519,12 +587,12 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
   const handlePagerChange = useCallback(
     (value: number) => {
       opportunitySearchFilter.pageNumber = value;
-      redirectSearchFilter(opportunitySearchFilter);
+      redirectwithSearchFilterParams(opportunitySearchFilter);
 
       // scroll to the top of the page
-      //window.scrollTo(0, 0);
+      window.scrollTo(0, 0);
     },
-    [opportunitySearchFilter, redirectSearchFilter],
+    [opportunitySearchFilter, redirectwithSearchFilterParams],
   );
 
   return (
@@ -580,7 +648,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
           <div className="my-4 md:items-center md:justify-center">
             <div className="flex flex-row items-center justify-center gap-2">
               <SearchInputLarge
-                onSearch={onSearch}
+                onSearch={onSearchInputSubmit}
                 placeholder="What are you looking for today?"
                 defaultValue={query as string}
               />
@@ -597,87 +665,25 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
           </div>
         </div>
 
-        {/* CATEGORIES */}
-        <div className="hidden flex-col md:flex">
-          {lookups_categories && lookups_categories.length > 0 && (
-            <div className="flex-col items-center justify-center gap-2 pb-8">
-              <div className="flex justify-center gap-2">
-                <div className="flex gap-2 overflow-hidden md:w-[800px]">
-                  {lookups_categories.map((item) => (
-                    <OpportunityCategoryHorizontalCard
-                      key={item.id}
-                      data={item}
-                      selected={opportunitySearchFilter.categories?.includes(
-                        item.name,
-                      )}
-                      onClick={onClickCategoryFilter}
-                    />
-                  ))}
-                </div>
-                {/* VIEW ALL: OPEN FILTERS */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFilterFullWindowVisible(!filterFullWindowVisible);
-                  }}
-                  className="flex h-[140px] w-[140px] flex-col items-center rounded-lg bg-white p-2"
-                >
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-center">
-                      <Image
-                        src={iconNextArrow}
-                        alt="Icon View All"
-                        width={60}
-                        height={60}
-                        sizes="100vw"
-                        priority={true}
-                        placeholder="blur"
-                        blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                          shimmer(288, 182),
-                        )}`}
-                        style={{
-                          // borderTopLeftRadius:
-                          //   showGreenTopBorder === true ? "none" : "8px",
-                          // borderTopRightRadius:
-                          //   showGreenTopBorder === true ? "none" : "8px",
-                          width: "60px",
-                          height: "60px",
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex flex-grow flex-row">
-                      <div className="flex flex-grow flex-col gap-1">
-                        <h1 className="h-10 overflow-hidden text-ellipsis text-center text-sm font-semibold text-black">
-                          View all
-                          <br />
-                          Topics
-                        </h1>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          )}
-          {/* FILTER ROW: LABEL AND DROPDOWN FILTERS (SELECT) FOR COUNTRIES, LANGUAGES, TYPE, ORGANISATIONS ETC */}
-          <div className="mb-4 flex flex-row">
-            <OpportunityFilterHorizontal
-              htmlRef={myRef.current!}
-              opportunitySearchFilter={opportunitySearchFilter}
-              lookups_categories={lookups_categories}
-              lookups_countries={lookups_countries}
-              lookups_languages={lookups_languages}
-              lookups_types={lookups_types}
-              lookups_organisations={lookups_organisations}
-              lookups_commitmentIntervals={lookups_commitmentIntervals}
-              lookups_zltoRewardRanges={lookups_zltoRewardRanges}
-              clearButtonText="Clear"
-              submitButtonText="Done"
-              onClear={onClearFilter}
-              onSubmit={onSubmitFilter}
-            />
-          </div>
+        {/* FILTER ROW: CATEGORIES DROPDOWN FILTERS (SELECT) FOR COUNTRIES, LANGUAGES, TYPE, ORGANISATIONS ETC  */}
+        <div className="mb-8 hidden md:flex">
+          <OpportunityFilterHorizontal
+            htmlRef={myRef.current!}
+            opportunitySearchFilter={opportunitySearchFilter}
+            lookups_categories={lookups_categories}
+            lookups_countries={lookups_countries}
+            lookups_languages={lookups_languages}
+            lookups_types={lookups_types}
+            lookups_organisations={lookups_organisations}
+            lookups_commitmentIntervals={lookups_commitmentIntervals}
+            lookups_zltoRewardRanges={lookups_zltoRewardRanges}
+            clearButtonText="Clear"
+            onClear={onClearFilter}
+            onSubmit={onSubmitFilter}
+            onOpenFilterFullWindow={() => {
+              setFilterFullWindowVisible(!filterFullWindowVisible);
+            }}
+          />
         </div>
 
         {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
@@ -730,10 +736,10 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         </div> */}
           </div>
         )}
+
         {/* SEARCH EXECUTED, SHOW RESULTS */}
         {isSearchExecuted && (
           <>
-            {/* SEARCH RESULTS */}
             <div className="items-centerx rounded-lgx bg-whitex p-4x flex flex-col">
               <div className="flex w-full flex-col gap-2">
                 {/* NO ROWS */}
@@ -751,7 +757,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
                 {searchResults && searchResults.items.length > 0 && (
                   <OpportunityRow
                     id="opportunities_search"
-                    title={`${searchResults.totalCount} results for ${searchFilterText}`}
+                    title={searchFilterText}
                     data={searchResults}
                   />
                 )}
