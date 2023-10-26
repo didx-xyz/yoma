@@ -18,10 +18,10 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             RuleFor(x => x.ValueContains).Length(3, 50).When(x => !string.IsNullOrEmpty(x.ValueContains));
             RuleFor(x => x.EndDate).GreaterThanOrEqualTo(x => x.StartDate).When(x => x.EndDate.HasValue && x.StartDate.HasValue).WithMessage("{PropertyName} is earlier than the Start Date.");
             RuleFor(x => x.Opportunities).Must(x => x == null || (x.Any() && x.All(id => id != Guid.Empty))).WithMessage("{PropertyName} contains empty value(s).");
-            RuleFor(x => x.CommitmentIntervals)
+            RuleFor(x => x.CommitmentIntervalsParsed)
                 .Must((x, commitmentIntervals) => commitmentIntervals == null || (commitmentIntervals.Any() && commitmentIntervals.All(item => item.Id != Guid.Empty && item.Count >= 1)))
                 .WithMessage("{PropertyName} is empty, contains an empty interval or count is smaller than 1.");
-            RuleFor(x => x.ZltoRewardRanges)
+            RuleFor(x => x.ZltoRewardRangesParsed)
                 .Must(zltoRewardRanges => zltoRewardRanges == null || (zltoRewardRanges.Any() && zltoRewardRanges.All(item => item.From >= 0 && item.To > item.From)))
                 .WithMessage("{PropertyName} is empty, contains invalid reward ranges (the 'To' value must be greater than the 'From' value and the 'From' value must be greater or equal to 0.");
         }
