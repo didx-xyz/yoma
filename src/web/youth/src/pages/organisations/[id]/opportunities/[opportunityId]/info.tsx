@@ -304,7 +304,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     {opportunity?.skills?.map((item) => (
                       <div
                         key={item.id}
-                        className="badge mr-2 h-auto rounded-lg border-0 bg-green text-white"
+                        className="badge mr-2 h-6 rounded-md border-0 bg-green text-white"
                       >
                         {item.name}
                       </div>
@@ -347,7 +347,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     {opportunity?.categories?.map((item) => (
                       <div
                         key={item.id}
-                        className="badge mr-2 h-auto rounded-lg bg-green text-white"
+                        className="badge mr-2 h-6 rounded-md bg-green text-white"
                       >
                         {item.name}
                       </div>
@@ -373,7 +373,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     {opportunity?.languages?.map((item) => (
                       <div
                         key={item.id}
-                        className="badge mr-2 h-auto rounded-lg bg-green text-white"
+                        className="badge mr-2 h-6 rounded-md bg-green text-white"
                       >
                         {item.name}
                       </div>

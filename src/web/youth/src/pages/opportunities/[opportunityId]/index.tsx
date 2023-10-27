@@ -9,7 +9,7 @@ import MainLayout from "~/components/Layout/Main";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
-import { IoMdArrowRoundBack } from "react-icons/io";
+import { IoMdArrowRoundBack, IoMdClose } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
 import iconAction from "public/images/icon-action.svg";
@@ -25,6 +25,7 @@ import iconLanguage from "public/images/icon-language.svg";
 import iconTopics from "public/images/icon-topics.svg";
 import iconSkills from "public/images/icon-skills.svg";
 import iconRocket from "public/images/icon-rocket.svg";
+import iconBell from "public/images/icon-bell.svg";
 import Image from "next/image";
 
 interface IParams extends ParsedUrlQuery {
@@ -102,13 +103,12 @@ const OpportunityDetails: NextPageWithLayout<{
   opportunityId: string;
   //user: User;
 }> = ({ opportunityId }) => {
+  const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
+
   const { data: opportunity } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
     queryFn: () => getOpportunityInfoById(opportunityId),
   });
-
-  const [manageOpportunityMenuVisible, setManageOpportunityMenuVisible] =
-    useState(false);
 
   // memo for spots left i.e participantLimit - participantCountTotal
   const spotsLeft = useMemo(() => {
@@ -217,6 +217,93 @@ const OpportunityDetails: NextPageWithLayout<{
           </ReactModal> */}
         </div>
 
+        {/* <div ref={myRef} /> */}
+
+        {/* POPUP FILTER */}
+        <ReactModal
+          isOpen={filterFullWindowVisible}
+          shouldCloseOnOverlayClick={true}
+          onRequestClose={() => {
+            setFilterFullWindowVisible(false);
+          }}
+          className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:rounded-3xl`}
+          portalClassName={"fixed z-40"}
+          overlayClassName="fixed inset-0 bg-overlay"
+        >
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-row bg-green p-4 shadow-lg">
+              <h1 className="flex-grow"></h1>
+              <button
+                type="button"
+                className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+                onClick={() => {
+                  setFilterFullWindowVisible(false);
+                }}
+              >
+                <IoMdClose className="h-6 w-6"></IoMdClose>
+              </button>
+            </div>
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white">
+                <Image
+                  src={iconBell}
+                  alt="Icon Bell"
+                  width={28}
+                  height={28}
+                  sizes="100vw"
+                  priority={true}
+                  style={{ width: "28px", height: "28px" }}
+                />
+              </div>
+              <h3>You are now leaving Yoma</h3>
+              <div className="w-[450px] rounded-lg bg-gray p-4 text-center">
+                Remember to <strong>upload your completion certificate</strong>{" "}
+                on this page upon finishing to <strong>earn your ZLTO</strong>.
+              </div>
+              <div>Don’t show me this message again</div>
+              <div>
+                Be mindful of external sites' privacy policy and keep your data
+                private.
+              </div>
+              <div className="mt-4 flex flex-grow gap-4">
+                <button
+                  type="button"
+                  className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[300px]"
+                >
+                  <Image
+                    src={iconBookmark}
+                    alt="Icon Bookmark"
+                    width={20}
+                    height={20}
+                    sizes="100vw"
+                    priority={true}
+                    style={{ width: "20px", height: "20px" }}
+                  />
+
+                  <span className="ml-1">Save opportunity</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn rounded-full bg-purple normal-case text-white md:w-[250px]"
+                  onClick={() => setFilterFullWindowVisible(true)}
+                >
+                  <Image
+                    src={iconOpen}
+                    alt="Icon Open"
+                    width={20}
+                    height={20}
+                    sizes="100vw"
+                    priority={true}
+                    style={{ width: "20px", height: "20px" }}
+                  />
+
+                  <span className="ml-1">Proceed</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </ReactModal>
+
         {opportunity && (
           <div className="flex flex-col gap-4">
             <div className="flex flex-row rounded-lg bg-white p-6">
@@ -289,6 +376,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     <button
                       type="button"
                       className="btn rounded-full bg-green normal-case text-white md:w-[250px]"
+                      onClick={() => setFilterFullWindowVisible(true)}
                     >
                       <Image
                         src={iconOpen}
@@ -394,7 +482,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.skills?.map((item) => (
                         <div
                           key={item.id}
-                          className="badge mr-2 h-auto rounded-lg border-0 bg-green text-white"
+                          className="badge mr-2 h-6 rounded-md border-0 bg-green text-white"
                         >
                           {item.name}
                         </div>
@@ -437,7 +525,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.categories?.map((item) => (
                         <div
                           key={item.id}
-                          className="badge mr-2 h-auto rounded-lg bg-green text-white"
+                          className="badge mr-2 h-6 rounded-md bg-green text-white"
                         >
                           {item.name}
                         </div>
@@ -463,7 +551,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.languages?.map((item) => (
                         <div
                           key={item.id}
-                          className="badge mr-2 h-auto rounded-lg bg-green text-white"
+                          className="badge mr-2 h-6 rounded-md bg-green text-white"
                         >
                           {item.name}
                         </div>
