@@ -24,6 +24,7 @@ using Yoma.Core.Domain.MyOpportunity.Validators;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
@@ -226,6 +227,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             });
             result.Items = items.Select(o => o.ToInfo()).ToList();
 
+            result.Items.ForEach(o => SetParticipantCounts(o));
             return result;
         }
 
@@ -569,6 +571,19 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         #endregion
 
         #region Private Members
+        private void SetParticipantCounts(MyOpportunityInfo result)
+        {
+            var filter = new MyOpportunitySearchFilterAdmin
+            {
+                TotalCountOnly = true,
+                Action = Action.Verification,
+                VerificationStatus = VerificationStatus.Pending
+            };
+
+            var searchResult = Search(filter, false);
+            result.OpportunityParticipantCountTotal += searchResult.TotalCount ?? default;
+        }
+
         private string? GetBlobObjectURL(Guid? id)
         {
             if (!id.HasValue) return null;
