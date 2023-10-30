@@ -138,7 +138,7 @@ namespace Yoma.Core.Domain.SSI.Services
             await _schemaRequestValidatorCreate.ValidateAndThrowAsync(request);
 
             var schemaType = _ssiSchemaTypeService.GetById(request.TypeId);
-            var nameFull = $"{schemaType.Name}{SchemaName_TypeDelimiter}{request.Name}";
+            var nameFull = $"{schemaType.Name}{SchemaName_TypeDelimiter}{request.Name}"; //i.e. Opportunity|Learning
 
             if (await GetByNameOrNull(nameFull) != null)
                 throw new ValidationException($"Schema '{nameFull}' already exists");
@@ -186,7 +186,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
         private SSISchema ConvertToSSISchema(Schema schema, List<SSISchemaEntity>? matchedEntities)
         {
-            var nameParts = schema.Name.Split(SchemaName_TypeDelimiter);
+            var nameParts = schema.Name.Split(SchemaName_TypeDelimiter); //i.e. Opportunity|Learning
             if (nameParts.Length != 2)
                 throw new ArgumentException($"Schema name of '{schema.Name}' is invalid. Expecting [type]:[name]", nameof(schema));
 

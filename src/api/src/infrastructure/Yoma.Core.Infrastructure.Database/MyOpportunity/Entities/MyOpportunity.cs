@@ -9,8 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
 {
     [Table("MyOpportunity", Schema = "Opportunity")]
     [Index(nameof(UserId), nameof(OpportunityId), nameof(ActionId), IsUnique = true)]
-    [Index(nameof(VerificationStatusId), nameof(DateCompleted), nameof(ZltoReward), nameof(YomaReward),
-        nameof(SSICredentialId), nameof(DateSSICredentialIssued), nameof(DateCreated), nameof(DateModified))]
+    [Index(nameof(VerificationStatusId), nameof(DateCompleted), nameof(ZltoReward), nameof(YomaReward), nameof(DateCreated), nameof(DateModified))]
     public class MyOpportunity : BaseEntity<Guid>
     {
         [Required]
@@ -46,11 +45,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
 
         [Column(TypeName = "decimal(8,2)")]
         public decimal? YomaReward { get; set; }
-
-        [Column(TypeName = "varchar(50)")]
-        public string? SSICredentialId { get; set; }
-
-        public DateTimeOffset? DateSSICredentialIssued { get; set; }
 
         [Required]
         public DateTimeOffset DateCreated { get; set; }

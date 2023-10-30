@@ -1131,6 +1131,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     {"EC978798-AAC0-4577-846E-1B5B2E6663CE","YoID","Yoma Member (YoID)",false,DateTimeOffset.Now}
             },
             schema: "SSI");
+
+            migrationBuilder.InsertData(
+            table: "CredentialIssuanceStatus",
+            columns: new[] { "Id", "Name", "DateCreated" },
+            values: new object[,]
+            {
+                    {"952603D2-0661-4A11-9D3D-AAD07338120B","Pending",DateTimeOffset.Now}
+                    ,
+                    {"8CFD3852-B8F5-44E3-ACCB-5FD8BD885AFB","Issued",DateTimeOffset.Now}
+                    ,
+                    {"067AFB08-407D-44EB-BE92-FB84443553FF","Error",DateTimeOffset.Now}
+            },
+            schema: "SSI");
             #endregion SSI
         }
     }

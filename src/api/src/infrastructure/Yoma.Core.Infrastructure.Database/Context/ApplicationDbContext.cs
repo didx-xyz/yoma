@@ -3,6 +3,7 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 using Yoma.Core.Infrastructure.Database.Opportunity.Entities;
+using Yoma.Core.Infrastructure.Database.SSI.Entities;
 using Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups;
 
 namespace Yoma.Core.Infrastructure.Database.Context
@@ -90,12 +91,16 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
         #region SSI
         #region Lookups
+        public DbSet<SSICredentialIssuanceStatus> SSICredentialIssuanceStatus { get; set; }
+
         public DbSet<SSISchemaEntity> SSISchemaObject { get; set; }
 
         public DbSet<SSISchemaEntityProperty> SSISchemaObjectProperty { get; set; }
 
         public DbSet<SSISchemaType> SSISchemaType { get; set; }
         #endregion Lookups
+
+        public DbSet<SSICredentialIssuance> SSICredentialIssuance { get; set; } 
         #endregion SSI
 
         #endregion

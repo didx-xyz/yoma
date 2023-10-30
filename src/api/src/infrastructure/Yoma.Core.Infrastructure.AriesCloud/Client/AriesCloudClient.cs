@@ -13,6 +13,7 @@ using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Provider;
 using Yoma.Core.Infrastructure.AriesCloud.Extensions;
+using Yoma.Core.Infrastructure.AriesCloud.Interfaces;
 
 namespace Yoma.Core.Infrastructure.AriesCloud.Client
 {
@@ -21,6 +22,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         #region Class Variables
         private readonly AppSettings _appSettings;
         private readonly ClientFactory _clientFactory;
+        private readonly ISSEListenerService _sseListenerService;
         private readonly IMemoryCache _memoryCache;
         private readonly IRepository<Models.CredentialSchema> _credentialSchemaRepository;
         private readonly IRepository<Models.Connection> _connectionRepository;
@@ -32,11 +34,13 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         public AriesCloudClient(AppSettings appSettings,
             ClientFactory clientFactory,
             IMemoryCache memoryCache,
+            ISSEListenerService sseListenerService,
             IRepository<Models.CredentialSchema> credentialSchemaRepository,
             IRepository<Models.Connection> connectionRepository)
         {
             _appSettings = appSettings;
             _clientFactory = clientFactory;
+            _sseListenerService = sseListenerService;
             _memoryCache = memoryCache;
             _credentialSchemaRepository = credentialSchemaRepository;
             _connectionRepository = connectionRepository;
@@ -216,20 +220,22 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             //validate specified attributes against schema
             var undefinedAttributes = request.Attributes.Keys.Except(schema.AttributeNames);
             if (undefinedAttributes.Any())
-                throw new ArgumentException($"'{nameof(request.Attributes)}' contains attribute(s) not defined on the associated schema: '{string.Join(",", undefinedAttributes)}'");
+                throw new ArgumentException($"'{nameof(request.Attributes)}' contains attribute(s) not defined on the associated schema ('{request.SchemaName}'): '{string.Join(",", undefinedAttributes)}'");
 
             var clientCustomer = _clientFactory.CreateCustomerClient();
 
             var tenantIssuer = await clientCustomer.GetTenantAsync(tenant_id: request.TenantIdIssuer);
+            var clientIssuer = _clientFactory.CreateTenantClient(tenantIssuer.Tenant_id);
             var tenantHolder = await clientCustomer.GetTenantAsync(tenant_id: request.TenantIdHolder);
+            var clientHolder = _clientFactory.CreateTenantClient(tenantHolder.Tenant_id);
 
-            var connection = await EnsureConnectionCI(tenantIssuer, tenantHolder);
+            var connection = await EnsureConnectionCI(tenantIssuer, clientIssuer, tenantHolder, clientHolder);
 
             SendCredential sendCredentialRequest;
             switch (request.ArtifactType)
             {
                 case ArtifactType.Indy:
-                    var definitionId = await EnsureDefinition(tenantIssuer, schema);
+                    var definitionId = await EnsureDefinition(clientIssuer, schema);
 
                     sendCredentialRequest = new SendCredential
                     {
@@ -292,14 +298,32 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             }
 
             //send the credential by issuer
-            var clientIssuer = _clientFactory.CreateTenantClient(tenantIssuer.Tenant_id);
-            var credentialExchange = await clientIssuer.SendCredentialAsync(sendCredentialRequest);
+            WebhookEvent<CredentialExchange>? sseEvent = null;
+            await Task.Run(async () =>
+            {
+                //send the credential by issuer
+                var credentialExchange = await clientIssuer.SendCredentialAsync(sendCredentialRequest);
 
-            //request and store the credential by holder
-            var clientHolder = _clientFactory.CreateTenantClient(tenantHolder.Tenant_id);
-            credentialExchange = await clientHolder.RequestCredentialAsync(credentialExchange.Credential_id);
-            credentialExchange = await clientHolder.StoreCredentialAsync(credentialExchange.Credential_id);
+                // await sse event on holders side (in order to retrieve the holder credential id)  
+                sseEvent = await _sseListenerService.Listen<CredentialExchange>(tenantHolder.Tenant_id,
+                  Topic.Credentials, "thread_id", credentialExchange.Thread_id, "offer-received");
+            });
 
+            if (sseEvent == null) throw new InvalidOperationException("");
+
+            // request the credential by holder (aries cloud auto completes and store the credential in the holders wallet)
+            var credentialExchange = await clientHolder.RequestCredentialAsync(sseEvent.payload.Credential_id);
+
+            await Task.Run(async () =>
+            {
+                // await sse event on holders side (in order to ensure credential issuance is done) 
+                sseEvent = await _sseListenerService.Listen<CredentialExchange>(tenantHolder.Tenant_id,
+                  Topic.Credentials, "credential_id", credentialExchange.Credential_id, "done");
+            });
+
+            if (sseEvent == null) throw new InvalidOperationException("");
+
+            //TODO: Support for Indy and Ld_proof; Referent (credential exchange records are deleted)
             return credentialExchange.Credential_id;
         }
         #endregion
@@ -334,22 +358,23 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         /// <summary>
         /// Ensure a credential definition for the specified issuer and schema (applies to artifact type Indy)
         /// </summary>
-        private async Task<string> EnsureDefinition(Tenant tenantIssuer, Schema schema)
+        private async Task<string> EnsureDefinition(ITenantClient clientIssuer, Schema schema)
         {
-            var client = _clientFactory.CreateTenantClient(tenantIssuer.Tenant_id);
+            var tagComponents = schema.Id.Split(':');
+            var tag = string.Join(string.Empty, tagComponents.Skip(1));
 
-            var existingDefinitions = await client.GetCredentialDefinitionsAsync(schema_id: schema.Id);
-            existingDefinitions = existingDefinitions?.Where(o => string.Equals(o.Tag, schema.Id)).ToList();
+            var existingDefinitions = await clientIssuer.GetCredentialDefinitionsAsync(schema_id: schema.Id);
+            existingDefinitions = existingDefinitions?.Where(o => string.Equals(o.Tag, tag)).ToList();
             if (existingDefinitions?.Count > 1)
-                throw new DataInconsistencyException($"More than one definition found with schema id and tag '{schema.Id}'");
+                throw new DataInconsistencyException($"More than one definition found with schema id and tag '{tag}'");
 
             var definition = existingDefinitions?.SingleOrDefault();
             if (definition != null) return definition.Id;
 
-            definition = await client.CreateCredentialDefinitionAsync(new CreateCredentialDefinition
+            definition = await clientIssuer.CreateCredentialDefinitionAsync(new CreateCredentialDefinition
             {
                 Schema_id = schema.Id,
-                Tag = schema.Id,
+                Tag = tag,
                 Support_revocation = true
             });
 
@@ -362,13 +387,11 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         /// <summary>
         /// Ensure a connection between the Issuer & Holder, initiated by the Issuer
         /// </summary>
-        private async Task<Models.Connection> EnsureConnectionCI(Tenant tenantSource, Tenant tenantTarget)
+        private async Task<Models.Connection> EnsureConnectionCI(Tenant tenantIssuer, ITenantClient clientIssuer, Tenant tenantHolder, ITenantClient clientHolder)
         {
             //try and find an existing connection
             var result = _connectionRepository.Query().SingleOrDefault(o =>
-                o.SourceTenantId == tenantSource.Tenant_id && o.TargetTenantId == tenantTarget.Tenant_id && o.Protocol == Connection_protocol.Connections_1_0);
-
-            var clientIssuer = _clientFactory.CreateTenantClient(tenantSource.Tenant_id);
+                o.SourceTenantId == tenantIssuer.Tenant_id && o.TargetTenantId == tenantHolder.Tenant_id && o.Protocol == Connection_protocol.Connections_1_0);
 
             Connection? connectionAries = null;
             if (result != null)
@@ -392,7 +415,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             //create invitation by issuer
             var createInvitationRequest = new CreateInvitation
             {
-                Alias = $"'{tenantSource.Tenant_name}' >> '{tenantTarget.Tenant_name}'",
+                Alias = $"'{tenantIssuer.Tenant_name}' >> '{tenantHolder.Tenant_name}'",
                 Multi_use = false,
                 Use_public_did = false
             };
@@ -402,7 +425,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             //accept invitation by holder
             var acceptInvitationRequest = new AcceptInvitation
             {
-                Alias = $"'{tenantSource.Tenant_name}' >> '{tenantTarget.Tenant_name}'",
+                Alias = $"'{tenantIssuer.Tenant_name}' >> '{tenantHolder.Tenant_name}'",
                 Use_existing_connection = true,
                 Invitation = new ReceiveInvitationRequest
                 {
@@ -416,14 +439,14 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                     Type = invitation.Invitation.Type
                 }
             };
-            var clientHolder = _clientFactory.CreateTenantClient(tenantTarget.Tenant_id);
+
             connectionAries = await clientHolder.AcceptInvitationAsync(acceptInvitationRequest);
 
             result = new Models.Connection
             {
-                SourceTenantId = tenantSource.Tenant_id,
+                SourceTenantId = tenantIssuer.Tenant_id,
                 SourceConnectionId = invitation.Connection_id,
-                TargetTenantId = tenantTarget.Tenant_id,
+                TargetTenantId = tenantHolder.Tenant_id,
                 TargetConnectionId = connectionAries.Connection_id,
                 Protocol = connectionAries.Connection_protocol
             };

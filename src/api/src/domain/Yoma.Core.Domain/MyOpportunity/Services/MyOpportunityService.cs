@@ -24,7 +24,6 @@ using Yoma.Core.Domain.MyOpportunity.Validators;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
-using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
@@ -523,50 +522,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 queryGrouped = queryGrouped.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
 
             return queryGrouped.ToDictionary(o => o.OpportunityId, o => o.Count);
-        }
-
-        public List<Models.MyOpportunity> ListPendingSSICredentialIssuance(int batchSize)
-        {
-            if (batchSize <= default(int))
-                throw new ArgumentOutOfRangeException(nameof(batchSize));
-
-            var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
-            var statusVerificationCompletedId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Completed.ToString()).Id;
-
-            var results = _myOpportunityRepository.Query(true).Where(
-                o => o.ActionId == actionVerificationId && o.VerificationStatusId == statusVerificationCompletedId && !o.DateSSICredentialIssued.HasValue //completed verification and credential not issued
-                 && !string.IsNullOrEmpty(o.OrganizationSSITenantId) && !string.IsNullOrEmpty(o.UserSSITenantId) //ssi tenants created
-                 && o.OpportunityCredentialIssuanceEnabled //credential issuance enabled
-                ).OrderBy(o => o.DateModified).Take(batchSize).ToList(); //user YoID onboarded
-
-            return results;
-        }
-
-        public async Task<Models.MyOpportunity> UpdateSSICredentialReference(Guid id, string credentialId)
-        {
-            var item = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.Id == id)
-                ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(Models.MyOpportunity)} with id '{id}' does not exist");
-
-            var canIssueCredential = item.Action == Action.Verification && item.VerificationStatus == VerificationStatus.Completed; //completed verification
-            if (canIssueCredential) canIssueCredential = !item.DateSSICredentialIssued.HasValue; //credential not issued
-            if (canIssueCredential) canIssueCredential = item.OpportunityCredentialIssuanceEnabled; //credential issuance enabled
-            if (canIssueCredential) canIssueCredential = !string.IsNullOrEmpty(item.OrganizationSSITenantId) && !string.IsNullOrEmpty(item.UserSSITenantId); //ssi tenants created
-
-            if (!canIssueCredential)
-                throw new InvalidOperationException($"Credential issuance criteria not met for 'my' opportunity with id '{item.Id}': " +
-                    $"Action '{item.Action}' | Verification Status '{item.VerificationStatus}' | Date SSI Credential Issued " +
-                    $"'{(item.DateSSICredentialIssued.HasValue ? item.DateSSICredentialIssued.Value : "n/a")} | Organization SSI Tenant Created " +
-                    $"'{!string.IsNullOrEmpty(item.OrganizationSSITenantId)}' | User SSI Tenant Created '{!string.IsNullOrEmpty(item.UserSSITenantId)}' " +
-                    $"| Credential Issuance Enabled '{item.OpportunityCredentialIssuanceEnabled}'");
-
-            if (string.IsNullOrWhiteSpace(credentialId))
-                throw new ArgumentNullException(nameof(credentialId));
-            credentialId = credentialId.Trim();
-
-            item.SSICredentialId = credentialId;
-            item = await _myOpportunityRepository.Update(item);
-
-            return item;
         }
         #endregion
 

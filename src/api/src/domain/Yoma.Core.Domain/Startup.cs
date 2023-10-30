@@ -90,6 +90,7 @@ namespace Yoma.Core.Domain
             services.AddScoped<ISSISchemaTypeService, SSISchemaTypeService>();
             #endregion Lookups
             services.AddScoped<ISSISchemaService, SSISchemaService>();
+            services.AddScoped<ISSICredentialService, SSICredentialService>();
             services.AddSingleton<ISSIBackgroundService, SSIBackgroundService>();
             #endregion SSI
         }
