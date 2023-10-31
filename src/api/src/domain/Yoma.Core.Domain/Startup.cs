@@ -86,12 +86,16 @@ namespace Yoma.Core.Domain
 
             #region SSI
             #region Lookups
+            services.AddScoped<ISSICredentialIssuanceStatusService, SSICredentialIssuanceStatusService>();
             services.AddScoped<ISSISchemaEntityService, SSISchemaEntityService>();
             services.AddScoped<ISSISchemaTypeService, SSISchemaTypeService>();
+            services.AddScoped<ISSIWalletCreationStatusService, SSIWalletCreationStatusService>();
             #endregion Lookups
-            services.AddScoped<ISSISchemaService, SSISchemaService>();
-            services.AddScoped<ISSICredentialService, SSICredentialService>();
+
             services.AddSingleton<ISSIBackgroundService, SSIBackgroundService>();
+            services.AddScoped<ISSICredentialIssuanceService, SSICredentialIssuanceService>();
+            services.AddScoped<ISSISchemaService, SSISchemaService>();
+            services.AddScoped<ISSIWalletCreationService, SSIWalletCreationService>();
             #endregion SSI
         }
 

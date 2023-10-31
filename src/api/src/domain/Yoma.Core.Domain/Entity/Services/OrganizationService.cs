@@ -19,6 +19,7 @@ using Flurl;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.IdentityProvider.Helpers;
 using Microsoft.Extensions.Logging;
+using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -33,6 +34,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IOrganizationProviderTypeService _providerTypeService;
         private readonly IBlobService _blobService;
+        private readonly ISSIWalletCreationService _ssiWalletCreationService;
         private readonly IEmailProviderClient _emailProviderClient;
         private readonly OrganizationRequestValidatorCreate _organizationCreateRequestValidator;
         private readonly OrganizationRequestValidatorUpdate _organizationUpdateRequestValidator;
@@ -59,6 +61,7 @@ namespace Yoma.Core.Domain.Entity.Services
             IOrganizationStatusService organizationStatusService,
             IOrganizationProviderTypeService providerTypeService,
             IBlobService blobService,
+            ISSIWalletCreationService ssiWalletCreationService,
             IEmailProviderClientFactory emailProviderClientFactory,
             OrganizationRequestValidatorCreate organizationCreateRequestValidator,
             OrganizationRequestValidatorUpdate organizationUpdateRequestValidator,
@@ -77,6 +80,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _organizationStatusService = organizationStatusService;
             _providerTypeService = providerTypeService;
             _blobService = blobService;
+            _ssiWalletCreationService = ssiWalletCreationService;
             _emailProviderClient = emailProviderClientFactory.CreateClient();
             _organizationCreateRequestValidator = organizationCreateRequestValidator;
             _organizationUpdateRequestValidator = organizationUpdateRequestValidator;
@@ -467,6 +471,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
 
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
             switch (request.Status)
             {
                 case OrganizationStatus.Active:
@@ -478,6 +484,8 @@ namespace Yoma.Core.Domain.Entity.Services
                     if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
                     result.CommentApproval = request.Comment;
+
+                    await _ssiWalletCreationService.Create(EntityType.Organization, result.Id);
 
                     await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Approved);
 
@@ -525,6 +533,8 @@ namespace Yoma.Core.Domain.Entity.Services
             result.Status = request.Status;
 
             result = await _organizationRepository.Update(result);
+
+            scope.Complete();
 
             return result;
         }
@@ -660,38 +670,6 @@ namespace Yoma.Core.Domain.Entity.Services
             var organizations = _organizationRepository.Query().Where(o => orgIds.Contains(o.Id)).ToList();
             if (includeComputed) organizations.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId));
             return organizations.Select(o => o.ToInfo()).ToList();
-        }
-
-        public List<Organization> ListPendingSSITenantCreation(int batchSize)
-        {
-            if (batchSize <= default(int))
-                throw new ArgumentOutOfRangeException(nameof(batchSize));
-
-            var statusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
-
-            var results = _organizationRepository.Query().Where(o => o.StatusId == statusActiveId && !o.DateSSITenantCreated.HasValue)
-                     .OrderBy(o => o.DateModified).Take(batchSize).ToList();
-
-            return results;
-        }
-
-        public async Task<Organization> UpdateSSITenantReference(Guid id, string tenantId)
-        {
-            var org = GetById(id, false, false, false);
-
-            if (string.IsNullOrWhiteSpace(tenantId))
-                throw new ArgumentNullException(nameof(tenantId));
-            tenantId = tenantId.Trim();
-
-            if (org.Status != OrganizationStatus.Active || org.DateSSITenantCreated.HasValue)
-                throw new InvalidOperationException($"Tenant creation criteria not met for organization with id '{org.Id}': " +
-                    $"Status '{org.Status}' " +
-                    $"| Date SSI Tenant Created '{(org.DateSSITenantCreated.HasValue ? org.DateSSITenantCreated.Value : "n/a")}'");
-
-            org.SSITenantId = tenantId;
-            org = await _organizationRepository.Update(org);
-
-            return org;
         }
         #endregion
 

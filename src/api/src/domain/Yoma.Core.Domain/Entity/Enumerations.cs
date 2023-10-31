@@ -20,4 +20,10 @@ namespace Yoma.Core.Domain.Entity
         Education,
         Marketplace
     }
+
+    public enum EntityType
+    {
+        User,
+        Organization
+    }
 }

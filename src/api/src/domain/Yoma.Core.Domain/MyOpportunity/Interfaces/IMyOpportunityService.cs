@@ -5,6 +5,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 {
     public interface IMyOpportunityService
     {
+        MyOpportunityInfo GetById(Guid id, bool includeChildItems, bool includeComputed);
+
         MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter);
 
         MyOpportunitySearchResults Search(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);

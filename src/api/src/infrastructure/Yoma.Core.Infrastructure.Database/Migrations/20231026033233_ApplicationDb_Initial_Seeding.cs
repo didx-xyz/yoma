@@ -1074,7 +1074,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Yoma.Core.Domain.Opportunity.Models.Opportunity",DateTimeOffset.Now}
                     ,
-                    {"CA11D9D0-39F6-46D8-A0D3-350EC41402F5","Yoma.Core.Domain.MyOpportunity.Models.MyOpportunity",DateTimeOffset.Now}
+                    {"CA11D9D0-39F6-46D8-A0D3-350EC41402F5","Yoma.Core.Domain.MyOpportunity.Models.MyOpportunityInfo",DateTimeOffset.Now}
             },
             schema: "SSI");
 
@@ -1142,6 +1142,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     {"8CFD3852-B8F5-44E3-ACCB-5FD8BD885AFB","Issued",DateTimeOffset.Now}
                     ,
                     {"067AFB08-407D-44EB-BE92-FB84443553FF","Error",DateTimeOffset.Now}
+            },
+            schema: "SSI");
+
+            migrationBuilder.InsertData(
+            table: "WalletCreationStatus",
+            columns: new[] { "Id", "Name", "DateCreated" },
+            values: new object[,]
+            {
+                    {"39562CB1-15F9-4B2A-9CE9-9CE875D7C253","Pending",DateTimeOffset.Now}
+                    ,
+                    {"32EC538F-7EFE-406B-AB8E-39918889276A","Created",DateTimeOffset.Now}
+                    ,
+                    {"B0F16D40-C3FE-4ACA-9EA7-5201158C083D","Error",DateTimeOffset.Now}
             },
             schema: "SSI");
             #endregion SSI

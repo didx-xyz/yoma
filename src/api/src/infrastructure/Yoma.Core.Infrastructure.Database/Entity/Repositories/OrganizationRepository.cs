@@ -46,8 +46,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 CommentApproval = entity.CommentApproval,
                 DateStatusModified = entity.DateStatusModified,
                 LogoId = entity.LogoId,
-                SSITenantId = entity.SSITenantId,
-                DateSSITenantCreated = entity.DateSSITenantCreated,
                 DateCreated = entity.DateCreated,
                 DateModified = entity.DateModified,
                 ProviderTypes = includeChildItems ?
@@ -89,7 +87,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         public async Task<Domain.Entity.Models.Organization> Create(Domain.Entity.Models.Organization item)
         {
             item.DateStatusModified = DateTimeOffset.Now;
-            item.DateSSITenantCreated = string.IsNullOrEmpty(item.SSITenantId) ? null : DateTimeOffset.Now;
             item.DateCreated = DateTimeOffset.Now;
             item.DateModified = DateTimeOffset.Now;
 
@@ -115,8 +112,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 CommentApproval = item.CommentApproval,
                 DateStatusModified = item.DateStatusModified,
                 LogoId = item.LogoId,
-                SSITenantId = item.SSITenantId,
-                DateSSITenantCreated = item.DateSSITenantCreated,
                 DateCreated = item.DateCreated,
                 DateModified = item.DateModified
             };
@@ -156,8 +151,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                    CommentApproval = item.CommentApproval,
                    DateStatusModified = DateTimeOffset.Now,
                    LogoId = item.LogoId,
-                   SSITenantId = item.SSITenantId,
-                   DateSSITenantCreated = string.IsNullOrEmpty(item.SSITenantId) ? null : DateTimeOffset.Now,
                    DateCreated = DateTimeOffset.Now,
                    DateModified = DateTimeOffset.Now
                });
@@ -169,7 +162,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             {
                 item.Id = entity.Id;
                 item.DateStatusModified = entity.DateStatusModified;
-                item.DateSSITenantCreated = entity.DateSSITenantCreated;
                 item.DateCreated = entity.DateCreated;
                 item.DateModified = entity.DateModified;
                 return item;
@@ -183,9 +175,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             var entity = _context.Organization.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Organization)} with id '{item.Id}' does not exist");
 
             if (item.StatusId != entity.StatusId) item.DateStatusModified = DateTimeOffset.Now;
-            item.DateSSITenantCreated = string.IsNullOrEmpty(item.SSITenantId)
-            ? null
-            : item.SSITenantId != entity.SSITenantId ? DateTimeOffset.Now : entity.DateSSITenantCreated;
             item.DateModified = DateTimeOffset.Now;
 
             entity.Name = item.Name;
@@ -207,8 +196,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             entity.StatusId = item.StatusId;
             entity.CommentApproval = item.CommentApproval;
             entity.LogoId = item.LogoId;
-            entity.SSITenantId = item.SSITenantId;
-            entity.DateSSITenantCreated = item.DateSSITenantCreated;
             entity.DateModified = item.DateModified;
 
             await _context.SaveChangesAsync();
@@ -228,9 +215,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             {
                 var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Organization)} with id '{item.Id}' does not exist");
 
-                item.DateSSITenantCreated = string.IsNullOrEmpty(item.SSITenantId)
-                 ? null
-                 : item.SSITenantId != entity.SSITenantId ? DateTimeOffset.Now : entity.DateSSITenantCreated;
                 if (item.StatusId != entity.StatusId) item.DateStatusModified = DateTimeOffset.Now;
                 item.DateModified = DateTimeOffset.Now;
 
@@ -253,8 +237,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 entity.StatusId = item.StatusId;
                 entity.CommentApproval = item.CommentApproval;
                 entity.LogoId = item.LogoId;
-                entity.SSITenantId = item.SSITenantId;
-                entity.DateSSITenantCreated = item.DateSSITenantCreated;
                 entity.DateModified = item.DateModified;
             }
 

@@ -98,9 +98,13 @@ namespace Yoma.Core.Infrastructure.Database.Context
         public DbSet<SSISchemaEntityProperty> SSISchemaObjectProperty { get; set; }
 
         public DbSet<SSISchemaType> SSISchemaType { get; set; }
+
+        public DbSet<SSIWalletCreationStatus> SSIWalletCreationStatus { get; set; }
         #endregion Lookups
 
-        public DbSet<SSICredentialIssuance> SSICredentialIssuance { get; set; } 
+        public DbSet<SSICredentialIssuance> SSICredentialIssuance { get; set; }
+
+        public DbSet<SSIWalletCreation> SSIWalletCreation { get; set; }
         #endregion SSI
 
         #endregion

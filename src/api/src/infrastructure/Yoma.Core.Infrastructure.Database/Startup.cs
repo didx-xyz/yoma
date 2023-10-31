@@ -102,9 +102,11 @@ namespace Yoma.Core.Infrastructure.Database
             services.AddScoped<IRepository<SSICredentialIssuanceStatus>, SSICredentialIssuanceStatusRepository>();
             services.AddScoped<IRepositoryWithNavigation<SSISchemaEntity>, SSISchemaEntityRepository>();
             services.AddScoped<IRepository<SSISchemaType>, SSISchemaTypeRepository>();
+            services.AddScoped<IRepository<SSIWalletCreationStatus>, SSIWalletCreationStatusRepository>();
             #endregion Lookups
 
             services.AddScoped<IRepository<SSICredentialIssuance>, SSICredentialIssuanceRepository>();
+            services.AddScoped<IRepository<SSIWalletCreation>, SSIWalletCreationRepository>();
             #endregion
         }
 

@@ -44,8 +44,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 ZltoWalletId = entity.ZltoWalletId,
                 DateZltoWalletCreated = entity.DateZltoWalletCreated,
                 YoIDOnboarded = entity.YoIDOnboarded,
-                SSITenantId = entity.SSITenantId,
-                DateSSITenantCreated = entity.DateSSITenantCreated,
+                DateYoIDOnboarded = entity.DateYoIDOnboarded,
                 DateCreated = entity.DateCreated,
                 DateModified = entity.DateModified,
                 Skills = includeChildItems ?
@@ -69,7 +68,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 throw new ArgumentNullException(nameof(item));
 
             item.DateZltoWalletCreated = string.IsNullOrEmpty(item.ZltoWalletId) ? null : DateTimeOffset.Now;
-            item.DateSSITenantCreated = string.IsNullOrEmpty(item.SSITenantId) ? null : DateTimeOffset.Now;
+            item.DateYoIDOnboarded = !item.YoIDOnboarded.HasValue || !item.YoIDOnboarded.Value ? null : DateTimeOffset.Now;
             item.DateCreated = DateTimeOffset.Now;
             item.DateModified = DateTimeOffset.Now;
 
@@ -92,8 +91,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 ZltoWalletId = item.ZltoWalletId,
                 DateZltoWalletCreated = item.DateZltoWalletCreated,
                 YoIDOnboarded = item.YoIDOnboarded,
-                SSITenantId = item.SSITenantId,
-                DateSSITenantCreated = item.DateSSITenantCreated,
                 DateCreated = item.DateCreated,
                 DateModified = item.DateModified
             };
@@ -110,11 +107,11 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             var entity = _context.User.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"User with id '{item.Id}' does not exist");
 
             item.DateZltoWalletCreated = string.IsNullOrEmpty(item.ZltoWalletId)
-           ? null
-           : item.ZltoWalletId != entity.ZltoWalletId ? DateTimeOffset.Now : entity.DateZltoWalletCreated;
-            item.DateSSITenantCreated = string.IsNullOrEmpty(item.SSITenantId)
-                    ? null
-                    : item.SSITenantId != entity.SSITenantId ? DateTimeOffset.Now : entity.DateSSITenantCreated;
+                ? null
+                : item.ZltoWalletId != entity.ZltoWalletId ? DateTimeOffset.Now : entity.DateZltoWalletCreated;
+            item.DateYoIDOnboarded = !item.YoIDOnboarded.HasValue || !item.YoIDOnboarded.Value
+                ? null
+                : item.YoIDOnboarded.Value && !entity.DateYoIDOnboarded.HasValue ? DateTimeOffset.Now : entity.DateYoIDOnboarded;
             item.DateModified = DateTimeOffset.Now;
 
             entity.Email = item.Email;
@@ -133,8 +130,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             entity.ZltoWalletId = item.ZltoWalletId;
             entity.DateZltoWalletCreated = item.DateZltoWalletCreated;
             entity.YoIDOnboarded = item.YoIDOnboarded;
-            entity.SSITenantId = item.SSITenantId;
-            entity.DateSSITenantCreated = item.DateSSITenantCreated;
             entity.DateModified = item.DateModified;
 
             await _context.SaveChangesAsync();

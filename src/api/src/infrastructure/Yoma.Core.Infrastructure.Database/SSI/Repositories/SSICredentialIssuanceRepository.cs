@@ -20,6 +20,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
                 Id = entity.Id,
                 SchemaTypeId = entity.SchemaTypeId,
                 SchemaType = Enum.Parse<Domain.SSI.Models.SchemaType>(entity.SchemaType.Name, true),
+                ArtifactType = Enum.Parse<ArtifactType>(entity.ArtifactType, true),
                 SchemaName = entity.SchemaName,
                 SchemaVersion = entity.SchemaVersion,
                 StatusId = entity.StatusId,
@@ -44,6 +45,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
             {
                 Id = item.Id,
                 SchemaTypeId = item.SchemaTypeId,
+                ArtifactType = item.ArtifactType.ToString(),
                 SchemaName = item.SchemaName,
                 SchemaVersion = item.SchemaVersion,
                 StatusId = item.StatusId,

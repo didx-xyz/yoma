@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -22,6 +23,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IGenderService _genderService;
         private readonly ICountryService _countryService;
         private readonly ISkillService _skillService;
+        private readonly ISSIWalletCreationService _ssiWalletCreationService;
         private readonly UserRequestValidator _userRequestValidator;
         private readonly UserSearchFilterValidator _userSearchFilterValidator;
         private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
@@ -35,6 +37,7 @@ namespace Yoma.Core.Domain.Entity.Services
             IGenderService genderService,
             ICountryService countryService,
             ISkillService skillService,
+            ISSIWalletCreationService ssiWalletCreationService,
             UserRequestValidator userValidator,
             UserSearchFilterValidator userSearchFilterValidator,
             IRepositoryValueContainsWithNavigation<User> userRepository,
@@ -45,6 +48,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _genderService = genderService;
             _countryService = countryService;
             _skillService = skillService;
+            _ssiWalletCreationService = ssiWalletCreationService;
             _userRequestValidator = userValidator;
             _userSearchFilterValidator = userSearchFilterValidator;
             _userRepository = userRepository;
@@ -256,35 +260,23 @@ namespace Yoma.Core.Domain.Entity.Services
             scope.Complete();
         }
 
-        public List<User> ListPendingSSITenantCreation(int batchSize)
+        public async Task<User> YoIDOnboard(string? email)
         {
-            if (batchSize <= default(int))
-                throw new ArgumentOutOfRangeException(nameof(batchSize));
+            var result = GetByEmail(email, false, false);
 
-            var results = _userRepository.Query().Where(o => o.YoIDOnboarded.HasValue && o.YoIDOnboarded.Value && !o.DateSSITenantCreated.HasValue)
-                       .OrderBy(o => o.DateModified).Take(batchSize).ToList();
+            if (result.YoIDOnboarded.HasValue && result.YoIDOnboarded.Value)
+                throw new ValidationException($"User with email '{email}' has already completed YoID onboarding");
 
-            return results;
-        }
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-        public async Task<User> UpdateSSITenantReference(Guid id, string tenantId)
-        {
-            var user = GetById(id, false, false);
+            result.YoIDOnboarded = true;
+            result = await _userRepository.Update(result);
 
-            if (string.IsNullOrWhiteSpace(tenantId))
-                throw new ArgumentNullException(nameof(tenantId));
-            tenantId = tenantId.Trim();
+            await _ssiWalletCreationService.Create(EntityType.User, result.Id);
 
-            if (user.DateSSITenantCreated.HasValue || !user.YoIDOnboarded.HasValue || !user.YoIDOnboarded.Value)
-                throw new InvalidOperationException($"Tenant creation criteria not met for user with id '{user.Id}': " +
-                    $"YoID Onboarded '{user.YoIDOnboarded.HasValue && user.YoIDOnboarded.Value}' " +
-                    $"| Date SSI Tenant Created '{(user.DateSSITenantCreated.HasValue ? user.DateSSITenantCreated.Value : "n/a")}'");
+            scope.Complete();
 
-            user.SSITenantId = tenantId;
-
-            user = await _userRepository.Update(user);
-
-            return user;
+            return result;
         }
         #endregion
 

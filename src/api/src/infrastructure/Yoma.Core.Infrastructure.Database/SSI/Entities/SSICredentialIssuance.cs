@@ -9,12 +9,16 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities
 {
     [Table("CredentialIssuance", Schema = "SSI")]
     [Index(nameof(SchemaName), nameof(UserId), nameof(OrganizationId), nameof(MyOpportunityId), IsUnique = true)]
-    [Index(nameof(SchemaTypeId), nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
+    [Index(nameof(SchemaTypeId), nameof(ArtifactType), nameof(SchemaName), nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
     public class SSICredentialIssuance : BaseEntity<Guid>
     {
         [ForeignKey("SchemaTypeId")]
         public Guid SchemaTypeId { get; set; }
         public SSISchemaType SchemaType { get; set; }
+
+        [Required]
+        [Column(TypeName = "varchar(25)")]
+        public string ArtifactType { get; set; }
 
         [Required]
         [Column(TypeName = "varchar(125)")]

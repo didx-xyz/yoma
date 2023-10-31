@@ -19,10 +19,19 @@ namespace Yoma.Core.Domain.SSI.Models
         YoID
     }
 
+    public enum WalletCreationStatus
+    {
+        Pending,
+        Created,
+        Error
+    }
+
     public enum CredentialIssuanceStatus
     {
         Pending,
         Issued,
         Error
     }
+
+   
 }

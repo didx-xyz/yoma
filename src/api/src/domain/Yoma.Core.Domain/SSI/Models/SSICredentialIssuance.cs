@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.SSI.Models
 
         public SchemaType SchemaType { get; set; }
 
+        public ArtifactType ArtifactType { get; set; }
+
         public string SchemaName { get; set; }
 
         public string SchemaVersion { get; set; }

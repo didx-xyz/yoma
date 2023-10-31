@@ -23,8 +23,6 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         Task AssignSkills(Guid id, List<Guid> skillIds);
 
-        List<User> ListPendingSSITenantCreation(int batchSize);
-
-        Task<User> UpdateSSITenantReference(Guid id, string tenantId);
+        Task<User> YoIDOnboard(string? email);
     }
 }

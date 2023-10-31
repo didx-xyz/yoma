@@ -24,6 +24,7 @@ using Yoma.Core.Domain.MyOpportunity.Validators;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
@@ -41,6 +42,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         private readonly IOpportunityStatusService _opportunityStatusService;
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IBlobService _blobService;
+        private readonly ISSICredentialIssuanceService _ssiCredentialIssuanceService;
         private readonly IEmailProviderClient _emailProviderClient;
         private readonly MyOpportunitySearchFilterValidator _myOpportunitySearchFilterValidator;
         private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
@@ -61,6 +63,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             IOpportunityStatusService opportunityStatusService,
             IOrganizationStatusService organizationStatusService,
             IBlobService blobService,
+            ISSICredentialIssuanceService ssiCredentialIssuanceService,
             IEmailProviderClientFactory emailProviderClientFactory,
             MyOpportunitySearchFilterValidator myOpportunitySearchFilterValidator,
             MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
@@ -79,6 +82,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             _opportunityStatusService = opportunityStatusService;
             _organizationStatusService = organizationStatusService;
             _blobService = blobService;
+            _ssiCredentialIssuanceService = ssiCredentialIssuanceService;
             _emailProviderClient = emailProviderClientFactory.CreateClient();
             _myOpportunitySearchFilterValidator = myOpportunitySearchFilterValidator;
             _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify;
@@ -89,6 +93,23 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         #endregion
 
         #region Public Members
+        public MyOpportunityInfo GetById(Guid id, bool includeChildItems, bool includeComputed)
+        {
+            if (id == Guid.Empty)
+                throw new ArgumentNullException(nameof(id));
+
+            var result = _myOpportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id)
+                ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(Models.MyOpportunity)} with id '{id}' does not exist");
+
+            if(includeComputed)
+            {
+                result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoId);
+                result.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileId));
+            }
+
+            return result.ToInfo();
+        }
+
         public MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter)
         {
             if (filter == null)
@@ -448,6 +469,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     var skillIds = opportunity.Skills?.Select(o => o.Id).ToList();
                     if (skillIds != null && skillIds.Any())
                         await _userService.AssignSkills(user.Id, skillIds);
+
+                    if (item.OpportunityCredentialIssuanceEnabled)
+                    {
+                        if (string.IsNullOrEmpty(item.OpportunitySSISchemaName))
+                            throw new InvalidOperationException($"Credential Issuance Enabled: Schema name expected for opportunity with id '{item.Id}'");
+                        await _ssiCredentialIssuanceService.Create(item.OpportunitySSISchemaName, item.Id);
+                    }
 
                     emailType = EmailType.Opportunity_Verification_Completed;
                     break;

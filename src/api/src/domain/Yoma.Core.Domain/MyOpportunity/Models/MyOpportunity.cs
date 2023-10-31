@@ -12,8 +12,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public string? UserDisplayName { get; set; }
 
-        public string? UserSSITenantId { get; set; }
-
         public Guid OpportunityId { get; set; }
 
         public string OpportunityTitle { get; set; }
@@ -49,8 +47,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
         public Guid OrganizationStatusId { get; set; }
 
         public OrganizationStatus OrganizationStatus { get; set; }
-
-        public string? OrganizationSSITenantId { get; set; }
 
         public Guid ActionId { get; set; }
 
