@@ -2,9 +2,16 @@ import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { type ParsedUrlQuery } from "querystring";
-import { useState, type ReactElement, useMemo } from "react";
-import type { OpportunityInfo } from "~/api/models/opportunity";
-import { getOpportunityInfoById } from "~/api/services/opportunities";
+import { useState, type ReactElement, useMemo, useCallback } from "react";
+import {
+  VerificationMethod,
+  type Opportunity,
+  type OpportunityInfo,
+} from "~/api/models/opportunity";
+import {
+  getOpportunityById,
+  getOpportunityInfoById,
+} from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
@@ -25,8 +32,18 @@ import iconLanguage from "public/images/icon-language.svg";
 import iconTopics from "public/images/icon-topics.svg";
 import iconSkills from "public/images/icon-skills.svg";
 import iconRocket from "public/images/icon-rocket.svg";
+import iconSuccess from "public/images/icon-success.svg";
+import iconCertificate from "public/images/icon-certificate.svg";
+import iconPicture from "public/images/icon-picture.svg";
+import iconVideo from "public/images/icon-video.svg";
 import iconBell from "public/images/icon-bell.svg";
 import Image from "next/image";
+import { saveMyOpportunity } from "~/api/services/myOpportunities";
+import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
+import { FileUpload } from "~/components/Opportunity/FileUpload";
+import { ACCEPTED_DOC_TYPES, ACCEPTED_DOC_TYPES_LABEL } from "~/lib/constants";
+import { OpportunityComplete } from "~/components/Opportunity/OpportunityComplete";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -103,7 +120,13 @@ const OpportunityDetails: NextPageWithLayout<{
   opportunityId: string;
   //user: User;
 }> = ({ opportunityId }) => {
-  const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
+  const [gotoOpportunityDialogVisible, setGotoOpportunityDialogVisible] =
+    useState(false);
+  const [
+    completeOpportunityDialogVisible,
+    setCompleteOpportunityDialogVisible,
+  ] = useState(false);
+  const { data: session } = useSession();
 
   const { data: opportunity } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
@@ -116,6 +139,31 @@ const OpportunityDetails: NextPageWithLayout<{
     const participantCountTotal = opportunity?.participantCountTotal ?? 0;
     return Math.max(participantLimit - participantCountTotal, 0);
   }, [opportunity]);
+
+  const onSaveOpportunity = useCallback(() => {
+    if (!session) {
+      toast.warning("You need to be logged in to save an opportunity");
+      return;
+    }
+
+    saveMyOpportunity(opportunityId)
+      .then((res) => {
+        toast.success("Opportunity saved");
+      })
+      .catch((err) => {
+        toast.error("Error");
+      });
+  }, [saveMyOpportunity]);
+
+  const onGoToOpportunity = useCallback(() => {
+    if (opportunity?.uRL) window.location.href = opportunity?.uRL;
+  }, []);
+
+  const [files, setFiles] = useState<any[]>([]);
+
+  const onSubmitOpportunity = useCallback(() => {
+    debugger;
+  }, [files]);
 
   return (
     <>
@@ -219,12 +267,12 @@ const OpportunityDetails: NextPageWithLayout<{
 
         {/* <div ref={myRef} /> */}
 
-        {/* POPUP FILTER */}
+        {/* GO-TO OPPORTUNITY DIALOG */}
         <ReactModal
-          isOpen={filterFullWindowVisible}
+          isOpen={gotoOpportunityDialogVisible}
           shouldCloseOnOverlayClick={true}
           onRequestClose={() => {
-            setFilterFullWindowVisible(false);
+            setGotoOpportunityDialogVisible(false);
           }}
           className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:rounded-3xl`}
           portalClassName={"fixed z-40"}
@@ -237,14 +285,14 @@ const OpportunityDetails: NextPageWithLayout<{
                 type="button"
                 className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
                 onClick={() => {
-                  setFilterFullWindowVisible(false);
+                  setGotoOpportunityDialogVisible(false);
                 }}
               >
                 <IoMdClose className="h-6 w-6"></IoMdClose>
               </button>
             </div>
             <div className="flex flex-col items-center justify-center gap-4">
-              <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white">
+              <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
                 <Image
                   src={iconBell}
                   alt="Icon Bell"
@@ -269,6 +317,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 <button
                   type="button"
                   className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[300px]"
+                  onClick={onSaveOpportunity}
                 >
                   <Image
                     src={iconBookmark}
@@ -285,7 +334,8 @@ const OpportunityDetails: NextPageWithLayout<{
                 <button
                   type="button"
                   className="btn rounded-full bg-purple normal-case text-white md:w-[250px]"
-                  onClick={() => setFilterFullWindowVisible(true)}
+                  onClick={onGoToOpportunity}
+                  disabled={!opportunity?.uRL}
                 >
                   <Image
                     src={iconOpen}
@@ -302,6 +352,20 @@ const OpportunityDetails: NextPageWithLayout<{
               </div>
             </div>
           </div>
+        </ReactModal>
+
+        {/* UPLOAD/COMPLETE OPPORTUNITY DIALOG */}
+        <ReactModal
+          isOpen={completeOpportunityDialogVisible}
+          shouldCloseOnOverlayClick={true}
+          onRequestClose={() => {
+            setCompleteOpportunityDialogVisible(false);
+          }}
+          className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-scroll bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:rounded-3xl`}
+          portalClassName={"fixed z-40"}
+          overlayClassName="fixed inset-0 bg-overlay"
+        >
+          <OpportunityComplete id="op-complete" opportunityInfo={opportunity} />
         </ReactModal>
 
         {opportunity && (
@@ -357,7 +421,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       <span className="ml-1"> {opportunity.zltoReward}</span>
                     </div>
                   )}
-                  <div className="bg-purple-light badge h-6 rounded-md text-purple">
+                  <div className="badge h-6 rounded-md bg-purple-light text-purple">
                     <Image
                       src={iconAction}
                       alt="Icon Action"
@@ -376,7 +440,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     <button
                       type="button"
                       className="btn rounded-full bg-green normal-case text-white md:w-[250px]"
-                      onClick={() => setFilterFullWindowVisible(true)}
+                      onClick={() => setGotoOpportunityDialogVisible(true)}
                     >
                       <Image
                         src={iconOpen}
@@ -391,22 +455,31 @@ const OpportunityDetails: NextPageWithLayout<{
                       <span className="ml-1">Go to opportunity</span>
                     </button>
 
-                    <button
-                      type="button"
-                      className="btn rounded-full border-green bg-white normal-case text-green md:w-[300px]"
-                    >
-                      <Image
-                        src={iconUpload}
-                        alt="Icon Upload"
-                        width={20}
-                        height={20}
-                        sizes="100vw"
-                        priority={true}
-                        style={{ width: "20px", height: "20px" }}
-                      />
+                    {/* only show upload button if verification is enabled and method is manual */}
+                    {opportunity.verificationEnabled &&
+                      opportunity.verificationMethod == "Manual" && (
+                        <button
+                          type="button"
+                          className="btn rounded-full border-green bg-white normal-case text-green md:w-[300px]"
+                          onClick={() =>
+                            setCompleteOpportunityDialogVisible(true)
+                          }
+                        >
+                          <Image
+                            src={iconUpload}
+                            alt="Icon Upload"
+                            width={20}
+                            height={20}
+                            sizes="100vw"
+                            priority={true}
+                            style={{ width: "20px", height: "20px" }}
+                          />
 
-                      <span className="ml-1">Upload your completion files</span>
-                    </button>
+                          <span className="ml-1">
+                            Upload your completion files
+                          </span>
+                        </button>
+                      )}
                   </div>
                   <div className="flex justify-end gap-4">
                     <button

@@ -459,68 +459,6 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     return `${countText} for ${filterText}`;
   }, [opportunitySearchFilter, searchResults]);
 
-  // const searchFilterText = useMemo<string>(() => {
-  //   if (searchResults == undefined) return "0 results";
-
-  //   let sb = [searchResults?.totalCount?.toString()];
-
-  //   if (searchResults?.totalCount === 0) sb.push("result");
-  //   else sb.push("results");
-
-  //   let sb2 = [];
-
-  //   if (opportunitySearchFilter.valueContains != undefined)
-  //     sb2.push(`'${opportunitySearchFilter.valueContains}'`);
-  //   if (
-  //     opportunitySearchFilter.mostViewed != undefined &&
-  //     opportunitySearchFilter.mostViewed
-  //   )
-  //     sb2.push(`'Most Viewed'`);
-
-  //   if (
-  //     opportunitySearchFilter.categories &&
-  //     opportunitySearchFilter.categories.length > 0
-  //   )
-  //     sb2.push(opportunitySearchFilter.categories.join(", "));
-  //   if (
-  //     opportunitySearchFilter.countries &&
-  //     opportunitySearchFilter.countries.length > 0
-  //   )
-  //     sb2.push(opportunitySearchFilter.countries.join(", "));
-  //   if (
-  //     opportunitySearchFilter.languages &&
-  //     opportunitySearchFilter.languages.length > 0
-  //   )
-  //     sb2.push(opportunitySearchFilter.languages.join(", "));
-  //   if (
-  //     opportunitySearchFilter.types &&
-  //     opportunitySearchFilter.types.length > 0
-  //   )
-  //     sb2.push(opportunitySearchFilter.types.join(", "));
-  //   if (
-  //     opportunitySearchFilter.organizations &&
-  //     opportunitySearchFilter.organizations.length > 0
-  //   )
-  //     sb2.push(opportunitySearchFilter.organizations.join(", "));
-  //   if (
-  //     opportunitySearchFilter.commitmentIntervals &&
-  //     opportunitySearchFilter.commitmentIntervals.length > 0
-  //   )
-  //     sb2.push(opportunitySearchFilter.commitmentIntervals.join(", "));
-  //   if (
-  //     opportunitySearchFilter.zltoRewardRanges &&
-  //     opportunitySearchFilter.zltoRewardRanges.length > 0
-  //   )
-  //     sb2.push(opportunitySearchFilter.zltoRewardRanges.join(", "));
-
-  //   if (sb2.length > 0) {
-  //     sb.push("for");
-  //     sb.push(sb2.join(" and "));
-  //   }
-
-  //   return sb.join(" ");
-  // }, [opportunitySearchFilter, searchResults]);
-
   const redirectwithSearchFilterParams = useCallback(
     (item: OpportunitySearchFilter) => {
       let url = "/opportunities";

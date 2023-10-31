@@ -94,6 +94,9 @@ export interface OpportunityInfo {
   countries: Country[] | null;
   languages: Language[] | null;
   skills: Skill[] | null;
+  verificationEnabled: boolean;
+  verificationMethod: /*VerificationMethod*/ string | null; //ISSUE: comes back as string
+  verificationTypes: OpportunityVerificationType[] | null;
 }
 
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
@@ -166,7 +169,7 @@ export enum OrganizationProviderType {
 
 export interface OpportunityVerificationType {
   id: string;
-  type?: VerificationType;
+  type?: VerificationType | string; //NB: hack
   displayName: string;
   description: string;
 }

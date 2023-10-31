@@ -1,0 +1,13 @@
+
+
+  .filepond--drop-label {
+    background-color: red;
+    border: 2px dashed #ccc;
+    color: #999;
+  }
+
+  .filepond--label-action{
+    background-color: red;
+    border: 2px dashed #ccc;
+    color: #999;
+  }

@@ -21,6 +21,7 @@ import { Global } from "~/components/global";
 import ConfirmationModalContextProvider from "~/context/modalConfirmationContext";
 import { config } from "~/lib/react-query-config";
 import "~/styles/globals.scss";
+import "~/styles/FileUpload.css";
 
 // configure font for tailwindcss
 // see https://nextjs.org/docs/pages/building-your-application/optimizing/fonts

@@ -1,3 +1,5 @@
+import { FormFile } from "./common";
+
 export interface OrganizationRequestBase {
   id: string;
   name: string;
@@ -84,14 +86,6 @@ export enum OrganizationStatus {
   Active,
   Declined,
   Deleted,
-}
-export interface FormFile {
-  contentType: string;
-  contentDisposition: string;
-  headers: [];
-  length: number;
-  name: string;
-  fileName: string;
 }
 
 export interface OrganizationSearchFilter extends PaginationFilter {

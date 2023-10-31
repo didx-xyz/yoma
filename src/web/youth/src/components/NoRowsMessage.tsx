@@ -1,5 +1,4 @@
 import React from "react";
-// import noRowsImage from "public/images/no-rows.svg";
 import iconImage from "public/images/icon-rocket.svg";
 import Image from "next/image";
 

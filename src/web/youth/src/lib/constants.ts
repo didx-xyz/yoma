@@ -12,5 +12,5 @@ export const ACCEPTED_DOC_TYPES = [
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
-export const ACCEPTED_DOC_TYPES_LABEL = ".jpg, .jpeg, .png and .webp";
+export const ACCEPTED_DOC_TYPES_LABEL = ".pdf, .doc and .docx";
 export const PAGE_SIZE = 10;
