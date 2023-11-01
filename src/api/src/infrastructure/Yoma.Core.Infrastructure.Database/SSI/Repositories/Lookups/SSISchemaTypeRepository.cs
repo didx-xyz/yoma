@@ -20,7 +20,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
             return _context.SSISchemaType.Select(entity => new SSISchemaType
             {
                 Id = entity.Id,
-                Type = Enum.Parse<SchemaType>(entity.Name, true), 
+                Type = Enum.Parse<SchemaType>(entity.Name, true),
                 Name = entity.Name,
                 Description = entity.Description,
                 SupportMultiple = entity.SupportMultiple

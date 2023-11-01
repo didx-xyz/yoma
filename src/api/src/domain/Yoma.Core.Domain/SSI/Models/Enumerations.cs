@@ -32,6 +32,4 @@ namespace Yoma.Core.Domain.SSI.Models
         Issued,
         Error
     }
-
-   
 }

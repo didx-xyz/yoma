@@ -52,7 +52,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities
         [Column(TypeName = "varchar(500)")]
         public string? ErrorReason { get; set; }
 
-        public byte? RetryCount {get;set;}
+        public byte? RetryCount { get; set; }
 
         [Required]
         public DateTimeOffset DateCreated { get; set; }

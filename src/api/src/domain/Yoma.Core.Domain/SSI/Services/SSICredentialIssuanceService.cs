@@ -34,14 +34,14 @@ namespace Yoma.Core.Domain.SSI.Services
         {
             var schema = await _ssiSchemaService.GetByName(schemaName);
 
-            if(entityId == Guid.Empty)
+            if (entityId == Guid.Empty)
                 throw new ArgumentNullException(nameof(entityId));
 
             var statusPendingId = _ssiCredentialIssuanceStatusService.GetByName(CredentialIssuanceStatus.Pending.ToString()).Id;
 
             SSICredentialIssuance? existingItem = null;
-            var item = new SSICredentialIssuance 
-            { 
+            var item = new SSICredentialIssuance
+            {
                 SchemaTypeId = schema.TypeId,
                 ArtifactType = schema.ArtifactType,
                 SchemaName = schema.Name,
@@ -49,7 +49,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 StatusId = statusPendingId
             };
 
-            switch(item.SchemaType)
+            switch (item.SchemaType)
             {
                 case SchemaType.Opportunity:
                     existingItem = _ssiCredentialIssuanceRepository.Query().SingleOrDefault(o => o.SchemaTypeId == item.SchemaTypeId && o.MyOpportunityId == entityId);

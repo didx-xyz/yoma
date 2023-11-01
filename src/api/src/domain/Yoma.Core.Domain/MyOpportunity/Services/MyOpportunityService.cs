@@ -101,7 +101,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var result = _myOpportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id)
                 ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(Models.MyOpportunity)} with id '{id}' does not exist");
 
-            if(includeComputed)
+            if (includeComputed)
             {
                 result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoId);
                 result.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileId));
