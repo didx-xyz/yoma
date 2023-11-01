@@ -96,14 +96,13 @@ namespace Yoma.Core.Domain.SSI.Services
             results = schemas.Where(o => matchedEntitiesGrouped.ContainsKey(o.Id)).Select(o =>
                 ConvertToSSISchema(o, matchedEntitiesGrouped.TryGetValue(o.Id, out var entities) ? entities : null)).ToList();
 
-            if (type == null) return results;
-
-            results = results.Where(o => o.Type == type).ToList();
-
             var mismatchedSchemas = results.Where(o => o.Entities?.Any(e => !e.Types?.Any(t => t?.Type == o.Type) == true) == true).ToList();
             if (mismatchedSchemas != null && mismatchedSchemas.Any())
                 throw new DataInconsistencyException($"Schema(s) '{string.Join(", ", mismatchedSchemas.Select(o => $"{o.Name}|{o.Type}"))}': Schema type vs entity schema type mismatches detected");
 
+            if (type == null) return results;
+
+            results = results.Where(o => o.Type == type).ToList();
             return results;
         }
 
