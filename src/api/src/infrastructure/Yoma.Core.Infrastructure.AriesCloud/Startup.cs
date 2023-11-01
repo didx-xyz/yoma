@@ -6,8 +6,10 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Infrastructure.AriesCloud.Client;
 using Yoma.Core.Infrastructure.AriesCloud.Context;
+using Yoma.Core.Infrastructure.AriesCloud.Interfaces;
 using Yoma.Core.Infrastructure.AriesCloud.Models;
 using Yoma.Core.Infrastructure.AriesCloud.Repositories;
+using Yoma.Core.Infrastructure.AriesCloud.Services;
 
 namespace Yoma.Core.Infrastructure.AriesCloud
 {
@@ -33,8 +35,12 @@ namespace Yoma.Core.Infrastructure.AriesCloud
             services.AddScoped<IRepository<CredentialSchema>, CredentialSchemaRepository>();
             services.AddScoped<IRepository<Connection>, ConnectionRepository>();
 
+            //sdk
             services.AddAriesCloudAPI();
             services.AddScoped<ISSIProviderClientFactory, AriesCloudClientFactory>();
+
+            //service
+            services.AddScoped<ISSEListenerService, SSEListenerService>();
         }
 
         public static void Configure_InfrastructureDatabaseSSIProvider(this IServiceProvider serviceProvider)

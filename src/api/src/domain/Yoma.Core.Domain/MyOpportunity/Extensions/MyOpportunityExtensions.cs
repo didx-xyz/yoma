@@ -25,6 +25,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
                 OpportunityParticipantCountTotal = value.OpportunityParticipantCountTotal,
                 OpportunityDateStart = value.OpportunityDateStart,
                 OpportunityDateEnd = value.OpportunityDateEnd,
+                OrganizationId = value.OrganizationId,
                 OrganizationName = value.OrganizationName,
                 OrganizationLogoURL = value.OrganizationLogoURL,
                 ActionId = value.ActionId,

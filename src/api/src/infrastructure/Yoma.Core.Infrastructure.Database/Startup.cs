@@ -7,6 +7,7 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Opportunity.Models;
+using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
@@ -14,6 +15,7 @@ using Yoma.Core.Infrastructure.Database.Entity.Repositories;
 using Yoma.Core.Infrastructure.Database.Lookups.Repositories;
 using Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories;
 using Yoma.Core.Infrastructure.Database.Opportunity.Repositories;
+using Yoma.Core.Infrastructure.Database.SSI.Repositories;
 using Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups;
 
 namespace Yoma.Core.Infrastructure.Database
@@ -97,9 +99,14 @@ namespace Yoma.Core.Infrastructure.Database
 
             #region SSI
             #region Lookups
+            services.AddScoped<IRepository<SSICredentialIssuanceStatus>, SSICredentialIssuanceStatusRepository>();
             services.AddScoped<IRepositoryWithNavigation<SSISchemaEntity>, SSISchemaEntityRepository>();
             services.AddScoped<IRepository<SSISchemaType>, SSISchemaTypeRepository>();
+            services.AddScoped<IRepository<SSITenantCreationStatus>, SSITenantCreationStatusRepository>();
             #endregion Lookups
+
+            services.AddScoped<IRepository<SSICredentialIssuance>, SSICredentialIssuanceRepository>();
+            services.AddScoped<IRepository<SSITenantCreation>, SSITenantCreationRepository>();
             #endregion
         }
 

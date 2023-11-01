@@ -86,11 +86,16 @@ namespace Yoma.Core.Domain
 
             #region SSI
             #region Lookups
+            services.AddScoped<ISSICredentialIssuanceStatusService, SSICredentialIssuanceStatusService>();
             services.AddScoped<ISSISchemaEntityService, SSISchemaEntityService>();
             services.AddScoped<ISSISchemaTypeService, SSISchemaTypeService>();
+            services.AddScoped<ISSITenantCreationStatusService, SSITenantCreationStatusService>();
             #endregion Lookups
-            services.AddScoped<ISSISchemaService, SSISchemaService>();
+
             services.AddSingleton<ISSIBackgroundService, SSIBackgroundService>();
+            services.AddScoped<ISSICredentialIssuanceService, SSICredentialIssuanceService>();
+            services.AddScoped<ISSISchemaService, SSISchemaService>();
+            services.AddScoped<ISSITenantCreationService, SSITenantCreationService>();
             #endregion SSI
         }
 
@@ -126,11 +131,11 @@ namespace Yoma.Core.Domain
             RecurringJob.AddOrUpdate($"Organization Deletion ({OrganizationStatus.Declined} for more than {options.OrganizationDeletionIntervalInDays} days)",
                () => organizationBackgroundService.ProcessDeletion(), options.OrganizationDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
+            return; //TODO: Remove
             //ssi
             var ssiTenantBackgroundService = scope.ServiceProvider.GetRequiredService<ISSIBackgroundService>();
             RecurringJob.AddOrUpdate($"SSI Tenant Creation",
                () => ssiTenantBackgroundService.ProcessTenantCreation(), options.SSITenantCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-
             RecurringJob.AddOrUpdate($"SSI Credential Issuance",
                () => ssiTenantBackgroundService.ProcessCredentialIssuance(), options.SSICredentialIssuanceSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
         }

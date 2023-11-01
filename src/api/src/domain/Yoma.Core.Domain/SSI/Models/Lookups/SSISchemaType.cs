@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.SSI.Models.Lookups
     {
         public Guid Id { get; set; }
 
+        public SchemaType Type { get; set; }
+
         public string Name { get; set; }
 
         public string Description { get; set; }

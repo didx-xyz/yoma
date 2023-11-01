@@ -1066,6 +1066,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             #region SSI
             migrationBuilder.InsertData(
+            table: "SchemaType",
+            columns: new[] { "Id", "Name", "Description", "SupportMultiple", "DateCreated" },
+            values: new object[,]
+            {
+                    {"7818B5C3-3D57-4264-B90B-DF53EAA9F749","Opportunity","Opportunity",true,DateTimeOffset.Now}
+                    ,
+                    {"EC978798-AAC0-4577-846E-1B5B2E6663CE","YoID","Yoma Member (YoID)",false,DateTimeOffset.Now}
+            },
+            schema: "SSI");
+
+            migrationBuilder.InsertData(
             table: "SchemaEntity",
             columns: new[] { "Id", "TypeName", "DateCreated" },
             values: new object[,]
@@ -1074,13 +1085,28 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Yoma.Core.Domain.Opportunity.Models.Opportunity",DateTimeOffset.Now}
                     ,
-                    {"CA11D9D0-39F6-46D8-A0D3-350EC41402F5","Yoma.Core.Domain.MyOpportunity.Models.MyOpportunity",DateTimeOffset.Now}
+                    {"CA11D9D0-39F6-46D8-A0D3-350EC41402F5","Yoma.Core.Domain.MyOpportunity.Models.MyOpportunityInfo",DateTimeOffset.Now}
+            },
+            schema: "SSI");
+
+            migrationBuilder.InsertData(
+            table: "SchemaEntityType",
+            columns: new[] { "Id", "SSISchemaEntityId", "SSISchemaTypeId", "DateCreated" },
+            values: new object[,]
+            {
+                    {Guid.NewGuid(),"AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","7818B5C3-3D57-4264-B90B-DF53EAA9F749",DateTimeOffset.Now}
+                    ,
+                    {Guid.NewGuid(),"AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","EC978798-AAC0-4577-846E-1B5B2E6663CE",DateTimeOffset.Now}
+                    ,
+                    {Guid.NewGuid(),"E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","7818B5C3-3D57-4264-B90B-DF53EAA9F749",DateTimeOffset.Now}
+                    ,
+                    {Guid.NewGuid(),"CA11D9D0-39F6-46D8-A0D3-350EC41402F5","7818B5C3-3D57-4264-B90B-DF53EAA9F749",DateTimeOffset.Now}
             },
             schema: "SSI");
 
             migrationBuilder.InsertData(
             table: "SchemaEntityProperty",
-            columns: new[] { "Id", "SSISchemaObjectId", "Name", "ValueDescription", "Required", "DateCreated" },
+            columns: new[] { "Id", "SSISchemaEntityId", "Name", "ValueDescription", "Required", "DateCreated" },
             values: new object[,]
             {
                     {"32447353-1698-467C-8B5D-AD85E89235B0","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","Email","Email",true,DateTimeOffset.Now}
@@ -1122,13 +1148,28 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             schema: "SSI");
 
             migrationBuilder.InsertData(
-            table: "SchemaType",
-            columns: new[] { "Id", "Name", "Description", "SupportMultiple", "DateCreated" },
+            table: "CredentialIssuanceStatus",
+            columns: new[] { "Id", "Name", "DateCreated" },
             values: new object[,]
             {
-                    {"7818B5C3-3D57-4264-B90B-DF53EAA9F749","Opportunity","Opportunity",true,DateTimeOffset.Now}
+                    {"952603D2-0661-4A11-9D3D-AAD07338120B","Pending",DateTimeOffset.Now}
                     ,
-                    {"EC978798-AAC0-4577-846E-1B5B2E6663CE","YoID","Yoma Member (YoID)",false,DateTimeOffset.Now}
+                    {"8CFD3852-B8F5-44E3-ACCB-5FD8BD885AFB","Issued",DateTimeOffset.Now}
+                    ,
+                    {"067AFB08-407D-44EB-BE92-FB84443553FF","Error",DateTimeOffset.Now}
+            },
+            schema: "SSI");
+
+            migrationBuilder.InsertData(
+            table: "TenantCreationStatus",
+            columns: new[] { "Id", "Name", "DateCreated" },
+            values: new object[,]
+            {
+                    {"39562CB1-15F9-4B2A-9CE9-9CE875D7C253","Pending",DateTimeOffset.Now}
+                    ,
+                    {"32EC538F-7EFE-406B-AB8E-39918889276A","Created",DateTimeOffset.Now}
+                    ,
+                    {"B0F16D40-C3FE-4ACA-9EA7-5201158C083D","Error",DateTimeOffset.Now}
             },
             schema: "SSI");
             #endregion SSI

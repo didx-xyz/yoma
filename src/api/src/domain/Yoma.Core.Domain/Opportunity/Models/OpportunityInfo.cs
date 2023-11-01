@@ -24,6 +24,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public decimal? YomaReward { get; set; }
 
+        public bool VerificationEnabled { get; set; }
+
+        public VerificationMethod? VerificationMethod { get; set; }
+
         public string Difficulty { get; set; }
 
         public string CommitmentInterval { get; set; }
@@ -55,5 +59,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public List<Language>? Languages { get; set; }
 
         public List<Skill>? Skills { get; set; }
+
+        public List<Lookups.OpportunityVerificationType>? VerificationTypes { get; set; }
     }
 }

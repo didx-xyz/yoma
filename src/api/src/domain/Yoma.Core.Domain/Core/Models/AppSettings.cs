@@ -17,6 +17,8 @@ namespace Yoma.Core.Domain.Core.Models
         public int CacheAbsoluteExpirationRelativeToNowInDays { get; set; }
 
         public CacheItemType CacheEnabledByCacheItemTypes { get; set; }
+
+        public int SSIMaximumRetryAttempts { get; set; }
     }
 
     public class AppSettingsCredentials

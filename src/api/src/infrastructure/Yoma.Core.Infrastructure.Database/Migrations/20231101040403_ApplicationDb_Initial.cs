@@ -17,13 +17,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 name: "Lookup");
 
             migrationBuilder.EnsureSchema(
+                name: "SSI");
+
+            migrationBuilder.EnsureSchema(
                 name: "Opportunity");
 
             migrationBuilder.EnsureSchema(
                 name: "Entity");
-
-            migrationBuilder.EnsureSchema(
-                name: "SSI");
 
             migrationBuilder.CreateTable(
                 name: "Blob",
@@ -58,6 +58,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Country", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CredentialIssuanceStatus",
+                schema: "SSI",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "varchar(20)", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CredentialIssuanceStatus", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -266,6 +280,32 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SSITenantCreationStatus",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SSITenantCreationStatus", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TenantCreationStatus",
+                schema: "SSI",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "varchar(20)", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TenantCreationStatus", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "TimeInterval",
                 schema: "Lookup",
                 columns: table => new
@@ -301,8 +341,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ZltoWalletId = table.Column<string>(type: "varchar(50)", nullable: true),
                     DateZltoWalletCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     YoIDOnboarded = table.Column<bool>(type: "bit", nullable: true),
-                    SSITenantId = table.Column<string>(type: "varchar(50)", nullable: true),
-                    DateSSITenantCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    DateYoIDOnboarded = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
@@ -360,8 +399,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     CommentApproval = table.Column<string>(type: "varchar(500)", nullable: true),
                     DateStatusModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     LogoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    SSITenantId = table.Column<string>(type: "varchar(50)", nullable: true),
-                    DateSSITenantCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
@@ -395,7 +432,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SSISchemaObjectId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SSISchemaEntityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "varchar(50)", nullable: false),
                     ValueDescription = table.Column<string>(type: "varchar(125)", nullable: false),
                     Required = table.Column<bool>(type: "bit", nullable: false),
@@ -405,10 +442,39 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 {
                     table.PrimaryKey("PK_SchemaEntityProperty", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SchemaEntityProperty_SchemaEntity_SSISchemaObjectId",
-                        column: x => x.SSISchemaObjectId,
+                        name: "FK_SchemaEntityProperty_SchemaEntity_SSISchemaEntityId",
+                        column: x => x.SSISchemaEntityId,
                         principalSchema: "SSI",
                         principalTable: "SchemaEntity",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SchemaEntityType",
+                schema: "SSI",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SSISchemaEntityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SSISchemaTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SchemaEntityType", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SchemaEntityType_SchemaEntity_SSISchemaEntityId",
+                        column: x => x.SSISchemaEntityId,
+                        principalSchema: "SSI",
+                        principalTable: "SchemaEntity",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_SchemaEntityType_SchemaType_SSISchemaTypeId",
+                        column: x => x.SSISchemaTypeId,
+                        principalSchema: "SSI",
+                        principalTable: "SchemaType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -608,6 +674,45 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TenantCreation",
+                schema: "SSI",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    EntityType = table.Column<string>(type: "varchar(25)", nullable: false),
+                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    TenantId = table.Column<string>(type: "varchar(50)", nullable: true),
+                    ErrorReason = table.Column<string>(type: "varchar(500)", nullable: true),
+                    RetryCount = table.Column<byte>(type: "tinyint", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TenantCreation", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TenantCreation_Organization_OrganizationId",
+                        column: x => x.OrganizationId,
+                        principalSchema: "Entity",
+                        principalTable: "Organization",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_TenantCreation_SSITenantCreationStatus_StatusId",
+                        column: x => x.StatusId,
+                        principalTable: "SSITenantCreationStatus",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TenantCreation_User_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "Entity",
+                        principalTable: "User",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "MyOpportunity",
                 schema: "Opportunity",
                 columns: table => new
@@ -623,8 +728,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     DateCompleted = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     ZltoReward = table.Column<decimal>(type: "decimal(8,2)", nullable: true),
                     YomaReward = table.Column<decimal>(type: "decimal(8,2)", nullable: true),
-                    SSICredentialId = table.Column<string>(type: "varchar(50)", nullable: true),
-                    DateSSICredentialIssued = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
@@ -808,6 +911,63 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CredentialIssuance",
+                schema: "SSI",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SchemaTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ArtifactType = table.Column<string>(type: "varchar(25)", nullable: false),
+                    SchemaName = table.Column<string>(type: "varchar(125)", nullable: false),
+                    SchemaVersion = table.Column<string>(type: "varchar(20)", nullable: false),
+                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    MyOpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CredentialId = table.Column<string>(type: "varchar(50)", nullable: true),
+                    ErrorReason = table.Column<string>(type: "varchar(500)", nullable: true),
+                    RetryCount = table.Column<byte>(type: "tinyint", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CredentialIssuance", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CredentialIssuance_CredentialIssuanceStatus_StatusId",
+                        column: x => x.StatusId,
+                        principalSchema: "SSI",
+                        principalTable: "CredentialIssuanceStatus",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CredentialIssuance_MyOpportunity_MyOpportunityId",
+                        column: x => x.MyOpportunityId,
+                        principalSchema: "Opportunity",
+                        principalTable: "MyOpportunity",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_CredentialIssuance_Organization_OrganizationId",
+                        column: x => x.OrganizationId,
+                        principalSchema: "Entity",
+                        principalTable: "Organization",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_CredentialIssuance_SchemaType_SchemaTypeId",
+                        column: x => x.SchemaTypeId,
+                        principalSchema: "SSI",
+                        principalTable: "SchemaType",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CredentialIssuance_User_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "Entity",
+                        principalTable: "User",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "MyOpportunityVerifications",
                 schema: "Opportunity",
                 columns: table => new
@@ -886,6 +1046,51 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_CredentialIssuance_MyOpportunityId",
+                schema: "SSI",
+                table: "CredentialIssuance",
+                column: "MyOpportunityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CredentialIssuance_OrganizationId",
+                schema: "SSI",
+                table: "CredentialIssuance",
+                column: "OrganizationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CredentialIssuance_SchemaName_UserId_OrganizationId_MyOpportunityId",
+                schema: "SSI",
+                table: "CredentialIssuance",
+                columns: new[] { "SchemaName", "UserId", "OrganizationId", "MyOpportunityId" },
+                unique: true,
+                filter: "[UserId] IS NOT NULL AND [OrganizationId] IS NOT NULL AND [MyOpportunityId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CredentialIssuance_SchemaTypeId_ArtifactType_SchemaName_StatusId_DateCreated_DateModified",
+                schema: "SSI",
+                table: "CredentialIssuance",
+                columns: new[] { "SchemaTypeId", "ArtifactType", "SchemaName", "StatusId", "DateCreated", "DateModified" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CredentialIssuance_StatusId",
+                schema: "SSI",
+                table: "CredentialIssuance",
+                column: "StatusId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CredentialIssuance_UserId",
+                schema: "SSI",
+                table: "CredentialIssuance",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CredentialIssuanceStatus_Name",
+                schema: "SSI",
+                table: "CredentialIssuanceStatus",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Gender_Name",
                 schema: "Lookup",
                 table: "Gender",
@@ -926,10 +1131,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_MyOpportunity_VerificationStatusId_DateCompleted_ZltoReward_YomaReward_SSICredentialId_DateSSICredentialIssued_DateCreated_D~",
+                name: "IX_MyOpportunity_VerificationStatusId_DateCompleted_ZltoReward_YomaReward_DateCreated_DateModified",
                 schema: "Opportunity",
                 table: "MyOpportunity",
-                columns: new[] { "VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "SSICredentialId", "DateSSICredentialIssued", "DateCreated", "DateModified" });
+                columns: new[] { "VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_MyOpportunityAction_Name",
@@ -1121,10 +1326,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Organization_StatusId_DateStatusModified_SSITenantId_DateSSITenantCreated_DateModified_DateCreated",
+                name: "IX_Organization_StatusId_DateStatusModified_DateModified_DateCreated",
                 schema: "Entity",
                 table: "Organization",
-                columns: new[] { "StatusId", "DateStatusModified", "SSITenantId", "DateSSITenantCreated", "DateModified", "DateCreated" });
+                columns: new[] { "StatusId", "DateStatusModified", "DateModified", "DateCreated" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrganizationDocuments_FileId",
@@ -1187,11 +1392,24 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_SchemaEntityProperty_SSISchemaObjectId_Name",
+                name: "IX_SchemaEntityProperty_SSISchemaEntityId_Name",
                 schema: "SSI",
                 table: "SchemaEntityProperty",
-                columns: new[] { "SSISchemaObjectId", "Name" },
+                columns: new[] { "SSISchemaEntityId", "Name" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SchemaEntityType_SSISchemaEntityId_SSISchemaTypeId",
+                schema: "SSI",
+                table: "SchemaEntityType",
+                columns: new[] { "SSISchemaEntityId", "SSISchemaTypeId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SchemaEntityType_SSISchemaTypeId",
+                schema: "SSI",
+                table: "SchemaEntityType",
+                column: "SSISchemaTypeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SchemaType_Name",
@@ -1211,6 +1429,39 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 name: "IX_Skill_Name",
                 schema: "Lookup",
                 table: "Skill",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantCreation_EntityType_UserId_OrganizationId",
+                schema: "SSI",
+                table: "TenantCreation",
+                columns: new[] { "EntityType", "UserId", "OrganizationId" },
+                unique: true,
+                filter: "[UserId] IS NOT NULL AND [OrganizationId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantCreation_OrganizationId",
+                schema: "SSI",
+                table: "TenantCreation",
+                column: "OrganizationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantCreation_StatusId_DateCreated_DateModified",
+                schema: "SSI",
+                table: "TenantCreation",
+                columns: new[] { "StatusId", "DateCreated", "DateModified" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantCreation_UserId",
+                schema: "SSI",
+                table: "TenantCreation",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantCreationStatus_Name",
+                schema: "SSI",
+                table: "TenantCreationStatus",
                 column: "Name",
                 unique: true);
 
@@ -1241,10 +1492,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_ExternalId_ZltoWalletId_DateZltoWalletCreated_YoIDOnboarded_SSITenantId_Da~",
+                name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_ExternalId_ZltoWalletId_DateZltoWalletCreated_YoIDOnboarded_DateYoIDOnboar~",
                 schema: "Entity",
                 table: "User",
-                columns: new[] { "FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "ZltoWalletId", "DateZltoWalletCreated", "YoIDOnboarded", "SSITenantId", "DateSSITenantCreated", "DateCreated", "DateModified" });
+                columns: new[] { "FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "ZltoWalletId", "DateZltoWalletCreated", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_User_GenderId",
@@ -1277,6 +1528,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "CredentialIssuance",
+                schema: "SSI");
+
             migrationBuilder.DropTable(
                 name: "MyOpportunityVerifications",
                 schema: "Opportunity");
@@ -1318,12 +1573,24 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI");
 
             migrationBuilder.DropTable(
-                name: "SchemaType",
+                name: "SchemaEntityType",
+                schema: "SSI");
+
+            migrationBuilder.DropTable(
+                name: "TenantCreation",
+                schema: "SSI");
+
+            migrationBuilder.DropTable(
+                name: "TenantCreationStatus",
                 schema: "SSI");
 
             migrationBuilder.DropTable(
                 name: "UserSkills",
                 schema: "Entity");
+
+            migrationBuilder.DropTable(
+                name: "CredentialIssuanceStatus",
+                schema: "SSI");
 
             migrationBuilder.DropTable(
                 name: "MyOpportunity",
@@ -1348,6 +1615,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             migrationBuilder.DropTable(
                 name: "SchemaEntity",
                 schema: "SSI");
+
+            migrationBuilder.DropTable(
+                name: "SchemaType",
+                schema: "SSI");
+
+            migrationBuilder.DropTable(
+                name: "SSITenantCreationStatus");
 
             migrationBuilder.DropTable(
                 name: "Skill",
