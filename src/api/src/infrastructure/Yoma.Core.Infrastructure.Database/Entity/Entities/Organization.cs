@@ -8,7 +8,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 {
     [Table("Organization", Schema = "Entity")]
     [Index(nameof(Name), IsUnique = true)]
-    [Index(nameof(StatusId), nameof(DateStatusModified), nameof(SSITenantId), nameof(DateSSITenantCreated), nameof(DateModified), nameof(DateCreated))]
+    [Index(nameof(StatusId), nameof(DateStatusModified), nameof(DateModified), nameof(DateCreated))]
     public class Organization : BaseEntity<Guid>
     {
         [Required]
@@ -71,12 +71,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
         [ForeignKey(nameof(LogoId))]
         public Guid? LogoId { get; set; }
         public BlobObject? Logo { get; set; }
-
-        [Column(TypeName = "varchar(50)")]
-        public string? SSITenantId { get; set; }
-
-
-        public DateTimeOffset? DateSSITenantCreated { get; set; }
 
         [Required]
         public DateTimeOffset DateCreated { get; set; }

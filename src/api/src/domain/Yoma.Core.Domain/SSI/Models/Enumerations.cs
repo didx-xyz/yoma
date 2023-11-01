@@ -18,4 +18,18 @@ namespace Yoma.Core.Domain.SSI.Models
         Opportunity,
         YoID
     }
+
+    public enum TenantCreationStatus
+    {
+        Pending,
+        Created,
+        Error
+    }
+
+    public enum CredentialIssuanceStatus
+    {
+        Pending,
+        Issued,
+        Error
+    }
 }

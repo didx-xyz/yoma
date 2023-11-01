@@ -108,12 +108,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Public Members
-        public Models.Opportunity GetById(Guid id, bool includeChildren, bool includeComputed, bool ensureOrganizationAuthorization)
+        public Models.Opportunity GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization)
         {
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
 
-            var result = GetByIdOrNull(id, includeChildren, includeComputed)
+            var result = GetByIdOrNull(id, includeChildItems, includeComputed)
                 ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(Models.Opportunity)} with id '{id}' does not exist");
 
             if (ensureOrganizationAuthorization)

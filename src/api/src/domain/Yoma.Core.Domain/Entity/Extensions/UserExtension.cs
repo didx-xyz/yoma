@@ -81,6 +81,8 @@ namespace Yoma.Core.Domain.Entity.Extensions
                 PhotoId = value.PhotoId,
                 PhotoURL = value.PhotoURL,
                 DateLastLogin = value.DateLastLogin,
+                YoIDOnboarded = value.YoIDOnboarded,
+                DateYoIDOnboarded = value.DateYoIDOnboarded,
                 Skills = value.Skills
             };
         }

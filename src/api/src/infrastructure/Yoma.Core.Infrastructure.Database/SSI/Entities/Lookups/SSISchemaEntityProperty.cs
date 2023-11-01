@@ -6,13 +6,13 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 namespace Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups
 {
     [Table("SchemaEntityProperty", Schema = "SSI")]
-    [Index(nameof(SSISchemaObjectId), nameof(Name), IsUnique = true)]
+    [Index(nameof(SSISchemaEntityId), nameof(Name), IsUnique = true)]
     public class SSISchemaEntityProperty : BaseEntity<Guid>
     {
         [Required]
-        [ForeignKey("SSISchemaObjectId")]
-        public Guid SSISchemaObjectId { get; set; }
-        public SSISchemaEntity SSISchemaObject { get; set; }
+        [ForeignKey("SSISchemaEntityId")]
+        public Guid SSISchemaEntityId { get; set; }
+        public SSISchemaEntity SSISchemaEntity { get; set; }
 
         [Required]
         [Column(TypeName = "varchar(50)")]

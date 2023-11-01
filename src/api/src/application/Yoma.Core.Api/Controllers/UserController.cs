@@ -49,6 +49,21 @@ namespace Yoma.Core.Api.Controllers
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
+
+        [SwaggerOperation(Summary = "Search for users based on the supplied filter (Admin or Organization Admin roles required)")]
+        [HttpPost("search")]
+        [ProducesResponseType(typeof(List<UserSearchResults>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult Search([FromBody] UserSearchFilter filter)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(Search));
+
+            var result = _userService.Search(filter);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(Search));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
         #endregion Administrative Actions
 
         #region Authenticated User Based Actions
@@ -97,17 +112,17 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Search for users based on the supplied filter (Admin or Organization Admin roles required)")]
-        [HttpPost("search")]
-        [ProducesResponseType(typeof(List<UserSearchResults>), (int)HttpStatusCode.OK)]
-        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public IActionResult Search([FromBody] UserSearchFilter filter)
+        [SwaggerOperation(Summary = "Complete YoID onboarding (Authenticated User)")]
+        [HttpPatch("yoId")]
+        [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public async Task<IActionResult> YoIDOnboard()
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(Search));
+            _logger.LogInformation("Handling request {requestName}", nameof(YoIDOnboard));
 
-            var result = _userService.Search(filter);
+            var result = await _userProfileService.YoIDOnboard();
 
-            _logger.LogInformation("Request {requestName} handled", nameof(Search));
+            _logger.LogInformation("Request {requestName} handled", nameof(YoIDOnboard));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

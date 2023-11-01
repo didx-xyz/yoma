@@ -1,4 +1,5 @@
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
@@ -19,6 +20,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
             return _context.SSISchemaType.Select(entity => new SSISchemaType
             {
                 Id = entity.Id,
+                Type = Enum.Parse<SchemaType>(entity.Name, true),
                 Name = entity.Name,
                 Description = entity.Description,
                 SupportMultiple = entity.SupportMultiple

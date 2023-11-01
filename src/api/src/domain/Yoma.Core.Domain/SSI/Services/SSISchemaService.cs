@@ -61,7 +61,7 @@ namespace Yoma.Core.Domain.SSI.Services
             //no configured schemas found 
             if (schemas == null || !schemas.Any()) return results;
 
-            var matchedEntitiesGrouped = _ssiSchemaEntityService.List()
+            var matchedEntitiesGrouped = _ssiSchemaEntityService.List(null)
                 .SelectMany(entity => schemas
                 .Where(schema => schema.AttributeNames
                     .Any(attributeName => entity.Properties?.Any(property =>
@@ -99,6 +99,11 @@ namespace Yoma.Core.Domain.SSI.Services
             if (type == null) return results;
 
             results = results.Where(o => o.Type == type).ToList();
+
+            var mismatchedSchemas = results.Where(o => o.Entities?.Any(e => e.Types?.Any(t => t?.Type != o.Type) == true) == true).ToList();
+            if (mismatchedSchemas != null && mismatchedSchemas.Any())
+                throw new DataInconsistencyException($"Schema(s) '{string.Join(", ", mismatchedSchemas.Select(o => $"{o.Name}|{o.Type}"))}': Schema type vs entity schema type mismatches detected");
+
             return results;
         }
 
@@ -138,7 +143,7 @@ namespace Yoma.Core.Domain.SSI.Services
             await _schemaRequestValidatorCreate.ValidateAndThrowAsync(request);
 
             var schemaType = _ssiSchemaTypeService.GetById(request.TypeId);
-            var nameFull = $"{schemaType.Name}{SchemaName_TypeDelimiter}{request.Name}";
+            var nameFull = $"{schemaType.Name}{SchemaName_TypeDelimiter}{request.Name}"; //i.e. Opportunity|Learning
 
             if (await GetByNameOrNull(nameFull) != null)
                 throw new ValidationException($"Schema '{nameFull}' already exists");
@@ -164,7 +169,7 @@ namespace Yoma.Core.Domain.SSI.Services
         #region Private Members
         private SSISchema ConvertToSSISchema(Schema schema)
         {
-            var matchedEntities = _ssiSchemaEntityService.List()
+            var matchedEntities = _ssiSchemaEntityService.List(null)
              .Where(entity =>
                  entity.Properties?.Any(property =>
                      schema.AttributeNames.Contains(property.AttributeName, StringComparer.InvariantCultureIgnoreCase)) == true
@@ -186,14 +191,14 @@ namespace Yoma.Core.Domain.SSI.Services
 
         private SSISchema ConvertToSSISchema(Schema schema, List<SSISchemaEntity>? matchedEntities)
         {
-            var nameParts = schema.Name.Split(SchemaName_TypeDelimiter);
+            var nameParts = schema.Name.Split(SchemaName_TypeDelimiter); //i.e. Opportunity|Learning
             if (nameParts.Length != 2)
                 throw new ArgumentException($"Schema name of '{schema.Name}' is invalid. Expecting [type]:[name]", nameof(schema));
 
             var countEntityProperties = matchedEntities?.Sum(o => o.Properties?.Count);
 
             if (countEntityProperties != schema.AttributeNames?.Count)
-                throw new DataInconsistencyException($"Schema '{schema.Name}': Attribute (count '{matchedEntities?.Count}') vs entity property mismatch detected (count '{countEntityProperties}')");
+                throw new DataInconsistencyException($"Schema '{schema.Name}': Attribute (count '{schema.AttributeNames?.Count}') vs entity property mismatch detected (count '{countEntityProperties}')");
 
             var schemaType = _ssiSchemaTypeService.GetByName(nameParts.First());
 

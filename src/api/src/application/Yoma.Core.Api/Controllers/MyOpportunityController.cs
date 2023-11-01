@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 
 namespace Yoma.Core.Api.Controllers
 {
-    [Route("api/v3/myopportunity")]
+    [Route("api/v3/myOpportunity")]
     [ApiController]
     [Authorize(Policy = Common.Constants.Authorization_Policy)]
     [SwaggerTag("(by default, User role required)")]
@@ -61,7 +62,6 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK);
         }
 
-
         [SwaggerOperation(Summary = "Reject or complete manual verification for the specified 'my' opportunity (Admin or Organization Admin roles required)")]
         [HttpPatch("verification/finalize")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
@@ -79,6 +79,21 @@ namespace Yoma.Core.Api.Controllers
         #endregion Administrative Actions
 
         #region Authenticated User Based Actions
+        [SwaggerOperation(Summary = "Get 'my' opportunity verification status for the specified opportunity (Authenticated User)")]
+        [HttpPost("action/verify/status")]
+        [ProducesResponseType(typeof(VerificationStatus?), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_User}")]
+        public IActionResult GetVerificationStatus([FromQuery] Guid opportunityId)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(GetVerificationStatus));
+
+            var result = _myOpportunityService.GetVerificationStatusOrNull(opportunityId);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(GetVerificationStatus));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
         [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter (Authenticated User)")]
         [HttpPost("search")]
         [ProducesResponseType(typeof(List<MyOpportunitySearchResults>), (int)HttpStatusCode.OK)]

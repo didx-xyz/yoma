@@ -18,7 +18,7 @@ namespace Yoma.Core.Domain.SSI.Validators
             _ssiSchemaTypeService = ssiSchemaTypeService;
 
             var fullName = string.Empty;
-            var systemCharacters = SSISchemaService.SchemaName_SystemCharacters.Union(new[] { SSISchemaService.SchemaName_TypeDelimiter });
+            var systemCharacters = SSISchemaService.SchemaName_SystemCharacters.Union(new[] { SSISchemaService.SchemaName_TypeDelimiter }); //i.e. Opportunity|Learning
 
             RuleFor(x => x.TypeId).NotEmpty().Must(TypeExists).WithMessage($"Specified type is invalid / does not exist.");
             RuleFor(o => o.Name).Must(name => !systemCharacters.Any(c => name.Contains(c))).WithMessage(name => $"{{PropertyName}} cannot contain system characters '{string.Join(' ', systemCharacters)}'");

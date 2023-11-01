@@ -17,5 +17,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups
         public DateTimeOffset DateCreated { get; set; }
 
         public ICollection<SSISchemaEntityProperty> Properties { get; set; }
+
+        public ICollection<SSISchemaEntityType> Types { get; set; }
     }
 }

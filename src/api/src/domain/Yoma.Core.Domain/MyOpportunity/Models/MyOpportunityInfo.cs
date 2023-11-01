@@ -26,6 +26,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public DateTimeOffset? OpportunityDateEnd { get; set; }
 
+        public Guid OrganizationId { get; set; }
+
         public string OrganizationName { get; set; }
 
         public string? OrganizationLogoURL { get; set; }

@@ -54,15 +54,15 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Return a list of schema entities (objects) and their associated properties that serve as data sources when creating a schema")]
+        [SwaggerOperation(Summary = "Return a list of schema entities (objects) and their associated properties that serve as data sources when creating a schema, optionally filtered by schema type")]
         [HttpGet("schema/entity")]
         [ProducesResponseType(typeof(List<SSISchemaEntity>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = Constants.Role_Admin)]
-        public IActionResult ListSchemaEntities()
+        public IActionResult ListSchemaEntities([FromQuery] SchemaType? schemaType)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListSchemaEntities));
 
-            var result = _ssiSchemaEntityService.List();
+            var result = _ssiSchemaEntityService.List(schemaType);
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListSchemaEntities));
 

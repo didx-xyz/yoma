@@ -66,6 +66,13 @@ namespace Yoma.Core.Domain.Entity.Services
             return ToProfile(user);
         }
 
+        public async Task<UserProfile> YoIDOnboard()
+        {
+            var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+            var user = await _userService.YoIDOnboard(username);
+            return ToProfile(user);
+        }
+
         public async Task<UserProfile> Update(UserRequestProfile request)
         {
             if (request == null)
@@ -90,7 +97,7 @@ namespace Yoma.Core.Domain.Entity.Services
             if (emailUpdated) user.EmailConfirmed = false;
             user.FirstName = request.FirstName;
             user.Surname = request.Surname;
-            user.DisplayName = request.DisplayName;
+            user.DisplayName = request.DisplayName ?? string.Empty;
             user.SetDisplayName();
             user.PhoneNumber = request.PhoneNumber;
             user.CountryId = request.CountryId;

@@ -46,9 +46,7 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public bool? YoIDOnboarded { get; set; }
 
-        public string? SSITenantId { get; set; }
-
-        public DateTimeOffset? DateSSITenantCreated { get; set; }
+        public DateTimeOffset? DateYoIDOnboarded { get; set; }
 
         public DateTimeOffset DateCreated { get; set; }
 

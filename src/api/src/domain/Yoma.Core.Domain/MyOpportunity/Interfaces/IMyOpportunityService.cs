@@ -5,6 +5,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 {
     public interface IMyOpportunityService
     {
+        Models.MyOpportunity GetById(Guid id, bool includeChildItems, bool includeComputed);
+
+        VerificationStatus? GetVerificationStatusOrNull(Guid opportunityId);
+
         MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter);
 
         MyOpportunitySearchResults Search(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
@@ -22,9 +26,5 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
         Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalize request);
 
         Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(PaginationFilter filter, bool includeExpired);
-
-        List<Models.MyOpportunity> ListPendingSSICredentialIssuance(int batchSize);
-
-        Task<Models.MyOpportunity> UpdateSSICredentialReference(Guid id, string credentialId);
     }
 }

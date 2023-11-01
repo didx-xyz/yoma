@@ -4,6 +4,7 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
+using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 
 namespace Yoma.Core.Domain.SSI.Services.Lookups
@@ -13,16 +14,19 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         #region Class Variables
         private readonly AppSettings _appSettings;
         private readonly IMemoryCache _memoryCache;
+        private readonly ISSISchemaTypeService _ssiSchemaTypeService;
         private readonly IRepositoryWithNavigation<SSISchemaEntity> _ssiSchemaEntityRepository;
         #endregion
 
         #region Constructor
         public SSISchemaEntityService(IOptions<AppSettings> appSettings,
             IMemoryCache memoryCache,
+            ISSISchemaTypeService ssiSchemaTypeService,
             IRepositoryWithNavigation<SSISchemaEntity> ssiSchemaEntityRepository)
         {
             _appSettings = appSettings.Value;
             _memoryCache = memoryCache;
+            _ssiSchemaTypeService = ssiSchemaTypeService;
             _ssiSchemaEntityRepository = ssiSchemaEntityRepository;
         }
         #endregion
@@ -39,7 +43,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
 
-            return List().SingleOrDefault(o => o.Id == id);
+            return List(null).SingleOrDefault(o => o.Id == id);
         }
 
         public SSISchemaEntityProperty GetByAttributeName(string attributeName)
@@ -54,7 +58,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
                 throw new ArgumentNullException(nameof(attributeName));
             attributeName = attributeName.Trim();
 
-            var result = List().SelectMany(o => o.Properties?.Where(p => string.Equals(p.AttributeName, attributeName, StringComparison.InvariantCultureIgnoreCase)) ?? Enumerable.Empty<SSISchemaEntityProperty>()).ToList();
+            var result = List(null).SelectMany(o => o.Properties?.Where(p => string.Equals(p.AttributeName, attributeName, StringComparison.InvariantCultureIgnoreCase)) ?? Enumerable.Empty<SSISchemaEntityProperty>()).ToList();
             if (result == null || !result.Any())
                 throw new ArgumentException($"{nameof(SSISchemaEntityProperty)} not found with attribute name '{attributeName}'", nameof(attributeName));
 
@@ -64,28 +68,35 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
             return result.SingleOrDefault();
         }
 
-        public List<SSISchemaEntity> List()
+        public List<SSISchemaEntity> List(SchemaType? type)
         {
+            List<SSISchemaEntity> results;
             if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(Core.CacheItemType.Lookups))
             {
-                var entities = _ssiSchemaEntityRepository.Query(true).ToList();
-                ReflectEntityTypeInformation(entities);
-                entities = entities.OrderBy(o => o.Name).ToList();
-                entities.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.AttributeName).ToList());
-                return entities;
+                results = _ssiSchemaEntityRepository.Query(true).ToList();
+                ReflectEntityTypeInformation(results);
+                results = results.OrderBy(o => o.Name).ToList();
+                results.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.AttributeName).ToList());
+            }
+            else
+            {
+                results = _memoryCache.GetOrCreate(nameof(SSISchemaEntity), entry =>
+                {
+                    entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
+                    var entities = _ssiSchemaEntityRepository.Query(true).ToList();
+                    ReflectEntityTypeInformation(entities);
+                    entities = entities.OrderBy(o => o.Name).ToList();
+                    entities.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.AttributeName).ToList());
+                    return entities;
+                }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(SSISchemaEntity)}s'");
             }
 
-            var result = _memoryCache.GetOrCreate(nameof(SSISchemaEntity), entry =>
-            {
-                entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-                var entities = _ssiSchemaEntityRepository.Query(true).ToList();
-                ReflectEntityTypeInformation(entities);
-                entities = entities.OrderBy(o => o.Name).ToList();
-                entities.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.AttributeName).ToList());
-                return entities;
-            }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(SSISchemaEntity)}s'");
-            return result;
+            if (type == null) return results;
+
+            var typeId = _ssiSchemaTypeService.GetByName(type.Value.ToString()).Id;
+            results = results.Where(o => o.Types?.Any(t => t.Id == typeId) == true).ToList();
+            return results;
         }
         #endregion
 

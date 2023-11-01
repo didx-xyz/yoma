@@ -28,5 +28,10 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Provider
         /// Ensure the tenant for the specified request
         /// </summary>
         Task<string> EnsureTenant(TenantRequest request);
+
+        /// <summary>
+        /// Issue credential for the specified request
+        /// </summary>
+        Task<string> IssueCredential(CredentialIssuanceRequest request);
     }
 }
