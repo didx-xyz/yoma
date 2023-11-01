@@ -72,7 +72,7 @@ namespace Yoma.Core.Domain.SSI.Services
         {
             var credentialIssuanceStatusPendingId = _ssiCredentialIssuanceStatusService.GetByName(CredentialIssuanceStatus.Pending.ToString()).Id;
 
-            // issuance skipped if wallets were not created (see SSIBackgroundService)
+            // issuance skipped if tenants were not created (see SSIBackgroundService)
             var results = _ssiCredentialIssuanceRepository.Query().Where(o => o.StatusId == credentialIssuanceStatusPendingId).OrderBy(o => o.DateModified).Take(batchSize).ToList();
 
             return results;

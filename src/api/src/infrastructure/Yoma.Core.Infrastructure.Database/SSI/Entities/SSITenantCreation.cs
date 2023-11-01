@@ -7,10 +7,10 @@ using Yoma.Core.Infrastructure.Database.Entity.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.SSI.Entities
 {
-    [Table("WalletCreation", Schema = "SSI")]
-    [Index(nameof(UserId), nameof(UserId), nameof(OrganizationId), IsUnique = true)]
+    [Table("TenantCreation", Schema = "SSI")]
+    [Index(nameof(EntityType), nameof(UserId), nameof(OrganizationId), IsUnique = true)]
     [Index(nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
-    public class SSIWalletCreation : BaseEntity<Guid>
+    public class SSITenantCreation : BaseEntity<Guid>
     {
         [Required]
         [Column(TypeName = "varchar(25)")]
@@ -19,7 +19,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities
         [Required]
         [ForeignKey("StatusId")]
         public Guid StatusId { get; set; }
-        public SSIWalletCreationStatus Status { get; set; }
+        public SSITenantCreationStatus Status { get; set; }
 
         [ForeignKey("UserId")]
         public Guid? UserId { get; set; }
@@ -30,7 +30,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities
         public Organization? Organization { get; set; }
 
         [Column(TypeName = "varchar(50)")]
-        public string? WalletId { get; set; }
+        public string? TenantId { get; set; }
 
         [Column(TypeName = "varchar(500)")]
         public string? ErrorReason { get; set; }

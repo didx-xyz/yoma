@@ -5,9 +5,9 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups
 {
-    [Table("SchemaEntityProperty", Schema = "SSI")]
-    [Index(nameof(SSISchemaEntityId), nameof(Name), IsUnique = true)]
-    public class SSISchemaEntityProperty : BaseEntity<Guid>
+    [Table("SchemaEntityType", Schema = "SSI")]
+    [Index(nameof(SSISchemaEntityId), nameof(SSISchemaTypeId), IsUnique = true)]
+    public class SSISchemaEntityType : BaseEntity<Guid>
     {
         [Required]
         [ForeignKey("SSISchemaEntityId")]
@@ -15,15 +15,9 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups
         public SSISchemaEntity SSISchemaEntity { get; set; }
 
         [Required]
-        [Column(TypeName = "varchar(50)")]
-        public string Name { get; set; }
-
-        [Required]
-        [Column(TypeName = "varchar(125)")]
-        public string ValueDescription { get; set; }
-
-        [Required]
-        public bool Required { get; set; }
+        [ForeignKey("SSISchemaTypeId")]
+        public Guid SSISchemaTypeId { get; set; }
+        public SSISchemaType SSISchemaType { get; set; }
 
         [Required]
         public DateTimeOffset DateCreated { get; set; }

@@ -34,7 +34,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IOrganizationProviderTypeService _providerTypeService;
         private readonly IBlobService _blobService;
-        private readonly ISSIWalletCreationService _ssiWalletCreationService;
+        private readonly ISSITenantCreationService _ssiTenantCreationService;
         private readonly IEmailProviderClient _emailProviderClient;
         private readonly OrganizationRequestValidatorCreate _organizationCreateRequestValidator;
         private readonly OrganizationRequestValidatorUpdate _organizationUpdateRequestValidator;
@@ -61,7 +61,7 @@ namespace Yoma.Core.Domain.Entity.Services
             IOrganizationStatusService organizationStatusService,
             IOrganizationProviderTypeService providerTypeService,
             IBlobService blobService,
-            ISSIWalletCreationService ssiWalletCreationService,
+            ISSITenantCreationService ssiTenantCreationService,
             IEmailProviderClientFactory emailProviderClientFactory,
             OrganizationRequestValidatorCreate organizationCreateRequestValidator,
             OrganizationRequestValidatorUpdate organizationUpdateRequestValidator,
@@ -80,7 +80,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _organizationStatusService = organizationStatusService;
             _providerTypeService = providerTypeService;
             _blobService = blobService;
-            _ssiWalletCreationService = ssiWalletCreationService;
+            _ssiTenantCreationService = ssiTenantCreationService;
             _emailProviderClient = emailProviderClientFactory.CreateClient();
             _organizationCreateRequestValidator = organizationCreateRequestValidator;
             _organizationUpdateRequestValidator = organizationUpdateRequestValidator;
@@ -485,7 +485,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
                     result.CommentApproval = request.Comment;
 
-                    await _ssiWalletCreationService.Create(EntityType.Organization, result.Id);
+                    await _ssiTenantCreationService.Create(EntityType.Organization, result.Id);
 
                     await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Approved);
 

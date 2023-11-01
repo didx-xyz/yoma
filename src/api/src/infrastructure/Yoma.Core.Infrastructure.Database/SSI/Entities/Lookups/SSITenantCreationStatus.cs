@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups
 {
-    [Table("WalletCreationStatus", Schema = "SSI")]
+    [Table("TenantCreationStatus", Schema = "SSI")]
     [Index(nameof(Name), IsUnique = true)]
-    public class SSIWalletCreationStatus : BaseEntity<Guid>
+    public class SSITenantCreationStatus : BaseEntity<Guid>
     {
         [Required]
         [Column(TypeName = "varchar(20)")]

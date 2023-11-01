@@ -93,7 +93,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         #endregion
 
         #region Public Members
-        public MyOpportunityInfo GetById(Guid id, bool includeChildItems, bool includeComputed)
+        public Models.MyOpportunity GetById(Guid id, bool includeChildItems, bool includeComputed)
         {
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
@@ -107,7 +107,19 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 result.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileId));
             }
 
-            return result.ToInfo();
+            return result;
+        }
+
+        public VerificationStatus? GetVerificationStatusOrNull(Guid opportunityId)
+        {
+            var opportunity = _opportunityService.GetById(opportunityId, true, false, false);
+
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+            var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
+
+            return myOpportunity?.VerificationStatus;
         }
 
         public MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter)

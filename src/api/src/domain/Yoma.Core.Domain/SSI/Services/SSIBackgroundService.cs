@@ -24,7 +24,7 @@ namespace Yoma.Core.Domain.SSI.Services
         private readonly IOpportunityService _opportunityService;
         private readonly IMyOpportunityService _myOpportunityService;
         private readonly ISSISchemaService _ssiSchemaService;
-        private readonly ISSIWalletCreationService _ssiWalletCreationService;
+        private readonly ISSITenantCreationService _ssiTenantCreationService;
         private readonly ISSICredentialIssuanceService _ssiCredentialIssuanceService;
         private readonly ISSIProviderClient _ssiProviderClient;
 
@@ -37,7 +37,7 @@ namespace Yoma.Core.Domain.SSI.Services
             IUserService userService,
             IOrganizationService organizationService,
             ISSISchemaService ssiSchemaService,
-            ISSIWalletCreationService ssiWalletCreationService,
+            ISSITenantCreationService ssiTenantCreationService,
             ISSICredentialIssuanceService ssiCredentialIssuanceService,
             ISSIProviderClientFactory ssiProviderClientFactory)
         {
@@ -46,7 +46,7 @@ namespace Yoma.Core.Domain.SSI.Services
             _userService = userService;
             _organizationService = organizationService;
             _ssiSchemaService = ssiSchemaService;
-            _ssiWalletCreationService = ssiWalletCreationService;
+            _ssiTenantCreationService = ssiTenantCreationService;
             _ssiCredentialIssuanceService = ssiCredentialIssuanceService;
             _ssiProviderClient = ssiProviderClientFactory.CreateClient();
         }
@@ -63,7 +63,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
                 while (executeUntil > DateTime.Now)
                 {
-                    var items = _ssiWalletCreationService.ListPendingCreation(_scheduleJobOptions.SSITenantCreationScheduleBatchSize);
+                    var items = _ssiTenantCreationService.ListPendingCreation(_scheduleJobOptions.SSITenantCreationScheduleBatchSize);
                     if (!items.Any()) break;
 
                     foreach (var item in items)
@@ -109,8 +109,8 @@ namespace Yoma.Core.Domain.SSI.Services
                                     throw new InvalidOperationException($"Entity type '{item.EntityType}' not supported");
                             }
 
-                            item.WalletId = _ssiProviderClient.EnsureTenant(request).Result;
-                            _ssiWalletCreationService.Update(item).Wait();
+                            item.TenantId = _ssiProviderClient.EnsureTenant(request).Result;
+                            _ssiTenantCreationService.Update(item).Wait();
 
                             _logger.LogInformation("Processed SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
                         }
@@ -118,9 +118,9 @@ namespace Yoma.Core.Domain.SSI.Services
                         {
                             _logger.LogError(ex, "Failed to created SSI tenant for '{entityType}'and item with id '{id}''", item.EntityType, item.Id);
 
-                            item.Status = Models.WalletCreationStatus.Error;
+                            item.Status = Models.TenantCreationStatus.Error;
                             item.ErrorReason = ex.Message;
-                            _ssiWalletCreationService.Update(item).Wait();
+                            _ssiTenantCreationService.Update(item).Wait();
                         }
 
                         if (executeUntil <= DateTime.Now) break;
@@ -164,23 +164,23 @@ namespace Yoma.Core.Domain.SSI.Services
                                 case Models.SchemaType.Opportunity:
                                     if (!item.MyOpportunityId.HasValue)
                                         throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'My' opportunity id is null");
-                                    var myOpportunityInfo = _myOpportunityService.GetById(item.MyOpportunityId.Value, false, false);
+                                    var myOpportunity = _myOpportunityService.GetById(item.MyOpportunityId.Value, false, false);
 
-                                    var walletIdIssuer = _ssiWalletCreationService.GetWalletIdNull(EntityType.Organization, myOpportunityInfo.OrganizationId);
-                                    if (string.IsNullOrEmpty(walletIdIssuer))
+                                    var tenantIdIssuer = _ssiTenantCreationService.GetTenantIdOrNull(EntityType.Organization, myOpportunity.OrganizationId);
+                                    if (string.IsNullOrEmpty(tenantIdIssuer))
                                     {
-                                        _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with ID '{id}' was skipped as the SSI issuer wallet creation has not been completed", item.SchemaType, item.Id);
+                                        _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with ID '{id}' was skipped as the SSI issuer tenant creation has not been completed", item.SchemaType, item.Id);
                                         continue;
                                     }
-                                    request.TenantIdIssuer = walletIdIssuer;
+                                    request.TenantIdIssuer = tenantIdIssuer;
 
-                                    var walletIdHolder = _ssiWalletCreationService.GetWalletIdNull(EntityType.User, myOpportunityInfo.UserId);
-                                    if (string.IsNullOrEmpty(walletIdHolder))
+                                    var tenantIdHolder = _ssiTenantCreationService.GetTenantIdOrNull(EntityType.User, myOpportunity.UserId);
+                                    if (string.IsNullOrEmpty(tenantIdHolder))
                                     {
-                                        _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with ID '{id}' was skipped as the SSI holder wallet creation has not been completed", item.SchemaType, item.Id);
+                                        _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with ID '{id}' was skipped as the SSI holder tenant creation has not been completed", item.SchemaType, item.Id);
                                         continue;
                                     }
-                                    request.TenantIdHolder = walletIdHolder;
+                                    request.TenantIdHolder = tenantIdHolder;
 
                                     foreach (var entity in schema.Entities)
                                     {
@@ -190,17 +190,17 @@ namespace Yoma.Core.Domain.SSI.Services
                                         switch (entityType)
                                         {
                                             case Type t when t == typeof(User):
-                                                var user = _userService.GetById(myOpportunityInfo.UserId, true, true);
+                                                var user = _userService.GetById(myOpportunity.UserId, true, true);
                                                 ReflectEntityValues(request, entity, t, user);
                                                 break;
 
                                             case Type t when t == typeof(Opportunity.Models.Opportunity):
-                                                var opportunity = _opportunityService.GetById(myOpportunityInfo.OpportunityId, true, true, false);
+                                                var opportunity = _opportunityService.GetById(myOpportunity.OpportunityId, true, true, false);
                                                 ReflectEntityValues(request, entity, t, opportunity);
                                                 break;
 
                                             case Type t when t == typeof(MyOpportunity.Models.MyOpportunityInfo):
-                                                ReflectEntityValues(request, entity, t, myOpportunityInfo);
+                                                ReflectEntityValues(request, entity, t, myOpportunity);
                                                 break;
 
                                             default:

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
@@ -22,12 +23,14 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
 
         public IQueryable<SSISchemaEntity> Query(bool includeChildItems)
         {
-            return _context.SSISchemaObject.Select(entity => new SSISchemaEntity
+            return _context.SSISchemaEntity.Select(entity => new SSISchemaEntity
             {
                 Id = entity.Id,
                 TypeName = entity.TypeName,
                 Properties = includeChildItems ?
-                    entity.Properties.Select(o => new SSISchemaEntityProperty { Id = o.Id, Name = o.Name, ValueDescription = o.ValueDescription, Required = o.Required }).ToList() : null
+                    entity.Properties.Select(o => new SSISchemaEntityProperty { Id = o.Id, Name = o.Name, ValueDescription = o.ValueDescription, Required = o.Required }).ToList() : null,
+                Types = includeChildItems ?
+                    entity.Types.Select(o => new SSISchemaType { Id = o.SSISchemaTypeId, Type = Enum.Parse<SchemaType>(o.SSISchemaType.Name, true), Name = o.SSISchemaType.Name, Description = o.SSISchemaType.Description, SupportMultiple = o.SSISchemaType.SupportMultiple }).ToList() : null
             }).AsSplitQuery();
         }
 

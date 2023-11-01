@@ -29,6 +29,8 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
                 URL = value.URL,
                 ZltoReward = value.ZltoReward,
                 YomaReward = value.YomaReward,
+                VerificationEnabled = value.VerificationEnabled,
+                VerificationMethod = value.VerificationMethod,
                 Difficulty = value.Difficulty,
                 CommitmentInterval = value.CommitmentInterval,
                 CommitmentIntervalCount = value.CommitmentIntervalCount,
@@ -42,7 +44,8 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
                 Categories = value.Categories,
                 Countries = value.Countries,
                 Languages = value.Languages,
-                Skills = value.Skills
+                Skills = value.Skills,
+                VerificationTypes = value.VerificationTypes
             };
         }
     }

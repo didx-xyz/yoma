@@ -181,8 +181,6 @@ namespace Yoma.Core.Api.Controllers
 
                     //add newly registered user to the default "User" role
                     await _identityProviderClient.EnsureRoles(kcUser.Id, new List<string> { Constants.Role_User });
-
-                    //TODO: AriesCloudApi tenant / wallet creation
                     break;
 
                 case WebhookRequestEventType.Login:

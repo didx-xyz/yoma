@@ -3,14 +3,14 @@ using Yoma.Core.Domain.SSI.Models;
 
 namespace Yoma.Core.Domain.SSI.Interfaces
 {
-    public interface ISSIWalletCreationService
+    public interface ISSITenantCreationService
     {
-        string? GetWalletIdNull(EntityType entityType, Guid entityId);
+        string? GetTenantIdOrNull(EntityType entityType, Guid entityId);
 
         Task Create(EntityType entityType, Guid entityId);
 
-        List<SSIWalletCreation> ListPendingCreation(int batchSize);
+        List<SSITenantCreation> ListPendingCreation(int batchSize);
 
-        Task Update(SSIWalletCreation item);
+        Task Update(SSITenantCreation item);
     }
 }

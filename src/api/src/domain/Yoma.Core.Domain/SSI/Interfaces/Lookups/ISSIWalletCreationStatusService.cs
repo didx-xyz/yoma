@@ -2,16 +2,16 @@ using Yoma.Core.Domain.SSI.Models.Lookups;
 
 namespace Yoma.Core.Domain.SSI.Interfaces.Lookups
 {
-    public interface ISSIWalletCreationStatusService
+    public interface ISSITenantCreationStatusService
     {
-        SSIWalletCreationStatus GetByName(string name);
+        SSITenantCreationStatus GetByName(string name);
 
-        SSIWalletCreationStatus? GetByNameOrNull(string name);
+        SSITenantCreationStatus? GetByNameOrNull(string name);
 
-        SSIWalletCreationStatus GetById(Guid id);
+        SSITenantCreationStatus GetById(Guid id);
 
-        SSIWalletCreationStatus? GetByIdOrNull(Guid id);
+        SSITenantCreationStatus? GetByIdOrNull(Guid id);
 
-        List<SSIWalletCreationStatus> List();
+        List<SSITenantCreationStatus> List();
     }
 }

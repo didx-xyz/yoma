@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 
 namespace Yoma.Core.Domain.SSI.Interfaces.Lookups
@@ -12,6 +13,6 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Lookups
 
         SSISchemaEntityProperty? GetByAttributeNameOrNull(string attributeName);
 
-        List<SSISchemaEntity> List();
+        List<SSISchemaEntity> List(SchemaType? type);
     }
 }

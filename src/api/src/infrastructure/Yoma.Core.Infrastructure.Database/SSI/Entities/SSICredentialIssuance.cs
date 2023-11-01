@@ -12,6 +12,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities
     [Index(nameof(SchemaTypeId), nameof(ArtifactType), nameof(SchemaName), nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
     public class SSICredentialIssuance : BaseEntity<Guid>
     {
+        [Required]
         [ForeignKey("SchemaTypeId")]
         public Guid SchemaTypeId { get; set; }
         public SSISchemaType SchemaType { get; set; }

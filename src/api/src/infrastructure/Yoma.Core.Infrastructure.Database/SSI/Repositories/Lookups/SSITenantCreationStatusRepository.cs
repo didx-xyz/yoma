@@ -5,35 +5,35 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
 {
-    public class SSIWalletCreationStatusRepository : BaseRepository<Entities.Lookups.SSIWalletCreationStatus, Guid>, IRepository<SSIWalletCreationStatus>
+    public class SSITenantCreationStatusRepository : BaseRepository<Entities.Lookups.SSITenantCreationStatus, Guid>, IRepository<SSITenantCreationStatus>
     {
         #region Constructor
-        public SSIWalletCreationStatusRepository(ApplicationDbContext context) : base(context)
+        public SSITenantCreationStatusRepository(ApplicationDbContext context) : base(context)
         {
         }
         #endregion
 
         #region Public Members
-        public IQueryable<SSIWalletCreationStatus> Query()
+        public IQueryable<SSITenantCreationStatus> Query()
         {
-            return _context.SSIWalletCreationStatus.Select(entity => new SSIWalletCreationStatus
+            return _context.SSITenantCreationStatus.Select(entity => new SSITenantCreationStatus
             {
                 Id = entity.Id,
                 Name = entity.Name
             });
         }
 
-        public Task<SSIWalletCreationStatus> Create(SSIWalletCreationStatus item)
+        public Task<SSITenantCreationStatus> Create(SSITenantCreationStatus item)
         {
             throw new NotImplementedException();
         }
 
-        public Task<SSIWalletCreationStatus> Update(SSIWalletCreationStatus item)
+        public Task<SSITenantCreationStatus> Update(SSITenantCreationStatus item)
         {
             throw new NotImplementedException();
         }
 
-        public Task Delete(SSIWalletCreationStatus item)
+        public Task Delete(SSITenantCreationStatus item)
         {
             throw new NotImplementedException();
         }

@@ -19,7 +19,7 @@ namespace Yoma.Core.Domain.SSI.Models
         YoID
     }
 
-    public enum WalletCreationStatus
+    public enum TenantCreationStatus
     {
         Pending,
         Created,

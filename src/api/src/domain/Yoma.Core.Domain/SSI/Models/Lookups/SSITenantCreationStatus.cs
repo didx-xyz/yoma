@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.SSI.Models.Lookups
 {
-    public class SSIWalletCreationStatus
+    public class SSITenantCreationStatus
     {
         public Guid Id { get; set; }
 

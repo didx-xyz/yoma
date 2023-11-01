@@ -7,33 +7,33 @@ using Yoma.Core.Domain.SSI.Models.Lookups;
 
 namespace Yoma.Core.Domain.SSI.Services.Lookups
 {
-    public class SSIWalletCreationStatusService : ISSIWalletCreationStatusService
+    public class SSITenantCreationStatusService : ISSITenantCreationStatusService
     {
         #region Class Variables
         private readonly AppSettings _appSettings;
         private readonly IMemoryCache _memoryCache;
-        private readonly IRepository<SSIWalletCreationStatus> _ssiWalletCreationStatusRepository;
+        private readonly IRepository<SSITenantCreationStatus> _ssiTenantCreationStatusRepository;
         #endregion
 
         #region Constructor
-        public SSIWalletCreationStatusService(IOptions<AppSettings> appSettings,
+        public SSITenantCreationStatusService(IOptions<AppSettings> appSettings,
             IMemoryCache memoryCache,
-            IRepository<SSIWalletCreationStatus> ssiWalletCreationStatusRepository)
+            IRepository<SSITenantCreationStatus> ssiTenantCreationStatusRepository)
         {
             _appSettings = appSettings.Value;
             _memoryCache = memoryCache;
-            _ssiWalletCreationStatusRepository = ssiWalletCreationStatusRepository;
+            _ssiTenantCreationStatusRepository = ssiTenantCreationStatusRepository;
         }
         #endregion
 
         #region Public Members
-        public SSIWalletCreationStatus GetByName(string name)
+        public SSITenantCreationStatus GetByName(string name)
         {
-            var result = GetByNameOrNull(name) ?? throw new ArgumentException($"{nameof(SSIWalletCreationStatus)} with name '{name}' does not exists", nameof(name));
+            var result = GetByNameOrNull(name) ?? throw new ArgumentException($"{nameof(SSITenantCreationStatus)} with name '{name}' does not exists", nameof(name));
             return result;
         }
 
-        public SSIWalletCreationStatus? GetByNameOrNull(string name)
+        public SSITenantCreationStatus? GetByNameOrNull(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentNullException(nameof(name));
@@ -42,13 +42,13 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
             return List().SingleOrDefault(o => o.Name == name);
         }
 
-        public SSIWalletCreationStatus GetById(Guid id)
+        public SSITenantCreationStatus GetById(Guid id)
         {
-            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(SSIWalletCreationStatus)} with '{id}' does not exists", nameof(id));
+            var result = GetByIdOrNull(id) ?? throw new ArgumentException($"{nameof(SSITenantCreationStatus)} with '{id}' does not exists", nameof(id));
             return result;
         }
 
-        public SSIWalletCreationStatus? GetByIdOrNull(Guid id)
+        public SSITenantCreationStatus? GetByIdOrNull(Guid id)
         {
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
@@ -56,17 +56,17 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
             return List().SingleOrDefault(o => o.Id == id);
         }
 
-        public List<SSIWalletCreationStatus> List()
+        public List<SSITenantCreationStatus> List()
         {
             if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(Core.CacheItemType.Lookups))
-                return _ssiWalletCreationStatusRepository.Query().OrderBy(o => o.Name).ToList();
+                return _ssiTenantCreationStatusRepository.Query().OrderBy(o => o.Name).ToList();
 
-            var result = _memoryCache.GetOrCreate(nameof(SSIWalletCreationStatus), entry =>
+            var result = _memoryCache.GetOrCreate(nameof(SSITenantCreationStatus), entry =>
             {
                 entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-                return _ssiWalletCreationStatusRepository.Query().OrderBy(o => o.Name).ToList();
-            }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(SSIWalletCreationStatus)}s'");
+                return _ssiTenantCreationStatusRepository.Query().OrderBy(o => o.Name).ToList();
+            }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(SSITenantCreationStatus)}s'");
             return result;
         }
         #endregion

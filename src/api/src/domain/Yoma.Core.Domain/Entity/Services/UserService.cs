@@ -23,7 +23,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IGenderService _genderService;
         private readonly ICountryService _countryService;
         private readonly ISkillService _skillService;
-        private readonly ISSIWalletCreationService _ssiWalletCreationService;
+        private readonly ISSITenantCreationService _ssiTenantCreationService;
         private readonly UserRequestValidator _userRequestValidator;
         private readonly UserSearchFilterValidator _userSearchFilterValidator;
         private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
@@ -37,7 +37,7 @@ namespace Yoma.Core.Domain.Entity.Services
             IGenderService genderService,
             ICountryService countryService,
             ISkillService skillService,
-            ISSIWalletCreationService ssiWalletCreationService,
+            ISSITenantCreationService ssiTenantCreationService,
             UserRequestValidator userValidator,
             UserSearchFilterValidator userSearchFilterValidator,
             IRepositoryValueContainsWithNavigation<User> userRepository,
@@ -48,7 +48,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _genderService = genderService;
             _countryService = countryService;
             _skillService = skillService;
-            _ssiWalletCreationService = ssiWalletCreationService;
+            _ssiTenantCreationService = ssiTenantCreationService;
             _userRequestValidator = userValidator;
             _userSearchFilterValidator = userSearchFilterValidator;
             _userRepository = userRepository;
@@ -272,7 +272,7 @@ namespace Yoma.Core.Domain.Entity.Services
             result.YoIDOnboarded = true;
             result = await _userRepository.Update(result);
 
-            await _ssiWalletCreationService.Create(EntityType.User, result.Id);
+            await _ssiTenantCreationService.Create(EntityType.User, result.Id);
 
             scope.Complete();
 
