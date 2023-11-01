@@ -58,11 +58,11 @@ namespace Yoma.Core.Api.Controllers
         [HttpGet("schema/entity")]
         [ProducesResponseType(typeof(List<SSISchemaEntity>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = Constants.Role_Admin)]
-        public IActionResult ListSchemaEntities()
+        public IActionResult ListSchemaEntities([FromQuery] SchemaType? schemaType)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListSchemaEntities));
 
-            var result = _ssiSchemaEntityService.List();
+            var result = _ssiSchemaEntityService.List(schemaType);
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListSchemaEntities));
 
