@@ -3,7 +3,7 @@
     "postinstall": "husky install"
   },
   "devDependencies": {
-    "cypress": "^13.3.1",
+    "cypress": "^13.4.0",
     "husky": "^8.0.3"
   }
 }
