@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231101040403_ApplicationDb_Initial")]
+    [Migration("20231102060617_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -24,21 +24,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Yoma.Core.Domain.SSI.Models.Lookups.SSITenantCreationStatus", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SSITenantCreationStatus");
-                });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", b =>
                 {
@@ -1243,8 +1228,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("UserId");
 
                     b.HasIndex("SchemaName", "UserId", "OrganizationId", "MyOpportunityId")
-                        .IsUnique()
-                        .HasFilter("[UserId] IS NOT NULL AND [OrganizationId] IS NOT NULL AND [MyOpportunityId] IS NOT NULL");
+                        .IsUnique();
 
                     b.HasIndex("SchemaTypeId", "ArtifactType", "SchemaName", "StatusId", "DateCreated", "DateModified");
 
@@ -1292,8 +1276,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("UserId");
 
                     b.HasIndex("EntityType", "UserId", "OrganizationId")
-                        .IsUnique()
-                        .HasFilter("[UserId] IS NOT NULL AND [OrganizationId] IS NOT NULL");
+                        .IsUnique();
 
                     b.HasIndex("StatusId", "DateCreated", "DateModified");
 
@@ -1695,7 +1678,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .WithMany()
                         .HasForeignKey("OrganizationId");
 
-                    b.HasOne("Yoma.Core.Domain.SSI.Models.Lookups.SSITenantCreationStatus", "Status")
+                    b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSITenantCreationStatus", "Status")
                         .WithMany()
                         .HasForeignKey("StatusId")
                         .OnDelete(DeleteBehavior.Cascade)

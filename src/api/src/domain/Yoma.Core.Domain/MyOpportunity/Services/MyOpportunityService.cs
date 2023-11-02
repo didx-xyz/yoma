@@ -112,7 +112,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public VerificationStatus? GetVerificationStatusOrNull(Guid opportunityId)
         {
-            var opportunity = _opportunityService.GetById(opportunityId, true, false, false);
+            var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -266,7 +266,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         public async Task PerformActionViewed(Guid opportunityId)
         {
             //published opportunities (irrespective of started)
-            var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
+            var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
             if (!opportunity.Published)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' | status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
@@ -292,7 +292,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         public async Task PerformActionSaved(Guid opportunityId)
         {
             //published opportunities (irrespective of started)
-            var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
+            var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
             if (!opportunity.Published)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' | status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
@@ -318,7 +318,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         public async Task PerformActionSavedRemove(Guid opportunityId)
         {
             //published opportunities (irrespective of started)
-            var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
+            var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
             if (!opportunity.Published)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' | status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
@@ -340,7 +340,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             await _myOpportunityRequestValidatorVerify.ValidateAndThrowAsync(request);
 
             //provided opportunity is published (and started) or expired
-            var opportunity = _opportunityService.GetById(opportunityId, true, false, false);
+            var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
             var canSendForVerification = opportunity.Status == Status.Expired;
             if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
             if (!canSendForVerification)
@@ -438,7 +438,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var user = _userService.GetById(request.UserId, false, false);
 
             //can complete, provided opportunity is published (and started) or expired (actioned prior to expiration)
-            var opportunity = _opportunityService.GetById(request.OpportunityId, false, false, false);
+            var opportunity = _opportunityService.GetById(request.OpportunityId, false, true, false);
             var canFinalize = opportunity.Status == Status.Expired;
             if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
             if (!canFinalize)

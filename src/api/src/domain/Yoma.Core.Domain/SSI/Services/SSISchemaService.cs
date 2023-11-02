@@ -24,7 +24,8 @@ namespace Yoma.Core.Domain.SSI.Services
         #endregion
 
         #region Constructor
-        public SSISchemaService(ISSIProviderClientFactory ssiProviderClientFactory,
+        public SSISchemaService(
+            ISSIProviderClientFactory ssiProviderClientFactory,
             ISSISchemaEntityService ssiSchemaEntityService,
             ISSISchemaTypeService ssiSchemaTypeService,
             SchemaRequestValidatorCreate schemaRequestValidatorCreate,
@@ -39,15 +40,15 @@ namespace Yoma.Core.Domain.SSI.Services
         #endregion
 
         #region Public Members
-        public async Task<SSISchema> GetByName(string name)
+        public async Task<SSISchema> GetByName(string fullName)
         {
-            var schema = await _ssiProviderClient.GetSchemaByName(name);
+            var schema = await _ssiProviderClient.GetSchemaByName(fullName);
             return ConvertToSSISchema(schema);
         }
 
-        public async Task<SSISchema?> GetByNameOrNull(string name)
+        public async Task<SSISchema?> GetByNameOrNull(string fullName)
         {
-            var schema = await _ssiProviderClient.GetSchemaByNameOrNull(name);
+            var schema = await _ssiProviderClient.GetSchemaByNameOrNull(fullName);
             if (schema == null) return null;
             return ConvertToSSISchema(schema);
         }

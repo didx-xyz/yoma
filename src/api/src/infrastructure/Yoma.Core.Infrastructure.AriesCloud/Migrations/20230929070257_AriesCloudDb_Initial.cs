@@ -36,7 +36,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
                 schema: "AriesCloud",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "varchar(50)", nullable: false),
+                    Id = table.Column<string>(type: "varchar(125)", nullable: false),
                     Name = table.Column<string>(type: "varchar(125)", nullable: false),
                     Version = table.Column<string>(type: "varchar(20)", nullable: false),
                     AttributeNames = table.Column<string>(type: "nvarchar(MAX)", nullable: false),

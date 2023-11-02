@@ -1,6 +1,8 @@
 USE [yoma-dev]
 GO
 
+/******!!!This script has been desinged to be applied to an empty database!!!*****/
+
 /****users & organizations****/
 
 --testuser@gmail.com (KeyCloak password: P@ssword1)
@@ -22,6 +24,13 @@ INSERT INTO [Entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],
 			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[DateZltoWalletCreated],[YoIDOnboarded],[DateYoIDOnboarded],[DateCreated],[DateModified])
 VALUES(NEWID(),'testorgadminuser@gmail.com',1,'Test Organization Admin','User','Test Organization Admin User','+27125555555',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),
 		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -22, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,1,GETDATE(),GETDATE(),GETDATE())
+GO
+
+--ssi tenant creation (pending) for YOID onboarded users
+INSERT INTO [SSI].[TenantCreation]([Id],[EntityType],[StatusId],[UserId],[OrganizationId],[TenantId],[ErrorReason],[RetryCount],[DateCreated],[DateModified])
+SELECT NEWID(),'User',(SELECT [Id] FROM [SSI].[TenantCreationStatus] WHERE [Name] = 'Pending'),[Id],NULL,NULL,NULL,NULL,GETDATE(),GETDATE()
+FROM [Entity].[User]
+WHERE [YoIDOnboarded] = 1
 GO
 
 DECLARE @Words VARCHAR(500) = 'The,A,An,Awesome,Incredible,Fantastic,Amazing,Wonderful,Exciting,Unbelievable,Great,Marvelous,Stunning,Impressive,Captivating,Extraordinary,Superb,Epic,Spectacular,Magnificent,Phenomenal,Outstanding,Brilliant,Enthralling,Enchanting,Mesmerizing,Riveting,Spellbinding,Unforgettable,Sublime';
@@ -49,6 +58,13 @@ BEGIN
     FROM sys.all_columns
   	SET @RowCount = @RowCount + 1;
 END;
+GO
+
+--ssi tenant creation (pending) for active organizations
+INSERT INTO [SSI].[TenantCreation]([Id],[EntityType],[StatusId],[UserId],[OrganizationId],[TenantId],[ErrorReason],[RetryCount],[DateCreated],[DateModified])
+SELECT NEWID(),'Organization',(SELECT [Id] FROM [SSI].[TenantCreationStatus] WHERE [Name] = 'Pending'),NULL,[Id],NULL,NULL,NULL,GETDATE(),GETDATE()
+FROM [Entity].[Organization]
+WHERE [StatusId] = (SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active')
 GO
 
 --organization admins
@@ -123,7 +139,7 @@ BEGIN
 		(SELECT ROUND(1000 + (3500 - 1000) * RAND(), 2)) as [YomaRewardPool],
 		NULL,
 		@VerificationEnabled,
-    	CASE WHEN @VerificationEnabled = 1 THEN 'Manual' ELSE NULL END,
+    CASE WHEN @VerificationEnabled = 1 THEN 'Manual' ELSE NULL END,
 		(SELECT TOP 1 [Id] FROM [Opportunity].[OpportunityDifficulty] ORDER BY NEWID()) as [DifficultyId],
 		(SELECT TOP 1 [Id] FROM [Lookup].[TimeInterval] ORDER BY NEWID()) as [CommitmentIntervalId],
 		(SELECT 1 + ABS(CHECKSUM(NEWID()) % 10)) as [CommitmentIntervalCount],
@@ -133,7 +149,7 @@ BEGIN
 		(SELECT TOP 1 STRING_AGG(Word, ',') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (ABS(CHECKSUM(NEWID()) % 101) + 100) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) as [Keywords],
 		CAST(@DateStart AS DATE),
 		CAST(DATEADD(DAY, 7, @DateStart) AS DATE),
-		0,
+   	CASE WHEN @VerificationEnabled = 1 THEN 1 ELSE 0 END,
 		NULL,
 		@DateCreated,
 		'testuser@gmail.com',
@@ -145,6 +161,27 @@ BEGIN
   SET @DateCreated = DATEADD(SECOND, 1, @DateCreated)
   SET @DateStart = DATEADD(SECOND, @SecondsPerIteration, @DateStart)
 END;
+
+--ssi schema defintions
+WITH CTE AS (
+  SELECT O.[SSISchemaName], OT.[Name]
+  FROM [Opportunity].[Opportunity] AS O
+  INNER JOIN [Opportunity].[OpportunityType] AS OT ON O.TypeId = OT.Id
+  WHERE O.[CredentialIssuanceEnabled] = 1
+)
+UPDATE CTE
+SET [SSISchemaName] =
+  CASE
+    WHEN CTE.[Name] = 'Task' THEN 'Opportunity|Task_Local'
+    WHEN CTE.[Name] = 'Learning' THEN 'Opportunity|Learning_Local'
+    ELSE 'ERROR' END
+GO
+
+IF EXISTS (SELECT 1 FROM [Opportunity].[Opportunity] WHERE [CredentialIssuanceEnabled] = 1 AND [SSISchemaName] = 'ERROR')
+BEGIN
+  THROW 50000, 'Unsupported SSISchemaName: ERROR', 1;
+END
+GO
 
 --categories
 INSERT INTO [Opportunity].[OpportunityCategories]([Id],[OpportunityId],[CategoryId],[DateCreated])
@@ -315,6 +352,18 @@ WHERE O.StatusId = (SELECT [Id] FROM [Opportunity].[OpportunityStatus] WHERE [Na
 ORDER BY [DateCreated]
 OFFSET 120 ROWS
 FETCH NEXT 30 ROWS ONLY;
+GO
+
+--ssi credential issuance (pending) for verification (completed) mapped to opportunities with CredentialIssuanceEnabled
+INSERT INTO [SSI].[CredentialIssuance]([Id],[SchemaTypeId],[ArtifactType],[SchemaName],[SchemaVersion],[StatusId],[UserId],[OrganizationId]
+           ,[MyOpportunityId],[CredentialId],[ErrorReason],[RetryCount],[DateCreated],[DateModified])
+SELECT NEWID(),(SELECT [Id] FROM [SSI].[SchemaType] WHERE [Name] = 'Opportunity'),'Ld_proof',O.SSISchemaName,'1.0',(SELECT [Id] FROM [SSI].[CredentialIssuanceStatus] WHERE [Name] = 'Pending'),
+	NULL,NULL,MO.Id,NULL,NULL,NULL,GETDATE(),GETDATE()
+FROM [Opportunity].[MyOpportunity] MO
+INNER JOIN [Opportunity].[Opportunity] O ON MO.OpportunityId = O.Id
+WHERE MO.[ActionId] = (SELECT [Id] FROM [Opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification')
+		AND MO.[VerificationStatusId] = (SELECT [Id] FROM [Opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Completed')
+		AND O.CredentialIssuanceEnabled = 1
 GO
 
 --verification (completed): assign user skills
