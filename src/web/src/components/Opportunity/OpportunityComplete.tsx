@@ -59,18 +59,24 @@ export const OpportunityComplete: React.FC<InputProps> = ({
       }
 
       /* eslint-disable @typescript-eslint/no-unsafe-argument */
+      debugger;
       const request: MyOpportunityRequestVerify = {
         certificate: data.certificate,
         picture: data.picture,
         voiceNote: data.voiceNote,
         geometry: data.geometry,
+        // geometry: data.geometry
+        //   ? {
+        //       type: "Point", //HACK: api wants string not enum int
+        //       coordinates: [data.geometry.lng, data.geometry.lat],
+        //     }
+        //   : null,
         dateStart: data.dateStart
           ? new Date(data.dateStart).toISOString()
           : null,
         dateEnd: data.dateEnd ? new Date(data.dateEnd).toISOString() : null,
       };
       /* eslint-enable @typescript-eslint/no-unsafe-argument */
-      debugger;
 
       performActionSendForVerificationManual(opportunityInfo.id, request)
         .then(() => {
@@ -391,6 +397,7 @@ export const OpportunityComplete: React.FC<InputProps> = ({
                       else
                         result = {
                           type: SpatialType.Point,
+                          //type: "Point",
                           coordinates: [coords.lng, coords.lat],
                         };
 

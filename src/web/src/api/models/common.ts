@@ -18,7 +18,7 @@ export interface FormFile {
 }
 
 export interface Geometry {
-  type: SpatialType;
+  type: SpatialType | string; //HACK: api wants string not enum int
   coordinates: number[][] | null;
 }
 

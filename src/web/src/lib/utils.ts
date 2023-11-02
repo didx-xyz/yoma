@@ -26,3 +26,30 @@ export async function fetchClientEnv() {
     console.error("Error fetching client environment variables:", error);
   }
 }
+
+export function objectToFormData(
+  obj: any,
+  form?: FormData,
+  namespace?: string,
+): FormData {
+  const formData = form || new FormData();
+
+  for (let property in obj) {
+    if (!obj.hasOwnProperty(property) || !obj[property]) continue;
+
+    let formKey = namespace ? `${namespace}[${property}]` : property;
+
+    if (
+      typeof obj[property] === "object" &&
+      obj[property] !== null &&
+      !(obj[property] instanceof Date) &&
+      !(obj[property] instanceof File)
+    ) {
+      objectToFormData(obj[property], formData, formKey);
+    } else {
+      formData.append(formKey, obj[property]);
+    }
+  }
+
+  return formData;
+}
