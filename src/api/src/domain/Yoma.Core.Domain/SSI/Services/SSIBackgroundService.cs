@@ -43,6 +43,8 @@ namespace Yoma.Core.Domain.SSI.Services
             IEnvironmentProvider environmentProvider,
             IUserService userService,
             IOrganizationService organizationService,
+            IOpportunityService opportunityService,
+            IMyOpportunityService myOpportunityService,
             ISSISchemaService ssiSchemaService,
             ISSISchemaTypeService ssiSchemaTypeService,
             ISSITenantCreationService ssiTenantCreationService,
@@ -54,6 +56,8 @@ namespace Yoma.Core.Domain.SSI.Services
             _environmentProvider = environmentProvider;
             _userService = userService;
             _organizationService = organizationService;
+            _opportunityService = opportunityService;
+            _myOpportunityService = myOpportunityService;
             _ssiSchemaService = ssiSchemaService;
             _ssiSchemaTypeService = ssiSchemaTypeService;
             _ssiTenantCreationService = ssiTenantCreationService;
@@ -103,7 +107,8 @@ namespace Yoma.Core.Domain.SSI.Services
                             _logger.LogInformation("Processing SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
 
                             TenantRequest request;
-                            switch (item.EntityType)
+                            var entityType = Enum.Parse<EntityType>(item.EntityType, false);
+                            switch (entityType)
                             {
                                 case EntityType.User:
                                     if (!item.UserId.HasValue)
@@ -116,7 +121,7 @@ namespace Yoma.Core.Domain.SSI.Services
                                         Referent = user.Id.ToString(),
                                         Name = user.DisplayName,
                                         ImageUrl = user.PhotoURL,
-                                        Roles = new List<Models.Role> { Role.Holder }
+                                        Roles = new List<Role> { Role.Holder }
                                     };
                                     break;
 
@@ -131,7 +136,7 @@ namespace Yoma.Core.Domain.SSI.Services
                                         Referent = org.Id.ToString(),
                                         Name = org.Name,
                                         ImageUrl = org.LogoURL,
-                                        Roles = new List<Models.Role> { Role.Holder, Role.Issuer, Role.Verifier }
+                                        Roles = new List<Role> { Role.Holder, Role.Issuer, Role.Verifier }
                                     };
                                     break;
 
@@ -230,7 +235,7 @@ namespace Yoma.Core.Domain.SSI.Services
                                                 ReflectEntityValues(request, entity, t, opportunity);
                                                 break;
 
-                                            case Type t when t == typeof(MyOpportunity.Models.MyOpportunityInfo):
+                                            case Type t when t == typeof(MyOpportunity.Models.MyOpportunity):
                                                 ReflectEntityValues(request, entity, t, myOpportunity);
                                                 break;
 

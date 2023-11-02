@@ -45,7 +45,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly IRepository<OpportunityLanguage> _opportunityLanguageRepository;
         private readonly IRepository<OpportunitySkill> _opportunitySkillRepository;
         private readonly IRepository<OpportunityVerificationType> _opportunityVerificationTypeRepository;
-        private readonly IRepositoryBatchedWithNavigation<Domain.MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
 
         public const string Keywords_Separator = ",";
         public const int Keywords_CombinedMaxLength = 500;
@@ -656,7 +655,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         public async Task<(decimal? ZltoReward, decimal? YomaReward)> AllocateRewards(Guid id, bool ensureOrganizationAuthorization)
         {
-            var opportunity = GetById(id, false, false, ensureOrganizationAuthorization);
+            var opportunity = GetById(id, false, true, ensureOrganizationAuthorization);
 
             //can complete, provided published (and started) or expired (action prior to expiration)
             var canComplete = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;

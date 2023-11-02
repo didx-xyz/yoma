@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.SSI.Models
     {
         public Guid Id { get; set; }
 
-        public EntityType EntityType { get; set; }
+        public string EntityType { get; set; }
 
         public Guid StatusId { get; set; }
 

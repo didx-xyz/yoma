@@ -101,7 +101,7 @@ namespace Yoma.Core.Domain.SSI.Services
                     if (string.IsNullOrEmpty(item.ErrorReason))
                         throw new ArgumentNullException(nameof(item), "Error reason required");
 
-                    item.RetryCount++;
+                    item.RetryCount = (byte?)(item.RetryCount + 1) ?? 1;
                     if (item.RetryCount == _appSettings.SSIMaximumRetryAttempts) break; //max retry count reached
                     item.StatusId = _ssiCredentialIssuanceStatusService.GetByName(CredentialIssuanceStatus.Pending.ToString()).Id;
                     break;
