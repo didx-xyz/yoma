@@ -31,7 +31,7 @@ jobs:
       matrix:
         project:
           - api
-          - youth
+          - web
         include:
           - project: api
             dir: ./src/api
@@ -43,7 +43,7 @@ jobs:
               dotnet_format: true
               dotnet_format_dir: ./src/api
             env: {}
-          - project: youth
+          - project: web
             dir: ./src/web
             lang: js
             config:
@@ -247,7 +247,7 @@ jobs:
       - name: Yoma API logs
         if: always()
         run: docker logs yoma-api
-      - name: Yoma Web Youth logs
+      - name: Yoma Web logs
         if: always()
         run: docker logs yoma-web
 
