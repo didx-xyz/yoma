@@ -56,6 +56,8 @@ namespace Yoma.Core.Api.Controllers
         [AllowAnonymous]
         public IActionResult GetInfoById([FromRoute] Guid id)
         {
+            //TODO: NotFound when not published / active
+
             _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
 
             var result = _opportunityInfoService.GetInfoById(id, true, true);
