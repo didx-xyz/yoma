@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 {
     public interface IOpportunityInfoService
     {
-        OpportunityInfo GetInfoById(Guid id, bool includeChildren, bool includeComputed);
+        OpportunityInfo? GetInfoByIdOrNull(Guid id, bool includeChildren, bool includeComputed, bool? includeExpired);
 
         OpportunityInfo? GetInfoByTitleOrNull(string title, bool includeChildItems, bool includeComputed);
 

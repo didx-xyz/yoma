@@ -50,21 +50,20 @@ namespace Yoma.Core.Api.Controllers
 
         #region Public Members
         #region Anonymous Actions
-        [SwaggerOperation(Summary = "Get the specified opportunity by id (Anonymous)")]
+        [SwaggerOperation(Summary = "Get the specified active or expired opportunity by id (Anonymous)")]
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [AllowAnonymous]
-        public IActionResult GetInfoById([FromRoute] Guid id)
+        public IActionResult GetInfoById([FromRoute] Guid id, [FromQuery] bool? includeExpired)
         {
-            //TODO: NotFound when not published / active
-
             _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
 
-            var result = _opportunityInfoService.GetInfoById(id, true, true);
+            var result = _opportunityInfoService.GetInfoByIdOrNull(id, true, true, includeExpired);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
 
-            return StatusCode((int)HttpStatusCode.OK, result);
+            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter (Anonymous)")]

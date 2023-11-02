@@ -15,13 +15,13 @@ namespace Yoma.Core.Domain.Core.Extensions
 
         public static DateTimeOffset RemoveTime(this DateTimeOffset e, TimeSpan? offSet = null)
         {
-            return new DateTimeOffset(new DateTime(e.Year, e.Month, e.Day, 0, 0, 0, 0, DateTimeKind.Utc), offSet ?? e.Offset);
+            return new DateTimeOffset(new DateTime(e.Year, e.Month, e.Day), offSet ?? e.Offset);
         }
 
         public static DateTimeOffset? RemoveTime(this DateTimeOffset? e, TimeSpan? offSet = null)
         {
             if (!e.HasValue) return null;
-            return new DateTimeOffset(new DateTime(e.Value.Year, e.Value.Month, e.Value.Day, 0, 0, 0, 0, DateTimeKind.Utc), offSet ?? e.Value.Offset);
+            return new DateTimeOffset(new DateTime(e.Value.Year, e.Value.Month, e.Value.Day), offSet ?? e.Value.Offset);
         }
 
         public static DateTime ToEndOfDay(this DateTime e)
