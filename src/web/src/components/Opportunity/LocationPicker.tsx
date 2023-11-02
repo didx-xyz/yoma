@@ -2,6 +2,7 @@ import React, { type ReactElement } from "react";
 import { GoogleMap, MarkerF, useLoadScript } from "@react-google-maps/api";
 import { IoMdPin } from "react-icons/io";
 import { toast } from "react-toastify";
+import { env } from "~/env.mjs";
 
 export interface InputProps {
   [id: string]: any;
@@ -26,7 +27,7 @@ const LocationPicker: React.FC<InputProps> = ({
   //* Google Maps
   const { isLoaded, loadError } = useLoadScript({
     id: "google-map-script",
-    googleMapsApiKey: "AIzaSyBScYRQ83PAkWNaqb2IKB5QQkgsSSjdUCk",
+    googleMapsApiKey: env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
     libraries,
   });
 
@@ -89,19 +90,6 @@ const LocationPicker: React.FC<InputProps> = ({
       key={id}
       className="flex w-full flex-col rounded-lg border-dotted bg-gray"
     >
-      {/* <button onClick={handleResetLocation}>Reset Location</button>
-      <div className="flex w-full flex-col">
-        <label>Latitute:</label>
-        <input type="text" value={location.lat} disabled />
-        <label>Longitute:</label>
-        <input type="text" value={location.lng} disabled />
-        <label>Zoom:</label>
-        <input type="text" value={zoom} disabled />
-        <button onClick={onClick_UseCurrentLocation}>
-          Use current location
-        </button>
-      </div> */}
-
       <div className="flex w-full flex-row">
         <div className="flex items-center p-8">
           <IoMdPin className="h-6 w-6 text-gray-dark" />
@@ -121,7 +109,6 @@ const LocationPicker: React.FC<InputProps> = ({
           </div>
         </div>
       </div>
-
       <div className="w-full p-4 pt-0">
         <GoogleMap
           id="map"
@@ -147,7 +134,6 @@ const LocationPicker: React.FC<InputProps> = ({
           />
         </GoogleMap>
       </div>
-
       <div className="px-8">{children && children}</div>
     </div>
   );
