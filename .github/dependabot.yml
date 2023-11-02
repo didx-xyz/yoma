@@ -13,12 +13,12 @@ updates:
     labels:
       - javascript
       - dependencies
-  # Maintain NPM dependencies for `web/youth`
+  # Maintain NPM dependencies for `web`
   - package-ecosystem: npm
-    directory: /src/web/youth
+    directory: /src/web
     schedule:
       interval: weekly
     labels:
       - javascript
       - dependencies
-      - web/youth
+      - web
