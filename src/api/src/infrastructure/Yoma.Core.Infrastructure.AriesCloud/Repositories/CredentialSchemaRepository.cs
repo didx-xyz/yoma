@@ -24,8 +24,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
                 DateCreated = entity.DateCreated
             });
         }
-        #endregion
-
+        
         public async Task<CredentialSchema> Create(CredentialSchema item)
         {
             item.DateCreated = DateTimeOffset.Now;
@@ -55,5 +54,6 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
         {
             throw new NotImplementedException();
         }
+        #endregion
     }
 }

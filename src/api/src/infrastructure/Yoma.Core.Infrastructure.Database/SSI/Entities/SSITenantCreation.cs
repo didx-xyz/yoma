@@ -32,7 +32,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities
         [Column(TypeName = "varchar(50)")]
         public string? TenantId { get; set; }
 
-        [Column(TypeName = "varchar(500)")]
+        [Column(TypeName = "varchar(MAX)")]
         public string? ErrorReason { get; set; }
 
         public byte? RetryCount { get; set; }

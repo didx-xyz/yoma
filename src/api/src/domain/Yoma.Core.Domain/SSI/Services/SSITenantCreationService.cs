@@ -36,19 +36,14 @@ namespace Yoma.Core.Domain.SSI.Services
             var statusCreatedId = _ssiTenantCreationStatusService.GetByName(TenantCreationStatus.Created.ToString()).Id;
 
             SSITenantCreation? result = null;
-            switch (entityType)
+            result = entityType switch
             {
-                case EntityType.User:
-                    result = _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType == entityType && o.UserId == entityId && o.StatusId == statusCreatedId);
-                    break;
-                case EntityType.Organization:
-                    result = _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType == entityType && o.OrganizationId == entityId && o.StatusId == statusCreatedId);
-                    break;
-
-                default:
-                    throw new InvalidOperationException($"Entity type of '{entityType}' not supported");
-            }
-
+                EntityType.User =>
+                    _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType == entityType.ToString() && o.UserId == entityId && o.StatusId == statusCreatedId),
+                EntityType.Organization =>
+                    _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType == entityType.ToString() && o.OrganizationId == entityId && o.StatusId == statusCreatedId),
+                _ => throw new InvalidOperationException($"Entity type of '{entityType}' not supported"),
+            };
             return result?.TenantId;
         }
 
@@ -60,16 +55,16 @@ namespace Yoma.Core.Domain.SSI.Services
             var statusPendingId = _ssiTenantCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
 
             SSITenantCreation? existingItem = null;
-            var item = new SSITenantCreation { StatusId = statusPendingId };
+            var item = new SSITenantCreation { EntityType = entityType.ToString(), StatusId = statusPendingId };
 
             switch (entityType)
             {
                 case EntityType.User:
-                    existingItem = _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType == entityType && o.UserId == entityId);
+                    existingItem = _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType == entityType.ToString() && o.UserId == entityId);
                     item.UserId = entityId;
                     break;
                 case EntityType.Organization:
-                    existingItem = _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType == entityType && o.OrganizationId == entityId);
+                    existingItem = _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType == entityType.ToString() && o.OrganizationId == entityId);
                     item.OrganizationId = entityId;
                     break;
 
@@ -115,7 +110,7 @@ namespace Yoma.Core.Domain.SSI.Services
                     if (string.IsNullOrEmpty(item.ErrorReason))
                         throw new ArgumentNullException(nameof(item), "Error reason required");
 
-                    item.RetryCount++;
+                    item.RetryCount = (byte?)(item.RetryCount + 1) ?? 1;
                     if (item.RetryCount == _appSettings.SSIMaximumRetryAttempts) break; //max retry count reached
                     item.StatusId = _ssiTenantCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
                     break;

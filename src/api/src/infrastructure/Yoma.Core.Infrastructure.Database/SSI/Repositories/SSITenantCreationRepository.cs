@@ -18,7 +18,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
             return _context.SSITenantCreation.Select(entity => new SSITenantCreation
             {
                 Id = entity.Id,
-                EntityType = Enum.Parse<EntityType>(entity.EntityType, true),
+                EntityType = entity.EntityType,
                 StatusId = entity.StatusId,
                 Status = Enum.Parse<TenantCreationStatus>(entity.Status.Name, true),
                 UserId = entity.UserId,
@@ -39,7 +39,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
             var entity = new Entities.SSITenantCreation
             {
                 Id = item.Id,
-                EntityType = item.EntityType.ToString(),
+                EntityType = item.EntityType,
                 StatusId = item.StatusId,
                 UserId = item.UserId,
                 OrganizationId = item.OrganizationId,

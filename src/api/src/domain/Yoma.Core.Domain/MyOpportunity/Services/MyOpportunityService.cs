@@ -438,7 +438,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var user = _userService.GetById(request.UserId, false, false);
 
             //can complete, provided opportunity is published (and started) or expired (actioned prior to expiration)
-            var opportunity = _opportunityService.GetById(request.OpportunityId, false, true, false);
+            var opportunity = _opportunityService.GetById(request.OpportunityId, true, true, false);
             var canFinalize = opportunity.Status == Status.Expired;
             if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
             if (!canFinalize)

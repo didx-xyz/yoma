@@ -14,7 +14,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Models
 
         public string TargetConnectionId { get; set; }
 
-        public Connection_protocol Protocol { get; set; }
+        public string Protocol { get; set; }
 
         public DateTimeOffset DateCreated { get; set; }
     }

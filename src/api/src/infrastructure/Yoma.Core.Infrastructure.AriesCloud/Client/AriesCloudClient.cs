@@ -306,10 +306,11 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
                 // await sse event on holders side (in order to retrieve the holder credential id)  
                 sseEvent = await _sseListenerService.Listen<CredentialExchange>(tenantHolder.Tenant_id,
-                  Topic.Credentials, "thread_id", credentialExchange.Thread_id, "offer-received");
+                  Topic.Credentials, "thread_id", credentialExchange.Thread_id, CredentialExchangeState.OfferReceived.ToEnumMemberValue());
             });
 
-            if (sseEvent == null) throw new InvalidOperationException("");
+            if (sseEvent == null)
+                throw new InvalidOperationException($"Failed to receive SSE event for topic '{Topic.Credentials}' and desired state '{CredentialExchangeState.OfferReceived}'");
 
             // request the credential by holder (aries cloud auto completes and store the credential in the holders wallet)
             var credentialExchange = await clientHolder.RequestCredentialAsync(sseEvent.payload.Credential_id);
@@ -318,10 +319,12 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             {
                 // await sse event on holders side (in order to ensure credential issuance is done) 
                 sseEvent = await _sseListenerService.Listen<CredentialExchange>(tenantHolder.Tenant_id,
-                  Topic.Credentials, "credential_id", credentialExchange.Credential_id, "done");
+                  Topic.Credentials, "credential_id", credentialExchange.Credential_id, CredentialExchangeState.Done.ToEnumMemberValue());
             });
 
-            if (sseEvent == null) throw new InvalidOperationException("");
+            if (sseEvent == null)
+                throw new InvalidOperationException($"Failed to receive SSE event for topic '{Topic.Credentials}' and desired state '{CredentialExchangeState.Done}'");
+
 
             //TODO: Support for Indy and Ld_proof; Referent (credential exchange records are deleted)
             return credentialExchange.Credential_id;
@@ -391,7 +394,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         {
             //try and find an existing connection
             var result = _connectionRepository.Query().SingleOrDefault(o =>
-                o.SourceTenantId == tenantIssuer.Tenant_id && o.TargetTenantId == tenantHolder.Tenant_id && o.Protocol == Connection_protocol.Connections_1_0);
+                o.SourceTenantId == tenantIssuer.Tenant_id && o.TargetTenantId == tenantHolder.Tenant_id && o.Protocol == Connection_protocol.Connections_1_0.ToString());
 
             Connection? connectionAries = null;
             if (result != null)
@@ -448,7 +451,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 SourceConnectionId = invitation.Connection_id,
                 TargetTenantId = tenantHolder.Tenant_id,
                 TargetConnectionId = connectionAries.Connection_id,
-                Protocol = connectionAries.Connection_protocol
+                Protocol = connectionAries.Connection_protocol.ToString()
             };
 
             result = await _connectionRepository.Create(result);

@@ -170,7 +170,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 result.Email = request.Email;
                 result.FirstName = request.FirstName;
                 result.Surname = request.Surname;
-                result.DisplayName = request.DisplayName;
+                result.DisplayName = request.DisplayName ?? string.Empty;
                 result.SetDisplayName();
                 result.PhoneNumber = request.PhoneNumber;
                 result.CountryId = request.CountryId;
