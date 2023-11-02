@@ -140,7 +140,7 @@ namespace Yoma.Core.Domain.SSI.Services
                             }
 
                             item.TenantId = _ssiProviderClient.EnsureTenant(request).Result;
-                            item.Status = TenantCreationStatus.Created; 
+                            item.Status = TenantCreationStatus.Created;
                             _ssiTenantCreationService.Update(item).Wait();
 
                             _logger.LogInformation("Processed SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
