@@ -271,7 +271,7 @@ const OpportunityDetails: NextPageWithLayout<{
         {/* LOGIN DIALOG */}
         <ReactModal
           isOpen={loginDialogVisible}
-          shouldCloseOnOverlayClick={true}
+          shouldCloseOnOverlayClick={false}
           onRequestClose={() => {
             setLoginDialogVisible(false);
           }}
@@ -353,7 +353,7 @@ const OpportunityDetails: NextPageWithLayout<{
         {/* GO-TO OPPORTUNITY DIALOG */}
         <ReactModal
           isOpen={gotoOpportunityDialogVisible}
-          shouldCloseOnOverlayClick={true}
+          shouldCloseOnOverlayClick={false}
           onRequestClose={() => {
             setGotoOpportunityDialogVisible(false);
           }}
@@ -440,7 +440,7 @@ const OpportunityDetails: NextPageWithLayout<{
         {/* UPLOAD/COMPLETE OPPORTUNITY DIALOG */}
         <ReactModal
           isOpen={completeOpportunityDialogVisible}
-          shouldCloseOnOverlayClick={true}
+          shouldCloseOnOverlayClick={false}
           onRequestClose={() => {
             setCompleteOpportunityDialogVisible(false);
           }}

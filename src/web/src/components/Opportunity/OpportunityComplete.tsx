@@ -30,6 +30,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import LocationPicker from "./LocationPicker";
 import { SpatialType } from "~/api/models/common";
 import { ApiErrors } from "../Status/ApiErrors";
+import { toISOStringWithTimezone } from "~/lib/utils";
 
 interface InputProps {
   [id: string]: any;
@@ -59,7 +60,6 @@ export const OpportunityComplete: React.FC<InputProps> = ({
       }
 
       /* eslint-disable @typescript-eslint/no-unsafe-argument */
-      debugger;
       const request: MyOpportunityRequestVerify = {
         certificate: data.certificate,
         picture: data.picture,
@@ -72,9 +72,11 @@ export const OpportunityComplete: React.FC<InputProps> = ({
         //     }
         //   : null,
         dateStart: data.dateStart
-          ? new Date(data.dateStart).toISOString()
+          ? toISOStringWithTimezone(new Date(data.dateStart))
           : null,
-        dateEnd: data.dateEnd ? new Date(data.dateEnd).toISOString() : null,
+        dateEnd: data.dateEnd
+          ? toISOStringWithTimezone(new Date(data.dateEnd))
+          : null,
       };
       /* eslint-enable @typescript-eslint/no-unsafe-argument */
 
@@ -180,6 +182,16 @@ export const OpportunityComplete: React.FC<InputProps> = ({
           path: ["dateStart"],
           fatal: true,
         });
+      } else if (
+        opportunityInfo?.dateStart &&
+        values.dateStart < opportunityInfo?.dateStart
+      ) {
+        ctx.addIssue({
+          message: "Date cannot be before opportunity start date.",
+          code: z.ZodIssueCode.custom,
+          path: ["dateStart"],
+          fatal: true,
+        });
       }
 
       if (values.dateEnd != null && values.dateEnd > new Date()) {
@@ -267,17 +279,6 @@ export const OpportunityComplete: React.FC<InputProps> = ({
                         shouldValidate: true,
                       });
                     }}
-                    // children={
-                    //   <>
-                    //     {errors.certificate && (
-                    //       <label className="label">
-                    //         <span className="label-text-alt text-base italic text-red-500">
-                    //           {`${errors.certificate.message}`}
-                    //         </span>
-                    //       </label>
-                    //     )}
-                    //   </>
-                    // }
                   >
                     <>
                       {errors.certificate && (
@@ -311,17 +312,6 @@ export const OpportunityComplete: React.FC<InputProps> = ({
                     onUploadComplete={(files) => {
                       setValue("picture", files[0], { shouldValidate: true });
                     }}
-                    // children={
-                    //   <>
-                    //     {errors.picture && (
-                    //       <label className="label">
-                    //         <span className="label-text-alt text-base italic text-red-500">
-                    //           {`${errors.picture.message}`}
-                    //         </span>
-                    //       </label>
-                    //     )}
-                    //   </>
-                    // }
                   >
                     <>
                       {errors.picture && (
@@ -355,17 +345,6 @@ export const OpportunityComplete: React.FC<InputProps> = ({
                     onUploadComplete={(files) => {
                       setValue("voiceNote", files[0], { shouldValidate: true });
                     }}
-                    // children={
-                    //   <>
-                    //     {errors.voiceNote && (
-                    //       <label className="label">
-                    //         <span className="label-text-alt text-base italic text-red-500">
-                    //           {`${errors.voiceNote.message}`}
-                    //         </span>
-                    //       </label>
-                    //     )}
-                    //   </>
-                    // }
                   >
                     <>
                       {errors.voiceNote && (
@@ -397,23 +376,11 @@ export const OpportunityComplete: React.FC<InputProps> = ({
                       else
                         result = {
                           type: SpatialType.Point,
-                          //type: "Point",
-                          coordinates: [coords.lng, coords.lat],
+                          coordinates: [[coords.lng, coords.lat, 0]],
                         };
 
                       setValue("geometry", result, { shouldValidate: true });
                     }}
-                    // children={
-                    //   <>
-                    //     {errors.geometry && (
-                    //       <label className="label">
-                    //         <span className="label-text-alt text-base italic text-red-500">
-                    //           {`${errors.geometry.message}`}
-                    //         </span>
-                    //       </label>
-                    //     )}
-                    //   </>
-                    // }
                   >
                     <>
                       {errors.geometry && (

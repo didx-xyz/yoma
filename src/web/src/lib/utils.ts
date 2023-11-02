@@ -35,11 +35,20 @@ export function objectToFormData(
   const formData = form || new FormData();
 
   for (let property in obj) {
-    if (!obj.hasOwnProperty(property) || !obj[property]) continue;
+    if (!obj.hasOwnProperty(property) || (!obj[property] && obj[property] != 0))
+      continue;
 
     let formKey = namespace ? `${namespace}[${property}]` : property;
 
-    if (
+    if (Array.isArray(obj[property])) {
+      obj[property].forEach((item: any, index: number) => {
+        if (typeof item === "object" && item !== null) {
+          objectToFormData(item, formData, `${formKey}[${index}]`);
+        } else {
+          formData.append(`${formKey}[${index}]`, item);
+        }
+      });
+    } else if (
       typeof obj[property] === "object" &&
       obj[property] !== null &&
       !(obj[property] instanceof Date) &&
@@ -52,4 +61,31 @@ export function objectToFormData(
   }
 
   return formData;
+}
+
+export function toISOStringWithTimezone(date: Date) {
+  const tzo = -date.getTimezoneOffset();
+  const dif = tzo >= 0 ? "+" : "-";
+  const pad = function (num: number) {
+    const norm = Math.floor(Math.abs(num));
+    return (norm < 10 ? "0" : "") + norm;
+  };
+
+  return (
+    date.getFullYear() +
+    "-" +
+    pad(date.getMonth() + 1) +
+    "-" +
+    pad(date.getDate()) +
+    "T" +
+    pad(date.getHours()) +
+    ":" +
+    pad(date.getMinutes()) +
+    ":" +
+    pad(date.getSeconds()) +
+    dif +
+    pad(tzo / 60) +
+    ":" +
+    pad(tzo % 60)
+  );
 }
