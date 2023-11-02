@@ -27,6 +27,7 @@ export async function fetchClientEnv() {
   }
 }
 
+/* eslint-disable */
 export function objectToFormData(
   obj: any,
   form?: FormData,
@@ -34,11 +35,11 @@ export function objectToFormData(
 ): FormData {
   const formData = form || new FormData();
 
-  for (let property in obj) {
+  for (const property in obj) {
     if (!obj.hasOwnProperty(property) || (!obj[property] && obj[property] != 0))
       continue;
 
-    let formKey = namespace ? `${namespace}[${property}]` : property;
+    const formKey = namespace ? `${namespace}[${property}]` : property;
 
     if (Array.isArray(obj[property])) {
       obj[property].forEach((item: any, index: number) => {
@@ -62,6 +63,7 @@ export function objectToFormData(
 
   return formData;
 }
+/* eslint-enable */
 
 export function toISOStringWithTimezone(date: Date) {
   const tzo = -date.getTimezoneOffset();
