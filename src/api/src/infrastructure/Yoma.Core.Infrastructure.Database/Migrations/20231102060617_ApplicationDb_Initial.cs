@@ -280,18 +280,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "SSITenantCreationStatus",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SSITenantCreationStatus", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "TenantCreationStatus",
                 schema: "SSI",
                 columns: table => new
@@ -699,9 +687,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         principalTable: "Organization",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_TenantCreation_SSITenantCreationStatus_StatusId",
+                        name: "FK_TenantCreation_TenantCreationStatus_StatusId",
                         column: x => x.StatusId,
-                        principalTable: "SSITenantCreationStatus",
+                        principalSchema: "SSI",
+                        principalTable: "TenantCreationStatus",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -1062,8 +1051,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI",
                 table: "CredentialIssuance",
                 columns: new[] { "SchemaName", "UserId", "OrganizationId", "MyOpportunityId" },
-                unique: true,
-                filter: "[UserId] IS NOT NULL AND [OrganizationId] IS NOT NULL AND [MyOpportunityId] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_CredentialIssuance_SchemaTypeId_ArtifactType_SchemaName_StatusId_DateCreated_DateModified",
@@ -1437,8 +1425,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI",
                 table: "TenantCreation",
                 columns: new[] { "EntityType", "UserId", "OrganizationId" },
-                unique: true,
-                filter: "[UserId] IS NOT NULL AND [OrganizationId] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_TenantCreation_OrganizationId",
@@ -1581,10 +1568,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI");
 
             migrationBuilder.DropTable(
-                name: "TenantCreationStatus",
-                schema: "SSI");
-
-            migrationBuilder.DropTable(
                 name: "UserSkills",
                 schema: "Entity");
 
@@ -1621,7 +1604,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI");
 
             migrationBuilder.DropTable(
-                name: "SSITenantCreationStatus");
+                name: "TenantCreationStatus",
+                schema: "SSI");
 
             migrationBuilder.DropTable(
                 name: "Skill",

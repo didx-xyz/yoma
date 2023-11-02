@@ -8,7 +8,7 @@ using Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups;
 namespace Yoma.Core.Infrastructure.Database.SSI.Entities
 {
     [Table("CredentialIssuance", Schema = "SSI")]
-    [Index(nameof(SchemaName), nameof(UserId), nameof(OrganizationId), nameof(MyOpportunityId), IsUnique = true)]
+    //unique index declared in OnModelCreating to cater for nullability constraints
     [Index(nameof(SchemaTypeId), nameof(ArtifactType), nameof(SchemaName), nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
     public class SSICredentialIssuance : BaseEntity<Guid>
     {

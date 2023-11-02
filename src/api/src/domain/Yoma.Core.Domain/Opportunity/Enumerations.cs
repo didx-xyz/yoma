@@ -27,4 +27,10 @@ namespace Yoma.Core.Domain.Opportunity
         Location,
         VoiceNote
     }
+
+    public enum OpportunityType
+    {
+        Task,
+        Learning
+    }
 }

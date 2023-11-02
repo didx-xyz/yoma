@@ -5,9 +5,9 @@ namespace Yoma.Core.Domain.SSI.Interfaces
 {
     public interface ISSISchemaService
     {
-        Task<SSISchema> GetByName(string name);
+        Task<SSISchema> GetByName(string fullName);
 
-        Task<SSISchema?> GetByNameOrNull(string name);
+        Task<SSISchema?> GetByNameOrNull(string fullName);
 
         Task<List<SSISchema>> List(SchemaType? type);
 

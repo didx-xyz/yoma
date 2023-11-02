@@ -1085,7 +1085,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Yoma.Core.Domain.Opportunity.Models.Opportunity",DateTimeOffset.Now}
                     ,
-                    {"CA11D9D0-39F6-46D8-A0D3-350EC41402F5","Yoma.Core.Domain.MyOpportunity.Models.MyOpportunityInfo",DateTimeOffset.Now}
+                    {"CA11D9D0-39F6-46D8-A0D3-350EC41402F5","Yoma.Core.Domain.MyOpportunity.Models.MyOpportunity",DateTimeOffset.Now}
             },
             schema: "SSI");
 
@@ -1131,6 +1131,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"869AC79B-1FF3-45FC-AAD8-6E383E463D00","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Title","Title",true,DateTimeOffset.Now}
                     ,
+                    {"7DA9B94B-5158-4A62-9993-A6FAD6E5EA23","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Summary","Summary",false,DateTimeOffset.Now}
+                     ,
                     {"755B1F54-1365-4D2F-AF29-8AEC57CC7B4C","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","Type","i.e. Learning",true,DateTimeOffset.Now}
                     ,
                     {"E763C235-F1B8-4D12-B60F-117AF7948355","E8AE5B9B-11AE-4ECB-8F6C-020A3D6A5C3D","OrganizationName","Organization Name",true,DateTimeOffset.Now}
