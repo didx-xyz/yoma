@@ -169,7 +169,7 @@ export enum OrganizationProviderType {
 
 export interface OpportunityVerificationType {
   id: string;
-  type?: VerificationType | string; //NB: hack
+  type?: VerificationType | string; //NB: hack comes back as string
   displayName: string;
   description: string;
 }

@@ -1,17 +1,8 @@
-import { useRef, useState } from "react";
+import { type ReactElement, useRef, useState } from "react";
 import Image from "next/image";
 import { IoMdClose } from "react-icons/io";
 import iconCertificate from "public/images/icon-certificate.svg";
-import iconPicture from "public/images/icon-picture.svg";
-import iconVideo from "public/images/icon-video.svg";
 import iconUpload from "public/images/icon-upload.svg";
-
-// export enum FileUploadType {
-//   Certificate,
-//   Image,
-//   Video,
-//   Voice
-// }
 
 export interface InputProps {
   [id: string]: any;
@@ -21,6 +12,7 @@ export interface InputProps {
   allowMultiple: boolean;
   label?: string;
   icon?: any;
+  children: ReactElement | undefined;
   onUploadComplete?: (data: any[]) => void;
 }
 
@@ -32,11 +24,10 @@ export const FileUpload: React.FC<InputProps> = ({
   allowMultiple,
   label = "Upload file",
   icon,
+  children,
   onUploadComplete,
 }) => {
   const [data, setFiles] = useState<any[]>(files ?? []);
-
-  // const [file, setFile] = useState();
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -58,7 +49,7 @@ export const FileUpload: React.FC<InputProps> = ({
   return (
     <div
       key={`OpportunityFileUpload_${id}`}
-      className="flex w-full flex-col items-center justify-center rounded-lg border-dotted bg-gray"
+      className="flex w-full flex-col rounded-lg border-dotted bg-gray"
     >
       <div className="flex w-full flex-row">
         <div className="flex items-center p-8">
@@ -131,6 +122,8 @@ export const FileUpload: React.FC<InputProps> = ({
           ))}
         </div>
       )}
+
+      <div className="px-8">{children && children}</div>
     </div>
   );
 };

@@ -10,12 +10,7 @@ import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
-import {
-  IoIosSettings,
-  IoMdArrowRoundBack,
-  IoMdClock,
-  IoMdPerson,
-} from "react-icons/io";
+import { IoIosSettings, IoMdArrowRoundBack, IoMdPerson } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
 import {
@@ -124,7 +119,7 @@ const OpportunityDetails: NextPageWithLayout<{
       <div className="container z-10 max-w-5xl px-2 py-4">
         <div className="flex flex-col gap-2 py-4 sm:flex-row">
           {/* BREADCRUMB */}
-          <div className="breadcrumbs flex-grow text-sm">
+          <div className="breadcrumbs flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
             <ul>
               <li>
                 <Link

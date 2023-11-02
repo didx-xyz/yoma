@@ -3,20 +3,13 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { type ParsedUrlQuery } from "querystring";
 import { useState, type ReactElement, useMemo, useCallback } from "react";
-import {
-  VerificationMethod,
-  type Opportunity,
-  type OpportunityInfo,
-} from "~/api/models/opportunity";
-import {
-  getOpportunityById,
-  getOpportunityInfoById,
-} from "~/api/services/opportunities";
+import { type OpportunityInfo } from "~/api/models/opportunity";
+import { getOpportunityInfoById } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
-import { authOptions, type User } from "~/server/auth";
+import { authOptions } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
-import { IoMdArrowRoundBack, IoMdClose } from "react-icons/io";
+import { IoMdArrowRoundBack, IoMdClose, IoMdFingerPrint } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
 import iconAction from "public/images/icon-action.svg";
@@ -32,18 +25,14 @@ import iconLanguage from "public/images/icon-language.svg";
 import iconTopics from "public/images/icon-topics.svg";
 import iconSkills from "public/images/icon-skills.svg";
 import iconRocket from "public/images/icon-rocket.svg";
-import iconSuccess from "public/images/icon-success.svg";
-import iconCertificate from "public/images/icon-certificate.svg";
-import iconPicture from "public/images/icon-picture.svg";
-import iconVideo from "public/images/icon-video.svg";
 import iconBell from "public/images/icon-bell.svg";
 import Image from "next/image";
 import { saveMyOpportunity } from "~/api/services/myOpportunities";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
-import { FileUpload } from "~/components/Opportunity/FileUpload";
-import { ACCEPTED_DOC_TYPES, ACCEPTED_DOC_TYPES_LABEL } from "~/lib/constants";
 import { OpportunityComplete } from "~/components/Opportunity/OpportunityComplete";
+import { signIn } from "next-auth/react";
+import { fetchClientEnv } from "~/lib/utils";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -120,6 +109,7 @@ const OpportunityDetails: NextPageWithLayout<{
   opportunityId: string;
   //user: User;
 }> = ({ opportunityId }) => {
+  const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [gotoOpportunityDialogVisible, setGotoOpportunityDialogVisible] =
     useState(false);
   const [
@@ -165,6 +155,17 @@ const OpportunityDetails: NextPageWithLayout<{
     debugger;
   }, [files]);
 
+  const [isButtonLoading, setIsButtonLoading] = useState(false);
+  const onLogin = useCallback(async () => {
+    setIsButtonLoading(true);
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    signIn(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
+        "") as string,
+    );
+  }, [setIsButtonLoading]);
+
   return (
     <>
       <PageBackground />
@@ -172,7 +173,7 @@ const OpportunityDetails: NextPageWithLayout<{
       <div className="container z-10 max-w-5xl px-2 py-4">
         <div className="flex flex-col gap-2 py-4 sm:flex-row">
           {/* BREADCRUMB */}
-          <div className="breadcrumbs flex-grow text-sm">
+          <div className="breadcrumbs flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
             <ul>
               <li>
                 <Link
@@ -184,7 +185,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 </Link>
               </li>
               <li>
-                <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
+                <div className="max-w-[600px]  text-white">
                   {opportunity?.title}
                 </div>
               </li>
@@ -267,6 +268,88 @@ const OpportunityDetails: NextPageWithLayout<{
 
         {/* <div ref={myRef} /> */}
 
+        {/* LOGIN DIALOG */}
+        <ReactModal
+          isOpen={loginDialogVisible}
+          shouldCloseOnOverlayClick={true}
+          onRequestClose={() => {
+            setLoginDialogVisible(false);
+          }}
+          className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:rounded-3xl`}
+          portalClassName={"fixed z-40"}
+          overlayClassName="fixed inset-0 bg-overlay"
+        >
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-row bg-green p-4 shadow-lg">
+              <h1 className="flex-grow"></h1>
+              <button
+                type="button"
+                className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+                onClick={() => {
+                  setLoginDialogVisible(false);
+                }}
+              >
+                <IoMdClose className="h-6 w-6"></IoMdClose>
+              </button>
+            </div>
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                <Image
+                  src={iconBell}
+                  alt="Icon Bell"
+                  width={28}
+                  height={28}
+                  sizes="100vw"
+                  priority={true}
+                  style={{ width: "28px", height: "28px" }}
+                />
+              </div>
+              <h3>Please login to continue</h3>
+              {/* <div className="w-[450px] rounded-lg bg-gray p-4 text-center">
+                Remember to <strong>upload your completion certificate</strong>{" "}
+                on this page upon finishing to <strong>earn your ZLTO</strong>.
+              </div>
+              <div>Don’t show me this message again</div>
+              <div>
+                Be mindful of external sites' privacy policy and keep your data
+                private.
+              </div> */}
+              <div className="mt-4 flex flex-grow gap-4">
+                <button
+                  type="button"
+                  className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[300px]"
+                  onClick={() => setLoginDialogVisible(false)}
+                >
+                  <Image
+                    src={iconBookmark}
+                    alt="Icon Bookmark"
+                    width={20}
+                    height={20}
+                    sizes="100vw"
+                    priority={true}
+                    style={{ width: "20px", height: "20px" }}
+                  />
+
+                  <span className="ml-1">Cancel</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn rounded-full bg-purple normal-case text-white md:w-[250px]"
+                  onClick={onLogin}
+                >
+                  {isButtonLoading && (
+                    <span className="loading loading-spinner loading-md mr-2 text-warning"></span>
+                  )}
+                  {!isButtonLoading && (
+                    <IoMdFingerPrint className="h-8 w-8 text-white" />
+                  )}
+                  <p className="text-white">Login</p>
+                </button>
+              </div>
+            </div>
+          </div>
+        </ReactModal>
+
         {/* GO-TO OPPORTUNITY DIALOG */}
         <ReactModal
           isOpen={gotoOpportunityDialogVisible}
@@ -310,8 +393,8 @@ const OpportunityDetails: NextPageWithLayout<{
               </div>
               <div>Don’t show me this message again</div>
               <div>
-                Be mindful of external sites' privacy policy and keep your data
-                private.
+                Be mindful of external sites&apos; privacy policy and keep your
+                data private.
               </div>
               <div className="mt-4 flex flex-grow gap-4">
                 <button
@@ -361,11 +444,17 @@ const OpportunityDetails: NextPageWithLayout<{
           onRequestClose={() => {
             setCompleteOpportunityDialogVisible(false);
           }}
-          className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-scroll bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:rounded-3xl`}
+          className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[600px] md:overflow-y-clip md:rounded-3xl`}
           portalClassName={"fixed z-40"}
           overlayClassName="fixed inset-0 bg-overlay"
         >
-          <OpportunityComplete id="op-complete" opportunityInfo={opportunity} />
+          <OpportunityComplete
+            id="op-complete"
+            opportunityInfo={opportunity}
+            onClose={() => {
+              setCompleteOpportunityDialogVisible(false);
+            }}
+          />
         </ReactModal>
 
         {opportunity && (
@@ -378,7 +467,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 </h6>
                 {/* BADGES */}
                 <div className="my-2 flex flex-row gap-1 text-xs font-bold text-green-dark">
-                  <div className="badge h-6 rounded-md bg-green-light text-green">
+                  <div className="badge h-6 whitespace-nowrap rounded-md bg-green-light text-green">
                     <Image
                       src={iconClock}
                       alt="Icon Clock"
@@ -393,7 +482,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
 
                   {spotsLeft > 0 && (
-                    <div className="badge h-6 rounded-md bg-green-light text-green">
+                    <div className="badge h-6 whitespace-nowrap rounded-md bg-green-light text-green">
                       <Image
                         src={iconUser}
                         alt="Icon User"
@@ -408,7 +497,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   )}
 
                   {(opportunity.zltoReward ?? 0) > 0 && (
-                    <div className="badge h-6 rounded-md bg-yellow-light text-yellow">
+                    <div className="badge h-6 whitespace-nowrap rounded-md bg-yellow-light text-yellow">
                       <Image
                         src={iconZlto}
                         alt="Icon Zlto"
@@ -421,7 +510,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       <span className="ml-1"> {opportunity.zltoReward}</span>
                     </div>
                   )}
-                  <div className="badge h-6 rounded-md bg-purple-light text-purple">
+                  <div className="badge h-6 whitespace-nowrap rounded-md bg-purple-light text-purple">
                     <Image
                       src={iconAction}
                       alt="Icon Action"
@@ -435,11 +524,11 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
                 </div>
                 {/* BUTTONS */}
-                <div className="mt-4 flex flex-row">
+                <div className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-2">
                   <div className="flex flex-grow gap-4">
                     <button
                       type="button"
-                      className="btn rounded-full bg-green normal-case text-white md:w-[250px]"
+                      className="btn btn-xs rounded-full bg-green normal-case text-white md:btn-sm lg:btn-md md:w-[250px]"
                       onClick={() => setGotoOpportunityDialogVisible(true)}
                     >
                       <Image
@@ -460,9 +549,11 @@ const OpportunityDetails: NextPageWithLayout<{
                       opportunity.verificationMethod == "Manual" && (
                         <button
                           type="button"
-                          className="btn rounded-full border-green bg-white normal-case text-green md:w-[300px]"
+                          className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm lg:btn-md md:w-[300px]"
                           onClick={() =>
-                            setCompleteOpportunityDialogVisible(true)
+                            session
+                              ? setCompleteOpportunityDialogVisible(true)
+                              : setLoginDialogVisible(true)
                           }
                         >
                           <Image
@@ -481,10 +572,10 @@ const OpportunityDetails: NextPageWithLayout<{
                         </button>
                       )}
                   </div>
-                  <div className="flex justify-end gap-4">
+                  <div className="flex gap-4 lg:justify-end">
                     <button
                       type="button"
-                      className="btn rounded-full border-gray-dark bg-white normal-case text-gray-dark md:w-[100px]"
+                      className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm lg:btn-md md:w-[100px]"
                     >
                       <Image
                         src={iconBookmark}
@@ -501,7 +592,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     <button
                       type="button"
-                      className="btn rounded-full border-gray-dark bg-white normal-case text-gray-dark md:w-[110px]"
+                      className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm lg:btn-md md:w-[110px]"
                     >
                       <Image
                         src={iconShare}
@@ -518,11 +609,12 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
                 </div>
               </div>
+              {/* LOGO */}
               <div>
                 <Image
                   src={opportunity?.organizationLogoURL ?? iconRocket}
                   alt="Icon Open"
-                  width={80}
+                  width={160}
                   height={80}
                   sizes="100vw"
                   priority={true}
@@ -532,10 +624,10 @@ const OpportunityDetails: NextPageWithLayout<{
             </div>
 
             <div className="flex flex-col gap-2 md:flex-row">
-              <div className="w-[66%] flex-grow rounded-lg bg-white p-6">
+              <div className="flex-grow rounded-lg bg-white p-6 md:w-[66%]">
                 {opportunity?.description}
               </div>
-              <div className="flex w-[33%] flex-col gap-2">
+              <div className="flex flex-col gap-2 md:w-[33%]">
                 <div className="flex flex-col gap-1 rounded-lg bg-white p-6">
                   <div>
                     <div className="flex flex-row items-center gap-1 text-sm font-bold">

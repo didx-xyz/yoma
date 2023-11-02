@@ -16,3 +16,13 @@ export interface FormFile {
   name: string;
   fileName: string;
 }
+
+export interface Geometry {
+  type: SpatialType;
+  coordinates: number[][] | null;
+}
+
+export enum SpatialType {
+  None,
+  Point,
+}

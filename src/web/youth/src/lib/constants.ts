@@ -13,4 +13,6 @@ export const ACCEPTED_DOC_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 export const ACCEPTED_DOC_TYPES_LABEL = ".pdf, .doc and .docx";
+export const ACCEPTED_AUDIO_TYPES = ["audio/mpeg", "audio/wav"];
+export const ACCEPTED_AUDIO_TYPES_LABEL = ".mp3, .wav";
 export const PAGE_SIZE = 10;

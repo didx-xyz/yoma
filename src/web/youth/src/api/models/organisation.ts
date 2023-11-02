@@ -1,4 +1,4 @@
-import { FormFile } from "./common";
+import type { FormFile } from "./common";
 
 export interface OrganizationRequestBase {
   id: string;
