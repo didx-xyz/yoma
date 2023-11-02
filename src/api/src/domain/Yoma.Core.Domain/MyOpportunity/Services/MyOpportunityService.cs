@@ -653,7 +653,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                                 if (request.Geometry == null)
                                     throw new ValidationException($"Verification type '{verificationType.Type}': Geometry required");
 
-                                if (request.Geometry.SpatialType != SpatialType.Point)
+                                if (request.Geometry.Type != SpatialType.Point)
                                     throw new ValidationException($"Verification type '{verificationType.Type}': Spatial type '{SpatialType.Point}' required");
 
                                 itemType.GeometryProperties = JsonConvert.SerializeObject(request.Geometry);
