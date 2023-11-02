@@ -23,9 +23,17 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Public Members
-        public OpportunityInfo GetInfoById(Guid id, bool includeChildren, bool includeComputed)
+        public OpportunityInfo? GetInfoByIdOrNull(Guid id, bool includeChildren, bool includeComputed, bool? includeExpired)
         {
             var opportunity = _opportunityService.GetById(id, includeChildren, includeComputed, false);
+
+            //inactive organization
+            if (opportunity.OrganizationStatus != Entity.OrganizationStatus.Active) return null;
+
+            //status criteria not met
+            var statuses = new List<Status>() { Status.Active };
+            if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
+            if (!statuses.Contains(opportunity.Status)) return null;
 
             var result = opportunity.ToOpportunityInfo();
             if (includeComputed) SetParticipantCounts(result);
