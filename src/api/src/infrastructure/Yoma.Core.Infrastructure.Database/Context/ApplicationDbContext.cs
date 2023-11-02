@@ -112,7 +112,18 @@ namespace Yoma.Core.Infrastructure.Database.Context
         #endregion
 
         #region Protected Members
-        protected override void OnModelCreating(ModelBuilder builder) { }
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            builder.Entity<SSITenantCreation>()
+                .HasIndex(e => new { e.EntityType, e.UserId, e.OrganizationId })
+                .IsUnique()
+                .HasFilter(null);
+
+            builder.Entity<SSICredentialIssuance>()
+                .HasIndex(e => new { e.SchemaName, e.UserId, e.OrganizationId, e.MyOpportunityId })
+                .IsUnique()
+                .HasFilter(null);
+        }
         #endregion
     }
 }

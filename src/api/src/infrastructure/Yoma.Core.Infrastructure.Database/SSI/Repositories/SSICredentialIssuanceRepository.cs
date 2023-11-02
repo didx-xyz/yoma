@@ -73,6 +73,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
 
             item.DateModified = DateTimeOffset.Now;
 
+            entity.CredentialId = item.CredentialId;
             entity.StatusId = item.StatusId;
             entity.ErrorReason = item.ErrorReason;
             entity.RetryCount = item.RetryCount;

@@ -12,7 +12,7 @@ namespace Yoma.Core.Api.Controllers
 {
     [Route("api/v3/ssi")]
     [ApiController]
-    //[Authorize(Policy = Common.Constants.Authorization_Policy)]
+    [Authorize(Policy = Common.Constants.Authorization_Policy)]
     [SwaggerTag("(by default, Admin role required)")]
     public class SSIController : Controller
     {
@@ -72,7 +72,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Return a list of configured schemas, providing only the latest version of each schema, optionally filtered by type (Admin or Organization Admin roles required)", Description = "Results includes the schema's associated entities (objects) and properties")]
         [HttpGet("schema")]
         [ProducesResponseType(typeof(List<SSISchema>), (int)HttpStatusCode.OK)]
-        //[Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> ListSchemas([FromQuery] SchemaType? schemaType)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListSchemas));

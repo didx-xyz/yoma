@@ -56,6 +56,8 @@ namespace Yoma.Core.Api.Controllers
         [AllowAnonymous]
         public IActionResult GetInfoById([FromRoute] Guid id)
         {
+            //TODO: NotFound when not published / active
+
             _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
 
             var result = _opportunityInfoService.GetInfoById(id, true, true);
@@ -82,7 +84,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Return a list of opportunity types (Anonymous)")]
         [HttpGet("type")]
-        [ProducesResponseType(typeof(List<OpportunityType>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityType>), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
         public IActionResult ListOpportunityTypes()
         {
