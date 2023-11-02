@@ -672,7 +672,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     TenantId = table.Column<string>(type: "varchar(50)", nullable: true),
-                    ErrorReason = table.Column<string>(type: "varchar(500)", nullable: true),
+                    ErrorReason = table.Column<string>(type: "varchar(MAX)", nullable: true),
                     RetryCount = table.Column<byte>(type: "tinyint", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
@@ -914,7 +914,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     MyOpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CredentialId = table.Column<string>(type: "varchar(50)", nullable: true),
-                    ErrorReason = table.Column<string>(type: "varchar(500)", nullable: true),
+                    ErrorReason = table.Column<string>(type: "varchar(MAX)", nullable: true),
                     RetryCount = table.Column<byte>(type: "tinyint", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
