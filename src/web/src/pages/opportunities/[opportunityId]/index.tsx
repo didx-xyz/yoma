@@ -9,7 +9,12 @@ import MainLayout from "~/components/Layout/Main";
 import { authOptions } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
-import { IoMdArrowRoundBack, IoMdClose, IoMdFingerPrint } from "react-icons/io";
+import {
+  IoMdArrowRoundBack,
+  IoMdCheckmark,
+  IoMdClose,
+  IoMdFingerPrint,
+} from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
 import iconAction from "public/images/icon-action.svg";
@@ -26,8 +31,12 @@ import iconTopics from "public/images/icon-topics.svg";
 import iconSkills from "public/images/icon-skills.svg";
 import iconRocket from "public/images/icon-rocket.svg";
 import iconBell from "public/images/icon-bell.svg";
+import iconSmiley from "public/images/icon-smiley.svg";
 import Image from "next/image";
-import { saveMyOpportunity } from "~/api/services/myOpportunities";
+import {
+  getVerificationStatus,
+  saveMyOpportunity,
+} from "~/api/services/myOpportunities";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 import { OpportunityComplete } from "~/components/Opportunity/OpportunityComplete";
@@ -109,6 +118,8 @@ const OpportunityDetails: NextPageWithLayout<{
   opportunityId: string;
   //user: User;
 }> = ({ opportunityId }) => {
+  const [refreshVerificationStatus, setRefreshVerificationStatus] =
+    useState(false);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [gotoOpportunityDialogVisible, setGotoOpportunityDialogVisible] =
     useState(false);
@@ -116,11 +127,27 @@ const OpportunityDetails: NextPageWithLayout<{
     completeOpportunityDialogVisible,
     setCompleteOpportunityDialogVisible,
   ] = useState(false);
+  const [
+    completeOpportunitySuccessDialogVisible,
+    setCompleteOpportunitySuccessDialogVisible,
+  ] = useState(false);
+
   const { data: session } = useSession();
 
   const { data: opportunity } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
     queryFn: () => getOpportunityInfoById(opportunityId),
+  });
+
+  const { data: verificationStatus } = useQuery<string | null>({
+    queryKey: ["verificationStatus", opportunityId],
+    queryFn: () => getVerificationStatus(opportunityId),
+    enabled:
+      (!!session &&
+        !!opportunity &&
+        opportunity.verificationEnabled &&
+        opportunity.verificationMethod == "Manual") ||
+      refreshVerificationStatus,
   });
 
   // memo for spots left i.e participantLimit - participantCountTotal
@@ -143,17 +170,11 @@ const OpportunityDetails: NextPageWithLayout<{
       .catch((err) => {
         toast.error("Error");
       });
-  }, [saveMyOpportunity]);
+  }, [opportunityId, session]);
 
   const onGoToOpportunity = useCallback(() => {
     if (opportunity?.uRL) window.location.href = opportunity?.uRL;
-  }, []);
-
-  const [files, setFiles] = useState<any[]>([]);
-
-  const onSubmitOpportunity = useCallback(() => {
-    debugger;
-  }, [files]);
+  }, [opportunity?.uRL]);
 
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const onLogin = useCallback(async () => {
@@ -191,82 +212,7 @@ const OpportunityDetails: NextPageWithLayout<{
               </li>
             </ul>
           </div>
-
-          {/* <div className="flex gap-2 sm:justify-end">
-            <button
-              className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
-              onClick={() => {
-                setManageOpportunityMenuVisible(true);
-              }}
-            >
-              <IoIosSettings className="mr-1 h-5 w-5" />
-              Manage opportunity
-            </button>
-          </div> */}
-
-          {/* MANAGE OPPORTUNITY MODAL MENU */}
-          {/* <ReactModal
-            isOpen={manageOpportunityMenuVisible}
-            shouldCloseOnOverlayClick={true}
-            onRequestClose={() => {
-              setManageOpportunityMenuVisible(false);
-            }}
-            className={`fixed left-2 right-2 top-[175px] flex-grow rounded-lg bg-gray-light animate-in fade-in md:left-[80%] md:right-[5%] md:top-[140px] md:w-44 xl:left-[67%] xl:right-[23%]`}
-            portalClassName={"fixed z-50"}
-            overlayClassName="fixed inset-0"
-          >
-            <div className="flex flex-col gap-4 p-4 text-xs">
-              <Link
-                href={`/opportunities/${opportunityId}`}
-                className="flex flex-row items-center text-gray-dark hover:brightness-50"
-              >
-                <FaPencilAlt className="mr-2 h-3 w-3" />
-                Edit
-              </Link>
-              <Link
-                href={`/opportunities/${opportunityId}/edit`}
-                className="flex flex-row items-center text-gray-dark hover:brightness-50"
-              >
-                <FaClipboard className="mr-2 h-3 w-3" />
-                Duplicate
-              </Link>
-              <Link
-                href={`/opportunities/${opportunityId}/edit`}
-                className="flex flex-row items-center text-gray-dark hover:brightness-50"
-              >
-                <FaClock className="mr-2 h-3 w-3" />
-                Expire
-              </Link>
-
-              <Link
-                href={`/opportunities/${opportunityId}/edit`}
-                className="flex flex-row items-center text-gray-dark hover:brightness-50"
-              >
-                <FaArrowCircleUp className="mr-2 h-3 w-3" />
-                Short link
-              </Link>
-              <Link
-                href={`/opportunities/${opportunityId}/edit`}
-                className="flex flex-row items-center text-gray-dark hover:brightness-50"
-              >
-                <FaLink className="mr-2 h-3 w-3" />
-                Generate magic link
-              </Link>
-
-              <div className="divider -m-2" />
-
-              <button
-                className="flex flex-row items-center text-red-500 hover:brightness-50 "
-                //onClick={handleLogout}
-              >
-                <FaTrash className="mr-2 h-3 w-3" />
-                Delete
-              </button>
-            </div>
-          </ReactModal> */}
         </div>
-
-        {/* <div ref={myRef} /> */}
 
         {/* LOGIN DIALOG */}
         <ReactModal
@@ -275,7 +221,7 @@ const OpportunityDetails: NextPageWithLayout<{
           onRequestClose={() => {
             setLoginDialogVisible(false);
           }}
-          className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:rounded-3xl`}
+          className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[600px] md:rounded-3xl`}
           portalClassName={"fixed z-40"}
           overlayClassName="fixed inset-0 bg-overlay"
         >
@@ -454,7 +400,69 @@ const OpportunityDetails: NextPageWithLayout<{
             onClose={() => {
               setCompleteOpportunityDialogVisible(false);
             }}
+            onSave={() => {
+              setCompleteOpportunityDialogVisible(false);
+              setCompleteOpportunitySuccessDialogVisible(true);
+              setRefreshVerificationStatus(true);
+            }}
           />
+        </ReactModal>
+
+        {/* COMPLETE SUCCESS DIALOG */}
+        <ReactModal
+          isOpen={completeOpportunitySuccessDialogVisible}
+          shouldCloseOnOverlayClick={false}
+          onRequestClose={() => {
+            setCompleteOpportunitySuccessDialogVisible(false);
+          }}
+          className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[600px] md:rounded-3xl`}
+          portalClassName={"fixed z-40"}
+          overlayClassName="fixed inset-0 bg-overlay"
+        >
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-row bg-green p-4 shadow-lg">
+              <h1 className="flex-grow"></h1>
+              <button
+                type="button"
+                className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+                onClick={() => {
+                  setCompleteOpportunitySuccessDialogVisible(false);
+                }}
+              >
+                <IoMdClose className="h-6 w-6"></IoMdClose>
+              </button>
+            </div>
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                <Image
+                  src={iconSmiley}
+                  alt="Icon Smiley"
+                  width={28}
+                  height={28}
+                  sizes="100vw"
+                  priority={true}
+                  style={{ width: "28px", height: "28px" }}
+                />
+              </div>
+              <h3>Submitted!</h3>
+              <div className="w-[450px] rounded-lg p-4 text-center">
+                <strong>{opportunity?.organizationName}</strong> is busy
+                reviewing your submission. Once approved, the opportunity will
+                be automatically added to your CV.
+              </div>
+              <div className="mt-4 flex flex-grow gap-4">
+                <button
+                  type="button"
+                  className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[200px]"
+                  onClick={() =>
+                    setCompleteOpportunitySuccessDialogVisible(false)
+                  }
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
         </ReactModal>
 
         {opportunity && (
@@ -547,6 +555,63 @@ const OpportunityDetails: NextPageWithLayout<{
                     {/* only show upload button if verification is enabled and method is manual */}
                     {opportunity.verificationEnabled &&
                       opportunity.verificationMethod == "Manual" && (
+                        <>
+                          {verificationStatus == null ||
+                            (verificationStatus == "Rejected" && (
+                              <button
+                                type="button"
+                                className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm lg:btn-md md:w-[300px]"
+                                onClick={() =>
+                                  session
+                                    ? setCompleteOpportunityDialogVisible(true)
+                                    : setLoginDialogVisible(true)
+                                }
+                              >
+                                <Image
+                                  src={iconUpload}
+                                  alt="Icon Upload"
+                                  width={20}
+                                  height={20}
+                                  sizes="100vw"
+                                  priority={true}
+                                  style={{ width: "20px", height: "20px" }}
+                                />
+
+                                <span className="ml-1">
+                                  Upload your completion files
+                                </span>
+                              </button>
+                            ))}
+                          {verificationStatus != null &&
+                            verificationStatus == "Pending" && (
+                              <div className="md:text-md flex items-center justify-center whitespace-nowrap rounded-full bg-gray-light px-8 text-center text-xs font-bold text-gray-dark">
+                                Pending verification
+                              </div>
+                            )}
+                          {/* {verificationStatus != null &&
+                            verificationStatus == "Rejected" && (
+                              <div className="flex items-center justify-center rounded-full bg-yellow-light px-8 text-center text-sm font-bold text-warning">
+                                Rejected
+                              </div>
+                            )} */}
+                          {verificationStatus != null &&
+                            verificationStatus == "Completed" && (
+                              <div className="md:text-md flex items-center justify-center rounded-full border border-purple bg-white px-4 text-center text-xs font-bold text-purple">
+                                Completed
+                                <IoMdCheckmark
+                                  strikethroughThickness={2}
+                                  overlineThickness={2}
+                                  underlineThickness={2}
+                                  className="ml-1 h-4 w-4 text-green"
+                                />
+                              </div>
+                            )}
+                        </>
+                      )}
+
+                    {/* TODO: */}
+                    {opportunity.verificationEnabled &&
+                      opportunity.verificationMethod == "Automatic" && (
                         <button
                           type="button"
                           className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm lg:btn-md md:w-[300px]"
@@ -566,9 +631,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             style={{ width: "20px", height: "20px" }}
                           />
 
-                          <span className="ml-1">
-                            Upload your completion files
-                          </span>
+                          <span className="ml-1">Mark as completed</span>
                         </button>
                       )}
                   </div>

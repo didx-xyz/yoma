@@ -18,20 +18,20 @@ export const performActionSendForVerificationManual = async (
 ): Promise<any> => {
   const formData = objectToFormData(model);
 
-  /* eslint-disable */
-  // convert model to form data
-  // const formData = new FormData();
-  // for (const property in model) {
-  //   let propVal = (model as any)[property];
-  //   if (propVal == null || propVal === undefined) continue;
-
-  //   formData.append(property, propVal);
-  // }
-  /* eslint-enable */
-
   await (
     await ApiClient
   ).put(`/myopportunity/action/${opportunityId}/verify`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+};
+
+export const getVerificationStatus = async (
+  opportunityId: string,
+): Promise<string | null> => {
+  const { data } = await (
+    await ApiClient
+  ).post<string | null>(
+    `/myopportunity/action/verify/status?opportunityId=${opportunityId}`,
+  );
+  return data;
 };
