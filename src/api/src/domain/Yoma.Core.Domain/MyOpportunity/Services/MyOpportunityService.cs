@@ -110,7 +110,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             return result;
         }
 
-        public VerificationStatus? GetVerificationStatusOrNull(Guid opportunityId)
+        public MyOpportunityResponseVerify? GetVerificationStatusOrNull(Guid opportunityId)
         {
             var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
 
@@ -118,8 +118,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
             var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
+            if (myOpportunity == null) return null;
 
-            return myOpportunity?.VerificationStatus;
+            if (!myOpportunity.VerificationStatus.HasValue)
+                throw new InvalidOperationException($"Verification status expected for 'my' opportunity with id '{myOpportunity.Id}'");
+
+            return new MyOpportunityResponseVerify { Status = myOpportunity.VerificationStatus.Value, Comment = myOpportunity.CommentVerification };
         }
 
         public MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter)

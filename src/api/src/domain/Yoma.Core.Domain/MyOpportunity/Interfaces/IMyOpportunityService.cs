@@ -7,7 +7,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
     {
         Models.MyOpportunity GetById(Guid id, bool includeChildItems, bool includeComputed);
 
-        VerificationStatus? GetVerificationStatusOrNull(Guid opportunityId);
+        MyOpportunityResponseVerify? GetVerificationStatusOrNull(Guid opportunityId);
 
         MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter);
 
