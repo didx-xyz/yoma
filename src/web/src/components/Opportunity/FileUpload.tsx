@@ -33,14 +33,15 @@ export const FileUpload: React.FC<InputProps> = ({
 
   const onFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      const result = [...data, event.target.files[0]];
+      const result = allowMultiple
+        ? [...data, event.target.files[0]]
+        : [event.target.files[0]];
       setFiles(result);
       if (onUploadComplete) onUploadComplete(result);
     }
   };
 
   const fileUpload = () => {
-    console.log(inputRef.current);
     if (inputRef.current) {
       inputRef.current.click();
     }
