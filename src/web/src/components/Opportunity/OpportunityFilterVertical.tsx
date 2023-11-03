@@ -195,7 +195,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
-            <div className="collapse-arrow collapse join-item border border-base-300">
+            <div className="collapse join-item collapse-arrow border border-base-300">
               <input type="radio" name="my-accordion-2" />
               <div className="collapse-title text-xl font-medium">
                 Opportunity type
@@ -237,7 +237,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
-            <div className="collapse-arrow collapse join-item border border-base-300">
+            <div className="collapse join-item collapse-arrow border border-base-300">
               <input type="radio" name="my-accordion-3" />
               <div className="collapse-title text-xl font-medium">Location</div>
               <div className="collapse-content">
@@ -277,7 +277,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
-            <div className="collapse-arrow collapse join-item border border-base-300">
+            <div className="collapse join-item collapse-arrow border border-base-300">
               <input type="radio" name="my-accordion-4" />
               <div className="collapse-title text-xl font-medium">Language</div>
               <div className="collapse-content">
@@ -317,7 +317,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
-            <div className="collapse-arrow collapse join-item border border-base-300">
+            <div className="collapse join-item collapse-arrow border border-base-300">
               <input type="radio" name="my-accordion-5" />
               <div className="collapse-title text-xl font-medium">
                 Organisation
@@ -359,7 +359,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
-            <div className="collapse-arrow collapse join-item border border-base-300">
+            <div className="collapse join-item collapse-arrow border border-base-300">
               <input type="radio" name="my-accordion-6" />
               <div className="collapse-title text-xl font-medium">Effort</div>
               <div className="collapse-content">
@@ -399,7 +399,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
-            <div className="collapse-arrow collapse join-item border border-base-300">
+            <div className="collapse join-item collapse-arrow border border-base-300">
               <input type="radio" name="my-accordion-7" />
               <div className="collapse-title text-xl font-medium">Reward</div>
               <div className="collapse-content">

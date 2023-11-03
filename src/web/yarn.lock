@@ -1177,10 +1177,10 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@next/bundle-analyzer@^13.4.19":
-  version "13.5.6"
-  resolved "https://registry.yarnpkg.com/@next/bundle-analyzer/-/bundle-analyzer-13.5.6.tgz#3c73f2e15ff5507317b37b87ce984bac5a5d7ad0"
-  integrity sha512-4P5YVpR3N/B5+p0TQ/rPAr+9fsjkdfCVTGzJhKwE7XHqS+QME4gYxAYeGKkfkHEkP2A3GKXs8QSp0LjIvWLI3g==
+"@next/bundle-analyzer@^14.0.1":
+  version "14.0.1"
+  resolved "https://registry.yarnpkg.com/@next/bundle-analyzer/-/bundle-analyzer-14.0.1.tgz#0b371a00a4c252596669319e2fdda2d3cff4b52b"
+  integrity sha512-AbZZnj4gZ1ZQFppZxAC9e8+skj0rFiSvY6E6Ut+ydS1r6oizR7PMu/7o02psIm4ekAsmp2O1Eq8IowHQgPWPCQ==
   dependencies:
     webpack-bundle-analyzer "4.7.0"
 
@@ -1462,7 +1462,7 @@
     "@sentry/utils" "7.77.0"
     localforage "^1.8.1"
 
-"@sentry/nextjs@^7.64.0":
+"@sentry/nextjs@^7.77.0":
   version "7.77.0"
   resolved "https://registry.yarnpkg.com/@sentry/nextjs/-/nextjs-7.77.0.tgz#036b1c45dd106e01d44967c97985464e108922be"
   integrity sha512-8tYPBt5luFjrng1sAMJqNjM9sq80q0jbt6yariADU9hEr7Zk8YqFaOI2/Q6yn9dZ6XyytIRtLEo54kk2AO94xw==
@@ -2447,7 +2447,7 @@ csstype@^3.0.2:
   resolved "https://registry.yarnpkg.com/csstype/-/csstype-3.1.2.tgz#1d4bf9d572f11c14031f0436e1c10bc1f571f50b"
   integrity sha512-I7K1Uu0MBPzaFKg4nI5Q7Vs2t+3gWWW648spaF+Rg7pI9ds18Ugn+lvg4SHczUdKlHI5LWBXyqfS8+DufyBsgQ==
 
-daisyui@^3.6.4:
+daisyui@^3.9.4:
   version "3.9.4"
   resolved "https://registry.yarnpkg.com/daisyui/-/daisyui-3.9.4.tgz#84209bfce115505d7b502f7362b8ced6bb3a6cc5"
   integrity sha512-fvi2RGH4YV617/6DntOVGcOugOPym9jTGWW2XySb5ZpvdWO4L7bEG77VHirrnbRUEWvIEVXkBpxUz2KFj0rVnA==

@@ -14,11 +14,11 @@
     "@fontsource/open-sans": "^5.0.17",
     "@hookform/resolvers": "^3.3.2",
     "@react-google-maps/api": "^2.19.2",
-    "@sentry/nextjs": "^7.64.0",
+    "@sentry/nextjs": "^7.77.0",
     "@t3-oss/env-nextjs": "^0.7.1",
     "@tanstack/react-query": "^4.33.0",
     "axios": "^1.6.0",
-    "daisyui": "^3.6.4",
+    "daisyui": "^3.9.4",
     "jotai": "^2.5.0",
     "moment": "^2.29.4",
     "next": "^14.0.1",
@@ -40,7 +40,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^13.4.19",
+    "@next/bundle-analyzer": "^14.0.1",
     "@types/eslint": "^8.44.6",
     "@types/next-pwa": "^5.6.8",
     "@types/node": "^20.8.10",
