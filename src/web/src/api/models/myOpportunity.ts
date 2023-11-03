@@ -8,3 +8,9 @@ export interface MyOpportunityRequestVerify {
   dateStart: string | null;
   dateEnd: string | null;
 }
+
+export enum VerificationStatus {
+  Pending,
+  Rejected,
+  Completed,
+}
