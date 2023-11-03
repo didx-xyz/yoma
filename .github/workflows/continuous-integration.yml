@@ -31,7 +31,7 @@ jobs:
       matrix:
         project:
           - api
-          - youth
+          - web
         include:
           - project: api
             dir: ./src/api
@@ -39,27 +39,27 @@ jobs:
             config:
               auto_fix: false
               continue_on_error: false
-              check_name: 'Dotnet Format (${dir})'
+              check_name: "Dotnet Format (${dir})"
               dotnet_format: true
               dotnet_format_dir: ./src/api
             env: {}
-          - project: youth
-            dir: ./src/web/youth
+          - project: web
+            dir: ./src/web
             lang: js
             config:
               auto_fix: false
               continue_on_error: false
-              check_name: '${linter} (${dir})'
+              check_name: "${linter} (${dir})"
               # ESLint
               eslint: true
-              eslint_dir: ./src/web/youth
+              eslint_dir: ./src/web
               eslint_extensions: js,ts,tsx
-              eslint_args: --ignore-path ../../../.gitignore --config .eslintrc.cjs
+              eslint_args: --ignore-path ../../.gitignore --config .eslintrc.cjs
               # Prettier
               prettier: true
-              prettier_dir: ./src/web/youth
+              prettier_dir: ./src/web
               prettier_extensions: js,ts,tsx
-              prettier_args: --ignore-path ../../../.gitignore --config prettier.config.cjs
+              prettier_args: --ignore-path ../../.gitignore --config prettier.config.cjs
             env:
               SKIP_ENV_VALIDATION: true
 
@@ -118,15 +118,15 @@ jobs:
       matrix:
         image:
           - yoma-api
-          - yoma-web-youth
+          - yoma-web
         include:
           - image: yoma-api
             context: ./src/api
             file: ./src/api/Dockerfile
             buildArgs: ""
-          - image: yoma-web-youth
-            context: ./src/web/youth
-            file: ./src/web/youth/Dockerfile
+          - image: yoma-web
+            context: ./src/web
+            file: ./src/web/Dockerfile
             buildArgs: |-
               NEXT_PUBLIC_ENVIRONMENT=production
 
@@ -199,24 +199,24 @@ jobs:
           filters: |-
             api:
               - './src/api/**'
-            web-youth:
-              - './src/web/youth/**'
+            web:
+              - './src/web/**'
 
       - name: Pre-pull images
         run: |-
           docker compose -f ./src/api/docker-compose.yml pull
-          docker compose -f ./src/web/youth/docker-compose.yml pull
+          docker compose -f ./src/web/docker-compose.yml pull
         env:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
-          YOUTH_TAG: ${{ steps.filter.outputs.web-youth == 'true' && needs.build.outputs.image_version || 'latest' }}
+          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
         continue-on-error: true
       - name: Start services
         run: |-
           docker compose -f ./src/api/docker-compose.yml up -d
-          docker compose -f ./src/web/youth/docker-compose.yml up -d
+          docker compose -f ./src/web/docker-compose.yml up -d
         env:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
-          YOUTH_TAG: ${{ steps.filter.outputs.web-youth == 'true' && needs.build.outputs.image_version || 'latest' }}
+          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
 
       - uses: actions/setup-node@v4
         with:
@@ -247,8 +247,8 @@ jobs:
       - name: Yoma API logs
         if: always()
         run: docker logs yoma-api
-      - name: Yoma Web Youth logs
+      - name: Yoma Web logs
         if: always()
-        run: docker logs yoma-web-youth
+        run: docker logs yoma-web
 
       - run: docker compose down -v
