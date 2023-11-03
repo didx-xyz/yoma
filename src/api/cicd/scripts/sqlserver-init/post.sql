@@ -172,8 +172,8 @@ WITH CTE AS (
 UPDATE CTE
 SET [SSISchemaName] =
   CASE
-    WHEN CTE.[Name] = 'Task' THEN 'Opportunity|Task_Local'
-    WHEN CTE.[Name] = 'Learning' THEN 'Opportunity|Learning_Local'
+    WHEN CTE.[Name] = 'Task' THEN 'Opportunity|Task'
+    WHEN CTE.[Name] = 'Learning' THEN 'Opportunity|Learning'
     ELSE 'ERROR' END
 GO
 

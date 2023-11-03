@@ -10,7 +10,6 @@ using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
-using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
@@ -22,6 +21,7 @@ namespace Yoma.Core.Domain.SSI.Services
     {
         #region Class Variables
         private readonly ILogger<SSIBackgroundService> _logger;
+        private readonly AppSettings _appSettings;
         private readonly ScheduleJobOptions _scheduleJobOptions;
         private readonly IEnvironmentProvider _environmentProvider;
         private readonly IUserService _userService;
@@ -29,7 +29,6 @@ namespace Yoma.Core.Domain.SSI.Services
         private readonly IOpportunityService _opportunityService;
         private readonly IMyOpportunityService _myOpportunityService;
         private readonly ISSISchemaService _ssiSchemaService;
-        private readonly ISSISchemaTypeService _ssiSchemaTypeService;
         private readonly ISSITenantCreationService _ssiTenantCreationService;
         private readonly ISSICredentialIssuanceService _ssiCredentialIssuanceService;
         private readonly ISSIProviderClient _ssiProviderClient;
@@ -39,6 +38,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
         #region Constructor
         public SSIBackgroundService(ILogger<SSIBackgroundService> logger,
+            IOptions<AppSettings> appSettings,
             IOptions<ScheduleJobOptions> scheduleJobOptions,
             IEnvironmentProvider environmentProvider,
             IUserService userService,
@@ -46,12 +46,12 @@ namespace Yoma.Core.Domain.SSI.Services
             IOpportunityService opportunityService,
             IMyOpportunityService myOpportunityService,
             ISSISchemaService ssiSchemaService,
-            ISSISchemaTypeService ssiSchemaTypeService,
             ISSITenantCreationService ssiTenantCreationService,
             ISSICredentialIssuanceService ssiCredentialIssuanceService,
             ISSIProviderClientFactory ssiProviderClientFactory)
         {
             _logger = logger;
+            _appSettings = appSettings.Value;
             _scheduleJobOptions = scheduleJobOptions.Value;
             _environmentProvider = environmentProvider;
             _userService = userService;
@@ -59,7 +59,6 @@ namespace Yoma.Core.Domain.SSI.Services
             _opportunityService = opportunityService;
             _myOpportunityService = myOpportunityService;
             _ssiSchemaService = ssiSchemaService;
-            _ssiSchemaTypeService = ssiSchemaTypeService;
             _ssiTenantCreationService = ssiTenantCreationService;
             _ssiCredentialIssuanceService = ssiCredentialIssuanceService;
             _ssiProviderClient = ssiProviderClientFactory.CreateClient();
@@ -67,7 +66,7 @@ namespace Yoma.Core.Domain.SSI.Services
         #endregion
 
         #region Public Members
-        public void Seed()
+        public void SeedSchemas()
         {
             lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
@@ -75,13 +74,17 @@ namespace Yoma.Core.Domain.SSI.Services
 
                 _logger.LogInformation("Processing SSI seeding");
 
-                SeedDomain_EnsureSchema(ArtifactType.Ld_proof,
-                    $"{SchemaType.Opportunity}{SSISchemaService.SchemaName_TypeDelimiter}{OpportunityType.Task}_{_environmentProvider.Environment}",
+                SeedSchema(ArtifactType.Ld_proof,
+                    _ssiSchemaService.ToFullName(SchemaType.Opportunity, OpportunityType.Task.ToString()),
                     new List<string> { "Opportunity_Title", "Opportunity_Summary", "Opportunity_Skills", "User_DisplayName", "User_DateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
 
-                SeedDomain_EnsureSchema(ArtifactType.Ld_proof,
-                    $"{SchemaType.Opportunity}{SSISchemaService.SchemaName_TypeDelimiter}{OpportunityType.Learning}_{_environmentProvider.Environment}",
+                SeedSchema(ArtifactType.Ld_proof,
+                    _ssiSchemaService.ToFullName(SchemaType.Opportunity, OpportunityType.Learning.ToString()),
                     new List<string> { "Opportunity_Title", "Opportunity_Summary", "Opportunity_Skills", "User_DisplayName", "User_DateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
+
+                SeedSchema(ArtifactType.Indy,
+                    _ssiSchemaService.ToFullName(SchemaType.YoID, $"{EntityType.User}_Member"),
+                    new List<string> { "User_FirstName", "User_Surname", "User_DisplayName", "User_PhoneNumber", "User_DateOfBirth", "User_Email", "User_Gender", "User_Country", "User_CountryOfResidence" }).Wait();
 
                 _logger.LogInformation("Processed SSI seeding");
             }
@@ -186,7 +189,7 @@ namespace Yoma.Core.Domain.SSI.Services
                         {
                             _logger.LogInformation("Processing SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
 
-                            var schema = _ssiSchemaService.GetByName(item.SchemaName).Result;
+                            var schema = _ssiSchemaService.GetByFullName(item.SchemaName).Result;
 
                             var request = new CredentialIssuanceRequest
                             {
@@ -195,28 +198,31 @@ namespace Yoma.Core.Domain.SSI.Services
                                 Attributes = new Dictionary<string, string>()
                             };
 
+                            User user;
+                            (bool proceed, string tenantId) tenantIssuer;
+                            (bool proceed, string tenantId) tenantHolder;
                             switch (item.SchemaType)
                             {
-                                case SchemaType.Opportunity:
-                                    if (!item.MyOpportunityId.HasValue)
-                                        throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'My' opportunity id is null");
-                                    var myOpportunity = _myOpportunityService.GetById(item.MyOpportunityId.Value, false, false);
+                                case SchemaType.YoID:
+                                    if (!item.UserId.HasValue)
+                                        throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'User id is null");
+                                    user = _userService.GetById(item.UserId.Value, true, true);
 
-                                    var tenantIdIssuer = _ssiTenantCreationService.GetTenantIdOrNull(EntityType.Organization, myOpportunity.OrganizationId);
-                                    if (string.IsNullOrEmpty(tenantIdIssuer))
+                                    var organization = _organizationService.GetByNameOrNull(_appSettings.SSIIssuerYomaOrganizationName, true, true);
+                                    if (organization == null)
                                     {
-                                        _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with ID '{id}' was skipped as the SSI issuer tenant creation has not been completed", item.SchemaType, item.Id);
+                                        _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with id '{id}' " +
+                                            "was skipped as the '{}' organization could not be found", item.SchemaType, item.Id, _appSettings.SSIIssuerYomaOrganizationName);
                                         continue;
                                     }
-                                    request.TenantIdIssuer = tenantIdIssuer;
 
-                                    var tenantIdHolder = _ssiTenantCreationService.GetTenantIdOrNull(EntityType.User, myOpportunity.UserId);
-                                    if (string.IsNullOrEmpty(tenantIdHolder))
-                                    {
-                                        _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with ID '{id}' was skipped as the SSI holder tenant creation has not been completed", item.SchemaType, item.Id);
-                                        continue;
-                                    }
-                                    request.TenantIdHolder = tenantIdHolder;
+                                    tenantIssuer = GetTenantId(item, EntityType.Organization, organization.Id);
+                                    if (!tenantIssuer.proceed) continue;
+                                    request.TenantIdIssuer = tenantIssuer.tenantId;
+
+                                    tenantHolder = GetTenantId(item, EntityType.User, user.Id);
+                                    if (!tenantHolder.proceed) continue;
+                                    request.TenantIdHolder = tenantHolder.tenantId;
 
                                     foreach (var entity in schema.Entities)
                                     {
@@ -226,7 +232,37 @@ namespace Yoma.Core.Domain.SSI.Services
                                         switch (entityType)
                                         {
                                             case Type t when t == typeof(User):
-                                                var user = _userService.GetById(myOpportunity.UserId, true, true);
+                                                ReflectEntityValues(request, entity, t, user);
+                                                break;
+
+                                            default:
+                                                throw new InvalidOperationException($"Entity of type '{entity.TypeName}' not supported");
+                                        }
+                                    }
+                                    break;
+
+                                case SchemaType.Opportunity:
+                                    if (!item.MyOpportunityId.HasValue)
+                                        throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'My' opportunity id is null");
+                                    var myOpportunity = _myOpportunityService.GetById(item.MyOpportunityId.Value, true, true);
+
+                                    tenantIssuer = GetTenantId(item, EntityType.Organization, myOpportunity.OrganizationId);
+                                    if (!tenantIssuer.proceed) continue;
+                                    request.TenantIdIssuer = tenantIssuer.tenantId;
+
+                                    tenantHolder = GetTenantId(item, EntityType.User, myOpportunity.UserId);
+                                    if (!tenantHolder.proceed) continue;
+                                    request.TenantIdHolder = tenantHolder.tenantId;
+
+                                    foreach (var entity in schema.Entities)
+                                    {
+                                        var entityType = Type.GetType(entity.TypeName)
+                                            ?? throw new InvalidOperationException($"Failed to get the entity of type '{entity.TypeName}'");
+
+                                        switch (entityType)
+                                        {
+                                            case Type t when t == typeof(User):
+                                                user = _userService.GetById(myOpportunity.UserId, true, true);
                                                 ReflectEntityValues(request, entity, t, user);
                                                 break;
 
@@ -274,16 +310,29 @@ namespace Yoma.Core.Domain.SSI.Services
         #endregion
 
         #region Private Members
-        private async Task SeedDomain_EnsureSchema(ArtifactType artifactType, string schemaFullName, List<string> attributes)
+        private (bool proceed, string tenantId) GetTenantId(SSICredentialIssuance item, EntityType entityType, Guid entityId)
         {
-            var schema = await _ssiSchemaService.GetByNameOrNull(schemaFullName);
+            var tenantIdIssuer = _ssiTenantCreationService.GetTenantIdOrNull(entityType, entityId);
+            if (string.IsNullOrEmpty(tenantIdIssuer))
+            {
+                _logger.LogInformation(
+                    "Processing of SSI credential issuance for schema type '{schemaType}' and item with id '{id}' " +
+                    "was skipped as the SSI tenant creation for entity of type '{entityType}' and with id '{entityId}' has not been completed", item.SchemaType, item.Id, entityType, entityId);
+                return (false, string.Empty);
+            }
+            return (true, tenantIdIssuer);
+        }
+
+        private async Task SeedSchema(ArtifactType artifactType, string schemaFullName, List<string> attributes)
+        {
+            var schema = await _ssiSchemaService.GetByFullNameOrNull(schemaFullName);
             if (schema == null)
             {
-                var schemaName = schemaFullName.Split(SSISchemaService.SchemaName_TypeDelimiter).Last();
+                var nameParts = _ssiSchemaService.SchemaFullNameValidateAndGetParts(schemaFullName);
                 await _ssiSchemaService.Create(new SSISchemaRequestCreate
                 {
-                    TypeId = _ssiSchemaTypeService.GetByName(SchemaType.Opportunity.ToString()).Id,
-                    Name = schemaName,
+                    TypeId = nameParts.schemaType.Id,
+                    Name = nameParts.displayName,
                     ArtifactType = artifactType,
                     Attributes = attributes
                 });

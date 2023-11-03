@@ -2,7 +2,7 @@ namespace Yoma.Core.Domain.SSI.Interfaces
 {
     public interface ISSIBackgroundService
     {
-        void Seed();
+        void SeedSchemas();
 
         void ProcessTenantCreation();
 

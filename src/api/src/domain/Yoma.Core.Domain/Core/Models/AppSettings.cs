@@ -19,6 +19,8 @@ namespace Yoma.Core.Domain.Core.Models
         public CacheItemType CacheEnabledByCacheItemTypes { get; set; }
 
         public int SSIMaximumRetryAttempts { get; set; }
+
+        public string SSIIssuerYomaOrganizationName { get; set; }
     }
 
     public class AppSettingsCredentials

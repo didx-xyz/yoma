@@ -133,7 +133,7 @@ namespace Yoma.Core.Domain
 
             //ssi
             var ssiTenantBackgroundService = scope.ServiceProvider.GetRequiredService<ISSIBackgroundService>();
-            BackgroundJob.Enqueue(() => ssiTenantBackgroundService.Seed()); //execute on startup provided local
+            BackgroundJob.Enqueue(() => ssiTenantBackgroundService.SeedSchemas()); //execute on startup provided local
             RecurringJob.AddOrUpdate($"SSI Tenant Creation",
                () => ssiTenantBackgroundService.ProcessTenantCreation(), options.SSITenantCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
