@@ -25,10 +25,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #region Public Members
         public OpportunityInfo? GetInfoByIdOrNull(Guid id, bool includeChildren, bool includeComputed, bool? includeExpired)
         {
-            var opportunity = _opportunityService.GetById(id, includeChildren, includeComputed, false);
+            var opportunity = _opportunityService.GetByIdOrNull(id, includeChildren, includeComputed);
 
             //inactive organization
-            if (opportunity.OrganizationStatus != Entity.OrganizationStatus.Active) return null;
+            if (opportunity == null || opportunity.OrganizationStatus != Entity.OrganizationStatus.Active) return null;
 
             //status criteria not met
             var statuses = new List<Status>() { Status.Active };
