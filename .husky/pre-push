@@ -30,8 +30,8 @@ run_command_for_changes() {
 # Check for changes in src/api and run dotnet format command
 run_command_for_changes "src/api" "dotnet format --verify-no-changes"
 
-# Check for changes in src/web/youth and run `lint` and `prettier`
-run_command_for_changes "src/web/youth" "yarn lint"
+# Check for changes in src/web and run `lint` and `prettier`
+run_command_for_changes "src/web" "yarn lint"
 
 # Exit with success
 exit 0
