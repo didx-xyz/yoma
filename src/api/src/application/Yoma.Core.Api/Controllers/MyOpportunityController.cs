@@ -82,7 +82,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Get 'my' opportunity verification status for the specified opportunity (Authenticated User)")]
         [HttpPost("action/verify/status")]
         [ProducesResponseType(typeof(MyOpportunityResponseVerify), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int)HttpStatusCode.NoContent)]
         [Authorize(Roles = $"{Constants.Role_User}")]
         public IActionResult GetVerificationStatus([FromQuery] Guid opportunityId)
         {
@@ -92,7 +92,7 @@ namespace Yoma.Core.Api.Controllers
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetVerificationStatus));
 
-            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
+            return result == null ? StatusCode((int)HttpStatusCode.NoContent) : StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter (Authenticated User)")]
