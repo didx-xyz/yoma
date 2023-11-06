@@ -42,14 +42,14 @@ namespace Yoma.Core.Domain
 
             #region Entity
             #region Lookups
-            services.AddScoped<IOrganizationStatusService, OrganizationStatusService>();
+            services.AddTransient<IOrganizationStatusService, OrganizationStatusService>();
             services.AddScoped<IOrganizationProviderTypeService, OrganizationProviderTypeService>();
             #endregion Lookups
 
-            services.AddScoped<IOrganizationService, OrganizationService>();
+            services.AddTransient<IOrganizationService, OrganizationService>();
             services.AddSingleton<IOrganizationBackgroundService, OrganizationBackgroundService>();
             services.AddScoped<IUserProfileService, UserProfileService>();
-            services.AddScoped<IUserService, UserService>();
+            services.AddTransient<IUserService, UserService>();
             #endregion Entity
 
             #region Lookups
@@ -63,10 +63,10 @@ namespace Yoma.Core.Domain
             #region My Opportunity
             #region Lookups
             services.AddScoped<IMyOpportunityActionService, MyOpportunityActionService>();
-            services.AddScoped<IMyOpportunityVerificationStatusService, MyOpportunityVerificationStatusService>();
+            services.AddTransient<IMyOpportunityVerificationStatusService, MyOpportunityVerificationStatusService>();
             #endregion Lookups
 
-            services.AddScoped<IMyOpportunityService, MyOpportunityService>();
+            services.AddTransient<IMyOpportunityService, MyOpportunityService>();
             services.AddSingleton<IMyOpportunityBackgroundService, MyOpportunityBackgroundService>();
             #endregion My Opportunity
 
@@ -74,12 +74,12 @@ namespace Yoma.Core.Domain
             #region Lookups
             services.AddScoped<IOpportunityCategoryService, OpportunityCategoryService>();
             services.AddScoped<IOpportunityDifficultyService, OpportunityDifficultyService>();
-            services.AddScoped<IOpportunityStatusService, OpportunityStatusService>();
+            services.AddTransient<IOpportunityStatusService, OpportunityStatusService>();
             services.AddScoped<IOpportunityTypeService, OpportunityTypeService>();
             services.AddScoped<IOpportunityVerificationTypeService, OpportunityVerificationTypeService>();
             #endregion Lookups
 
-            services.AddScoped<IOpportunityService, OpportunityService>();
+            services.AddTransient<IOpportunityService, OpportunityService>();
             services.AddScoped<IOpportunityInfoService, OpportunityInfoService>();
             services.AddSingleton<IOpportunityBackgroundService, OpportunityBackgroundService>();
             #endregion Opportunity
@@ -88,14 +88,14 @@ namespace Yoma.Core.Domain
             #region Lookups
             services.AddScoped<ISSICredentialIssuanceStatusService, SSICredentialIssuanceStatusService>();
             services.AddScoped<ISSISchemaEntityService, SSISchemaEntityService>();
-            services.AddScoped<ISSISchemaTypeService, SSISchemaTypeService>();
+            services.AddTransient<ISSISchemaTypeService, SSISchemaTypeService>();
             services.AddScoped<ISSITenantCreationStatusService, SSITenantCreationStatusService>();
             #endregion Lookups
 
             services.AddSingleton<ISSIBackgroundService, SSIBackgroundService>();
-            services.AddScoped<ISSICredentialIssuanceService, SSICredentialIssuanceService>();
-            services.AddScoped<ISSISchemaService, SSISchemaService>();
-            services.AddScoped<ISSITenantCreationService, SSITenantCreationService>();
+            services.AddTransient<ISSICredentialIssuanceService, SSICredentialIssuanceService>();
+            services.AddTransient<ISSISchemaService, SSISchemaService>();
+            services.AddTransient<ISSITenantCreationService, SSITenantCreationService>();
             #endregion SSI
         }
 

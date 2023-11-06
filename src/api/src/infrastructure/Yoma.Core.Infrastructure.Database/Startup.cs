@@ -56,7 +56,7 @@ namespace Yoma.Core.Infrastructure.Database
             #endregion Lookups
             services.AddScoped<IRepository<OrganizationDocument>, OrganizationDocumentRepository>();
             services.AddScoped<IRepository<OrganizationProviderType>, OrganizationProviderTypeRepository>();
-            services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Organization>, OrganizationRepository>();
+            services.AddTransient<IRepositoryBatchedValueContainsWithNavigation<Organization>, OrganizationRepository>();
             services.AddScoped<IRepository<OrganizationUser>, OrganizationUserRepository>();
             services.AddScoped<IRepositoryValueContainsWithNavigation<User>, UserRepository>();
             services.AddScoped<IRepository<UserSkill>, UserSkillRepository>();
@@ -76,7 +76,7 @@ namespace Yoma.Core.Infrastructure.Database
             services.AddScoped<IRepository<Domain.MyOpportunity.Models.Lookups.MyOpportunityVerificationStatus>, MyOpportunity.Repositories.Lookups.MyOpportunityVerificationStatusRepository>();
             #endregion Lookups
 
-            services.AddScoped<IRepositoryBatchedWithNavigation<Domain.MyOpportunity.Models.MyOpportunity>, MyOpportunityRepository>();
+            services.AddTransient<IRepositoryBatchedWithNavigation<Domain.MyOpportunity.Models.MyOpportunity>, MyOpportunityRepository>();
             services.AddScoped<IRepository<Domain.MyOpportunity.Models.MyOpportunityVerification>, MyOpportunityVerificationRepository>();
             #endregion My Opportunity
 
@@ -89,7 +89,7 @@ namespace Yoma.Core.Infrastructure.Database
             services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityVerificationType>, Opportunity.Repositories.Lookups.OpportunityVerificationTypeRepository>();
             #endregion
 
-            services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Opportunity.Models.Opportunity>, OpportunityRepository>();
+            services.AddTransient<IRepositoryBatchedValueContainsWithNavigation<Domain.Opportunity.Models.Opportunity>, OpportunityRepository>();
             services.AddScoped<IRepository<OpportunityCategory>, OpportunityCategoryRepository>();
             services.AddScoped<IRepository<OpportunityCountry>, OpportunityCountryRepository>();
             services.AddScoped<IRepository<OpportunityLanguage>, OpportunityLanguageRepository>();
