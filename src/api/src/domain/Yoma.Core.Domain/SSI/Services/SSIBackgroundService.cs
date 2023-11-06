@@ -9,6 +9,7 @@ using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
+using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models;
@@ -75,15 +76,15 @@ namespace Yoma.Core.Domain.SSI.Services
                 _logger.LogInformation("Processing SSI seeding");
 
                 SeedSchema(ArtifactType.Ld_proof,
-                    _ssiSchemaService.ToFullName(SchemaType.Opportunity, OpportunityType.Task.ToString()),
+                    SSISSchemaHelper.ToFullName(SchemaType.Opportunity, OpportunityType.Task.ToString()),
                     new List<string> { "Opportunity_Title", "Opportunity_Summary", "Opportunity_Skills", "User_DisplayName", "User_DateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
 
                 SeedSchema(ArtifactType.Ld_proof,
-                    _ssiSchemaService.ToFullName(SchemaType.Opportunity, OpportunityType.Learning.ToString()),
+                    SSISSchemaHelper.ToFullName(SchemaType.Opportunity, OpportunityType.Learning.ToString()),
                     new List<string> { "Opportunity_Title", "Opportunity_Summary", "Opportunity_Skills", "User_DisplayName", "User_DateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
 
                 SeedSchema(ArtifactType.Indy,
-                    _ssiSchemaService.ToFullName(SchemaType.YoID, $"{EntityType.User}_Member"),
+                    SSISSchemaHelper.ToFullName(SchemaType.YoID, _appSettings.SSISchemaNameYoID),
                     new List<string> { "User_FirstName", "User_Surname", "User_DisplayName", "User_PhoneNumber", "User_DateOfBirth", "User_Email", "User_Gender", "User_Country", "User_CountryOfResidence" }).Wait();
 
                 _logger.LogInformation("Processed SSI seeding");
@@ -196,6 +197,10 @@ namespace Yoma.Core.Domain.SSI.Services
                                 SchemaName = item.SchemaName,
                                 ArtifactType = item.ArtifactType,
                                 Attributes = new Dictionary<string, string>()
+                                {
+                                    { SSISchemaService.SchemaAttribute_Internal_DateIssued, DateTimeOffset.Now.ToString("yyyy-MM-dd")},
+                                    { SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString()}
+                                }
                             };
 
                             User user;
@@ -208,11 +213,11 @@ namespace Yoma.Core.Domain.SSI.Services
                                         throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'User id is null");
                                     user = _userService.GetById(item.UserId.Value, true, true);
 
-                                    var organization = _organizationService.GetByNameOrNull(_appSettings.SSIIssuerYomaOrganizationName, true, true);
+                                    var organization = _organizationService.GetByNameOrNull(_appSettings.SSIIssuerNameYomaOrganization, true, true);
                                     if (organization == null)
                                     {
                                         _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with id '{id}' " +
-                                            "was skipped as the '{}' organization could not be found", item.SchemaType, item.Id, _appSettings.SSIIssuerYomaOrganizationName);
+                                            "was skipped as the '{orgName}' organization could not be found", item.SchemaType, item.Id, _appSettings.SSIIssuerNameYomaOrganization);
                                         continue;
                                     }
 

@@ -20,7 +20,9 @@ namespace Yoma.Core.Domain.Core.Models
 
         public int SSIMaximumRetryAttempts { get; set; }
 
-        public string SSIIssuerYomaOrganizationName { get; set; }
+        public string SSIIssuerNameYomaOrganization { get; set; }
+
+        public string SSISchemaNameYoID { get; set; }
     }
 
     public class AppSettingsCredentials

@@ -12,18 +12,22 @@ using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.SSI.Interfaces;
+using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.SSI.Helpers;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
     public class UserService : IUserService
     {
         #region Class Variables
+        private readonly AppSettings _appSettings;
         private readonly IIdentityProviderClient _identityProviderClient;
         private readonly IBlobService _blobService;
         private readonly IGenderService _genderService;
         private readonly ICountryService _countryService;
         private readonly ISkillService _skillService;
         private readonly ISSITenantCreationService _ssiTenantCreationService;
+        private readonly ISSICredentialIssuanceService _ssiCredentialIssuanceService;
         private readonly UserRequestValidator _userRequestValidator;
         private readonly UserSearchFilterValidator _userSearchFilterValidator;
         private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
@@ -32,23 +36,27 @@ namespace Yoma.Core.Domain.Entity.Services
 
         #region Constructor
         public UserService(
+            IOptions<AppSettings> appSettings,
             IIdentityProviderClientFactory identityProviderClientFactory,
             IBlobService blobService,
             IGenderService genderService,
             ICountryService countryService,
             ISkillService skillService,
             ISSITenantCreationService ssiTenantCreationService,
+            ISSICredentialIssuanceService ssiCredentialIssuanceService,
             UserRequestValidator userValidator,
             UserSearchFilterValidator userSearchFilterValidator,
             IRepositoryValueContainsWithNavigation<User> userRepository,
             IRepository<UserSkill> userSkillRepository)
         {
+            _appSettings = appSettings.Value;
             _identityProviderClient = identityProviderClientFactory.CreateClient();
             _blobService = blobService;
             _genderService = genderService;
             _countryService = countryService;
             _skillService = skillService;
             _ssiTenantCreationService = ssiTenantCreationService;
+            _ssiCredentialIssuanceService = ssiCredentialIssuanceService;
             _userRequestValidator = userValidator;
             _userSearchFilterValidator = userSearchFilterValidator;
             _userRepository = userRepository;
@@ -273,6 +281,7 @@ namespace Yoma.Core.Domain.Entity.Services
             result = await _userRepository.Update(result);
 
             await _ssiTenantCreationService.Create(EntityType.User, result.Id);
+            await _ssiCredentialIssuanceService.Create(SSISSchemaHelper.ToFullName(SSI.Models.SchemaType.YoID, _appSettings.SSISchemaNameYoID), result.Id);
 
             scope.Complete();
 
