@@ -257,10 +257,10 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
                     var dids = await clientIssuer.GetDidsAsync();
                     var did = dids.SingleOrDefault(o => o.Key_type == DIDKey_type.Ed25519);
-                    if(did == null)
+                    if (did == null)
                         throw new InvalidOperationException($"Failed to retrieve the issuer DID of type '{DIDKey_type.Ed25519}'");
 
-                    var credentialSubject = new Dictionary<string, string> { { "type",  request.SchemaType  } };
+                    var credentialSubject = new Dictionary<string, string> { { "type", request.SchemaType } };
                     credentialSubject = credentialSubject.Concat(request.Attributes).ToDictionary(x => x.Key, x => x.Value);
 
                     sendCredentialRequest = new SendCredential
@@ -272,7 +272,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                             Credential = new Credential
                             {
                                 Context = new List<string> { "https://www.w3.org/2018/credentials/v1" },
-                                Type = new List<string> { "VerifiableCredential", request.SchemaType }, 
+                                Type = new List<string> { "VerifiableCredential", request.SchemaType },
                                 IssuanceDate = DateTimeOffset.Now.ToString("yyyy-MM-dd"),
                                 Issuer = did.Did,
                                 CredentialSubject = credentialSubject,
