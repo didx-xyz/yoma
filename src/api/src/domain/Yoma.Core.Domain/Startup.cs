@@ -47,7 +47,7 @@ namespace Yoma.Core.Domain
             #endregion Lookups
 
             services.AddScoped<IOrganizationService, OrganizationService>();
-            services.AddSingleton<IOrganizationBackgroundService, OrganizationBackgroundService>();
+            services.AddScoped<IOrganizationBackgroundService, OrganizationBackgroundService>();
             services.AddScoped<IUserProfileService, UserProfileService>();
             services.AddScoped<IUserService, UserService>();
             #endregion Entity
@@ -67,7 +67,7 @@ namespace Yoma.Core.Domain
             #endregion Lookups
 
             services.AddScoped<IMyOpportunityService, MyOpportunityService>();
-            services.AddSingleton<IMyOpportunityBackgroundService, MyOpportunityBackgroundService>();
+            services.AddScoped<IMyOpportunityBackgroundService, MyOpportunityBackgroundService>();
             #endregion My Opportunity
 
             #region Opportunity
@@ -81,7 +81,7 @@ namespace Yoma.Core.Domain
 
             services.AddScoped<IOpportunityService, OpportunityService>();
             services.AddScoped<IOpportunityInfoService, OpportunityInfoService>();
-            services.AddSingleton<IOpportunityBackgroundService, OpportunityBackgroundService>();
+            services.AddScoped<IOpportunityBackgroundService, OpportunityBackgroundService>();
             #endregion Opportunity
 
             #region SSI
@@ -92,7 +92,7 @@ namespace Yoma.Core.Domain
             services.AddScoped<ISSITenantCreationStatusService, SSITenantCreationStatusService>();
             #endregion Lookups
 
-            services.AddSingleton<ISSIBackgroundService, SSIBackgroundService>();
+            services.AddScoped<ISSIBackgroundService, SSIBackgroundService>();
             services.AddScoped<ISSICredentialIssuanceService, SSICredentialIssuanceService>();
             services.AddScoped<ISSISchemaService, SSISchemaService>();
             services.AddScoped<ISSITenantCreationService, SSITenantCreationService>();
