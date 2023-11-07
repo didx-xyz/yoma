@@ -35,8 +35,10 @@ namespace Yoma.Core.Domain.Core.Extensions
             }
             catch (FlurlHttpException ex)
             {
-                resp = ex.Call.Response;
+                if (ex.Call == null || ex.Call.Response == null)
+                    throw new HttpClientException(HttpStatusCode.InternalServerError, $"Response is empty / null: {ex.Message}");
 
+                resp = ex.Call.Response;
                 var errorMessage = await resp.ResponseMessage.Content.ReadAsStringAsync();
 
                 throw new HttpClientException((HttpStatusCode)resp.StatusCode, errorMessage);

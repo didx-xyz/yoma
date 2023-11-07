@@ -202,6 +202,10 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 throw new ArgumentException($"'{nameof(request.SchemaName)}' is required", nameof(request));
             request.SchemaName = request.SchemaName.Trim();
 
+            if (string.IsNullOrWhiteSpace(request.SchemaType))
+                throw new ArgumentException($"'{nameof(request.SchemaType)}' is required", nameof(request));
+            request.SchemaType = request.SchemaType.Trim();
+
             if (string.IsNullOrWhiteSpace(request.TenantIdIssuer))
                 throw new ArgumentException($"'{nameof(request.TenantIdIssuer)}' is required", nameof(request));
             request.TenantIdIssuer = request.TenantIdIssuer.Trim();
@@ -251,15 +255,35 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
                 case ArtifactType.Ld_proof:
 
+                    var dids = await clientIssuer.GetDidsAsync();
+                    var did = dids.SingleOrDefault(o => o.Key_type == DIDKey_type.Ed25519);
+                    if (did == null)
+                        throw new InvalidOperationException($"Failed to retrieve the issuer DID of type '{DIDKey_type.Ed25519}'");
+
+                    var credentialSubject = new Dictionary<string, string> { { "type", request.SchemaType } };
+                    credentialSubject = credentialSubject.Concat(request.Attributes).ToDictionary(x => x.Key, x => x.Value);
+
                     sendCredentialRequest = new SendCredential
                     {
                         Type = CredentialType.Ld_proof,
                         Connection_id = connection.TargetConnectionId,
                         Ld_credential_detail = new LDProofVCDetail
                         {
-                            Credential = new Credential()
+                            Credential = new Credential
+                            {
+                                Context = new List<string> { "https://www.w3.org/2018/credentials/v1" },
+                                Type = new List<string> { "VerifiableCredential", request.SchemaType },
+                                IssuanceDate = DateTimeOffset.Now.ToString("yyyy-MM-dd"),
+                                Issuer = did.Did,
+                                CredentialSubject = credentialSubject,
+                            },
+                            Options = new LDProofVCDetailOptions
+                            {
+                                ProofType = "Ed25519Signature2018"
+                            }
                         }
                     };
+
 
                     /*
                         https://aca-py.org/main/demo/AliceWantsAJsonCredential/#request-presentation-example
@@ -324,7 +348,6 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
             if (sseEvent == null)
                 throw new InvalidOperationException($"Failed to receive SSE event for topic '{Topic.Credentials}' and desired state '{CredentialExchangeState.Done}'");
-
 
             //TODO: Support for Indy and Ld_proof; Referent (credential exchange records are deleted)
             return credentialExchange.Credential_id;

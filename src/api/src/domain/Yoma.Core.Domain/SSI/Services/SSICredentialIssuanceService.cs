@@ -32,7 +32,7 @@ namespace Yoma.Core.Domain.SSI.Services
         #region Public Members
         public async Task Create(string schemaName, Guid entityId)
         {
-            var schema = await _ssiSchemaService.GetByName(schemaName);
+            var schema = await _ssiSchemaService.GetByFullName(schemaName);
 
             if (entityId == Guid.Empty)
                 throw new ArgumentNullException(nameof(entityId));

@@ -7,6 +7,7 @@ using Yoma.Core.Domain.SSI.Models.Provider;
 using Yoma.Core.Domain.SSI.Validators;
 using FluentValidation;
 using Yoma.Core.Domain.Exceptions;
+using Yoma.Core.Domain.SSI.Helpers;
 
 namespace Yoma.Core.Domain.SSI.Services
 {
@@ -21,6 +22,10 @@ namespace Yoma.Core.Domain.SSI.Services
 
         public static readonly char[] SchemaName_SystemCharacters = { ':' };
         public const char SchemaName_TypeDelimiter = '|';
+        public const char SchemaAttribute_Internal_Prefix = '_';
+        public const string SchemaAttribute_Internal_DateIssued = "_Date_Issued";
+        public const string SchemaAttribute_Internal_ReferentClient = "_Referent_Client";
+        public static readonly string[] SchemaAttributes_Internal = { SchemaAttribute_Internal_DateIssued, SchemaAttribute_Internal_ReferentClient };
         #endregion
 
         #region Constructor
@@ -40,13 +45,13 @@ namespace Yoma.Core.Domain.SSI.Services
         #endregion
 
         #region Public Members
-        public async Task<SSISchema> GetByName(string fullName)
+        public async Task<SSISchema> GetByFullName(string fullName)
         {
             var schema = await _ssiProviderClient.GetSchemaByName(fullName);
             return ConvertToSSISchema(schema);
         }
 
-        public async Task<SSISchema?> GetByNameOrNull(string fullName)
+        public async Task<SSISchema?> GetByFullNameOrNull(string fullName)
         {
             var schema = await _ssiProviderClient.GetSchemaByNameOrNull(fullName);
             if (schema == null) return null;
@@ -120,7 +125,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
             await _schemaRequestValidatorUpdate.ValidateAndThrowAsync(request);
 
-            var schemaExisting = await GetByNameOrNull(request.Name)
+            var schemaExisting = await GetByFullNameOrNull(request.Name)
                 ?? throw new ValidationException($"Schema '{request.Name}' does not exist");
 
             var mismatchedEntities = _ssiSchemaEntityService.List(null)
@@ -129,6 +134,9 @@ namespace Yoma.Core.Domain.SSI.Services
               ).ToList();
             if (mismatchedEntities != null && mismatchedEntities.Any())
                 throw new ArgumentException($"Request contains attributes mapped to entities ('{string.Join(", ", mismatchedEntities.Select(o => o.Name))}') that are not of the specified schema type", nameof(request));
+
+            //prefix internal attributes
+            request.Attributes.InsertRange(0, SchemaAttributes_Internal);
 
             var schema = await _ssiProviderClient.UpsertSchema(new SchemaRequest
             {
@@ -148,9 +156,9 @@ namespace Yoma.Core.Domain.SSI.Services
             await _schemaRequestValidatorCreate.ValidateAndThrowAsync(request);
 
             var schemaType = _ssiSchemaTypeService.GetById(request.TypeId);
-            var nameFull = $"{schemaType.Name}{SchemaName_TypeDelimiter}{request.Name}"; //i.e. Opportunity|Learning
+            var nameFull = SSISSchemaHelper.ToFullName(schemaType.Type, request.Name);
 
-            if (await GetByNameOrNull(nameFull) != null)
+            if (await GetByFullNameOrNull(nameFull) != null)
                 throw new ValidationException($"Schema '{nameFull}' already exists");
 
             if (!schemaType.SupportMultiple)
@@ -167,6 +175,9 @@ namespace Yoma.Core.Domain.SSI.Services
             if (mismatchedEntities != null && mismatchedEntities.Any())
                 throw new ArgumentException($"Request contains attributes mapped to entities ('{string.Join(", ", mismatchedEntities.Select(o => o.Name))}') that are not of the specified schema type", nameof(request));
 
+            //prefix internal attributes
+            request.Attributes.InsertRange(0, SchemaAttributes_Internal);
+
             var schema = await _ssiProviderClient.UpsertSchema(new SchemaRequest
             {
                 Name = nameFull,
@@ -175,6 +186,23 @@ namespace Yoma.Core.Domain.SSI.Services
             });
 
             return ConvertToSSISchema(schema);
+        }
+
+        public (SSISchemaType schemaType, string displayName) SchemaFullNameValidateAndGetParts(string schemaFullName)
+        {
+            if (string.IsNullOrWhiteSpace(schemaFullName))
+                throw new ArgumentNullException(nameof(schemaFullName));
+            schemaFullName = schemaFullName.Trim();
+
+            var nameParts = schemaFullName.Split(SchemaName_TypeDelimiter); //i.e. Opportunity|Learning
+            if (nameParts.Length != 2)
+                throw new ArgumentException($"Schema name of '{schemaFullName}' is invalid. Expecting [type]:[name]", nameof(schemaFullName));
+
+            var schemaType = _ssiSchemaTypeService.GetByNameOrNull(nameParts.First());
+            if (schemaType == null)
+                throw new ArgumentException($"Schema full name of '{schemaFullName}' is invalid. Specified type '{nameParts.First()}' does not exist", nameof(schemaFullName));
+
+            return (schemaType, nameParts.Last());
         }
         #endregion
 
@@ -203,25 +231,23 @@ namespace Yoma.Core.Domain.SSI.Services
 
         private SSISchema ConvertToSSISchema(Schema schema, List<SSISchemaEntity>? matchedEntities)
         {
-            var nameParts = schema.Name.Split(SchemaName_TypeDelimiter); //i.e. Opportunity|Learning
-            if (nameParts.Length != 2)
-                throw new ArgumentException($"Schema name of '{schema.Name}' is invalid. Expecting [type]:[name]", nameof(schema));
+            var nameParts = SchemaFullNameValidateAndGetParts(schema.Name);
 
             var countEntityProperties = matchedEntities?.Sum(o => o.Properties?.Count);
 
-            if (countEntityProperties != schema.AttributeNames?.Count)
-                throw new DataInconsistencyException($"Schema '{schema.Name}': Attribute (count '{schema.AttributeNames?.Count}') vs entity property mismatch detected (count '{countEntityProperties}')");
+            var schemaAttributeNames = schema.AttributeNames?.Except(SchemaAttributes_Internal).ToList();
 
-            var schemaType = _ssiSchemaTypeService.GetByName(nameParts.First());
+            if (countEntityProperties != schemaAttributeNames?.Count())
+                throw new DataInconsistencyException($"Schema '{schema.Name}': Attribute (count '{schemaAttributeNames?.Count}') vs entity property mismatch detected (count '{countEntityProperties}')");
 
             return new SSISchema
             {
                 Id = schema.Id,
                 Name = schema.Name,
-                DisplayName = nameParts.Last(),
-                TypeId = schemaType.Id,
-                Type = Enum.Parse<SchemaType>(schemaType.Name, true),
-                TypeDescription = schemaType.Description,
+                DisplayName = nameParts.displayName,
+                TypeId = nameParts.schemaType.Id,
+                Type = Enum.Parse<SchemaType>(nameParts.schemaType.Name, true),
+                TypeDescription = nameParts.schemaType.Description,
                 Version = schema.Version.ToString(),
                 ArtifactType = schema.ArtifactType,
                 Entities = matchedEntities ?? new List<SSISchemaEntity>(),

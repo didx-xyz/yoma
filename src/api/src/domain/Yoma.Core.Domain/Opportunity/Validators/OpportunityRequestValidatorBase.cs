@@ -173,7 +173,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         private bool SSISchemaExistsAndOfTypeOpportunity(string? name)
         {
             if (string.IsNullOrEmpty(name)) return false;
-            var result = _ssiSchemaService.GetByNameOrNull(name).Result;
+            var result = _ssiSchemaService.GetByFullNameOrNull(name).Result;
 
             return result != null && result.Type == SSI.Models.SchemaType.Opportunity;
         }

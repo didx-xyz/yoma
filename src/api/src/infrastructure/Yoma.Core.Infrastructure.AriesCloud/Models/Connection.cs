@@ -1,5 +1,3 @@
-using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
-
 namespace Yoma.Core.Infrastructure.AriesCloud.Models
 {
     public class Connection

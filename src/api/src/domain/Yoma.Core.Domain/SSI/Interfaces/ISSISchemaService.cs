@@ -5,9 +5,9 @@ namespace Yoma.Core.Domain.SSI.Interfaces
 {
     public interface ISSISchemaService
     {
-        Task<SSISchema> GetByName(string fullName);
+        Task<SSISchema> GetByFullName(string fullName);
 
-        Task<SSISchema?> GetByNameOrNull(string fullName);
+        Task<SSISchema?> GetByFullNameOrNull(string fullName);
 
         Task<List<SSISchema>> List(SchemaType? type);
 
@@ -16,5 +16,7 @@ namespace Yoma.Core.Domain.SSI.Interfaces
         Task<SSISchema> Create(SSISchemaRequestCreate request);
 
         Task<SSISchema> Update(SSISchemaRequestUpdate request);
+
+        (SSISchemaType schemaType, string displayName) SchemaFullNameValidateAndGetParts(string schemaFullName);
     }
 }

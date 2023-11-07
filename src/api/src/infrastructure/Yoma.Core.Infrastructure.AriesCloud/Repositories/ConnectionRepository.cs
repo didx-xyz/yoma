@@ -1,4 +1,3 @@
-using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.AriesCloud.Context;
 

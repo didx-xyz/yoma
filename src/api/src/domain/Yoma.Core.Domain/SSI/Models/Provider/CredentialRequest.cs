@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.SSI.Models.Provider
     {
         public string SchemaName { get; set; }
 
+        public string SchemaType { get; set; }
+
         public ArtifactType ArtifactType { get; set; }
 
         public string TenantIdIssuer { get; set; }

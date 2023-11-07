@@ -33,6 +33,15 @@ FROM [Entity].[User]
 WHERE [YoIDOnboarded] = 1
 GO
 
+--ssi credential issuance (pending) for YOID onboarded users
+INSERT INTO [SSI].[CredentialIssuance]([Id],[SchemaTypeId],[ArtifactType],[SchemaName],[SchemaVersion],[StatusId],[UserId],[OrganizationId]
+           ,[MyOpportunityId],[CredentialId],[ErrorReason],[RetryCount],[DateCreated],[DateModified])
+SELECT NEWID(),(SELECT [Id] FROM [SSI].[SchemaType] WHERE [Name] = 'YoID'),'Indy','YoID|User_Member','1.0',(SELECT [Id] FROM [SSI].[CredentialIssuanceStatus] WHERE [Name] = 'Pending'),
+	U.[Id],NULL,NULL,NULL,NULL,NULL,GETDATE(),GETDATE()
+FROM [Entity].[User] U
+WHERE U.[YoIDOnboarded] = 1
+GO
+
 DECLARE @Words VARCHAR(500) = 'The,A,An,Awesome,Incredible,Fantastic,Amazing,Wonderful,Exciting,Unbelievable,Great,Marvelous,Stunning,Impressive,Captivating,Extraordinary,Superb,Epic,Spectacular,Magnificent,Phenomenal,Outstanding,Brilliant,Enthralling,Enchanting,Mesmerizing,Riveting,Spellbinding,Unforgettable,Sublime';
 DECLARE @RandomLengthName INT = ABS(CHECKSUM(NEWID()) % 5) + 5;
 DECLARE @RandomLengthOther INT = ABS(CHECKSUM(NEWID()) % 101) + 100;
@@ -60,17 +69,25 @@ BEGIN
 END;
 GO
 
---ssi tenant creation (pending) for active organizations
-INSERT INTO [SSI].[TenantCreation]([Id],[EntityType],[StatusId],[UserId],[OrganizationId],[TenantId],[ErrorReason],[RetryCount],[DateCreated],[DateModified])
-SELECT NEWID(),'Organization',(SELECT [Id] FROM [SSI].[TenantCreationStatus] WHERE [Name] = 'Pending'),NULL,[Id],NULL,NULL,NULL,GETDATE(),GETDATE()
-FROM [Entity].[Organization]
-WHERE [StatusId] = (SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active')
+--Yoma (Youth Agency Marketplace) organization
+INSERT INTO [Entity].[Organization]([Id],[Name],[WebsiteURL],[PrimaryContactName],[PrimaryContactEmail],[PrimaryContactPhone],[VATIN],[TaxNumber],[RegistrationNumber]
+           ,[City],[CountryId],[StreetAddress],[Province],[PostalCode],[Tagline],[Biography],[StatusId],[CommentApproval],[DateStatusModified],[LogoId],[DateCreated],[DateModified])
+VALUES(NEWID(),'Yoma (Youth Agency Marketplace)','https://www.yoma.world/','Primary Contact','primarycontact@gmail.com','+27125555555', 'GB123456789', '0123456789', '12345/28/14',
+		'My City',(SELECT [Id] FROM [Lookup].[Country] WHERE CodeAlpha2 = 'ZA'),'My Street Address 1000', 'My Province', '12345-1234','Tag Line','Biography',
+		(SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active'),'Approved',GETDATE(), NULL,GETDATE(),GETDATE())
 GO
 
 --organization admins
 INSERT INTO [Entity].[OrganizationUsers]([Id],[OrganizationId],[UserId],[DateCreated])
 SELECT NEWID(), [Id], (SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testorgadminuser@gmail.com'), GETDATE()
 FROM [Entity].[Organization]
+GO
+
+--ssi tenant creation (pending) for active organizations
+INSERT INTO [SSI].[TenantCreation]([Id],[EntityType],[StatusId],[UserId],[OrganizationId],[TenantId],[ErrorReason],[RetryCount],[DateCreated],[DateModified])
+SELECT NEWID(),'Organization',(SELECT [Id] FROM [SSI].[TenantCreationStatus] WHERE [Name] = 'Pending'),NULL,[Id],NULL,NULL,NULL,GETDATE(),GETDATE()
+FROM [Entity].[Organization]
+WHERE [StatusId] = (SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active')
 GO
 
 --organization provider types
@@ -172,8 +189,8 @@ WITH CTE AS (
 UPDATE CTE
 SET [SSISchemaName] =
   CASE
-    WHEN CTE.[Name] = 'Task' THEN 'Opportunity|Task_Local'
-    WHEN CTE.[Name] = 'Learning' THEN 'Opportunity|Learning_Local'
+    WHEN CTE.[Name] = 'Task' THEN 'Opportunity|Task'
+    WHEN CTE.[Name] = 'Learning' THEN 'Opportunity|Learning'
     ELSE 'ERROR' END
 GO
 
