@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
+using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Api.Controllers
 {
@@ -45,6 +47,22 @@ namespace Yoma.Core.Api.Controllers
 
             return result == null ? StatusCode((int)HttpStatusCode.NoContent) : StatusCode((int)HttpStatusCode.OK, result);
         }
+
+        [SwaggerOperation(Summary = "Return a list of opportunities sent for verification with optional organization and/or verification status filtering (Admin or Organization Admin roles required)")]
+        [HttpGet("search/filter/opportunity")]
+        [ProducesResponseType(typeof(List<OpportunitySearchCriteriaCommitmentInterval>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult ListMyOpportunityVerificationSearchCriteriaOpportunity([FromQuery] List<Guid>? organizations, [FromQuery] List<VerificationStatus>? verificationStatuses)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListMyOpportunityVerificationSearchCriteriaOpportunity));
+
+            var result = _myOpportunityService.ListMyOpportunityVerificationSearchCriteriaOpportunity(organizations, verificationStatuses, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListMyOpportunityVerificationSearchCriteriaOpportunity));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
 
         [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter (Admin or Organization Admin roles required)")]
         [HttpPost("search/admin")]

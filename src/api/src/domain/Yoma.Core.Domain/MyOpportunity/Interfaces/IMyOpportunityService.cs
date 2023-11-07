@@ -9,6 +9,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
         MyOpportunityResponseVerify? GetVerificationStatusOrNull(Guid opportunityId);
 
+        List<MyOpportunitySearchCriteriaOpportunity> ListMyOpportunityVerificationSearchCriteriaOpportunity(List<Guid>? organizations, List<VerificationStatus>? verificationStatuses, bool ensureOrganizationAuthorization);
+
         MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter);
 
         MyOpportunitySearchResults Search(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
