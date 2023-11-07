@@ -1441,6 +1441,7 @@ smtpServer:
   from: no-reply@yoma.africa
   fromDisplayName: Yoma
   user: apikey
+  verifyLinkExpiration: 86400
 loginTheme: yoma
 accountTheme: ""
 adminTheme: ""
