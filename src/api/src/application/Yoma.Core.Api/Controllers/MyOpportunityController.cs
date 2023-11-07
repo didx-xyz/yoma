@@ -35,7 +35,7 @@ namespace Yoma.Core.Api.Controllers
         #region Administrative Actions
         [SwaggerOperation(Summary = "Get 'my' opportunity by id (Admin or Organization Admin roles required)")]
         [HttpGet("{id}/admin")]
-        [ProducesResponseType(typeof(MyOpportunityInfo), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(MyOpportunity), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult GetById([FromRoute] Guid id)
         {
@@ -50,7 +50,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Return a list of opportunities sent for verification with optional organization and/or verification status filtering (Admin or Organization Admin roles required)")]
         [HttpGet("search/filter/opportunity")]
-        [ProducesResponseType(typeof(List<OpportunitySearchCriteriaCommitmentInterval>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(List<MyOpportunitySearchCriteriaOpportunity>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult ListMyOpportunityVerificationSearchCriteriaOpportunity([FromQuery] List<Guid>? organizations, [FromQuery] List<VerificationStatus>? verificationStatuses)
         {
@@ -126,8 +126,6 @@ namespace Yoma.Core.Api.Controllers
 
             return result == null ? StatusCode((int)HttpStatusCode.NoContent) : StatusCode((int)HttpStatusCode.OK, result);
         }
-
-
 
         [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter (Authenticated User)")]
         [HttpPost("search")]

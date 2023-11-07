@@ -86,7 +86,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Get the latest version of the configured schema with the specified name (Admin or Organization Admin roles required)", Description = "Results includes the schema's associated entities (objects) and properties")]
         [HttpGet("schema/{name}")]
-        [ProducesResponseType(typeof(List<SSISchema>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(SSISchema), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> GetShemaByName([FromRoute] string name)
         {

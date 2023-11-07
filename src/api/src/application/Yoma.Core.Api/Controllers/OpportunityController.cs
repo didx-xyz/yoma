@@ -50,8 +50,8 @@ namespace Yoma.Core.Api.Controllers
 
         #region Public Members
         #region Anonymous Actions
-        [SwaggerOperation(Summary = "Get the specified active or expired opportunity by id (Anonymous)")]
-        [HttpGet("{id}")]
+        [SwaggerOperation(Summary = "Get the specified active or expired opportunity info by id (Anonymous)")]
+        [HttpGet("{id}/info")]
         [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [AllowAnonymous]
@@ -59,7 +59,7 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
 
-            var result = _opportunityInfoService.GetInfoByIdOrNull(id, true, true, includeExpired);
+            var result = _opportunityInfoService.GetActiveExpiredByIdOrNull(id, includeExpired);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
 
@@ -235,15 +235,30 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter")]
         [HttpPost("search/admin")]
-        [ProducesResponseType(typeof(List<OpportunitySearchResults>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(List<OpportunitySearchResultsInfo>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult Search([FromBody] OpportunitySearchFilterAdmin filter)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
-            var result = _opportunityService.Search(filter, true);
+            var result = _opportunityInfoService.Search(filter, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(Search));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Get the specified opportunity info by id")]
+        [HttpGet("{id}/admin/info")]
+        [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult GetInfoById([FromRoute] Guid id)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
+
+            var result = _opportunityInfoService.GetById(id, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

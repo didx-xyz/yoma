@@ -4,9 +4,11 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 {
     public interface IOpportunityInfoService
     {
-        OpportunityInfo? GetInfoByIdOrNull(Guid id, bool includeChildren, bool includeComputed, bool? includeExpired);
+        OpportunityInfo? GetById(Guid id, bool ensureOrganizationAuthorization);
 
-        OpportunityInfo? GetInfoByTitleOrNull(string title, bool includeChildItems, bool includeComputed);
+        OpportunityInfo? GetActiveExpiredByIdOrNull(Guid id, bool? includeExpired);
+
+        OpportunitySearchResultsInfo Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
         OpportunitySearchResultsInfo Search(OpportunitySearchFilter filter);
     }
