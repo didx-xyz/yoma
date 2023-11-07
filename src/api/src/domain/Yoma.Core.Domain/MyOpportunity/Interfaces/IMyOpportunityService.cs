@@ -5,7 +5,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 {
     public interface IMyOpportunityService
     {
-        Models.MyOpportunity GetById(Guid id, bool includeChildItems, bool includeComputed);
+        Models.MyOpportunity GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization);
 
         MyOpportunityResponseVerify? GetVerificationStatusOrNull(Guid opportunityId);
 

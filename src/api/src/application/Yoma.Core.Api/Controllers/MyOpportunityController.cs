@@ -31,6 +31,21 @@ namespace Yoma.Core.Api.Controllers
 
         #region Public Members
         #region Administrative Actions
+        [SwaggerOperation(Summary = "Get 'my' opportunity by id (Admin or Organization Admin roles required)")]
+        [HttpGet("{id}/admin")]
+        [ProducesResponseType(typeof(MyOpportunityInfo), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult GetById([FromRoute] Guid id)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(GetById));
+
+            var result = _myOpportunityService.GetById(id, true, true, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(GetById));
+
+            return result == null ? StatusCode((int)HttpStatusCode.NoContent) : StatusCode((int)HttpStatusCode.OK, result);
+        }
+
         [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter (Admin or Organization Admin roles required)")]
         [HttpPost("search/admin")]
         [ProducesResponseType(typeof(List<MyOpportunitySearchResults>), (int)HttpStatusCode.OK)]
@@ -93,6 +108,8 @@ namespace Yoma.Core.Api.Controllers
 
             return result == null ? StatusCode((int)HttpStatusCode.NoContent) : StatusCode((int)HttpStatusCode.OK, result);
         }
+
+
 
         [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter (Authenticated User)")]
         [HttpPost("search")]
