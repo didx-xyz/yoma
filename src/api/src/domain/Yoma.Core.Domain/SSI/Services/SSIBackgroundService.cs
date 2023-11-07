@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using System.Collections;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Core.Services;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
@@ -71,7 +72,14 @@ namespace Yoma.Core.Domain.SSI.Services
         {
             lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
-                if (_environmentProvider.Environment != Core.Environment.Local) return;
+                switch(_environmentProvider.Environment) //locally en development only
+                {
+                    case Core.Environment.Local:
+                    case Core.Environment.Development:
+                        break;
+                    default:
+                        return;
+                }
 
                 _logger.LogInformation("Processing SSI seeding");
 
