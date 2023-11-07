@@ -72,7 +72,7 @@ namespace Yoma.Core.Domain.SSI.Services
         {
             lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
-                switch(_environmentProvider.Environment) //locally en development only
+                switch (_environmentProvider.Environment) //locally en development only
                 {
                     case Core.Environment.Local:
                     case Core.Environment.Development:
