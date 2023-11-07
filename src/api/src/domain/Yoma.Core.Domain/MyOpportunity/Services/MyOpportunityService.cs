@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using System;
 using System.Transactions;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
@@ -20,7 +21,6 @@ using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.MyOpportunity.Extensions;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
-using Yoma.Core.Domain.MyOpportunity.Services.Lookups;
 using Yoma.Core.Domain.MyOpportunity.Validators;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
@@ -107,11 +107,58 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             if (includeComputed)
             {
+                result.UserPhotoURL = GetBlobObjectURL(result.UserPhotoId);
                 result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoId);
                 result.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileId));
             }
 
             return result;
+        }
+
+        public List<MyOpportunitySearchCriteriaOpportunity> ListMyOpportunityVerificationSearchCriteriaOpportunity(List<Guid>? organizations,
+            List<VerificationStatus>? verificationStatuses,
+            bool ensureOrganizationAuthorization)
+        {
+            var query = _myOpportunityRepository.Query(false);
+
+            var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+            query = query.Where(o => o.ActionId == actionVerificationId);
+
+            //organization (explicitly specified)
+            if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+            {
+                //ensure the organization admin is the admin of the specified organizations
+                if (organizations != null && organizations.Any())
+                {
+                    organizations = organizations.Distinct().ToList();
+                    _organizationService.IsAdminsOf(organizations, true);
+                }
+                else
+                    //ensure search only spans authorized organizations
+                    organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
+            }
+
+            if (organizations != null && organizations.Any())
+                query = query.Where(o => organizations.Contains(o.OrganizationId));
+
+            if (verificationStatuses != null && verificationStatuses.Any())
+            {
+                verificationStatuses = verificationStatuses.Distinct().ToList();
+                var verificationStatusIds = new List<Guid>();
+                verificationStatuses.ForEach(o => verificationStatusIds.Add(_myOpportunityVerificationStatusService.GetByName(o.ToString()).Id));
+                query = query.Where(o => o.VerificationStatusId.HasValue && verificationStatusIds.Contains(o.VerificationStatusId.Value));
+            }
+
+            var results = query
+                .GroupBy(o => o.OpportunityId)
+                .Select(group => new MyOpportunitySearchCriteriaOpportunity
+                {
+                    Id = group.Key,
+                    Title = group.First().OpportunityTitle
+                })
+                .ToList();
+
+            return results;
         }
 
         public MyOpportunityResponseVerify? GetVerificationStatusOrNull(Guid opportunityId)
@@ -279,6 +326,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var items = query.ToList();
             items.ForEach(o =>
             {
+                o.UserPhotoURL = GetBlobObjectURL(o.UserPhotoId);
                 o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoId);
                 o.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileId));
             });

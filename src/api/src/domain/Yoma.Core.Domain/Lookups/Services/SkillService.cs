@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -12,6 +13,7 @@ namespace Yoma.Core.Domain.Lookups.Services
     public class SkillService : ISkillService
     {
         #region Class Variables
+        private readonly ILogger<SkillService> _logger;
         private readonly ScheduleJobOptions _scheduleJobOptions;
         private readonly ILaborMarketProviderClient _laborMarketProviderClient;
         private readonly SkillSearchFilterValidator _searchFilterValidator;
@@ -21,11 +23,13 @@ namespace Yoma.Core.Domain.Lookups.Services
         #endregion
 
         #region Constructor
-        public SkillService(IOptions<ScheduleJobOptions> scheduleJobOptions,
+        public SkillService(ILogger<SkillService> logger,
+            IOptions<ScheduleJobOptions> scheduleJobOptions,
             ILaborMarketProviderClientFactory laborMarketProviderClientFactory,
             SkillSearchFilterValidator searchFilterValidator,
             IRepositoryBatchedValueContains<Skill> skillRepository)
         {
+            _logger = logger;
             _scheduleJobOptions = scheduleJobOptions.Value;
             _laborMarketProviderClient = laborMarketProviderClientFactory.CreateClient();
             _searchFilterValidator = searchFilterValidator;
@@ -102,42 +106,49 @@ namespace Yoma.Core.Domain.Lookups.Services
         {
             lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
-                var incomingResults = _laborMarketProviderClient.ListSkills().Result;
-                if (incomingResults == null || !incomingResults.Any()) return;
-
-                int batchSize = _scheduleJobOptions.SeedSkillsBatchSize;
-                int pageIndex = 0;
-                do
+                try
                 {
-                    var incomingBatch = incomingResults.Skip(pageIndex * batchSize).Take(batchSize).ToList();
-                    var incomingBatchIds = incomingBatch.Select(o => o.Id).ToList();
-                    var existingItems = _skillRepository.Query().Where(o => incomingBatchIds.Contains(o.ExternalId)).ToList();
-                    var newItems = new List<Skill>();
-                    foreach (var item in incomingBatch)
+                    var incomingResults = _laborMarketProviderClient.ListSkills().Result;
+                    if (incomingResults == null || !incomingResults.Any()) return;
+
+                    int batchSize = _scheduleJobOptions.SeedSkillsBatchSize;
+                    int pageIndex = 0;
+                    do
                     {
-                        var existItem = existingItems.SingleOrDefault(o => o.ExternalId == item.Id);
-                        if (existItem != null)
+                        var incomingBatch = incomingResults.Skip(pageIndex * batchSize).Take(batchSize).ToList();
+                        var incomingBatchIds = incomingBatch.Select(o => o.Id).ToList();
+                        var existingItems = _skillRepository.Query().Where(o => incomingBatchIds.Contains(o.ExternalId)).ToList();
+                        var newItems = new List<Skill>();
+                        foreach (var item in incomingBatch)
                         {
-                            existItem.Name = item.Name;
-                            existItem.InfoURL = item.InfoURL;
-                        }
-                        else
-                        {
-                            newItems.Add(new Skill
+                            var existItem = existingItems.SingleOrDefault(o => o.ExternalId == item.Id);
+                            if (existItem != null)
                             {
-                                Name = item.Name,
-                                InfoURL = item.InfoURL,
-                                ExternalId = item.Id
-                            });
+                                existItem.Name = item.Name;
+                                existItem.InfoURL = item.InfoURL;
+                            }
+                            else
+                            {
+                                newItems.Add(new Skill
+                                {
+                                    Name = item.Name,
+                                    InfoURL = item.InfoURL,
+                                    ExternalId = item.Id
+                                });
+                            }
                         }
+
+                        if (newItems.Any()) _skillRepository.Create(newItems).Wait();
+                        if (existingItems.Any()) _skillRepository.Update(existingItems).Wait();
+
+                        pageIndex++;
                     }
-
-                    if (newItems.Any()) _skillRepository.Create(newItems).Wait();
-                    if (existingItems.Any()) _skillRepository.Update(existingItems).Wait();
-
-                    pageIndex++;
+                    while ((pageIndex - 1) * batchSize < incomingResults.Count);
                 }
-                while ((pageIndex - 1) * batchSize < incomingResults.Count);
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to seed labor market skills");
+                }
             }
         }
         #endregion

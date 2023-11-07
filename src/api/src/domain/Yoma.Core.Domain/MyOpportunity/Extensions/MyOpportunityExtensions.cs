@@ -17,6 +17,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
                 UserId = value.UserId,
                 UserEmail = value.UserEmail,
                 UserDisplayName = value.UserDisplayName,
+                UserPhotoId = value.UserPhotoId,
+                UserPhotoURL = value.UserPhotoURL,
                 OpportunityId = value.OpportunityId,
                 OpportunityTitle = value.OpportunityTitle,
                 OpportunityDescription = value.OpportunityDescription,
@@ -42,6 +44,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
                     {
                         VerificationType = o.VerificationType,
                         FileId = o.FileId,
+                        FileURL = o.FileURL,
                         Geometry = string.IsNullOrEmpty(o.GeometryProperties) ? null : JsonConvert.DeserializeObject<Geometry>(o.GeometryProperties)
                     }).ToList()
             };
