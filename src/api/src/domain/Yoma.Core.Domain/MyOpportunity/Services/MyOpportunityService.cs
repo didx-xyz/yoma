@@ -235,7 +235,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                                 //items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
                                 predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.Now) ||
                                     o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId);
-                            break;
+                                break;
 
                             case VerificationStatus.Completed:
                                 //all, irrespective of related opportunity and organization status
