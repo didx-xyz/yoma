@@ -249,7 +249,7 @@ namespace Yoma.Core.Domain.SSI.Services
                                 case SchemaType.Opportunity:
                                     if (!item.MyOpportunityId.HasValue)
                                         throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'My' opportunity id is null");
-                                    var myOpportunity = _myOpportunityService.GetById(item.MyOpportunityId.Value, true, true);
+                                    var myOpportunity = _myOpportunityService.GetById(item.MyOpportunityId.Value, true, true, false);
 
                                     tenantIssuer = GetTenantId(item, EntityType.Organization, myOpportunity.OrganizationId);
                                     if (!tenantIssuer.proceed) continue;
