@@ -16,6 +16,8 @@ namespace Yoma.Core.Domain.Lookups.Services
         private readonly ILaborMarketProviderClient _laborMarketProviderClient;
         private readonly SkillSearchFilterValidator _searchFilterValidator;
         private readonly IRepositoryBatchedValueContains<Skill> _skillRepository;
+
+        private static readonly object _lock_Object = new();
         #endregion
 
         #region Constructor
@@ -96,44 +98,47 @@ namespace Yoma.Core.Domain.Lookups.Services
             return results;
         }
 
-        public async Task SeedSkills()
+        public void SeedSkills()
         {
-            var incomingResults = await _laborMarketProviderClient.ListSkills();
-            if (incomingResults == null || !incomingResults.Any()) return;
-
-            int batchSize = _scheduleJobOptions.SeedSkillsBatchSize;
-            int pageIndex = 0;
-            do
+            lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
-                var incomingBatch = incomingResults.Skip(pageIndex * batchSize).Take(batchSize).ToList();
-                var incomingBatchIds = incomingBatch.Select(o => o.Id).ToList();
-                var existingItems = _skillRepository.Query().Where(o => incomingBatchIds.Contains(o.ExternalId)).ToList();
-                var newItems = new List<Skill>();
-                foreach (var item in incomingBatch)
+                var incomingResults = _laborMarketProviderClient.ListSkills().Result;
+                if (incomingResults == null || !incomingResults.Any()) return;
+
+                int batchSize = _scheduleJobOptions.SeedSkillsBatchSize;
+                int pageIndex = 0;
+                do
                 {
-                    var existItem = existingItems.SingleOrDefault(o => o.ExternalId == item.Id);
-                    if (existItem != null)
+                    var incomingBatch = incomingResults.Skip(pageIndex * batchSize).Take(batchSize).ToList();
+                    var incomingBatchIds = incomingBatch.Select(o => o.Id).ToList();
+                    var existingItems = _skillRepository.Query().Where(o => incomingBatchIds.Contains(o.ExternalId)).ToList();
+                    var newItems = new List<Skill>();
+                    foreach (var item in incomingBatch)
                     {
-                        existItem.Name = item.Name;
-                        existItem.InfoURL = item.InfoURL;
-                    }
-                    else
-                    {
-                        newItems.Add(new Skill
+                        var existItem = existingItems.SingleOrDefault(o => o.ExternalId == item.Id);
+                        if (existItem != null)
                         {
-                            Name = item.Name,
-                            InfoURL = item.InfoURL,
-                            ExternalId = item.Id
-                        });
+                            existItem.Name = item.Name;
+                            existItem.InfoURL = item.InfoURL;
+                        }
+                        else
+                        {
+                            newItems.Add(new Skill
+                            {
+                                Name = item.Name,
+                                InfoURL = item.InfoURL,
+                                ExternalId = item.Id
+                            });
+                        }
                     }
+
+                    if (newItems.Any()) _skillRepository.Create(newItems).Wait();
+                    if (existingItems.Any()) _skillRepository.Update(existingItems).Wait();
+
+                    pageIndex++;
                 }
-
-                if (newItems.Any()) await _skillRepository.Create(newItems);
-                if (existingItems.Any()) await _skillRepository.Update(existingItems);
-
-                pageIndex++;
+                while ((pageIndex - 1) * batchSize < incomingResults.Count);
             }
-            while ((pageIndex - 1) * batchSize < incomingResults.Count);
         }
         #endregion
     }

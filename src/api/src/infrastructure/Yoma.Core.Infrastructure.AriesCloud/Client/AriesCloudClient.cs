@@ -271,10 +271,10 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                         {
                             Credential = new Credential
                             {
-                                //Context = new List<string> { "https://www.w3.org/2018/credentials/v1" },
+                                Context = new List<string> { "https://www.w3.org/2018/credentials/v1" },
                                 Type = new List<string> { "VerifiableCredential", request.SchemaType }, 
                                 IssuanceDate = DateTimeOffset.Now.ToString("yyyy-MM-dd"),
-                                //Issuer = did.Did,
+                                Issuer = did.Did,
                                 CredentialSubject = credentialSubject,
                             },
                             Options = new LDProofVCDetailOptions
