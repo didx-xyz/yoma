@@ -1,0 +1,21 @@
+ingress:
+  internal:
+    rules:
+      - host: v3api.dev.yoma.world
+
+env:
+  ASPNETCORE_ENVIRONMENT: "Development"
+  ConnectionStrings__SQLConnection: "Data Source=mssql-mssqlserver-2022,1433;Initial Catalog=yoma-dev;MultipleActiveResultSets=true;User ID=sa;Password=Password1;TrustServerCertificate=True;Encrypt=True"
+
+appSettings:
+  fileName: appsettings.Development.json
+
+volumes:
+  - name: app-settings
+    secret:
+      secretName: yoma-api
+
+volumeMounts:
+  - name: app-settings
+    mountPath: /api/appsettings.Development.json
+    subPath: appsettings.Development.json

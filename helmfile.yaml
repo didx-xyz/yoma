@@ -1,0 +1,97 @@
+environments:
+  local:
+    values:
+      - namespace: yoma-dev
+  dev:
+    values:
+      - namespace: myproject
+      - arch: amd64
+      - lifecycle: spot
+      - tag: {{ env "TAG" | default "master" }}
+      - ddInjectEnabled: false
+  test:
+    values:
+      - namespace: yoma-test
+      - arch: amd64
+      - lifecycle: spot
+      - tag: {{ env "TAG" | default "master" }}
+      - ddInjectEnabled: false
+---
+repositories:
+{{ if eq .Environment.Name "local" }}
+  - name: ingress-nginx
+    url: https://kubernetes.github.io/ingress-nginx
+{{ end }}
+{{ if eq .Environment.Name "dev" }}
+  # - name: ingress-nginx
+  #   url: https://kubernetes.github.io/ingress-nginx
+  - name: simcube
+    url: https://simcubeltd.github.io/simcube-helm-charts/
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+{{ end }}
+---
+releases:
+{{ if eq .Environment.Name "dev" }}
+  # - name: ingress-nginx
+  #   namespace: "ingress-nginx"
+  #   chart: ingress-nginx/ingress-nginx
+  #   version: "4.8.3"
+  - name: mssql
+    namespace: {{ .Values.namespace }}
+    chart: simcube/mssqlserver-2022
+    version: "1.2.3"
+    set:
+      - name: edition.value
+        value: Developer
+      - name: acceptEula.value
+        value: "Y"
+      - name: sapassword
+        value: "Password1"
+      - name: image.repository
+        value: ghcr.io/didx-xyz/mssql-server
+      - name: image.tag
+        value: 2022-latest
+          # requests:
+          #   memory: 1024Mi
+  # - name: keycloak-pg
+  #   namespace: {{ .Values.namespace }}
+  #   chart: bitnami/postgresql
+  #   version: "10.4.0"
+  #   set:
+  #     - name: postgresqlUsername
+  #       value: keycloak
+  #     - name: postgresqlPassword
+  #       value: keycloak
+  #     - name: postgresqlDatabase
+  #       value: keycloak
+  - name: keycloak
+    namespace: {{ .Values.namespace }}
+    chart: ./helm/keycloak
+    version: "0.3.2"
+    values:
+      - ./helm/keycloak/conf/{{ .Environment.Name }}/values.yaml
+    secrets:
+      - ./helm/keycloak/conf/{{ .Environment.Name }}/secrets.yaml
+{{ end }}
+
+  - name: yoma-api
+    namespace: {{ .Values.namespace }}
+    chart: ./helm/yoma-api
+    version: "0.1.0"
+    values:
+      - ./helm/yoma-api/conf/base/values.yaml
+      - ./helm/yoma-api/conf/{{ .Environment.Name }}/values.yaml
+      - nodeSelector:
+          kubernetes.io/arch: {{ .Values.arch }}
+          node.kubernetes.io/lifecycle: {{ .Values.lifecycle }}
+    secrets:
+      - ./helm/yoma-api/conf/base/secrets.yaml
+      - ./helm/yoma-api/conf/{{ .Environment.Name }}/secrets.yaml
+---
+helmDefaults:
+  timeout: 180
+  wait: true
+  atomic: true
+  cleanupOnFail: true
+  createNamespace: false

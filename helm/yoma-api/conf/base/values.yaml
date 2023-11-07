@@ -1,0 +1,39 @@
+image:
+  repository: ghcr.io/didx-xyz/yoma-api
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "pr-257"
+
+ingress:
+  internal:
+    enabled: true
+    className: "nginx-internal"
+    annotations: {}
+    rules:
+      - host: v3api.local.yoma.world
+
+env:
+  ASPNETCORE_ENVIRONMENT: "Local"
+  ASPNETCORE_URLS: "http://+:5000"
+  ConnectionStrings__SQLConnection: "Data Source=mssql-mssqlserver-2022,1433;Initial Catalog=yoma-dev;MultipleActiveResultSets=true;User ID=sa;Password=Password1;TrustServerCertificate=True;Encrypt=True"
+
+livenessProbe:
+  enabled: false
+readinessProbe:
+  enabled: false
+
+appSettings:
+  fileName: appsettings.Local.json
+
+service:
+  port: 5000
+
+volumes:
+  - name: app-settings
+    secret:
+      secretName: yoma-api
+
+volumeMounts:
+  - name: app-settings
+    mountPath: /api/appsettings.Local.json
+    subPath: appsettings.Local.json
