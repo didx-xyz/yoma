@@ -7,7 +7,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     {
         public Action Action { get; set; }
 
-        public VerificationStatus? VerificationStatus { get; set; }
+        public List<VerificationStatus>? VerificationStatuses { get; set; }
 
         [JsonIgnore]
         internal bool TotalCountOnly { get; set; }

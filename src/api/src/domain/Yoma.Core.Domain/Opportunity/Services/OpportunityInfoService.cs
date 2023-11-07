@@ -106,7 +106,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             {
                 TotalCountOnly = true,
                 Action = MyOpportunity.Action.Verification,
-                VerificationStatus = MyOpportunity.VerificationStatus.Pending
+                VerificationStatuses = new List<MyOpportunity.VerificationStatus> { MyOpportunity.VerificationStatus.Pending }
             };
 
             var searchResult = _myOpportunityService.Search(filter, false);
