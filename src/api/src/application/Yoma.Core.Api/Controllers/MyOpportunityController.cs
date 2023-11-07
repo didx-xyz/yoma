@@ -50,7 +50,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Return a list of opportunities sent for verification with optional organization and/or verification status filtering (Admin or Organization Admin roles required)")]
         [HttpGet("search/filter/opportunity")]
-        [ProducesResponseType(typeof(List<OpportunitySearchCriteriaCommitmentInterval>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(List<MyOpportunitySearchCriteriaOpportunity>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult ListMyOpportunityVerificationSearchCriteriaOpportunity([FromQuery] List<Guid>? organizations, [FromQuery] List<VerificationStatus>? verificationStatuses)
         {

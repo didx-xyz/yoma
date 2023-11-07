@@ -250,7 +250,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Get the specified opportunity info by id")]
         [HttpGet("{id}/admin/info")]
-        [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult GetInfoById([FromRoute] Guid id)
         {
