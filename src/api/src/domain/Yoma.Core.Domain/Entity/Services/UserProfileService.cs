@@ -9,6 +9,7 @@ using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Entity.Validators;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 
@@ -147,10 +148,10 @@ namespace Yoma.Core.Domain.Entity.Services
             result.OpportunityCountSaved = _myOpportunityService.Search(filter).TotalCount ?? default;
 
             filter.Action = MyOpportunity.Action.Verification;
-            filter.VerificationStatus = MyOpportunity.VerificationStatus.Pending;
+            filter.VerificationStatuses = new List<VerificationStatus> { VerificationStatus.Pending };
             result.OpportunityCountPending = _myOpportunityService.Search(filter).TotalCount ?? default;
 
-            filter.VerificationStatus = MyOpportunity.VerificationStatus.Completed;
+            filter.VerificationStatuses = new List<VerificationStatus> { VerificationStatus.Completed };
             result.OpportunityCountCompleted = _myOpportunityService.Search(filter).TotalCount ?? default;
 
             return result;

@@ -4,7 +4,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     {
         public Guid? UserId { get; set; }
 
-        public Guid? OpportunityId { get; set; }
+        public Guid? Opportunity { get; set; }
+
+        public List<Guid>? Organizations { get; set; }
 
         public string? ValueContains { get; set; }
     }

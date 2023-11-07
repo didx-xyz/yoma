@@ -20,6 +20,7 @@ using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.MyOpportunity.Extensions;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
+using Yoma.Core.Domain.MyOpportunity.Services.Lookups;
 using Yoma.Core.Domain.MyOpportunity.Validators;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
@@ -142,7 +143,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             {
                 UserId = user.Id,
                 Action = filter.Action,
-                VerificationStatus = filter.VerificationStatus,
+                VerificationStatuses = filter.VerificationStatuses,
                 TotalCountOnly = filter.TotalCountOnly,
                 PageNumber = filter.PageNumber,
                 PageSize = filter.PageSize
@@ -165,12 +166,22 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             var query = _myOpportunityRepository.Query(true);
 
-            //ensureOrganizationAuthorization (ensure search only spans authorized organizations)
+            //organization (explicitly specified)
             if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
             {
-                var organizationIds = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
-                query = query.Where(o => organizationIds.Contains(o.OrganizationId));
+                //ensure the organization admin is the admin of the specified organizations
+                if (filter.Organizations != null && filter.Organizations.Any())
+                {
+                    filter.Organizations = filter.Organizations.Distinct().ToList();
+                    _organizationService.IsAdminsOf(filter.Organizations, true);
+                }
+                else
+                    //ensure search only spans authorized organizations
+                    filter.Organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
             }
+
+            if (filter.Organizations != null && filter.Organizations.Any())
+                query = query.Where(o => filter.Organizations.Contains(o.OrganizationId));
 
             //action (required)
             query = query.Where(o => o.ActionId == actionId);
@@ -180,8 +191,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 query = query.Where(o => o.UserId == filter.UserId);
 
             //opportunity (explicitly specified)
-            if (filter.OpportunityId.HasValue)
-                query = query.Where(o => o.OpportunityId == filter.OpportunityId);
+            if (filter.Opportunity.HasValue)
+                query = query.Where(o => o.OpportunityId == filter.Opportunity);
 
             //valueContains (opportunities and users) 
             if (!string.IsNullOrEmpty(filter.ValueContains))
@@ -208,35 +219,42 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     break;
 
                 case Action.Verification:
-                    if (!filter.VerificationStatus.HasValue)
-                        throw new ArgumentNullException(nameof(filter), "Verification status required");
+                    if (filter.VerificationStatuses == null || !filter.VerificationStatuses.Any())
+                        throw new ArgumentNullException(nameof(filter), "One or more verification status(es) required");
+                    filter.VerificationStatuses = filter.VerificationStatuses.Distinct().ToList();
 
-                    var verificationStatusId = _myOpportunityVerificationStatusService.GetByName(filter.VerificationStatus.Value.ToString()).Id;
-                    query = query.Where(o => o.VerificationStatusId == verificationStatusId);
+                    var predicate = PredicateBuilder.False<Models.MyOpportunity>();
 
-                    switch (filter.VerificationStatus.Value)
+                    foreach (var status in filter.VerificationStatuses)
                     {
-                        case VerificationStatus.Pending:
-                            //items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
-                            query = query.Where(o => (o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.Now)
-                                || o.OpportunityStatusId == opportunityStatusExpiredId);
-                            query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
-                            query = query.OrderByDescending(o => o.DateModified);
-                            break;
+                        var verificationStatusId = _myOpportunityVerificationStatusService.GetByName(status.ToString()).Id;
 
-                        case VerificationStatus.Completed:
-                            //all, irrespective of related opportunity and organization status
-                            query = query.OrderByDescending(o => o.DateCompleted);
-                            break;
+                        switch (status)
+                        {
+                            case VerificationStatus.Pending:
+                                //items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
+                                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.Now) ||
+                                    o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId);
+                                break;
 
-                        case VerificationStatus.Rejected:
-                            //all, irrespective of related opportunity and organization status
-                            query = query.OrderByDescending(o => o.DateModified);
-                            break;
+                            case VerificationStatus.Completed:
+                                //all, irrespective of related opportunity and organization status
+                                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId);
+                                break;
 
-                        default:
-                            throw new InvalidOperationException($"Unknown / unsupported '{nameof(filter.VerificationStatus)}' of '{filter.VerificationStatus.Value}'");
+                            case VerificationStatus.Rejected:
+                                //all, irrespective of related opportunity and organization status
+                                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId);
+                                break;
+
+                            default:
+                                throw new InvalidOperationException($"Unknown / unsupported '{nameof(filter.VerificationStatuses)}' of '{status}'");
+                        }
                     }
+
+                    query = query.Where(predicate);
+                    query.OrderByDescending(o => o.DateModified).ThenByDescending(o => o.DateCompleted);
+
                     break;
 
                 default:
@@ -579,7 +597,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             {
                 TotalCountOnly = true,
                 Action = Action.Verification,
-                VerificationStatus = VerificationStatus.Pending
+                VerificationStatuses = new List<VerificationStatus> { VerificationStatus.Pending }
             };
 
             var searchResult = Search(filter, false);
