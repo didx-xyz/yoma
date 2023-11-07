@@ -23,9 +23,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Public Members
-        public OpportunityInfo? GetInfoByIdOrNull(Guid id, bool includeChildren, bool includeComputed, bool? includeExpired)
+        public OpportunityInfo? GetById(Guid id, bool ensureOrganizationAuthorization)
         {
-            var opportunity = _opportunityService.GetById(id, includeChildren, includeComputed, false);
+            var opportunity = _opportunityService.GetById(id, true, true, ensureOrganizationAuthorization);
+
+            var result = opportunity.ToOpportunityInfo();
+            SetParticipantCounts(result);
+            return result;
+        }
+
+        public OpportunityInfo? GetActiveExpiredByIdOrNull(Guid id, bool? includeExpired)
+        {
+            var opportunity = _opportunityService.GetById(id, true, true, false);
 
             //inactive organization
             if (opportunity.OrganizationStatus != Entity.OrganizationStatus.Active) return null;
@@ -36,18 +45,22 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (!statuses.Contains(opportunity.Status)) return null;
 
             var result = opportunity.ToOpportunityInfo();
-            if (includeComputed) SetParticipantCounts(result);
+            SetParticipantCounts(result);
             return result;
         }
 
-        public OpportunityInfo? GetInfoByTitleOrNull(string title, bool includeChildItems, bool includeComputed)
+        public OpportunitySearchResultsInfo Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
         {
-            var opportunity = _opportunityService.GetByTitleOrNull(title, includeChildItems, includeComputed);
-            if (opportunity == null) return null;
+            var searchResult = _opportunityService.Search(filter, ensureOrganizationAuthorization);
 
-            var result = opportunity.ToOpportunityInfo();
-            if (includeComputed) SetParticipantCounts(result);
-            return result;
+            var results = new OpportunitySearchResultsInfo
+            {
+                TotalCount = searchResult.TotalCount,
+                Items = searchResult.Items.Select(o => o.ToOpportunityInfo()).ToList(),
+            };
+
+            results.Items.ForEach(SetParticipantCounts);
+            return results;
         }
 
         public OpportunitySearchResultsInfo Search(OpportunitySearchFilter filter)
@@ -55,7 +68,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
 
-            //filter validated by SearchAdmin
+            //filter validated by OpportunityService.Search
 
             var filterInternal = new OpportunitySearchFilterAdmin
             {
