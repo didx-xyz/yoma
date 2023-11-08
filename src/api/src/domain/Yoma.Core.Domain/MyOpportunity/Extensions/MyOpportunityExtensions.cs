@@ -42,6 +42,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
                     {
                         VerificationType = o.VerificationType,
                         FileId = o.FileId,
+                        FileURL = o.FileURL,
                         Geometry = string.IsNullOrEmpty(o.GeometryProperties) ? null : JsonConvert.DeserializeObject<Geometry>(o.GeometryProperties)
                     }).ToList()
             };

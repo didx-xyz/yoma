@@ -3,8 +3,11 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { type ParsedUrlQuery } from "querystring";
 import { useState, type ReactElement } from "react";
-import type { OpportunityInfo } from "~/api/models/opportunity";
-import { getOpportunityInfoById } from "~/api/services/opportunities";
+import type { Opportunity, OpportunityInfo } from "~/api/models/opportunity";
+import {
+  getOpportunityById,
+  getOpportunityInfoById,
+} from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
@@ -85,7 +88,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   if (opportunityId !== "create") {
     await queryClient.prefetchQuery(["opportunityInfo", opportunityId], () =>
-      getOpportunityInfoById(opportunityId, context),
+      getOpportunityById(opportunityId, context),
     );
   }
 
@@ -104,9 +107,9 @@ const OpportunityDetails: NextPageWithLayout<{
   opportunityId: string;
   user: User;
 }> = ({ id, opportunityId }) => {
-  const { data: opportunity } = useQuery<OpportunityInfo>({
+  const { data: opportunity } = useQuery<Opportunity>({
     queryKey: ["opportunityInfo", opportunityId],
-    queryFn: () => getOpportunityInfoById(opportunityId),
+    queryFn: () => getOpportunityById(opportunityId),
   });
 
   const [manageOpportunityMenuVisible, setManageOpportunityMenuVisible] =
@@ -230,7 +233,8 @@ const OpportunityDetails: NextPageWithLayout<{
 
                 <span className="ml-1">{`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}`}</span>
               </div>
-              {(opportunity?.participantCountTotal ?? 0) > 0 && (
+              {/* TODO: add participant count to opportunity */}
+              {/* {(opportunity?.participantCountTotal ?? 0) > 0 && (
                 <div className="badge h-6 rounded-md bg-green-light text-green">
                   <Image
                     src={iconUser}
@@ -249,7 +253,7 @@ const OpportunityDetails: NextPageWithLayout<{
               )}
               <div className="badge h-6 rounded-md bg-green-light text-green">
                 Ongoing
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -263,7 +267,8 @@ const OpportunityDetails: NextPageWithLayout<{
                   <IoMdPerson className="h-6 w-6 text-gray" />
                   Participants
                 </div>
-                <div className="flex flex-row items-center gap-4 rounded-lg bg-gray p-4">
+                {/* TODO: add participant count to opportunity */}
+                {/* <div className="flex flex-row items-center gap-4 rounded-lg bg-gray p-4">
                   <div className="text-3xl font-bold text-gray-dark">
                     {opportunity?.participantCountTotal ?? 0}
                   </div>
@@ -278,7 +283,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         </div>
                       </div>
                     )}
-                </div>
+                </div> */}
               </div>
               <div className="flex flex-col gap-1 rounded-lg bg-white p-6">
                 <div>
@@ -299,7 +304,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     {opportunity?.skills?.map((item) => (
                       <div
                         key={item.id}
-                        className="badge mr-2 h-6 rounded-md border-0 bg-green text-white"
+                        className="badge min-h-6 mr-2 h-full rounded-md border-0 bg-green text-white"
                       >
                         {item.name}
                       </div>
@@ -342,7 +347,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     {opportunity?.categories?.map((item) => (
                       <div
                         key={item.id}
-                        className="badge mr-2 h-6 rounded-md bg-green text-white"
+                        className="badge min-h-6 mr-2 h-full rounded-md bg-green text-white"
                       >
                         {item.name}
                       </div>
@@ -368,7 +373,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     {opportunity?.languages?.map((item) => (
                       <div
                         key={item.id}
-                        className="badge mr-2 h-6 rounded-md bg-green text-white"
+                        className="badge min-h-6 mr-2 h-full rounded-md bg-green text-white"
                       >
                         {item.name}
                       </div>

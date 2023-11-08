@@ -16,14 +16,14 @@ interface Location {
   lng: number;
 }
 
+const libraries: any[] = ["places"];
+
 const LocationPicker: React.FC<InputProps> = ({
   id,
   label = "Select pin",
   children,
   onSelect,
 }) => {
-  const libraries: any[] = ["places"];
-
   //* Google Maps
   const { isLoaded, loadError } = useLoadScript({
     id: "google-map-script",
