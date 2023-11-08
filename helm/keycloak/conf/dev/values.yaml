@@ -31,59 +31,17 @@ keycloak:
       memory: 512Mi
 
   themes:
-    enabled: false
-    ref: develop
-
-  extraEnv: |-
-    - name: JAVA_OPTS_APPEND
-      value: >-
-        -XX:+UseContainerSupport
-        -XX:MaxRAMPercentage=50.0
-        -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless
-        -Djava.awt.headless=true
-        -Dkeycloak.profile.feature.upload_scripts=enabled
-    # - name: KC_DB_URL_HOST
-    #   valueFrom:
-    #     secretKeyRef:
-    #       name: keycloak-db
-    #       key: host
-    # - name: KC_DB_URL_PORT
-    #   valueFrom:
-    #     secretKeyRef:
-    #       name: keycloak-db
-    #       key: port
-    # - name: KC_DB_URL_DATABASE
-    #   valueFrom:
-    #     secretKeyRef:
-    #       name: keycloak-db
-    #       key: database
-    # - name: KC_DB_USERNAME
-    #   valueFrom:
-    #     secretKeyRef:
-    #       name: keycloak-db
-    #       key: user
-    - name: KEYCLOAK_ADMIN
-      valueFrom:
-        secretKeyRef:
-          name: {{ include "keycloak.fullname" . }}-admin
-          key: user
-    - name: KEYCLOAK_ADMIN_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: {{ include "keycloak.fullname" . }}-admin
-          key: password
-    - name: WEBHOOK_HTTP_BASE_PATH
-      value: http://yoma-api-core:5000/api/v1/keycloak
-    - name: WEBHOOK_EVENTS_TAKEN
-      value: LOGIN,REGISTER,LOGOUT,UPDATE_PROFILE
-    - name: DD_LOGS_INJECTION
-      value: "true"
-    - name: DD_PROFILING_ENABLED
-      value: "false"
+    enabled: true
+    ref: master
 
   extraEnvFrom: |-
     - secretRef:
         name: keycloak-webhook
+
+  database:
+    existingSecret: keycloak-db
+    existingSecretKey: password
+    vendor: postgres
 
   affinity: |-
     nodeAffinity:

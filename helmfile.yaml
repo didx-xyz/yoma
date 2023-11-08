@@ -73,6 +73,19 @@ releases:
       - ./helm/keycloak/conf/{{ .Environment.Name }}/values.yaml
     secrets:
       - ./helm/keycloak/conf/{{ .Environment.Name }}/secrets.yaml
+  - name: postgresql-keycoak
+    namespace: {{ .Values.namespace }}
+    chart: bitnami/postgresql
+    version: "13.2.2"
+    set:
+      - name: fullnameOverride
+        value: postgresql-keycoak
+      - name: auth.username
+        value: keycloak
+      - name: auth.password
+        value: keycloak
+      - name: auth.database
+        value: keycloak
 {{ end }}
 
   - name: yoma-api
