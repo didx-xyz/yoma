@@ -174,8 +174,8 @@ const OpportunityDetails: NextPageWithLayout<{
   }, [opportunityId, session]);
 
   const onGoToOpportunity = useCallback(() => {
-    if (opportunity?.uRL) window.location.href = opportunity?.uRL;
-  }, [opportunity?.uRL]);
+    if (opportunity?.url) window.location.href = opportunity?.url;
+  }, [opportunity?.url]);
 
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const onLogin = useCallback(async () => {
@@ -365,7 +365,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   type="button"
                   className="btn rounded-full bg-purple normal-case text-white md:w-[250px]"
                   onClick={onGoToOpportunity}
-                  disabled={!opportunity?.uRL}
+                  disabled={!opportunity?.url}
                 >
                   <Image
                     src={iconOpen}

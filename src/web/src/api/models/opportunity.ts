@@ -75,7 +75,7 @@ export interface OpportunityInfo {
   organizationName: string;
   organizationLogoURL: string | null;
   instructions: string | null;
-  uRL: string | null;
+  url: string | null; //NB:
   zltoReward: number | null;
   yomaReward: number | null;
   difficulty: string;
