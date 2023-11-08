@@ -95,7 +95,7 @@ keycloak:
           wget -O - \
             --header="Authorization: token ${GITHUB_PAT}" \
             --header="Accept:application/vnd.github.v3.raw" \
-            https://api.github.com/repos/didx-xyz/yoma-api/tarball/{{ .Values.themes.ref }} | tar xz
+            https://api.github.com/repos/didx-xyz/yoma/tarball/{{ .Values.themes.ref }} | tar xz
           cp -R ./didx-xyz-yoma-*/src/api/cicd/themes/yoma /themes
           rm -rf ./didx-xyz-yoma-*
       env:
