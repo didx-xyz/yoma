@@ -644,6 +644,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var filter = new MyOpportunitySearchFilterAdmin
             {
                 TotalCountOnly = true,
+                Opportunity = result.OpportunityId,
                 Action = Action.Verification,
                 VerificationStatuses = new List<VerificationStatus> { VerificationStatus.Pending }
             };

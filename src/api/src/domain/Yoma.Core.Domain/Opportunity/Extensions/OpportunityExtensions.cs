@@ -23,6 +23,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
                 Title = value.Title,
                 Description = value.Description,
                 Type = value.Type,
+                OrganizationId = value.OrganizationId,
                 OrganizationName = value.OrganizationName,
                 OrganizationLogoURL = value.OrganizationLogoURL,
                 Instructions = value.Instructions,
