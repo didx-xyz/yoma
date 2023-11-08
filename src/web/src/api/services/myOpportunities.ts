@@ -5,12 +5,14 @@ import type {
   MyOpportunityRequestVerifyFinalize,
   MyOpportunityRequestVerifyFinalizeBatch,
   MyOpportunityResponseVerify,
+  MyOpportunitySearchCriteriaOpportunity,
   MyOpportunitySearchFilter,
   MyOpportunitySearchFilterAdmin,
   MyOpportunitySearchResults,
+  VerificationStatus,
 } from "../models/myOpportunity";
 import { objectToFormData } from "~/lib/utils";
-import { GetServerSidePropsContext } from "next/types";
+import type { GetServerSidePropsContext } from "next/types";
 import ApiServer from "~/lib/axiosServer";
 
 export const saveMyOpportunity = async (
@@ -84,4 +86,28 @@ export const performActionVerifyBulk = async (
   await (
     await ApiClient
   ).patch(`/myopportunity/verification/finalize/batch`, model);
+};
+
+export const getOpportunitiesForVerification = async (
+  organisations?: string[],
+  verificationStatuses?: VerificationStatus[],
+  context?: GetServerSidePropsContext,
+): Promise<MyOpportunitySearchCriteriaOpportunity[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  let querystring = "";
+  if (organisations) {
+    querystring += `organisations=${organisations.join(",")}`;
+  }
+  if (verificationStatuses) {
+    querystring += `&verificationStatuses=${verificationStatuses.join(",")}`;
+  }
+  if (querystring.length > 0) {
+    querystring = `?${querystring}`;
+  }
+
+  const { data } = await instance.get<MyOpportunitySearchCriteriaOpportunity[]>(
+    `/myopportunity/search/filter/opportunity${querystring}`,
+  );
+  return data;
 };

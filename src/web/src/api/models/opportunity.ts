@@ -10,7 +10,7 @@ export interface OpportunitySearchFilterAdmin
 }
 
 export interface OpportunitySearchResults extends OpportunitySearchResultsBase {
-  items: Opportunity[];
+  items: OpportunityInfo[];
 }
 
 export interface OpportunitySearchResultsBase {

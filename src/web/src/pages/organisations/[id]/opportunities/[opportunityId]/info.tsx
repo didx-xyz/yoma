@@ -3,11 +3,8 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { type ParsedUrlQuery } from "querystring";
 import { useState, type ReactElement } from "react";
-import type { Opportunity, OpportunityInfo } from "~/api/models/opportunity";
-import {
-  getOpportunityById,
-  getOpportunityInfoById,
-} from "~/api/services/opportunities";
+import type { OpportunityInfo } from "~/api/models/opportunity";
+import { getOpportunityInfoByIdAdmin } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
@@ -26,11 +23,11 @@ import {
 } from "react-icons/fa";
 import Image from "next/image";
 import iconClock from "public/images/icon-clock.svg";
-import iconUser from "public/images/icon-user.svg";
 import iconDifficulty from "public/images/icon-difficulty.svg";
 import iconLanguage from "public/images/icon-language.svg";
 import iconTopics from "public/images/icon-topics.svg";
 import iconSkills from "public/images/icon-skills.svg";
+import iconUser from "public/images/icon-user.svg";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -88,7 +85,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   if (opportunityId !== "create") {
     await queryClient.prefetchQuery(["opportunityInfo", opportunityId], () =>
-      getOpportunityById(opportunityId, context),
+      getOpportunityInfoByIdAdmin(opportunityId, context),
     );
   }
 
@@ -107,9 +104,9 @@ const OpportunityDetails: NextPageWithLayout<{
   opportunityId: string;
   user: User;
 }> = ({ id, opportunityId }) => {
-  const { data: opportunity } = useQuery<Opportunity>({
+  const { data: opportunity } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
-    queryFn: () => getOpportunityById(opportunityId),
+    queryFn: () => getOpportunityInfoByIdAdmin(opportunityId),
   });
 
   const [manageOpportunityMenuVisible, setManageOpportunityMenuVisible] =
@@ -233,8 +230,8 @@ const OpportunityDetails: NextPageWithLayout<{
 
                 <span className="ml-1">{`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}`}</span>
               </div>
-              {/* TODO: add participant count to opportunity */}
-              {/* {(opportunity?.participantCountTotal ?? 0) > 0 && (
+
+              {(opportunity?.participantCountTotal ?? 0) > 0 && (
                 <div className="badge h-6 rounded-md bg-green-light text-green">
                   <Image
                     src={iconUser}
@@ -253,7 +250,7 @@ const OpportunityDetails: NextPageWithLayout<{
               )}
               <div className="badge h-6 rounded-md bg-green-light text-green">
                 Ongoing
-              </div> */}
+              </div>
             </div>
           </div>
 
@@ -267,8 +264,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   <IoMdPerson className="h-6 w-6 text-gray" />
                   Participants
                 </div>
-                {/* TODO: add participant count to opportunity */}
-                {/* <div className="flex flex-row items-center gap-4 rounded-lg bg-gray p-4">
+                <div className="flex flex-row items-center gap-4 rounded-lg bg-gray p-4">
                   <div className="text-3xl font-bold text-gray-dark">
                     {opportunity?.participantCountTotal ?? 0}
                   </div>
@@ -283,7 +279,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         </div>
                       </div>
                     )}
-                </div> */}
+                </div>
               </div>
               <div className="flex flex-col gap-1 rounded-lg bg-white p-6">
                 <div>

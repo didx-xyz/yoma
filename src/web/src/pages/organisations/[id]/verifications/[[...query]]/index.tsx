@@ -9,42 +9,37 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, type ReactElement, useState, useMemo } from "react";
-import { getOpportunitiesAdmin } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
-import { type OpportunitySearchResults } from "~/api/models/opportunity";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { type ParsedUrlQuery } from "querystring";
 import Link from "next/link";
 import { PageBackground } from "~/components/PageBackground";
 import {
-  IoIosAdd,
-  IoMdAlarm,
   IoMdAlert,
   IoMdClose,
-  IoMdOpen,
   IoMdPin,
   IoMdThumbsDown,
   IoMdThumbsUp,
   IoMdWarning,
 } from "react-icons/io";
-import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { DATETIME_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import {
+  getOpportunitiesForVerification,
   performActionVerifyBulk,
   performActionVerifyManual,
-  searchMyOpportunities,
   searchMyOpportunitiesAdmin,
 } from "~/api/services/myOpportunities";
 import {
   Action,
-  MyOpportunityInfo,
-  MyOpportunityRequestVerifyFinalize,
-  MyOpportunityRequestVerifyFinalizeBatch,
-  MyOpportunitySearchResults,
+  type MyOpportunityInfo,
+  type MyOpportunityRequestVerifyFinalize,
+  type MyOpportunityRequestVerifyFinalizeBatch,
+  type MyOpportunitySearchCriteriaOpportunity,
+  type MyOpportunitySearchResults,
   VerificationStatus,
 } from "~/api/models/myOpportunity";
 import Moment from "react-moment";
@@ -92,6 +87,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           context,
         ),
     );
+
+    await queryClient.prefetchQuery(["OpportunitiesForVerification", id], () =>
+      getOpportunitiesForVerification([id], undefined, context),
+    );
   }
 
   return {
@@ -129,6 +128,12 @@ const OpportunityVerifications: NextPageWithLayout<{
         action: Action.Verification, //TODO
         verificationStatus: VerificationStatus.Pending,
       }),
+  });
+  const { data: dataOpportunitiesForVerification } = useQuery<
+    MyOpportunitySearchCriteriaOpportunity[]
+  >({
+    queryKey: [`OpportunitiesForVerification_${id}`],
+    queryFn: () => getOpportunitiesForVerification([id]),
   });
 
   const onSearch = useCallback(
@@ -324,14 +329,14 @@ const OpportunityVerifications: NextPageWithLayout<{
   const markerPosition = useMemo(() => {
     if (currentRow == null || currentRow == undefined) return null;
 
-    var verification = currentRow?.verifications?.find(
+    const verification = currentRow?.verifications?.find(
       (item) => item.verificationType == "Location",
     );
 
     const coords = verification?.geometry?.coordinates as number[][];
     if (coords == null || coords == undefined || coords.length == 0)
       return null;
-    var first = coords[0];
+    const first = coords[0];
     if (!first || first.length < 2) return null;
 
     return {
@@ -382,7 +387,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                 <div className="flex flex-row">
                   <div className="flex flex-grow flex-col gap-1">
                     <p className="text-lg font-bold text-black">
-                      Linda Makwena
+                      {currentRow?.userDisplayName}
                     </p>
                     <p className="text--dark text-sm">
                       User Experience Designer
@@ -395,8 +400,8 @@ const OpportunityVerifications: NextPageWithLayout<{
                   <div className="flex flex-col items-center justify-center gap-4">
                     <div className="-mt-8 flex h-24 w-24 items-center justify-center rounded-full border-green-dark bg-white p-4 shadow-lg">
                       <Image
-                        src={iconSuccess}
-                        alt="Icon Success"
+                        src={currentRow?.userPhotoURL ?? iconSuccess}
+                        alt="Icon User"
                         width={60}
                         height={60}
                         sizes="100vw"

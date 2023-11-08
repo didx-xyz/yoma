@@ -1,12 +1,10 @@
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import { type ParsedUrlQuery } from "querystring";
 import { useState, type ReactElement, useMemo, useCallback } from "react";
 import { type OpportunityInfo } from "~/api/models/opportunity";
 import { getOpportunityInfoById } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
-import { authOptions } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
 import {
@@ -42,7 +40,7 @@ import { useSession } from "next-auth/react";
 import { OpportunityComplete } from "~/components/Opportunity/OpportunityComplete";
 import { signIn } from "next-auth/react";
 import { fetchClientEnv } from "~/lib/utils";
-import { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
+import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -52,7 +50,7 @@ interface IParams extends ParsedUrlQuery {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { opportunityId } = context.params as IParams;
   const queryClient = new QueryClient();
-  const session = await getServerSession(context.req, context.res, authOptions);
+  //const session = await getServerSession(context.req, context.res, authOptions);
 
   // UND_ERR_HEADERS_OVERFLOW ISSUE: disable prefetching for now
   //   await queryClient.prefetchQuery(["categories"], async () =>
@@ -403,10 +401,10 @@ const OpportunityDetails: NextPageWithLayout<{
             onClose={() => {
               setCompleteOpportunityDialogVisible(false);
             }}
-            onSave={() => {
+            onSave={async () => {
               setCompleteOpportunityDialogVisible(false);
               setCompleteOpportunitySuccessDialogVisible(true);
-              queryClient.invalidateQueries([
+              await queryClient.invalidateQueries([
                 "verificationStatus",
                 opportunityId,
               ]);

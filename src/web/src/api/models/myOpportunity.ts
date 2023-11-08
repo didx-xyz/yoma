@@ -1,5 +1,5 @@
 import type { FormFile, Geometry, PaginationFilter } from "./common";
-import { VerificationType } from "./opportunity";
+import type { VerificationType } from "./opportunity";
 
 export interface MyOpportunityRequestVerify {
   certificate: FormFile | null;
@@ -47,6 +47,8 @@ export interface MyOpportunityInfo {
   userId: string;
   userEmail: string;
   userDisplayName: string | null;
+  userPhotoId: string | null;
+  userPhotoURL: string | null;
   opportunityId: string;
   opportunityTitle: string;
   opportunityDescription: string;
@@ -97,4 +99,9 @@ export interface MyOpportunityRequestVerifyFinalizeBatchItem {
 export interface MyOpportunityResponseVerify {
   status: VerificationStatus | string; //NB
   comment: string | null;
+}
+
+export interface MyOpportunitySearchCriteriaOpportunity {
+  id: string;
+  title: string;
 }
