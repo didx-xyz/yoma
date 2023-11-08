@@ -17,6 +17,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
                 UserId = value.UserId,
                 UserEmail = value.UserEmail,
                 UserDisplayName = value.UserDisplayName,
+                UserCountry = value.UserCountry,
+                UserCountryOfResidence = value.UserCountryOfResidence,
                 UserPhotoId = value.UserPhotoId,
                 UserPhotoURL = value.UserPhotoURL,
                 OpportunityId = value.OpportunityId,

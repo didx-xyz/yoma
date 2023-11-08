@@ -199,10 +199,9 @@ namespace Yoma.Core.Domain.SSI.Services
                 throw new ArgumentException($"Schema name of '{schemaFullName}' is invalid. Expecting [type]:[name]", nameof(schemaFullName));
 
             var schemaType = _ssiSchemaTypeService.GetByNameOrNull(nameParts.First());
-            if (schemaType == null)
-                throw new ArgumentException($"Schema full name of '{schemaFullName}' is invalid. Specified type '{nameParts.First()}' does not exist", nameof(schemaFullName));
-
-            return (schemaType, nameParts.Last());
+            return schemaType == null
+                ? throw new ArgumentException($"Schema full name of '{schemaFullName}' is invalid. Specified type '{nameParts.First()}' does not exist", nameof(schemaFullName))
+                : ((SSISchemaType schemaType, string displayName))(schemaType, nameParts.Last());
         }
         #endregion
 
@@ -231,23 +230,23 @@ namespace Yoma.Core.Domain.SSI.Services
 
         private SSISchema ConvertToSSISchema(Schema schema, List<SSISchemaEntity>? matchedEntities)
         {
-            var nameParts = SchemaFullNameValidateAndGetParts(schema.Name);
+            var (schemaType, displayName) = SchemaFullNameValidateAndGetParts(schema.Name);
 
             var countEntityProperties = matchedEntities?.Sum(o => o.Properties?.Count);
 
             var schemaAttributeNames = schema.AttributeNames?.Except(SchemaAttributes_Internal).ToList();
 
-            if (countEntityProperties != schemaAttributeNames?.Count())
+            if (countEntityProperties != schemaAttributeNames?.Count)
                 throw new DataInconsistencyException($"Schema '{schema.Name}': Attribute (count '{schemaAttributeNames?.Count}') vs entity property mismatch detected (count '{countEntityProperties}')");
 
             return new SSISchema
             {
                 Id = schema.Id,
                 Name = schema.Name,
-                DisplayName = nameParts.displayName,
-                TypeId = nameParts.schemaType.Id,
-                Type = Enum.Parse<SchemaType>(nameParts.schemaType.Name, true),
-                TypeDescription = nameParts.schemaType.Description,
+                DisplayName = displayName,
+                TypeId = schemaType.Id,
+                Type = Enum.Parse<SchemaType>(schemaType.Name, true),
+                TypeDescription = schemaType.Description,
                 Version = schema.Version.ToString(),
                 ArtifactType = schema.ArtifactType,
                 Entities = matchedEntities ?? new List<SSISchemaEntity>(),

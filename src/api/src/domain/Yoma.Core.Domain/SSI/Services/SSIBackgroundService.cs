@@ -202,6 +202,8 @@ namespace Yoma.Core.Domain.SSI.Services
 
                             var request = new CredentialIssuanceRequest
                             {
+                                ClientReferent = new KeyValuePair<string, string>(SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString()),
+                                SchemaType = item.SchemaType.ToString(),
                                 SchemaName = item.SchemaName,
                                 ArtifactType = item.ArtifactType,
                                 Attributes = new Dictionary<string, string>()
@@ -341,11 +343,11 @@ namespace Yoma.Core.Domain.SSI.Services
             var schema = await _ssiSchemaService.GetByFullNameOrNull(schemaFullName);
             if (schema == null)
             {
-                var nameParts = _ssiSchemaService.SchemaFullNameValidateAndGetParts(schemaFullName);
+                var (schemaType, displayName) = _ssiSchemaService.SchemaFullNameValidateAndGetParts(schemaFullName);
                 await _ssiSchemaService.Create(new SSISchemaRequestCreate
                 {
-                    TypeId = nameParts.schemaType.Id,
-                    Name = nameParts.displayName,
+                    TypeId = schemaType.Id,
+                    Name = displayName,
                     ArtifactType = artifactType,
                     Attributes = attributes
                 });

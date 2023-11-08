@@ -26,6 +26,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 Id = entity.Id,
                 UserId = entity.UserId,
                 UserEmail = entity.User.Email,
+                UserCountry = entity.User.Country == null ? null : entity.User.Country.Name,
+                UserCountryOfResidence = entity.User.CountryOfResidence == null ? null : entity.User.CountryOfResidence.Name,
                 UserDisplayName = entity.User.DisplayName,
                 UserPhotoId = entity.User.PhotoId,
                 OpportunityId = entity.OpportunityId,

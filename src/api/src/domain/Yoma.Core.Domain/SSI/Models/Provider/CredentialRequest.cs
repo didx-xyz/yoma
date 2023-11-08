@@ -2,6 +2,8 @@ namespace Yoma.Core.Domain.SSI.Models.Provider
 {
     public class CredentialIssuanceRequest
     {
+        public KeyValuePair<string, string> ClientReferent { get; set; }
+
         public string SchemaName { get; set; }
 
         public string SchemaType { get; set; }

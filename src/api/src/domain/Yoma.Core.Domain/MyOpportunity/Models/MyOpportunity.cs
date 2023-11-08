@@ -12,6 +12,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public string? UserDisplayName { get; set; }
 
+        public string? UserCountry { get; set; }
+
+        public string? UserCountryOfResidence { get; set; }
+
         public Guid? UserPhotoId { get; set; }
 
         public string? UserPhotoURL { get; set; }

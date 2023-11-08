@@ -193,10 +193,14 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             return tenant.Tenant_id;
         }
 
-        public async Task<string> IssueCredential(CredentialIssuanceRequest request)
+        public async Task<string?> IssueCredential(CredentialIssuanceRequest request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
+
+            request.ClientReferent = new KeyValuePair<string, string>(request.ClientReferent.Key?.Trim() ?? string.Empty, request.ClientReferent.Value?.Trim() ?? string.Empty);
+            if (string.IsNullOrEmpty(request.ClientReferent.Key) && string.IsNullOrEmpty(request.ClientReferent.Value))
+                throw new ArgumentException($"'{nameof(request.ClientReferent)}' is required", nameof(request));
 
             if (string.IsNullOrWhiteSpace(request.SchemaName))
                 throw new ArgumentException($"'{nameof(request.SchemaName)}' is required", nameof(request));
@@ -228,10 +232,15 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
             var clientCustomer = _clientFactory.CreateCustomerClient();
 
-            var tenantIssuer = await clientCustomer.GetTenantAsync(tenant_id: request.TenantIdIssuer);
-            var clientIssuer = _clientFactory.CreateTenantClient(tenantIssuer.Tenant_id);
             var tenantHolder = await clientCustomer.GetTenantAsync(tenant_id: request.TenantIdHolder);
             var clientHolder = _clientFactory.CreateTenantClient(tenantHolder.Tenant_id);
+
+            //check if credential was issued based on clientReferent
+            var result = await GetCredentialReferentByClientReferentOrNull(clientHolder, request.ArtifactType, request.ClientReferent, false);
+            if (!string.IsNullOrEmpty(result)) return result;
+
+            var tenantIssuer = await clientCustomer.GetTenantAsync(tenant_id: request.TenantIdIssuer);
+            var clientIssuer = _clientFactory.CreateTenantClient(tenantIssuer.Tenant_id);
 
             var connection = await EnsureConnectionCI(tenantIssuer, clientIssuer, tenantHolder, clientHolder);
 
@@ -254,12 +263,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                     break;
 
                 case ArtifactType.Ld_proof:
-
                     var dids = await clientIssuer.GetDidsAsync();
-                    var did = dids.SingleOrDefault(o => o.Key_type == DIDKey_type.Ed25519);
-                    if (did == null)
-                        throw new InvalidOperationException($"Failed to retrieve the issuer DID of type '{DIDKey_type.Ed25519}'");
-
+                    var did = dids.SingleOrDefault(o => o.Key_type == DIDKey_type.Ed25519)
+                        ?? throw new InvalidOperationException($"Failed to retrieve the issuer DID of type '{DIDKey_type.Ed25519}'");
                     var credentialSubject = new Dictionary<string, string> { { "type", request.SchemaType } };
                     credentialSubject = credentialSubject.Concat(request.Attributes).ToDictionary(x => x.Key, x => x.Value);
 
@@ -349,8 +355,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             if (sseEvent == null)
                 throw new InvalidOperationException($"Failed to receive SSE event for topic '{Topic.Credentials}' and desired state '{CredentialExchangeState.Done}'");
 
-            //TODO: Support for Indy and Ld_proof; Referent (credential exchange records are deleted)
-            return credentialExchange.Credential_id;
+            result = await GetCredentialReferentByClientReferentOrNull(clientHolder, request.ArtifactType, request.ClientReferent, true);
+            return result;
         }
         #endregion
 
@@ -480,6 +486,62 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             result = await _connectionRepository.Create(result);
 
             return result;
+        }
+
+        private static async Task<string?> GetCredentialReferentByClientReferentOrNull(ITenantClient clientHolder, ArtifactType artifactType,
+            KeyValuePair<string,string> clientReferent, bool throwNotFound)
+        {
+            var wqlQueryString = $"{{\"attr::{clientReferent.Key}::value\":\"{clientReferent.Value}\"}}";
+
+            switch (artifactType)
+            {
+                case ArtifactType.Indy:
+                    var credsIndy = await clientHolder.GetIndyCredentialsAsync(null, null, wqlQueryString);
+
+                    if (credsIndy?.Results?.Count > 1)
+                        throw new InvalidOperationException($"More than one credential found for client referent '{clientReferent}'");
+
+                    var credIndy = credsIndy?.Results?.SingleOrDefault();
+
+                    if (credIndy == null)
+                    {
+                        if (throwNotFound)
+                            throw new InvalidOperationException($"Credential expected but not found for client referent '{clientReferent}'");
+                        return null;
+                    }
+                    else
+                    {
+                        var result = credIndy?.Referent?.Trim();
+                        if (string.IsNullOrEmpty(result))
+                            throw new InvalidOperationException($"Credential referent expected but is null / empty client referent '{clientReferent}'");
+                        return result;
+                    }
+
+                case ArtifactType.Ld_proof:
+                    var credsW3C = await clientHolder.GetW3CCredentialsAsync(null, null, wqlQueryString);
+
+                    if (credsW3C?.Count > 1)
+                        throw new InvalidOperationException($"More than one credential found for client referent '{clientReferent}'");
+
+                    var credW3C = credsW3C?.SingleOrDefault();
+
+                    if (credsW3C == null)
+                    {
+                        if (throwNotFound)
+                            throw new InvalidOperationException($"Credential expected but not found for client referent '{clientReferent}'");
+                        return null;
+                    }
+                    else
+                    {
+                        var result = credW3C?.Given_id?.Trim();
+                        if (string.IsNullOrEmpty(result))
+                            throw new InvalidOperationException($"Credential referent expected but is null / empty client referent '{clientReferent}'");
+                        return result;
+                    }
+
+                default:
+                    throw new InvalidOperationException($"Artifact type of '{artifactType}' not supported");
+            }
         }
         #endregion
     }

@@ -136,8 +136,7 @@ namespace Yoma.Core.Domain
             BackgroundJob.Enqueue(() => ssiTenantBackgroundService.SeedSchemas()); //execute on startup provided local
             RecurringJob.AddOrUpdate($"SSI Tenant Creation",
                () => ssiTenantBackgroundService.ProcessTenantCreation(), options.SSITenantCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-
-            return; //TODO: Remove
+            return;
             RecurringJob.AddOrUpdate($"SSI Credential Issuance",
                () => ssiTenantBackgroundService.ProcessCredentialIssuance(), options.SSICredentialIssuanceSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
         }

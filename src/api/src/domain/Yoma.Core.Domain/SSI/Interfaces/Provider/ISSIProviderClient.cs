@@ -32,6 +32,6 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Provider
         /// <summary>
         /// Issue credential for the specified request
         /// </summary>
-        Task<string> IssueCredential(CredentialIssuanceRequest request);
+        Task<string?> IssueCredential(CredentialIssuanceRequest request);
     }
 }
