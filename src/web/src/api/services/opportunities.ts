@@ -98,6 +98,18 @@ export const getOpportunityById = async (
   return data;
 };
 
+export const getOpportunityInfoByIdAdmin = async (
+  id: string,
+  context?: GetServerSidePropsContext,
+): Promise<OpportunityInfo> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<OpportunityInfo>(
+    `/opportunity/${id}/admin/info`,
+  );
+  return data;
+};
+
 export const getOpportunityInfoById = async (
   id: string,
   context?: GetServerSidePropsContext,

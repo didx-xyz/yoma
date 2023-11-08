@@ -30,6 +30,7 @@ const config = {
     "@typescript-eslint/restrict-template-expressions": "off",
     "@typescript-eslint/non-nullable-type-assertion-style": "off",
     "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-empty-interface": "off",
     "prefer-spread": "off",
   },
 };

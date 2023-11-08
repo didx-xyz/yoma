@@ -209,37 +209,12 @@ const Opportunities: NextPageWithLayout<{
                         </>
                       </td>
                       <td>{opportunity.url}</td>
-                      <td>{opportunity.participantCount}</td>
-                      {/* <td>{opportunity.ver}</td>  */}
+                      <td>{opportunity.participantCountTotal}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-
-            // <ReactDataGrid
-            //   columns={[
-            //     { key: "title", name: "Title" },
-            //     { key: "type", name: "Type" },
-            //     { key: "skills", name: "Skills", renderCell: SkillsFormatter },
-            //     { key: "status", name: "Status", renderCell: StatusFormatter },
-            //     { key: "zltoReward", name: "ZLTO" },
-            //     {
-            //       key: "unverifiedCredentials",
-            //       name: "Participants (verifications)",
-            //       renderCell: UnverifiedCredentialsFormatter,
-            //     },
-            //     { key: "opportunityURL", name: "Short Link" },
-            //     { key: "opportunityURL1", name: "Magic Link" },
-            //     {
-            //       key: "opportunityURL2",
-            //       name: "Manage",
-            //       renderCell: ManageFormatter,
-            //       cellClass: "flex justify-center items-center",
-            //     },
-            //   ]}
-            //   rows={opportunities}
-            // />
           )}
 
           <div className="mt-2 grid place-items-center justify-center">

@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { type ParsedUrlQuery } from "querystring";
 import { useState, type ReactElement } from "react";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import { getOpportunityInfoById } from "~/api/services/opportunities";
+import { getOpportunityInfoByIdAdmin } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
@@ -23,11 +23,11 @@ import {
 } from "react-icons/fa";
 import Image from "next/image";
 import iconClock from "public/images/icon-clock.svg";
-import iconUser from "public/images/icon-user.svg";
 import iconDifficulty from "public/images/icon-difficulty.svg";
 import iconLanguage from "public/images/icon-language.svg";
 import iconTopics from "public/images/icon-topics.svg";
 import iconSkills from "public/images/icon-skills.svg";
+import iconUser from "public/images/icon-user.svg";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -85,7 +85,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   if (opportunityId !== "create") {
     await queryClient.prefetchQuery(["opportunityInfo", opportunityId], () =>
-      getOpportunityInfoById(opportunityId, context),
+      getOpportunityInfoByIdAdmin(opportunityId, context),
     );
   }
 
@@ -106,7 +106,7 @@ const OpportunityDetails: NextPageWithLayout<{
 }> = ({ id, opportunityId }) => {
   const { data: opportunity } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
-    queryFn: () => getOpportunityInfoById(opportunityId),
+    queryFn: () => getOpportunityInfoByIdAdmin(opportunityId),
   });
 
   const [manageOpportunityMenuVisible, setManageOpportunityMenuVisible] =
@@ -230,6 +230,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                 <span className="ml-1">{`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}`}</span>
               </div>
+
               {(opportunity?.participantCountTotal ?? 0) > 0 && (
                 <div className="badge h-6 rounded-md bg-green-light text-green">
                   <Image
@@ -299,7 +300,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     {opportunity?.skills?.map((item) => (
                       <div
                         key={item.id}
-                        className="badge mr-2 h-6 rounded-md border-0 bg-green text-white"
+                        className="badge min-h-6 mr-2 h-full rounded-md border-0 bg-green text-white"
                       >
                         {item.name}
                       </div>
@@ -342,7 +343,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     {opportunity?.categories?.map((item) => (
                       <div
                         key={item.id}
-                        className="badge mr-2 h-6 rounded-md bg-green text-white"
+                        className="badge min-h-6 mr-2 h-full rounded-md bg-green text-white"
                       >
                         {item.name}
                       </div>
@@ -368,7 +369,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     {opportunity?.languages?.map((item) => (
                       <div
                         key={item.id}
-                        className="badge mr-2 h-6 rounded-md bg-green text-white"
+                        className="badge min-h-6 mr-2 h-full rounded-md bg-green text-white"
                       >
                         {item.name}
                       </div>

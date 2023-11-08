@@ -1,12 +1,10 @@
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import { type ParsedUrlQuery } from "querystring";
 import { useState, type ReactElement, useMemo, useCallback } from "react";
 import { type OpportunityInfo } from "~/api/models/opportunity";
 import { getOpportunityInfoById } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
-import { authOptions } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
 import {
@@ -42,6 +40,7 @@ import { useSession } from "next-auth/react";
 import { OpportunityComplete } from "~/components/Opportunity/OpportunityComplete";
 import { signIn } from "next-auth/react";
 import { fetchClientEnv } from "~/lib/utils";
+import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -51,7 +50,7 @@ interface IParams extends ParsedUrlQuery {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { opportunityId } = context.params as IParams;
   const queryClient = new QueryClient();
-  const session = await getServerSession(context.req, context.res, authOptions);
+  //const session = await getServerSession(context.req, context.res, authOptions);
 
   // UND_ERR_HEADERS_OVERFLOW ISSUE: disable prefetching for now
   //   await queryClient.prefetchQuery(["categories"], async () =>
@@ -118,6 +117,7 @@ const OpportunityDetails: NextPageWithLayout<{
   opportunityId: string;
   //user: User;
 }> = ({ opportunityId }) => {
+  const queryClient = new QueryClient();
   const [refreshVerificationStatus, setRefreshVerificationStatus] =
     useState(false);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
@@ -139,16 +139,17 @@ const OpportunityDetails: NextPageWithLayout<{
     queryFn: () => getOpportunityInfoById(opportunityId),
   });
 
-  const { data: verificationStatus } = useQuery<string | null>({
-    queryKey: ["verificationStatus", opportunityId],
-    queryFn: () => getVerificationStatus(opportunityId),
-    enabled:
-      (!!session &&
-        !!opportunity &&
-        opportunity.verificationEnabled &&
-        opportunity.verificationMethod == "Manual") ||
-      refreshVerificationStatus,
-  });
+  const { data: verificationStatus } =
+    useQuery<MyOpportunityResponseVerify | null>({
+      queryKey: ["verificationStatus", opportunityId],
+      queryFn: () => getVerificationStatus(opportunityId),
+      enabled:
+        (!!session &&
+          !!opportunity &&
+          opportunity.verificationEnabled &&
+          opportunity.verificationMethod == "Manual") ||
+        refreshVerificationStatus,
+    });
 
   // memo for spots left i.e participantLimit - participantCountTotal
   const spotsLeft = useMemo(() => {
@@ -173,8 +174,8 @@ const OpportunityDetails: NextPageWithLayout<{
   }, [opportunityId, session]);
 
   const onGoToOpportunity = useCallback(() => {
-    if (opportunity?.uRL) window.location.href = opportunity?.uRL;
-  }, [opportunity?.uRL]);
+    if (opportunity?.url) window.location.href = opportunity?.url;
+  }, [opportunity?.url]);
 
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const onLogin = useCallback(async () => {
@@ -364,7 +365,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   type="button"
                   className="btn rounded-full bg-purple normal-case text-white md:w-[250px]"
                   onClick={onGoToOpportunity}
-                  disabled={!opportunity?.uRL}
+                  disabled={!opportunity?.url}
                 >
                   <Image
                     src={iconOpen}
@@ -400,10 +401,14 @@ const OpportunityDetails: NextPageWithLayout<{
             onClose={() => {
               setCompleteOpportunityDialogVisible(false);
             }}
-            onSave={() => {
+            onSave={async () => {
               setCompleteOpportunityDialogVisible(false);
               setCompleteOpportunitySuccessDialogVisible(true);
-              setRefreshVerificationStatus(true);
+              await queryClient.invalidateQueries([
+                "verificationStatus",
+                opportunityId,
+              ]);
+              //setRefreshVerificationStatus(true);
             }}
           />
         </ReactModal>
@@ -551,39 +556,41 @@ const OpportunityDetails: NextPageWithLayout<{
 
                       <span className="ml-1">Go to opportunity</span>
                     </button>
-
+                    {/* verificationStatus: {JSON.stringify(verificationStatus)} */}
                     {/* only show upload button if verification is enabled and method is manual */}
                     {opportunity.verificationEnabled &&
                       opportunity.verificationMethod == "Manual" && (
                         <>
-                          {verificationStatus == null ||
-                            (verificationStatus == "Rejected" && (
-                              <button
-                                type="button"
-                                className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm lg:btn-md md:w-[300px]"
-                                onClick={() =>
-                                  session
-                                    ? setCompleteOpportunityDialogVisible(true)
-                                    : setLoginDialogVisible(true)
-                                }
-                              >
-                                <Image
-                                  src={iconUpload}
-                                  alt="Icon Upload"
-                                  width={20}
-                                  height={20}
-                                  sizes="100vw"
-                                  priority={true}
-                                  style={{ width: "20px", height: "20px" }}
-                                />
+                          {(verificationStatus == null ||
+                            //verificationStatus == undefined ||
+                            //verificationStatus == "" ||
+                            verificationStatus.status == "Rejected") && (
+                            <button
+                              type="button"
+                              className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm lg:btn-md md:w-[300px]"
+                              onClick={() =>
+                                session
+                                  ? setCompleteOpportunityDialogVisible(true)
+                                  : setLoginDialogVisible(true)
+                              }
+                            >
+                              <Image
+                                src={iconUpload}
+                                alt="Icon Upload"
+                                width={20}
+                                height={20}
+                                sizes="100vw"
+                                priority={true}
+                                style={{ width: "20px", height: "20px" }}
+                              />
 
-                                <span className="ml-1">
-                                  Upload your completion files
-                                </span>
-                              </button>
-                            ))}
-                          {verificationStatus != null &&
-                            verificationStatus == "Pending" && (
+                              <span className="ml-1">
+                                Upload your completion files
+                              </span>
+                            </button>
+                          )}
+                          {verificationStatus &&
+                            verificationStatus.status == "Pending" && (
                               <div className="md:text-md flex items-center justify-center whitespace-nowrap rounded-full bg-gray-light px-8 text-center text-xs font-bold text-gray-dark">
                                 Pending verification
                               </div>
@@ -594,8 +601,8 @@ const OpportunityDetails: NextPageWithLayout<{
                                 Rejected
                               </div>
                             )} */}
-                          {verificationStatus != null &&
-                            verificationStatus == "Completed" && (
+                          {verificationStatus &&
+                            verificationStatus.status == "Completed" && (
                               <div className="md:text-md flex items-center justify-center rounded-full border border-purple bg-white px-4 text-center text-xs font-bold text-purple">
                                 Completed
                                 <IoMdCheckmark
@@ -608,7 +615,6 @@ const OpportunityDetails: NextPageWithLayout<{
                             )}
                         </>
                       )}
-
                     {/* TODO: */}
                     {opportunity.verificationEnabled &&
                       opportunity.verificationMethod == "Automatic" && (
@@ -710,7 +716,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.skills?.map((item) => (
                         <div
                           key={item.id}
-                          className="badge mr-2 h-6 rounded-md border-0 bg-green text-white"
+                          className="badge min-h-6 mr-2 h-full rounded-md border-0 bg-green text-white"
                         >
                           {item.name}
                         </div>
@@ -753,7 +759,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.categories?.map((item) => (
                         <div
                           key={item.id}
-                          className="badge mr-2 h-6 rounded-md bg-green text-white"
+                          className="badge min-h-6 mr-2 h-full rounded-md bg-green text-white"
                         >
                           {item.name}
                         </div>
@@ -779,7 +785,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.languages?.map((item) => (
                         <div
                           key={item.id}
-                          className="badge mr-2 h-6 rounded-md bg-green text-white"
+                          className="badge min-h-6 mr-2 h-full rounded-md bg-green text-white"
                         >
                           {item.name}
                         </div>
