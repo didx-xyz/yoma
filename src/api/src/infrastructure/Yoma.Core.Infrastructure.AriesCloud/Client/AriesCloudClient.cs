@@ -489,7 +489,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         }
 
         private static async Task<string?> GetCredentialReferentByClientReferentOrNull(ITenantClient clientHolder, ArtifactType artifactType,
-            KeyValuePair<string,string> clientReferent, bool throwNotFound)
+            KeyValuePair<string, string> clientReferent, bool throwNotFound)
         {
             var wqlQueryString = $"{{\"attr::{clientReferent.Key}::value\":\"{clientReferent.Value}\"}}";
 
