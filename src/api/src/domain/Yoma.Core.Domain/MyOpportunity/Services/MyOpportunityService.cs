@@ -300,7 +300,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     }
 
                     query = query.Where(predicate);
-                    query.OrderByDescending(o => o.DateModified).ThenByDescending(o => o.DateCompleted);
+                    query = query.OrderByDescending(o => o.DateModified).ThenByDescending(o => o.DateCompleted);
 
                     break;
 

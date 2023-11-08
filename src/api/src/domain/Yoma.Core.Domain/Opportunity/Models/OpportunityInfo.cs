@@ -44,6 +44,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public int ParticipantCountTotal { get; set; }
 
+        public Guid StatusId { get; set; }
+
+        public Status Status { get; set; }
+
         public List<string>? Keywords { get; set; }
 
         public DateTimeOffset DateStart { get; set; }
