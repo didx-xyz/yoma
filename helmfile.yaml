@@ -88,6 +88,20 @@ releases:
     secrets:
       - ./helm/yoma-api/conf/base/secrets.yaml
       - ./helm/yoma-api/conf/{{ .Environment.Name }}/secrets.yaml
+
+  - name: yoma-web
+    namespace: {{ .Values.namespace }}
+    chart: ./helm/yoma-web
+    version: "0.1.0"
+    values:
+      - ./helm/yoma-web/conf/base/values.yaml
+      - ./helm/yoma-web/conf/{{ .Environment.Name }}/values.yaml
+      - nodeSelector:
+          kubernetes.io/arch: {{ .Values.arch }}
+          node.kubernetes.io/lifecycle: {{ .Values.lifecycle }}
+    secrets:
+      - ./helm/yoma-web/conf/base/secrets.yaml
+      - ./helm/yoma-web/conf/{{ .Environment.Name }}/secrets.yaml
 ---
 helmDefaults:
   timeout: 180

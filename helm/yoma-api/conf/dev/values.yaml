@@ -1,5 +1,14 @@
+image:
+  repository: ghcr.io/didx-xyz/yoma-api
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "master"
+
 ingress:
   internal:
+    annotations:
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/cors-allow-origin: "https://v3app.dev.yoma.world"
     rules:
       - host: v3api.dev.yoma.world
 
