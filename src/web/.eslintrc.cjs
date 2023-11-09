@@ -31,6 +31,8 @@ const config = {
     "@typescript-eslint/non-nullable-type-assertion-style": "off",
     "@typescript-eslint/no-unsafe-call": "off",
     "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/no-unsafe-argument": "off",
+    "@typescript-eslint/no-floating-promises": "off",
     "prefer-spread": "off",
   },
 };

@@ -21,7 +21,7 @@ import { useSession } from "next-auth/react";
 import type { MyOpportunityRequestVerify } from "~/api/models/myOpportunity";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
-import { Controller, type FieldValues, useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import LocationPicker from "./LocationPicker";

@@ -6,11 +6,19 @@ import { useState } from "react";
 import { IoMdImage, IoMdPerson } from "react-icons/io";
 import ReactModal from "react-modal";
 import { shimmer, toBase64 } from "~/lib/image";
-import { userProfileAtom } from "~/lib/store";
+import {
+  currentOrganisationIdAtom,
+  currentOrganisationLogoAtom,
+  userProfileAtom,
+} from "~/lib/store";
 
 export const UserMenu: React.FC = () => {
   const [userMenuVisible, setUserMenuVisible] = useState(false);
   const userProfile = useAtomValue(userProfileAtom);
+  const currentOrganisationIdValue = useAtomValue(currentOrganisationIdAtom);
+  const currentOrganisationLogoValue = useAtomValue(
+    currentOrganisationLogoAtom,
+  );
   const { data: session } = useSession();
 
   const handleLogout = () => {
@@ -27,35 +35,76 @@ export const UserMenu: React.FC = () => {
         className="text-center text-white"
         onClick={() => setUserMenuVisible(!userMenuVisible)}
       >
-        {/* NO IMAGE */}
-        {!userProfile?.photoURL && (
-          <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full border-2 hover:border-gray-dark">
-            <IoMdPerson className="absolute -left-1 h-12 w-12 text-white animate-in slide-in-from-top-4" />
-          </div>
+        {/* NO CURRENT ORGANISATION, SHOW USER IMAGE */}
+        {!currentOrganisationIdValue && (
+          <>
+            {/* NO IMAGE */}
+            {!userProfile?.photoURL && (
+              <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full border-2 hover:border-gray-dark">
+                <IoMdPerson className="absolute -left-1 h-12 w-12 text-white animate-in slide-in-from-top-4" />
+              </div>
+            )}
+
+            {/* EXISTING IMAGE */}
+            {userProfile?.photoURL && (
+              <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full hover:border-2 hover:border-gray-dark">
+                <Image
+                  src={userProfile.photoURL}
+                  alt="User Logo"
+                  width={44}
+                  height={44}
+                  sizes="(max-width: 44px) 30vw, 50vw"
+                  priority={true}
+                  placeholder="blur"
+                  blurDataURL={`data:image/svg+xml;base64,${toBase64(
+                    shimmer(44, 44),
+                  )}`}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    maxWidth: "44px",
+                    maxHeight: "44px",
+                  }}
+                />
+              </div>
+            )}
+          </>
         )}
 
-        {/* EXISTING IMAGE */}
-        {userProfile?.photoURL && (
-          <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full hover:border-2 hover:border-gray-dark">
-            <Image
-              src={userProfile.photoURL}
-              alt="User Logo"
-              width={44}
-              height={44}
-              sizes="(max-width: 44px) 30vw, 50vw"
-              priority={true}
-              placeholder="blur"
-              blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                shimmer(44, 44),
-              )}`}
-              style={{
-                width: "100%",
-                height: "100%",
-                maxWidth: "44px",
-                maxHeight: "44px",
-              }}
-            />
-          </div>
+        {/* CURRENT ORGANISATION, SHOW COMPANY LOGO */}
+        {currentOrganisationIdValue && (
+          <>
+            {/* NO IMAGE */}
+            {!currentOrganisationLogoValue && (
+              <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full border-2 hover:border-gray-dark">
+                <IoMdPerson className="absolute -left-1 h-12 w-12 text-white animate-in slide-in-from-top-4" />
+              </div>
+            )}
+
+            {/* EXISTING IMAGE */}
+            {currentOrganisationLogoValue && (
+              <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full hover:border-2 hover:border-gray-dark">
+                <Image
+                  src={currentOrganisationLogoValue}
+                  alt="Company Logo"
+                  width={44}
+                  height={44}
+                  sizes="(max-width: 44px) 30vw, 50vw"
+                  priority={true}
+                  placeholder="blur"
+                  blurDataURL={`data:image/svg+xml;base64,${toBase64(
+                    shimmer(44, 44),
+                  )}`}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    maxWidth: "44px",
+                    maxHeight: "44px",
+                  }}
+                />
+              </div>
+            )}
+          </>
         )}
       </button>
 

@@ -323,10 +323,10 @@ const OpportunityDetails: NextPageWithLayout<{
           </div>
 
           <div className="flex flex-col gap-2 md:flex-row">
-            <div className="w-[66%] flex-grow rounded-lg bg-white p-6">
+            <div className="w-full flex-grow rounded-lg bg-white p-6 md:w-[66%]">
               {opportunity?.description}
             </div>
-            <div className="flex w-[33%] flex-col gap-2">
+            <div className="flex w-full  flex-col gap-2 md:w-[33%]">
               <div className="flex flex-col rounded-lg bg-white p-6">
                 <div className="mb-2 flex flex-row items-center gap-1 text-sm font-bold">
                   <IoMdPerson className="h-6 w-6 text-gray" />

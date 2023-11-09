@@ -182,7 +182,7 @@ const Settings: NextPageWithLayout<{
       });
       setIsLoading(false);
     },
-    [update, user, logoFiles, setIsLoading],
+    [update, user, logoFiles, setIsLoading, setUserProfileAtom],
   );
 
   const handleCancel = () => {
