@@ -1,4 +1,4 @@
-name: Continuous Integration
+name: CICD
 
 on:
   workflow_dispatch:
@@ -78,24 +78,24 @@ jobs:
             web:
               - './src/web/**'
 
-      - uses: actions/setup-node@v4
-        if: (steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-        with:
-          node-version: 18
-          cache: yarn
-      - run: yarn install --frozen-lockfile
-        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-        working-directory: ${{ matrix.dir }}
+      # - uses: actions/setup-node@v4
+      #   if: (steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+      #   with:
+      #     node-version: 18
+      #     cache: yarn
+      # - run: yarn install --frozen-lockfile
+      #   if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+      #   working-directory: ${{ matrix.dir }}
 
-      - uses: actions/setup-dotnet@v3
-        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
-        with:
-          dotnet-version: 7.x
+      # - uses: actions/setup-dotnet@v3
+      #   if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
+      #   with:
+      #     dotnet-version: 7.x
 
-      - uses: wearerequired/lint-action@v2
-        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
-        with: ${{ matrix.config }}
-        env: ${{ matrix.env }}
+      # - uses: wearerequired/lint-action@v2
+      #   if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
+      #   with: ${{ matrix.config }}
+      #   env: ${{ matrix.env }}
 
   build:
     name: Build and push
@@ -210,45 +210,86 @@ jobs:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
         continue-on-error: true
-      - name: Start services
+      # - name: Start services
+      #   run: |-
+      #     docker compose -f ./src/api/docker-compose.yml up -d
+      #     docker compose -f ./src/web/docker-compose.yml up -d
+      #   env:
+      #     API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
+      #     YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
+
+      # - uses: actions/setup-node@v4
+      #   with:
+      #     node-version: 18
+      #     cache: yarn
+      # - uses: cypress-io/github-action@v6
+      # - name: Upload Cypress Screenshots
+      #   uses: actions/upload-artifact@v3
+      #   if: always()
+      #   with:
+      #     name: cypress-screenshots
+      #     path: cypress/screenshots
+      #     if-no-files-found: ignore
+      # - name: Upload Cypress Recording
+      #   uses: actions/upload-artifact@v3
+      #   if: always()
+      #   with:
+      #     name: cypress-videos
+      #     path: cypress/videos
+      #     if-no-files-found: ignore
+
+      # - name: Keycloak Config logs
+      #   if: always()
+      #   run: docker logs keycloak-config
+      # - name: Keycloak logs
+      #   if: always()
+      #   run: docker logs keycloak
+      # - name: Yoma API logs
+      #   if: always()
+      #   run: docker logs yoma-api
+      # - name: Yoma Web logs
+      #   if: always()
+      #   run: docker logs yoma-web
+
+      # - run: docker compose down -v
+
+  deploy:
+    name: Deploy
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+    needs: [ test-e2e, build ]
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        project:
+          - yoma-api
+          - yoma-web
+        include:
+          - project: yoma-api
+            context: ./src/api
+          - project: yoma-web
+            context: ./src/web
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2 # https://github.com/actions/runner/pull/2477
+        id: filter
+        with:
+          base: master
+          filters: |-
+            changes:
+              - '${{ matrix.context }}/**'
+
+      - name: Dummy
         run: |-
-          docker compose -f ./src/api/docker-compose.yml up -d
-          docker compose -f ./src/web/docker-compose.yml up -d
+          echo "API_TAG is $API_TAG"
+          echo "YOUTH_TAG is $YOUTH_TAG"
+          echo ${{ steps.filter.outputs.changes }}
+          echo ${{ needs.build.outputs.image_version }}
+          echo "The image version is ${{ steps.meta.outputs.version }}"
         env:
-          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
-          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: yarn
-      - uses: cypress-io/github-action@v6
-      - name: Upload Cypress Screenshots
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: cypress-screenshots
-          path: cypress/screenshots
-          if-no-files-found: ignore
-      - name: Upload Cypress Recording
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: cypress-videos
-          path: cypress/videos
-          if-no-files-found: ignore
-
-      - name: Keycloak Config logs
-        if: always()
-        run: docker logs keycloak-config
-      - name: Keycloak logs
-        if: always()
-        run: docker logs keycloak
-      - name: Yoma API logs
-        if: always()
-        run: docker logs yoma-api
-      - name: Yoma Web logs
-        if: always()
-        run: docker logs yoma-web
-
-      - run: docker compose down -v
+          API_TAG: ${{ steps.filter.outputs.changes == 'true' && needs.build.outputs.image_version || 'xxx' }}
+          YOUTH_TAG: ${{ steps.filter.outputs.changes == 'true' && needs.build.outputs.image_version || 'xxx' }}
