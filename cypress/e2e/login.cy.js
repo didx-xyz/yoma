@@ -22,6 +22,6 @@ describe("Login to Yoma Web Youth", () => {
       cy.get("#kc-login").click();
     });
     cy.get(".button").click();
-    cy.location("href").should("eq", "http://localhost:3000");
+    cy.location("href").should("eq", "http://localhost:3000/");
   });
 });
