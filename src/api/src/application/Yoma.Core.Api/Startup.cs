@@ -140,8 +140,8 @@ namespace Yoma.Core.Api
                     new BasicAuthAuthorizationFilter(
                         new BasicAuthAuthorizationFilterOptions
                         {
-                            RequireSsl = _environment != Domain.Core.Environment.Local,
-                            SslRedirect = _environment != Domain.Core.Environment.Local,
+                            RequireSsl = false, //handled by AWS
+                            SslRedirect = false, //handled by AWS
                             LoginCaseSensitive = true,
                             Users = new[]
                             {
