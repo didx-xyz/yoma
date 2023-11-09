@@ -47,19 +47,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         .or(zod.literal("")),
       logo: zod.any().optional(),
       logoExisting: zod.any().optional(),
-      // logo: zod
-      //   .any()
-      //   .refine((files: File[]) => files?.length == 1, "Logo is required.")
-      //   .refine(
-      //     // eslint-disable-next-line
-      //     (files) => files?.[0]?.size <= MAX_IMAGE_SIZE,
-      //     `Maximum file size is ${MAX_IMAGE_SIZE_LABEL}.`,
-      //   )
-      //   .refine(
-      //     // eslint-disable-next-line
-      //     (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-      //     "${ACCEPTED_IMAGE_TYPES_LABEL} files are accepted.",
-      //   ),
       tagline: zod
         .string()
         .max(160, "Maximum of 160 characters allowed.")
@@ -145,7 +132,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           {formState.errors.name && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${formState.errors.name.message}`}
               </span>
             </label>
@@ -165,7 +151,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           {formState.errors.streetAddress && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${formState.errors.streetAddress.message}`}
               </span>
             </label>
@@ -186,7 +171,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           {formState.errors.province && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${formState.errors.province.message}`}
               </span>
             </label>
@@ -207,7 +191,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           {formState.errors.city && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${formState.errors.city.message}`}
               </span>
             </label>
@@ -228,7 +211,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           {formState.errors.postalCode && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${formState.errors.postalCode.message}`}
               </span>
             </label>
@@ -249,7 +231,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           {formState.errors.websiteURL && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${formState.errors.websiteURL.message}`}
               </span>
             </label>
@@ -320,7 +301,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           {formState.errors.logo && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${formState.errors.logo.message}`}
               </span>
             </label>
@@ -340,7 +320,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           {formState.errors.tagline && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${formState.errors.tagline.message}`}
               </span>
             </label>
@@ -359,7 +338,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           {formState.errors.biography && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${formState.errors.biography.message}`}
               </span>
             </label>

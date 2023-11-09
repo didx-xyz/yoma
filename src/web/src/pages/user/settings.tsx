@@ -12,13 +12,19 @@ import { toast } from "react-toastify";
 import zod from "zod";
 import { type UserProfileRequest } from "~/api/models/user";
 import { getCountries, getGenders } from "~/api/services/lookups";
-import { getUserProfile, patchUser } from "~/api/services/user";
+import { getUserProfile, patchPhoto, patchUser } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
 import { type NextPageWithLayout } from "../_app";
+import { FileUploader } from "~/components/Organisation/Upsert/FileUpload";
+import { ACCEPTED_IMAGE_TYPES } from "~/lib/constants";
+import Image from "next/image";
+import { PageBackground } from "~/components/PageBackground";
+import { useSetAtom } from "jotai";
+import { userProfileAtom } from "~/lib/store";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -48,6 +54,9 @@ const Settings: NextPageWithLayout<{
   user: User;
 }> = ({ user }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [logoFiles, setLogoFiles] = useState<File[]>([]);
+  const setUserProfileAtom = useSetAtom(userProfileAtom);
+
   // 👇 use prefetched queries (from server)
   const { data: genders } = useQuery({
     queryKey: ["genders"],
@@ -135,8 +144,13 @@ const Settings: NextPageWithLayout<{
       setIsLoading(true);
 
       try {
+        // update photo
+        if (logoFiles && logoFiles.length > 0) {
+          await patchPhoto(logoFiles[0]);
+        }
+
         // update api
-        await patchUser(data as UserProfileRequest);
+        const userProfile = await patchUser(data as UserProfileRequest);
 
         // update session
         await update({
@@ -145,6 +159,9 @@ const Settings: NextPageWithLayout<{
           email: data.email, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
           profile: data,
         });
+
+        // update userProfile Atom (used by NavBar/UserMenu.tsx, refresh profile picture)
+        setUserProfileAtom(userProfile);
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
@@ -165,7 +182,7 @@ const Settings: NextPageWithLayout<{
       });
       setIsLoading(false);
     },
-    [update, user, setIsLoading],
+    [update, user, logoFiles, setIsLoading],
   );
 
   const handleCancel = () => {
@@ -173,245 +190,296 @@ const Settings: NextPageWithLayout<{
   };
 
   return (
-    <div className="container max-w-5xl px-2 py-8">
+    <>
+      <PageBackground />
       {isLoading && <Loading />}
 
-      <h2 className="pb-8 font-bold">User Settings</h2>
+      <div className="container z-10 max-w-2xl px-2 py-4">
+        <h2 className="font-boldx pb-8 text-white">User Settings</h2>
 
-      {/* CONTENT */}
-      <div className="flex items-center justify-center">
-        <div className="flex w-full max-w-2xl flex-col rounded-lg bg-white p-8">
-          <form
-            onSubmit={handleSubmit(onSubmit)} // eslint-disable-line @typescript-eslint/no-misused-promises
-            className="gap-2x flex flex-col"
-          >
-            <div className="form-control">
-              <label className="label font-bold">
-                <span className="label-text">Email</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                {...register("email")}
-              />
-              {errors.email && (
+        <div className="flex flex-col items-center justify-start">
+          <div className="flex w-full max-w-2xl flex-col rounded-lg bg-white p-8">
+            <form
+              onSubmit={handleSubmit(onSubmit)} // eslint-disable-line @typescript-eslint/no-misused-promises
+              className="gap-2x flex flex-col"
+            >
+              <div className="form-control">
                 <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                    {`${errors.email.message}`}
-                  </span>
+                  <span className="label-text">Email</span>
                 </label>
-              )}
-            </div>
-
-            <div className="form-control">
-              <label className="label font-bold">
-                <span className="label-text">First name</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered"
-                {...register("firstName")}
-              />
-              {errors.firstName && (
-                <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                    {`${errors.firstName.message}`}
-                  </span>
-                </label>
-              )}
-            </div>
-
-            <div className="form-control">
-              <label className="label font-bold">
-                <span className="label-text">Last name</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered"
-                {...register("surname")}
-              />
-              {errors.surname && (
-                <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                    {`${errors.surname.message}`}
-                  </span>
-                </label>
-              )}
-            </div>
-
-            <div className="form-control">
-              <label className="label font-bold">
-                <span className="label-text">Display name</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered"
-                {...register("displayName")}
-              />
-              {errors.displayName && (
-                <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                    {`${errors.displayName.message}`}
-                  </span>
-                </label>
-              )}
-            </div>
-
-            <div className="form-control">
-              <label className="label font-bold">
-                <span className="label-text">Phone Number</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered"
-                {...register("phoneNumber")}
-              />
-              {errors.phoneNumber && (
-                <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                    {`${errors.phoneNumber.message}`}
-                  </span>
-                </label>
-              )}
-            </div>
-
-            <div className="form-control">
-              <label className="label font-bold">
-                <span className="label-text">Country</span>
-              </label>
-              <select
-                className="select select-bordered"
-                {...register("countryId")}
-              >
-                <option value="">Please select</option>
-                {countries?.map((country) => (
-                  <option key={country.id} value={country.id}>
-                    {country.name}
-                  </option>
-                ))}
-              </select>
-              {errors.countryId && (
-                <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                    {`${errors.countryId.message}`}
-                  </span>
-                </label>
-              )}
-            </div>
-
-            <div className="form-control">
-              <label className="label font-bold">
-                <span className="label-text">Country Of Residence</span>
-              </label>
-              <select
-                className="select select-bordered"
-                {...register("countryOfResidenceId")}
-              >
-                <option value="">Please select</option>
-                {countries?.map((country) => (
-                  <option key={country.id} value={country.id}>
-                    {country.name}
-                  </option>
-                ))}
-              </select>
-              {errors.countryOfResidenceId && (
-                <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                    {`${errors.countryOfResidenceId.message}`}
-                  </span>
-                </label>
-              )}
-            </div>
-
-            <div className="form-control">
-              <label className="label font-bold">
-                <span className="label-text">Gender</span>
-              </label>
-              <select
-                className="select select-bordered"
-                {...register("genderId")}
-              >
-                <option value="">Please select</option>
-                {genders?.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-              {errors.genderId && (
-                <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                    {`${errors.genderId.message}`}
-                  </span>
-                </label>
-              )}
-            </div>
-
-            <div className="form-control">
-              <label className="label font-bold">
-                <span className="label-text">Date of Birth</span>
-              </label>
-              <input
-                type="date"
-                className="input input-bordered"
-                {...register("dateOfBirth")}
-              />
-              {errors.dateOfBirth && (
-                <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                    {`${errors.dateOfBirth.message}`}
-                  </span>
-                </label>
-              )}
-            </div>
-
-            <div className="form-control">
-              <label className="label cursor-pointer">
-                <span className="label-text">Reset Password</span>
                 <input
-                  type="checkbox"
-                  className="checkbox mr-2"
-                  {...register("resetPassword")}
+                  type="text"
+                  className="input input-bordered w-full"
+                  {...register("email")}
                 />
-              </label>
-              {errors.resetPassword && (
-                <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                    {`${errors.resetPassword.message}`}
-                  </span>
-                </label>
-              )}
-            </div>
+                {errors.email && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${errors.email.message}`}
+                    </span>
+                  </label>
+                )}
+              </div>
 
-            <div className="my-4 flex items-center justify-center gap-2">
-              <button
-                type="button"
-                className="btn btn-warning btn-sm flex-grow"
-                onClick={handleCancel}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="btn btn-success btn-sm flex-grow"
-              >
-                Submit
-              </button>
-            </div>
-          </form>
+              <div className="form-control">
+                <label className="label font-bold">
+                  <span className="label-text">First name</span>
+                </label>
+                <input
+                  type="text"
+                  className="input input-bordered"
+                  {...register("firstName")}
+                />
+                {errors.firstName && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${errors.firstName.message}`}
+                    </span>
+                  </label>
+                )}
+              </div>
+
+              <div className="form-control">
+                <label className="label font-bold">
+                  <span className="label-text">Last name</span>
+                </label>
+                <input
+                  type="text"
+                  className="input input-bordered"
+                  {...register("surname")}
+                />
+                {errors.surname && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${errors.surname.message}`}
+                    </span>
+                  </label>
+                )}
+              </div>
+
+              <div className="form-control">
+                <label className="label font-bold">
+                  <span className="label-text">Display name</span>
+                </label>
+                <input
+                  type="text"
+                  className="input input-bordered"
+                  {...register("displayName")}
+                />
+                {errors.displayName && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${errors.displayName.message}`}
+                    </span>
+                  </label>
+                )}
+              </div>
+
+              <div className="form-control">
+                <label className="label font-bold">
+                  <span className="label-text">Phone Number</span>
+                </label>
+                <input
+                  type="text"
+                  className="input input-bordered"
+                  {...register("phoneNumber")}
+                />
+                {errors.phoneNumber && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${errors.phoneNumber.message}`}
+                    </span>
+                  </label>
+                )}
+              </div>
+
+              <div className="form-control">
+                <label className="label font-bold">
+                  <span className="label-text">Country</span>
+                </label>
+                <select
+                  className="select select-bordered"
+                  {...register("countryId")}
+                >
+                  <option value="">Please select</option>
+                  {countries?.map((country) => (
+                    <option key={country.id} value={country.id}>
+                      {country.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.countryId && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${errors.countryId.message}`}
+                    </span>
+                  </label>
+                )}
+              </div>
+
+              <div className="form-control">
+                <label className="label font-bold">
+                  <span className="label-text">Country Of Residence</span>
+                </label>
+                <select
+                  className="select select-bordered"
+                  {...register("countryOfResidenceId")}
+                >
+                  <option value="">Please select</option>
+                  {countries?.map((country) => (
+                    <option key={country.id} value={country.id}>
+                      {country.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.countryOfResidenceId && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${errors.countryOfResidenceId.message}`}
+                    </span>
+                  </label>
+                )}
+              </div>
+
+              <div className="form-control">
+                <label className="label font-bold">
+                  <span className="label-text">Gender</span>
+                </label>
+                <select
+                  className="select select-bordered"
+                  {...register("genderId")}
+                >
+                  <option value="">Please select</option>
+                  {genders?.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.genderId && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${errors.genderId.message}`}
+                    </span>
+                  </label>
+                )}
+              </div>
+
+              <div className="form-control">
+                <label className="label font-bold">
+                  <span className="label-text">Date of Birth</span>
+                </label>
+                <input
+                  type="date"
+                  className="input input-bordered"
+                  {...register("dateOfBirth")}
+                />
+                {errors.dateOfBirth && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${errors.dateOfBirth.message}`}
+                    </span>
+                  </label>
+                )}
+              </div>
+
+              <div className="form-control">
+                <label className="label font-bold">
+                  <span className="label-text">Picture</span>
+                </label>
+
+                {/* existing image */}
+                <div className="flex items-center justify-center pb-4">
+                  {/* NO IMAGE */}
+                  {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
+                  {/* {!logoExisting && <IoMdImage className="h-12 w-12 rounded-lg" />} */}
+                  {/* EXISTING IMAGE */}
+                  {userProfile?.photoURL &&
+                    !(logoFiles && logoFiles.length > 0) && (
+                      <div className="indicator">
+                        {/* <button
+                      className="filepond--file-action-button filepond--action-remove-item badge indicator-item badge-secondary"
+                      type="button"
+                      data-align="left"
+                      //onClick={onRemoveLogoExisting}
+                    >
+                      <svg
+                        width="26"
+                        height="26"
+                        viewBox="0 0 26 26"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M11.586 13l-2.293 2.293a1 1 0 0 0 1.414 1.414L13 14.414l2.293 2.293a1 1 0 0 0 1.414-1.414L14.414 13l2.293-2.293a1 1 0 0 0-1.414-1.414L13 11.586l-2.293-2.293a1 1 0 0 0-1.414 1.414L11.586 13z"
+                          fill="currentColor"
+                          fillRule="nonzero"
+                        ></path>
+                      </svg>
+                      <span>Remove</span>
+                    </button> */}
+
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <Image
+                          className="rounded-lg object-contain shadow-lg"
+                          alt="user picture"
+                          width={100}
+                          height={100}
+                          style={{ width: 100, height: 100 }}
+                          src={userProfile.photoURL}
+                        />
+                      </div>
+                    )}
+                </div>
+
+                {/* upload image */}
+                <FileUploader
+                  files={logoFiles as any}
+                  allowMultiple={false}
+                  fileTypes={ACCEPTED_IMAGE_TYPES}
+                  onUploadComplete={(files) => {
+                    setLogoFiles(files);
+                  }}
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Reset Password</span>
+                  <input
+                    type="checkbox"
+                    className="checkbox mr-2"
+                    {...register("resetPassword")}
+                  />
+                </label>
+                {errors.resetPassword && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${errors.resetPassword.message}`}
+                    </span>
+                  </label>
+                )}
+              </div>
+
+              <div className="my-4 flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  className="btn btn-warning btn-sm flex-grow"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-success btn-sm flex-grow"
+                >
+                  Submit
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

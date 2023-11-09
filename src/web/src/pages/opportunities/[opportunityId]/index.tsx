@@ -41,13 +41,12 @@ import {
   saveMyOpportunity,
 } from "~/api/services/myOpportunities";
 import { toast } from "react-toastify";
-import { useSession } from "next-auth/react";
 import { OpportunityComplete } from "~/components/Opportunity/OpportunityComplete";
 import { signIn } from "next-auth/react";
 import { fetchClientEnv } from "~/lib/utils";
 import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
 import { getServerSession } from "next-auth";
-import { User, authOptions } from "~/server/auth";
+import { type User, authOptions } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
