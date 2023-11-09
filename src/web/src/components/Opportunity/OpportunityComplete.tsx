@@ -59,16 +59,34 @@ export const OpportunityComplete: React.FC<InputProps> = ({
         return;
       }
 
+      // add the current time to date start and date end
+      let dateStartWithCurrentTime = data.dateStart
+        ? new Date(
+            new Date(data.dateStart).setHours(
+              new Date().getHours(),
+              new Date().getMinutes(),
+              new Date().getSeconds(),
+            ),
+          ).toISOString()
+        : null;
+      let dateEndWithCurrentTime = data.dateEnd
+        ? new Date(
+            new Date(data.dateEnd).setHours(
+              new Date().getHours(),
+              new Date().getMinutes(),
+              new Date().getSeconds(),
+            ),
+          ).toISOString()
+        : null;
+
       /* eslint-disable @typescript-eslint/no-unsafe-argument */
       const request: MyOpportunityRequestVerify = {
         certificate: data.certificate,
         picture: data.picture,
         voiceNote: data.voiceNote,
         geometry: data.geometry,
-        dateStart: data.dateStart
-          ? new Date(data.dateStart).toISOString()
-          : null,
-        dateEnd: data.dateEnd ? new Date(data.dateEnd).toISOString() : null,
+        dateStart: dateStartWithCurrentTime,
+        dateEnd: dateEndWithCurrentTime,
       };
 
       setIsLoading(true);

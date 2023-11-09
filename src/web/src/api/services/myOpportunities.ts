@@ -39,10 +39,10 @@ export const performActionSendForVerificationManual = async (
 
 export const getVerificationStatus = async (
   opportunityId: string,
-): Promise<MyOpportunityResponseVerify | null> => {
+): Promise<MyOpportunityResponseVerify | ""> => {
   const { data } = await (
     await ApiClient
-  ).post<MyOpportunityResponseVerify | null>(
+  ).post<MyOpportunityResponseVerify | "">(
     `/myopportunity/action/verify/status?opportunityId=${opportunityId}`,
   );
   return data;
