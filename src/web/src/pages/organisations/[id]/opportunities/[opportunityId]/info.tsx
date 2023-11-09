@@ -52,55 +52,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
   const session = await getServerSession(context.req, context.res, authOptions);
 
-  // UND_ERR_HEADERS_OVERFLOW ISSUE: disable prefetching for now
-  //   await queryClient.prefetchQuery(["categories"], async () =>
-  //   (await getCategories(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["countries"], async () =>
-  //   (await getCountries(context)).map((c) => ({
-  //     value: c.codeNumeric,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["languages"], async () =>
-  //   (await getLanguages(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["opportunityTypes"], async () =>
-  //   (await getTypes(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["verificationTypes"], async () =>
-  //   (await getVerificationTypes(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.displayName,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["difficulties"], async () =>
-  //   (await getDifficulties(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["timeIntervals"], async () =>
-  //   (await getTimeIntervals(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
-
-  if (opportunityId !== "create") {
+  if (session)
     await queryClient.prefetchQuery(["opportunityInfo", opportunityId], () =>
       getOpportunityInfoByIdAdmin(opportunityId, context),
     );
-  }
 
   return {
     props: {
@@ -119,6 +74,7 @@ const OpportunityDetails: NextPageWithLayout<{
 }> = ({ id, opportunityId, user }) => {
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
+
   const { data: opportunity } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
     queryFn: () => getOpportunityInfoByIdAdmin(opportunityId),
@@ -279,7 +235,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-grow flex-row gap-1 rounded-lg bg-white p-6">
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-grow flex-col gap-1">
               <h4 className="text-black">{opportunity?.title}</h4>
               <h6 className="text-gray-dark">
                 by {opportunity?.organizationName}
@@ -367,10 +323,10 @@ const OpportunityDetails: NextPageWithLayout<{
           </div>
 
           <div className="flex flex-col gap-2 md:flex-row">
-            <div className="w-[66%] flex-grow rounded-lg bg-white p-6">
+            <div className="w-full flex-grow rounded-lg bg-white p-6 md:w-[66%]">
               {opportunity?.description}
             </div>
-            <div className="flex w-[33%] flex-col gap-2">
+            <div className="flex w-full  flex-col gap-2 md:w-[33%]">
               <div className="flex flex-col rounded-lg bg-white p-6">
                 <div className="mb-2 flex flex-row items-center gap-1 text-sm font-bold">
                   <IoMdPerson className="h-6 w-6 text-gray" />

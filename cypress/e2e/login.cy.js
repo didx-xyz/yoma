@@ -1,6 +1,6 @@
 describe("Login to Yoma Web Youth", () => {
   it("should login to yoma web youth", () => {
-    cy.visit("http://localhost:3000", { failOnStatusCode: false });
+    cy.visit("http://localhost:3000");
     cy.reload(); // Reload the page to get cookies to load
     cy.getAllCookies().then((cookies) => {
       cookies.forEach((c) => {
@@ -22,6 +22,6 @@ describe("Login to Yoma Web Youth", () => {
       cy.get("#kc-login").click();
     });
     cy.get(".button").click();
-    cy.location("href").should("eq", "http://localhost:3000/opportunities");
+    cy.location("href").should("eq", "http://localhost:3000/");
   });
 });

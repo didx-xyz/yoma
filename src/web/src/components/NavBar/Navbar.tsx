@@ -7,11 +7,12 @@ import { LogoImage } from "./LogoImage";
 import { SignInButton } from "./SignInButton";
 import { UserMenu } from "./UserMenu";
 import { useAtomValue } from "jotai";
-import { navbarColorAtom } from "~/lib/store";
+import { currentOrganisationIdAtom, navbarColorAtom } from "~/lib/store";
 
 export const Navbar: React.FC = () => {
   const navbarColor = useAtomValue(navbarColorAtom);
   const [menuVisible, setMenuVisible] = useState(false);
+  const currentOrganisationIdValue = useAtomValue(currentOrganisationIdAtom);
   const { data: session } = useSession();
 
   return (
@@ -36,95 +37,143 @@ export const Navbar: React.FC = () => {
             portalClassName={"fixed z-50"}
             overlayClassName="fixed inset-0"
           >
-            <div className="flex flex-col">
-              <Link
-                href="/"
-                className="px-7 py-3 text-white hover:brightness-50"
-                onClick={() => setMenuVisible(false)}
-              >
-                Home
-              </Link>
-              <Link
-                href="/about"
-                className="px-7 py-3 text-white hover:brightness-50"
-                onClick={() => setMenuVisible(false)}
-              >
-                About
-              </Link>
-              <Link
-                href="/opportunities?types=Learning"
-                className="px-7 py-3 text-white hover:brightness-50"
-                onClick={() => setMenuVisible(false)}
-              >
-                Learning
-              </Link>
-              <Link
-                href="/opportunities?types=Task"
-                className="px-7 py-3 text-white hover:brightness-50"
-                onClick={() => setMenuVisible(false)}
-              >
-                Tasks
-              </Link>
-              <Link
-                href="/jobs"
-                className="px-7 py-3 text-white hover:brightness-50"
-                onClick={() => setMenuVisible(false)}
-              >
-                Jobs
-              </Link>
-              <Link
-                href="/marketplace"
-                className="px-7 py-3 text-white hover:brightness-50"
-                onClick={() => setMenuVisible(false)}
-              >
-                Marketplace
-              </Link>
-            </div>
+            {/* NO CURRENT ORGANISATION, SHOW USER LINKS */}
+            {!currentOrganisationIdValue && (
+              <div className="flex flex-col">
+                <Link
+                  href="/"
+                  className="px-7 py-3 text-white hover:brightness-50"
+                  onClick={() => setMenuVisible(false)}
+                >
+                  Home
+                </Link>
+                <Link
+                  href="/about"
+                  className="px-7 py-3 text-white hover:brightness-50"
+                  onClick={() => setMenuVisible(false)}
+                >
+                  About
+                </Link>
+                <Link
+                  href="/opportunities"
+                  className="px-7 py-3 text-white hover:brightness-50"
+                  onClick={() => setMenuVisible(false)}
+                >
+                  Opportunities
+                </Link>
+                <Link
+                  href="/jobs"
+                  className="px-7 py-3 text-white hover:brightness-50"
+                  onClick={() => setMenuVisible(false)}
+                >
+                  Jobs
+                </Link>
+                <Link
+                  href="/marketplace"
+                  className="px-7 py-3 text-white hover:brightness-50"
+                  onClick={() => setMenuVisible(false)}
+                >
+                  Marketplace
+                </Link>
+              </div>
+            )}
+
+            {/* CURRENT ORGANISATION, SHOW ORGANISATION LINKS */}
+            {currentOrganisationIdValue && (
+              <div className="flex flex-col">
+                <Link
+                  href="/"
+                  className="px-7 py-3 text-white hover:brightness-50"
+                  onClick={() => setMenuVisible(false)}
+                >
+                  Home
+                </Link>
+                <Link
+                  href={`/organisations/${currentOrganisationIdValue}/opportunities`}
+                  className="px-7 py-3 text-white hover:brightness-50"
+                  onClick={() => setMenuVisible(false)}
+                >
+                  Opportunities
+                </Link>
+
+                <Link
+                  href={`/organisations/${currentOrganisationIdValue}/verifications`}
+                  className="px-7 py-3 text-white hover:brightness-50"
+                  onClick={() => setMenuVisible(false)}
+                >
+                  Verifications
+                </Link>
+              </div>
+            )}
           </ReactModal>
+
           <div className="ml-8">
             <LogoImage />
           </div>
-          <ul className="hidden w-full flex-row items-center justify-center gap-16 p-0 lg:flex">
-            <li tabIndex={0}>
-              <Link href="/" className="text-white hover:brightness-50">
-                Home
-              </Link>
-            </li>
-            <li tabIndex={1}>
-              <Link href="/about" className="text-white hover:brightness-50">
-                About
-              </Link>
-            </li>
-            <li tabIndex={2}>
-              <Link
-                href="/opportunities?types=Learning"
-                className="text-white hover:brightness-50"
-              >
-                Learning
-              </Link>
-            </li>
-            <li tabIndex={3}>
-              <Link
-                href="/opportunities?types=Task"
-                className="text-white hover:brightness-50"
-              >
-                Tasks
-              </Link>
-            </li>
-            <li tabIndex={4}>
-              <Link href="/jobs" className="text-white hover:brightness-50">
-                Jobs
-              </Link>
-            </li>
-            <li tabIndex={5}>
-              <Link
-                href="/marketplace"
-                className="text-white hover:brightness-50"
-              >
-                Marketplace
-              </Link>
-            </li>
-          </ul>
+
+          {/* NO CURRENT ORGANISATION, SHOW USER LINKS */}
+          {!currentOrganisationIdValue && (
+            <ul className="hidden w-full flex-row items-center justify-center gap-16 p-0 lg:flex">
+              <li tabIndex={0}>
+                <Link href="/" className="text-white hover:brightness-50">
+                  Home
+                </Link>
+              </li>
+              <li tabIndex={1}>
+                <Link href="/about" className="text-white hover:brightness-50">
+                  About
+                </Link>
+              </li>
+              <li tabIndex={2}>
+                <Link
+                  href="/opportunities"
+                  className="text-white hover:brightness-50"
+                >
+                  Opportunities
+                </Link>
+              </li>
+              <li tabIndex={3}>
+                <Link href="/jobs" className="text-white hover:brightness-50">
+                  Jobs
+                </Link>
+              </li>
+              <li tabIndex={4}>
+                <Link
+                  href="/marketplace"
+                  className="text-white hover:brightness-50"
+                >
+                  Marketplace
+                </Link>
+              </li>
+            </ul>
+          )}
+
+          {/* CURRENT ORGANISATION, SHOW ORGANISATION LINKS */}
+          {currentOrganisationIdValue && (
+            <ul className="hidden w-full flex-row items-center justify-center gap-16 p-0 lg:flex">
+              <li tabIndex={0}>
+                <Link href="/" className="text-white hover:brightness-50">
+                  Home
+                </Link>
+              </li>
+              <li tabIndex={1}>
+                <Link
+                  href={`/organisations/${currentOrganisationIdValue}/opportunities`}
+                  className="text-white hover:brightness-50"
+                >
+                  Opportunities
+                </Link>
+              </li>
+              <li tabIndex={2}>
+                <Link
+                  href={`/organisations/${currentOrganisationIdValue}/verifications`}
+                  className="text-white hover:brightness-50"
+                >
+                  Verifications
+                </Link>
+              </li>
+            </ul>
+          )}
         </div>
         <div className="navbar-end w-[150px] justify-center">
           <div>

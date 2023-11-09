@@ -21,7 +21,7 @@ import { useSession } from "next-auth/react";
 import type { MyOpportunityRequestVerify } from "~/api/models/myOpportunity";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
-import { Controller, type FieldValues, useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import LocationPicker from "./LocationPicker";
@@ -47,52 +47,6 @@ export const OpportunityComplete: React.FC<InputProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { data: session } = useSession();
-
-  const onSubmit = useCallback(
-    (data: FieldValues) => {
-      if (!session) {
-        toast.warning("You need to be logged in to save an opportunity");
-        return;
-      }
-      if (!opportunityInfo) {
-        toast.warning("Something went wrong. Please try again.");
-        return;
-      }
-
-      /* eslint-disable @typescript-eslint/no-unsafe-argument */
-      const request: MyOpportunityRequestVerify = {
-        certificate: data.certificate,
-        picture: data.picture,
-        voiceNote: data.voiceNote,
-        geometry: data.geometry,
-        dateStart: data.dateStart
-          ? new Date(data.dateStart).toISOString()
-          : null,
-        dateEnd: data.dateEnd ? new Date(data.dateEnd).toISOString() : null,
-      };
-
-      setIsLoading(true);
-
-      /* eslint-enable @typescript-eslint/no-unsafe-argument */
-
-      performActionSendForVerificationManual(opportunityInfo.id, request)
-        .then(() => {
-          //toast.success("Opportunity saved");
-          setIsLoading(false);
-          onSave && onSave();
-        })
-        .catch((error) => {
-          setIsLoading(false);
-          toast(<ApiErrors error={error} />, {
-            type: "error",
-            toastId: "opportunityCompleteError",
-            autoClose: false,
-            icon: false,
-          });
-        });
-    },
-    [onSave, opportunityInfo, session],
-  );
 
   const schema = z
     .object({
@@ -216,6 +170,72 @@ export const OpportunityComplete: React.FC<InputProps> = ({
         });
       }
     });
+
+  type SchemaType = z.infer<typeof schema>;
+
+  const onSubmit = useCallback(
+    (data: SchemaType) => {
+      if (!session) {
+        toast.warning("You need to be logged in to save an opportunity");
+        return;
+      }
+      if (!opportunityInfo) {
+        toast.warning("Something went wrong. Please try again.");
+        return;
+      }
+
+      // add the current time to date start and date end
+      const dateStartWithCurrentTime = data.dateStart
+        ? new Date(
+            new Date(data.dateStart).setHours(
+              new Date().getHours(),
+              new Date().getMinutes(),
+              new Date().getSeconds(),
+            ),
+          ).toISOString()
+        : null;
+      const dateEndWithCurrentTime = data.dateEnd
+        ? new Date(
+            new Date(data.dateEnd).setHours(
+              new Date().getHours(),
+              new Date().getMinutes(),
+              new Date().getSeconds(),
+            ),
+          ).toISOString()
+        : null;
+
+      /* eslint-disable @typescript-eslint/no-unsafe-argument */
+      const request: MyOpportunityRequestVerify = {
+        certificate: data.certificate,
+        picture: data.picture,
+        voiceNote: data.voiceNote,
+        geometry: data.geometry,
+        dateStart: dateStartWithCurrentTime,
+        dateEnd: dateEndWithCurrentTime,
+      };
+
+      setIsLoading(true);
+
+      /* eslint-enable @typescript-eslint/no-unsafe-argument */
+
+      performActionSendForVerificationManual(opportunityInfo.id, request)
+        .then(() => {
+          //toast.success("Opportunity saved");
+          setIsLoading(false);
+          onSave && onSave();
+        })
+        .catch((error) => {
+          setIsLoading(false);
+          toast(<ApiErrors error={error} />, {
+            type: "error",
+            toastId: "opportunityCompleteError",
+            autoClose: false,
+            icon: false,
+          });
+        });
+    },
+    [onSave, opportunityInfo, session],
+  );
 
   const {
     handleSubmit,

@@ -2,8 +2,11 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
+import { getOrganisationById } from "~/api/services/organisations";
 import { getUserProfile } from "~/api/services/user";
 import {
+  currentOrganisationIdAtom,
+  currentOrganisationLogoAtom,
   navbarColorAtom,
   smallDisplayAtom,
   userProfileAtom,
@@ -48,24 +51,53 @@ export const Global: React.FC = () => {
   // used to change navbar color per page
   const router = useRouter();
   const setNavbarColor = useSetAtom(navbarColorAtom);
+  const currentOrganisationIdValue = useAtomValue(currentOrganisationIdAtom);
+  const setCurrentOrganisationIdAtom = useSetAtom(currentOrganisationIdAtom);
+  const setCurrentOrganisationLogoAtom = useSetAtom(
+    currentOrganisationLogoAtom,
+  );
 
   useEffect(() => {
-    if (
-      router.asPath.startsWith("/dashboard/opportunities") ||
-      router.asPath.startsWith("/dashboard/opportunity")
-    )
-      setNavbarColor("bg-blue");
-    else if (
-      router.asPath.match(/\/organisations\/[a-z0-9-]{36}\/opportunities/)
-    )
-      setNavbarColor("bg-green");
-    else if (
-      router.asPath.startsWith("/user") ||
-      router.asPath.startsWith("/organisation")
-    )
-      setNavbarColor("bg-blue-dark");
-    else setNavbarColor("bg-purple");
-  }, [router, setNavbarColor]);
+    // logic to perform "profile-switching"
+    // if organisation page, OrgAdmins see green and update the atoms
+    if (router.asPath.startsWith("/organisations")) {
+      const matches = router.asPath.match(/\/organisations\/([a-z0-9-]{36})/);
+
+      if (matches && matches.length > 1) {
+        const orgId = matches[1];
+        if (!orgId) return;
+
+        setNavbarColor("bg-green");
+
+        if (orgId != currentOrganisationIdValue) {
+          // update atom (change navbar links)
+          setCurrentOrganisationIdAtom(orgId);
+
+          // get the organisation logo, update atom (change user image to company logo)
+          getOrganisationById(orgId).then((res) => {
+            if (res.logoURL) setCurrentOrganisationLogoAtom(res.logoURL);
+            else setCurrentOrganisationLogoAtom(null);
+          });
+        }
+
+        return;
+      }
+    } else {
+      setCurrentOrganisationIdAtom(null);
+      setCurrentOrganisationLogoAtom(null);
+
+      // admins see blue
+      if (router.asPath.startsWith("/schema")) setNavbarColor("bg-blue");
+      // everyone else see purple (public youth)
+      else setNavbarColor("bg-purple");
+    }
+  }, [
+    router,
+    setNavbarColor,
+    setCurrentOrganisationIdAtom,
+    setCurrentOrganisationLogoAtom,
+    currentOrganisationIdValue,
+  ]);
 
   return null;
 };

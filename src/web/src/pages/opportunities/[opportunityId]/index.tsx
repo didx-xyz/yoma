@@ -1,4 +1,9 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  dehydrate,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { type ParsedUrlQuery } from "querystring";
 import { useState, type ReactElement, useMemo, useCallback } from "react";
@@ -36,11 +41,12 @@ import {
   saveMyOpportunity,
 } from "~/api/services/myOpportunities";
 import { toast } from "react-toastify";
-import { useSession } from "next-auth/react";
 import { OpportunityComplete } from "~/components/Opportunity/OpportunityComplete";
 import { signIn } from "next-auth/react";
 import { fetchClientEnv } from "~/lib/utils";
 import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
+import { getServerSession } from "next-auth";
+import { type User, authOptions } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -50,76 +56,26 @@ interface IParams extends ParsedUrlQuery {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { opportunityId } = context.params as IParams;
   const queryClient = new QueryClient();
-  //const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerSession(context.req, context.res, authOptions);
 
-  // UND_ERR_HEADERS_OVERFLOW ISSUE: disable prefetching for now
-  //   await queryClient.prefetchQuery(["categories"], async () =>
-  //   (await getCategories(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["countries"], async () =>
-  //   (await getCountries(context)).map((c) => ({
-  //     value: c.codeNumeric,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["languages"], async () =>
-  //   (await getLanguages(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["opportunityTypes"], async () =>
-  //   (await getTypes(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["verificationTypes"], async () =>
-  //   (await getVerificationTypes(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.displayName,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["difficulties"], async () =>
-  //   (await getDifficulties(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["timeIntervals"], async () =>
-  //   (await getTimeIntervals(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
-
-  if (opportunityId !== "create") {
-    await queryClient.prefetchQuery(["opportunityInfo", opportunityId], () =>
-      getOpportunityInfoById(opportunityId, context),
-    );
-  }
+  await queryClient.prefetchQuery(["opportunityInfo", opportunityId], () =>
+    getOpportunityInfoById(opportunityId, context),
+  );
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
-      //user: session?.user ?? null,
-      //id: id,
+      user: session?.user ?? null,
       opportunityId: opportunityId,
     },
   };
 }
 
 const OpportunityDetails: NextPageWithLayout<{
-  //id: string;
   opportunityId: string;
-  //user: User;
-}> = ({ opportunityId }) => {
-  const queryClient = new QueryClient();
-  const [refreshVerificationStatus, setRefreshVerificationStatus] =
-    useState(false);
+  user: User;
+}> = ({ opportunityId, user }) => {
+  const queryClient = useQueryClient();
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [gotoOpportunityDialogVisible, setGotoOpportunityDialogVisible] =
     useState(false);
@@ -132,23 +88,20 @@ const OpportunityDetails: NextPageWithLayout<{
     setCompleteOpportunitySuccessDialogVisible,
   ] = useState(false);
 
-  const { data: session } = useSession();
-
   const { data: opportunity } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
     queryFn: () => getOpportunityInfoById(opportunityId),
   });
 
-  const { data: verificationStatus } =
-    useQuery<MyOpportunityResponseVerify | null>({
+  const { data: verificationStatus, isLoading: verificationStatusIsLoading } =
+    useQuery<MyOpportunityResponseVerify | "">({
       queryKey: ["verificationStatus", opportunityId],
       queryFn: () => getVerificationStatus(opportunityId),
       enabled:
-        (!!session &&
-          !!opportunity &&
-          opportunity.verificationEnabled &&
-          opportunity.verificationMethod == "Manual") ||
-        refreshVerificationStatus,
+        !!user &&
+        !!opportunity &&
+        opportunity.verificationEnabled &&
+        opportunity.verificationMethod == "Manual",
     });
 
   // memo for spots left i.e participantLimit - participantCountTotal
@@ -159,7 +112,7 @@ const OpportunityDetails: NextPageWithLayout<{
   }, [opportunity]);
 
   const onSaveOpportunity = useCallback(() => {
-    if (!session) {
+    if (!user) {
       toast.warning("You need to be logged in to save an opportunity");
       return;
     }
@@ -171,10 +124,10 @@ const OpportunityDetails: NextPageWithLayout<{
       .catch((err) => {
         toast.error("Error");
       });
-  }, [opportunityId, session]);
+  }, [opportunityId, user]);
 
   const onGoToOpportunity = useCallback(() => {
-    if (opportunity?.url) window.location.href = opportunity?.url;
+    if (opportunity?.url) window.open(opportunity?.url, "_blank");
   }, [opportunity?.url]);
 
   const [isButtonLoading, setIsButtonLoading] = useState(false);
@@ -473,7 +426,7 @@ const OpportunityDetails: NextPageWithLayout<{
         {opportunity && (
           <div className="flex flex-col gap-4">
             <div className="flex flex-grow flex-row gap-1 rounded-lg bg-white p-6">
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-grow flex-col gap-1">
                 <div className="flex flex-grow flex-col ">
                   <h4 className="text-black">{opportunity.title}</h4>
                   <h6 className="text-gray-dark">
@@ -524,19 +477,49 @@ const OpportunityDetails: NextPageWithLayout<{
                         <span className="ml-1"> {opportunity.zltoReward}</span>
                       </div>
                     )}
-                    <div className="badge h-6 whitespace-nowrap rounded-md bg-purple-light text-purple">
-                      <Image
-                        src={iconAction}
-                        alt="Icon Action"
-                        width={20}
-                        height={20}
-                        sizes="100vw"
-                        priority={true}
-                        style={{ width: "20px", height: "20px" }}
-                      />
-                      <span className="ml-1">Action</span>
-                    </div>
+
+                    {/* Status Badges */}
+                    {opportunity?.status == "Active" && (
+                      <div className="badge h-6 rounded-md bg-purple-light text-purple">
+                        <Image
+                          src={iconAction}
+                          alt="Icon Action"
+                          width={20}
+                          height={20}
+                          sizes="100vw"
+                          priority={true}
+                          style={{ width: "20px", height: "20px" }}
+                        />
+                        <span className="ml-1">Action</span>
+                      </div>
+                    )}
+                    {opportunity?.status == "Expired" && (
+                      <div className="badge h-6 rounded-md bg-green-light text-yellow">
+                        Expired
+                      </div>
+                    )}
+                    {/* {opportunity?.status == "Inactive" && (
+                      <div className="badge h-6 rounded-md bg-green-light text-red-400">
+                        Inactive
+                      </div>
+                    )}
+                    {opportunity?.status == "Deleted" && (
+                      <div className="badge h-6 rounded-md bg-green-light text-red-400">
+                        Deleted
+                      </div>
+                    )}
+                    {opportunity?.published && (
+                      <div className="badge h-6 rounded-md bg-green-light text-blue">
+                        Published
+                      </div>
+                    )}
+                    {!opportunity?.published && (
+                      <div className="badge h-6 rounded-md bg-green-light text-red-400">
+                        Not published
+                      </div>
+                    )} */}
                   </div>
+
                   {/* BUTTONS */}
                   <div className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-2">
                     <div className="flex flex-grow gap-4">
@@ -557,39 +540,42 @@ const OpportunityDetails: NextPageWithLayout<{
 
                         <span className="ml-1">Go to opportunity</span>
                       </button>
-                      {/* verificationStatus: {JSON.stringify(verificationStatus)} */}
+
                       {/* only show upload button if verification is enabled and method is manual */}
                       {opportunity.verificationEnabled &&
                         opportunity.verificationMethod == "Manual" && (
                           <>
                             {(verificationStatus == null ||
-                              //verificationStatus == undefined ||
-                              //verificationStatus == "" ||
-                              verificationStatus.status == "Rejected") && (
-                              <button
-                                type="button"
-                                className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm lg:btn-md md:w-[300px]"
-                                onClick={() =>
-                                  session
-                                    ? setCompleteOpportunityDialogVisible(true)
-                                    : setLoginDialogVisible(true)
-                                }
-                              >
-                                <Image
-                                  src={iconUpload}
-                                  alt="Icon Upload"
-                                  width={20}
-                                  height={20}
-                                  sizes="100vw"
-                                  priority={true}
-                                  style={{ width: "20px", height: "20px" }}
-                                />
+                              verificationStatus == undefined ||
+                              verificationStatus == "" ||
+                              verificationStatus.status == "Rejected") &&
+                              !verificationStatusIsLoading && (
+                                <button
+                                  type="button"
+                                  className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm lg:btn-md md:w-[300px]"
+                                  onClick={() =>
+                                    user
+                                      ? setCompleteOpportunityDialogVisible(
+                                          true,
+                                        )
+                                      : setLoginDialogVisible(true)
+                                  }
+                                >
+                                  <Image
+                                    src={iconUpload}
+                                    alt="Icon Upload"
+                                    width={20}
+                                    height={20}
+                                    sizes="100vw"
+                                    priority={true}
+                                    style={{ width: "20px", height: "20px" }}
+                                  />
 
-                                <span className="ml-1">
-                                  Upload your completion files
-                                </span>
-                              </button>
-                            )}
+                                  <span className="ml-1">
+                                    Upload your completion files
+                                  </span>
+                                </button>
+                              )}
                             {verificationStatus &&
                               verificationStatus.status == "Pending" && (
                                 <div className="md:text-md flex items-center justify-center whitespace-nowrap rounded-full bg-gray-light px-8 text-center text-xs font-bold text-gray-dark">
@@ -623,7 +609,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             type="button"
                             className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm lg:btn-md md:w-[300px]"
                             onClick={() =>
-                              session
+                              user
                                 ? setCompleteOpportunityDialogVisible(true)
                                 : setLoginDialogVisible(true)
                             }
