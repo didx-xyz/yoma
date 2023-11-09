@@ -1,6 +1,6 @@
 <#macro userProfileFormFields>
 	<#assign currentGroup="">
-	
+
 	<#list profile.attributes as attribute>
 
 		<#assign groupName = attribute.group!"">
@@ -8,7 +8,7 @@
 			<#assign currentGroup=groupName>
 			<#if currentGroup != "" >
 				<div class="${properties.kcFormGroupClass!}">
-	
+
 					<#assign groupDisplayHeader=attribute.groupDisplayHeader!"">
 					<#if groupDisplayHeader != "">
 						<#assign groupHeaderText=advancedMsg(attribute.groupDisplayHeader)!groupName>
@@ -18,7 +18,7 @@
 					<div class="${properties.kcContentWrapperClass!}">
 						<label id="header-${groupName}" class="${kcFormGroupHeader!}">${groupHeaderText}</label>
 					</div>
-	
+
 					<#assign groupDisplayDescription=attribute.groupDisplayDescription!"">
 					<#if groupDisplayDescription != "">
 						<#assign groupDescriptionText=advancedMsg(attribute.groupDisplayDescription)!"">
@@ -134,7 +134,7 @@
 		<#list options as option>
 		<option value="${option}" <#if attribute.values?seq_contains(option)>selected</#if>><@selectOptionLabelText attribute=attribute option=option/></option>
 		</#list>
-	</#if>	
+	</#if>
 	</select>
 </#macro>
 
@@ -144,13 +144,13 @@
 		<#assign classDiv=properties.kcInputClassRadio!>
 		<#assign classInput=properties.kcInputClassRadioInput!>
 		<#assign classLabel=properties.kcInputClassRadioLabel!>
-	<#else>	
+	<#else>
 		<#assign inputType='checkbox'>
 		<#assign classDiv=properties.kcInputClassCheckbox!>
 		<#assign classInput=properties.kcInputClassCheckboxInput!>
 		<#assign classLabel=properties.kcInputClassCheckboxLabel!>
 	</#if>
-	
+
 	<#if attribute.annotations.inputOptionsFromValidation?? && attribute.validators[attribute.annotations.inputOptionsFromValidation]?? && attribute.validators[attribute.annotations.inputOptionsFromValidation].options??>
 		<#assign options=attribute.validators[attribute.annotations.inputOptionsFromValidation].options>
 	<#elseif attribute.validators.options?? && attribute.validators.options.options??>
@@ -168,7 +168,7 @@
 			<label for="${attribute.name}-${option}" class="${classLabel}<#if attribute.readOnly> ${properties.kcInputClassRadioCheckboxLabelDisabled!}</#if>"><@selectOptionLabelText attribute=attribute option=option/></label>
 		</div>
 		</#list>
-	</#if>	
+	</#if>
 	</select>
 </#macro>
 

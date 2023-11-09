@@ -5,5 +5,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
         void ProcessDeclination();
 
         void ProcessDeletion();
+
+        void SeedLogoAndDocuments();
     }
 }

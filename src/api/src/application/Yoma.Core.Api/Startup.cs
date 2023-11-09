@@ -168,7 +168,7 @@ namespace Yoma.Core.Api
 
             #region 3rd Partry
             //migrations applied as part of ConfigureHangfire to ensure db exist prior to executing Hangfire migrations
-            serviceProvider.Configure_RecurringJobs(_configuration);
+            serviceProvider.Configure_RecurringJobs(_configuration, _environment);
             #endregion 3rd Party
         }
         #endregion

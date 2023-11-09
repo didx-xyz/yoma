@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System;
 using System.Transactions;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;

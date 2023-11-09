@@ -148,7 +148,7 @@ BEGIN
 		(SELECT TOP 1 [Id] FROM [Entity].[Organization] ORDER BY NEWID()) as [OrganizationId],
 		NULL,
 		(SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (ABS(CHECKSUM(NEWID()) % 101) + 100) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) as [Instructions],
-		'www.google.com',
+		'https://www.google.com/',
 		(SELECT ROUND(100 + (350 - 100) * RAND(), 2)) as [ZltoReward],
 		(SELECT ROUND(1000 + (3500 - 1000) * RAND(), 2)) as [ZltoRewardPool],
 		NULL,

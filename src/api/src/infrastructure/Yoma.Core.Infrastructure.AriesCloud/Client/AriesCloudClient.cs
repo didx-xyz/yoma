@@ -253,7 +253,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                     sendCredentialRequest = new SendCredential
                     {
                         Type = CredentialType.Indy,
-                        Connection_id = connection.TargetConnectionId,
+                        Connection_id = connection.SourceConnectionId,
                         Indy_credential_detail = new IndyCredential
                         {
                             Credential_definition_id = definitionId,
@@ -264,15 +264,15 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
                 case ArtifactType.Ld_proof:
                     var dids = await clientIssuer.GetDidsAsync();
-                    var did = dids.SingleOrDefault(o => o.Key_type == DIDKey_type.Ed25519)
-                        ?? throw new InvalidOperationException($"Failed to retrieve the issuer DID of type '{DIDKey_type.Ed25519}'");
+                    var did = dids.SingleOrDefault(o => o.Key_type == DIDKey_type.Ed25519 && o.Posture == DIDPosture.Posted)
+                        ?? throw new InvalidOperationException($"Failed to retrieve the issuer DID of type '{DIDKey_type.Ed25519}' and posture '{DIDPosture.Posted}'");
                     var credentialSubject = new Dictionary<string, string> { { "type", request.SchemaType } };
                     credentialSubject = credentialSubject.Concat(request.Attributes).ToDictionary(x => x.Key, x => x.Value);
 
                     sendCredentialRequest = new SendCredential
                     {
                         Type = CredentialType.Ld_proof,
-                        Connection_id = connection.TargetConnectionId,
+                        Connection_id = connection.SourceConnectionId,
                         Ld_credential_detail = new LDProofVCDetail
                         {
                             Credential = new Credential
@@ -518,7 +518,15 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                     }
 
                 case ArtifactType.Ld_proof:
-                    var credsW3C = await clientHolder.GetW3CCredentialsAsync(null, null, wqlQueryString);
+                    ICollection<W3CCredentialsListRequest>? credsW3C = null;
+                    try
+                    {
+                        credsW3C = await clientHolder.GetW3CCredentialsAsync(null, null, wqlQueryString);
+                    }
+                    catch (HttpClientException ex)
+                    {
+                        if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+                    }
 
                     if (credsW3C?.Count > 1)
                         throw new InvalidOperationException($"More than one credential found for client referent '{clientReferent}'");

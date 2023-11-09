@@ -21,9 +21,12 @@
 												</label> *
 											</div>
 											<div class="${properties.kcInputWrapperClass!}">
-												<input type="password" id="password" class="${properties.kcInputClass!}" name="password"
+												<div class="password-container">
+													<input type="password" id="password" class="${properties.kcInputClass!}" name="password"
 													autocomplete="new-password"
 													aria-invalid="<#if messagesPerField.existsError('password','password-confirm')>true</#if>" />
+													<i class="fa fa-eye-slash" id="toggle-password" onclick="togglePassword()"></i>
+												</div>
 												<#if messagesPerField.existsError('password')>
 													<span id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
 														${kcSanitize(messagesPerField.get('password'))?no_esc}
@@ -39,9 +42,12 @@
 												</label> *
 											</div>
 											<div class="${properties.kcInputWrapperClass!}">
-												<input type="password" id="password-confirm" class="${properties.kcInputClass!}"
+												<div class="password-confirm-container">
+													<input type="password" id="password-confirm" class="${properties.kcInputClass!}"
 													name="password-confirm"
 													aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>" />
+													<i class="fa fa-eye-slash" id="toggle-password-confirm" onclick="togglePasswordConfirm()"></i>
+												</div>
 												<#if messagesPerField.existsError('password-confirm')>
 													<span id="input-error-password-confirm" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
 														${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}
@@ -63,7 +69,7 @@
 										required />
 									<label for="terms">
 										<a href="https://app.yoma.world/terms-and-conditions" target="_blank">
-											I agree to yoma’s privacy policy and terms of service
+											I agree to Yoma’s privacy policy and terms of service
 										</a>
 									</label>
 								</div>
@@ -82,15 +88,45 @@
 								<div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
 									<div style="display: inline;" class="${properties.kcFormOptionsWrapperClass!}">
 										<hr class="grey-hr">
-										<span>
+										<div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
+											<a href="${url.loginUrl}" style="text-decoration: none;">
+												<input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" value="${msg("verifiedAccount")} ${kcSanitize(msg("backToLogin"))?no_esc}" />
+											</a>
+										</div>
+										<!-- <span>
 											<a href="${url.loginUrl}">
 												${msg("verifiedAccount")}
 												${kcSanitize(msg("backToLogin"))?no_esc}
-											</a></span>
+											</a></span> -->
 									</div>
 								</div>
 							</div>
 					</form>
 			</#if>
-			
+
 		</@layout.registrationLayout>
+
+		<script>
+			function togglePassword() {
+				var password = document.getElementById("password");
+				var toggle = document.getElementById("toggle-password");
+				if (password.type === "password") {
+					password.type = "text";
+					toggle.className = "fa fa-eye";
+				} else {
+					password.type = "password";
+					toggle.className = "fa fa-eye-slash";
+				}
+			}
+			function togglePasswordConfirm() {
+				var passwordConfirm = document.getElementById("password-confirm");
+				var toggle = document.getElementById("toggle-password-confirm");
+				if (passwordConfirm.type === "password") {
+					passwordConfirm.type = "text";
+					toggle.className = "fa fa-eye";
+				} else {
+					passwordConfirm.type = "password";
+					toggle.className = "fa fa-eye-slash";
+				}
+			}
+		</script>

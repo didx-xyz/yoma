@@ -6,7 +6,6 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
-using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Api.Controllers
 {

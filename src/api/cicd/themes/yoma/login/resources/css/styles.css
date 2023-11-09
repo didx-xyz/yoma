@@ -1,7 +1,48 @@
+.realm-display-name {
+}
+
+
+
+
+
+#kc-locale {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+#kc-locale-dropdown {
+  text-align: right;
+}
+
+#kc-current-locale-link {
+  color: red;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 5px 10px;
+  background-color: white;
+  border-radius: 5px;
+}
+
+.pf-c-dropdown__menu {
+  right: 0;
+}
+
+#kc-header-wrapper {
+  display: none;
+  color: red;
+}
+
+.page-footer {
+  background-color: white;
+  color: black;
+}
+
 .login-pf,
 .login-pf body {
     background: none;
-    background-image: linear-gradient(to right, rgb(249, 171, 63) 50%, #f5f6f8 50%);
+    /* background-image: linear-gradient(to right, rgb(249, 171, 63) 50%, #f5f6f8 50%); */
+    background-color: rgb(249, 171, 63);
     color: #0a0c0d;
 }
 
@@ -17,50 +58,89 @@ h1#kc-page-title {
     display: none;
 }
 
+.kc-locale-wrapper {
+  margin-top: -80px;
+  color: red
+}
+
+.login-pf-page .login-pf-page-header::before {
+    content: "";
+    display: inline-block;
+    background-image: url('https://app.yoma.world/static/media/logo.b5904244acf3d691fa2399e21a926ff4.svg');
+    width: 88px;
+    height: 42px;
+    margin-right: 10px;
+    vertical-align: middle;
+    overflow: hidden;
+}
+
 .login-pf-page .login-pf-page-header {
     margin-bottom: 20px;
     text-align: left;
-
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
 }
 
+.login-pf-page .login-pf-page-header::after {
+    margin-left: 10px;
+    overflow: hidden;
+}
+
+
 .login-pf-page .card-pf {
-    padding: 20px 40px 30px 40px;
-    padding-top: 20px;
-    padding-right: 20px;
-    padding-bottom: 80px;
-    padding-left: 20px;
+    padding: 20px 30px 30px 30px;
     background-color: white;
     border-radius: 25px;
     border: none;
     box-shadow: none;
 }
 
+#kc-info {
+    margin: auto;
+}
+
 #kc-info-wrapper {
-    font-size: 13px;
+    background-color: white;
     padding: 15px 35px;
-    background-color: #461d4d;
-    color: white;
     border-radius: 50px;
-    cursor: pointer;
     font-size: 16px;
-    height: 48px;
-    width: 50%;
-    margin: 0 auto;
-    display: block;
+    width: 95%;
+    margin: 10px auto 0;
 }
 
 .pf-c-button.pf-m-primary {
     font-size: 13px;
-    padding: 15px 35px;
     background-color: #461d4d;
     color: white;
     border-radius: 50px;
     cursor: pointer;
     font-size: 16px;
     height: 48px;
-    width: 60%;
+    width: 90%;
     margin: 0 auto;
     display: block;
+}
+
+.login-pf-page .login-pf-signup a {
+    margin: 0 0 0 0;
+}
+
+.login-pf-signup {
+
+}
+
+.pf-c-button.pf-m-primary:hover {
+    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.login-pf-page .login-pf-settings {
+    justify-content: center;
+}
+
+#kc-form-buttons {
+    margin-top: 0;
 }
 
 .pf-c-form-control:not(textarea) {
@@ -68,9 +148,9 @@ h1#kc-page-title {
     background-color: #e6e8eb;
     color: #495057;
     border-radius: 50px;
-    font-size: 16px;
+    font-size: 14px;
     height: 48px;
-    width: 90%;
+    width: 85%;
     margin: 0 auto;
     display: block;
     border-color: white;
@@ -93,17 +173,18 @@ a {
     text-align: center;
     display: block;
     width: 100%;
+    font-size: 14px;
 }
 
 .grey-hr {
     border: none;
     border-top: 1px solid #ccc;
-    margin: 10px 0;
+    margin: 22px 0 22px 0;
 }
 
 #kc-register-form div {
     text-align: left;
-    margin-left: 10px;
+    /* margin-left: 10px; */
 }
 
 .login-pf body {
@@ -117,6 +198,7 @@ a {
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-bottom: 20px;
 }
 
 .centered-subTitles {
@@ -125,6 +207,7 @@ a {
     align-items: center;
     margin-top: -20px;
     margin-bottom: 20px;
+    font-size: 16px;
 }
 
 .centered-label {
@@ -134,8 +217,18 @@ a {
     margin-top: 10px;
 }
 
+.pf-c-form__label-text {
+    font-size: 12px;
+    color: black;
+    margin: 0 0 5px 35px;
+}
+
+.pf-c-form__helper-text {
+    margin: 0 0 0 35px;
+}
+
 .centered-checkbox {
-    margin-top: 10px;
+    /* margin-top: 10px; */
 }
 
 .page-footer {
@@ -155,3 +248,34 @@ a {
     color: white;
     /* Add any additional styling for the link if needed */
   }
+
+.password-container,
+.password-confirm-container {
+    position: relative;
+}
+.password-container i,
+.password-confirm-container i {
+    position: absolute;
+    top: 50%;
+    right: 50px;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
+
+.fa-eye-slash::before {
+font-size: 15px;
+}
+
+.fa-eye::before {
+font-size: 15px;
+}
+
+.page-footer {
+  text-align: center;
+  background-color: #461d4d;
+  color: white;
+  padding: 20px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
