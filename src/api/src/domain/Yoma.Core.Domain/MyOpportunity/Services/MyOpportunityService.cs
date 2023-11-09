@@ -16,6 +16,7 @@ using Yoma.Core.Domain.EmailProvider.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
+using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.MyOpportunity.Extensions;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
@@ -404,74 +405,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             await _myOpportunityRepository.Delete(myOpportunity);
         }
 
+        public async Task PerformActionSendForVerificationManual(Guid userId, Guid opportunityId, MyOpportunityRequestVerify request, bool overridePending)
+        {
+            var user = _userService.GetById(userId, false, false);
+            await PerformActionSendForVerificationManual(user, opportunityId, request, overridePending);
+        }
+
         public async Task PerformActionSendForVerificationManual(Guid opportunityId, MyOpportunityRequestVerify request)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
-            await _myOpportunityRequestValidatorVerify.ValidateAndThrowAsync(request);
-
-            //provided opportunity is published (and started) or expired
-            var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
-            var canSendForVerification = opportunity.Status == Status.Expired;
-            if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
-            if (!canSendForVerification)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can no longer be send for verification (published '{opportunity.Published}' status | '{opportunity.Status}' | start date '{opportunity.DateStart}')");
-
-            if (!opportunity.VerificationEnabled)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / verification is not enabled");
-
-            if (opportunity.VerificationMethod == null || opportunity.VerificationMethod != VerificationMethod.Manual)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / requires verification method manual");
-
-            if (opportunity.VerificationTypes == null || !opportunity.VerificationTypes.Any())
-                throw new DataInconsistencyException("Manual verification enabled but opportunity has no mapped verification types");
-
-            if (request.DateStart.HasValue && request.DateStart.Value < opportunity.DateStart)
-                throw new ValidationException($"Start date can not be earlier than the opportunity stated date of '{opportunity.DateStart}'");
-
-            if (request.DateEnd.HasValue && opportunity.DateEnd.HasValue && request.DateEnd.Value > opportunity.DateEnd.Value)
-                throw new ValidationException($"End date can not be later than the opportunity end date of '{opportunity.DateEnd}'");
-
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-
-            var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
-            var verificationStatusPendingId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
-
-            var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
-            var isNew = myOpportunity == null;
-
-            if (myOpportunity == null)
-                myOpportunity = new Models.MyOpportunity
-                {
-                    UserId = user.Id,
-                    OpportunityId = opportunity.Id,
-                    ActionId = actionVerificationId,
-                };
-            else
-            {
-                switch (myOpportunity.VerificationStatus)
-                {
-                    case null:
-                        throw new DataInconsistencyException($"{nameof(myOpportunity.VerificationStatus)} expected with action '{Action.Verification}'");
-
-                    case VerificationStatus.Pending:
-                    case VerificationStatus.Completed:
-                        throw new ValidationException($"Verification is {myOpportunity.VerificationStatus?.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
-
-                    case VerificationStatus.Rejected: //can be re-send for verification
-                        break;
-
-                    default:
-                        throw new InvalidOperationException($"Unknown / unsupported '{nameof(myOpportunity.VerificationStatus)}' of '{myOpportunity.VerificationStatus.Value}'");
-                }
-            }
-
-            myOpportunity.VerificationStatusId = verificationStatusPendingId;
-            myOpportunity.DateStart = request.DateStart.RemoveTime();
-            myOpportunity.DateEnd = request.DateEnd.ToEndOfDay();
-
-            await PerformActionSendForVerificationManual(request, opportunity, myOpportunity, isNew);
+            await PerformActionSendForVerificationManual(user, opportunityId, request, false);
         }
 
         public async Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalizeBatch request)
@@ -656,6 +599,77 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
             if (!id.HasValue) return null;
             return _blobService.GetURL(id.Value);
+        }
+
+        private async Task PerformActionSendForVerificationManual(User user, Guid opportunityId, MyOpportunityRequestVerify request, bool overridePending)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            await _myOpportunityRequestValidatorVerify.ValidateAndThrowAsync(request);
+
+            //provided opportunity is published (and started) or expired
+            var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
+            var canSendForVerification = opportunity.Status == Status.Expired;
+            if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
+            if (!canSendForVerification)
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can no longer be send for verification (published '{opportunity.Published}' status | '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+
+            if (!opportunity.VerificationEnabled)
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / verification is not enabled");
+
+            if (opportunity.VerificationMethod == null || opportunity.VerificationMethod != VerificationMethod.Manual)
+                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / requires verification method manual");
+
+            if (opportunity.VerificationTypes == null || !opportunity.VerificationTypes.Any())
+                throw new DataInconsistencyException("Manual verification enabled but opportunity has no mapped verification types");
+
+            if (request.DateStart.HasValue && request.DateStart.Value < opportunity.DateStart)
+                throw new ValidationException($"Start date can not be earlier than the opportunity stated date of '{opportunity.DateStart}'");
+
+            if (request.DateEnd.HasValue && opportunity.DateEnd.HasValue && request.DateEnd.Value > opportunity.DateEnd.Value)
+                throw new ValidationException($"End date can not be later than the opportunity end date of '{opportunity.DateEnd}'");
+
+            var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+            var verificationStatusPendingId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
+
+            var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
+            var isNew = myOpportunity == null;
+
+            if (myOpportunity == null)
+                myOpportunity = new Models.MyOpportunity
+                {
+                    UserId = user.Id,
+                    OpportunityId = opportunity.Id,
+                    ActionId = actionVerificationId,
+                };
+            else
+            {
+                switch (myOpportunity.VerificationStatus)
+                {
+                    case null:
+                        throw new DataInconsistencyException($"{nameof(myOpportunity.VerificationStatus)} expected with action '{Action.Verification}'");
+
+                    case VerificationStatus.Pending:
+                        if (overridePending) break;
+                        throw new ValidationException($"Verification is {myOpportunity.VerificationStatus?.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
+
+                    case VerificationStatus.Completed:
+                        throw new ValidationException($"Verification is {myOpportunity.VerificationStatus?.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
+
+                    case VerificationStatus.Rejected: //can be re-send for verification
+                        break;
+
+                    default:
+                        throw new InvalidOperationException($"Unknown / unsupported '{nameof(myOpportunity.VerificationStatus)}' of '{myOpportunity.VerificationStatus.Value}'");
+                }
+            }
+
+            myOpportunity.VerificationStatusId = verificationStatusPendingId;
+            myOpportunity.DateStart = request.DateStart.RemoveTime();
+            myOpportunity.DateEnd = request.DateEnd.ToEndOfDay();
+
+            await PerformActionSendForVerificationManual(request, opportunity, myOpportunity, isNew);
         }
 
         private async Task PerformActionSendForVerificationManual(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity myOpportunity, bool isNew)

@@ -73,8 +73,8 @@ namespace Yoma.Core.Domain.Entity.Services
                 resourceBytes = memoryStream.ToArray();
             }
 
-            string fileName = string.Join('.', resourcePath.Split('.').Reverse().Take(2).Reverse());
-            string fileExtension = Path.GetExtension(fileName)[1..];
+            var fileName = string.Join('.', resourcePath.Split('.').Reverse().Take(2).Reverse());
+            var fileExtension = Path.GetExtension(fileName)[1..];
 
             foreach (var item in items)
                 _userService.UpsertPhoto(item.Email, FileHelper.FromByteArray(fileName, $"image/{fileExtension}", resourceBytes)).Wait();

@@ -34,10 +34,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         public OpportunityInfo? GetActiveExpiredByIdOrNull(Guid id, bool? includeExpired)
         {
-            var opportunity = _opportunityService.GetById(id, true, true, false);
+            var opportunity = _opportunityService.GetByIdOrNull(id, true, true);
 
             //inactive organization
-            if (opportunity.OrganizationStatus != Entity.OrganizationStatus.Active) return null;
+            if (opportunity == null || opportunity.OrganizationStatus != Entity.OrganizationStatus.Active) return null;
 
             //status criteria not met
             var statuses = new List<Status>() { Status.Active };

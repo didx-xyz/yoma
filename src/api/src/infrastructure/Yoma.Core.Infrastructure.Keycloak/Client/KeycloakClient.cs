@@ -64,7 +64,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
             var timeout = 15000;
             var startTime = DateTime.Now;
             UserRepresentation? kcUser = null;
-            using (var usersApi = ApiClientFactory.Create<UsersApi>(_httpClient))
+            using (var usersApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient))
             {
                 while (true)
                 {
@@ -83,7 +83,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
         public async Task UpdateUser(User user, bool resetPassword)
         {
-            using var userApi = ApiClientFactory.Create<UserApi>(_httpClient);
+            using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UserApi>(_httpClient);
 
             var request = new UserRepresentation
             {
@@ -142,8 +142,8 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
             if (rolesInvalid.Any())
                 throw new ArgumentOutOfRangeException(nameof(roles), $"Invalid role(s) specified: {string.Join(';', rolesInvalid)}");
 
-            using var rolesApi = ApiClientFactory.Create<RoleContainerApi>(_httpClient);
-            using var rolesMapperApi = ApiClientFactory.Create<RoleMapperApi>(_httpClient);
+            using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleContainerApi>(_httpClient);
+            using var rolesMapperApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleMapperApi>(_httpClient);
 
             var kcRoles = await rolesApi.GetRolesAsync(_keycloakAuthenticationOptions.Realm);
 
@@ -163,8 +163,8 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
             if (rolesInvalid.Any())
                 throw new ArgumentOutOfRangeException(nameof(roles), $"Invalid role(s) specified: {string.Join(';', rolesInvalid)}");
 
-            using var rolesApi = ApiClientFactory.Create<RoleContainerApi>(_httpClient);
-            using var rolesMapperApi = ApiClientFactory.Create<RoleMapperApi>(_httpClient);
+            using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleContainerApi>(_httpClient);
+            using var rolesMapperApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleMapperApi>(_httpClient);
 
             var roleRepresentationsExisting = await rolesMapperApi.GetUsersRoleMappingsByIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
 
@@ -181,7 +181,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
             if (!Constants.Roles_Supported.Contains(role, StringComparer.InvariantCultureIgnoreCase))
                 throw new ArgumentOutOfRangeException(nameof(role), $"Role '{role}' is invalid");
 
-            using var rolesApi = ApiClientFactory.Create<RoleContainerApi>(_httpClient);
+            using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleContainerApi>(_httpClient);
 
             var kcUsers = await rolesApi.GetRolesUsersByRoleNameAsync(_keycloakAuthenticationOptions.Realm, role);
 

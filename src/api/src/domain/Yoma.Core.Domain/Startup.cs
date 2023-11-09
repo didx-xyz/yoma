@@ -100,7 +100,7 @@ namespace Yoma.Core.Domain
             #endregion SSI
         }
 
-        public static void Configure_RecurringJobs(this IServiceProvider serviceProvider, IConfiguration configuration, Domain.Core.Environment environment)
+        public static void Configure_RecurringJobs(this IServiceProvider serviceProvider, IConfiguration configuration, Core.Environment environment)
         {
             var options = configuration.GetSection(ScheduleJobOptions.Section).Get<ScheduleJobOptions>() ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{ScheduleJobOptions.Section}'");
 
@@ -108,6 +108,7 @@ namespace Yoma.Core.Domain
 
             //skills
             var skillService = scope.ServiceProvider.GetRequiredService<ISkillService>();
+
             BackgroundJob.Enqueue(() => skillService.SeedSkills()); //execute on startup
             RecurringJob.AddOrUpdate("Skill Reference Seeding", () => skillService.SeedSkills(), options.SeedSkillsSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
@@ -153,6 +154,9 @@ namespace Yoma.Core.Domain
                     //user
                     var userBackgroundService = scope.ServiceProvider.GetRequiredService<IUserBackgroundService>();
                     BackgroundJob.Schedule(() => userBackgroundService.SeedPhotos(), TimeSpan.FromMinutes(5));
+
+                    //my opportunity verifications
+                    BackgroundJob.Schedule(() => myOpportunityBackgroundService.SeedPendingVerifications(), TimeSpan.FromMinutes(5));
                     break;
             }
         }

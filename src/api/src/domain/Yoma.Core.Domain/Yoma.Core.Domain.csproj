@@ -10,6 +10,9 @@
     <None Remove="Entity\SampleBlobs\sample.pdf" />
     <None Remove="Entity\SampleBlobs\sample_logo.png" />
     <None Remove="Entity\SampleBlobs\sample_photo.png" />
+    <None Remove="MyOpportunity\SampleBlobs\sample_certificate.pdf" />
+    <None Remove="MyOpportunity\SampleBlobs\sample_photo.png" />
+    <None Remove="MyOpportunity\SampleBlobs\sample_voice_note.wav" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,6 +21,9 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Entity\SampleBlobs\sample_photo.png" />
+    <EmbeddedResource Include="MyOpportunity\SampleBlobs\sample_certificate.pdf" />
+    <EmbeddedResource Include="MyOpportunity\SampleBlobs\sample_photo.png" />
+    <EmbeddedResource Include="MyOpportunity\SampleBlobs\sample_voice_note.wav" />
   </ItemGroup>
 
   <ItemGroup>
