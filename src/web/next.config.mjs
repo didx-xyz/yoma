@@ -19,18 +19,6 @@ const config = {
   reactStrictMode: true,
   output: "standalone",
 
-  // redirect to /opportunities for homepage
-  async redirects() {
-    return [
-      {
-        source: "/",
-        destination: "/opportunities",
-        basePath: false,
-        permanent: true,
-      },
-    ];
-  },
-
   /**NB: for docker-compose, this section is needed in order to pass the server environment variables
    * to nextjs (without using a .env file in the container)
    */

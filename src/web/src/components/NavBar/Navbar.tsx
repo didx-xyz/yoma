@@ -52,18 +52,11 @@ export const Navbar: React.FC = () => {
                 About
               </Link>
               <Link
-                href="/opportunities?types=Learning"
+                href="/opportunities"
                 className="px-7 py-3 text-white hover:brightness-50"
                 onClick={() => setMenuVisible(false)}
               >
-                Learning
-              </Link>
-              <Link
-                href="/opportunities?types=Task"
-                className="px-7 py-3 text-white hover:brightness-50"
-                onClick={() => setMenuVisible(false)}
-              >
-                Tasks
+                Opportunities
               </Link>
               <Link
                 href="/jobs"
@@ -97,26 +90,18 @@ export const Navbar: React.FC = () => {
             </li>
             <li tabIndex={2}>
               <Link
-                href="/opportunities?types=Learning"
+                href="/opportunities"
                 className="text-white hover:brightness-50"
               >
-                Learning
+                Opportunities
               </Link>
             </li>
             <li tabIndex={3}>
-              <Link
-                href="/opportunities?types=Task"
-                className="text-white hover:brightness-50"
-              >
-                Tasks
-              </Link>
-            </li>
-            <li tabIndex={4}>
               <Link href="/jobs" className="text-white hover:brightness-50">
                 Jobs
               </Link>
             </li>
-            <li tabIndex={5}>
+            <li tabIndex={4}>
               <Link
                 href="/marketplace"
                 className="text-white hover:brightness-50"
