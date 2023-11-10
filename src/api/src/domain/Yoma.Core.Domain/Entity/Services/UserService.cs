@@ -26,8 +26,8 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IGenderService _genderService;
         private readonly ICountryService _countryService;
         private readonly ISkillService _skillService;
-        private readonly ISSITenantCreationService _ssiTenantCreationService;
-        private readonly ISSICredentialIssuanceService _ssiCredentialIssuanceService;
+        private readonly ISSITenantService _ssiTenantCreationService;
+        private readonly ISSICredentialService _ssiCredentialIssuanceService;
         private readonly UserRequestValidator _userRequestValidator;
         private readonly UserSearchFilterValidator _userSearchFilterValidator;
         private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
@@ -42,8 +42,8 @@ namespace Yoma.Core.Domain.Entity.Services
             IGenderService genderService,
             ICountryService countryService,
             ISkillService skillService,
-            ISSITenantCreationService ssiTenantCreationService,
-            ISSICredentialIssuanceService ssiCredentialIssuanceService,
+            ISSITenantService ssiTenantCreationService,
+            ISSICredentialService ssiCredentialIssuanceService,
             UserRequestValidator userValidator,
             UserSearchFilterValidator userSearchFilterValidator,
             IRepositoryValueContainsWithNavigation<User> userRepository,
@@ -280,8 +280,8 @@ namespace Yoma.Core.Domain.Entity.Services
             result.YoIDOnboarded = true;
             result = await _userRepository.Update(result);
 
-            await _ssiTenantCreationService.Create(EntityType.User, result.Id);
-            await _ssiCredentialIssuanceService.Create(SSISSchemaHelper.ToFullName(SSI.Models.SchemaType.YoID, _appSettings.SSISchemaNameYoID), result.Id);
+            await _ssiTenantCreationService.ScheduleCreation(EntityType.User, result.Id);
+            await _ssiCredentialIssuanceService.ScheduleIssuance(SSISSchemaHelper.ToFullName(SSI.Models.SchemaType.YoID, _appSettings.SSISchemaNameYoID), result.Id);
 
             scope.Complete();
 

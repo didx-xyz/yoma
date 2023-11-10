@@ -1,7 +1,5 @@
 using FluentValidation;
 using Hangfire;
-using Hangfire.Storage;
-using Hangfire.Storage.Monitoring;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -96,9 +94,9 @@ namespace Yoma.Core.Domain
             #endregion Lookups
 
             services.AddScoped<ISSIBackgroundService, SSIBackgroundService>();
-            services.AddScoped<ISSICredentialIssuanceService, SSICredentialIssuanceService>();
+            services.AddScoped<ISSICredentialService, SSICredentialService>();
             services.AddScoped<ISSISchemaService, SSISchemaService>();
-            services.AddScoped<ISSITenantCreationService, SSITenantCreationService>();
+            services.AddScoped<ISSITenantService, SSITenantService>();
             #endregion SSI
         }
 
@@ -151,7 +149,7 @@ namespace Yoma.Core.Domain
                 case Core.Environment.Local:
                 case Core.Environment.Development:
                     //ssi
-                    //BackgroundJob.Enqueue(() => ssiTenantBackgroundService.SeedSchemas());
+                    BackgroundJob.Enqueue(() => ssiTenantBackgroundService.SeedSchemas());
 
                     //organization
                     BackgroundJob.Schedule(() => organizationBackgroundService.SeedLogoAndDocuments(), TimeSpan.FromMinutes(5));

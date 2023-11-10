@@ -30,8 +30,8 @@ namespace Yoma.Core.Domain.SSI.Services
         private readonly IOpportunityService _opportunityService;
         private readonly IMyOpportunityService _myOpportunityService;
         private readonly ISSISchemaService _ssiSchemaService;
-        private readonly ISSITenantCreationService _ssiTenantCreationService;
-        private readonly ISSICredentialIssuanceService _ssiCredentialIssuanceService;
+        private readonly ISSITenantService _ssiTenantCreationService;
+        private readonly ISSICredentialService _ssiCredentialIssuanceService;
         private readonly ISSIProviderClient _ssiProviderClient;
 
         private static readonly object _lock_Object = new();
@@ -47,8 +47,8 @@ namespace Yoma.Core.Domain.SSI.Services
             IOpportunityService opportunityService,
             IMyOpportunityService myOpportunityService,
             ISSISchemaService ssiSchemaService,
-            ISSITenantCreationService ssiTenantCreationService,
-            ISSICredentialIssuanceService ssiCredentialIssuanceService,
+            ISSITenantService ssiTenantCreationService,
+            ISSICredentialService ssiCredentialIssuanceService,
             ISSIProviderClientFactory ssiProviderClientFactory)
         {
             _logger = logger;
@@ -85,15 +85,15 @@ namespace Yoma.Core.Domain.SSI.Services
 
                 SeedSchema(ArtifactType.Indy, //TODO: Ld_proof
                     SSISSchemaHelper.ToFullName(SchemaType.Opportunity, OpportunityType.Task.ToString()),
-                    new List<string> { "Opportunity_Title", "Opportunity_Summary", "Opportunity_Skills", "User_DisplayName", "User_DateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
+                    new List<string> { "Organization_Name", "Organization_LogoURL", "Opportunity_Title", "Opportunity_Summary", "Opportunity_Skills", "User_DisplayName", "User_DateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
 
                 SeedSchema(ArtifactType.Indy, //TODO: Ld_proof
                     SSISSchemaHelper.ToFullName(SchemaType.Opportunity, OpportunityType.Learning.ToString()),
-                    new List<string> { "Opportunity_Title", "Opportunity_Summary", "Opportunity_Skills", "User_DisplayName", "User_DateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
+                    new List<string> { "Organization_Name", "Organization_LogoURL", "Opportunity_Title", "Opportunity_Summary", "Opportunity_Skills", "User_DisplayName", "User_DateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
 
                 SeedSchema(ArtifactType.Indy,
                     SSISSchemaHelper.ToFullName(SchemaType.YoID, _appSettings.SSISchemaNameYoID),
-                    new List<string> { "User_FirstName", "User_Surname", "User_DisplayName", "User_PhoneNumber", "User_DateOfBirth", "User_Email", "User_Gender", "User_Country", "User_CountryOfResidence" }).Wait();
+                    new List<string> { "User_FirstName", "User_Surname", "User_DateOfBirth", "User_Email", "User_Gender", "User_Country" }).Wait();
 
                 _logger.LogInformation("Processed SSI seeding");
             }
@@ -109,7 +109,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
                 while (executeUntil > DateTime.Now)
                 {
-                    var items = _ssiTenantCreationService.ListPendingCreation(_scheduleJobOptions.SSITenantCreationScheduleBatchSize);
+                    var items = _ssiTenantCreationService.ListPendingCreationSchedule(_scheduleJobOptions.SSITenantCreationScheduleBatchSize);
                     if (!items.Any()) break;
 
                     foreach (var item in items)
@@ -158,7 +158,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
                             item.TenantId = _ssiProviderClient.EnsureTenant(request).Result;
                             item.Status = TenantCreationStatus.Created;
-                            _ssiTenantCreationService.Update(item).Wait();
+                            _ssiTenantCreationService.UpdateScheduleCreation(item).Wait();
 
                             _logger.LogInformation("Processed SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
                         }
@@ -168,7 +168,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
                             item.Status = TenantCreationStatus.Error;
                             item.ErrorReason = ex.Message;
-                            _ssiTenantCreationService.Update(item).Wait();
+                            _ssiTenantCreationService.UpdateScheduleCreation(item).Wait();
                         }
 
                         if (executeUntil <= DateTime.Now) break;
@@ -189,7 +189,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
                 while (executeUntil > DateTime.Now)
                 {
-                    var items = _ssiCredentialIssuanceService.ListPendingIssuance(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize);
+                    var items = _ssiCredentialIssuanceService.ListPendingIssuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize);
                     if (!items.Any()) break;
 
                     foreach (var item in items)
@@ -302,7 +302,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
                             item.CredentialId = _ssiProviderClient.IssueCredential(request).Result;
                             item.Status = CredentialIssuanceStatus.Issued;
-                            _ssiCredentialIssuanceService.Update(item).Wait();
+                            _ssiCredentialIssuanceService.UpdateScheduleIssuance(item).Wait();
 
                             _logger.LogInformation("Processed SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
                         }
@@ -312,7 +312,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
                             item.Status = CredentialIssuanceStatus.Error;
                             item.ErrorReason = ex.Message;
-                            _ssiCredentialIssuanceService.Update(item).Wait();
+                            _ssiCredentialIssuanceService.UpdateScheduleIssuance(item).Wait();
                         }
 
                         if (executeUntil <= DateTime.Now) break;
@@ -351,12 +351,21 @@ namespace Yoma.Core.Domain.SSI.Services
                     ArtifactType = artifactType,
                     Attributes = attributes
                 });
+
+                return;
             }
-            else
+
+            if (schema.ArtifactType != artifactType)
+                throw new InvalidOperationException($"Artifact type mismatch detected for existing schema '{schemaFullName}': Requested '{artifactType}' vs. Existing '{schema.ArtifactType}'");
+
+            var misMatchesAttributes = attributes.Where(attr => !schema.Entities.Any(entity => entity.Properties?.Any(property => property.AttributeName == attr) == true)).ToList();
+            if (misMatchesAttributes == null || !misMatchesAttributes.Any()) return;
+
+            await _ssiSchemaService.Update(new SSISchemaRequestUpdate
             {
-                if (schema.ArtifactType != artifactType)
-                    throw new InvalidOperationException($"Artifact type mismatch detected for existing schema '{schemaFullName}': Requested '{artifactType}' vs. Existing '{schema.ArtifactType}'");
-            }
+                Name = schema.Name,
+                Attributes = attributes
+            });
         }
 
         private static void ReflectEntityValues<T>(CredentialIssuanceRequest request, SSISchemaEntity schemaEntity, Type type, T entity)

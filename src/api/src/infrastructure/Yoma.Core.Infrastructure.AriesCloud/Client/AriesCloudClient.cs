@@ -82,6 +82,34 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             return results.SingleOrDefault();
         }
 
+        public async Task<List<Domain.SSI.Models.Provider.Credential>?> ListCredentials(string tenantIdHolder)
+        {
+            if (string.IsNullOrWhiteSpace(tenantIdHolder))
+                throw new ArgumentNullException(nameof(tenantIdHolder));
+            tenantIdHolder = tenantIdHolder.Trim();
+
+            var clientCustomer = _clientFactory.CreateCustomerClient();
+
+            Tenant? tenantHolder = null;
+            try
+            {
+                tenantHolder = await clientCustomer.GetTenantAsync(tenant_id: tenantIdHolder);
+            }
+            catch (HttpClientException ex)
+            {
+                if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+            }
+            if (tenantHolder == null) return null;
+
+            var clientHolder = _clientFactory.CreateTenantClient(tenantHolder.Tenant_id);
+
+            //TODO: ld_proofs
+            var indyCredentials = await clientHolder.GetIndyCredentialsAsync();
+
+            var results = indyCredentials?.Results?.Select(o => o.ToCredential()).ToList();
+            return results;
+        }
+
         public async Task<Schema> UpsertSchema(SchemaRequest request)
         {
             if (request == null)
@@ -275,7 +303,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                         Connection_id = connection.SourceConnectionId,
                         Ld_credential_detail = new LDProofVCDetail
                         {
-                            Credential = new Credential
+                            Credential = new AriesCloudAPI.DotnetSDK.AspCore.Clients.Models.Credential
                             {
                                 Context = new List<string> { "https://www.w3.org/2018/credentials/v1" },
                                 Type = new List<string> { "VerifiableCredential", request.SchemaType },

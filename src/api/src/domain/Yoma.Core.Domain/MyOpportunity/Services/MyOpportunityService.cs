@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         private readonly IOpportunityStatusService _opportunityStatusService;
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IBlobService _blobService;
-        private readonly ISSICredentialIssuanceService _ssiCredentialIssuanceService;
+        private readonly ISSICredentialService _ssiCredentialIssuanceService;
         private readonly IEmailProviderClient _emailProviderClient;
         private readonly MyOpportunitySearchFilterValidator _myOpportunitySearchFilterValidator;
         private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
@@ -64,7 +64,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             IOpportunityStatusService opportunityStatusService,
             IOrganizationStatusService organizationStatusService,
             IBlobService blobService,
-            ISSICredentialIssuanceService ssiCredentialIssuanceService,
+            ISSICredentialService ssiCredentialIssuanceService,
             IEmailProviderClientFactory emailProviderClientFactory,
             MyOpportunitySearchFilterValidator myOpportunitySearchFilterValidator,
             MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
@@ -501,7 +501,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     {
                         if (string.IsNullOrEmpty(item.OpportunitySSISchemaName))
                             throw new InvalidOperationException($"Credential Issuance Enabled: Schema name expected for opportunity with id '{item.Id}'");
-                        await _ssiCredentialIssuanceService.Create(item.OpportunitySSISchemaName, item.Id);
+                        await _ssiCredentialIssuanceService.ScheduleIssuance(item.OpportunitySSISchemaName, item.Id);
                     }
 
                     emailType = EmailType.Opportunity_Verification_Completed;
