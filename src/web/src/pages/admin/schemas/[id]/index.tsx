@@ -35,6 +35,7 @@ import {
 } from "~/api/services/credentials";
 import {
   ArtifactType,
+  SchemaType,
   type SSISchema,
   type SSISchemaRequest,
 } from "~/api/models/credential";
@@ -157,6 +158,17 @@ const SchemaCreateEdit: NextPageWithLayout<{
   // form submission handler
   const onSubmitStep = useCallback(
     async (step: number, data: FieldValues) => {
+      if (id === "create") {
+        if (step === 2) {
+          // if type changed, reset attributes
+          let typeChanged = formData.typeId != data.typeId;
+
+          if (typeChanged) {
+            formData.attributes = [];
+          }
+        }
+      }
+
       // set form data
       const model = {
         ...formData,
@@ -179,7 +191,16 @@ const SchemaCreateEdit: NextPageWithLayout<{
       }
       setStep(step);
     },
-    [id, setStep, formData, setFormData, onSubmit],
+    [
+      id,
+      setStep,
+      formData,
+      setFormData,
+      onSubmit,
+      formData,
+      schemaTypes,
+      schema,
+    ],
   );
 
   const schemaStep1 = z.object({
@@ -208,6 +229,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
     handleSubmit: handleSubmitStep1,
     formState: { errors: errorsStep1, isValid: isValidStep1 },
     control: controlStep1,
+    getValues: getValuesStep1,
   } = useForm({
     resolver: zodResolver(schemaStep1),
     defaultValues: formData,
@@ -402,7 +424,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       {errorsStep1.name && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep1.name.message}`}
                           </span>
                         </label>
@@ -441,7 +462,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       {errorsStep1.typeId && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep1.typeId.message}`}
                           </span>
                         </label>
@@ -562,6 +582,13 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         render={({ field: { onChange } }) => (
                           <SchemaAttributesEdit
                             defaultValue={formData.attributes}
+                            schemaType={
+                              SchemaType[
+                                schemaTypes?.find(
+                                  (x) => x.value == formData.typeId,
+                                )?.label as keyof typeof SchemaType
+                              ]
+                            }
                             onChange={onChange}
                           />
                         )}
@@ -627,7 +654,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       {errorsStep1.name && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep1.name.message}`}
                           </span>
                         </label>
@@ -649,7 +675,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       {errorsStep1.name && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep1.name.message}`}
                           </span>
                         </label>
@@ -673,7 +698,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       {errorsStep1.artifactType && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep1.artifactType.message}`}
                           </span>
                         </label>
@@ -697,7 +721,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       {errorsStep2.attributes && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep2.attributes.message}`}
                           </span>
                         </label>

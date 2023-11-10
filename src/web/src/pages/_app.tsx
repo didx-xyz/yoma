@@ -17,7 +17,7 @@ import ReactModal from "react-modal";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Navbar } from "~/components/NavBar/Navbar";
-import { Global } from "~/components/global";
+import { Global } from "~/components/Global";
 import ConfirmationModalContextProvider from "~/context/modalConfirmationContext";
 import { config } from "~/lib/react-query-config";
 import "~/styles/globals.scss";

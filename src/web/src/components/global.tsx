@@ -63,11 +63,11 @@ export const Global: React.FC = () => {
     if (router.asPath.startsWith("/organisations")) {
       const matches = router.asPath.match(/\/organisations\/([a-z0-9-]{36})/);
 
+      setNavbarColor("bg-green");
+
       if (matches && matches.length > 1) {
         const orgId = matches[1];
         if (!orgId) return;
-
-        setNavbarColor("bg-green");
 
         if (orgId != currentOrganisationIdValue) {
           // update atom (change navbar links)
@@ -87,7 +87,7 @@ export const Global: React.FC = () => {
       setCurrentOrganisationLogoAtom(null);
 
       // admins see blue
-      if (router.asPath.startsWith("/schema")) setNavbarColor("bg-blue");
+      if (router.asPath.startsWith("/admin")) setNavbarColor("bg-blue");
       // everyone else see purple (public youth)
       else setNavbarColor("bg-purple");
     }
