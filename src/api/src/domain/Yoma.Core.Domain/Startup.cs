@@ -110,7 +110,7 @@ namespace Yoma.Core.Domain
 
             var scheduledJobs = JobStorage.Current.GetMonitoringApi().ScheduledJobs(0, int.MaxValue);
             foreach (var job in scheduledJobs) BackgroundJob.Delete(job.Key);
-         
+
             //skills
             var skillService = scope.ServiceProvider.GetRequiredService<ISkillService>();
 
