@@ -28,3 +28,57 @@ volumeMounts:
   - name: app-settings
     mountPath: /api/appsettings.Development.json
     subPath: appsettings.Development.json
+
+postInstallHook:
+  enabled: true
+  image:
+    repository: ghcr.io/didx-xyz/mssql-server
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: 2022-latest
+  command:
+    - /bin/bash
+    - /init/post.sh
+    - mssql-mssqlserver-2022
+    - sa
+    - /init/post.sql
+  env:
+    ACCEPT_EULA: "Y"
+    SA_PASSWORD: "Password1"
+    SQLCMDPASSWORD: "Password1"
+  nodeSelector:
+    kubernetes.io/arch: amd64
+
+  volumes:
+    - name: init
+      emptyDir: {}
+
+  volumeMounts:
+    - name: init
+      mountPath: /init
+
+  initContainers:
+    - name: download-sql
+      image: docker.io/busybox:stable
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+      args:
+        - -c
+        - |-
+          cd /init
+          wget -O - \
+            --header="Authorization: token ${GITHUB_PAT}"\
+            --header="Accept:application/vnd.github.v3.raw" \
+            https://api.github.com/repos/didx-xyz/yoma/tarball/master | tar xz
+          cp -v ./didx-xyz-yoma-*/src/api/cicd/scripts/sqlserver-init/* /init/
+          rm -rf ./didx-xyz-yoma-*
+      env:
+        - name: GITHUB_PAT
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-github-pat
+              key: github-pat
+      volumeMounts:
+        - name: init
+          mountPath: /init

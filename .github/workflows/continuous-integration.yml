@@ -78,24 +78,24 @@ jobs:
             web:
               - './src/web/**'
 
-      # - uses: actions/setup-node@v4
-      #   if: (steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-      #   with:
-      #     node-version: 18
-      #     cache: yarn
-      # - run: yarn install --frozen-lockfile
-      #   if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-      #   working-directory: ${{ matrix.dir }}
+      - uses: actions/setup-node@v4
+        if: (steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+        with:
+          node-version: 18
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+        working-directory: ${{ matrix.dir }}
 
-      # - uses: actions/setup-dotnet@v3
-      #   if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
-      #   with:
-      #     dotnet-version: 7.x
+      - uses: actions/setup-dotnet@v3
+        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
+        with:
+          dotnet-version: 7.x
 
-      # - uses: wearerequired/lint-action@v2
-      #   if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
-      #   with: ${{ matrix.config }}
-      #   env: ${{ matrix.env }}
+      - uses: wearerequired/lint-action@v2
+        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
+        with: ${{ matrix.config }}
+        env: ${{ matrix.env }}
 
   build:
     name: Build and push
@@ -210,48 +210,48 @@ jobs:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
         continue-on-error: true
-      # - name: Start services
-      #   run: |-
-      #     docker compose -f ./src/api/docker-compose.yml up -d
-      #     docker compose -f ./src/web/docker-compose.yml up -d
-      #   env:
-      #     API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
-      #     YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
+      - name: Start services
+        run: |-
+          docker compose -f ./src/api/docker-compose.yml up -d
+          docker compose -f ./src/web/docker-compose.yml up -d
+        env:
+          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
+          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
 
-      # - uses: actions/setup-node@v4
-      #   with:
-      #     node-version: 18
-      #     cache: yarn
-      # - uses: cypress-io/github-action@v6
-      # - name: Upload Cypress Screenshots
-      #   uses: actions/upload-artifact@v3
-      #   if: always()
-      #   with:
-      #     name: cypress-screenshots
-      #     path: cypress/screenshots
-      #     if-no-files-found: ignore
-      # - name: Upload Cypress Recording
-      #   uses: actions/upload-artifact@v3
-      #   if: always()
-      #   with:
-      #     name: cypress-videos
-      #     path: cypress/videos
-      #     if-no-files-found: ignore
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: yarn
+      - uses: cypress-io/github-action@v6
+      - name: Upload Cypress Screenshots
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          if-no-files-found: ignore
+      - name: Upload Cypress Recording
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: cypress-videos
+          path: cypress/videos
+          if-no-files-found: ignore
 
-      # - name: Keycloak Config logs
-      #   if: always()
-      #   run: docker logs keycloak-config
-      # - name: Keycloak logs
-      #   if: always()
-      #   run: docker logs keycloak
-      # - name: Yoma API logs
-      #   if: always()
-      #   run: docker logs yoma-api
-      # - name: Yoma Web logs
-      #   if: always()
-      #   run: docker logs yoma-web
+      - name: Keycloak Config logs
+        if: always()
+        run: docker logs keycloak-config
+      - name: Keycloak logs
+        if: always()
+        run: docker logs keycloak
+      - name: Yoma API logs
+        if: always()
+        run: docker logs yoma-api
+      - name: Yoma Web logs
+        if: always()
+        run: docker logs yoma-web
 
-      # - run: docker compose down -v
+      - run: docker compose down -v
 
   deploy:
     name: Deploy
@@ -263,9 +263,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TAILSCALE_VERSION: 1.50.1
-      HELMFILE_VERSION: v0.157.0
-      HELM_VERSION: v3.13.0
+      TAILSCALE_VERSION: 1.52.1
+      HELMFILE_VERSION: v0.158.1
+      HELM_VERSION: v3.13.2
       TAG: ${{ needs.build.outputs.image_version }}
 
     concurrency:
@@ -286,6 +286,8 @@ jobs:
           - project: yoma-web
             context: ./src/web
 
+    if: github.triggering_actor != 'dependabot[bot]' && github.event.pull_request.draft == false
+
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v2 # https://github.com/actions/runner/pull/2477
@@ -295,20 +297,6 @@ jobs:
           filters: |-
             changes:
               - '${{ matrix.context }}/**'
-
-      - name: Dummy
-        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
-        run: |-
-          echo "API_TAG is $API_TAG"
-          echo "YOUTH_TAG is $YOUTH_TAG"
-          echo ${{ steps.filter.outputs.changes }}
-          echo ${{ needs.build.outputs.image_version }}
-          echo "The image version is ${{ needs.build.outputs.image_version }}"
-          echo "TAG is $TAG"
-        env:
-          API_TAG: ${{ steps.filter.outputs.changes == 'true' && needs.build.outputs.image_version || 'xxx' }}
-          YOUTH_TAG: ${{ steps.filter.outputs.changes == 'true' && needs.build.outputs.image_version || 'xxx' }}
-
 
       - uses: unfor19/install-aws-cli-action@v1
         if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'

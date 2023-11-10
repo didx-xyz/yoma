@@ -92,3 +92,6 @@ env: {}
 volumeMounts: {}
 volumes: {}
 persistence: {}
+
+postInstallHook:
+  enabled: false
