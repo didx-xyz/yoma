@@ -158,15 +158,9 @@ const SchemaCreateEdit: NextPageWithLayout<{
   // form submission handler
   const onSubmitStep = useCallback(
     async (step: number, data: FieldValues) => {
-      if (id === "create") {
-        if (step === 2) {
-          // if type changed, reset attributes
-          let typeChanged = formData.typeId != data.typeId;
-
-          if (typeChanged) {
-            formData.attributes = [];
-          }
-        }
+      // reset attributes if type changed
+      if (id === "create" && step === 2 && formData.typeId != data.typeId) {
+        formData.attributes = [];
       }
 
       // set form data
@@ -191,16 +185,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
       }
       setStep(step);
     },
-    [
-      id,
-      setStep,
-      formData,
-      setFormData,
-      onSubmit,
-      formData,
-      schemaTypes,
-      schema,
-    ],
+    [id, setStep, formData, setFormData, onSubmit],
   );
 
   const schemaStep1 = z.object({
@@ -229,7 +214,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
     handleSubmit: handleSubmitStep1,
     formState: { errors: errorsStep1, isValid: isValidStep1 },
     control: controlStep1,
-    getValues: getValuesStep1,
   } = useForm({
     resolver: zodResolver(schemaStep1),
     defaultValues: formData,

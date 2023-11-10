@@ -33,7 +33,7 @@ export const Global: React.FC = () => {
   // 🔔 SMALL DISPLAY ATOM
   const setSmallDisplay = useSetAtom(smallDisplayAtom);
 
-  // 🔔 track the screen size for responsive elements
+  // track the screen size for responsive elements
   useEffect(() => {
     function onResize() {
       const small = window.innerWidth < 768;
@@ -48,7 +48,7 @@ export const Global: React.FC = () => {
 
   // 🔔 ROUTE CHANGE HANDLER
   // set navbarColor atom on route change
-  // used to change navbar color per page
+  // set currentOrganisationId atom on route change
   const router = useRouter();
   const setNavbarColor = useSetAtom(navbarColorAtom);
   const currentOrganisationIdValue = useAtomValue(currentOrganisationIdAtom);
@@ -59,7 +59,7 @@ export const Global: React.FC = () => {
 
   useEffect(() => {
     // logic to perform "profile-switching"
-    // if organisation page, OrgAdmins see green and update the atoms
+    // if organisation page, OrgAdmins sees green. navbar links & company logo changes
     if (router.asPath.startsWith("/organisations")) {
       const matches = router.asPath.match(/\/organisations\/([a-z0-9-]{36})/);
 
@@ -86,9 +86,9 @@ export const Global: React.FC = () => {
       setCurrentOrganisationIdAtom(null);
       setCurrentOrganisationLogoAtom(null);
 
-      // admins see blue
+      // admins sees blue
       if (router.asPath.startsWith("/admin")) setNavbarColor("bg-blue");
-      // everyone else see purple (public youth)
+      // everyone else sees purple (public youth)
       else setNavbarColor("bg-purple");
     }
   }, [

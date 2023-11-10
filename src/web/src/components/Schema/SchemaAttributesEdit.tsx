@@ -5,7 +5,7 @@ import { IoIosAdd, IoIosRemove } from "react-icons/io";
 import type { SelectOption } from "~/api/models/lookups";
 import { getSchemaEntities } from "~/api/services/credentials";
 import Select from "react-select";
-import { SchemaType } from "~/api/models/credential";
+import type { SchemaType } from "~/api/models/credential";
 
 interface InputProps {
   defaultValue?: string[] | null;
