@@ -309,6 +309,8 @@ jobs:
 
 
       - uses: unfor19/install-aws-cli-action@v1
+      - name: SOPS Binary Installer
+        uses: mdgreenwald/mozilla-sops-action@v1.4.1
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ secrets.AWS_REGION }}
@@ -330,4 +332,5 @@ jobs:
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: |
-            https://github.com/jkroepke/helm-secrets,
+            https://github.com/databus23/helm-diff,
+            https://github.com/jkroepke/helm-secrets
