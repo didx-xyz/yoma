@@ -262,6 +262,19 @@ jobs:
     needs: [ test-e2e, build ]
     runs-on: ubuntu-latest
 
+    env:
+      TAILSCALE_VERSION: 1.50.1
+      HELMFILE_VERSION: v0.157.0
+      HELM_VERSION: v3.13.0
+      TAG: ${{ needs.build.outputs.image_version }}
+
+    concurrency:
+      group: ${{ github.workflow }}-deploy-${{ github.event_name == 'release' && 'prod' || 'dev' }}
+      cancel-in-progress: false
+    environment:
+      name: ${{ github.event_name == 'release' && 'prod' || 'dev' }}
+      url: ${{ vars.PUBLIC_URL }}
+
     strategy:
       matrix:
         project:
@@ -293,3 +306,28 @@ jobs:
         env:
           API_TAG: ${{ steps.filter.outputs.changes == 'true' && needs.build.outputs.image_version || 'xxx' }}
           YOUTH_TAG: ${{ steps.filter.outputs.changes == 'true' && needs.build.outputs.image_version || 'xxx' }}
+
+
+      - uses: unfor19/install-aws-cli-action@v1
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: github-cicd
+      - run: aws eks update-kubeconfig --name ${{ secrets.CLUSTER }}
+      - uses: tailscale/github-action@main
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          version: ${{ env.TAILSCALE_VERSION }}
+
+      - name: Helmfile Apply/Diff
+        uses: helmfile/helmfile-action@v1.3.0
+        with:
+          helmfile-args: |
+            ${{ github.event_name != 'pull_request' && 'apply' || 'diff' }} \
+              --environment ${{ vars.ENVIRONMENT }} \
+              --selector app=${{ matrix.project }}
+          helmfile-version: ${{ env.HELMFILE_VERSION }}
+          helm-version: ${{ env.HELM_VERSION }}
+          helm-plugins: |
+            https://github.com/jkroepke/helm-secrets,
