@@ -81,6 +81,9 @@ releases:
     namespace: {{ .Values.namespace }}
     chart: ./helm/yoma-api
     version: "0.1.0"
+    set:
+      - name: image.tag
+        value: {{ .Values.tag }}
     values:
       - ./helm/yoma-api/conf/base/values.yaml
       - ./helm/yoma-api/conf/{{ .Environment.Name }}/values.yaml
@@ -97,6 +100,9 @@ releases:
     namespace: {{ .Values.namespace }}
     chart: ./helm/yoma-web
     version: "0.1.0"
+    set:
+      - name: image.tag
+        value: {{ .Values.tag }}
     values:
       - ./helm/yoma-web/conf/base/values.yaml
       - ./helm/yoma-web/conf/{{ .Environment.Name }}/values.yaml

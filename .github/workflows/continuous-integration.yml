@@ -269,7 +269,7 @@ jobs:
       TAG: ${{ needs.build.outputs.image_version }}
 
     concurrency:
-      group: ${{ github.workflow }}-deploy-${{ github.event_name == 'release' && 'prod' || 'dev' }}
+      group: ${{ github.workflow }}-deploy-${{ matrix.project }}-${{ github.ref }}
       cancel-in-progress: false
     environment:
       name: ${{ github.event_name == 'release' && 'prod' || 'dev' }}
@@ -297,32 +297,40 @@ jobs:
               - '${{ matrix.context }}/**'
 
       - name: Dummy
+        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
         run: |-
           echo "API_TAG is $API_TAG"
           echo "YOUTH_TAG is $YOUTH_TAG"
           echo ${{ steps.filter.outputs.changes }}
           echo ${{ needs.build.outputs.image_version }}
-          echo "The image version is ${{ steps.meta.outputs.version }}"
+          echo "The image version is ${{ needs.build.outputs.image_version }}"
+          echo "TAG is $TAG"
         env:
           API_TAG: ${{ steps.filter.outputs.changes == 'true' && needs.build.outputs.image_version || 'xxx' }}
           YOUTH_TAG: ${{ steps.filter.outputs.changes == 'true' && needs.build.outputs.image_version || 'xxx' }}
 
 
       - uses: unfor19/install-aws-cli-action@v1
+        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
       - name: SOPS Binary Installer
+        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
         uses: mdgreenwald/mozilla-sops-action@v1.4.1
       - uses: aws-actions/configure-aws-credentials@v4
+        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: github-cicd
       - run: aws eks update-kubeconfig --name ${{ secrets.CLUSTER }}
+        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
       - uses: tailscale/github-action@main
+        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           version: ${{ env.TAILSCALE_VERSION }}
 
       - name: Helmfile Apply/Diff
+        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
         uses: helmfile/helmfile-action@v1.3.0
         with:
           helmfile-args: |
