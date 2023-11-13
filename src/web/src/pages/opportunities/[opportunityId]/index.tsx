@@ -41,7 +41,7 @@ import {
   saveMyOpportunity,
 } from "~/api/services/myOpportunities";
 import { toast } from "react-toastify";
-import { OpportunityComplete } from "~/components/Opportunity/OpportunityComplete";
+import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityCompletionEdit";
 import { signIn } from "next-auth/react";
 import { fetchClientEnv } from "~/lib/utils";
 import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
@@ -348,7 +348,7 @@ const OpportunityDetails: NextPageWithLayout<{
           portalClassName={"fixed z-40"}
           overlayClassName="fixed inset-0 bg-overlay"
         >
-          <OpportunityComplete
+          <OpportunityCompletionEdit
             id="op-complete"
             opportunityInfo={opportunity}
             onClose={() => {
