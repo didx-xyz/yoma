@@ -2,14 +2,13 @@ using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.SSI.Models;
-using Yoma.Core.Domain.SSI.Models.Provider;
 
 namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
 {
     public static class SchemaExtensions
     {
         #region Public Members
-        public static List<Schema>? ToSchema(this ICollection<CredentialSchema> schemas, bool latestVersion)
+        public static List<Domain.SSI.Models.Provider.Schema>? ToSchema(this ICollection<CredentialSchema> schemas, bool latestVersion)
         {
             if (!schemas.Any()) return null;
 
@@ -20,9 +19,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
             return results;
         }
 
-        public static Schema ToSchema(this CredentialSchema o)
+        public static Domain.SSI.Models.Provider.Schema ToSchema(this CredentialSchema o)
         {
-            return new Schema
+            return new Domain.SSI.Models.Provider.Schema
             {
                 Id = o.Id,
                 Name = o.Name,
@@ -32,7 +31,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
             };
         }
 
-        public static List<Schema>? ToSchema(this ICollection<Models.CredentialSchema> schemas, bool latestVersion)
+        public static List<Domain.SSI.Models.Provider.Schema>? ToSchema(this ICollection<Models.CredentialSchema> schemas, bool latestVersion)
         {
             if (!schemas.Any()) return null;
 
@@ -43,9 +42,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
             return results;
         }
 
-        public static Schema ToSchema(this Models.CredentialSchema o)
+        public static Domain.SSI.Models.Provider.Schema ToSchema(this Models.CredentialSchema o)
         {
-            return new Schema
+            return new Domain.SSI.Models.Provider.Schema
             {
                 Id = o.Id,
                 Name = o.Name,
@@ -54,10 +53,20 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
                 AttributeNames = JsonConvert.DeserializeObject<ICollection<string>>(o.AttributeNames) ?? new List<string>(),
             };
         }
+
+
+        public static Domain.SSI.Models.Provider.Credential ToCredential(this IndyCredInfo o)
+        {
+            return new Domain.SSI.Models.Provider.Credential
+            {
+                SchemaId = o.Schema_id,
+                Attributes = o.Attrs
+            };
+        }
         #endregion
 
         #region Private Members
-        private static List<Schema> FilterByLatestVersion(bool latestVersion, List<Schema> results)
+        private static List<Domain.SSI.Models.Provider.Schema> FilterByLatestVersion(bool latestVersion, List<Domain.SSI.Models.Provider.Schema> results)
         {
             if (latestVersion)
                 results = results

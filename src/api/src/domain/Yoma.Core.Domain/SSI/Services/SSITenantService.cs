@@ -8,7 +8,7 @@ using Yoma.Core.Domain.SSI.Models;
 
 namespace Yoma.Core.Domain.SSI.Services
 {
-    public class SSITenantCreationService : ISSITenantCreationService
+    public class SSITenantService : ISSITenantService
     {
         #region Class Variables
         private readonly AppSettings _appSettings;
@@ -17,7 +17,7 @@ namespace Yoma.Core.Domain.SSI.Services
         #endregion
 
         #region Constructor
-        public SSITenantCreationService(IOptions<AppSettings> appSettings,
+        public SSITenantService(IOptions<AppSettings> appSettings,
             ISSITenantCreationStatusService ssiTenantCreationStatusService,
             IRepository<SSITenantCreation> ssiTenantCreationRepository)
         {
@@ -47,7 +47,7 @@ namespace Yoma.Core.Domain.SSI.Services
             return result?.TenantId;
         }
 
-        public async Task Create(EntityType entityType, Guid entityId)
+        public async Task ScheduleCreation(EntityType entityType, Guid entityId)
         {
             if (entityId == Guid.Empty)
                 throw new ArgumentNullException(nameof(entityId));
@@ -78,7 +78,7 @@ namespace Yoma.Core.Domain.SSI.Services
             await _ssiTenantCreationRepository.Create(item);
         }
 
-        public List<SSITenantCreation> ListPendingCreation(int batchSize)
+        public List<SSITenantCreation> ListPendingCreationSchedule(int batchSize)
         {
             var statusPendingId = _ssiTenantCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
 
@@ -87,7 +87,7 @@ namespace Yoma.Core.Domain.SSI.Services
             return results;
         }
 
-        public async Task Update(SSITenantCreation item)
+        public async Task UpdateScheduleCreation(SSITenantCreation item)
         {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));

@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         private readonly IOpportunityStatusService _opportunityStatusService;
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IBlobService _blobService;
-        private readonly ISSICredentialIssuanceService _ssiCredentialIssuanceService;
+        private readonly ISSICredentialService _ssiCredentialIssuanceService;
         private readonly IEmailProviderClient _emailProviderClient;
         private readonly MyOpportunitySearchFilterValidator _myOpportunitySearchFilterValidator;
         private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
@@ -64,7 +64,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             IOpportunityStatusService opportunityStatusService,
             IOrganizationStatusService organizationStatusService,
             IBlobService blobService,
-            ISSICredentialIssuanceService ssiCredentialIssuanceService,
+            ISSICredentialService ssiCredentialIssuanceService,
             IEmailProviderClientFactory emailProviderClientFactory,
             MyOpportunitySearchFilterValidator myOpportunitySearchFilterValidator,
             MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
@@ -276,27 +276,21 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     {
                         var verificationStatusId = _myOpportunityVerificationStatusService.GetByName(status.ToString()).Id;
 
-                        switch (status)
+                        predicate = status switch
                         {
-                            case VerificationStatus.Pending:
-                                //items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
-                                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.Now) ||
-                                    o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId);
-                                break;
+                            //items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
+                            VerificationStatus.Pending =>
+                                predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.Now) ||
+                                o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId),
 
-                            case VerificationStatus.Completed:
-                                //all, irrespective of related opportunity and organization status
-                                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId);
-                                break;
+                            //all, irrespective of related opportunity and organization status
+                            VerificationStatus.Completed => predicate.Or(o => o.VerificationStatusId == verificationStatusId),
 
-                            case VerificationStatus.Rejected:
-                                //all, irrespective of related opportunity and organization status
-                                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId);
-                                break;
+                            //all, irrespective of related opportunity and organization status
+                            VerificationStatus.Rejected => predicate.Or(o => o.VerificationStatusId == verificationStatusId),
 
-                            default:
-                                throw new InvalidOperationException($"Unknown / unsupported '{nameof(filter.VerificationStatuses)}' of '{status}'");
-                        }
+                            _ => throw new InvalidOperationException($"Unknown / unsupported '{nameof(filter.VerificationStatuses)}' of '{status}'"),
+                        };
                     }
 
                     query = query.Where(predicate);
@@ -501,7 +495,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     {
                         if (string.IsNullOrEmpty(item.OpportunitySSISchemaName))
                             throw new InvalidOperationException($"Credential Issuance Enabled: Schema name expected for opportunity with id '{item.Id}'");
-                        await _ssiCredentialIssuanceService.Create(item.OpportunitySSISchemaName, item.Id);
+                        await _ssiCredentialIssuanceService.ScheduleIssuance(item.OpportunitySSISchemaName, item.Id);
                     }
 
                     emailType = EmailType.Opportunity_Verification_Completed;

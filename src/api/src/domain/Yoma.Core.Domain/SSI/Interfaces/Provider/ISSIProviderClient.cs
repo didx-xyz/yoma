@@ -19,6 +19,8 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Provider
         /// </summary>
         Task<Schema?> GetSchemaByNameOrNull(string name);
 
+        Task<List<Credential>?> ListCredentials(string tenantIdHolder);
+
         /// <summary>
         /// Create a new schema with the specified name and attributes. If a schema with the same name already exists, a new version will automatically be created
         /// </summary>

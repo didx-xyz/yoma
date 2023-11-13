@@ -10,7 +10,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public string UserEmail { get; set; }
 
-        public string? UserDisplayName { get; set; }
+        public string UserDisplayName { get; set; }
+
+        public DateTimeOffset? UserDateOfBirth { get; set; }
 
         public string? UserCountry { get; set; }
 

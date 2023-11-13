@@ -19,11 +19,21 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups
         public string Name { get; set; }
 
         [Required]
+        [Column(TypeName = "varchar(50)")]
+        public string NameDisplay { get; set; }
+
+        [Required]
         [Column(TypeName = "varchar(125)")]
-        public string ValueDescription { get; set; }
+        public string Description { get; set; }
 
         [Required]
         public bool Required { get; set; }
+
+        [Column(TypeName = "varchar(50)")]
+        public string? SystemType { get; set; }
+
+        [Column(TypeName = "varchar(125)")]
+        public string? Format { get; set; }
 
         [Required]
         public DateTimeOffset DateCreated { get; set; }

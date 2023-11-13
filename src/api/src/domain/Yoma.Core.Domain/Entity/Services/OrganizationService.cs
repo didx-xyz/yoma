@@ -34,7 +34,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IOrganizationProviderTypeService _providerTypeService;
         private readonly IBlobService _blobService;
-        private readonly ISSITenantCreationService _ssiTenantCreationService;
+        private readonly ISSITenantService _ssiTenantCreationService;
         private readonly IEmailProviderClient _emailProviderClient;
         private readonly OrganizationRequestValidatorCreate _organizationCreateRequestValidator;
         private readonly OrganizationRequestValidatorUpdate _organizationUpdateRequestValidator;
@@ -61,7 +61,7 @@ namespace Yoma.Core.Domain.Entity.Services
             IOrganizationStatusService organizationStatusService,
             IOrganizationProviderTypeService providerTypeService,
             IBlobService blobService,
-            ISSITenantCreationService ssiTenantCreationService,
+            ISSITenantService ssiTenantCreationService,
             IEmailProviderClientFactory emailProviderClientFactory,
             OrganizationRequestValidatorCreate organizationCreateRequestValidator,
             OrganizationRequestValidatorUpdate organizationUpdateRequestValidator,
@@ -485,7 +485,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
                     result.CommentApproval = request.Comment;
 
-                    await _ssiTenantCreationService.Create(EntityType.Organization, result.Id);
+                    await _ssiTenantCreationService.ScheduleCreation(EntityType.Organization, result.Id);
 
                     await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Approved);
 

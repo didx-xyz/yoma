@@ -2,9 +2,7 @@ using AriesCloudAPI.DotnetSDK.AspCore.Clients;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Interfaces;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
-using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
-using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -23,7 +21,6 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         private readonly AppSettings _appSettings;
         private readonly ClientFactory _clientFactory;
         private readonly ISSEListenerService _sseListenerService;
-        private readonly IMemoryCache _memoryCache;
         private readonly IRepository<Models.CredentialSchema> _credentialSchemaRepository;
         private readonly IRepository<Models.Connection> _connectionRepository;
 
@@ -33,7 +30,6 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         #region Constructor
         public AriesCloudClient(AppSettings appSettings,
             ClientFactory clientFactory,
-            IMemoryCache memoryCache,
             ISSEListenerService sseListenerService,
             IRepository<Models.CredentialSchema> credentialSchemaRepository,
             IRepository<Models.Connection> connectionRepository)
@@ -41,29 +37,29 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             _appSettings = appSettings;
             _clientFactory = clientFactory;
             _sseListenerService = sseListenerService;
-            _memoryCache = memoryCache;
             _credentialSchemaRepository = credentialSchemaRepository;
             _connectionRepository = connectionRepository;
         }
         #endregion
 
         #region Public Members
-        public async Task<List<Schema>?> ListSchemas(bool latestVersion)
+        public async Task<List<Domain.SSI.Models.Provider.Schema>?> ListSchemas(bool latestVersion)
         {
             var client = _clientFactory.CreateGovernanceClient();
             var schemasAries = await client.GetSchemasAsync();
             var schemasLocal = _credentialSchemaRepository.Query().ToList();
 
-            return (schemasAries.ToSchema(latestVersion) ?? Enumerable.Empty<Schema>()).Concat(schemasLocal.ToSchema(latestVersion) ?? Enumerable.Empty<Schema>()).ToList();
+            return (schemasAries.ToSchema(latestVersion)
+                ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).Concat(schemasLocal.ToSchema(latestVersion) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).ToList();
         }
 
-        public async Task<Schema> GetSchemaByName(string name)
+        public async Task<Domain.SSI.Models.Provider.Schema> GetSchemaByName(string name)
         {
-            var result = await GetSchemaByNameOrNull(name) ?? throw new ArgumentException($"{nameof(Schema)} with name '{name}' does not exists", nameof(name));
+            var result = await GetSchemaByNameOrNull(name) ?? throw new ArgumentException($"{nameof(Domain.SSI.Models.Provider.Schema)} with name '{name}' does not exists", nameof(name));
             return result;
         }
 
-        public async Task<Schema?> GetSchemaByNameOrNull(string name)
+        public async Task<Domain.SSI.Models.Provider.Schema?> GetSchemaByNameOrNull(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentNullException(nameof(name));
@@ -73,7 +69,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             var schemasAries = await client.GetSchemasAsync(schema_name: name);
             var schemasLocal = _credentialSchemaRepository.Query().Where(o => o.Name == name).ToList();
 
-            var results = (schemasAries.ToSchema(true) ?? Enumerable.Empty<Schema>()).Concat(schemasLocal.ToSchema(true) ?? Enumerable.Empty<Schema>()).ToList();
+            var results = (schemasAries.ToSchema(true) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).Concat(schemasLocal.ToSchema(true) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).ToList();
             if (results == null || !results.Any()) return null;
 
             if (results.Count > 1)
@@ -82,7 +78,35 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             return results.SingleOrDefault();
         }
 
-        public async Task<Schema> UpsertSchema(SchemaRequest request)
+        public async Task<List<Domain.SSI.Models.Provider.Credential>?> ListCredentials(string tenantIdHolder)
+        {
+            if (string.IsNullOrWhiteSpace(tenantIdHolder))
+                throw new ArgumentNullException(nameof(tenantIdHolder));
+            tenantIdHolder = tenantIdHolder.Trim();
+
+            var clientCustomer = _clientFactory.CreateCustomerClient();
+
+            Tenant? tenantHolder = null;
+            try
+            {
+                tenantHolder = await clientCustomer.GetTenantAsync(wallet_id: tenantIdHolder);
+            }
+            catch (HttpClientException ex)
+            {
+                if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+            }
+            if (tenantHolder == null) return null;
+
+            var clientHolder = _clientFactory.CreateTenantClient(tenantHolder.Wallet_id);
+
+            //TODO: ld_proofs
+            var indyCredentials = await clientHolder.GetIndyCredentialsAsync();
+
+            var results = indyCredentials?.Results?.Select(o => o.ToCredential()).ToList();
+            return results;
+        }
+
+        public async Task<Domain.SSI.Models.Provider.Schema> UpsertSchema(SchemaRequest request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -113,8 +137,6 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
                     var client = _clientFactory.CreateGovernanceClient();
                     var schemaAries = await client.CreateSchemaAsync(schemaCreateRequest);
-                    //schemas added to te trust registry
-                    _memoryCache.Remove(nameof(TrustRegistry));
                     return schemaAries.ToSchema();
 
                 case ArtifactType.Ld_proof:
@@ -166,31 +188,33 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             {
                 var createTenantRequest = new CreateTenantRequest
                 {
-                    //TODO
-                    //WalletName = request.Referent,
-                    //Name = request.Name,
-                    Name = request.Referent,
+                    Wallet_name = request.Referent,
+                    Wallet_label = request.Name,
                     Roles = request.Roles.ToAriesRoles(),
-                    Image_url = imageUri
+                    Image_url = imageUri?.ToString()
                 };
 
                 var response = await client.CreateTenantAsync(createTenantRequest);
 
-                if (createTenantRequest.Roles.Any()) //issuer and verifier added to trust registry; holder implicitly assigned to a tenant
-                    _memoryCache.Remove(nameof(TrustRegistry));
-                return response.Tenant_id;
+                return response.Wallet_id;
             }
 
             var existingRoles = new List<Role>() { Role.Holder };
-            var actor = GetTrustRegistry().Actors.SingleOrDefault(o => o.Id == tenant.Tenant_id);
+
+            var clientPublic = _clientFactory.CreatePublicClient();
+            var actors = clientPublic.GetTrustRegistryActorsAsync(null, tenant.Wallet_id, null).Result;
+            if (actors?.Count > 1)
+                throw new InvalidOperationException($"More than one actor found for tenant with id '{tenant.Wallet_id}'");
+
+            var actor = actors?.SingleOrDefault();
             if (actor != null) existingRoles.AddRange(actor.Roles.ToSSIRoles());
 
             var diffs = request.Roles.Except(existingRoles).ToList();
             if (diffs.Any())
                 throw new DataInconsistencyException(
-                    $"Role mismatched detected for tenant with id '{tenant.Tenant_id}'. Updating of tenant are not supported");
+                    $"Role mismatched detected for tenant with id '{tenant.Wallet_id}'. Updating of tenant are not supported");
 
-            return tenant.Tenant_id;
+            return tenant.Wallet_id;
         }
 
         public async Task<string?> IssueCredential(CredentialIssuanceRequest request)
@@ -232,15 +256,15 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
             var clientCustomer = _clientFactory.CreateCustomerClient();
 
-            var tenantHolder = await clientCustomer.GetTenantAsync(tenant_id: request.TenantIdHolder);
-            var clientHolder = _clientFactory.CreateTenantClient(tenantHolder.Tenant_id);
+            var tenantHolder = await clientCustomer.GetTenantAsync(wallet_id: request.TenantIdHolder);
+            var clientHolder = _clientFactory.CreateTenantClient(tenantHolder.Wallet_id);
 
             //check if credential was issued based on clientReferent
             var result = await GetCredentialReferentByClientReferentOrNull(clientHolder, request.ArtifactType, request.ClientReferent, false);
             if (!string.IsNullOrEmpty(result)) return result;
 
-            var tenantIssuer = await clientCustomer.GetTenantAsync(tenant_id: request.TenantIdIssuer);
-            var clientIssuer = _clientFactory.CreateTenantClient(tenantIssuer.Tenant_id);
+            var tenantIssuer = await clientCustomer.GetTenantAsync(wallet_id: request.TenantIdIssuer);
+            var clientIssuer = _clientFactory.CreateTenantClient(tenantIssuer.Wallet_id);
 
             var connection = await EnsureConnectionCI(tenantIssuer, clientIssuer, tenantHolder, clientHolder);
 
@@ -275,7 +299,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                         Connection_id = connection.SourceConnectionId,
                         Ld_credential_detail = new LDProofVCDetail
                         {
-                            Credential = new Credential
+                            Credential = new AriesCloudAPI.DotnetSDK.AspCore.Clients.Models.Credential
                             {
                                 Context = new List<string> { "https://www.w3.org/2018/credentials/v1" },
                                 Type = new List<string> { "VerifiableCredential", request.SchemaType },
@@ -335,7 +359,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 var credentialExchange = await clientIssuer.SendCredentialAsync(sendCredentialRequest);
 
                 // await sse event on holders side (in order to retrieve the holder credential id)  
-                sseEvent = await _sseListenerService.Listen<CredentialExchange>(tenantHolder.Tenant_id,
+                sseEvent = await _sseListenerService.Listen<CredentialExchange>(tenantHolder.Wallet_id,
                   Topic.Credentials, "thread_id", credentialExchange.Thread_id, CredentialExchangeState.OfferReceived.ToEnumMemberValue());
             });
 
@@ -348,7 +372,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             await Task.Run(async () =>
             {
                 // await sse event on holders side (in order to ensure credential issuance is done) 
-                sseEvent = await _sseListenerService.Listen<CredentialExchange>(tenantHolder.Tenant_id,
+                sseEvent = await _sseListenerService.Listen<CredentialExchange>(tenantHolder.Wallet_id,
                   Topic.Credentials, "credential_id", credentialExchange.Credential_id, CredentialExchangeState.Done.ToEnumMemberValue());
             });
 
@@ -361,36 +385,20 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         #endregion
 
         #region Private Members
-        private TrustRegistry GetTrustRegistry()
-        {
-            if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(CacheItemType.TrustRegistry))
-            {
-                var client = _clientFactory.CreatePublicClient();
-                return client.GetTrustRegistryAsync().Result;
-            }
-
-            var result = _memoryCache.GetOrCreate(nameof(TrustRegistry), entry =>
-            {
-                entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-                var client = _clientFactory.CreatePublicClient();
-                return client.GetTrustRegistryAsync().Result;
-            });
-
-            return result ?? throw new InvalidOperationException($"Failed to retrieve the '{nameof(TrustRegistry)}' cache item");
-        }
-
         private static async Task<Tenant?> GetTenantByWalletNameOrNull(string walletName, ICustomerClient client)
         {
-            //TODO: currently the client unique reference is the name; requested introduction of client reference and GetTenantByClientReferenceAsync capability
-            var tenants = await client.GetTenantsAsync();
-            return tenants.FirstOrDefault(o => string.Equals(walletName, o.Tenant_name, StringComparison.InvariantCultureIgnoreCase));
+            var tenants = await client.GetTenantsAsync(wallet_name: walletName);
+
+            if (tenants?.Count > 1)
+                throw new InvalidOperationException($"More than one tenant found with wallet name '{walletName}'");
+
+            return tenants?.SingleOrDefault(o => string.Equals(walletName, o.Wallet_name, StringComparison.InvariantCultureIgnoreCase));
         }
 
         /// <summary>
         /// Ensure a credential definition for the specified issuer and schema (applies to artifact type Indy)
         /// </summary>
-        private async Task<string> EnsureDefinition(ITenantClient clientIssuer, Schema schema)
+        private static async Task<string> EnsureDefinition(ITenantClient clientIssuer, Domain.SSI.Models.Provider.Schema schema)
         {
             var tagComponents = schema.Id.Split(':');
             var tag = string.Join(string.Empty, tagComponents.Skip(1));
@@ -410,9 +418,6 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 Support_revocation = true
             });
 
-            //definitions added to the trust registry
-            _memoryCache.Remove(nameof(TrustRegistry));
-
             return definition.Id;
         }
 
@@ -423,7 +428,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         {
             //try and find an existing connection
             var result = _connectionRepository.Query().SingleOrDefault(o =>
-                o.SourceTenantId == tenantIssuer.Tenant_id && o.TargetTenantId == tenantHolder.Tenant_id && o.Protocol == Connection_protocol.Connections_1_0.ToString());
+                o.SourceTenantId == tenantIssuer.Wallet_id && o.TargetTenantId == tenantHolder.Wallet_id && o.Protocol == Connection_protocol.Connections_1_0.ToString());
 
             Connection? connectionAries = null;
             if (result != null)
@@ -447,7 +452,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             //create invitation by issuer
             var createInvitationRequest = new CreateInvitation
             {
-                Alias = $"'{tenantIssuer.Tenant_name}' >> '{tenantHolder.Tenant_name}'",
+                Alias = $"'{tenantIssuer.Wallet_label}' >> '{tenantHolder.Wallet_label}'",
                 Multi_use = false,
                 Use_public_did = false
             };
@@ -457,7 +462,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             //accept invitation by holder
             var acceptInvitationRequest = new AcceptInvitation
             {
-                Alias = $"'{tenantIssuer.Tenant_name}' >> '{tenantHolder.Tenant_name}'",
+                Alias = $"'{tenantIssuer.Wallet_label}' >> '{tenantHolder.Wallet_label}'",
                 Use_existing_connection = true,
                 Invitation = new ReceiveInvitationRequest
                 {
@@ -476,9 +481,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
             result = new Models.Connection
             {
-                SourceTenantId = tenantIssuer.Tenant_id,
+                SourceTenantId = tenantIssuer.Wallet_id,
                 SourceConnectionId = invitation.Connection_id,
-                TargetTenantId = tenantHolder.Tenant_id,
+                TargetTenantId = tenantHolder.Wallet_id,
                 TargetConnectionId = connectionAries.Connection_id,
                 Protocol = connectionAries.Connection_protocol.ToString()
             };
