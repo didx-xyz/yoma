@@ -87,7 +87,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             opportunity: opportunity?.toString() ?? null,
             userId: null,
             valueContains: query?.toString() ?? null,
-            action: Action.Verification, //TODO
+            action: Action.Verification,
             verificationStatuses: [
               VerificationStatus.Pending,
               VerificationStatus.Completed,
@@ -117,7 +117,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       id: id ?? null,
       query: query ?? null,
       opportunity: opportunity ?? null,
-      page: page ?? null,
+      page: page ?? "1",
     },
   };
 }
@@ -170,14 +170,28 @@ const OpportunityVerifications: NextPageWithLayout<{
         const queryEncoded = encodeURIComponent(query);
 
         // redirect to the search page
-        void router.push(
-          `/organisations/${id}/opportunities?query=${queryEncoded}`,
-        );
+        void router.push({
+          pathname: `/organisations/${id}/verifications`,
+          query: { query: queryEncoded, opportunity: opportunity },
+        });
       } else {
-        void router.push(`/organisations/${id}/opportunities`);
+        void router.push(`/organisations/${id}/verifications`);
       }
     },
-    [router, id],
+    [router, id, opportunity],
+  );
+  const onFilterOpportunity = useCallback(
+    (opportunityId: string) => {
+      if (opportunityId) {
+        void router.push({
+          pathname: `/organisations/${id}/verifications`,
+          query: { query: query, opportunity: opportunityId },
+        });
+      } else {
+        void router.push(`/organisations/${id}/verifications`);
+      }
+    },
+    [router, id, query],
   );
 
   // 🔔 pager change event
@@ -226,6 +240,9 @@ const OpportunityVerifications: NextPageWithLayout<{
 
         // invalidate query
         await queryClient.invalidateQueries(["opportunityParticipants", id]);
+        await queryClient.invalidateQueries([
+          `Verifications_${id}_${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
+        ]);
       } catch (error) {
         toast(<ApiErrors error={error} />, {
           type: "error",
@@ -257,6 +274,9 @@ const OpportunityVerifications: NextPageWithLayout<{
       verifyComments,
       setIsLoading,
       setModalVerifySingleVisible,
+      query,
+      opportunity,
+      page,
     ],
   );
 
@@ -672,25 +692,20 @@ const OpportunityVerifications: NextPageWithLayout<{
           <div className="flex gap-2 sm:justify-end">
             <SearchInput defaultValue={query} onSearch={onSearch} />
 
+            {/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */}
             <Select
               classNames={{
-                control: () => "input input-bordered",
+                control: () => "input input-bordered input-xs w-[200px]",
               }}
               options={dataOpportunitiesForVerification}
-              // onChange={(val) => onChange(val?.value)}
+              onChange={(val) => onFilterOpportunity(val?.value!)}
               value={dataOpportunitiesForVerification?.find(
                 (c) => c.value === opportunity,
               )}
               placeholder="Opportunity"
+              isClearable={true}
             />
-
-            {/* <Link
-              href={`/organisations/${id}/opportunities/create`}
-              className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
-            >
-              <IoIosAdd className="mr-1 h-5 w-5" />
-              Add opportunity
-            </Link> */}
+            {/* eslint-enable @typescript-eslint/no-non-null-asserted-optional-chain */}
           </div>
         </div>
 

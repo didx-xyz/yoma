@@ -25,10 +25,17 @@ export const getSchemas = async (
 };
 
 export const getSchemaEntities = async (
+  schemaType?: SchemaType,
   context?: GetServerSidePropsContext,
 ): Promise<SSISchemaEntity[]> => {
+  let querystring = "";
+  if (schemaType !== undefined && schemaType !== null)
+    querystring = `?schemaType=${schemaType}`;
+
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.get<SSISchemaEntity[]>("/ssi/schema/entity");
+  const { data } = await instance.get<SSISchemaEntity[]>(
+    `/ssi/schema/entity${querystring}`,
+  );
   return data;
 };
 

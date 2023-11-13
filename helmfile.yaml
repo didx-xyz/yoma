@@ -1,0 +1,119 @@
+environments:
+  local:
+    values:
+      - namespace: yoma-dev
+  dev:
+    values:
+      - namespace: myproject
+      - arch: amd64
+      - lifecycle: spot
+      - tag: {{ env "TAG" | default "master" }}
+      - ddInjectEnabled: false
+  test:
+    values:
+      - namespace: yoma-test
+      - arch: amd64
+      - lifecycle: spot
+      - tag: {{ env "TAG" | default "master" }}
+      - ddInjectEnabled: false
+---
+repositories:
+{{ if eq .Environment.Name "local" }}
+  - name: ingress-nginx
+    url: https://kubernetes.github.io/ingress-nginx
+{{ end }}
+{{ if eq .Environment.Name "dev" }}
+  - name: simcube
+    url: https://simcubeltd.github.io/simcube-helm-charts/
+{{ end }}
+---
+releases:
+{{ if eq .Environment.Name "local" }}
+  - name: ingress-nginx
+    namespace: "ingress-nginx"
+    chart: ingress-nginx/ingress-nginx
+    version: "4.8.3"
+{{ end }}
+{{ if eq .Environment.Name "dev" }}
+  - name: mssql
+    namespace: {{ .Values.namespace }}
+    chart: simcube/mssqlserver-2022
+    version: "1.2.3"
+    set:
+      - name: edition.value
+        value: Developer
+      - name: acceptEula.value
+        value: "Y"
+      - name: sapassword
+        value: "Password1"
+      - name: image.repository
+        value: ghcr.io/didx-xyz/mssql-server
+      - name: image.tag
+        value: 2022-latest
+  - name: keycloak
+    namespace: {{ .Values.namespace }}
+    chart: ./helm/keycloak
+    version: "0.3.2"
+    values:
+      - ./helm/keycloak/conf/{{ .Environment.Name }}/values.yaml
+    secrets:
+      - ./helm/keycloak/conf/{{ .Environment.Name }}/secrets.yaml
+  - name: postgresql-keycoak
+    namespace: {{ .Values.namespace }}
+    chart: oci://registry-1.docker.io/bitnamicharts/postgresql
+    version: "13.2.2"
+    set:
+      - name: fullnameOverride
+        value: postgresql-keycoak
+      - name: auth.username
+        value: keycloak
+      - name: auth.password
+        value: keycloak
+      - name: auth.database
+        value: keycloak
+{{ end }}
+
+  - name: yoma-api
+    labels:
+      app: yoma-api
+    namespace: {{ .Values.namespace }}
+    chart: ./helm/yoma-api
+    version: "0.1.0"
+    set:
+      - name: image.tag
+        value: {{ .Values.tag }}
+    values:
+      - ./helm/yoma-api/conf/base/values.yaml
+      - ./helm/yoma-api/conf/{{ .Environment.Name }}/values.yaml
+      - nodeSelector:
+          kubernetes.io/arch: {{ .Values.arch }}
+          node.kubernetes.io/lifecycle: {{ .Values.lifecycle }}
+    secrets:
+      - ./helm/yoma-api/conf/base/secrets.yaml
+      - ./helm/yoma-api/conf/{{ .Environment.Name }}/secrets.yaml
+
+  - name: yoma-web
+    labels:
+      app: yoma-web
+    namespace: {{ .Values.namespace }}
+    chart: ./helm/yoma-web
+    version: "0.1.0"
+    set:
+      - name: image.tag
+        value: {{ .Values.tag }}
+    values:
+      - ./helm/yoma-web/conf/base/values.yaml
+      - ./helm/yoma-web/conf/{{ .Environment.Name }}/values.yaml
+      - nodeSelector:
+          kubernetes.io/arch: {{ .Values.arch }}
+          node.kubernetes.io/lifecycle: {{ .Values.lifecycle }}
+    secrets:
+      - ./helm/yoma-web/conf/base/secrets.yaml
+      - ./helm/yoma-web/conf/{{ .Environment.Name }}/secrets.yaml
+---
+helmDefaults:
+  timeout: 180
+  wait: true
+  atomic: true
+  cleanupOnFail: true
+  createNamespace: false

@@ -1,0 +1,286 @@
+fullnameOverride: keycloak
+
+ingress:
+  internal:
+    enabled: false
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
+    className: nginx-internal
+    rules:
+      - host: keycloak.example.com
+
+  external:
+    enabled: false
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
+    className: nginx-external
+    rules:
+      - host: keycloak.example.com
+        paths:
+          # - path: /realms/example
+          - path: /resources
+          - path: /js
+
+keycloak:
+  fullnameOverride: keycloak
+  enabled: true
+
+  replicas: 1
+
+  image:
+    tag: 22.0.1
+
+  command:
+    - "/opt/keycloak/bin/kc.sh"
+    - "start"
+    - "--features=preview,declarative-user-profile"
+    - "--http-enabled=true"
+    - "--http-port=8080"
+    - "--hostname-strict=false"
+    - "--spi-events-listener-jboss-logging-success-level=info" # log login/out events
+    - "--spi-events-listener-jboss-logging-error-level=warn"   # log login/out events
+
+  serviceAccount:
+    create: true
+    allowReadPods: true
+
+  rbac:
+    create: true
+    rules:
+     - apiGroups:
+         - ""
+       resources:
+         - pods
+       verbs:
+         - get
+         - list
+
+  podSecurityContext:
+    runAsUser: 1000
+    fsGroup: 1000
+  securityContext:
+    runAsUser: 1000
+    runAsNonRoot: true
+
+  webhook:
+    version: 0.3.0
+  themes:
+    enabled: false
+    ref: develop
+  extraInitContainers: |-
+    - name: download-extensions
+      image: docker.io/busybox:stable
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+      args:
+        - -c
+        - |-
+          wget \
+            https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-{{ .Values.webhook.version }}-all.jar \
+              -O /providers/keycloak-webhook-{{ .Values.webhook.version }}.jar
+      volumeMounts:
+        - name: providers
+          mountPath: /providers
+    {{- if .Values.themes.enabled }}
+    - name: download-themes
+      image: docker.io/busybox:stable
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+      args:
+        - -c
+        - |-
+          cd /themes
+          wget -O - \
+            --header="Authorization: token ${GITHUB_PAT}" \
+            --header="Accept:application/vnd.github.v3.raw" \
+            https://api.github.com/repos/didx-xyz/yoma/tarball/{{ .Values.themes.ref }} | tar xz
+          cp -R ./didx-xyz-yoma-*/src/api/cicd/themes/yoma /themes
+          rm -rf ./didx-xyz-yoma-*
+      env:
+        - name: GITHUB_PAT
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "keycloak.fullname" . }}-github-pat
+              key: github-pat
+      volumeMounts:
+        - name: themes
+          mountPath: /themes
+    {{- end }}
+
+  extraEnv: |-
+    - name: JAVA_OPTS_APPEND
+      value: >-
+        -XX:+UseContainerSupport
+        -XX:MaxRAMPercentage=50.0
+        -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless
+        -Djava.awt.headless=true
+        -Dkeycloak.profile.feature.upload_scripts=enabled
+    - name: KC_DB_URL_HOST
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-db
+          key: host
+    - name: KC_DB_URL_PORT
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-db
+          key: port
+    - name: KC_DB_URL_DATABASE
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-db
+          key: database
+    - name: KC_DB_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-db
+          key: user
+    - name: KEYCLOAK_ADMIN
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "keycloak.fullname" . }}-admin
+          key: user
+    - name: KEYCLOAK_ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "keycloak.fullname" . }}-admin
+          key: password
+    - name: WEBHOOK_HTTP_BASE_PATH
+      value: http://yoma-api:5000/api/v3/keycloak
+    - name: WEBHOOK_EVENTS_TAKEN
+      value: LOGIN,REGISTER,LOGOUT,UPDATE_PROFILE
+    - name: DD_LOGS_INJECTION
+      value: "true"
+    - name: DD_PROFILING_ENABLED
+      value: "false"
+
+  affinity: |-
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: node.kubernetes.io/lifecycle
+                operator: In
+                values:
+                  - spot
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              {{- include "keycloak.selectorLabels" . | nindent 10 }}
+            matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: NotIn
+                values:
+                  - test
+          topologyKey: kubernetes.io/hostname
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                {{- include "keycloak.selectorLabels" . | nindent 12 }}
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: NotIn
+                  values:
+                    - test
+            topologyKey: topology.kubernetes.io/zone
+
+  statefulsetLabels:
+    # tags.datadoghq.com/env: <env>
+    tags.datadoghq.com/service: keycloak
+    tags.datadoghq.com/version: '{{ default .Chart.AppVersion .Values.image.tag }}'
+  statefulsetAnnotations: {}
+  podLabels:
+    # tags.datadoghq.com/env: <env>
+    tags.datadoghq.com/service: keycloak
+    tags.datadoghq.com/version: '{{ default .Chart.AppVersion .Values.image.tag }}'
+    admission.datadoghq.com/enabled: "false" # disabled by default (for now)
+  podAnnotations:
+    admission.datadoghq.com/java-lib.version: v1.20.0
+    ad.datadoghq.com/keycloak.logs: '[{ "service": "keycloak", "source": "jboss_wildfly"}]'
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1536Mi
+    limits:
+      cpu: 3000m
+      memory: 1536Mi
+
+  extraVolumes: |-
+    - name: providers
+      emptyDir: {}
+    - name: themes
+      emptyDir: {}
+
+  extraVolumeMounts: |-
+    - name: providers
+      mountPath: /opt/keycloak/providers
+    - name: themes
+      mountPath: /opt/keycloak/themes
+
+  podDisruptionBudget:
+    maxUnavailable: 1
+    # minAvailable: 1
+
+  database: {}
+    # existingSecret: keycloak-db
+    # existingSecretKey: password
+    # vendor: postgres
+
+  metrics:
+    enabled: true
+
+  health:
+    enabled: true
+
+  http:
+    relativePath: "/"
+
+  autoscaling:
+    # If `true`, an autoscaling/v2 HorizontalPodAutoscaler resource is created (requires Kubernetes 1.23 or above)
+    # Autoscaling seems to be most reliable when using KUBE_PING service discovery (see README for details)
+    # This disables the `replicas` field in the StatefulSet
+    enabled: false
+    # Additional HorizontalPodAutoscaler labels
+    labels: {}
+    # The minimum and maximum number of replicas for the Keycloak StatefulSet
+    minReplicas: 3
+    maxReplicas: 10
+    # The metrics to use for scaling
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 80
+    # The scaling policy to use. This will scale up quickly but only scale down a single Pod per 5 minutes.
+    # This is important because caches are usually only replicated to 2 Pods and if one of those Pods is terminated this will give the cluster time to recover.
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 300
+        policies:
+          - type: Pods
+            value: 1
+            periodSeconds: 300
+
+config-cli:
+  fullnameOverride: keycloak-config-cli
+  enabled: false
+
+  image:
+    tag: 5.8.0-22.0.0
+
+  env:
+    KEYCLOAK_AVAILABILITYCHECK_ENABLED: "true"
+    KEYCLOAK_AVAILABILITYCHECK_TIMEOUT: "120s"
+    IMPORT_VALIDATE: "true"
+    LOGGING_LEVEL_ROOT: "INFO"
+    IMPORT_VAR_SUBSTITUTION_ENABLED: "true"
+    IMPORT_CACHE_ENABLED: "false"

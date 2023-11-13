@@ -5,9 +5,11 @@ import { IoIosAdd, IoIosRemove } from "react-icons/io";
 import type { SelectOption } from "~/api/models/lookups";
 import { getSchemaEntities } from "~/api/services/credentials";
 import Select from "react-select";
+import type { SchemaType } from "~/api/models/credential";
 
 interface InputProps {
   defaultValue?: string[] | null;
+  schemaType: SchemaType;
   onChange?: (attributes: string[]) => void;
 }
 interface ISchemaViewModel {
@@ -21,12 +23,12 @@ interface ISchemaAttributeViewModel {
 
 export const SchemaAttributesEdit: React.FC<InputProps> = ({
   defaultValue,
-
+  schemaType,
   onChange,
 }) => {
   const { data: schemaEntities } = useQuery({
-    queryKey: ["schemaEntities"],
-    queryFn: () => getSchemaEntities(),
+    queryKey: ["schemaEntities", schemaType],
+    queryFn: () => getSchemaEntities(schemaType),
   });
   const schemaEntitiesSelectOptions = useMemo<SelectOption[]>(
     () =>
@@ -77,9 +79,6 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
       {fields.map((field: any, index) => (
         <div key={field.id} className="flex flex-row gap-2">
           <Select
-            // classNames={{
-            //   control: () => "input input-bordered flex flex-grow",
-            // }}
             styles={{
               container: (css) => ({
                 ...css,
@@ -109,9 +108,6 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
             }
           />
           <Select
-            // classNames={{
-            //   control: () => "input input-bordered  flex flex-grow",
-            // }}
             styles={{
               container: (css) => ({
                 ...css,
@@ -129,7 +125,7 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
               });
             }}
             value={
-              field?.attributes.find((x: any) => x.value == field.attribute)!
+              field?.attributes?.find((x: any) => x.value == field.attribute)!
             }
           />
           <div className="flex">

@@ -1,0 +1,24 @@
+apiVersion: v2
+name: keycloak
+description: A Wrapper Helm chart for Keycloakx in Kubernetes
+type: application
+version: 0.3.2
+appVersion: 22.0.1
+
+dependencies:
+  - name: common
+    version: 2.13.3
+    repository: oci://registry-1.docker.io/bitnamicharts
+
+  # https://github.com/codecentric/helm-charts/tree/master/charts/keycloakx
+  - name: keycloakx
+    version: 2.2.2
+    repository: https://codecentric.github.io/helm-charts
+    alias: keycloak
+    condition: keycloak.enabled
+
+  - name: keycloak-config-cli
+    version: 5.8.1-SNAPSHOT
+    repository: git+https://github.com/didx-xyz/keycloak-config-cli@contrib/charts?ref=init-containers&sparse=0
+    alias: config-cli
+    condition: config-cli.enabled

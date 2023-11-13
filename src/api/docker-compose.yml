@@ -39,7 +39,7 @@ services:
       - /post.sh
       - sqlserver
       - sa
-      - post.sql
+      - ./post.sql
     restart: "no"
     environment:
       ACCEPT_EULA: Y
