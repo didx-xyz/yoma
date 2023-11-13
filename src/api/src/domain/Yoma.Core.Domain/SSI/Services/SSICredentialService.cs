@@ -155,8 +155,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 throw new ArgumentNullException(nameof(item));
 
             item.CredentialId = item.CredentialId?.Trim();
-            item.ErrorReason = item.ErrorReason?.Trim();
-
+       
             var statusId = _ssiCredentialIssuanceStatusService.GetByName(item.Status.ToString()).Id;
             item.StatusId = statusId;
 
@@ -166,12 +165,14 @@ namespace Yoma.Core.Domain.SSI.Services
                     if (string.IsNullOrEmpty(item.CredentialId))
                         throw new ArgumentNullException(nameof(item), "Credential id required");
                     item.ErrorReason = null;
+                    item.RetryCount = null;
                     break;
 
                 case CredentialIssuanceStatus.Error:
                     if (string.IsNullOrEmpty(item.ErrorReason))
                         throw new ArgumentNullException(nameof(item), "Error reason required");
 
+                    item.ErrorReason = item.ErrorReason?.Trim();
                     item.RetryCount = (byte?)(item.RetryCount + 1) ?? 1;
                     if (item.RetryCount == _appSettings.SSIMaximumRetryAttempts) break; //max retry count reached
                     item.StatusId = _ssiCredentialIssuanceStatusService.GetByName(CredentialIssuanceStatus.Pending.ToString()).Id;
