@@ -4,7 +4,7 @@ environments:
       - namespace: yoma-dev
   dev:
     values:
-      - namespace: myproject
+      - namespace: yoma-v3-dev
       - arch: amd64
       - lifecycle: spot
       - tag: {{ env "TAG" | default "master" }}
