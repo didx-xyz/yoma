@@ -392,6 +392,9 @@ namespace Yoma.Core.Domain.SSI.Services
                     var valList = propValueObject as IList
                         ?? throw new InvalidOperationException($"Multi-part property '{prop.Name}''s parent is not of type List<>");
 
+                    if (prop.Required && valList.Count == 0)
+                        throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but is an emty list");
+
                     var nonNullOrEmptyNames = valList
                          .Cast<object>()
                          .Where(item => item != null)
@@ -408,6 +411,7 @@ namespace Yoma.Core.Domain.SSI.Services
                          .Where(name => !string.IsNullOrEmpty(name)).ToList();
 
                     propValue = string.Join(", ", nonNullOrEmptyNames);
+                    if (string.IsNullOrEmpty(propValue)) propValue = "n/a";
                 }
                 else
                     propValue = string.IsNullOrEmpty(propValueObject?.ToString()) ? "n/a" : propValueObject.ToString() ?? "n/a";
