@@ -1,15 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { IoIosAdd, IoIosRemove } from "react-icons/io";
 import type { SelectOption } from "~/api/models/lookups";
-import { getSchemaEntities } from "~/api/services/credentials";
 import Select from "react-select";
-import type { SchemaType } from "~/api/models/credential";
+import type { SSISchemaEntity } from "~/api/models/credential";
 
 interface InputProps {
   defaultValue?: string[] | null;
-  schemaType: SchemaType;
+  schemaEntities: SSISchemaEntity[] | null | undefined;
   onChange?: (attributes: string[]) => void;
 }
 interface ISchemaViewModel {
@@ -23,14 +21,9 @@ interface ISchemaAttributeViewModel {
 
 export const SchemaAttributesEdit: React.FC<InputProps> = ({
   defaultValue,
-  schemaType,
+  schemaEntities,
   onChange,
 }) => {
-  const { data: schemaEntities } = useQuery({
-    queryKey: ["schemaEntities", schemaType],
-    queryFn: () => getSchemaEntities(schemaType),
-    enabled: schemaType != null,
-  });
   const systemSchemaEntities = useMemo(
     () =>
       schemaEntities?.map((x) => ({
@@ -99,7 +92,7 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
             </tr>
           </thead>
           <tbody>
-            {systemSchemaEntities.map((attribute, index) => (
+            {systemSchemaEntities.map((attribute) => (
               <>
                 {attribute.properties?.map((property, index) => (
                   <tr key={`${index}_${property.id}`}>
@@ -162,15 +155,6 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
               placeholder="Select attribute"
               isMulti={false}
               options={field.attributes}
-              // options={field.attributes.map(
-              //   (x: string) =>
-              //     (schemaEntities?.flatMap((y) => y.properties) ?? [])
-              //       ?.map((a) => ({
-              //         value: a?.attributeName,
-              //         label: a?.nameDisplay,
-              //       }))
-              //       .find((y) => y?.value == x) ?? x,
-              // )}
               onChange={(val) => {
                 update(index, {
                   dataSource: field.dataSource,
