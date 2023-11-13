@@ -85,7 +85,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
                 SeedSchema(ArtifactType.Indy, //TODO: Ld_proof
                      SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
-                     new List<string> { "Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Summary", "Opportunity_Type",
+                     new List<string> { "Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Skills", "Opportunity_Summary", "Opportunity_Type",
                         "MyOpportunity_UserDisplayName", "MyOpportunity_UserDateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
 
                 SeedSchema(ArtifactType.Indy,
