@@ -155,7 +155,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 throw new ArgumentNullException(nameof(item));
 
             item.CredentialId = item.CredentialId?.Trim();
-       
+
             var statusId = _ssiCredentialIssuanceStatusService.GetByName(item.Status.ToString()).Id;
             item.StatusId = statusId;
 

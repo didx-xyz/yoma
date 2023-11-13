@@ -93,7 +93,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 throw new ArgumentNullException(nameof(item));
 
             item.TenantId = item.TenantId?.Trim();
-            
+
             var statusId = _ssiTenantCreationStatusService.GetByName(item.Status.ToString()).Id;
             item.StatusId = statusId;
 
