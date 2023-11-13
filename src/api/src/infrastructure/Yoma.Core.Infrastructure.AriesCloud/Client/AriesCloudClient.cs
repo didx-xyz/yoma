@@ -1,9 +1,7 @@
 using AriesCloudAPI.DotnetSDK.AspCore.Clients;
-using AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Interfaces;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
 using Newtonsoft.Json;
-using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
