@@ -36,6 +36,8 @@ releases:
 {{ end }}
 {{ if eq .Environment.Name "dev" }}
   - name: mssql
+    labels:
+      app: mssql
     namespace: {{ .Values.namespace }}
     chart: simcube/mssqlserver-2022
     version: "1.2.3"
@@ -50,6 +52,13 @@ releases:
         value: ghcr.io/didx-xyz/mssql-server
       - name: image.tag
         value: 2022-latest
+    values:
+      - service:
+          type: LoadBalancer
+          annotations:
+            service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+            service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+
   - name: keycloak
     namespace: {{ .Values.namespace }}
     chart: ./helm/keycloak
