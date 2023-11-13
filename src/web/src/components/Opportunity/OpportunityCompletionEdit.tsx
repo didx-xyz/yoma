@@ -39,7 +39,7 @@ interface InputProps {
   onSave?: () => void;
 }
 
-export const OpportunityComplete: React.FC<InputProps> = ({
+export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   id,
   opportunityInfo,
   onClose,
