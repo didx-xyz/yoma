@@ -212,7 +212,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             {
                 if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
             }
-            
+
             if (actors?.Count > 1)
                 throw new InvalidOperationException($"More than one actor found for tenant with id '{tenant.Wallet_id}'");
 
