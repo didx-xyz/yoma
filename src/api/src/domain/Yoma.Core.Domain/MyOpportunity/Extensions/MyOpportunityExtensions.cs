@@ -36,6 +36,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
                 Action = value.Action,
                 VerificationStatusId = value.VerificationStatusId,
                 VerificationStatus = value.VerificationStatus,
+                CommentVerification = value.CommentVerification,
                 DateStart = value.DateStart,
                 DateEnd = value.DateEnd,
                 DateCompleted = value.DateCompleted,

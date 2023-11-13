@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -422,8 +423,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     SSISchemaEntityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "varchar(50)", nullable: false),
-                    ValueDescription = table.Column<string>(type: "varchar(125)", nullable: false),
+                    NameDisplay = table.Column<string>(type: "varchar(50)", nullable: false),
+                    Description = table.Column<string>(type: "varchar(125)", nullable: false),
                     Required = table.Column<bool>(type: "bit", nullable: false),
+                    SystemType = table.Column<string>(type: "varchar(50)", nullable: true),
+                    Format = table.Column<string>(type: "varchar(125)", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
                 constraints: table =>

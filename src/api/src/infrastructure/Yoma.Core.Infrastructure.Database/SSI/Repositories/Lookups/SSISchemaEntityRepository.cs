@@ -28,7 +28,18 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
                 Id = entity.Id,
                 TypeName = entity.TypeName,
                 Properties = includeChildItems ?
-                    entity.Properties.Select(o => new SSISchemaEntityProperty { Id = o.Id, Name = o.Name, ValueDescription = o.ValueDescription, Required = o.Required }).ToList() : null,
+                    entity.Properties.Select(o =>
+                    new SSISchemaEntityProperty
+                    {
+                        Id = o.Id,
+                        Name = o.Name,
+                        NameDisplay = o.NameDisplay,
+                        Description = o.Description,
+                        System = !string.IsNullOrEmpty(o.SystemType),
+                        SystemType = string.IsNullOrEmpty(o.SystemType) ? null : Enum.Parse<SchemaEntityPropertySystemType>(o.SystemType, true),
+                        Format = o.Format,
+                        Required = o.Required
+                    }).ToList() : null,
                 Types = includeChildItems ?
                     entity.Types.Select(o => new SSISchemaType { Id = o.SSISchemaTypeId, Type = Enum.Parse<SchemaType>(o.SSISchemaType.Name, true), Name = o.SSISchemaType.Name, Description = o.SSISchemaType.Description, SupportMultiple = o.SSISchemaType.SupportMultiple }).ToList() : null
             }).AsSplitQuery();

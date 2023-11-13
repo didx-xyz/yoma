@@ -32,4 +32,11 @@ namespace Yoma.Core.Domain.SSI.Models
         Issued,
         Error
     }
+
+    public enum SchemaEntityPropertySystemType
+    {
+        Issuer,
+        IssuerLogoURL,
+        Title
+    }
 }

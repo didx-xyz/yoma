@@ -22,7 +22,7 @@ namespace Yoma.Core.Domain.Core.Models
 
         public string SSIIssuerNameYomaOrganization { get; set; }
 
-        public string SSISchemaNameYoID { get; set; }
+        public string SSISchemaFullNameYoID { get; set; }
     }
 
     public class AppSettingsCredentials

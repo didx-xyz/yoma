@@ -135,6 +135,15 @@ namespace Yoma.Core.Domain.SSI.Services
             if (mismatchedEntities != null && mismatchedEntities.Any())
                 throw new ArgumentException($"Request contains attributes mapped to entities ('{string.Join(", ", mismatchedEntities.Select(o => o.Name))}') that are not of the specified schema type", nameof(request));
 
+            //prefix system attributes of not already included
+            var systemProperties = _ssiSchemaEntityService.List(null)
+                .Where(o => o.Types?.Any(t => t.Id == schemaExisting.TypeId) == true)
+                .SelectMany(entity => entity.Properties?.Where(property => property.System) ?? Enumerable.Empty<SSISchemaEntityProperty>())
+                .Where(systemProperty => !request.Attributes.Contains(systemProperty.AttributeName, StringComparer.InvariantCultureIgnoreCase))
+                .Select(systemProperty => systemProperty.AttributeName)
+                .ToList();
+            request.Attributes.InsertRange(0, systemProperties);
+
             //prefix internal attributes
             request.Attributes.InsertRange(0, SchemaAttributes_Internal);
 
@@ -174,6 +183,15 @@ namespace Yoma.Core.Domain.SSI.Services
              ).ToList();
             if (mismatchedEntities != null && mismatchedEntities.Any())
                 throw new ArgumentException($"Request contains attributes mapped to entities ('{string.Join(", ", mismatchedEntities.Select(o => o.Name))}') that are not of the specified schema type", nameof(request));
+
+            //prefix system attributes of not already included
+            var systemProperties = _ssiSchemaEntityService.List(null)
+                .Where(o => o.Types?.Any(t => t.Id == request.TypeId) == true)
+                .SelectMany(entity => entity.Properties?.Where(property => property.System) ?? Enumerable.Empty<SSISchemaEntityProperty>())
+                .Where(systemProperty => !request.Attributes.Contains(systemProperty.AttributeName, StringComparer.InvariantCultureIgnoreCase))
+                .Select(systemProperty => systemProperty.AttributeName)
+                .ToList();
+            request.Attributes.InsertRange(0, systemProperties);
 
             //prefix internal attributes
             request.Attributes.InsertRange(0, SchemaAttributes_Internal);

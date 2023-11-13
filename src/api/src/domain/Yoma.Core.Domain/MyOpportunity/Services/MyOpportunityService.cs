@@ -276,27 +276,21 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     {
                         var verificationStatusId = _myOpportunityVerificationStatusService.GetByName(status.ToString()).Id;
 
-                        switch (status)
+                        predicate = status switch
                         {
-                            case VerificationStatus.Pending:
-                                //items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
-                                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.Now) ||
-                                    o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId);
-                                break;
+                            //items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
+                            VerificationStatus.Pending =>
+                                predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.Now) ||
+                                o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId),
 
-                            case VerificationStatus.Completed:
-                                //all, irrespective of related opportunity and organization status
-                                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId);
-                                break;
+                            //all, irrespective of related opportunity and organization status
+                            VerificationStatus.Completed => predicate.Or(o => o.VerificationStatusId == verificationStatusId),
 
-                            case VerificationStatus.Rejected:
-                                //all, irrespective of related opportunity and organization status
-                                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId);
-                                break;
+                            //all, irrespective of related opportunity and organization status
+                            VerificationStatus.Rejected => predicate.Or(o => o.VerificationStatusId == verificationStatusId),
 
-                            default:
-                                throw new InvalidOperationException($"Unknown / unsupported '{nameof(filter.VerificationStatuses)}' of '{status}'");
-                        }
+                            _ => throw new InvalidOperationException($"Unknown / unsupported '{nameof(filter.VerificationStatuses)}' of '{status}'"),
+                        };
                     }
 
                     query = query.Where(predicate);

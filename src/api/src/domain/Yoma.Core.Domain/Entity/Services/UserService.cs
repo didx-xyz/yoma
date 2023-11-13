@@ -281,7 +281,7 @@ namespace Yoma.Core.Domain.Entity.Services
             result = await _userRepository.Update(result);
 
             await _ssiTenantCreationService.ScheduleCreation(EntityType.User, result.Id);
-            await _ssiCredentialIssuanceService.ScheduleIssuance(SSISSchemaHelper.ToFullName(SSI.Models.SchemaType.YoID, _appSettings.SSISchemaNameYoID), result.Id);
+            await _ssiCredentialIssuanceService.ScheduleIssuance(_appSettings.SSISchemaFullNameYoID, result.Id);
 
             scope.Complete();
 

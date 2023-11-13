@@ -48,6 +48,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public VerificationStatus? VerificationStatus { get; set; }
 
+        public string? CommentVerification { get; set; }
+
         public DateTimeOffset? DateStart { get; set; }
 
         public DateTimeOffset? DateEnd { get; set; }

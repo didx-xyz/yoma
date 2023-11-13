@@ -41,6 +41,10 @@ namespace Yoma.Core.Domain.SSI.Services
         #region Public Members
         public async Task<List<Credential>> Search(CredentialFilter filter)
         {
+            //TODO: NameDisplay on entity property in DB
+            //TODO: ValueDescription >> Description
+            //TODO: Optional Format with prefix / suffix capability
+
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
 

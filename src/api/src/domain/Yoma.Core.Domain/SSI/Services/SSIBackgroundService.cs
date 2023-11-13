@@ -84,16 +84,13 @@ namespace Yoma.Core.Domain.SSI.Services
                 _logger.LogInformation("Processing SSI seeding");
 
                 SeedSchema(ArtifactType.Indy, //TODO: Ld_proof
-                    SSISSchemaHelper.ToFullName(SchemaType.Opportunity, OpportunityType.Task.ToString()),
-                    new List<string> { "Organization_Name", "Organization_LogoURL", "Opportunity_Title", "Opportunity_Summary", "Opportunity_Skills", "User_DisplayName", "User_DateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
-
-                SeedSchema(ArtifactType.Indy, //TODO: Ld_proof
-                    SSISSchemaHelper.ToFullName(SchemaType.Opportunity, OpportunityType.Learning.ToString()),
-                    new List<string> { "Organization_Name", "Organization_LogoURL", "Opportunity_Title", "Opportunity_Summary", "Opportunity_Skills", "User_DisplayName", "User_DateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
+                    SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
+                    new List<string> { "Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Summary", "Opportunity_Type", "Opportunity_Skills",
+                        "MyOpportunity_UserDisplayName", "MyOpportunity_UserDateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
 
                 SeedSchema(ArtifactType.Indy,
-                    SSISSchemaHelper.ToFullName(SchemaType.YoID, _appSettings.SSISchemaNameYoID),
-                    new List<string> { "User_FirstName", "User_Surname", "User_DateOfBirth", "User_Email", "User_Gender", "User_Country" }).Wait();
+                    _appSettings.SSISchemaFullNameYoID,
+                    new List<string> { "Organization_Name", "Organization_LogoURL", "User_DisplayName", "User_FirstName", "User_Surname", "User_DateOfBirth", "User_Email", "User_Gender", "User_Country" }).Wait();
 
                 _logger.LogInformation("Processed SSI seeding");
             }
