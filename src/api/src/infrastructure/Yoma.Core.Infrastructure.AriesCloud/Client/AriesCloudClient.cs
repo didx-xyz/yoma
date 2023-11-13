@@ -3,6 +3,7 @@ using AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Interfaces;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -91,7 +92,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             {
                 tenantHolder = await clientCustomer.GetTenantAsync(wallet_id: tenantIdHolder);
             }
-            catch (HttpClientException ex)
+            catch (AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
             {
                 if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
             }
@@ -202,7 +203,16 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             var existingRoles = new List<Role>() { Role.Holder };
 
             var clientPublic = _clientFactory.CreatePublicClient();
-            var actors = clientPublic.GetTrustRegistryActorsAsync(null, tenant.Wallet_id, null).Result;
+            ICollection<Actor>? actors = null;
+            try
+            {
+                actors = await clientPublic.GetTrustRegistryActorsAsync(null, tenant.Wallet_id, null);
+            }
+            catch (AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+            {
+                if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+            }
+            
             if (actors?.Count > 1)
                 throw new InvalidOperationException($"More than one actor found for tenant with id '{tenant.Wallet_id}'");
 
@@ -443,7 +453,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
                     await _connectionRepository.Delete(result);
                 }
-                catch (HttpClientException ex)
+                catch (AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
                 {
                     if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
                 }
@@ -528,7 +538,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                     {
                         credsW3C = await clientHolder.GetW3CCredentialsAsync(null, null, wqlQueryString);
                     }
-                    catch (HttpClientException ex)
+                    catch (AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
                     {
                         if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
                     }

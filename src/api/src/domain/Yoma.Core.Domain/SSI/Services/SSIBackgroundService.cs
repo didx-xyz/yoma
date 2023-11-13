@@ -247,6 +247,10 @@ namespace Yoma.Core.Domain.SSI.Services
                                                 ReflectEntityValues(request, entity, t, user);
                                                 break;
 
+                                            case Type t when t == typeof(Organization):
+                                                ReflectEntityValues(request, entity, t, organization);
+                                                break;
+
                                             default:
                                                 throw new InvalidOperationException($"Entity of type '{entity.TypeName}' not supported");
                                         }
@@ -273,11 +277,6 @@ namespace Yoma.Core.Domain.SSI.Services
 
                                         switch (entityType)
                                         {
-                                            case Type t when t == typeof(User):
-                                                user = _userService.GetById(myOpportunity.UserId, true, true);
-                                                ReflectEntityValues(request, entity, t, user);
-                                                break;
-
                                             case Type t when t == typeof(Opportunity.Models.Opportunity):
                                                 var opportunity = _opportunityService.GetById(myOpportunity.OpportunityId, true, true, false);
                                                 ReflectEntityValues(request, entity, t, opportunity);
