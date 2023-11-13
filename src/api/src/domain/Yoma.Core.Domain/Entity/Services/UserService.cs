@@ -13,7 +13,6 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Microsoft.Extensions.Options;
-using Yoma.Core.Domain.SSI.Helpers;
 
 namespace Yoma.Core.Domain.Entity.Services
 {

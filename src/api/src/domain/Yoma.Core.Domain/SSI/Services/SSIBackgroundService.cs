@@ -1,13 +1,13 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Collections;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
-using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.SSI.Interfaces;
@@ -84,8 +84,8 @@ namespace Yoma.Core.Domain.SSI.Services
                 _logger.LogInformation("Processing SSI seeding");
 
                 SeedSchema(ArtifactType.Indy, //TODO: Ld_proof
-                    SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
-                    new List<string> { "Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Summary", "Opportunity_Type", "Opportunity_Skills",
+                     SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
+                     new List<string> { "Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Skills", "Opportunity_Summary", "Opportunity_Type",
                         "MyOpportunity_UserDisplayName", "MyOpportunity_UserDateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
 
                 SeedSchema(ArtifactType.Indy,
@@ -142,7 +142,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
                                     request = new TenantRequest
                                     {
-                                        Referent = org.Id.ToString(),
+                                        Referent = HashHelper.ComputeSHA256Hash(org.Name), //use hash value of the name; these are published to the trust registry and both the name and label must be unique
                                         Name = org.Name,
                                         ImageUrl = org.LogoURL,
                                         Roles = new List<Role> { Role.Holder, Role.Issuer, Role.Verifier }
@@ -247,6 +247,10 @@ namespace Yoma.Core.Domain.SSI.Services
                                                 ReflectEntityValues(request, entity, t, user);
                                                 break;
 
+                                            case Type t when t == typeof(Organization):
+                                                ReflectEntityValues(request, entity, t, organization);
+                                                break;
+
                                             default:
                                                 throw new InvalidOperationException($"Entity of type '{entity.TypeName}' not supported");
                                         }
@@ -273,11 +277,6 @@ namespace Yoma.Core.Domain.SSI.Services
 
                                         switch (entityType)
                                         {
-                                            case Type t when t == typeof(User):
-                                                user = _userService.GetById(myOpportunity.UserId, true, true);
-                                                ReflectEntityValues(request, entity, t, user);
-                                                break;
-
                                             case Type t when t == typeof(Opportunity.Models.Opportunity):
                                                 var opportunity = _opportunityService.GetById(myOpportunity.OpportunityId, true, true, false);
                                                 ReflectEntityValues(request, entity, t, opportunity);
@@ -393,6 +392,9 @@ namespace Yoma.Core.Domain.SSI.Services
                     var valList = propValueObject as IList
                         ?? throw new InvalidOperationException($"Multi-part property '{prop.Name}''s parent is not of type List<>");
 
+                    if (prop.Required && valList.Count == 0)
+                        throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but is an emty list");
+
                     var nonNullOrEmptyNames = valList
                          .Cast<object>()
                          .Where(item => item != null)
@@ -409,6 +411,7 @@ namespace Yoma.Core.Domain.SSI.Services
                          .Where(name => !string.IsNullOrEmpty(name)).ToList();
 
                     propValue = string.Join(", ", nonNullOrEmptyNames);
+                    if (string.IsNullOrEmpty(propValue)) propValue = "n/a";
                 }
                 else
                     propValue = string.IsNullOrEmpty(propValueObject?.ToString()) ? "n/a" : propValueObject.ToString() ?? "n/a";

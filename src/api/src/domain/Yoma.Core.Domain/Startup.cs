@@ -1,7 +1,5 @@
 using FluentValidation;
 using Hangfire;
-using Hangfire.Storage;
-using Hangfire.Storage.Monitoring;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -140,10 +138,10 @@ namespace Yoma.Core.Domain
 
             //ssi
             var ssiTenantBackgroundService = scope.ServiceProvider.GetRequiredService<ISSIBackgroundService>();
-            //RecurringJob.AddOrUpdate($"SSI Tenant Creation",
-            //   () => ssiTenantBackgroundService.ProcessTenantCreation(), options.SSITenantCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-            //RecurringJob.AddOrUpdate($"SSI Credential Issuance",
-            //   () => ssiTenantBackgroundService.ProcessCredentialIssuance(), options.SSICredentialIssuanceSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            RecurringJob.AddOrUpdate($"SSI Tenant Creation",
+               () => ssiTenantBackgroundService.ProcessTenantCreation(), options.SSITenantCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            RecurringJob.AddOrUpdate($"SSI Credential Issuance",
+               () => ssiTenantBackgroundService.ProcessCredentialIssuance(), options.SSICredentialIssuanceSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
             //seeding (local and development)
             switch (environment)

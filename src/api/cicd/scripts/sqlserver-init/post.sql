@@ -36,7 +36,7 @@ GO
 --ssi credential issuance (pending) for YOID onboarded users
 INSERT INTO [SSI].[CredentialIssuance]([Id],[SchemaTypeId],[ArtifactType],[SchemaName],[SchemaVersion],[StatusId],[UserId],[OrganizationId]
            ,[MyOpportunityId],[CredentialId],[ErrorReason],[RetryCount],[DateCreated],[DateModified])
-SELECT NEWID(),(SELECT [Id] FROM [SSI].[SchemaType] WHERE [Name] = 'YoID'),'Indy','YoID|Member_Default','1.0',(SELECT [Id] FROM [SSI].[CredentialIssuanceStatus] WHERE [Name] = 'Pending'),
+SELECT NEWID(),(SELECT [Id] FROM [SSI].[SchemaType] WHERE [Name] = 'YoID'),'Indy','YoID|Default','1.0',(SELECT [Id] FROM [SSI].[CredentialIssuanceStatus] WHERE [Name] = 'Pending'),
 	U.[Id],NULL,NULL,NULL,NULL,NULL,GETDATE(),GETDATE()
 FROM [Entity].[User] U
 WHERE U.[YoIDOnboarded] = 1
@@ -101,7 +101,6 @@ DECLARE @RowCount INT = 0;
 
 DECLARE @DateCreated DATETIMEOFFSET(7) = DATEADD(MONTH, -1 , GETDATE())
 DECLARE @DateStart DATETIMEOFFSET(7) = DATEADD(MONTH, -2 , GETDATE())
-DECLARE @DateEnd DATETIMEOFFSET(7) = DATEADD(DAY, 7, @DateStart)
 DECLARE @TotalSecondsIn2Months BIGINT = 2 * 30.44 * 24 * 60 * 60
 DECLARE @Iterations INT = 5000
 DECLARE @SecondsPerIteration BIGINT = @TotalSecondsIn2Months / @Iterations
@@ -166,7 +165,7 @@ BEGIN
 		(SELECT TOP 1 [Id] FROM [Opportunity].[OpportunityStatus] WHERE [Name] in ('Active','Inactive') ORDER BY NEWID()) as [StatusId],
 		(SELECT TOP 1 STRING_AGG(Word, ',') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (ABS(CHECKSUM(NEWID()) % 101) + 100) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) as [Keywords],
 		CAST(@DateStart AS DATE),
-		CAST(@DateEnd AS DATE),
+		CAST(DATEADD(DAY, 7, @DateStart) AS DATE),
    	CASE WHEN @VerificationEnabled = 1 THEN 1 ELSE 0 END,
 		NULL,
 		@DateCreated,
@@ -370,7 +369,7 @@ GO
 --ssi credential issuance (pending) for verification (completed) mapped to opportunities with CredentialIssuanceEnabled
 INSERT INTO [SSI].[CredentialIssuance]([Id],[SchemaTypeId],[ArtifactType],[SchemaName],[SchemaVersion],[StatusId],[UserId],[OrganizationId]
            ,[MyOpportunityId],[CredentialId],[ErrorReason],[RetryCount],[DateCreated],[DateModified])
-SELECT NEWID(),(SELECT [Id] FROM [SSI].[SchemaType] WHERE [Name] = 'Opportunity'),'Ld_proof',O.SSISchemaName,'1.0',(SELECT [Id] FROM [SSI].[CredentialIssuanceStatus] WHERE [Name] = 'Pending'),
+SELECT NEWID(),(SELECT [Id] FROM [SSI].[SchemaType] WHERE [Name] = 'Opportunity'),'Indy',O.SSISchemaName,'1.5',(SELECT [Id] FROM [SSI].[CredentialIssuanceStatus] WHERE [Name] = 'Pending'), --TODO: Ld_proof
 	NULL,NULL,MO.Id,NULL,NULL,NULL,GETDATE(),GETDATE()
 FROM [Opportunity].[MyOpportunity] MO
 INNER JOIN [Opportunity].[Opportunity] O ON MO.OpportunityId = O.Id

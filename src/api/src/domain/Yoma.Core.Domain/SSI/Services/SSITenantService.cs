@@ -93,7 +93,6 @@ namespace Yoma.Core.Domain.SSI.Services
                 throw new ArgumentNullException(nameof(item));
 
             item.TenantId = item.TenantId?.Trim();
-            item.ErrorReason = item.ErrorReason?.Trim();
 
             var statusId = _ssiTenantCreationStatusService.GetByName(item.Status.ToString()).Id;
             item.StatusId = statusId;
@@ -104,12 +103,14 @@ namespace Yoma.Core.Domain.SSI.Services
                     if (string.IsNullOrEmpty(item.TenantId))
                         throw new ArgumentNullException(nameof(item), "Tenant id required");
                     item.ErrorReason = null;
+                    item.RetryCount = null;
                     break;
 
                 case TenantCreationStatus.Error:
                     if (string.IsNullOrEmpty(item.ErrorReason))
                         throw new ArgumentNullException(nameof(item), "Error reason required");
 
+                    item.ErrorReason = item.ErrorReason?.Trim();
                     item.RetryCount = (byte?)(item.RetryCount + 1) ?? 1;
                     if (item.RetryCount == _appSettings.SSIMaximumRetryAttempts) break; //max retry count reached
                     item.StatusId = _ssiTenantCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
