@@ -9,6 +9,6 @@ namespace Yoma.Core.Domain.SSI.Models
 
         public Guid EntityId { get; set; }
 
-        public SchemaType SchemaType { get; set; }  
+        public SchemaType SchemaType { get; set; }
     }
 }

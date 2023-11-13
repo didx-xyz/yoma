@@ -10,6 +10,6 @@ namespace Yoma.Core.Domain.SSI.Models
 
         public DateTimeOffset? DateIssued { get; set; }
 
-        public List<CredentialAttribute> Attributes { get; set; }   
+        public List<CredentialAttribute> Attributes { get; set; }
     }
 }
