@@ -369,7 +369,7 @@ GO
 --ssi credential issuance (pending) for verification (completed) mapped to opportunities with CredentialIssuanceEnabled
 INSERT INTO [SSI].[CredentialIssuance]([Id],[SchemaTypeId],[ArtifactType],[SchemaName],[SchemaVersion],[StatusId],[UserId],[OrganizationId]
            ,[MyOpportunityId],[CredentialId],[ErrorReason],[RetryCount],[DateCreated],[DateModified])
-SELECT NEWID(),(SELECT [Id] FROM [SSI].[SchemaType] WHERE [Name] = 'Opportunity'),'Indy',O.SSISchemaName,'1.0',(SELECT [Id] FROM [SSI].[CredentialIssuanceStatus] WHERE [Name] = 'Pending'), --TODO: Ld_proof
+SELECT NEWID(),(SELECT [Id] FROM [SSI].[SchemaType] WHERE [Name] = 'Opportunity'),'Indy',O.SSISchemaName,'1.4',(SELECT [Id] FROM [SSI].[CredentialIssuanceStatus] WHERE [Name] = 'Pending'), --TODO: Ld_proof
 	NULL,NULL,MO.Id,NULL,NULL,NULL,GETDATE(),GETDATE()
 FROM [Opportunity].[MyOpportunity] MO
 INNER JOIN [Opportunity].[Opportunity] O ON MO.OpportunityId = O.Id
