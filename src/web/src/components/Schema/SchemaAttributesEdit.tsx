@@ -29,8 +29,18 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
   const { data: schemaEntities } = useQuery({
     queryKey: ["schemaEntities", schemaType],
     queryFn: () => getSchemaEntities(schemaType),
+    enabled: schemaType != null,
   });
-  const schemaEntitiesSelectOptions = useMemo<SelectOption[]>(
+  const systemSchemaEntities = useMemo(
+    () =>
+      schemaEntities?.map((x) => ({
+        ...x,
+        properties: x.properties?.filter((x) => x.system == true),
+      })) ?? [],
+    [schemaEntities],
+  );
+
+  const additionalSchemaEntitiesSelectOptions = useMemo<SelectOption[]>(
     () =>
       schemaEntities?.map((c) => ({
         value: c.id,
@@ -59,7 +69,7 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
           ?.find((a) => a.properties?.find((y) => y.attributeName == x))
           ?.properties?.map((x) => ({
             value: x.attributeName,
-            label: x.attributeName,
+            label: x.nameDisplay,
           })),
       })),
     });
@@ -75,71 +85,117 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
 
   return (
     <div className="flex flex-col gap-2">
+      {/* SYSTEM ATTRIBUTES (READ ONLY) */}
+      <div className="flex flex-col gap-2">
+        <label className="label">
+          <span className="label-text">System attributes</span>
+        </label>
+
+        <table className="table w-full">
+          <thead>
+            <tr>
+              <th>Datasource</th>
+              <th>Attribute</th>
+            </tr>
+          </thead>
+          <tbody>
+            {systemSchemaEntities.map((attribute, index) => (
+              <>
+                {attribute.properties?.map((property, index) => (
+                  <tr key={`${index}_${property.id}`}>
+                    <td>{attribute?.name}</td>
+                    <td>{property.nameDisplay}</td>
+                  </tr>
+                ))}
+              </>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ADDITIONAL ATTRIBUTES (WRITE) */}
       {/* eslint-disable */}
-      {fields.map((field: any, index) => (
-        <div key={field.id} className="flex flex-row gap-2">
-          <Select
-            styles={{
-              container: (css) => ({
-                ...css,
-                width: "100%",
-              }),
-            }}
-            placeholder="Select data source"
-            isMulti={false}
-            options={schemaEntitiesSelectOptions}
-            onChange={(val) => {
-              update(index, {
-                dataSource: val?.value!,
-                attribute: "", // clear
-                attributes:
-                  schemaEntities
-                    ?.find((x) => x.id == val?.value!)
-                    ?.properties?.map((x) => ({
-                      value: x.attributeName,
-                      label: x.attributeName,
-                    })) ?? [],
-              });
-            }}
-            value={
-              schemaEntitiesSelectOptions.find(
-                (x) => x.value == field.dataSource,
-              )!
-            }
-          />
-          <Select
-            styles={{
-              container: (css) => ({
-                ...css,
-                width: "100%",
-              }),
-            }}
-            placeholder="Select attribute"
-            isMulti={false}
-            options={field.attributes}
-            onChange={(val) => {
-              update(index, {
-                dataSource: field.dataSource,
-                attribute: val?.value!,
-                attributes: field.attributes,
-              });
-            }}
-            value={
-              field?.attributes?.find((x: any) => x.value == field.attribute)!
-            }
-          />
-          <div className="flex">
-            <button
-              type="button"
-              className="btn btn-error btn-sm"
-              onClick={() => remove(index)}
-            >
-              <IoIosRemove className="h-4 w-4" />
-            </button>
+      <div className="flex flex-col gap-2">
+        <label className="label">
+          <span className="label-text">Additional attributes</span>
+        </label>
+
+        {fields.map((field: any, index) => (
+          <div key={field.id} className="flex flex-row gap-2">
+            <Select
+              styles={{
+                container: (css) => ({
+                  ...css,
+                  width: "100%",
+                }),
+              }}
+              placeholder="Select data source"
+              isMulti={false}
+              options={additionalSchemaEntitiesSelectOptions}
+              onChange={(val) => {
+                update(index, {
+                  dataSource: val?.value!,
+                  attribute: "", // clear
+                  attributes:
+                    schemaEntities
+                      ?.find((x) => x.id == val?.value!)
+                      ?.properties?.filter((x) => x.system == false)
+                      .map((x) => ({
+                        value: x.attributeName,
+                        label: x.nameDisplay,
+                      })) ?? [],
+                });
+              }}
+              value={
+                additionalSchemaEntitiesSelectOptions.find(
+                  (x) => x.value == field.dataSource,
+                )!
+              }
+            />
+            <Select
+              styles={{
+                container: (css) => ({
+                  ...css,
+                  width: "100%",
+                }),
+              }}
+              placeholder="Select attribute"
+              isMulti={false}
+              options={field.attributes}
+              // options={field.attributes.map(
+              //   (x: string) =>
+              //     (schemaEntities?.flatMap((y) => y.properties) ?? [])
+              //       ?.map((a) => ({
+              //         value: a?.attributeName,
+              //         label: a?.nameDisplay,
+              //       }))
+              //       .find((y) => y?.value == x) ?? x,
+              // )}
+              onChange={(val) => {
+                update(index, {
+                  dataSource: field.dataSource,
+                  attribute: val?.value!,
+                  attributes: field.attributes,
+                });
+              }}
+              value={
+                field?.attributes?.find((x: any) => x.value == field.attribute)!
+              }
+            />
+            <div className="flex">
+              <button
+                type="button"
+                className="btn btn-error btn-sm"
+                onClick={() => remove(index)}
+              >
+                <IoIosRemove className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
-      {/* eslint-enable */}
+        ))}
+        {/* eslint-enable */}
+      </div>
+
       <div className="flex justify-center">
         <button
           type="button"

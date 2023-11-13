@@ -2,13 +2,16 @@ export interface SSISchemaEntity {
   id: string;
   name: string;
   properties: SSISchemaEntityProperty[] | null;
+  types: SSISchemaType[] | null;
 }
 
 export interface SSISchemaEntityProperty {
   id: string;
+  nameDisplay: string;
+  description: string;
   attributeName: string;
   typeName: string;
-  valueDescription: string;
+  system: boolean;
   required: boolean;
 }
 
@@ -45,6 +48,6 @@ export interface SSISchema {
   typeDescription: string;
   version: string;
   artifactType: ArtifactType;
-  entities: SSISchemaEntity[] | null;
+  entities: SSISchemaEntity[];
   propertyCount: number | null;
 }

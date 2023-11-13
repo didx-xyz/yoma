@@ -11,7 +11,13 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import router from "next/router";
 import { type ParsedUrlQuery } from "querystring";
-import { useCallback, useState, type ReactElement, useEffect } from "react";
+import {
+  useCallback,
+  useState,
+  type ReactElement,
+  useEffect,
+  useMemo,
+} from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import Select from "react-select";
@@ -112,6 +118,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
     attributes:
       schema?.entities
         ?.flatMap((x) => x.properties)
+        .filter((x) => x?.system == false)
         .map((x) => x?.attributeName!) ?? [],
   });
   /* eslint-enable */
@@ -556,10 +563,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                     )}
                   >
                     <div className="form-control">
-                      <label className="label">
-                        <span className="label-text">Attributes included</span>
-                      </label>
-
                       <Controller
                         control={controlStep2}
                         name="attributes"
