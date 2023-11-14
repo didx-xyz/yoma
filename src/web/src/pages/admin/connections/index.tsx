@@ -1,14 +1,14 @@
 import Head from "next/head";
 import type { ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
-import type { NextPageWithLayout } from "../_app";
 import { UnderConstruction } from "~/components/Status/UnderConstruction";
+import type { NextPageWithLayout } from "~/pages/_app";
 
-const AdminHome: NextPageWithLayout = () => {
+const AdminOpportunities: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>Yoma | Admin</title>
+        <title>Yoma | Admin Connections</title>
       </Head>
       <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
         <UnderConstruction />
@@ -17,8 +17,8 @@ const AdminHome: NextPageWithLayout = () => {
   );
 };
 
-AdminHome.getLayout = function getLayout(page: ReactElement) {
+AdminOpportunities.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default AdminHome;
+export default AdminOpportunities;

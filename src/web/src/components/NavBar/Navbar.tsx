@@ -7,12 +7,18 @@ import { LogoImage } from "./LogoImage";
 import { SignInButton } from "./SignInButton";
 import { UserMenu } from "./UserMenu";
 import { useAtomValue } from "jotai";
-import { currentOrganisationIdAtom, navbarColorAtom } from "~/lib/store";
+import {
+  RoleView,
+  activeRoleViewAtom,
+  currentOrganisationIdAtom,
+  navbarColorAtom,
+} from "~/lib/store";
 
 export const Navbar: React.FC = () => {
   const navbarColor = useAtomValue(navbarColorAtom);
   const [menuVisible, setMenuVisible] = useState(false);
-  const currentOrganisationIdValue = useAtomValue(currentOrganisationIdAtom);
+  const activeRoleView = useAtomValue(activeRoleViewAtom);
+  const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
   const { data: session } = useSession();
 
   return (
@@ -37,8 +43,50 @@ export const Navbar: React.FC = () => {
             portalClassName={"fixed z-50"}
             overlayClassName="fixed inset-0"
           >
-            {/* NO CURRENT ORGANISATION, SHOW USER LINKS */}
-            {!currentOrganisationIdValue && (
+            {/* USER: NO CURRENT ORGANISATION, SHOW USER LINKS */}
+            {(activeRoleView == RoleView.User || !currentOrganisationId) &&
+              activeRoleView != RoleView.Admin && (
+                <div className="flex flex-col">
+                  <Link
+                    href="/"
+                    className="px-7 py-3 text-white hover:brightness-50"
+                    onClick={() => setMenuVisible(false)}
+                  >
+                    Home
+                  </Link>
+                  <Link
+                    href="/about"
+                    className="px-7 py-3 text-white hover:brightness-50"
+                    onClick={() => setMenuVisible(false)}
+                  >
+                    About
+                  </Link>
+                  <Link
+                    href="/opportunities"
+                    className="px-7 py-3 text-white hover:brightness-50"
+                    onClick={() => setMenuVisible(false)}
+                  >
+                    Opportunities
+                  </Link>
+                  <Link
+                    href="/jobs"
+                    className="px-7 py-3 text-white hover:brightness-50"
+                    onClick={() => setMenuVisible(false)}
+                  >
+                    Jobs
+                  </Link>
+                  <Link
+                    href="/marketplace"
+                    className="px-7 py-3 text-white hover:brightness-50"
+                    onClick={() => setMenuVisible(false)}
+                  >
+                    Marketplace
+                  </Link>
+                </div>
+              )}
+
+            {/* ORG ADMIN: CURRENT ORGANISATION, SHOW ORGANISATION LINKS */}
+            {activeRoleView == RoleView.OrgAdmin && currentOrganisationId && (
               <div className="flex flex-col">
                 <Link
                   href="/"
@@ -48,48 +96,7 @@ export const Navbar: React.FC = () => {
                   Home
                 </Link>
                 <Link
-                  href="/about"
-                  className="px-7 py-3 text-white hover:brightness-50"
-                  onClick={() => setMenuVisible(false)}
-                >
-                  About
-                </Link>
-                <Link
-                  href="/opportunities"
-                  className="px-7 py-3 text-white hover:brightness-50"
-                  onClick={() => setMenuVisible(false)}
-                >
-                  Opportunities
-                </Link>
-                <Link
-                  href="/jobs"
-                  className="px-7 py-3 text-white hover:brightness-50"
-                  onClick={() => setMenuVisible(false)}
-                >
-                  Jobs
-                </Link>
-                <Link
-                  href="/marketplace"
-                  className="px-7 py-3 text-white hover:brightness-50"
-                  onClick={() => setMenuVisible(false)}
-                >
-                  Marketplace
-                </Link>
-              </div>
-            )}
-
-            {/* CURRENT ORGANISATION, SHOW ORGANISATION LINKS */}
-            {currentOrganisationIdValue && (
-              <div className="flex flex-col">
-                <Link
-                  href="/"
-                  className="px-7 py-3 text-white hover:brightness-50"
-                  onClick={() => setMenuVisible(false)}
-                >
-                  Home
-                </Link>
-                <Link
-                  href={`/organisations/${currentOrganisationIdValue}/opportunities`}
+                  href={`/organisations/${currentOrganisationId}/opportunities`}
                   className="px-7 py-3 text-white hover:brightness-50"
                   onClick={() => setMenuVisible(false)}
                 >
@@ -97,7 +104,7 @@ export const Navbar: React.FC = () => {
                 </Link>
 
                 <Link
-                  href={`/organisations/${currentOrganisationIdValue}/verifications`}
+                  href={`/organisations/${currentOrganisationId}/verifications`}
                   className="px-7 py-3 text-white hover:brightness-50"
                   onClick={() => setMenuVisible(false)}
                 >
@@ -105,14 +112,94 @@ export const Navbar: React.FC = () => {
                 </Link>
               </div>
             )}
-          </ReactModal>
 
+            {/* ADMIN: SHOW ADMIN LINKS */}
+            {activeRoleView == RoleView.Admin && (
+              <div className="flex flex-col">
+                <Link
+                  href="/admin"
+                  className="px-7 py-3 text-white hover:brightness-50"
+                  onClick={() => setMenuVisible(false)}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  href="/organisations"
+                  className="px-7 py-3 text-white hover:brightness-50"
+                  onClick={() => setMenuVisible(false)}
+                >
+                  Organisations
+                </Link>
+                <Link
+                  href="/admin/opportunities"
+                  className="px-7 py-3 text-white hover:brightness-50"
+                  onClick={() => setMenuVisible(false)}
+                >
+                  Opportunities
+                </Link>
+                <Link
+                  href="/admin/schemas"
+                  className="px-7 py-3 text-white hover:brightness-50"
+                  onClick={() => setMenuVisible(false)}
+                >
+                  Schemas
+                </Link>
+                <Link
+                  href="/admin/connections"
+                  className="px-7 py-3 text-white hover:brightness-50"
+                  onClick={() => setMenuVisible(false)}
+                >
+                  Connections
+                </Link>
+              </div>
+            )}
+          </ReactModal>
           <div className="ml-8">
             <LogoImage />
           </div>
 
-          {/* NO CURRENT ORGANISATION, SHOW USER LINKS */}
-          {!currentOrganisationIdValue && (
+          {/* USER: NO CURRENT ORGANISATION, SHOW USER LINKS */}
+          {(activeRoleView == RoleView.User || !currentOrganisationId) &&
+            activeRoleView != RoleView.Admin && (
+              <ul className="hidden w-full flex-row items-center justify-center gap-16 p-0 lg:flex">
+                <li tabIndex={0}>
+                  <Link href="/" className="text-white hover:brightness-50">
+                    Home
+                  </Link>
+                </li>
+                <li tabIndex={1}>
+                  <Link
+                    href="/about"
+                    className="text-white hover:brightness-50"
+                  >
+                    About
+                  </Link>
+                </li>
+                <li tabIndex={2}>
+                  <Link
+                    href="/opportunities"
+                    className="text-white hover:brightness-50"
+                  >
+                    Opportunities
+                  </Link>
+                </li>
+                <li tabIndex={3}>
+                  <Link href="/jobs" className="text-white hover:brightness-50">
+                    Jobs
+                  </Link>
+                </li>
+                <li tabIndex={4}>
+                  <Link
+                    href="/marketplace"
+                    className="text-white hover:brightness-50"
+                  >
+                    Marketplace
+                  </Link>
+                </li>
+              </ul>
+            )}
+          {/* ORG ADMIN: CURRENT ORGANISATION, SHOW ORGANISATION LINKS */}
+          {activeRoleView == RoleView.OrgAdmin && currentOrganisationId && (
             <ul className="hidden w-full flex-row items-center justify-center gap-16 p-0 lg:flex">
               <li tabIndex={0}>
                 <Link href="/" className="text-white hover:brightness-50">
@@ -120,56 +207,61 @@ export const Navbar: React.FC = () => {
                 </Link>
               </li>
               <li tabIndex={1}>
-                <Link href="/about" className="text-white hover:brightness-50">
-                  About
+                <Link
+                  href={`/organisations/${currentOrganisationId}/opportunities`}
+                  className="text-white hover:brightness-50"
+                >
+                  Opportunities
                 </Link>
               </li>
               <li tabIndex={2}>
                 <Link
-                  href="/opportunities"
+                  href={`/organisations/${currentOrganisationId}/verifications`}
+                  className="text-white hover:brightness-50"
+                >
+                  Verifications
+                </Link>
+              </li>
+            </ul>
+          )}
+          {/* ADMIN: SHOW ADMIN LINKS */}
+          {activeRoleView == RoleView.Admin && (
+            <ul className="hidden w-full flex-row items-center justify-center gap-16 p-0 lg:flex">
+              <li tabIndex={0}>
+                <Link href="/admin" className="text-white hover:brightness-50">
+                  Dashboard
+                </Link>
+              </li>
+              <li tabIndex={1}>
+                <Link
+                  href="/organisations"
+                  className="text-white hover:brightness-50"
+                >
+                  Organisations
+                </Link>
+              </li>
+              <li tabIndex={2}>
+                <Link
+                  href="/admin/opportunities"
                   className="text-white hover:brightness-50"
                 >
                   Opportunities
                 </Link>
               </li>
               <li tabIndex={3}>
-                <Link href="/jobs" className="text-white hover:brightness-50">
-                  Jobs
+                <Link
+                  href="/admin/schemas"
+                  className="text-white hover:brightness-50"
+                >
+                  Schemas
                 </Link>
               </li>
               <li tabIndex={4}>
                 <Link
-                  href="/marketplace"
+                  href="/admin/connections"
                   className="text-white hover:brightness-50"
                 >
-                  Marketplace
-                </Link>
-              </li>
-            </ul>
-          )}
-
-          {/* CURRENT ORGANISATION, SHOW ORGANISATION LINKS */}
-          {currentOrganisationIdValue && (
-            <ul className="hidden w-full flex-row items-center justify-center gap-16 p-0 lg:flex">
-              <li tabIndex={0}>
-                <Link href="/" className="text-white hover:brightness-50">
-                  Home
-                </Link>
-              </li>
-              <li tabIndex={1}>
-                <Link
-                  href={`/organisations/${currentOrganisationIdValue}/opportunities`}
-                  className="text-white hover:brightness-50"
-                >
-                  Opportunities
-                </Link>
-              </li>
-              <li tabIndex={2}>
-                <Link
-                  href={`/organisations/${currentOrganisationIdValue}/verifications`}
-                  className="text-white hover:brightness-50"
-                >
-                  Verifications
+                  Connections
                 </Link>
               </li>
             </ul>

@@ -18,8 +18,8 @@ export const Unauthorized: React.FC = () => {
       <Head>
         <title>Yoma Partner | Unauthorized</title>
       </Head>
-      <div className="container max-w-md">
-        <div className="flex flex-col place-items-center justify-center rounded-xl bg-white p-4">
+      <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
+        <div className="flex h-full max-h-[350px] w-full max-w-md flex-col items-center justify-center gap-1 rounded-lg bg-white">
           <h4>401 - Unauthorized</h4>
 
           <FaExclamationTriangle size={100} className="my-10 text-yellow" />
