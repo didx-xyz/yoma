@@ -705,7 +705,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         {/* SEARCH EXECUTED, SHOW RESULTS */}
         {isSearchExecuted && (
           <>
-            <div className="p-4 flex flex-col items-center rounded-lg bg-white">
+            <div className="flex flex-col items-center rounded-lg bg-white p-4">
               <div className="flex w-full flex-col gap-2">
                 {/* NO ROWS */}
                 {!searchResults ||
