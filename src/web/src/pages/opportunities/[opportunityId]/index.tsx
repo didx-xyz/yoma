@@ -47,6 +47,8 @@ import { fetchClientEnv } from "~/lib/utils";
 import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
 import { getServerSession } from "next-auth";
 import { type User, authOptions } from "~/server/auth";
+import { ApiErrors } from "~/components/Status/ApiErrors";
+import type { AxiosError } from "axios";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -118,11 +120,15 @@ const OpportunityDetails: NextPageWithLayout<{
     }
 
     saveMyOpportunity(opportunityId)
-      .then((res) => {
+      .then(() => {
         toast.success("Opportunity saved");
       })
-      .catch((err) => {
-        toast.error("Error");
+      .catch((error) => {
+        toast(<ApiErrors error={error as AxiosError} />, {
+          type: "error",
+          autoClose: false,
+          icon: false,
+        });
       });
   }, [opportunityId, user]);
 

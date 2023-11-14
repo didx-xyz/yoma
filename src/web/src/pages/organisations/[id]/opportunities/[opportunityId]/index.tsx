@@ -204,14 +204,18 @@ const OpportunityDetails: NextPageWithLayout<{
         label: c.name,
       })),
   });
-  const { data: schemas } = useQuery<SelectOption[]>({
+  const { data: schemas } = useQuery({
     queryKey: ["schemas"],
-    queryFn: async () =>
-      (await getSchemas(SchemaType.Opportunity)).map((c) => ({
+    queryFn: async () => getSchemas(SchemaType.Opportunity),
+  });
+  const schemasOptions = useMemo<SelectOption[]>(
+    () =>
+      schemas?.map((c) => ({
         value: c.name,
         label: c.displayName,
-      })),
-  });
+      })) ?? [],
+    [schemas],
+  );
   // skills cache. searched items are added to this cache
   const [skillsCache, setSkillsCache] = useState<SelectOption[]>([]);
   useMemo(() => {
@@ -609,9 +613,10 @@ const OpportunityDetails: NextPageWithLayout<{
     resolver: zodResolver(schemaStep6),
     defaultValues: formData,
   });
-  const watchcredentialIssuanceEnabled = watchStep6(
+  const watchCredentialIssuanceEnabled = watchStep6(
     "credentialIssuanceEnabled",
   );
+  const watcSSISchemaName = watchStep6("ssiSchemaName");
 
   const {
     register: registerStep7,
@@ -626,6 +631,13 @@ const OpportunityDetails: NextPageWithLayout<{
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [step]);
+
+  // on schema select, show the schema attributes
+  const schemaAttributes = useMemo(() => {
+    if (watcSSISchemaName) {
+      return schemas?.find((x) => x.name === watcSSISchemaName)?.entities ?? [];
+    }
+  }, [schemas, watcSSISchemaName]);
 
   return (
     <>
@@ -667,7 +679,7 @@ const OpportunityDetails: NextPageWithLayout<{
         </h4>
 
         <div className="flex flex-col gap-2 md:flex-row">
-          {/* left vertical menu */}
+          {/* LEFT VERTICAL MENU */}
           <ul className="menu hidden w-64 gap-2 rounded-lg bg-base-200 font-semibold md:flex">
             <li onClick={() => setStep(1)}>
               <a
@@ -808,7 +820,7 @@ const OpportunityDetails: NextPageWithLayout<{
             )}
           </ul>
 
-          {/* dropdown menu */}
+          {/* DROPDOWN MENU */}
           <select
             className="select select-bordered select-sm md:hidden"
             onChange={(e) => {
@@ -849,7 +861,7 @@ const OpportunityDetails: NextPageWithLayout<{
             <option>Preview opportunity</option>
           </select>
 
-          {/* forms */}
+          {/* FORMS */}
           <div className="flex flex-grow flex-col items-center rounded-lg bg-white">
             <div className="flex w-full max-w-xl flex-col p-4">
               {step === 1 && (
@@ -882,7 +894,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep1.title && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep1.title.message}`}
                           </span>
                         </label>
@@ -913,7 +924,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep1.typeId && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep1.typeId.message}`}
                           </span>
                         </label>
@@ -949,7 +959,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep1.categories && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep1.categories.message}`}
                           </span>
                         </label>
@@ -1149,7 +1158,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         {errorsStep2.commitmentIntervalCount && (
                           <label className="label">
                             <span className="label-text-alt italic text-red-500">
-                              {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                               {`${errorsStep2.commitmentIntervalCount.message}`}
                             </span>
                           </label>
@@ -1180,7 +1188,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         {errorsStep2.commitmentIntervalId && (
                           <label className="label">
                             <span className="label-text-alt italic text-red-500">
-                              {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                               {`${errorsStep2.commitmentIntervalId.message}`}
                             </span>
                           </label>
@@ -1266,7 +1273,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep2.participantLimit && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep2.participantLimit.message}`}
                           </span>
                         </label>
@@ -1329,7 +1335,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         {errorsStep3.yomaReward && (
                           <label className="label">
                             <span className="label-text-alt italic text-red-500">
-                              {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                               {`${errorsStep3.yomaReward.message}`}
                             </span>
                           </label>
@@ -1351,7 +1356,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         {errorsStep3.yomaRewardPool && (
                           <label className="label">
                             <span className="label-text-alt italic text-red-500">
-                              {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                               {`${errorsStep3.yomaRewardPool.message}`}
                             </span>
                           </label>
@@ -1376,7 +1380,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         {errorsStep3.zltoReward && (
                           <label className="label">
                             <span className="label-text-alt italic text-red-500">
-                              {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                               {`${errorsStep3.zltoReward.message}`}
                             </span>
                           </label>
@@ -1398,7 +1401,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         {errorsStep3.zltoRewardPool && (
                           <label className="label">
                             <span className="label-text-alt italic text-red-500">
-                              {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                               {`${errorsStep3.zltoRewardPool.message}`}
                             </span>
                           </label>
@@ -1450,7 +1452,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep3.skills && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep3.skills.message}`}
                           </span>
                         </label>
@@ -1533,7 +1534,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep4.keywords && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep4.keywords.message}`}
                           </span>
                         </label>
@@ -1665,7 +1665,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep5.verificationEnabled && (
                         <label className="label font-bold">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep5.verificationEnabled.message}`}
                           </span>
                         </label>
@@ -1673,7 +1672,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep5.verificationMethod && (
                         <label className="label font-bold">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep5.verificationMethod.message}`}
                           </span>
                         </label>
@@ -1776,7 +1774,6 @@ const OpportunityDetails: NextPageWithLayout<{
                           {errorsStep5.verificationTypes && (
                             <label className="label font-bold">
                               <span className="label-text-alt italic text-red-500">
-                                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                                 {`${errorsStep5.verificationTypes.message}`}
                               </span>
                             </label>
@@ -1832,7 +1829,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         <input
                           {...registerStep6(`credentialIssuanceEnabled`)}
                           type="checkbox"
-                          //value={item.value}
                           id="credentialIssuanceEnabled"
                           className="checkbox-primary checkbox"
                           disabled={watchVerificationEnabled !== true}
@@ -1851,42 +1847,74 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep6.credentialIssuanceEnabled && (
                         <label className="label font-bold">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep6.credentialIssuanceEnabled.message}`}
                           </span>
                         </label>
                       )}
                     </div>
 
-                    {watchcredentialIssuanceEnabled && (
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">Schema</span>
-                        </label>
-
-                        <Controller
-                          control={controlStep6}
-                          name="ssiSchemaName"
-                          render={({ field: { onChange, value } }) => (
-                            <Select
-                              classNames={{
-                                control: () => "input input-bordered",
-                              }}
-                              options={schemas}
-                              onChange={(val) => onChange(val?.value)}
-                              value={schemas?.find((c) => c.value === value)}
-                            />
-                          )}
-                        />
-                        {errorsStep6.ssiSchemaName && (
+                    {watchCredentialIssuanceEnabled && (
+                      <>
+                        <div className="form-control">
                           <label className="label">
-                            <span className="label-text-alt italic text-red-500">
-                              {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                              {`${errorsStep6.ssiSchemaName.message}`}
-                            </span>
+                            <span className="label-text">Schema</span>
                           </label>
+
+                          <Controller
+                            control={controlStep6}
+                            name="ssiSchemaName"
+                            render={({ field: { onChange, value } }) => (
+                              <Select
+                                classNames={{
+                                  control: () => "input input-bordered",
+                                }}
+                                options={schemasOptions}
+                                onChange={(val) => onChange(val?.value)}
+                                value={schemasOptions?.find(
+                                  (c) => c.value === value,
+                                )}
+                              />
+                            )}
+                          />
+                          {errorsStep6.ssiSchemaName && (
+                            <label className="label">
+                              <span className="label-text-alt italic text-red-500">
+                                {`${errorsStep6.ssiSchemaName.message}`}
+                              </span>
+                            </label>
+                          )}
+                        </div>
+
+                        {/* SCHEMA ATTRIBUTES */}
+                        {watcSSISchemaName && (
+                          <>
+                            <div className="flex flex-col gap-2">
+                              <table className="table w-full">
+                                <thead>
+                                  <tr>
+                                    <th>Datasource</th>
+                                    <th>Attribute</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {schemaAttributes?.map((attribute) => (
+                                    <>
+                                      {attribute.properties?.map(
+                                        (property, index) => (
+                                          <tr key={`${index}_${property.id}`}>
+                                            <td>{attribute?.name}</td>
+                                            <td>{property.nameDisplay}</td>
+                                          </tr>
+                                        ),
+                                      )}
+                                    </>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </>
                         )}
-                      </div>
+                      </>
                     )}
 
                     {/* BUTTONS */}
@@ -1941,7 +1969,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep1.title && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep1.title.message}`}
                           </span>
                         </label>
@@ -1959,7 +1986,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep1.description && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep1.description.message}`}
                           </span>
                         </label>
@@ -1982,7 +2008,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep1.typeId && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep1.typeId.message}`}
                           </span>
                         </label>
@@ -2001,7 +2026,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep1.keywords && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep1.keywords.message}`}
                           </span>
                         </label>
@@ -2026,7 +2050,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep1.uRL && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep1.uRL.message}`}
                           </span>
                         </label>
@@ -2049,7 +2072,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep2.languages && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep2.languages.message}`}
                           </span>
                         </label>
@@ -2072,7 +2094,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep2.countries && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep2.countries.message}`}
                           </span>
                         </label>
@@ -2095,7 +2116,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep2.difficultyId && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep2.difficultyId.message}`}
                           </span>
                         </label>
@@ -2121,7 +2141,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep2.commitmentIntervalCount && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep2.commitmentIntervalCount.message}`}
                           </span>
                         </label>
@@ -2129,7 +2148,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep2.commitmentIntervalId && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep2.commitmentIntervalId.message}`}
                           </span>
                         </label>
@@ -2146,7 +2164,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep2.dateStart && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep2.dateStart.message}`}
                           </span>
                         </label>
@@ -2163,7 +2180,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep2.dateEnd && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep2.dateEnd.message}`}
                           </span>
                         </label>
@@ -2182,7 +2198,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep2.yomaReward && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep2.yomaReward.message}`}
                           </span>
                         </label>
@@ -2201,7 +2216,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep2.yomaRewardPool && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep2.yomaRewardPool.message}`}
                           </span>
                         </label>
@@ -2220,7 +2234,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep2.zltoReward && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep2.zltoReward.message}`}
                           </span>
                         </label>
@@ -2239,7 +2252,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep2.zltoRewardPool && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep2.zltoRewardPool.message}`}
                           </span>
                         </label>
@@ -2258,7 +2270,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep2.participantLimit && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep2.participantLimit.message}`}
                           </span>
                         </label>
@@ -2279,7 +2290,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep3.verificationEnabled && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep3.verificationEnabled.message}`}
                           </span>
                         </label>
@@ -2306,7 +2316,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         {errorsStep3.verificationTypes && (
                           <label className="label">
                             <span className="label-text-alt italic text-red-500">
-                              {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                               {`${errorsStep3.verificationTypes.message}`}
                             </span>
                           </label>
@@ -2326,12 +2335,57 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep6.credentialIssuanceEnabled && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep6.credentialIssuanceEnabled.message}`}
                           </span>
                         </label>
                       )}
                     </div>
+
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text font-bold">Schema</span>
+                      </label>
+                      <label className="label-text text-sm">
+                        {formData.ssiSchemaName}
+                      </label>
+                      {errorsStep6.ssiSchemaName && (
+                        <label className="label">
+                          <span className="label-text-alt italic text-red-500">
+                            {`${errorsStep6.ssiSchemaName.message}`}
+                          </span>
+                        </label>
+                      )}
+                    </div>
+
+                    {/* SCHEMA ATTRIBUTES */}
+                    {watcSSISchemaName && (
+                      <>
+                        <div className="flex flex-col gap-2">
+                          <table className="table w-full">
+                            <thead>
+                              <tr>
+                                <th>Datasource</th>
+                                <th>Attribute</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {schemaAttributes?.map((attribute) => (
+                                <>
+                                  {attribute.properties?.map(
+                                    (property, index) => (
+                                      <tr key={`${index}_${property.id}`}>
+                                        <td>{attribute?.name}</td>
+                                        <td>{property.nameDisplay}</td>
+                                      </tr>
+                                    ),
+                                  )}
+                                </>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
+                    )}
 
                     <div className="form-control">
                       {/* checkbox label */}
@@ -2342,7 +2396,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         <input
                           {...registerStep7(`postAsActive`)}
                           type="checkbox"
-                          //value={item.value}
                           id="postAsActive"
                           className="checkbox-primary checkbox"
                         />
@@ -2354,7 +2407,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       {errorsStep7.postAsActive && (
                         <label className="label font-bold">
                           <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                             {`${errorsStep7.postAsActive.message}`}
                           </span>
                         </label>
