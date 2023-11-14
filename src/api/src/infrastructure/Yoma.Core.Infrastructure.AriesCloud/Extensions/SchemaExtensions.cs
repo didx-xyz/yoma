@@ -59,6 +59,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
         {
             return new Domain.SSI.Models.Provider.Credential
             {
+                Id = o.Referent,
                 SchemaId = o.Schema_id,
                 Attributes = o.Attrs
             };

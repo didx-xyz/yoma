@@ -5,6 +5,8 @@ namespace Yoma.Core.Domain.SSI.Interfaces
 {
     public interface ISSITenantService
     {
+        string GetTenantId(EntityType entityType, Guid entityId);
+
         string? GetTenantIdOrNull(EntityType entityType, Guid entityId);
 
         Task ScheduleCreation(EntityType entityType, Guid entityId);

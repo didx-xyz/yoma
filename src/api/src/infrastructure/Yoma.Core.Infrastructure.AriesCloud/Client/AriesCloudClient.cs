@@ -77,29 +77,55 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             return results.SingleOrDefault();
         }
 
-        public async Task<List<Domain.SSI.Models.Provider.Credential>?> ListCredentials(string tenantIdHolder)
+        public async Task<Domain.SSI.Models.Provider.Schema> GetSchemaById(string id)
         {
-            if (string.IsNullOrWhiteSpace(tenantIdHolder))
-                throw new ArgumentNullException(nameof(tenantIdHolder));
-            tenantIdHolder = tenantIdHolder.Trim();
+            var result = await GetSchemaByIdOrNull(id) ?? throw new ArgumentException($"{nameof(Domain.SSI.Models.Provider.Schema)} with id '{id}' does not exists", nameof(id));
+            return result;
+        }
 
-            var clientCustomer = _clientFactory.CreateCustomerClient();
+        public async Task<Domain.SSI.Models.Provider.Schema?> GetSchemaByIdOrNull(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                throw new ArgumentNullException(nameof(id));
+            id = id.Trim();
 
-            Tenant? tenantHolder = null;
-            try
-            {
-                tenantHolder = await clientCustomer.GetTenantAsync(wallet_id: tenantIdHolder);
-            }
-            catch (AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
-            {
-                if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
-            }
-            if (tenantHolder == null) return null;
+            var client = _clientFactory.CreateGovernanceClient();
+            var schemasAries = await client.GetSchemasAsync(id);
+            var schemasLocal = _credentialSchemaRepository.Query().Where(o => o.Id == id).ToList();
 
-            var clientHolder = _clientFactory.CreateTenantClient(tenantHolder.Wallet_id);
+            var results = (schemasAries.ToSchema(false) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).Concat(schemasLocal.ToSchema(false) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).ToList();
+            if (results == null || !results.Any()) return null;
+
+            if (results.Count > 1)
+                throw new DataInconsistencyException($"More than one schema found with id '{id}' (specific version): {string.Join(", ", results.Select(o => $"{o.Name}:{o.ArtifactType}"))}");
+
+            return results.SingleOrDefault();
+        }
+
+        public async Task<Domain.SSI.Models.Provider.Credential> GetCredentialById(string tenantId, string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                throw new ArgumentNullException(nameof(id));
+            id = id.Trim();
+
+            var client = _clientFactory.CreateTenantClient(tenantId);
 
             //TODO: ld_proofs
-            var indyCredentials = await clientHolder.GetIndyCredentialsAsync();
+            var indyCredential = await client.GetIndyCredentialAsync(id);
+
+            return indyCredential.ToCredential();
+        }
+
+        public async Task<List<Domain.SSI.Models.Provider.Credential>?> ListCredentials(string tenantId, int? start, int? count)
+        {
+            if (string.IsNullOrWhiteSpace(tenantId))
+                throw new ArgumentNullException(nameof(tenantId));
+            tenantId = tenantId.Trim();
+
+            var client = _clientFactory.CreateTenantClient(tenantId);
+
+            //TODO: ld_proofs
+            var indyCredentials = await client.GetIndyCredentialsAsync(count, start);
 
             var results = indyCredentials?.Results?.Select(o => o.ToCredential()).ToList();
             return results;
@@ -401,6 +427,23 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 throw new InvalidOperationException($"More than one tenant found with wallet name '{walletName}'");
 
             return tenants?.SingleOrDefault(o => string.Equals(walletName, o.Wallet_name, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        private async Task<Tenant> GetTenantById(string id)
+        {
+            var clientCustomer = _clientFactory.CreateCustomerClient();
+
+            Tenant? tenant = null;
+            try
+            {
+                tenant = await clientCustomer.GetTenantAsync(wallet_id: id);
+            }
+            catch (AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+            {
+                if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+            }
+
+            return tenant ?? throw new ArgumentOutOfRangeException(nameof(id), $"Tenant with id '{id}' does not exist");
         }
 
         /// <summary>

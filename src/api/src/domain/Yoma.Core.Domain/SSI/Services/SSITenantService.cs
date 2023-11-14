@@ -28,6 +28,14 @@ namespace Yoma.Core.Domain.SSI.Services
         #endregion
 
         #region Public Members
+        public string GetTenantId(EntityType entityType, Guid entityId)
+        {
+            var result = GetTenantIdOrNull(entityType, entityId);
+            if (string.IsNullOrEmpty(result))
+                throw new InvalidOperationException($"Tenant id not found of entity of type '{entityType}' and id '{entityId}'");
+            return result;
+        }
+
         public string? GetTenantIdOrNull(EntityType entityType, Guid entityId)
         {
             if (entityId == Guid.Empty)

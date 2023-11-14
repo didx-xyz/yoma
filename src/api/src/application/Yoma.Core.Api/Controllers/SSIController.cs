@@ -21,6 +21,7 @@ namespace Yoma.Core.Api.Controllers
         private readonly ISSISchemaEntityService _ssiSchemaEntityService;
         private readonly ISSISchemaService _ssiSchemaService;
         private readonly ISSISchemaTypeService _ssiSchemaTypeService;
+        private readonly ISSIWalletService _ssiWalletService;
         #endregion
 
         #region Constructor
@@ -28,12 +29,14 @@ namespace Yoma.Core.Api.Controllers
           ILogger<SSIController> logger,
           ISSISchemaEntityService ssiSchemaEntityService,
           ISSISchemaService ssiSchemaService,
-          ISSISchemaTypeService ssiSchemaTypeService)
+          ISSISchemaTypeService ssiSchemaTypeService,
+          ISSIWalletService ssiWalletService)
         {
             _logger = logger;
             _ssiSchemaEntityService = ssiSchemaEntityService;
             _ssiSchemaService = ssiSchemaService;
             _ssiSchemaTypeService = ssiSchemaTypeService;
+            _ssiWalletService = ssiWalletService;
         }
         #endregion
 
@@ -129,6 +132,38 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
         #endregion Administrative Actions
+
+        #region Authenticated User Based Actions
+        [SwaggerOperation(Summary = "Search for credentials in the user's wallet based on the supplied filter (Authenticated User)")]
+        [HttpPost("wallet/user/search")]
+        [ProducesResponseType(typeof(SSIWalletSearchResults), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_User}")]
+        public async Task<IActionResult> SearchUserWalletCredentials([FromBody] SSIWalletFilter filter)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(SearchUserWalletCredentials));
+
+            var result = await _ssiWalletService.SearchUserCredentials(filter);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(SearchUserWalletCredentials));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Get a specific credential from the user's wallet by id (Authenticated User)")]
+        [HttpPost("wallet/user/{id}")]
+        [ProducesResponseType(typeof(SSIWalletSearchResults), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_User}")]
+        public async Task<IActionResult> GetUserWalletCredentialById([FromRoute] string id)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(GetUserWalletCredentialById));
+
+            var result = await _ssiWalletService.GetUserCredentialById(id);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(GetUserWalletCredentialById));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+        #endregion Authenticated User Based Actions
         #endregion
     }
 }
