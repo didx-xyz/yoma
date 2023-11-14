@@ -393,7 +393,7 @@ namespace Yoma.Core.Domain.SSI.Services
                         ?? throw new InvalidOperationException($"Multi-part property '{prop.Name}''s parent is not of type List<>");
 
                     if (prop.Required && valList.Count == 0)
-                        throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but is an emty list");
+                        throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but is an empty list");
 
                     var nonNullOrEmptyNames = valList
                          .Cast<object>()
@@ -410,7 +410,7 @@ namespace Yoma.Core.Domain.SSI.Services
                          })
                          .Where(name => !string.IsNullOrEmpty(name)).ToList();
 
-                    propValue = string.Join(", ", nonNullOrEmptyNames);
+                    propValue = string.Join(SSICredentialService.CredentialAttribute_OfTypeList_Delimiter, nonNullOrEmptyNames);
                     if (string.IsNullOrEmpty(propValue)) propValue = "n/a";
                 }
                 else

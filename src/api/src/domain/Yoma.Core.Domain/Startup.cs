@@ -97,6 +97,7 @@ namespace Yoma.Core.Domain
             services.AddScoped<ISSICredentialService, SSICredentialService>();
             services.AddScoped<ISSISchemaService, SSISchemaService>();
             services.AddScoped<ISSITenantService, SSITenantService>();
+            services.AddScoped<ISSIWalletService, SSIWalletService>();
             #endregion SSI
         }
 

@@ -1,12 +1,9 @@
 using Microsoft.Extensions.Options;
-using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
-using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models;
-using Yoma.Core.Domain.SSI.Models.Lookups;
 
 namespace Yoma.Core.Domain.SSI.Services
 {
@@ -14,24 +11,20 @@ namespace Yoma.Core.Domain.SSI.Services
     {
         #region Class Variables
         private readonly AppSettings _appSettings;
-        private readonly ISSIProviderClient _ssiProviderClient;
-        private readonly ISSITenantService _ssiTenantService;
         private readonly ISSISchemaService _ssiSchemaService;
         private readonly ISSICredentialIssuanceStatusService _ssiCredentialIssuanceStatusService;
         private readonly IRepository<SSICredentialIssuance> _ssiCredentialIssuanceRepository;
+
+        public const string CredentialAttribute_OfTypeList_Delimiter = ", ";
         #endregion
 
         #region Constructor
         public SSICredentialService(IOptions<AppSettings> appSettings,
-            ISSIProviderClientFactory ssiProviderClientFactory,
-            ISSITenantService ssiTenantService,
             ISSISchemaService ssiSchemaService,
             ISSICredentialIssuanceStatusService ssiCredentialIssuanceStatusService,
             IRepository<SSICredentialIssuance> ssiCredentialIssuanceRepository)
         {
             _appSettings = appSettings.Value;
-            _ssiProviderClient = ssiProviderClientFactory.CreateClient();
-            _ssiTenantService = ssiTenantService;
             _ssiSchemaService = ssiSchemaService;
             _ssiCredentialIssuanceStatusService = ssiCredentialIssuanceStatusService;
             _ssiCredentialIssuanceRepository = ssiCredentialIssuanceRepository;
@@ -39,68 +32,6 @@ namespace Yoma.Core.Domain.SSI.Services
         #endregion
 
         #region Public Members
-        public async Task<List<Credential>> Search(CredentialFilter filter)
-        {
-            //TODO: NameDisplay on entity property in DB
-            //TODO: ValueDescription >> Description
-            //TODO: Optional Format with prefix / suffix capability
-
-            if (filter == null)
-                throw new ArgumentNullException(nameof(filter));
-
-            var results = new List<Credential>();
-
-            var tenantId = _ssiTenantService.GetTenantIdOrNull(filter.EntityType, filter.EntityId);
-            if (string.IsNullOrEmpty(tenantId)) return results; //tenant pending creation
-
-            var items = await _ssiProviderClient.ListCredentials(tenantId);
-            if (items == null || !items.Any()) return results;
-
-
-            foreach (var item in items)
-            {
-                var schema = await _ssiSchemaService.GetByFullName(item.SchemaId);
-
-                var credential = new Credential
-                {
-                    Id = item.Id,
-                    ArtifactType = schema.ArtifactType,
-                    SchemaType = schema.Type,
-                    DateIssued = DateTimeHelper.TyrParse(item.Attributes.SingleOrDefault(o => o.Key == SSISchemaService.SchemaAttribute_Internal_DateIssued).Value),
-                    Attributes = new List<CredentialAttribute>()
-                };
-
-                var itemAttributes = item.Attributes.Where(o => !SSISchemaService.SchemaAttributes_Internal.Any(i => string.Equals(i, o.Key, StringComparison.InvariantCultureIgnoreCase)));
-
-                foreach (var itemAttribute in itemAttributes)
-                {
-                    var schemaProperty = schema.Entities.SelectMany(entity => entity.Properties ?? Enumerable.Empty<SSISchemaEntityProperty>())
-                        .SingleOrDefault(property => property?.AttributeName == itemAttribute.Key);
-
-                    var credAttribute = new CredentialAttribute
-                    {
-                        Name = itemAttribute.Key,
-                        NameDisplay = itemAttribute.Key,
-                        ValueDisplay = itemAttribute.Value
-                    };
-                    credential.Attributes.Add(credAttribute);
-
-                    if (schemaProperty == null || string.IsNullOrEmpty(schemaProperty.DotNetType)) continue; //no schema information; return raw attribute
-
-                    var type = Type.GetType(schemaProperty.DotNetType);
-                    if (type == null) continue;
-
-                    if (type == typeof(DateTimeOffset))
-                    {
-                        if (!DateTimeOffset.TryParse(itemAttribute.Value, out var dateValue) || dateValue == default) continue;
-                        credAttribute.ValueDisplay = dateValue.ToString("yyyy-MM-dd");
-                    }
-                }
-            }
-
-            return results;
-        }
-
         public async Task ScheduleIssuance(string schemaName, Guid entityId)
         {
             var schema = await _ssiSchemaService.GetByFullName(schemaName);

@@ -45,6 +45,19 @@ namespace Yoma.Core.Domain.SSI.Services
         #endregion
 
         #region Public Members
+        public async Task<SSISchema> GetById(string id)
+        {
+            var schema = await _ssiProviderClient.GetSchemaById(id);
+            return ConvertToSSISchema(schema);
+        }
+
+        public async Task<SSISchema?> GetByIdOrNull(string id)
+        {
+            var schema = await _ssiProviderClient.GetSchemaByIdOrNull(id);
+            if (schema == null) return null;
+            return ConvertToSSISchema(schema);
+        }
+
         public async Task<SSISchema> GetByFullName(string fullName)
         {
             var schema = await _ssiProviderClient.GetSchemaByName(fullName);
@@ -104,7 +117,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
             var mismatchedSchemas = results.Where(o => o.Entities?.Any(e => !e.Types?.Any(t => t?.Type == o.Type) == true) == true).ToList();
             if (mismatchedSchemas != null && mismatchedSchemas.Any())
-                throw new DataInconsistencyException($"Schema(s) '{string.Join(", ", mismatchedSchemas.Select(o => $"{o.Name}|{o.Type}"))}': Schema type vs entity schema type mismatches detected");
+                throw new DataInconsistencyException($"Schema(s) '{string.Join(",", mismatchedSchemas.Select(o => $"{o.Name}|{o.Type}"))}': Schema type vs entity schema type mismatches detected");
 
             if (type == null) return results;
 
@@ -133,7 +146,7 @@ namespace Yoma.Core.Domain.SSI.Services
                   entity.Properties?.Any(property => request.Attributes.Contains(property.AttributeName, StringComparer.InvariantCultureIgnoreCase)) == true
               ).ToList();
             if (mismatchedEntities != null && mismatchedEntities.Any())
-                throw new ArgumentException($"Request contains attributes mapped to entities ('{string.Join(", ", mismatchedEntities.Select(o => o.Name))}') that are not of the specified schema type", nameof(request));
+                throw new ArgumentException($"Request contains attributes mapped to entities ('{string.Join(",", mismatchedEntities.Select(o => o.Name))}') that are not of the specified schema type", nameof(request));
 
             //prefix system attributes of not already included
             var systemProperties = _ssiSchemaEntityService.List(null)
@@ -174,7 +187,7 @@ namespace Yoma.Core.Domain.SSI.Services
             {
                 var existing = await List(schemaType.Id);
                 if (existing.Any())
-                    throw new ValidationException($"Schema type '{schemaType.Name}' does not support multiple schemas. Existing schemas: '{string.Join(", ", existing.Select(o => o.Name))}'");
+                    throw new ValidationException($"Schema type '{schemaType.Name}' does not support multiple schemas. Existing schemas: '{string.Join(",", existing.Select(o => o.Name))}'");
             }
 
             var mismatchedEntities = _ssiSchemaEntityService.List(null)
@@ -182,7 +195,7 @@ namespace Yoma.Core.Domain.SSI.Services
                  entity.Properties?.Any(property => request.Attributes.Contains(property.AttributeName, StringComparer.InvariantCultureIgnoreCase)) == true
              ).ToList();
             if (mismatchedEntities != null && mismatchedEntities.Any())
-                throw new ArgumentException($"Request contains attributes mapped to entities ('{string.Join(", ", mismatchedEntities.Select(o => o.Name))}') that are not of the specified schema type", nameof(request));
+                throw new ArgumentException($"Request contains attributes mapped to entities ('{string.Join(",", mismatchedEntities.Select(o => o.Name))}') that are not of the specified schema type", nameof(request));
 
             //prefix system attributes of not already included
             var systemProperties = _ssiSchemaEntityService.List(null)

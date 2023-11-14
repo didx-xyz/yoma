@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.SSI.Models
 {
-    public class CredentialAttribute
+    public class SSICredentialAttribute
     {
         public string Name { get; set; }
 
