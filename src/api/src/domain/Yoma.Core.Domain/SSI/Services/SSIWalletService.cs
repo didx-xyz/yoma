@@ -133,7 +133,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 }
             }
 
-            if (typeof(T) == typeof(SSICredentialInfo))  return result;
+            if (typeof(T) == typeof(SSICredentialInfo)) return result;
 
             result.Attributes = new List<SSICredentialAttribute>();
 
