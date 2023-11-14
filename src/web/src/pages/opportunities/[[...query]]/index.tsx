@@ -71,7 +71,7 @@ export const getStaticProps: GetStaticProps = async () => {
     countries: null,
     languages: null,
     types: null,
-    valueContains: 'Learning',
+    valueContains: "Learning",
     commitmentIntervals: null,
     mostViewed: null,
     organizations: null,
@@ -85,7 +85,7 @@ export const getStaticProps: GetStaticProps = async () => {
     countries: null,
     languages: null,
     types: null,
-    valueContains: 'Task',
+    valueContains: "Task",
     commitmentIntervals: null,
     mostViewed: null,
     organizations: null,
@@ -591,11 +591,11 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
 
       <div className="container z-10 max-w-7xl px-2 py-1 md:py-4">
         <div className="flex flex-col gap-2 pb-2 pt-8 text-white">
-          <h3 className="flex flex-grow flex-wrap items-center justify-center font-semibold text-xl -mb-1">
+          <h3 className="-mb-1 flex flex-grow flex-wrap items-center justify-center text-xl font-semibold">
             Find <span className="mx-2 text-orange">opportunities</span> to
             <span className="mx-2 text-orange">unlock</span> your future.
           </h3>
-          <h6 className="text-center font-normal text-[14px] text-[#C3A2CD]">
+          <h6 className="text-center text-[14px] font-normal text-[#C3A2CD]">
             A learning opportunity is a self-paced online course that you can
             finish at your convenience.
           </h6>
@@ -620,7 +620,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         </div>
 
         {/* FILTER ROW: CATEGORIES DROPDOWN FILTERS (SELECT) FOR COUNTRIES, LANGUAGES, TYPE, ORGANISATIONS ETC  */}
-        <div className="hidden md:flex mb-4 mt-[3rem]">
+        <div className="mb-4 mt-[3rem] hidden md:flex">
           <OpportunityFilterHorizontal
             htmlRef={myRef.current!}
             opportunitySearchFilter={opportunitySearchFilter}

@@ -25,7 +25,7 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
   return (
     <button
       onClick={handleClick}
-      className={`flex h-[120px] aspect-square flex-col items-center rounded-lg p-2 mb-4 shadow-lg ${
+      className={`mb-4 flex aspect-square h-[120px] flex-col items-center rounded-lg p-2 shadow-lg ${
         selected ? "bg-gray" : "bg-white"
       }`}
     >

@@ -128,7 +128,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
       {lookups_categories && lookups_categories.length > 0 && (
         <div className="flex-col items-center justify-center gap-2 pb-8">
           <div className="flex justify-center gap-2">
-            <div className="flex gap-4 overflow-hidden md:w-full justify-center">
+            <div className="flex justify-center gap-4 overflow-hidden md:w-full">
               {lookups_categories.map((item) => (
                 <OpportunityCategoryHorizontalCard
                   key={item.id}
@@ -184,15 +184,18 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
       <form
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
         className={`
-        ${opportunitySearchFilter?.valueContains === null
-          && opportunitySearchFilter?.countries === null
-          && opportunitySearchFilter?.categories === null
-          && opportunitySearchFilter?.languages === null
-          && opportunitySearchFilter?.mostViewed === null
-          && opportunitySearchFilter?.organizations === null
-          && opportunitySearchFilter?.types === null
-          && opportunitySearchFilter?.zltoRewardRanges === null
-           ? "hidden " : "flex flex-col gap-2"} `}
+        ${
+          opportunitySearchFilter?.valueContains === null &&
+          opportunitySearchFilter?.countries === null &&
+          opportunitySearchFilter?.categories === null &&
+          opportunitySearchFilter?.languages === null &&
+          opportunitySearchFilter?.mostViewed === null &&
+          opportunitySearchFilter?.organizations === null &&
+          opportunitySearchFilter?.types === null &&
+          opportunitySearchFilter?.zltoRewardRanges === null
+            ? "hidden "
+            : "flex flex-col gap-2"
+        } `}
       >
         <div className="flex flex-row gap-2">
           <div className="mr-4 flex items-center text-sm font-bold text-gray-dark">
@@ -457,7 +460,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
             )}
           </div>
 
-          <div className="flex items-center text-xs text-green border-2 rounded-md border-green font-semibold w-24 justify-center">
+          <div className="flex w-24 items-center justify-center rounded-md border-2 border-green text-xs font-semibold text-green">
             <button type="button" onClick={onClear}>
               {clearButtonText}
             </button>
