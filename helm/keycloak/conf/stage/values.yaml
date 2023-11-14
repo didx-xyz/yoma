@@ -1,0 +1,143 @@
+ingress:
+  internal:
+    enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/configuration-snippet: |-
+        more_clear_headers "Content-Security-Policy";
+        add_header Content-Security-Policy "frame-ancestors 'self' https://app.dev.yoma.world; frame-src 'self'; object-src 'none';" always;
+    rules:
+      - host: v3auth.stage.yoma.world
+  external:
+    enabled: false
+    annotations:
+      nginx.ingress.kubernetes.io/configuration-snippet: |-
+        more_clear_headers "Content-Security-Policy";
+        add_header Content-Security-Policy "frame-ancestors 'self' https://app.dev.yoma.world; frame-src 'self'; object-src 'none';" always;
+    rules:
+      - host: v3auth.stage.yoma.world
+        paths:
+          - path: /realms/yoma
+          - path: /resources
+          - path: /js
+
+keycloak:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 512Mi
+    limits:
+      cpu: 2500m
+      memory: 512Mi
+
+  themes:
+    enabled: true
+    ref: master
+
+  users:
+    enabled: false
+
+  extraEnvFrom: |-
+    - secretRef:
+        name: keycloak-webhook
+
+  database:
+    existingSecret: keycloak-db
+    existingSecretKey: password
+    vendor: postgres
+
+  affinity: |-
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: node.kubernetes.io/lifecycle
+                operator: In
+                values:
+                  - spot
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                {{- include "keycloak.selectorLabels" . | nindent 12 }}
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: NotIn
+                  values:
+                    - test
+            topologyKey: kubernetes.io/hostname
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                {{- include "keycloak.selectorLabels" . | nindent 12 }}
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: NotIn
+                  values:
+                    - test
+            topologyKey: topology.kubernetes.io/zone
+
+config-cli:
+  enabled: true
+  env:
+    KEYCLOAK_URL: https://v3auth.stage.yoma.world
+    IMPORT_FILES_LOCATIONS: "/init/*.yaml"
+    #KEYCLOAK_USER: xxx
+    #REALM_YOMA_ADMIN_CLI_SECRET: "xxx"
+    #SMTP_PASSWORD: "SG.xxx"
+    CLIENT_YOMA_API_URL: "https://v3api.stage.yoma.world"
+    CLIENT_YOMA_YOUTH_URL: "https://v3app.stage.yoma.world"
+    CLIENT_YOMA_OP_URL: "https://partner.dev.yoma.world"
+    CLIENT_YOMA_ADMIN_URL: "http://localhost:3002"
+    CLIENT_ATINGI_URL: https://sandbox.atingi.org
+    CLIENT_ATINGI_URL_REDIRECT: https://keycloak-uat.enovationaws.com/realms/master/broker/yoma-prod/endpoint
+    CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT: https://keycloak-uat.enovationaws.com/realms/master/broker/yoma-prod/endpoint
+    CLIENT_GOODWALL_URL: https://dev.goodlab.io
+    CLIENT_GOODWALL_URL_REDIRECT: goodwallauth://yomaredirect
+
+  init:
+    enabled: true
+    ref: master
+
+  existingSecret: keycloak-admin
+  existingSecretKey: password
+
+  extraVolumes: |-
+    - name: init
+      emptyDir: {}
+
+  extraVolumeMounts: |-
+    - name: init
+      mountPath: /init
+
+  initContainers: |-
+    {{- if .Values.init.enabled }}
+    - name: download-realm
+      image: docker.io/busybox:stable
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+      args:
+        - -c
+        - |-
+          cd /init
+          wget -O - \
+            --header="Authorization: token ${GITHUB_PAT}"\
+            --header="Accept:application/vnd.github.v3.raw" \
+            https://api.github.com/repos/didx-xyz/yoma/tarball/{{ .Values.init.ref }} | tar xz
+          cp -v ./didx-xyz-yoma-*/src/api/cicd/scripts/keycloak/* /init/
+          rm -rf ./didx-xyz-yoma-*
+      env:
+        - name: GITHUB_PAT
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-github-pat
+              key: github-pat
+      volumeMounts:
+        - name: init
+          mountPath: /init
+    {{- end }}
