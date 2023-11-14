@@ -21,6 +21,9 @@ ingress:
           - path: /resources
           - path: /js
 
+postInstallHook: # users
+  enabled: false
+
 keycloak:
   fullnameOverride: keycloak
   enabled: true
@@ -67,6 +70,8 @@ keycloak:
   themes:
     enabled: false
     ref: develop
+  users:
+    enabled: false
   extraInitContainers: |-
     - name: download-extensions
       image: docker.io/busybox:stable
@@ -116,6 +121,8 @@ keycloak:
         - /bin/sh
         - -c
         - /sbin/apk add jq && /bin/sh /scripts/users.sh
+      securityContext:
+        runAsUser: 0
       env:
         - name: KC_BASE_URL
           value: http://keycloak:8080

@@ -6,6 +6,11 @@
 # KC_CLIENT_ID="admin-cli"
 # KC_ADMIN_USER="xxxxx@example.com"
 # KC_ADMIN_PASSWORD="xxxxx"
+
+echo "${KC_CLIENT_ID}"
+echo "${KC_ADMIN_USER}"
+echo "${KC_ADMIN_PASSWORD}"
+
 KC_JWT=$(curl -s -X POST "${KC_BASE_URL}/realms/${KC_ADMIN_REALM:-master}/protocol/openid-connect/token" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'grant_type=password' \
@@ -31,12 +36,12 @@ if [ ! -z "${ADMIN_USER}" ]; then
     -H 'Content-Type: application/json' \
     -H "Authorization: bearer ${KC_JWT}" \
     -d '{
-          "username": "${ADMIN_USER}",
+          "username": "'"${ADMIN_USER}"'",
           "enabled": true,
           "emailVerified": true,
           "firstName": "Test Admin",
           "lastName": "User",
-          "email": "${ADMIN_USER}",
+          "email": "'"${ADMIN_USER}"'",
           "attributes": {
             "dateOfBirth": ["01/01/2001"],
             "phoneNumber": ["202-918-2132"],
@@ -46,16 +51,18 @@ if [ ! -z "${ADMIN_USER}" ]; then
           },
           "credentials": [{
             "type": "password",
-            "value": "${ADMIN_USER_PASSWORD}",
+            "value": "'"${ADMIN_USER_PASSWORD}"'",
             "temporary": false
           }],
           "realmRoles": ["default-roles-yoma", "Admin", "User"]
         }'
   # Get Test Admin User ID
+  echo "Geting Test Admin User: ${ADMIN_USER}"
   adminUserID=$(curl -s -X GET "${KC_BASE_URL}/admin/realms/${KC_REALM}/users?exact=true&username=${ADMIN_USER}" \
     -H 'Content-Type: application/json' \
     -H "Authorization: bearer ${KC_JWT}" | jq .[].id -r)
   # Assign Test Admin User to required roles
+  echo "Assigning Test Admin User: ${ADMIN_USER}"
   curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users/${adminUserID}/role-mappings/realm" \
     -H 'Content-Type: application/json' \
     -H "Authorization: bearer ${KC_JWT}" \
@@ -78,12 +85,12 @@ if [ ! -z "${ORG_ADMIN_USER}" ]; then
     -H 'Content-Type: application/json' \
     -H "Authorization: bearer ${KC_JWT}" \
     -d '{
-          "username": "${ORG_ADMIN_USER}",
+          "username": "'"${ORG_ADMIN_USER}"'",
           "enabled": true,
           "emailVerified": true,
           "firstName": "Test Organization Admin",
           "lastName": "User",
-          "email": "${ORG_ADMIN_USER}",
+          "email": "'"${ORG_ADMIN_USER}"'",
           "attributes": {
             "dateOfBirth": ["01/01/2001"],
             "phoneNumber": ["202-918-2132"],
@@ -93,7 +100,7 @@ if [ ! -z "${ORG_ADMIN_USER}" ]; then
           },
           "credentials": [{
             "type": "password",
-            "value": "${ORG_ADMIN_USER_PASSWORD}",
+            "value": "'"${ORG_ADMIN_USER_PASSWORD}"'",
             "temporary": false
           }],
           "realmRoles": ["default-roles-yoma", "OrganisationAdmin", "User"]
@@ -119,18 +126,18 @@ if [ ! -z "${ORG_ADMIN_USER}" ]; then
 fi
 
 # Test User
-if [ ! -z "${TEST_USER}" ]; the
+if [ ! -z "${TEST_USER}" ]; then
   echo "Creating Test User"
   curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users" \
     -H 'Content-Type: application/json' \
     -H "Authorization: bearer ${KC_JWT}" \
     -d '{
-          "username": "${TEST_USER}",
+          "username": "'"${TEST_USER}"'",
           "enabled": true,
           "emailVerified": true,
           "firstName": "Test",
           "lastName": "User",
-          "email": "${TEST_USER}",
+          "email": "'"${TEST_USER}"'",
           "attributes": {
             "dateOfBirth": ["01/01/2001"],
             "phoneNumber": ["202-918-2132"],
@@ -140,7 +147,7 @@ if [ ! -z "${TEST_USER}" ]; the
           },
           "credentials": [{
             "type": "password",
-            "value": "${TEST_USER_PASSWORD}",
+            "value": "'"${TEST_USER_PASSWORD}"'",
             "temporary": false
           }],
           "realmRoles": ["default-roles-yoma", "User"]
