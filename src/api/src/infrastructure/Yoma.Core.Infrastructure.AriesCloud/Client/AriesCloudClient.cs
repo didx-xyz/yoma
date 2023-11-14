@@ -118,6 +118,10 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
         public async Task<List<Domain.SSI.Models.Provider.Credential>?> ListCredentials(string tenantId, int? start, int? count)
         {
+            //TODO: schemaType starts with / contains filter on Schema_id
+            //TODO: orderByDescending on attrib _Date_Issued
+            //TODO: totalCount
+
             if (string.IsNullOrWhiteSpace(tenantId))
                 throw new ArgumentNullException(nameof(tenantId));
             tenantId = tenantId.Trim();

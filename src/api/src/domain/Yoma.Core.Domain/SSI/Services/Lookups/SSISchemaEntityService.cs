@@ -87,7 +87,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
                     var entities = _ssiSchemaEntityRepository.Query(true).ToList();
                     ReflectEntityTypeInformation(entities);
                     entities = entities.OrderBy(o => o.Name).ToList();
-                    entities.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.AttributeName).ToList());
+                    entities.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.NameDisplay).ToList());
                     return entities;
                 }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(SSISchemaEntity)}s'");
             }
