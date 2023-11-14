@@ -112,8 +112,8 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
       const prev = { ...opportunitySearchFilter };
       prev.categories = prev.categories ?? [];
 
-      if (prev.categories.includes(cat.id)) {
-        prev.categories = prev.categories.filter((x) => x !== cat.id);
+      if (prev.categories.includes(cat.name)) {
+        prev.categories = prev.categories.filter((x) => x !== cat.name);
       } else {
         prev.categories.push(cat.name);
       }
@@ -128,7 +128,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
       {lookups_categories && lookups_categories.length > 0 && (
         <div className="flex-col items-center justify-center gap-2 pb-8">
           <div className="flex justify-center gap-2">
-            <div className="flex gap-2 overflow-hidden md:w-[800px]">
+            <div className="flex gap-4 overflow-hidden md:w-full justify-center">
               {lookups_categories.map((item) => (
                 <OpportunityCategoryHorizontalCard
                   key={item.id}
@@ -141,18 +141,18 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               ))}
             </div>
             {/* VIEW ALL: OPEN FILTERS */}
-            <button
+            {/* <button
               type="button"
               onClick={onOpenFilterFullWindow}
-              className="flex h-[140px] w-[140px] flex-col items-center rounded-lg bg-white p-2"
+              className="flex h-[120px] aspect-square flex-col items-center rounded-lg bg-white p-2 shadow-lg -ml-10"
             >
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-center">
                   <Image
                     src={iconNextArrow}
                     alt="Icon View All"
-                    width={60}
-                    height={60}
+                    width={31}
+                    height={31}
                     sizes="100vw"
                     priority={true}
                     placeholder="blur"
@@ -160,8 +160,8 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                       shimmer(288, 182),
                     )}`}
                     style={{
-                      width: "60px",
-                      height: "60px",
+                      width: "31px",
+                      height: "31px",
                     }}
                   />
                 </div>
@@ -176,14 +176,23 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   </div>
                 </div>
               </div>
-            </button>
+            </button> */}
           </div>
         </div>
       )}
 
       <form
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
-        className="flex flex-col gap-2"
+        className={`
+        ${opportunitySearchFilter?.valueContains === null
+          && opportunitySearchFilter?.countries === null
+          && opportunitySearchFilter?.categories === null
+          && opportunitySearchFilter?.languages === null
+          && opportunitySearchFilter?.mostViewed === null
+          && opportunitySearchFilter?.organizations === null
+          && opportunitySearchFilter?.types === null
+          && opportunitySearchFilter?.zltoRewardRanges === null
+           ? "hidden " : "flex flex-col gap-2"} `}
       >
         <div className="flex flex-row gap-2">
           <div className="mr-4 flex items-center text-sm font-bold text-gray-dark">
@@ -344,7 +353,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   value={lookups_organisations
                     .filter((c) => value?.includes(c.name))
                     .map((c) => ({ value: c.name, label: c.name }))}
-                  placeholder="Organisation"
+                  placeholder="Opportunity provider"
                   components={{
                     ValueContainer,
                   }}
@@ -388,7 +397,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   value={lookups_commitmentIntervals
                     .filter((c) => value?.includes(c.id))
                     .map((c) => ({ value: c.id, label: c.name }))}
-                  placeholder="Effort"
+                  placeholder="Time to invest"
                   components={{
                     ValueContainer,
                   }}
@@ -448,7 +457,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
             )}
           </div>
 
-          <div className="flex items-center text-xs text-gray-dark">
+          <div className="flex items-center text-xs text-green border-2 rounded-md border-green font-semibold w-24 justify-center">
             <button type="button" onClick={onClear}>
               {clearButtonText}
             </button>

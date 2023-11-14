@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { IoMdClock, IoMdPerson } from "react-icons/io";
 import { shimmer, toBase64 } from "src/lib/image";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import iconRocket from "public/images/icon-rocket.svg";
+import iconClock from "public/images/icon-clock.svg";
+import iconUser from "public/images/icon-user.svg";
+import iconZlto from "public/images/icon-zlto.svg";
 
 interface InputProps {
   data: OpportunityInfo;
@@ -27,25 +29,25 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
     <Link
       href={`/opportunities/${data.id}`}
       //onClick={handleClick}
-      className="flex h-[285px] min-w-[310px] flex-col rounded-lg bg-white p-3"
+      className="flex aspect-square min-w-[300px] flex-col rounded-lg bg-white p-5 gap-1 hover:scale-105 transition relative"
     >
       <div className="flex flex-row">
-        <div className="flex flex-grow flex-row">
-          <div className="flex flex-grow flex-col">
-            <h1 className="max-w-[220px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark">
+        <div className="flex flex-row">
+          <div className="flex flex-grow flex-col w-3/5">
+            <h1 className="max-w-[220px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark">
               {data.organizationName}
             </h1>
-            <h2 className="max-h-[75px] max-w-[220px] overflow-hidden text-ellipsis text-base font-bold">
+            <h2 className="max-h-[80px] max-w-[220px] overflow-hidden text-ellipsis text-[18px] leading-tight font-semibold line-clamp-3">
               {data.title}
             </h2>
           </div>
-          <div className="flex flex-row items-start">
+          <div className="absolute right-1 top-1">
             {!data.organizationLogoURL && (
               <Image
                 src={iconRocket}
                 alt="Icon Rocket"
-                width={60}
-                height={60}
+                width={80}
+                height={80}
                 sizes="100vw"
                 priority={true}
                 placeholder="blur"
@@ -57,8 +59,8 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
                     showGreenTopBorder === true ? "none" : "8px",
                   borderTopRightRadius:
                     showGreenTopBorder === true ? "none" : "8px",
-                  width: "60px",
-                  height: "60px",
+                  width: "80px",
+                  height: "80px",
                 }}
               />
             )}
@@ -88,22 +90,58 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
         </div>
       </div>
 
-      <div className="flex max-w-[280px] flex-grow flex-row overflow-hidden text-ellipsis">
+      <div className="flex max-w-[280px] flex-row">
+        <p className="line-clamp-4 text-sm font-light text-[rgba(84, 88, 89, 1)]">
         {data.description}
+        </p>
       </div>
 
-      <div className="flex flex-row items-end gap-1 overflow-hidden whitespace-nowrap pt-2 text-xs font-normal text-green-dark">
-        <div className="badge bg-green-light">
-          <IoMdClock className="mr-2 h-4 w-4" />
+      {/* BADGES */}
+      <div className="absolute bottom-5 flex flex-row gap-1 whitespace-nowrap pt-2 text-xs font-normal text-green-dark">
+        <div className="badge rounded-md bg-green-light text-[12px] text-green font-semibold">
+        <Image
+          src={iconClock}
+          alt="Icon Clock"
+          width={17}
+          height={17}
+          sizes="100vw"
+          priority={true}
+          style={{ width: "17px", height: "17px" }}
+          className="mr-1"
+        />
           {`${data?.commitmentIntervalCount} ${data?.commitmentInterval}`}
         </div>
+        <div className="badge rounded-md bg-green-light text-[12px] text-green font-semibold">Ongoing</div>
         {(data?.participantCountTotal ?? 0) > 0 && (
-          <div className="badge bg-green-light">
-            <IoMdPerson className="mr-2 h-4 w-4" />
-            {data?.participantCountTotal} enrolled
+          <div className="badge rounded-md bg-green-light text-[12px] text-green font-semibold">
+            <Image
+            src={iconUser}
+            alt="Icon User"
+            width={16}
+            height={16}
+            sizes="100vw"
+            priority={true}
+            style={{ width: "16px", height: "16px" }}
+            className="mr-1"
+          />
+            {data?.participantCountTotal}
           </div>
+         )}
+
+         {data.zltoReward && (
+         <div className="badge rounded-md bg-[#FEF4D9] text-[#F6B700] font-semibold">
+          <Image
+            src={iconZlto}
+            alt="Icon Zlto"
+            width={16}
+            height={16}
+            sizes="100vw"
+            priority={true}
+            style={{ width: "16px", height: "16px" }}
+          />
+          <span className="ml-1 text-[12px] font-semibold">{Math.ceil(data?.zltoReward)}</span>
+        </div>
         )}
-        <div className="badge bg-green-light">Ongoing</div>
       </div>
     </Link>
   );

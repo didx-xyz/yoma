@@ -34,10 +34,10 @@ export const SearchInputLarge: React.FC<InputProps> = ({
   return (
     <form onSubmit={handleSubmit} className="w-full md:max-w-[600px]">
       <div className="input-group">
-        <div className="inline-flex items-center justify-center bg-[#653A72] px-4 text-white">
+        <div className="inline-flex items-center justify-center bg-[#653A72] text-white">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
+            className="h-5 w-5 ml-5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -53,7 +53,7 @@ export const SearchInputLarge: React.FC<InputProps> = ({
         <input
           type="search"
           placeholder={placeholder ?? "Search..."}
-          className="input-sm w-full bg-[#653A72]  text-white md:input-lg focus:outline-0"
+          className="input-sm w-full bg-[#653A72] text-white focus:outline-0 placeholder-white py-5 text-sm"
           value={searchInputValue ?? ""}
           onChange={(e) => setSearchInputValue(e.target.value)}
           onFocus={(e) => (e.target.placeholder = "")}

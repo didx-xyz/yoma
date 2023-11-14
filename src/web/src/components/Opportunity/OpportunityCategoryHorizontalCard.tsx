@@ -25,7 +25,7 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
   return (
     <button
       onClick={handleClick}
-      className={`flex h-[140px] w-[140px] flex-col items-center rounded-lg p-2 ${
+      className={`flex h-[120px] aspect-square flex-col items-center rounded-lg p-2 mb-4 shadow-lg ${
         selected ? "bg-gray" : "bg-white"
       }`}
     >
@@ -35,8 +35,8 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
             <Image
               src={iconRocket}
               alt="Icon Rocket"
-              width={60}
-              height={60}
+              width={31}
+              height={31}
               sizes="100vw"
               priority={true}
               placeholder="blur"
@@ -44,8 +44,8 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
                 shimmer(288, 182),
               )}`}
               style={{
-                width: "60px",
-                height: "60px",
+                width: "31px",
+                height: "31px",
               }}
             />
           )}
@@ -53,8 +53,8 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
             <Image
               src={data.imageURL}
               alt="Organization Logo"
-              width={60}
-              height={60}
+              width={31}
+              height={31}
               sizes="100vw"
               priority={true}
               placeholder="blur"
@@ -62,19 +62,19 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
                 shimmer(288, 182),
               )}`}
               style={{
-                width: "60px",
-                height: "60px",
+                width: "31px",
+                height: "31px",
               }}
             />
           )}
         </div>
 
-        <div className="flex flex-grow flex-row">
+        <div className="flex flex-grow flex-col">
           <div className="flex flex-grow flex-col gap-1">
-            <h1 className="h-10 overflow-hidden text-ellipsis text-center text-sm font-semibold text-black">
+            <h1 className="h-12 overflow-hidden text-ellipsis text-center text-xs font-semibold text-black">
               {data.name}
             </h1>
-            <h6 className="text-center text-sm text-gray-dark">
+            <h6 className="text-center text-xs text-gray-dark">
               {data.count} available
             </h6>
           </div>

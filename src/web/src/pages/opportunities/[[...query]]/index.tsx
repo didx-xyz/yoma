@@ -10,7 +10,6 @@ import React, {
   useRef,
   useMemo,
 } from "react";
-import { IoMdOptions } from "react-icons/io";
 import ReactModal from "react-modal";
 import type { Country, Language } from "~/api/models/lookups";
 import type {
@@ -50,7 +49,7 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 // It may be called again, on a serverless function, if
 // revalidation is enabled and a new request comes in
 export const getStaticProps: GetStaticProps = async () => {
-  const opportunities_popular = await searchOpportunities({
+  const opportunities_trending = await searchOpportunities({
     pageNumber: 1,
     pageSize: 4,
     categories: null,
@@ -64,7 +63,7 @@ export const getStaticProps: GetStaticProps = async () => {
     organizations: null,
     zltoRewardRanges: null,
   });
-  const opportunities_latestCourses = await searchOpportunities({
+  const opportunities_learning = await searchOpportunities({
     pageNumber: 1,
     pageSize: 4,
     categories: null,
@@ -72,15 +71,29 @@ export const getStaticProps: GetStaticProps = async () => {
     countries: null,
     languages: null,
     types: null,
-    valueContains: null,
+    valueContains: 'Learning',
     commitmentIntervals: null,
     mostViewed: null,
     organizations: null,
     zltoRewardRanges: null,
   });
-  const opportunities_allCourses = await searchOpportunities({
+  const opportunities_tasks = await searchOpportunities({
     pageNumber: 1,
     pageSize: 4,
+    categories: null,
+    includeExpired: false,
+    countries: null,
+    languages: null,
+    types: null,
+    valueContains: 'Task',
+    commitmentIntervals: null,
+    mostViewed: null,
+    organizations: null,
+    zltoRewardRanges: null,
+  });
+  const opportunities_allOpportunities = await searchOpportunities({
+    pageNumber: 1,
+    pageSize: 8,
     categories: null,
     includeExpired: false,
     countries: null,
@@ -102,9 +115,10 @@ export const getStaticProps: GetStaticProps = async () => {
 
   return {
     props: {
-      opportunities_popular,
-      opportunities_latestCourses,
-      opportunities_allCourses,
+      opportunities_trending,
+      opportunities_learning,
+      opportunities_tasks,
+      opportunities_allOpportunities,
       lookups_categories,
       lookups_countries,
       lookups_languages,
@@ -128,9 +142,10 @@ export const getStaticPaths: GetStaticPaths = () => {
 };
 
 interface InputProps {
-  opportunities_popular: OpportunitySearchResultsInfo;
-  opportunities_latestCourses: OpportunitySearchResultsInfo;
-  opportunities_allCourses: OpportunitySearchResultsInfo;
+  opportunities_trending: OpportunitySearchResultsInfo;
+  opportunities_learning: OpportunitySearchResultsInfo;
+  opportunities_tasks: OpportunitySearchResultsInfo;
+  opportunities_allOpportunities: OpportunitySearchResultsInfo;
   lookups_categories: OpportunityCategory[];
   lookups_countries: Country[];
   lookups_languages: Language[];
@@ -141,9 +156,10 @@ interface InputProps {
 }
 
 const Opportunities: NextPageWithLayout<InputProps> = ({
-  opportunities_popular,
-  opportunities_latestCourses,
-  opportunities_allCourses,
+  opportunities_trending,
+  opportunities_learning,
+  opportunities_tasks,
+  opportunities_allOpportunities,
   lookups_categories,
   lookups_countries,
   lookups_languages,
@@ -442,7 +458,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     const filterText = [
       opportunitySearchFilter.valueContains &&
         `'${opportunitySearchFilter.valueContains}'`,
-      opportunitySearchFilter.mostViewed && `'Most Viewed'`,
+      opportunitySearchFilter.mostViewed && `'Trending'`,
       opportunitySearchFilter.categories?.map((c) => `'${c}'`)?.join(", "),
       opportunitySearchFilter.countries?.map((c) => `'${c}'`)?.join(", "),
       opportunitySearchFilter.languages?.map((c) => `'${c}'`).join(", "),
@@ -575,14 +591,14 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
 
       <div className="container z-10 max-w-7xl px-2 py-1 md:py-4">
         <div className="flex flex-col gap-2 pb-2 pt-8 text-white">
-          <h3 className="flex flex-grow flex-wrap items-center justify-center">
+          <h3 className="flex flex-grow flex-wrap items-center justify-center font-semibold text-xl -mb-1">
             Find <span className="mx-2 text-orange">opportunities</span> to
             <span className="mx-2 text-orange">unlock</span> your future.
           </h3>
-          <h5 className="text-center">
+          <h6 className="text-center font-normal text-[14px] text-[#C3A2CD]">
             A learning opportunity is a self-paced online course that you can
             finish at your convenience.
-          </h5>
+          </h6>
           <div className="my-4 md:items-center md:justify-center">
             <div className="flex flex-row items-center justify-center gap-2">
               <SearchInputLarge
@@ -590,21 +606,21 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
                 placeholder="What are you looking for today?"
                 defaultValue={query as string}
               />
-              <button
+              {/* <button
                 type="button"
                 className="btn btn-primary"
                 onClick={() => {
                   setFilterFullWindowVisible(!filterFullWindowVisible);
                 }}
               >
-                <IoMdOptions className="h-6 w-6" />
-              </button>
+                <IoMdOptions className="h-5 w-5" />
+              </button> */}
             </div>
           </div>
         </div>
 
         {/* FILTER ROW: CATEGORIES DROPDOWN FILTERS (SELECT) FOR COUNTRIES, LANGUAGES, TYPE, ORGANISATIONS ETC  */}
-        <div className="mb-8 hidden md:flex">
+        <div className="hidden md:flex mb-4 mt-[3rem]">
           <OpportunityFilterHorizontal
             htmlRef={myRef.current!}
             opportunitySearchFilter={opportunitySearchFilter}
@@ -626,32 +642,43 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
 
         {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
         {!isSearchExecuted && (
-          <div className="flex flex-col gap-8">
-            {/* POPULAR */}
-            {(opportunities_popular?.totalCount ?? 0) > 0 && (
+          <div className="flex flex-col gap-6">
+            {/* TRENDING */}
+            {(opportunities_trending?.totalCount ?? 0) > 0 && (
               <OpportunityRow
-                id="opportunities_popular"
-                title="Popular 🔥"
-                data={opportunities_popular}
+                id="opportunities_trending"
+                title="Trending 🔥"
+                data={opportunities_trending}
                 viewAllUrl="/opportunities?mostViewed=true"
               />
             )}
 
-            {/* LATEST COURCES */}
-            {(opportunities_latestCourses?.totalCount ?? 0) > 0 && (
+            {/* LEARNING COURSES */}
+            {(opportunities_learning?.totalCount ?? 0) > 0 && (
               <OpportunityRow
-                id="opportunities_latestCourses"
-                title="Latest courses 📚"
-                data={opportunities_latestCourses}
+                id="opportunities_learning"
+                title="Learning Courses 📚"
+                data={opportunities_learning}
+                viewAllUrl="/opportunities?types=Learning"
               />
             )}
 
-            {/* ALL COURSES */}
-            {(opportunities_allCourses?.totalCount ?? 0) > 0 && (
+            {/* IMPACT TASKS */}
+            {(opportunities_tasks?.totalCount ?? 0) > 0 && (
               <OpportunityRow
-                id="opportunities_allCourses"
-                title="All courses"
-                data={opportunities_allCourses}
+                id="opportunities_tasks"
+                title="Impact Tasks ⚡"
+                data={opportunities_tasks}
+                viewAllUrl="/opportunities?types=Task"
+              />
+            )}
+
+            {/* ALL OPPORTUNITIES */}
+            {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
+              <OpportunityRow
+                id="opportunities_allOpportunities"
+                title="All Opportunities"
+                data={opportunities_allOpportunities}
               />
             )}
 
