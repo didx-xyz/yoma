@@ -148,7 +148,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 result.Attributes.Add(new SSICredentialAttribute { Name = property.AttributeName, NameDisplay = property.NameDisplay, ValueDisplay = ParseCredentialAttributeValue(property, attribute) });
             }
 
-            result.Attributes = result.Attributes.OrderBy(o => o.NameDisplay).ToList(); 
+            result.Attributes = result.Attributes.OrderBy(o => o.NameDisplay).ToList();
             return result;
         }
 
