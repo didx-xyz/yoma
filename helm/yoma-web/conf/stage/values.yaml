@@ -1,0 +1,12 @@
+image:
+  repository: ghcr.io/didx-xyz/yoma-web
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "master"
+
+ingress:
+  internal:
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    rules:
+      - host: v3app.stage.yoma.world

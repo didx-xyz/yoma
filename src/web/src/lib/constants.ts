@@ -20,3 +20,7 @@ export const PAGE_SIZE = 10;
 export const ROLE_ADMIN = "Admin";
 export const ROLE_ORG_ADMIN = "OrganisationAdmin";
 export const ROLE_USER = "User";
+export const OPPORTUNITY_TYPES_LEARNING = [
+  "25F5A835-C3F7-43CA-9840-D372A1D26694",
+];
+export const OPPORTUNITY_TYPES_TASK = ["F12A9D90-A8F6-4914-8CA5-6ACF209F7312"];
