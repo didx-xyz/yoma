@@ -159,6 +159,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 {
                     case Core.Environment.Local:
                     case Core.Environment.Development:
+                    case Core.Environment.Staging: //TODO: Remove this when we have a proper staging environment (seeded for demo purposes)
                         break;
                     default:
                         _logger.LogInformation("SSI seeding skipped for environment '{environment}'", _environmentProvider.Environment);
