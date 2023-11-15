@@ -70,7 +70,7 @@ postInstallHook:
       valueFrom:
         secretKeyRef:
           name: keycloak-users
-          key: admin-user
+          key: org-admin-user
     - name: ORG_ADMIN_USER_PASSWORD
       valueFrom:
         secretKeyRef:
@@ -80,7 +80,7 @@ postInstallHook:
       valueFrom:
         secretKeyRef:
           name: keycloak-users
-          key: admin-user
+          key: test-user
     - name: TEST_USER_PASSWORD
       valueFrom:
         secretKeyRef:

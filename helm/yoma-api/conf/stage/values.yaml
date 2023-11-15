@@ -72,7 +72,9 @@ postInstallHook:
             --header="Accept:application/vnd.github.v3.raw" \
             https://api.github.com/repos/didx-xyz/yoma/tarball/293-initial-stage-environment-assets | tar xz
           cp -v ./didx-xyz-yoma-*/src/api/cicd/scripts/sqlserver-init/* /init/
-          sed -i "s/{email}/$ADMIN_USER/g" /init/post-stage.sql
+          sed -i "s/{admin_user}/$ADMIN_USER/g" /init/post-stage.sql
+          sed -i "s/{org_admin_user}/$ORG_ADMIN_USER/g" /init/post-stage.sql
+          sed -i "s/{test_user}/$TEST_USER/g" /init/post-stage.sql
           rm -rf ./didx-xyz-yoma-*
       env:
         - name: GITHUB_PAT
@@ -85,6 +87,16 @@ postInstallHook:
             secretKeyRef:
               name: keycloak-users
               key: admin-user
+        - name: ORG_ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-users
+              key: org-admin-user
+        - name: TEST_USER
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-users
+              key: test-user
       volumeMounts:
         - name: init
           mountPath: /init
