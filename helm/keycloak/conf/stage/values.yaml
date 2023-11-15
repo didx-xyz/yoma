@@ -66,7 +66,26 @@ postInstallHook:
         secretKeyRef:
           name: keycloak-users
           key: admin-user-password
-
+    - name: ORG_ADMIN_USER
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-users
+          key: admin-user
+    - name: ORG_ADMIN_USER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-users
+          key: admin-user-password
+    - name: TEST_USER
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-users
+          key: admin-user
+    - name: TEST_USER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-users
+          key: admin-user-password
   volumes:
     - name: scripts
       emptyDir: {}

@@ -30,7 +30,7 @@ volumeMounts:
     subPath: appsettings.Development.json
 
 postInstallHook:
-  enabled: false
+  enabled: true
   image:
     repository: ghcr.io/didx-xyz/mssql-server
     pullPolicy: Always
@@ -82,3 +82,6 @@ postInstallHook:
       volumeMounts:
         - name: init
           mountPath: /init
+
+readinessProbe:
+  enabled: true

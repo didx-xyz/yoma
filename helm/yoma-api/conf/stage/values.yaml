@@ -30,7 +30,7 @@ volumeMounts:
     subPath: appsettings.Staging.json
 
 postInstallHook:
-  enabled: false
+  enabled: true
   image:
     repository: ghcr.io/didx-xyz/mssql-server
     pullPolicy: Always
@@ -41,7 +41,7 @@ postInstallHook:
     - /init/post.sh
     - mssql-mssqlserver-2022
     - sa
-    - /init/post.sql
+    - /init/post-stage.sql
   env:
     ACCEPT_EULA: "Y"
     SA_PASSWORD: "Password1"
@@ -70,8 +70,9 @@ postInstallHook:
           wget -O - \
             --header="Authorization: token ${GITHUB_PAT}"\
             --header="Accept:application/vnd.github.v3.raw" \
-            https://api.github.com/repos/didx-xyz/yoma/tarball/master | tar xz
+            https://api.github.com/repos/didx-xyz/yoma/tarball/293-initial-stage-environment-assets | tar xz
           cp -v ./didx-xyz-yoma-*/src/api/cicd/scripts/sqlserver-init/* /init/
+          sed -i "s/{email}/$ADMIN_USER/g" /init/post-stage.sql
           rm -rf ./didx-xyz-yoma-*
       env:
         - name: GITHUB_PAT
@@ -79,6 +80,14 @@ postInstallHook:
             secretKeyRef:
               name: keycloak-github-pat
               key: github-pat
+        - name: ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-users
+              key: admin-user
       volumeMounts:
         - name: init
           mountPath: /init
+
+readinessProbe:
+  enabled: true
