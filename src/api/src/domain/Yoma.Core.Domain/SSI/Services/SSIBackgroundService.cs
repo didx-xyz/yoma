@@ -67,21 +67,14 @@ namespace Yoma.Core.Domain.SSI.Services
         #endregion
 
         #region Public Members
+        /// <summary>
+        /// Seed the default schemas for Opportunity and YoID (all environments)
+        /// </summary>
         public void SeedSchemas()
         {
             lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
-                switch (_environmentProvider.Environment) //locally en development only
-                {
-                    case Core.Environment.Local:
-                    case Core.Environment.Development:
-                        break;
-                    default:
-                        _logger.LogInformation("SSI seeding skipped for environment '{environment}'", _environmentProvider.Environment);
-                        return;
-                }
-
-                _logger.LogInformation("Processing SSI seeding");
+                _logger.LogInformation("Processing SSI default schema seeding");
 
                 SeedSchema(ArtifactType.Indy, //TODO: Ld_proof
                      SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
@@ -92,7 +85,7 @@ namespace Yoma.Core.Domain.SSI.Services
                     _appSettings.SSISchemaFullNameYoID,
                     new List<string> { "Organization_Name", "Organization_LogoURL", "User_DisplayName", "User_FirstName", "User_Surname", "User_DateOfBirth", "User_Email", "User_Gender", "User_Country" }).Wait();
 
-                _logger.LogInformation("Processed SSI seeding");
+                _logger.LogInformation("Processed SSI default schema seeding");
             }
         }
 

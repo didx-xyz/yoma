@@ -139,19 +139,17 @@ namespace Yoma.Core.Domain
 
             //ssi
             var ssiTenantBackgroundService = scope.ServiceProvider.GetRequiredService<ISSIBackgroundService>();
+            BackgroundJob.Enqueue(() => ssiTenantBackgroundService.SeedSchemas()); //seed default schemas
             RecurringJob.AddOrUpdate($"SSI Tenant Creation",
                () => ssiTenantBackgroundService.ProcessTenantCreation(), options.SSITenantCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
             RecurringJob.AddOrUpdate($"SSI Credential Issuance",
                () => ssiTenantBackgroundService.ProcessCredentialIssuance(), options.SSICredentialIssuanceSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-
+            
             //seeding (local and development)
             switch (environment)
             {
                 case Core.Environment.Local:
                 case Core.Environment.Development:
-                    //ssi
-                    BackgroundJob.Enqueue(() => ssiTenantBackgroundService.SeedSchemas());
-
                     //organization
                     BackgroundJob.Schedule(() => organizationBackgroundService.SeedLogoAndDocuments(), TimeSpan.FromMinutes(5));
 
