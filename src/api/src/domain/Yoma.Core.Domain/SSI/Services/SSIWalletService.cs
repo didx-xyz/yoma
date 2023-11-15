@@ -81,6 +81,8 @@ namespace Yoma.Core.Domain.SSI.Services
             foreach (var item in items)
                 result.Items.Add(await ParseCredential<SSICredentialInfo>(item));
 
+            //TODO: Remove; OrderByDesc by provider (pending wql documentation)
+            result.Items = result.Items.OrderByDescending(o => o.DateIssued).ToList();
             return result;
         }
 

@@ -6,6 +6,6 @@ namespace Yoma.Core.Domain.LaborMarketProvider.Models
 
         public string Name { get; set; }
 
-        public string InfoURL { get; set; }
+        public string? InfoURL { get; set; }
     }
 }
