@@ -30,7 +30,7 @@ volumeMounts:
     subPath: appsettings.Development.json
 
 postInstallHook:
-  enabled: true
+  enabled: false
   image:
     repository: ghcr.io/didx-xyz/mssql-server
     pullPolicy: Always
