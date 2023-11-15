@@ -75,7 +75,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           {
             organizations: [id],
             pageNumber: page ? parseInt(page.toString()) : 1,
-            pageSize: 10,
+            pageSize: PAGE_SIZE,
             opportunity: opportunity?.toString() ?? null,
             userId: null,
             valueContains: query?.toString() ?? null,
@@ -132,7 +132,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       searchMyOpportunitiesAdmin({
         organizations: [id],
         pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: 10,
+        pageSize: PAGE_SIZE,
         opportunity: opportunity?.toString() ?? null,
         userId: null,
         valueContains: query?.toString() ?? null,

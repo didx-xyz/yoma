@@ -1,4 +1,4 @@
-import type { FormFile } from "./common";
+import type { FormFile, PaginationFilter } from "./common";
 
 export interface OrganizationRequestBase {
   id: string;
@@ -91,11 +91,6 @@ export enum OrganizationStatus {
 export interface OrganizationSearchFilter extends PaginationFilter {
   valueContains: string | null;
   statuses: Status[] | null;
-}
-
-export interface PaginationFilter {
-  pageNumber: number | null;
-  pageSize: number | null;
 }
 
 export enum Status {
