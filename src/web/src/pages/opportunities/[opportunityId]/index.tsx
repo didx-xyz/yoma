@@ -17,6 +17,7 @@ import {
   IoMdCheckmark,
   IoMdClose,
   IoMdFingerPrint,
+  IoIosArrowBack,
 } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
@@ -151,22 +152,25 @@ const OpportunityDetails: NextPageWithLayout<{
     <>
       <PageBackground />
 
-      <div className="container z-10 max-w-5xl px-2 py-4">
+      <div className="container z-10 mt-28 max-w-7xl px-2 py-4">
         <div className="flex flex-col gap-2 py-4 sm:flex-row">
           {/* BREADCRUMB */}
           <div className="breadcrumbs flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
             <ul>
               <li>
                 <Link
-                  className="font-bold text-white hover:text-gray"
+                  className="text-white hover:text-gray"
                   href={`/opportunities`}
                 >
-                  <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
+                  <IoIosArrowBack className="mr-3 inline-block h-6 w-6 rounded-full bg-purple-shade pr-[2px]" />
                   Opportunities
                 </Link>
               </li>
               <li>
-                <div className="max-w-[600px]  text-white">
+                <p className="-mx-4 font-semibold text-white">|</p>
+              </li>
+              <li>
+                <div className="max-w-[600px] text-white">
                   {opportunity?.title}
                 </div>
               </li>
@@ -431,11 +435,13 @@ const OpportunityDetails: NextPageWithLayout<{
 
         {opportunity && (
           <div className="flex flex-col gap-4">
-            <div className="flex flex-grow flex-row gap-1 rounded-lg bg-white p-6">
+            <div className="relative flex flex-grow flex-row gap-1 rounded-lg bg-white p-6 shadow-lg">
               <div className="flex flex-grow flex-col gap-1">
-                <div className="flex flex-grow flex-col ">
-                  <h4 className="text-black">{opportunity.title}</h4>
-                  <h6 className="text-gray-dark">
+                <div className="flex flex-grow flex-col">
+                  <h4 className="text-2xl font-semibold text-black">
+                    {opportunity.title}
+                  </h4>
+                  <h6 className="text-sm text-gray-dark">
                     By {opportunity.organizationName}
                   </h6>
                   {/* BADGES */}
@@ -451,7 +457,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         style={{ width: "20px", height: "20px" }}
                       />
 
-                      <span className="ml-1">{`${opportunity.commitmentIntervalCount} ${opportunity.commitmentInterval}`}</span>
+                      <span className="ml-1 text-xs">{`${opportunity.commitmentIntervalCount} ${opportunity.commitmentInterval}`}</span>
                     </div>
 
                     {spotsLeft > 0 && (
@@ -459,13 +465,31 @@ const OpportunityDetails: NextPageWithLayout<{
                         <Image
                           src={iconUser}
                           alt="Icon User"
-                          width={20}
-                          height={20}
+                          width={18}
+                          height={18}
                           sizes="100vw"
                           priority={true}
-                          style={{ width: "20px", height: "20px" }}
+                          style={{ width: "18px", height: "18px" }}
                         />
-                        <span className="ml-1"> {spotsLeft} spots left</span>
+                        <span className="ml-1 text-xs">
+                          {" "}
+                          {spotsLeft} spots left
+                        </span>
+                      </div>
+                    )}
+
+                    {opportunity?.type && (
+                      <div className="badge h-6 rounded-md bg-[#E7E8F5] text-[#5F65B9]">
+                        <Image
+                          src={iconTopics}
+                          alt="Icon Type"
+                          width={18}
+                          height={18}
+                          sizes="100vw"
+                          priority={true}
+                          style={{ width: "18px", height: "18px" }}
+                        />
+                        <span className="ml-1 text-xs">{opportunity.type}</span>
                       </div>
                     )}
 
@@ -474,13 +498,16 @@ const OpportunityDetails: NextPageWithLayout<{
                         <Image
                           src={iconZlto}
                           alt="Icon Zlto"
-                          width={20}
-                          height={20}
+                          width={18}
+                          height={18}
                           sizes="100vw"
                           priority={true}
-                          style={{ width: "20px", height: "20px" }}
+                          style={{ width: "18px", height: "18px" }}
                         />
-                        <span className="ml-1"> {opportunity.zltoReward}</span>
+                        <span className="ml-1 text-xs">
+                          {" "}
+                          {opportunity.zltoReward}
+                        </span>
                       </div>
                     )}
 
@@ -490,13 +517,13 @@ const OpportunityDetails: NextPageWithLayout<{
                         <Image
                           src={iconAction}
                           alt="Icon Action"
-                          width={20}
-                          height={20}
+                          width={18}
+                          height={18}
                           sizes="100vw"
                           priority={true}
-                          style={{ width: "20px", height: "20px" }}
+                          style={{ width: "18px", height: "18px" }}
                         />
-                        <span className="ml-1">Action</span>
+                        <span className="ml-1 text-xs">Action</span>
                       </div>
                     )}
                     {opportunity?.status == "Expired" && (
@@ -504,6 +531,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         Expired
                       </div>
                     )}
+
                     {/* {opportunity?.status == "Inactive" && (
                       <div className="badge h-6 rounded-md bg-green-light text-red-400">
                         Inactive
@@ -531,7 +559,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     <div className="flex flex-grow gap-4">
                       <button
                         type="button"
-                        className="btn btn-xs rounded-full bg-green normal-case text-white md:btn-sm lg:btn-md md:w-[250px]"
+                        className="btn btn-xs rounded-full bg-green normal-case text-white md:btn-sm md:h-10 md:w-[250px]"
                         onClick={() => setGotoOpportunityDialogVisible(true)}
                       >
                         <Image
@@ -558,7 +586,7 @@ const OpportunityDetails: NextPageWithLayout<{
                               !verificationStatusIsLoading && (
                                 <button
                                   type="button"
-                                  className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm lg:btn-md md:w-[300px]"
+                                  className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm md:h-10 md:w-[300px]"
                                   onClick={() =>
                                     user
                                       ? setCompleteOpportunityDialogVisible(
@@ -634,10 +662,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           </button>
                         )}
                     </div>
-                    <div className="flex gap-4 lg:justify-end">
+                    <div className="flex gap-4 md:justify-end lg:justify-end">
                       <button
                         type="button"
-                        className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm lg:btn-md md:w-[100px]"
+                        className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm md:h-10 md:w-[100px]"
                       >
                         <Image
                           src={iconBookmark}
@@ -654,7 +682,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                       <button
                         type="button"
-                        className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm lg:btn-md md:w-[110px]"
+                        className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm md:h-10 md:w-[100px]"
                       >
                         <Image
                           src={iconShare}
@@ -673,30 +701,30 @@ const OpportunityDetails: NextPageWithLayout<{
                 </div>
               </div>
               {/* company logo */}
-              <div className="flex h-24 w-28 items-center justify-center rounded-full border-green-dark bg-white p-4 shadow-lg">
+              <div className="absolute right-6 top-4 h-16 w-16 items-center justify-center rounded-full border-green-dark bg-white p-3 shadow-lg">
                 <Image
                   src={opportunity?.organizationLogoURL ?? iconSuccess}
                   alt="Icon Success"
-                  width={80}
-                  height={80}
+                  width={40}
+                  height={40}
                   sizes="100vw"
                   priority={true}
                   style={{
-                    width: "80px",
-                    height: "80px",
+                    width: "40px",
+                    height: "40px",
                   }}
                 />
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 md:flex-row">
-              <div className="flex-grow rounded-lg bg-white p-6 md:w-[66%]">
+            <div className="flex flex-col gap-4 md:flex-row">
+              <div className="flex-grow rounded-lg bg-white p-6 shadow-lg md:w-[66%]">
                 {opportunity?.description}
               </div>
-              <div className="flex flex-col gap-2 md:w-[33%]">
+              <div className="flex flex-col gap-2 shadow-lg md:w-[33%]">
                 <div className="flex flex-col gap-1 rounded-lg bg-white p-6">
                   <div>
-                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                    <div className="mt-2 flex flex-row items-center gap-1 text-sm font-bold">
                       <Image
                         src={iconSkills}
                         alt="Icon Skills"
@@ -713,31 +741,34 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.skills?.map((item) => (
                         <div
                           key={item.id}
-                          className="badge min-h-6 mr-2 h-full rounded-md border-0 bg-green text-white"
+                          className="badge min-h-6 mr-1 h-full rounded-md border-0 bg-green text-xs text-white"
                         >
                           {item.name}
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="divider mt-1" />
+                  <div className="divider mt-2" />
                   <div>
                     <div className="flex flex-row items-center gap-1 text-sm font-bold">
                       <Image
                         src={iconClock}
                         alt="Icon Clock"
-                        width={20}
-                        height={20}
+                        width={23}
+                        height={23}
                         sizes="100vw"
                         priority={true}
-                        style={{ width: "20px", height: "20px" }}
+                        style={{ width: "23px", height: "23px" }}
                       />
 
                       <span className="ml-1">How much time you will need</span>
                     </div>
-                    <div className="my-2">{`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}`}</div>
+                    {/* <div className="my-2 text-sm">{`This task should not take you more than ${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}`}</div> */}
+                    <div className="my-2 text-sm">{`This task should not take you more than ${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
+                      opportunity?.commitmentIntervalCount > 1 ? "s" : ""
+                    }`}</div>
                   </div>
-                  <div className="divider mt-1" />
+                  <div className="divider mt-2" />
                   <div>
                     <div className="flex flex-row items-center gap-1 text-sm font-bold">
                       <Image
@@ -756,14 +787,14 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.categories?.map((item) => (
                         <div
                           key={item.id}
-                          className="badge min-h-6 mr-2 h-full rounded-md bg-green text-white"
+                          className="badge min-h-6 mr-1 h-full rounded-md bg-green text-xs text-white"
                         >
                           {item.name}
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="divider mt-1" />
+                  <div className="divider mt-2" />
                   <div>
                     <div className="flex flex-row items-center gap-1 text-sm font-bold">
                       <Image
@@ -782,14 +813,14 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.languages?.map((item) => (
                         <div
                           key={item.id}
-                          className="badge min-h-6 mr-2 h-full rounded-md bg-green text-white"
+                          className="badge min-h-6 mr-1 h-full rounded-md bg-green text-xs text-white"
                         >
                           {item.name}
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="divider mt-1" />
+                  <div className="divider mt-2" />
                   <div>
                     <div className="flex flex-row items-center gap-1 text-sm font-bold">
                       <Image
@@ -804,7 +835,9 @@ const OpportunityDetails: NextPageWithLayout<{
 
                       <span className="ml-1">Course difficulty</span>
                     </div>
-                    <div className="my-2">{opportunity?.difficulty}</div>
+                    <div className="my-2 text-sm">
+                      {opportunity?.difficulty}
+                    </div>
                   </div>
                 </div>
               </div>
