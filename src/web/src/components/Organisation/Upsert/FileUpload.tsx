@@ -48,7 +48,8 @@ export const FileUploader: React.FC<InputProps> = ({
       dropValidation
       acceptedFileTypes={fileTypes}
       //labelIdle='Drag & Drop your files or <span class="filepond--label-action">Browse</span>'
-      labelIdle='<span class="btn btn-sm btn-primary normal-case">Choose File</span>'
+      // labelIdle='<span class="btn btn-sm btn-primary normal-case">Choose File</span>'
+      labelIdle='<span class="btn btn-sm rounded-full normal-case font-normal bg-white text-black">Choose File</span>'
       //={"-p-4 -m-4"}
       allowImageExifOrientation={true}
       credits={false}

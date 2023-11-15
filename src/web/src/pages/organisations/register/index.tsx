@@ -137,24 +137,26 @@ const OrganisationCreate: NextPageWithLayout = () => {
   }, [step]);
 
   return (
-    <div className="container max-w-5xl px-2 py-8">
+    <div className="w-full bg-purple px-2 py-12">
       {isLoading && <Loading />}
-
-      <h2 className="pb-8 font-bold">Register Organisation</h2>
 
       {/* CONTENT */}
       <div className="flex items-center justify-center">
-        <div className="flex w-full max-w-2xl flex-col rounded-lg bg-white p-8">
+        <div className="flex w-full max-w-lg flex-col rounded-lg bg-white p-12">
           {step == 1 && (
             <>
-              <ul className="steps steps-horizontal w-full">
+              <ul className="steps steps-horizontal mx-auto w-72">
                 <li className="step step-success"></li>
                 <li className="step"></li>
                 <li className="step"></li>
               </ul>
-              <div className="flex flex-col text-center">
-                <h2>Organisation details</h2>
-                <p className="my-2">General organisation information</p>
+              <div className="my-4 flex flex-col text-center">
+                <h2 className="font-semibold tracking-wide">
+                  Organisation details
+                </h2>
+                <p className="my-2 text-gray-dark">
+                  General organisation information
+                </p>
               </div>
 
               <OrgInfoEdit
@@ -169,15 +171,17 @@ const OrganisationCreate: NextPageWithLayout = () => {
 
           {step == 2 && (
             <>
-              <ul className="steps steps-horizontal w-full">
-                <li className="step"></li>
+              <ul className="steps steps-horizontal mx-auto w-72">
+                <li className="step step-success"></li>
                 <li className="step step-success"></li>
                 <li className="step"></li>
               </ul>
-              <div className="flex flex-col text-center">
-                <h2>Organisation roles</h2>
-                <p className="my-2">
-                  What role will your organisation play within Yoma?
+              <div className="my-4 flex flex-col text-center">
+                <h2 className="font-semibold tracking-wide">
+                  Organisation roles
+                </h2>
+                <p className="my-2 text-gray-dark">
+                  Organisation role information
                 </p>
               </div>
 
@@ -195,14 +199,16 @@ const OrganisationCreate: NextPageWithLayout = () => {
 
           {step == 3 && (
             <>
-              <ul className="steps steps-horizontal w-full">
-                <li className="step"></li>
-                <li className="step"></li>
+              <ul className="steps steps-horizontal mx-auto w-72">
+                <li className="step step-success"></li>
+                <li className="step step-success"></li>
                 <li className="step step-success"></li>
               </ul>
-              <div className="flex flex-col text-center">
-                <h2>Organisation Admins</h2>
-                <p className="my-2">
+              <div className="my-4 flex flex-col text-center">
+                <h2 className="font-semibold tracking-wide">
+                  Organisation Admins
+                </h2>
+                <p className="my-2 text-gray-dark">
                   Who can login and manage the organisation?
                 </p>
               </div>
@@ -212,7 +218,7 @@ const OrganisationCreate: NextPageWithLayout = () => {
                 onCancel={(data) => onSubmitStep(2, data)}
                 onSubmit={(data) => onSubmitStep(4, data)}
                 cancelButtonText="Back"
-                submitButtonText="Next"
+                submitButtonText="Submit for approval"
               />
             </>
           )}
