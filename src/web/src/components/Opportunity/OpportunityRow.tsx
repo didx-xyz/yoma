@@ -63,7 +63,7 @@ export const OpportunityRow: React.FC<InputProps> = ({
             {viewAllUrl && (
               <Link
                 href={viewAllUrl}
-                className="items-end text-sm text-gray-dark"
+                className="my-auto items-end text-sm text-gray-dark"
               >
                 View all
               </Link>

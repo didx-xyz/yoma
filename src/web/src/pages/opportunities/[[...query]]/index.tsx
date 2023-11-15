@@ -38,12 +38,17 @@ import { SearchInputLarge } from "~/components/SearchInputLarge";
 import { smallDisplayAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
-import { PAGE_SIZE } from "~/lib/constants";
+import {
+  PAGE_SIZE,
+  OPPORTUNITY_TYPES_LEARNING,
+  OPPORTUNITY_TYPES_TASK,
+} from "~/lib/constants";
 import { useQuery } from "@tanstack/react-query";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { OpportunityFilterHorizontal } from "~/components/Opportunity/OpportunityFilterHorizontal";
 import { Loading } from "~/components/Status/Loading";
 import { PaginationButtons } from "~/components/PaginationButtons";
+import { IoMdOptions } from "react-icons/io";
 
 // This function gets called at build time on server-side.
 // It may be called again, on a serverless function, if
@@ -70,8 +75,8 @@ export const getStaticProps: GetStaticProps = async () => {
     includeExpired: false,
     countries: null,
     languages: null,
-    types: null,
-    valueContains: "Learning",
+    types: OPPORTUNITY_TYPES_LEARNING,
+    valueContains: null,
     commitmentIntervals: null,
     mostViewed: null,
     organizations: null,
@@ -84,8 +89,8 @@ export const getStaticProps: GetStaticProps = async () => {
     includeExpired: false,
     countries: null,
     languages: null,
-    types: null,
-    valueContains: "Task",
+    types: OPPORTUNITY_TYPES_TASK,
+    valueContains: null,
     commitmentIntervals: null,
     mostViewed: null,
     organizations: null,
@@ -595,7 +600,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
             Find <span className="mx-2 text-orange">opportunities</span> to
             <span className="mx-2 text-orange">unlock</span> your future.
           </h3>
-          <h6 className="text-center text-[14px] font-normal text-[#C3A2CD]">
+          <h6 className="text-center text-[14px] font-normal text-purple-soft">
             A learning opportunity is a self-paced online course that you can
             finish at your convenience.
           </h6>
@@ -606,7 +611,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
                 placeholder="What are you looking for today?"
                 defaultValue={query as string}
               />
-              {/* <button
+              <button
                 type="button"
                 className="btn btn-primary"
                 onClick={() => {
@@ -614,13 +619,13 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
                 }}
               >
                 <IoMdOptions className="h-5 w-5" />
-              </button> */}
+              </button>
             </div>
           </div>
         </div>
 
         {/* FILTER ROW: CATEGORIES DROPDOWN FILTERS (SELECT) FOR COUNTRIES, LANGUAGES, TYPE, ORGANISATIONS ETC  */}
-        <div className="mb-4 mt-[3rem] hidden md:flex">
+        <div className="mb-4 mt-10 hidden md:flex">
           <OpportunityFilterHorizontal
             htmlRef={myRef.current!}
             opportunitySearchFilter={opportunitySearchFilter}
@@ -705,7 +710,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         {/* SEARCH EXECUTED, SHOW RESULTS */}
         {isSearchExecuted && (
           <>
-            <div className="flex flex-col items-center rounded-lg bg-white p-4">
+            <div className="flex flex-col items-center rounded-lg p-4">
               <div className="flex w-full flex-col gap-2">
                 {/* NO ROWS */}
                 {!searchResults ||
