@@ -88,7 +88,7 @@ const LocationPicker: React.FC<InputProps> = ({
   return (
     <div
       key={id}
-      className="flex w-full flex-col rounded-lg border-dotted bg-gray"
+      className="flex w-full flex-col rounded-lg border-dotted bg-gray-light"
     >
       <div className="flex w-full flex-row">
         <div className="flex items-center p-8">

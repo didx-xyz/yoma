@@ -54,13 +54,13 @@ export const Navbar: React.FC = () => {
                   >
                     Home
                   </Link>
-                  <Link
+                  {/* <Link
                     href="/about"
                     className="px-7 py-3 text-white hover:brightness-50"
                     onClick={() => setMenuVisible(false)}
                   >
                     About
-                  </Link>
+                  </Link> */}
                   <Link
                     href="/opportunities"
                     className="px-7 py-3 text-white hover:brightness-50"
@@ -167,15 +167,15 @@ export const Navbar: React.FC = () => {
                     Home
                   </Link>
                 </li>
-                <li tabIndex={1}>
+                {/* <li tabIndex={1}>
                   <Link
                     href="/about"
                     className="text-white hover:brightness-50"
                   >
                     About
                   </Link>
-                </li>
-                <li tabIndex={2}>
+                </li> */}
+                <li tabIndex={1}>
                   <Link
                     href="/opportunities"
                     className="text-white hover:brightness-50"
@@ -183,12 +183,12 @@ export const Navbar: React.FC = () => {
                     Opportunities
                   </Link>
                 </li>
-                <li tabIndex={3}>
+                <li tabIndex={2}>
                   <Link href="/jobs" className="text-white hover:brightness-50">
                     Jobs
                   </Link>
                 </li>
-                <li tabIndex={4}>
+                <li tabIndex={3}>
                   <Link
                     href="/marketplace"
                     className="text-white hover:brightness-50"
