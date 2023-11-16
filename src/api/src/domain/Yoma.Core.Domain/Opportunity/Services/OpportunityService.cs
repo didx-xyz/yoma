@@ -506,6 +506,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' already exists");
 
             var status = request.PostAsActive ? Status.Active : Status.Inactive;
+            if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.Now)
+            {
+                if (request.PostAsActive)
+                    throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' has already ended and can not be posted as active");
+                status = Status.Expired;
+            }
 
             var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
