@@ -37,7 +37,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             {
                     {"A3BCAA03-B31C-4830-AAE8-06BBA701D3F0","Education",DateTimeOffset.Now}
                     ,
-                    {"6FB02F6F-34FE-4E6E-9094-2E3B54115235","Task",DateTimeOffset.Now}
+                    {"6FB02F6F-34FE-4E6E-9094-2E3B54115235","Impact",DateTimeOffset.Now}
                     ,
                     {"D2987F9F-8CC8-4576-AF09-C01213A1435E","Employment",DateTimeOffset.Now}
                     ,
