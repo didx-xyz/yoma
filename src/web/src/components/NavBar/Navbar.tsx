@@ -25,14 +25,6 @@ const navBarLinksUser: TabItem[] = [
     icon: null,
   },
   {
-    title: "About",
-    description: "About",
-    url: "/about",
-    badgeCount: null,
-    selected: false,
-    icon: null,
-  },
-  {
     title: "Opportunities",
     description: "Opportunities",
     url: "/opportunities",
