@@ -124,7 +124,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           </label>
           <input
             type="text"
-            className="input input-bordered input-sm w-full"
+            className="input input-bordered input-sm w-full md:input-md"
             placeholder="Your organisation name"
             {...register("name")}
             data-autocomplete="organization"
@@ -140,11 +140,11 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
 
         <div className="form-control">
           <label className="label font-bold">
-            <span className="label-text">Street address</span>
+            <span className="label-text">Physical address</span>
           </label>
           <textarea
-            className="textarea textarea-bordered textarea-sm w-full"
-            placeholder="Your organisation's street address"
+            className="textarea textarea-bordered textarea-sm w-full md:textarea-md"
+            placeholder="Your organisation's physical address"
             {...register("streetAddress")}
             data-autocomplete="street-address"
           />
@@ -163,7 +163,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           </label>
           <input
             type="text"
-            className="input input-bordered input-sm w-full"
+            className="input input-bordered input-sm w-full md:input-md"
             placeholder="Your organisation's province/state"
             {...register("province")}
             data-autocomplete="address-level1"
@@ -183,7 +183,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           </label>
           <input
             type="text"
-            className="input input-bordered input-sm w-full"
+            className="input input-bordered input-sm w-full md:input-md"
             placeholder="Your organisation's city/town"
             {...register("city")}
             data-autocomplete="address-level2"
@@ -203,7 +203,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           </label>
           <input
             type="text"
-            className="input input-bordered input-sm w-full"
+            className="input input-bordered input-sm w-full md:input-md"
             placeholder="Your organisation's postal code/zip"
             {...register("postalCode")}
             data-autocomplete="postal-code"
@@ -223,7 +223,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           </label>
           <input
             type="text"
-            className="input input-bordered input-sm w-full"
+            className="input input-bordered input-sm w-full md:input-md"
             placeholder="www.website.com"
             {...register("websiteURL")}
             data-autocomplete="url"
@@ -313,7 +313,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           </label>
           <input
             type="text"
-            className="input input-bordered input-sm w-full"
+            className="input input-bordered input-sm w-full md:input-md"
             placeholder="Your organisation tagline"
             {...register("tagline")}
           />
@@ -345,18 +345,21 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         </div>
 
         {/* BUTTONS */}
-        <div className="my-4 flex items-center justify-center gap-2">
+        <div className="mt-4 flex flex-col items-center justify-center gap-4">
           {onCancel && (
             <button
               type="button"
-              className="btn btn-warning btn-sm flex-grow"
+              className="btn btn-warning btn-md w-full flex-grow normal-case"
               onClick={onCancel}
             >
               {cancelButtonText}
             </button>
           )}
           {onSubmit && (
-            <button type="submit" className="btn btn-success btn-sm flex-grow">
+            <button
+              type="submit"
+              className="btn btn-success btn-md w-full flex-grow normal-case"
+            >
               {submitButtonText}
             </button>
           )}
