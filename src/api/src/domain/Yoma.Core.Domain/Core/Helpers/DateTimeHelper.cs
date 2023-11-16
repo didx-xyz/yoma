@@ -2,7 +2,7 @@ namespace Yoma.Core.Domain.Core.Helpers
 {
     public static class DateTimeHelper
     {
-        public static DateTimeOffset? TyrParse(string? value)
+        public static DateTimeOffset? TryParse(string? value)
         {
             if (string.IsNullOrWhiteSpace(value)) return null;
             value = value.Trim();
