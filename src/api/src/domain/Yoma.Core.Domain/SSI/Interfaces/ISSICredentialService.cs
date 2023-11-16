@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.SSI.Interfaces
     {
         Task ScheduleIssuance(string schemaName, Guid entityId);
 
-        List<SSICredentialIssuance> ListPendingIssuanceSchedule(int batchSize);
+        List<SSICredentialIssuance> ListPendingIssuanceSchedule(int batchSize, List<Guid> IdsToSkip);
 
         Task UpdateScheduleIssuance(SSICredentialIssuance item);
     }

@@ -33,8 +33,12 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
         public async Task Send<T>(EmailType type, List<EmailRecipient> recipients, T data)
             where T : EmailBase
         {
-            if (_environmentProvider.Environment == Domain.Core.Environment.Local)
-                return; //emails not send on local
+            switch (_environmentProvider.Environment)
+            {
+                case Domain.Core.Environment.Local:
+                case Domain.Core.Environment.Development:
+                    return; //emails not send on local or development
+            }
 
             if (recipients == null || !recipients.Any())
                 throw new ArgumentNullException(nameof(recipients));
