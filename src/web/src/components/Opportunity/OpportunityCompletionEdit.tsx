@@ -121,7 +121,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           path: ["dateStart"],
           fatal: true,
         });
-      } else if (values.dateStart > new Date()) {
+      } /*else if (values.dateStart > new Date()) {
         ctx.addIssue({
           message: "Date cannot be in the future.",
           code: z.ZodIssueCode.custom,
@@ -148,27 +148,27 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           path: ["dateStart"],
           fatal: true,
         });
-      }
+      }*/
 
-      if (values.dateEnd != null && values.dateEnd > new Date()) {
-        ctx.addIssue({
-          message: "Date cannot be in the future.",
-          code: z.ZodIssueCode.custom,
-          path: ["dateEnd"],
-          fatal: true,
-        });
-      } else if (
-        opportunityInfo?.dateEnd &&
-        values.dateEnd != null &&
-        values.dateEnd > opportunityInfo?.dateEnd
-      ) {
-        ctx.addIssue({
-          message: "Date cannot be after than opportunity end date.",
-          code: z.ZodIssueCode.custom,
-          path: ["dateEnd"],
-          fatal: true,
-        });
-      }
+      // if (values.dateEnd != null && values.dateEnd > new Date()) {
+      //   ctx.addIssue({
+      //     message: "Date cannot be in the future.",
+      //     code: z.ZodIssueCode.custom,
+      //     path: ["dateEnd"],
+      //     fatal: true,
+      //   });
+      // } else if (
+      //   opportunityInfo?.dateEnd &&
+      //   values.dateEnd != null &&
+      //   values.dateEnd > opportunityInfo?.dateEnd
+      // ) {
+      //   ctx.addIssue({
+      //     message: "Date cannot be after than opportunity end date.",
+      //     code: z.ZodIssueCode.custom,
+      //     path: ["dateEnd"],
+      //     fatal: true,
+      //   });
+      // }
     });
 
   type SchemaType = z.infer<typeof schema>;
