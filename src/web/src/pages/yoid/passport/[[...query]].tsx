@@ -298,11 +298,11 @@ const MyPassport: NextPageWithLayout<{
             {data.items.map((item, index) => (
               <div
                 key={index}
-                className="flex h-[180px] w-[280px] flex-col rounded-lg bg-white p-2"
+                className="flex h-[180px] w-[280px] cursor-pointer flex-col rounded-lg bg-white p-2"
                 onClick={() => handleOnClickCredential(item)}
               >
                 <div className="flex h-full flex-row">
-                  <div className="flex flex-row items-start justify-start">
+                  <div className="flex flex-grow flex-row items-start justify-start">
                     <div className="flex flex-col items-start justify-start gap-2">
                       <p className="max-h-[35px] overflow-hidden text-ellipsis text-sm font-semibold text-gray-dark">
                         {item.issuer}
@@ -312,7 +312,7 @@ const MyPassport: NextPageWithLayout<{
                       </p>
                     </div>
                   </div>
-                  <div className="flex w-64 flex-row items-start">
+                  <div className="flex flex-row items-start">
                     <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-full shadow">
                       <Image
                         src={item.issuerLogoURL}

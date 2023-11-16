@@ -83,7 +83,7 @@ export const searchCredentials = async (
 ): Promise<SSIWalletSearchResults> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
-  // if environment is Local, return hardcoded data
+  // // if environment is Local, return hardcoded data
   // if (process.env.NEXT_PUBLIC_ENVIRONMENT === "local") {
   //   return {
   //     totalCount: 10,
@@ -92,12 +92,10 @@ export const searchCredentials = async (
   //         id: "9a8bba63-92ef-4f2b-8240-3c595db3c1c9",
   //         artifactType: "Indy",
   //         schemaType: "Opportunity",
-  //         issuer:
-  //           "Awesome A Wonderful An Fantastic Exciting Amazing The Incredible 1649058286",
+  //         issuer: "Awesome",
   //         issuerLogoURL:
   //           "https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/development/photos/f76cde7a-3c8a-4c93-b26c-af4d7bdf28c2.png",
-  //         title:
-  //           "Exciting A Incredible Wonderful The Amazing Unbelievable Fantastic Awesome An 641932871",
+  //         title: "Exciting A Incredible",
   //         dateIssued: "2023-11-15T00:00:00+00:00",
   //         attributes: [],
   //       },
@@ -228,7 +226,7 @@ export const searchCredentials = async (
 };
 
 export const getCredentialById = async (id: string): Promise<SSICredential> => {
-  // if environment is Local, return hardcoded data
+  // // if environment is Local, return hardcoded data
   // if (process.env.NEXT_PUBLIC_ENVIRONMENT === "local") {
   //   return {
   //     id: "9a8bba63-92ef-4f2b-8240-3c595db3c1c9",
