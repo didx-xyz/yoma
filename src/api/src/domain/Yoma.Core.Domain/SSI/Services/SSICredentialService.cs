@@ -70,12 +70,13 @@ namespace Yoma.Core.Domain.SSI.Services
             await _ssiCredentialIssuanceRepository.Create(item);
         }
 
-        public List<SSICredentialIssuance> ListPendingIssuanceSchedule(int batchSize)
+        public List<SSICredentialIssuance> ListPendingIssuanceSchedule(int batchSize, List<Guid> IdsToSkip)
         {
             var credentialIssuanceStatusPendingId = _ssiCredentialIssuanceStatusService.GetByName(CredentialIssuanceStatus.Pending.ToString()).Id;
 
             // issuance skipped if tenants were not created (see SSIBackgroundService)
-            var results = _ssiCredentialIssuanceRepository.Query().Where(o => o.StatusId == credentialIssuanceStatusPendingId).OrderBy(o => o.DateModified).Take(batchSize).ToList();
+            var results = _ssiCredentialIssuanceRepository.Query().Where(o => o.StatusId == credentialIssuanceStatusPendingId
+                && !IdsToSkip.Contains(o.Id)).OrderBy(o => o.DateModified).Take(batchSize).ToList();
 
             return results;
         }

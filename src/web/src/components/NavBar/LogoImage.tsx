@@ -3,17 +3,14 @@ import Link from "next/link";
 import logoPicDark from "public/images/logo-dark.svg";
 import logoPicLight from "public/images/logo-light.svg";
 import React from "react";
-import { useHomeLink } from "~/context/useHomeLink";
 
 export interface InputProps {
   dark?: boolean;
 }
 
 export const LogoImage: React.FC<InputProps> = ({ dark }) => {
-  const href = useHomeLink();
-
   return (
-    <Link href={href}>
+    <Link href="/">
       {/* eslint-disable */}
       <Image
         src={dark ? logoPicDark : logoPicLight}

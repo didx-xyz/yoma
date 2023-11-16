@@ -44,7 +44,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           {
             organizations: [id],
             pageNumber: page ? parseInt(page.toString()) : 1,
-            pageSize: 10,
+            pageSize: PAGE_SIZE,
             startDate: null,
             endDate: null,
             // admins can see deleted opportunities, org admins can see Active, Expired & Inactive
@@ -92,7 +92,7 @@ const Opportunities: NextPageWithLayout<{
       getOpportunitiesAdmin({
         organizations: [id],
         pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: 10,
+        pageSize: PAGE_SIZE,
         startDate: null,
         endDate: null,
         // admins can see deleted opportunities, org admins can see Active, Expired & Inactive

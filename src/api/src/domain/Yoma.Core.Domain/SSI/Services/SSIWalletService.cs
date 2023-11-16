@@ -96,7 +96,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 Id = item.Id,
                 ArtifactType = schema.ArtifactType,
                 SchemaType = schema.Type,
-                DateIssued = DateTimeHelper.TyrParse(item.Attributes.SingleOrDefault(o => o.Key == SSISchemaService.SchemaAttribute_Internal_DateIssued).Value),
+                DateIssued = DateTimeHelper.TryParse(item.Attributes.SingleOrDefault(o => o.Key == SSISchemaService.SchemaAttribute_Internal_DateIssued).Value),
             };
 
             var systemPropertiesSchema = schema.Entities.SelectMany(entity => entity.Properties ?? Enumerable.Empty<SSISchemaEntityProperty>())

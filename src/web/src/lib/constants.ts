@@ -1,6 +1,7 @@
 export const DATE_FORMAT_HUMAN = "DD MMM YYYY";
 export const DATE_FORMAT_HUMAN_LONG = "dddd Do MMMM YYYY";
 export const DATETIME_FORMAT_HUMAN = "MMM D YYYY, h:mm a";
+export const DATETIME_FORMAT_SYSTEM = "YYYY-MM-DD HH:mm:ss";
 export const MAX_IMAGE_SIZE = 5000000;
 export const MAX_IMAGE_SIZE_LABEL = "5MB";
 export const MAX_DOC_SIZE = 10000000;

@@ -25,8 +25,8 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IGenderService _genderService;
         private readonly ICountryService _countryService;
         private readonly ISkillService _skillService;
-        private readonly ISSITenantService _ssiTenantCreationService;
-        private readonly ISSICredentialService _ssiCredentialIssuanceService;
+        private readonly ISSITenantService _ssiTenantService;
+        private readonly ISSICredentialService _ssiCredentialService;
         private readonly UserRequestValidator _userRequestValidator;
         private readonly UserSearchFilterValidator _userSearchFilterValidator;
         private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
@@ -41,8 +41,8 @@ namespace Yoma.Core.Domain.Entity.Services
             IGenderService genderService,
             ICountryService countryService,
             ISkillService skillService,
-            ISSITenantService ssiTenantCreationService,
-            ISSICredentialService ssiCredentialIssuanceService,
+            ISSITenantService ssiTenantService,
+            ISSICredentialService ssiCredentialService,
             UserRequestValidator userValidator,
             UserSearchFilterValidator userSearchFilterValidator,
             IRepositoryValueContainsWithNavigation<User> userRepository,
@@ -54,8 +54,8 @@ namespace Yoma.Core.Domain.Entity.Services
             _genderService = genderService;
             _countryService = countryService;
             _skillService = skillService;
-            _ssiTenantCreationService = ssiTenantCreationService;
-            _ssiCredentialIssuanceService = ssiCredentialIssuanceService;
+            _ssiTenantService = ssiTenantService;
+            _ssiCredentialService = ssiCredentialService;
             _userRequestValidator = userValidator;
             _userSearchFilterValidator = userSearchFilterValidator;
             _userRepository = userRepository;
@@ -279,8 +279,8 @@ namespace Yoma.Core.Domain.Entity.Services
             result.YoIDOnboarded = true;
             result = await _userRepository.Update(result);
 
-            await _ssiTenantCreationService.ScheduleCreation(EntityType.User, result.Id);
-            await _ssiCredentialIssuanceService.ScheduleIssuance(_appSettings.SSISchemaFullNameYoID, result.Id);
+            await _ssiTenantService.ScheduleCreation(EntityType.User, result.Id);
+            await _ssiCredentialService.ScheduleIssuance(_appSettings.SSISchemaFullNameYoID, result.Id);
 
             scope.Complete();
 

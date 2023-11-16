@@ -1,3 +1,5 @@
+import type { PaginationFilter } from "./common";
+
 export interface SSISchemaEntity {
   id: string;
   name: string;
@@ -50,4 +52,33 @@ export interface SSISchema {
   artifactType: ArtifactType;
   entities: SSISchemaEntity[];
   propertyCount: number | null;
+}
+
+export interface SSIWalletFilter extends PaginationFilter {
+  schemaType: SchemaType | null;
+}
+
+export interface SSIWalletSearchResults {
+  totalCount: number | null;
+  items: SSICredentialInfo[];
+}
+export interface SSICredentialInfo extends SSICredentialBase {}
+
+export interface SSICredential extends SSICredentialBase {}
+
+export interface SSICredentialBase {
+  id: string;
+  artifactType: ArtifactType | string; //NB
+  schemaType: SchemaType | string; //NB
+  issuer: string;
+  issuerLogoURL: string;
+  title: string;
+  dateIssued: string | null;
+  attributes: SSICredentialAttribute[];
+}
+
+export interface SSICredentialAttribute {
+  name: string;
+  nameDisplay: string;
+  valueDisplay: string;
 }
