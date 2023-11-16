@@ -26,3 +26,12 @@ export enum SpatialType {
   None,
   Point,
 }
+
+export interface TabItem {
+  title: string;
+  description: string;
+  url: string;
+  badgeCount?: number | null;
+  selected: boolean;
+  icon?: any;
+}

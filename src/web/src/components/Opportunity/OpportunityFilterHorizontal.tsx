@@ -13,9 +13,9 @@ import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import Select, { components, type ValueContainerProps } from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizontalCard";
-import iconNextArrow from "public/images/icon-next-arrow.svg";
-import { toBase64, shimmer } from "~/lib/image";
-import Image from "next/image";
+// import iconNextArrow from "public/images/icon-next-arrow.svg";
+// import { toBase64, shimmer } from "~/lib/image";
+// import Image from "next/image";
 
 export interface InputProps {
   htmlRef: HTMLDivElement;
@@ -64,7 +64,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
   lookups_zltoRewardRanges,
   onSubmit,
   onClear,
-  onOpenFilterFullWindow,
+  //onOpenFilterFullWindow,
   clearButtonText = "Clear",
 }) => {
   const schema = zod.object({

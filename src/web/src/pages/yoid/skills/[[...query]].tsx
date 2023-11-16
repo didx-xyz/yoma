@@ -1,12 +1,12 @@
 import { QueryClient, dehydrate } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
-import { authOptions, type User } from "~/server/auth";
+import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
-import { ParsedUrlQuery } from "querystring";
+import type { ParsedUrlQuery } from "querystring";
 import { UnderConstruction } from "~/components/Status/UnderConstruction";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 import withAuth from "~/context/withAuth";
 
 interface IParams extends ParsedUrlQuery {
@@ -38,7 +38,7 @@ const MySkills: NextPageWithLayout<{
   id: string;
   query?: string;
   page?: string;
-}> = ({ id, query, page }) => {
+}> = (/*{ id, query, page }*/) => {
   return (
     <>
       <UnderConstruction />

@@ -9,8 +9,6 @@ import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 import { DATETIME_FORMAT_SYSTEM, PAGE_SIZE } from "~/lib/constants";
 import Image from "next/image";
-import { useSetAtom } from "jotai";
-import { userProfileAtom } from "~/lib/store";
 import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
 import {
   getCredentialById,
@@ -79,9 +77,6 @@ const MyPassport: NextPageWithLayout<{
   schemaType?: string;
   page?: string;
 }> = ({ id, query, schemaType, page }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [logoFiles, setLogoFiles] = useState<File[]>([]);
-  const setUserProfileAtom = useSetAtom(userProfileAtom);
   const [credentialDialogVisible, setCredentialDialogVisible] = useState(false);
   const [activeCredential, setActiveCredential] =
     useState<SSICredentialInfo | null>(null);
@@ -115,20 +110,23 @@ const MyPassport: NextPageWithLayout<{
       // reset scroll position
       window.scrollTo(0, 0);
     },
-    [router, query, id, schemaType],
+    [query, schemaType],
   );
 
-  const handleOnClickCredential = useCallback((item: SSICredentialInfo) => {
-    getCredentialById(item.id)
-      .then((res) => {
-        setActiveCredential(res);
-        setCredentialDialogVisible(true);
-      })
-      .catch((err) => {
-        toast.error("Unable to retrieve your credential");
-        console.error(err);
-      });
-  }, []);
+  const handleOnClickCredential = useCallback(
+    (item: SSICredentialInfo) => {
+      getCredentialById(item.id)
+        .then((res) => {
+          setActiveCredential(res);
+          setCredentialDialogVisible(true);
+        })
+        .catch((err) => {
+          toast.error("Unable to retrieve your credential");
+          console.error(err);
+        });
+    },
+    [setActiveCredential, setCredentialDialogVisible],
+  );
 
   return (
     <>

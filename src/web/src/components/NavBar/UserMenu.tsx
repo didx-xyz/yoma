@@ -12,10 +12,11 @@ import {
   IoMdSettings,
 } from "react-icons/io";
 import ReactModal from "react-modal";
+import { ROLE_ADMIN, ROLE_ORG_ADMIN } from "~/lib/constants";
 import { shimmer, toBase64 } from "~/lib/image";
 import {
   RoleView,
-  activeRoleViewAtom,
+  activeNavigationRoleViewAtom,
   currentOrganisationLogoAtom,
   userProfileAtom,
 } from "~/lib/store";
@@ -23,9 +24,11 @@ import {
 export const UserMenu: React.FC = () => {
   const [userMenuVisible, setUserMenuVisible] = useState(false);
   const userProfile = useAtomValue(userProfileAtom);
-  const activeRoleView = useAtomValue(activeRoleViewAtom);
+  const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationLogo = useAtomValue(currentOrganisationLogoAtom);
   const { data: session } = useSession();
+  const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
+  const isOrgAdmin = session?.user?.roles.includes(ROLE_ORG_ADMIN);
 
   const handleLogout = () => {
     setUserMenuVisible(false);
@@ -189,8 +192,7 @@ export const UserMenu: React.FC = () => {
           </li>
 
           {/* organisations */}
-          {(activeRoleView === RoleView.Admin ||
-            activeRoleView === RoleView.OrgAdmin) &&
+          {(isAdmin == true || isOrgAdmin == true) &&
             (userProfile?.adminsOf?.length ?? 0) > 0 && (
               <>
                 <div className="divider m-0" />
@@ -255,7 +257,7 @@ export const UserMenu: React.FC = () => {
               </>
             )}
 
-          {activeRoleView == RoleView.Admin && (
+          {(activeRoleView == RoleView.Admin || isAdmin) && (
             <>
               <div className="divider m-0" />
               <li>

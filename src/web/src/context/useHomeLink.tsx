@@ -1,12 +1,12 @@
 import { useAtomValue } from "jotai";
 import {
-  activeRoleViewAtom,
+  activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
   RoleView,
 } from "~/lib/store";
 
 export const useHomeLink = () => {
-  const activeRoleView = useAtomValue(activeRoleViewAtom);
+  const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
 
   const href =

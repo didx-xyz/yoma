@@ -7,7 +7,7 @@ import { getUserProfile } from "~/api/services/user";
 import { ROLE_ADMIN, ROLE_ORG_ADMIN } from "~/lib/constants";
 import {
   RoleView,
-  activeRoleViewAtom,
+  activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
   currentOrganisationLogoAtom,
   navbarColorAtom,
@@ -22,7 +22,9 @@ export const Global: React.FC = () => {
   const { data: session } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
-  const setActiveRoleViewAtom = useSetAtom(activeRoleViewAtom);
+  const setactiveNavigationRoleViewAtom = useSetAtom(
+    activeNavigationRoleViewAtom,
+  );
   const setNavbarColor = useSetAtom(navbarColorAtom);
   const currentOrganisationIdValue = useAtomValue(currentOrganisationIdAtom);
   const setCurrentOrganisationIdAtom = useSetAtom(currentOrganisationIdAtom);
@@ -32,27 +34,27 @@ export const Global: React.FC = () => {
   const setSmallDisplay = useSetAtom(smallDisplayAtom);
 
   useEffect(() => {
-    // 🔔 PROFILE SWITCHING:  SET DEFAULT COLOR BASED ON ROLE
-    if (!session) {
-      setActiveRoleViewAtom(RoleView.User);
-      setNavbarColor("bg-purple");
-      return;
-    }
+    // // 🔔 PROFILE SWITCHING: SET DEFAULT COLOR BASED ON ROLE
+    // if (!session) {
+    //   setactiveNavigationRoleViewAtom(RoleView.User);
+    //   setNavbarColor("bg-purple");
+    //   return;
+    // }
 
     // set the active role view atom (based on roles)
-    const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
-    const isOrgAdmin = session?.user?.roles.includes(ROLE_ORG_ADMIN);
+    // const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
+    // const isOrgAdmin = session?.user?.roles.includes(ROLE_ORG_ADMIN);
 
-    if (isAdmin) {
-      setActiveRoleViewAtom(RoleView.Admin);
-      setNavbarColor("bg-blue");
-    } else if (isOrgAdmin) {
-      setActiveRoleViewAtom(RoleView.OrgAdmin);
-      setNavbarColor("bg-green");
-    } else {
-      setActiveRoleViewAtom(RoleView.User);
-      setNavbarColor("bg-purple");
-    }
+    // if (isAdmin) {
+    //   setactiveNavigationRoleViewAtom(RoleView.Admin);
+    //   setNavbarColor("bg-blue");
+    // } else if (isOrgAdmin) {
+    //   setactiveNavigationRoleViewAtom(RoleView.OrgAdmin);
+    //   setNavbarColor("bg-green");
+    // } else {
+    //   setactiveNavigationRoleViewAtom(RoleView.User);
+    //   setNavbarColor("bg-purple");
+    // }
 
     // 🔔 USER PROFILE
     if (!userProfile) {
@@ -70,7 +72,7 @@ export const Global: React.FC = () => {
     session,
     userProfile,
     setUserProfile,
-    setActiveRoleViewAtom,
+    setactiveNavigationRoleViewAtom,
     setNavbarColor,
   ]);
 
@@ -90,6 +92,31 @@ export const Global: React.FC = () => {
 
   // 🔔 ROUTE CHANGE HANDLER
   useEffect(() => {
+    if (!session) {
+      setactiveNavigationRoleViewAtom(RoleView.User);
+      setNavbarColor("bg-purple");
+      return;
+    }
+
+    // set the active role view atom (based on roles)
+    const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
+    const isOrgAdmin = session?.user?.roles.includes(ROLE_ORG_ADMIN);
+
+    if (
+      isAdmin &&
+      (router.asPath.startsWith("/admin") ||
+        router.asPath.startsWith("/organisations"))
+    ) {
+      setactiveNavigationRoleViewAtom(RoleView.Admin);
+      setNavbarColor("bg-blue");
+    } else if (isOrgAdmin && router.asPath.startsWith("/organisations")) {
+      setactiveNavigationRoleViewAtom(RoleView.OrgAdmin);
+      setNavbarColor("bg-green");
+    } else {
+      setactiveNavigationRoleViewAtom(RoleView.User);
+      setNavbarColor("bg-purple");
+    }
+
     // PROFILE SWITCHING: if organisation page, OrgAdmins sees green. navbar links & company logo changes
     if (router.asPath.startsWith("/organisations")) {
       const matches = router.asPath.match(/\/organisations\/([a-z0-9-]{36})/);
@@ -100,10 +127,8 @@ export const Global: React.FC = () => {
         const orgId = matches[1];
         if (!orgId) return;
 
-        //setNavbarColor("bg-green");
-
         if (orgId != currentOrganisationIdValue) {
-          // update atom (change navbar links)
+          // update atom (navbar items)
           setCurrentOrganisationIdAtom(orgId);
 
           // get the organisation logo, update atom (change user image to company logo)
@@ -119,16 +144,18 @@ export const Global: React.FC = () => {
       setCurrentOrganisationIdAtom(null);
       setCurrentOrganisationLogoAtom(null);
 
-      // admins sees blue
-      // if (router.asPath.startsWith("/admin")) setNavbarColor("bg-blue");
-      // // everyone else sees purple (public youth)
-      // else setNavbarColor("bg-purple");
+      //   // admins sees blue
+      //   // if (router.asPath.startsWith("/admin")) setNavbarColor("bg-blue");
+      //   // // everyone else sees purple (public youth)
+      //   // else setNavbarColor("bg-purple");
     }
   }, [
     router,
+    session,
     setNavbarColor,
     setCurrentOrganisationIdAtom,
     setCurrentOrganisationLogoAtom,
+    setactiveNavigationRoleViewAtom,
     currentOrganisationIdValue,
   ]);
 

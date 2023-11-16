@@ -1,6 +1,6 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { IoMdMenu } from "react-icons/io";
 import ReactModal from "react-modal";
 import { LogoImage } from "./LogoImage";
@@ -9,17 +9,139 @@ import { UserMenu } from "./UserMenu";
 import { useAtomValue } from "jotai";
 import {
   RoleView,
-  activeRoleViewAtom,
+  activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
   navbarColorAtom,
 } from "~/lib/store";
+import type { TabItem } from "~/api/models/common";
+
+const navBarLinksUser: TabItem[] = [
+  {
+    title: "Home",
+    description: "Home",
+    url: "/",
+    badgeCount: null,
+    selected: false,
+    icon: null,
+  },
+  {
+    title: "About",
+    description: "About",
+    url: "/about",
+    badgeCount: null,
+    selected: false,
+    icon: null,
+  },
+  {
+    title: "Opportunities",
+    description: "Opportunities",
+    url: "/opportunities",
+    badgeCount: null,
+    selected: false,
+    icon: null,
+  },
+  {
+    title: "Jobs",
+    description: "Jobs",
+    url: "/jobs",
+    badgeCount: null,
+    selected: false,
+    icon: null,
+  },
+  {
+    title: "Marketplace",
+    description: "Marketplace",
+    url: "/marketplace",
+    badgeCount: null,
+    selected: false,
+    icon: null,
+  },
+];
+
+const navBarLinksAdmin: TabItem[] = [
+  {
+    title: "Dashboard",
+    description: "Dashboard",
+    url: "/admin",
+    badgeCount: null,
+    selected: false,
+    icon: null,
+  },
+  {
+    title: "Organisations",
+    description: "Organisations",
+    url: "/organisations",
+    badgeCount: null,
+    selected: false,
+    icon: null,
+  },
+  {
+    title: "Opportunities",
+    description: "Opportunities",
+    url: "/admin/opportunities",
+    badgeCount: null,
+    selected: false,
+    icon: null,
+  },
+  {
+    title: "Schemas",
+    description: "Schemas",
+    url: "/admin/schemas",
+    badgeCount: null,
+    selected: false,
+    icon: null,
+  },
+  {
+    title: "Connections",
+    description: "Connections",
+    url: "/admin/connections",
+    badgeCount: null,
+    selected: false,
+    icon: null,
+  },
+];
 
 export const Navbar: React.FC = () => {
   const navbarColor = useAtomValue(navbarColorAtom);
   const [menuVisible, setMenuVisible] = useState(false);
-  const activeRoleView = useAtomValue(activeRoleViewAtom);
+  const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
   const { data: session } = useSession();
+
+  const currentNavbarLinks = useMemo<TabItem[]>(() => {
+    if (activeRoleView == RoleView.Admin) {
+      return navBarLinksAdmin;
+    } else if (activeRoleView == RoleView.OrgAdmin && currentOrganisationId) {
+      return [
+        {
+          title: "Home",
+          description: "Home",
+          url: "/",
+          badgeCount: null,
+          selected: false,
+          icon: null,
+        },
+        {
+          title: "Opportunities",
+          description: "Opportunities",
+          url: `/organisations/${currentOrganisationId}/opportunities`,
+          badgeCount: null,
+          selected: false,
+          icon: null,
+        },
+        {
+          title: "Verifications",
+          description: "Verifications",
+          url: `/organisations/${currentOrganisationId}/verifications`,
+          badgeCount: null,
+          selected: false,
+          icon: null,
+        },
+      ];
+    } else {
+      return navBarLinksUser;
+    }
+  }, [activeRoleView, currentOrganisationId]);
 
   return (
     <div id="topNav" className="fixed left-0 right-0 top-0 z-40">
@@ -43,229 +165,36 @@ export const Navbar: React.FC = () => {
             portalClassName={"fixed z-50"}
             overlayClassName="fixed inset-0"
           >
-            {/* USER: NO CURRENT ORGANISATION, SHOW USER LINKS */}
-            {(activeRoleView == RoleView.User || !currentOrganisationId) &&
-              activeRoleView != RoleView.Admin && (
-                <div className="flex flex-col">
-                  <Link
-                    href="/"
-                    className="px-7 py-3 text-white hover:brightness-50"
-                    onClick={() => setMenuVisible(false)}
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    href="/about"
-                    className="px-7 py-3 text-white hover:brightness-50"
-                    onClick={() => setMenuVisible(false)}
-                  >
-                    About
-                  </Link>
-                  <Link
-                    href="/opportunities"
-                    className="px-7 py-3 text-white hover:brightness-50"
-                    onClick={() => setMenuVisible(false)}
-                  >
-                    Opportunities
-                  </Link>
-                  <Link
-                    href="/jobs"
-                    className="px-7 py-3 text-white hover:brightness-50"
-                    onClick={() => setMenuVisible(false)}
-                  >
-                    Jobs
-                  </Link>
-                  <Link
-                    href="/marketplace"
-                    className="px-7 py-3 text-white hover:brightness-50"
-                    onClick={() => setMenuVisible(false)}
-                  >
-                    Marketplace
-                  </Link>
-                </div>
-              )}
-
-            {/* ORG ADMIN: CURRENT ORGANISATION, SHOW ORGANISATION LINKS */}
-            {activeRoleView == RoleView.OrgAdmin && currentOrganisationId && (
-              <div className="flex flex-col">
+            <div className="flex flex-col">
+              {currentNavbarLinks.map((link, index) => (
                 <Link
-                  href="/"
+                  href={link.url}
+                  key={index}
                   className="px-7 py-3 text-white hover:brightness-50"
                   onClick={() => setMenuVisible(false)}
                 >
-                  Home
+                  {link.title}
                 </Link>
-                <Link
-                  href={`/organisations/${currentOrganisationId}/opportunities`}
-                  className="px-7 py-3 text-white hover:brightness-50"
-                  onClick={() => setMenuVisible(false)}
-                >
-                  Opportunities
-                </Link>
-
-                <Link
-                  href={`/organisations/${currentOrganisationId}/verifications`}
-                  className="px-7 py-3 text-white hover:brightness-50"
-                  onClick={() => setMenuVisible(false)}
-                >
-                  Verifications
-                </Link>
-              </div>
-            )}
-
-            {/* ADMIN: SHOW ADMIN LINKS */}
-            {activeRoleView == RoleView.Admin && (
-              <div className="flex flex-col">
-                <Link
-                  href="/admin"
-                  className="px-7 py-3 text-white hover:brightness-50"
-                  onClick={() => setMenuVisible(false)}
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/organisations"
-                  className="px-7 py-3 text-white hover:brightness-50"
-                  onClick={() => setMenuVisible(false)}
-                >
-                  Organisations
-                </Link>
-                <Link
-                  href="/admin/opportunities"
-                  className="px-7 py-3 text-white hover:brightness-50"
-                  onClick={() => setMenuVisible(false)}
-                >
-                  Opportunities
-                </Link>
-                <Link
-                  href="/admin/schemas"
-                  className="px-7 py-3 text-white hover:brightness-50"
-                  onClick={() => setMenuVisible(false)}
-                >
-                  Schemas
-                </Link>
-                <Link
-                  href="/admin/connections"
-                  className="px-7 py-3 text-white hover:brightness-50"
-                  onClick={() => setMenuVisible(false)}
-                >
-                  Connections
-                </Link>
-              </div>
-            )}
+              ))}
+            </div>
           </ReactModal>
           <div className="ml-8">
             <LogoImage />
           </div>
 
-          {/* USER: NO CURRENT ORGANISATION, SHOW USER LINKS */}
-          {(activeRoleView == RoleView.User || !currentOrganisationId) &&
-            activeRoleView != RoleView.Admin && (
-              <ul className="hidden w-full flex-row items-center justify-center gap-16 p-0 lg:flex">
-                <li tabIndex={0}>
-                  <Link href="/" className="text-white hover:brightness-50">
-                    Home
-                  </Link>
-                </li>
-                <li tabIndex={1}>
-                  <Link
-                    href="/about"
-                    className="text-white hover:brightness-50"
-                  >
-                    About
-                  </Link>
-                </li>
-                <li tabIndex={2}>
-                  <Link
-                    href="/opportunities"
-                    className="text-white hover:brightness-50"
-                  >
-                    Opportunities
-                  </Link>
-                </li>
-                <li tabIndex={3}>
-                  <Link href="/jobs" className="text-white hover:brightness-50">
-                    Jobs
-                  </Link>
-                </li>
-                <li tabIndex={4}>
-                  <Link
-                    href="/marketplace"
-                    className="text-white hover:brightness-50"
-                  >
-                    Marketplace
-                  </Link>
-                </li>
-              </ul>
-            )}
-          {/* ORG ADMIN: CURRENT ORGANISATION, SHOW ORGANISATION LINKS */}
-          {activeRoleView == RoleView.OrgAdmin && currentOrganisationId && (
-            <ul className="hidden w-full flex-row items-center justify-center gap-16 p-0 lg:flex">
-              <li tabIndex={0}>
-                <Link href="/" className="text-white hover:brightness-50">
-                  Home
-                </Link>
-              </li>
-              <li tabIndex={1}>
+          <ul className="hidden w-full flex-row items-center justify-center gap-16 p-0 lg:flex">
+            {currentNavbarLinks.map((link, index) => (
+              <li key={index} tabIndex={index}>
                 <Link
-                  href={`/organisations/${currentOrganisationId}/opportunities`}
+                  href={link.url}
+                  tabIndex={index}
                   className="text-white hover:brightness-50"
                 >
-                  Opportunities
+                  {link.title}
                 </Link>
               </li>
-              <li tabIndex={2}>
-                <Link
-                  href={`/organisations/${currentOrganisationId}/verifications`}
-                  className="text-white hover:brightness-50"
-                >
-                  Verifications
-                </Link>
-              </li>
-            </ul>
-          )}
-          {/* ADMIN: SHOW ADMIN LINKS */}
-          {activeRoleView == RoleView.Admin && (
-            <ul className="hidden w-full flex-row items-center justify-center gap-16 p-0 lg:flex">
-              <li tabIndex={0}>
-                <Link href="/admin" className="text-white hover:brightness-50">
-                  Dashboard
-                </Link>
-              </li>
-              <li tabIndex={1}>
-                <Link
-                  href="/organisations"
-                  className="text-white hover:brightness-50"
-                >
-                  Organisations
-                </Link>
-              </li>
-              <li tabIndex={2}>
-                <Link
-                  href="/admin/opportunities"
-                  className="text-white hover:brightness-50"
-                >
-                  Opportunities
-                </Link>
-              </li>
-              <li tabIndex={3}>
-                <Link
-                  href="/admin/schemas"
-                  className="text-white hover:brightness-50"
-                >
-                  Schemas
-                </Link>
-              </li>
-              <li tabIndex={4}>
-                <Link
-                  href="/admin/connections"
-                  className="text-white hover:brightness-50"
-                >
-                  Connections
-                </Link>
-              </li>
-            </ul>
-          )}
+            ))}
+          </ul>
         </div>
         <div className="navbar-end w-[150px] justify-center">
           <div>

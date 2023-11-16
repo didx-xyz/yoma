@@ -15,15 +15,7 @@ import iconTools from "public/images/icon-tools.png";
 import iconMap from "public/images/icon-map.png";
 import iconSaved from "public/images/icon-saved.png";
 import iconHourglass from "public/images/icon-hourglass.png";
-
-export interface TabItem {
-  title: string;
-  description: string;
-  url: string;
-  badgeCount?: number | null;
-  selected: boolean;
-  icon?: any;
-}
+import type { TabItem } from "~/api/models/common";
 
 export type TabProps = ({
   children,
@@ -184,10 +176,9 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
               <ul className="menu w-64 gap-2 md:rounded-2xl">
                 {/* TABS */}
                 {tabItems.map((tabItem, index) => (
-                  <li key={`MenuNavigation_${tabItem.url}`}>
+                  <li key={`MenuNavigation_${index}`}>
                     <Link
                       href={tabItem.url}
-                      key={index}
                       className={`${
                         tabItem.selected ? "bg-gray" : "bg-gray-light"
                       }`}
@@ -238,7 +229,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                   {tabItems.map((tabItem, index) => (
                     <option
                       value={tabItem.url}
-                      key={`DropdownNavigation_${tabItem.url}`}
+                      key={`DropdownNavigation_${index}`}
                       selected={tabItem.selected}
                     >
                       {tabItem.title}

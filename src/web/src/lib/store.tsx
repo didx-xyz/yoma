@@ -11,14 +11,15 @@ const userProfileAtom = atom<UserProfile | null>(null);
 // small display state used by search results (show/hide filter)
 const smallDisplayAtom = atom(true);
 
-// these atoms are used for "profile-switching" (updated in global.tsx)
-// used to override the navbar links & user image (to company logo) per page
+// PROFILE SWITCHING:
+// these atoms are used to override the navbar links (based on path & role) and user image/company logo
+// (updated in global.tsx, used in navbar.tsx & usermnenu.tsx)
 export enum RoleView {
   User,
   Admin,
   OrgAdmin,
 }
-const activeRoleViewAtom = atom<RoleView>(RoleView.User);
+const activeNavigationRoleViewAtom = atom<RoleView>(RoleView.User);
 const currentOrganisationIdAtom = atom<string | null>(null);
 const currentOrganisationLogoAtom = atom<string | null>(null);
 
@@ -26,7 +27,7 @@ export {
   navbarColorAtom,
   userProfileAtom,
   smallDisplayAtom,
-  activeRoleViewAtom,
+  activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
   currentOrganisationLogoAtom,
 };
