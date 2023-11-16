@@ -125,7 +125,8 @@ namespace Yoma.Core.Api
             app.UseStaticFiles();
             app.UseRouting();
 
-            if (_environment != Domain.Core.Environment.Local) app.UseSentryTracing();
+            //enabling sentry tracing causes endless information logs about 'Sentry trace header is null'
+            //if (_environment != Domain.Core.Environment.Local) app.UseSentryTracing();
 
             app.UseAuthentication();
             app.UseAuthorization();

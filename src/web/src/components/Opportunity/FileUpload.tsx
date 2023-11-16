@@ -50,7 +50,7 @@ export const FileUpload: React.FC<InputProps> = ({
   return (
     <div
       key={`OpportunityFileUpload_${id}`}
-      className="flex w-full flex-col rounded-lg border-dotted bg-gray"
+      className="flex w-full flex-col rounded-lg border-dotted bg-gray-light"
     >
       <div className="flex w-full flex-row">
         <div className="flex items-center p-8">
@@ -70,7 +70,7 @@ export const FileUpload: React.FC<InputProps> = ({
         </div>
         <div className="flex items-center justify-center p-4">
           <button
-            className="btn btn-sm rounded-md border-green bg-transparent normal-case text-green hover:border-green"
+            className="btn btn-sm mr-2 rounded-md border-green bg-transparent normal-case text-green hover:border-green"
             onClick={fileUpload}
           >
             <Image

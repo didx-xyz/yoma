@@ -91,7 +91,7 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
             <span className="label-text">I will be the organisation admin</span>
             <input
               type="checkbox"
-              className="checkbox-primary checkbox"
+              className="checkbox-secondary checkbox"
               {...register("addCurrentUserAsAdmin")}
             />
           </label>
@@ -122,7 +122,7 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
                   value: val,
                 }))}
                 isMulti
-                className="form-control w-full"
+                className="form-control mb-2 w-full"
                 // eslint-disable-next-line
                 onChange={(val) => onChange(val.map((c) => c.value))}
                 value={value?.map((val: any) => ({
@@ -143,18 +143,21 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
         </div>
 
         {/* BUTTONS */}
-        <div className="my-4 flex items-center justify-center gap-2">
+        <div className="mt-4 flex flex-col items-center justify-center gap-4">
           {onCancel && (
             <button
               type="button"
-              className="btn btn-warning btn-sm flex-grow"
+              className="btn btn-warning btn-md w-full flex-grow normal-case"
               onClick={(data) => onCancel(data)}
             >
               {cancelButtonText}
             </button>
           )}
           {onSubmit && (
-            <button type="submit" className="btn btn-success btn-sm flex-grow">
+            <button
+              type="submit"
+              className="btn btn-success btn-md w-full flex-grow normal-case"
+            >
               {submitButtonText}
             </button>
           )}

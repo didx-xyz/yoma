@@ -90,16 +90,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.OpportunityExpirationNotificationIntervalInDays);
                 var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
 
-                do
-                {
-                    var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-                        o.DateEnd.HasValue && o.DateEnd.Value >= datetimeFrom && o.DateEnd.Value <= datetimeTo)
-                        .OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
-                    if (!items.Any()) break;
+                var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
+                    o.DateEnd.HasValue && o.DateEnd.Value >= datetimeFrom && o.DateEnd.Value <= datetimeTo)
+                    .OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
+                if (!items.Any()) return;
 
-                    SendEmail(items, EmailType.Opportunity_Expiration_WithinNextDays).Wait();
-
-                } while (true);
+                SendEmail(items, EmailType.Opportunity_Expiration_WithinNextDays).Wait();
 
                 _logger.LogInformation("Processed opportunity expiration notifications");
             }

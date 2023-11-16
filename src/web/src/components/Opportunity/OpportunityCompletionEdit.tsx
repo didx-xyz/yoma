@@ -265,44 +265,46 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               <IoMdClose className="h-6 w-6"></IoMdClose>
             </button>
           </div>
-          <div className="flex flex-col ">
+          <div className="flex flex-col">
             <div className="flex flex-col items-center justify-center gap-4">
-              <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white p-4 shadow-lg">
+              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
                 <Image
                   src={iconSuccess}
                   alt="Icon Success"
-                  width={28}
-                  height={28}
+                  width={35}
+                  height={35}
                   sizes="100vw"
                   priority={true}
                   style={{
-                    width: "28px",
-                    height: "28px",
+                    width: "35px",
+                    height: "35px",
                   }}
                 />
               </div>
             </div>
-            <div className="flex flex-grow flex-col gap-4 overflow-x-hidden overflow-y-scroll p-4 md:max-h-[480px] md:min-h-[350px]">
-              <div className="flex flex-col items-center gap-4 ">
-                <h4>Well done for completing this opportunity!</h4>
-                <div className="text-gray-dark">
+            <div className="flex flex-grow flex-col gap-4 overflow-x-hidden overflow-y-scroll px-10 md:max-h-[480px] md:min-h-[350px]">
+              <div className="mb-8 flex flex-col items-center gap-1">
+                <h4 className="font-semibold tracking-wide">
+                  Well done for completing this opportunity!
+                </h4>
+                <div className="tracking-wide text-gray-dark">
                   Upload the required documents below, and once
                   <br />
                   approved, we&apos;ll add the accreditation to your CV!
                 </div>
               </div>
 
-              <div className="flex w-full flex-col rounded-lg border-dotted bg-gray">
+              <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
                 <div className="flex w-full flex-row">
-                  <div className="flex items-center p-8">
+                  <div className="ml-2 flex items-center p-6">
                     <Image
                       src={iconClock}
                       alt="Icon Clock"
-                      width={28}
-                      height={28}
+                      width={32}
+                      height={32}
                       sizes="100vw"
                       priority={true}
-                      style={{ width: "28px", height: "28px" }}
+                      style={{ width: "32px", height: "32px" }}
                     />
                   </div>
                   <div className="flex flex-grow flex-col items-start justify-center">
@@ -312,7 +314,8 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2 p-2 pt-0">
+
+                <div className="-mt-2 grid grid-cols-2 gap-4 px-4 pb-4">
                   <div className="form-control">
                     {/* eslint-disable @typescript-eslint/no-unsafe-argument  */}
                     <Controller
@@ -320,7 +323,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       name="dateStart"
                       render={({ field: { onChange, value } }) => (
                         <DatePicker
-                          className="input input-bordered w-full"
+                          className="input input-bordered input-sm w-full"
                           onChange={(date) =>
                             onChange(toISOStringForTimezone(date))
                           }
@@ -346,7 +349,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       name="dateEnd"
                       render={({ field: { onChange, value } }) => (
                         <DatePicker
-                          className="input input-bordered w-full"
+                          className="input input-bordered input-sm w-full"
                           onChange={(date) =>
                             onChange(toISOStringForTimezone(date))
                           }
@@ -368,7 +371,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 </div>
               </div>
 
-              <div className="flex w-full flex-col items-center justify-center gap-2">
+              <div className="flex w-full flex-col items-center justify-center gap-4">
                 {opportunityInfo?.verificationTypes?.find(
                   (x) => x.type == "FileUpload",
                 ) && (
@@ -509,10 +512,10 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 )}
               </div>
 
-              <div className="mt-4 flex flex-grow gap-4 pb-14">
+              <div className="mt-4 flex flex-grow gap-4">
                 <button
                   type="button"
-                  className="btn w-1/2 rounded-full border-purple bg-white normal-case text-purple md:w-[300px]"
+                  className="btn w-1/2 rounded-full border-purple bg-white normal-case text-purple"
                   onClick={onClose}
                 >
                   Cancel
@@ -526,9 +529,9 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               </div>
 
               {!isValid && (
-                <div className="mt-4 flex flex-grow gap-4">
+                <div className="mb-10 mt-0 flex flex-grow justify-center gap-4">
                   <label className="label">
-                    <span className="label-text-alt px-4 text-base italic text-red-500">
+                    <span className="label-text-alt px-4 text-center text-base italic text-red-500">
                       Please fill out the required information above.
                     </span>
                   </label>

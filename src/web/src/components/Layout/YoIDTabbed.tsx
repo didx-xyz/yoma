@@ -179,7 +179,8 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                   <li key={`MenuNavigation_${index}`}>
                     <Link
                       href={tabItem.url}
-                      className={`${
+                      key={index}
+                      className={`hover:bg-gray ${
                         tabItem.selected ? "bg-gray" : "bg-gray-light"
                       }`}
                     >
