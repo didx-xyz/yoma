@@ -1,0 +1,59 @@
+{{- if .Values.postInstallHook.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "keycloak.fullname" . }}-post-install
+  labels:
+    {{- include "keycloak.labels" . | nindent 4 }}
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    # "helm.sh/hook-delete-policy": "hook-succeeded,before-hook-creation"
+spec:
+  template:
+    metadata:
+      name: {{ include "keycloak.fullname" . }}
+      labels:
+        {{- include "keycloak.labels" . | nindent 4 }}
+    spec:
+      restartPolicy: Never
+      {{- if .Values.postInstallHook.initContainers }}
+      initContainers:
+        {{- toYaml .Values.postInstallHook.initContainers | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: post-install-job
+        image:  "{{ .Values.postInstallHook.image.repository }}:{{ .Values.postInstallHook.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.postInstallHook.image.pullPolicy }}
+        {{- if .Values.postInstallHook.command }}
+        {{- if .Values.postInstallHook.securityContext }}
+        securityContext:
+          {{- toYaml .Values.postInstallHook.securityContext | nindent 10 }}
+        {{- end }}
+        command:
+          {{- toYaml .Values.postInstallHook.command | nindent 10 }}
+        {{- end }}
+        {{- if .Values.postInstallHook.args }}
+        args:
+          {{- toYaml .Values.postInstallHook.args | nindent 10 }}
+        {{- end }}
+        {{- if .Values.postInstallHook.env }}
+        env:
+          {{- toYaml .Values.postInstallHook.env | nindent 10 }}
+        {{- end }}
+        {{- with .Values.postInstallHook.volumeMounts }}
+        volumeMounts:
+          {{- include "common.tplvalues.render" (dict "value" . "context" $) | nindent 12 }}
+        {{- end }}
+      {{- with .Values.postInstallHook.volumes }}
+      volumes:
+        {{- include "common.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}
+      {{- end }}
+      {{- with .Values.postInstallHook.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  backoffLimit: 0
+{{- end }}

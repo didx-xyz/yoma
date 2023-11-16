@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   IoMdAdd,
+  IoMdCard,
   IoMdImage,
   IoMdPerson,
   IoMdPower,
@@ -172,6 +173,21 @@ export const UserMenu: React.FC = () => {
             </Link>
           </li>
 
+          <div className="divider m-0" />
+
+          <li>
+            <Link
+              href="/yoid/passport"
+              className="text-gray-dark"
+              onClick={() => setUserMenuVisible(false)}
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
+                <IoMdCard className="h-6 w-6 text-gray-dark" />
+              </div>
+              YoID
+            </Link>
+          </li>
+
           {/* organisations */}
           {(activeRoleView === RoleView.Admin ||
             activeRoleView === RoleView.OrgAdmin) &&
@@ -238,6 +254,7 @@ export const UserMenu: React.FC = () => {
                 </li>
               </>
             )}
+
           {activeRoleView == RoleView.Admin && (
             <>
               <div className="divider m-0" />
@@ -255,7 +272,9 @@ export const UserMenu: React.FC = () => {
               </li>
             </>
           )}
+
           <div className="divider m-0" />
+
           <li>
             <button className="text-left text-gray-dark" onClick={handleLogout}>
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
