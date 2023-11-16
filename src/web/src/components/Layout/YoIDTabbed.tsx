@@ -188,7 +188,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                     <Link
                       href={tabItem.url}
                       key={index}
-                      className={`${
+                      className={`hover:bg-gray ${
                         tabItem.selected ? "bg-gray" : "bg-gray-light"
                       }`}
                     >
