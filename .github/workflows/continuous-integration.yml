@@ -155,6 +155,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ matrix.image }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+            type=sha,prefix=pr-${{ github.event.pull_request.number }}-,priority=601,enable=${{ github.event_name == 'pull_request' }}
             type=sha,prefix={{branch}}-,priority=601,enable=${{ github.event_name != 'pull_request' }}
             type=ref,event=branch,priority=600
             type=ref,event=pr
@@ -281,28 +282,10 @@ jobs:
         }}
       url: ${{ vars.PUBLIC_URL }}
 
-    # strategy:
-    #   matrix:
-    #     project:
-    #       - yoma-api
-    #       - yoma-web
-    #     include:
-    #       - project: yoma-api
-    #         context: ./src/api
-    #       - project: yoma-web
-    #         context: ./src/web
-
     if: github.triggering_actor != 'dependabot[bot]'
 
     steps:
       - uses: actions/checkout@v4
-      # - uses: dorny/paths-filter@v2 # https://github.com/actions/runner/pull/2477
-      #   id: filter
-      #   with:
-      #     base: master
-      #     filters: |-
-      #       changes:
-      #         - '${{ matrix.context }}/**'
       - uses: dorny/paths-filter@v2 # https://github.com/actions/runner/pull/2477
         id: filter
         with:
@@ -312,7 +295,6 @@ jobs:
               - './src/api/**'
             web:
               - './src/web/**'
-
       - uses: unfor19/install-aws-cli-action@v1
         if: steps.filter.outputs.api == 'true' || steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch'
       - name: SOPS Binary Installer
