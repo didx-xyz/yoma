@@ -1,6 +1,11 @@
 .filepond--drop-label {
-  border: 2px dashed #ccc;
+  /* border: 2px dashed #ccc; */
   color: #999;
+  background: #f3f6fa !important;
+  max-height: min-content !important;
+  border-radius: 0.5rem;
+  justify-content: end !important;
+  padding-inline: 1rem;
 }
 
 .filepond--label-action {

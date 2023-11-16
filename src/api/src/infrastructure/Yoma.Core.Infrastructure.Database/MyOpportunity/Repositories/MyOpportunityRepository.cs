@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.MyOpportunity;
@@ -71,7 +72,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                         FileId = o.FileId,
                         DateCreated = o.DateCreated
                     }).ToList() : null
-            });
+            }).AsSplitQuery();
         }
 
         public async Task<Domain.MyOpportunity.Models.MyOpportunity> Create(Domain.MyOpportunity.Models.MyOpportunity item)

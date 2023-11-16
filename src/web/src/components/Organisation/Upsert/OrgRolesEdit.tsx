@@ -215,7 +215,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
 
   const form = useForm({
     mode: "all",
-    resolver: zodResolver(schema),
+    // resolver: zodResolver(schema),
   });
   const { register, handleSubmit, formState, setValue, getValues, reset } =
     form;
@@ -320,7 +320,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
                 type="checkbox"
                 value={item.id}
                 id={item.id}
-                className="checkbox-primary checkbox"
+                className="checkbox-secondary checkbox"
                 // checked={
                 //   formData
                 //     ? formData.providerTypes.findIndex(
@@ -471,18 +471,21 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
         </div>
 
         {/* BUTTONS */}
-        <div className="my-4 flex items-center justify-center gap-2">
+        <div className="mt-4 flex flex-col items-center justify-center gap-4">
           {onCancel && (
             <button
               type="button"
-              className="btn btn-warning btn-sm flex-grow"
+              className="btn btn-warning btn-md w-full flex-grow normal-case"
               onClick={(data) => onCancel(data)}
             >
               {cancelButtonText}
             </button>
           )}
           {onSubmit && (
-            <button type="submit" className="btn btn-success btn-sm flex-grow">
+            <button
+              type="submit"
+              className="btn btn-success btn-md w-full flex-grow normal-case"
+            >
               {submitButtonText}
             </button>
           )}
