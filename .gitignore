@@ -1111,3 +1111,4 @@ $RECYCLE.BIN/
 # Additional files built by Visual Studio
 
 # End of https://www.toptal.com/developers/gitignore/api/node,yarn,linux,macos,csharp,nextjs,windows,aspnetcore,dotnetcore,sublimetext,intellij+all,visualstudio,visualstudiocode
+/src/api/workload-install.ps1

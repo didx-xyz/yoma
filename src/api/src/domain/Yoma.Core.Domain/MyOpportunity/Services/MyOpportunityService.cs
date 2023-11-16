@@ -619,7 +619,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 throw new DataInconsistencyException("Manual verification enabled but opportunity has no mapped verification types");
 
             if (request.DateStart.HasValue && request.DateStart.Value < opportunity.DateStart)
-                throw new ValidationException($"Start date can not be earlier than the opportunity stated date of '{opportunity.DateStart}'");
+                throw new ValidationException($"Start date can not be earlier than the opportunity start date of '{opportunity.DateStart}'");
 
             if (request.DateEnd.HasValue && opportunity.DateEnd.HasValue && request.DateEnd.Value > opportunity.DateEnd.Value)
                 throw new ValidationException($"End date can not be later than the opportunity end date of '{opportunity.DateEnd}'");

@@ -68,11 +68,8 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             RuleFor(x => x.ParticipantLimit).Must(x => x.HasValue && x > 0).When(x => x.ParticipantLimit.HasValue).WithMessage("'{PropertyName}' must be greater than 0.");
             RuleFor(x => x.Keywords).Must(keywords => keywords == null || keywords.All(x => !string.IsNullOrWhiteSpace(x) && !x.Contains(OpportunityService.Keywords_Separator))).WithMessage("{PropertyName} contains empty value(s) or keywords with ',' character.");
             RuleFor(model => model.Keywords).Must(list => list == null || CalculateCombinedLength(list) >= 1 && CalculateCombinedLength(list) <= OpportunityService.Keywords_CombinedMaxLength).WithMessage("The combined length of keywords must be between 1 and 500 characters.");
-            RuleFor(x => x.DateStart).NotEmpty();
-            RuleFor(model => model.DateEnd)
-                .Must((model, dateEnd) => dateEnd >= DateTime.Today)
-                .When(model => model.DateEnd.HasValue)
-                .WithMessage("{PropertyName} is in the past and cannot be earlier than today.")
+            RuleFor(x => x.DateStart).NotEmpty(); //start date can be in the past
+            RuleFor(model => model.DateEnd) //end date can be in the past
                 .GreaterThanOrEqualTo(model => model.DateStart)
                 .When(model => model.DateEnd.HasValue)
                 .WithMessage("{PropertyName} is earlier than the Start Date.");
