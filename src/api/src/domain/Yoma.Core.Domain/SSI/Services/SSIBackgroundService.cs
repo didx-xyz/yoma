@@ -182,7 +182,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 {
                     var items = _ssiCredentialService.ListPendingIssuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize, itemIdsToSkip);
                     if (!items.Any()) break;
-                    
+
                     foreach (var item in items)
                     {
                         try
