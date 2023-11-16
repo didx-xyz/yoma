@@ -51,7 +51,6 @@ releases:
         value: 2022-latest
     secrets:
       - ./helm/mssql/conf/{{ .Environment.Name }}/secrets.yaml
-    values:
       - service:
           type: LoadBalancer
           annotations:

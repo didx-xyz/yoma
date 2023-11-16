@@ -10,6 +10,8 @@ on:
   pull_request:
     branches:
       - "master"
+  release:
+    types: [released,prereleased]
 
 env:
   REGISTRY: ghcr.io/${{ github.repository_owner }}
@@ -272,7 +274,11 @@ jobs:
       group: ${{ github.workflow }}-deploy-${{ matrix.project }}-${{ github.ref }}
       cancel-in-progress: false
     environment:
-      name: ${{ github.event_name == 'release' && 'prod' || 'dev' }}
+      name: ${{
+        (github.event_name == 'release' && github.event.action == 'released') && 'prod' ||
+        (github.event_name == 'release' && github.event.action == 'prereleased') && 'stage' ||
+        'dev'
+        }}
       url: ${{ vars.PUBLIC_URL }}
 
     strategy:
@@ -286,7 +292,7 @@ jobs:
           - project: yoma-web
             context: ./src/web
 
-    if: github.triggering_actor != 'dependabot[bot]' && github.event.pull_request.draft == false
+    if: github.triggering_actor != 'dependabot[bot]'
 
     steps:
       - uses: actions/checkout@v4
@@ -316,13 +322,13 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           version: ${{ env.TAILSCALE_VERSION }}
-
+      # Diff on PR draft. Apply on
       - name: Helmfile Apply/Diff
         if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
         uses: helmfile/helmfile-action@v1.4.0
         with:
           helmfile-args: |
-            ${{ github.event_name != 'pull_request' && 'apply' || 'diff' }} \
+            ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
               --environment ${{ vars.ENVIRONMENT }} \
               --selector app=${{ matrix.project }}
           helmfile-version: ${{ env.HELMFILE_VERSION }}
