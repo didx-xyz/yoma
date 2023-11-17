@@ -61,7 +61,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
   await queryClient.prefetchQuery(["opportunityInfo", opportunityId], () =>
-    getOpportunityInfoById(opportunityId, context),
+    getOpportunityInfoById(opportunityId, session != null, context),
   );
 
   return {
@@ -92,7 +92,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
   const { data: opportunity } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
-    queryFn: () => getOpportunityInfoById(opportunityId),
+    queryFn: () => getOpportunityInfoById(opportunityId, user != null),
   });
 
   const { data: verificationStatus, isLoading: verificationStatusIsLoading } =
