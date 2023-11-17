@@ -787,7 +787,9 @@ const OpportunityDetails: NextPageWithLayout<{
 
                   <div className="flex flex-col gap-4 md:flex-row">
                     <div className="flex-grow rounded-lg bg-white p-6 shadow-lg md:w-[66%]">
-                      {opportunity?.description}
+                      <div style={{ whiteSpace: "pre-wrap" }}>
+                        {opportunity?.description}
+                      </div>
                     </div>
                     <div className="flex flex-col gap-2 shadow-lg md:w-[33%]">
                       <div className="flex flex-col gap-1 rounded-lg bg-white p-6">
