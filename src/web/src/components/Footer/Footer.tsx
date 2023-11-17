@@ -15,9 +15,9 @@ export const Footer: React.FC = () => {
           </Link>
           <Link
             className="text-green hover:underline"
-            href="mailto:help@yoma.africa"
+            href="mailto:help@yoma.world"
           >
-            help@yoma.africa
+            help@yoma.world
           </Link>
         </div>
       </div>
