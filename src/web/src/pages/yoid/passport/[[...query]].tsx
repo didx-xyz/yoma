@@ -52,7 +52,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         searchCredentials(
           {
             pageNumber: page ? parseInt(page.toString()) : 1,
-            pageSize: PAGE_SIZE,
+            pageSize: null, //PAGE_SIZE,
             schemaType: null, //schemaType?.toString() ?? null,
           },
           context,
@@ -94,7 +94,7 @@ const MyPassport: NextPageWithLayout<{
     queryFn: () =>
       searchCredentials({
         pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
+        pageSize: null, //PAGE_SIZE,
         schemaType: null, //schemaType?.toString() ?? null,
       }),
   });
