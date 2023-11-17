@@ -26,6 +26,7 @@ import Moment from "react-moment";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import ReactModal from "react-modal";
 import { ApiErrors } from "~/components/Status/ApiErrors";
+import { LoadingInline } from "~/components/Status/LoadingInline";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -271,14 +272,7 @@ const MyPassport: NextPageWithLayout<{
             {dataError && <ApiErrors error={dataError} />}
 
             {/* LOADING */}
-            {dataIsLoading && (
-              <div className="flex items-center justify-center">
-                <div className="flex flex-col items-center justify-center gap-4">
-                  <div className="h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-purple"></div>
-                  <p className="text-sm text-gray-dark">Loading...</p>
-                </div>
-              </div>
-            )}
+            {dataIsLoading && <LoadingInline />}
 
             {/* NO ROWS */}
             {data && data.totalCount === 0 && (

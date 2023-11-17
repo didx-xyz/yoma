@@ -29,7 +29,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 }
 
 // NB: this a placeholder page for the home page
-// exported from figma and everything it's absolutely positioned... don't do things like this!!!
 const Home: NextPageWithLayout<{
   id: string;
   user: User;
