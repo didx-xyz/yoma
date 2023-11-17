@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { type ReactElement } from "react";
-import { FaThumbsUp } from "react-icons/fa";
 import MainLayout from "~/components/Layout/Main";
 import { type NextPageWithLayout } from "~/pages/_app";
 import iconRocket from "public/images/icon-rocket.svg";

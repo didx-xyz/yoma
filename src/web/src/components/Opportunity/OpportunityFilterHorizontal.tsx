@@ -87,7 +87,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { register, handleSubmit, formState, reset } = form;
+  const { handleSubmit, formState, reset } = form;
 
   // set default values
   useEffect(() => {

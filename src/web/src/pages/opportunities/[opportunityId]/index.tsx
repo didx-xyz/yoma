@@ -13,7 +13,6 @@ import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
 import {
-  IoMdArrowRoundBack,
   IoMdCheckmark,
   IoMdClose,
   IoMdFingerPrint,
