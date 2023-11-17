@@ -324,6 +324,8 @@ jobs:
           path: src/api
           monorepo-tags: true
           package-name: yoma-api
+          command: release-pr
+          default-branch: release-please
       # Diff on PR draft. Apply on
       - name: Helmfile Apply/Diff API
         if: steps.filter.outputs.api == 'true' || github.event_name == 'workflow_dispatch'
