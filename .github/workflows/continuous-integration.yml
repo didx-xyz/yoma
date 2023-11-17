@@ -5,13 +5,13 @@ on:
   push:
     branches:
       - "master"
-    tags:
-      - "v*"
+    # tags:
+    #   - "v*"
   pull_request:
     branches:
       - "master"
-  release:
-    types: [released,prereleased]
+  # release:
+  #   types: [released,prereleased]
 
 env:
   REGISTRY: ghcr.io/${{ github.repository_owner }}
@@ -80,24 +80,24 @@ jobs:
             web:
               - './src/web/**'
 
-      - uses: actions/setup-node@v4
-        if: (steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-        with:
-          node-version: 18
-          cache: yarn
-      - run: yarn install --frozen-lockfile
-        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-        working-directory: ${{ matrix.dir }}
+      # - uses: actions/setup-node@v4
+      #   if: (steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+      #   with:
+      #     node-version: 18
+      #     cache: yarn
+      # - run: yarn install --frozen-lockfile
+      #   if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+      #   working-directory: ${{ matrix.dir }}
 
-      - uses: actions/setup-dotnet@v3
-        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
-        with:
-          dotnet-version: 7.x
+      # - uses: actions/setup-dotnet@v3
+      #   if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
+      #   with:
+      #     dotnet-version: 7.x
 
-      - uses: wearerequired/lint-action@v2
-        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
-        with: ${{ matrix.config }}
-        env: ${{ matrix.env }}
+      # - uses: wearerequired/lint-action@v2
+      #   if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
+      #   with: ${{ matrix.config }}
+      #   env: ${{ matrix.env }}
 
   build:
     name: Build and push
@@ -205,63 +205,64 @@ jobs:
             web:
               - './src/web/**'
 
-      - name: Pre-pull images
-        run: |-
-          docker compose -f ./src/api/docker-compose.yml pull
-          docker compose -f ./src/web/docker-compose.yml pull
-        env:
-          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
-          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
-        continue-on-error: true
-      - name: Start services
-        run: |-
-          docker compose -f ./src/api/docker-compose.yml up -d
-          docker compose -f ./src/web/docker-compose.yml up -d
-        env:
-          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
-          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
+      # - name: Pre-pull images
+      #   run: |-
+      #     docker compose -f ./src/api/docker-compose.yml pull
+      #     docker compose -f ./src/web/docker-compose.yml pull
+      #   env:
+      #     API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
+      #     YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
+      #   continue-on-error: true
+      # - name: Start services
+      #   run: |-
+      #     docker compose -f ./src/api/docker-compose.yml up -d
+      #     docker compose -f ./src/web/docker-compose.yml up -d
+      #   env:
+      #     API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
+      #     YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: yarn
-      - uses: cypress-io/github-action@v6
-      - name: Upload Cypress Screenshots
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: cypress-screenshots
-          path: cypress/screenshots
-          if-no-files-found: ignore
-      - name: Upload Cypress Recording
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: cypress-videos
-          path: cypress/videos
-          if-no-files-found: ignore
+      # - uses: actions/setup-node@v4
+      #   with:
+      #     node-version: 18
+      #     cache: yarn
+      # - uses: cypress-io/github-action@v6
+      # - name: Upload Cypress Screenshots
+      #   uses: actions/upload-artifact@v3
+      #   if: always()
+      #   with:
+      #     name: cypress-screenshots
+      #     path: cypress/screenshots
+      #     if-no-files-found: ignore
+      # - name: Upload Cypress Recording
+      #   uses: actions/upload-artifact@v3
+      #   if: always()
+      #   with:
+      #     name: cypress-videos
+      #     path: cypress/videos
+      #     if-no-files-found: ignore
 
-      - name: Keycloak Config logs
-        if: always()
-        run: docker logs keycloak-config
-      - name: Keycloak logs
-        if: always()
-        run: docker logs keycloak
-      - name: Yoma API logs
-        if: always()
-        run: docker logs yoma-api
-      - name: Yoma Web logs
-        if: always()
-        run: docker logs yoma-web
+      # - name: Keycloak Config logs
+      #   if: always()
+      #   run: docker logs keycloak-config
+      # - name: Keycloak logs
+      #   if: always()
+      #   run: docker logs keycloak
+      # - name: Yoma API logs
+      #   if: always()
+      #   run: docker logs yoma-api
+      # - name: Yoma Web logs
+      #   if: always()
+      #   run: docker logs yoma-web
 
-      - run: docker compose down -v
+      # - run: docker compose down -v
 
   deploy:
     name: Deploy
     permissions:
       id-token: write
-      contents: read
+      contents: write
       packages: read
+      pull-requests: write
     needs: [ test-e2e, build ]
     runs-on: ubuntu-latest
 
@@ -313,6 +314,16 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           version: ${{ env.TAILSCALE_VERSION }}
+      - uses: google-github-actions/release-please-action@v3
+        if: steps.filter.outputs.api == 'true' || github.event_name == 'workflow_dispatch'
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release-type: simple
+          path: src/api
+          monorepo-tags: true
+          package-name: yoma-api
       # Diff on PR draft. Apply on
       - name: Helmfile Apply/Diff API
         if: steps.filter.outputs.api == 'true' || github.event_name == 'workflow_dispatch'
