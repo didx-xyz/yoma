@@ -117,11 +117,15 @@ export const Global: React.FC = () => {
       setNavbarColor("bg-purple");
     }
 
-    // PROFILE SWITCHING: if organisation page, OrgAdmins sees green. navbar links & company logo changes
+    //  if organisation page, OrgAdmins sees green. navbar links & company logo changes
     if (router.asPath.startsWith("/organisations")) {
-      const matches = router.asPath.match(/\/organisations\/([a-z0-9-]{36})/);
+      // override for register page
+      if (router.asPath.startsWith("/organisations/register")) {
+        setNavbarColor("bg-purple");
+        return;
+      }
 
-      //setNavbarColor("bg-blue");
+      const matches = router.asPath.match(/\/organisations\/([a-z0-9-]{36})/);
 
       if (matches && matches.length > 1) {
         const orgId = matches[1];
