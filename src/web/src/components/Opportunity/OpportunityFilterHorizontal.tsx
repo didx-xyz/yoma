@@ -13,6 +13,7 @@ import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import Select, { components, type ValueContainerProps } from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizontalCard";
+import { useSession } from "next-auth/react";
 // import iconNextArrow from "public/images/icon-next-arrow.svg";
 // import { toBase64, shimmer } from "~/lib/image";
 // import Image from "next/image";
@@ -31,6 +32,7 @@ export interface InputProps {
   onClear?: () => void;
   onOpenFilterFullWindow?: () => void;
   clearButtonText?: string;
+  isSearchExecuted: boolean;
 }
 
 const ValueContainer = ({
@@ -66,7 +68,10 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
   onClear,
   //onOpenFilterFullWindow,
   clearButtonText = "Clear",
+  isSearchExecuted,
 }) => {
+  const { data: session } = useSession();
+
   const schema = zod.object({
     types: zod.array(zod.string()).optional().nullable(),
     categories: zod.array(zod.string()).optional().nullable(),
@@ -75,13 +80,14 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
     organizations: zod.array(zod.string()).optional().nullable(),
     commitmentIntervals: zod.array(zod.string()).optional().nullable(),
     zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
+    includeExpired: zod.boolean().optional().nullable(),
   });
 
   const form = useForm({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { handleSubmit, formState, reset } = form;
+  const { register, handleSubmit, formState, reset } = form;
 
   // set default values
   useEffect(() => {
@@ -184,18 +190,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
       <form
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
         className={`
-        ${
-          opportunitySearchFilter?.valueContains === null &&
-          opportunitySearchFilter?.countries === null &&
-          opportunitySearchFilter?.categories === null &&
-          opportunitySearchFilter?.languages === null &&
-          opportunitySearchFilter?.mostViewed === null &&
-          opportunitySearchFilter?.organizations === null &&
-          opportunitySearchFilter?.types === null &&
-          opportunitySearchFilter?.zltoRewardRanges === null
-            ? "hidden "
-            : "flex flex-col gap-2"
-        } `}
+        ${isSearchExecuted ? "flex flex-col gap-2" : "hidden"} `}
       >
         <div className="flex flex-row gap-2">
           <div className="mr-4 flex items-center text-sm font-bold text-gray-dark">
@@ -459,6 +454,39 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               </label>
             )}
           </div>
+
+          {session && (
+            <div className="">
+              <label className="label cursor-pointer font-bold">
+                <span className="label-text mr-2 text-xs">Include expired</span>
+
+                <Controller
+                  name="includeExpired"
+                  control={form.control}
+                  render={({ field }) => (
+                    <input
+                      type="checkbox"
+                      className="checkbox-secondary checkbox"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e); // default handler
+                        void handleSubmit(onSubmitHandler)();
+                      }}
+                      checked={field.value ?? false}
+                    />
+                  )}
+                />
+              </label>
+
+              {formState.errors.includeExpired && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {`${formState.errors.includeExpired.message}`}
+                  </span>
+                </label>
+              )}
+            </div>
+          )}
 
           <div className="flex w-24 items-center justify-center rounded-md border-2 border-green text-xs font-semibold text-green">
             <button type="button" onClick={onClear}>
