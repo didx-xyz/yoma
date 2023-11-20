@@ -10,7 +10,6 @@ import {
   activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
   currentOrganisationLogoAtom,
-  navbarColorAtom,
   smallDisplayAtom,
   userProfileAtom,
 } from "~/lib/store";
@@ -25,7 +24,6 @@ export const Global: React.FC = () => {
   const setactiveNavigationRoleViewAtom = useSetAtom(
     activeNavigationRoleViewAtom,
   );
-  const setNavbarColor = useSetAtom(navbarColorAtom);
   const currentOrganisationIdValue = useAtomValue(currentOrganisationIdAtom);
   const setCurrentOrganisationIdAtom = useSetAtom(currentOrganisationIdAtom);
   const setCurrentOrganisationLogoAtom = useSetAtom(
@@ -64,16 +62,12 @@ export const Global: React.FC = () => {
         })
         .catch((e) => console.error(e));
     }
-
-    // if home page then override navbar color to purple
-    if (router.asPath === "/") setNavbarColor("bg-purple");
   }, [
     router,
     session,
     userProfile,
     setUserProfile,
     setactiveNavigationRoleViewAtom,
-    setNavbarColor,
   ]);
 
   // 🔔 SMALL DISPLAY
@@ -94,7 +88,7 @@ export const Global: React.FC = () => {
   useEffect(() => {
     if (!session) {
       setactiveNavigationRoleViewAtom(RoleView.User);
-      setNavbarColor("bg-purple");
+
       return;
     }
 
@@ -108,23 +102,14 @@ export const Global: React.FC = () => {
         router.asPath.startsWith("/organisations"))
     ) {
       setactiveNavigationRoleViewAtom(RoleView.Admin);
-      setNavbarColor("bg-blue");
     } else if (isOrgAdmin && router.asPath.startsWith("/organisations")) {
       setactiveNavigationRoleViewAtom(RoleView.OrgAdmin);
-      setNavbarColor("bg-green");
     } else {
       setactiveNavigationRoleViewAtom(RoleView.User);
-      setNavbarColor("bg-purple");
     }
 
     //  if organisation page, OrgAdmins sees green. navbar links & company logo changes
     if (router.asPath.startsWith("/organisations")) {
-      // override for register page
-      if (router.asPath.startsWith("/organisations/register")) {
-        setNavbarColor("bg-purple");
-        return;
-      }
-
       const matches = router.asPath.match(/\/organisations\/([a-z0-9-]{36})/);
 
       if (matches && matches.length > 1) {
@@ -156,7 +141,6 @@ export const Global: React.FC = () => {
   }, [
     router,
     session,
-    setNavbarColor,
     setCurrentOrganisationIdAtom,
     setCurrentOrganisationLogoAtom,
     setactiveNavigationRoleViewAtom,

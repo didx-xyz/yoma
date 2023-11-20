@@ -24,3 +24,6 @@ export const OPPORTUNITY_TYPES_LEARNING = [
   "25F5A835-C3F7-43CA-9840-D372A1D26694",
 ];
 export const OPPORTUNITY_TYPES_TASK = ["F12A9D90-A8F6-4914-8CA5-6ACF209F7312"];
+export const THEME_BLUE = "blue";
+export const THEME_GREEN = "green";
+export const THEME_PURPLE = "purple";

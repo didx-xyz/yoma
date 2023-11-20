@@ -10,7 +10,6 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, type ReactElement, useState } from "react";
 import MainLayout from "~/components/Layout/Main";
-import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { type ParsedUrlQuery } from "querystring";
@@ -24,7 +23,7 @@ import {
   IoMdThumbsUp,
 } from "react-icons/io";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { DATETIME_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
+import { DATETIME_FORMAT_HUMAN, PAGE_SIZE, THEME_GREEN } from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import {
   getOpportunitiesForVerification,
@@ -49,6 +48,7 @@ import { type SelectOption } from "~/api/models/lookups";
 import { Loading } from "~/components/Status/Loading";
 import { OpportunityCompletionRead } from "~/components/Opportunity/OpportunityCompletionRead";
 import Moment from "react-moment";
+import { AccessDenied } from "~/components/Status/AccessDenied";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -58,54 +58,60 @@ interface IParams extends ParsedUrlQuery {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id } = context.params as IParams;
-  const { query, opportunity, page } = context.query;
-
   const session = await getServerSession(context.req, context.res, authOptions);
 
-  const queryClient = new QueryClient();
-  if (session) {
-    // 👇 prefetch queries (on server)
-    await queryClient.prefetchQuery(
-      [
-        `Verifications_${id}_${query?.toString()}_${opportunity}_${page?.toString()}`,
-      ],
-      () =>
-        searchMyOpportunitiesAdmin(
-          {
-            organizations: [id],
-            pageNumber: page ? parseInt(page.toString()) : 1,
-            pageSize: PAGE_SIZE,
-            opportunity: opportunity?.toString() ?? null,
-            userId: null,
-            valueContains: query?.toString() ?? null,
-            action: Action.Verification,
-            verificationStatuses: [
-              VerificationStatus.Pending,
-              VerificationStatus.Completed,
-              VerificationStatus.Rejected,
-            ],
-          },
-          context,
-        ),
-    );
-
-    await queryClient.prefetchQuery(
-      ["OpportunitiesForVerification", id],
-      async () =>
-        (await getOpportunitiesForVerification([id], undefined, context)).map(
-          (x) => ({
-            value: x.id,
-            label: x.title,
-          }),
-        ),
-    );
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
   }
+
+  const { id } = context.params as IParams;
+  const { query, opportunity, page } = context.query;
+  const queryClient = new QueryClient();
+
+  // 👇 prefetch queries (on server)
+  await queryClient.prefetchQuery(
+    [
+      `Verifications_${id}_${query?.toString()}_${opportunity}_${page?.toString()}`,
+    ],
+    () =>
+      searchMyOpportunitiesAdmin(
+        {
+          organizations: [id],
+          pageNumber: page ? parseInt(page.toString()) : 1,
+          pageSize: PAGE_SIZE,
+          opportunity: opportunity?.toString() ?? null,
+          userId: null,
+          valueContains: query?.toString() ?? null,
+          action: Action.Verification,
+          verificationStatuses: [
+            VerificationStatus.Pending,
+            VerificationStatus.Completed,
+            VerificationStatus.Rejected,
+          ],
+        },
+        context,
+      ),
+  );
+
+  await queryClient.prefetchQuery(
+    ["OpportunitiesForVerification", id],
+    async () =>
+      (await getOpportunitiesForVerification([id], undefined, context)).map(
+        (x) => ({
+          value: x.id,
+          label: x.title,
+        }),
+      ),
+  );
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      user: session?.user ?? null,
       id: id ?? null,
       query: query ?? null,
       opportunity: opportunity ?? null,
@@ -119,7 +125,8 @@ const OpportunityVerifications: NextPageWithLayout<{
   query?: string;
   opportunity?: string;
   page?: string;
-}> = ({ id, query, opportunity, page }) => {
+  error: string;
+}> = ({ id, query, opportunity, page, error }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -143,6 +150,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           VerificationStatus.Rejected,
         ],
       }),
+    enabled: !!error,
   });
   const { data: dataOpportunitiesForVerification } = useQuery<SelectOption[]>({
     queryKey: [`OpportunitiesForVerification_${id}`],
@@ -151,6 +159,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         value: x.id,
         label: x.title,
       })),
+    enabled: !!error,
   });
   const dataBulkActions: SelectOption[] = [
     { value: "Approve", label: "Approve" },
@@ -391,6 +400,8 @@ const OpportunityVerifications: NextPageWithLayout<{
       setSelectedRows([]);
     }
   };
+
+  if (error) return <AccessDenied />;
 
   return (
     <>
@@ -728,4 +739,6 @@ OpportunityVerifications.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(OpportunityVerifications);
+OpportunityVerifications.theme = THEME_GREEN;
+
+export default OpportunityVerifications;

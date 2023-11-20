@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import router from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
 import { toast } from "react-toastify";
-import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 import { DATETIME_FORMAT_SYSTEM, PAGE_SIZE } from "~/lib/constants";
@@ -27,6 +26,7 @@ import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import ReactModal from "react-modal";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { LoadingInline } from "~/components/Status/LoadingInline";
+import { AccessDenied } from "~/components/Status/AccessDenied";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -36,29 +36,35 @@ interface IParams extends ParsedUrlQuery {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const session = await getServerSession(context.req, context.res, authOptions);
+
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  const queryClient = new QueryClient();
   const { id } = context.params as IParams;
   const { query, schemaType, page } = context.query;
 
-  const session = await getServerSession(context.req, context.res, authOptions);
-
-  const queryClient = new QueryClient();
-  if (session) {
-    // 👇 prefetch queries (on server)
-    await queryClient.prefetchQuery(
-      [
-        `Credentials_${id}_${query?.toString()}_${schemaType}_${page?.toString()}`,
-      ],
-      () =>
-        searchCredentials(
-          {
-            pageNumber: null, //page ? parseInt(page.toString()) : 1,
-            pageSize: null, //PAGE_SIZE,
-            schemaType: null, //schemaType?.toString() ?? null,
-          },
-          context,
-        ),
-    );
-  }
+  // 👇 prefetch queries (on server)
+  await queryClient.prefetchQuery(
+    [
+      `Credentials_${id}_${query?.toString()}_${schemaType}_${page?.toString()}`,
+    ],
+    () =>
+      searchCredentials(
+        {
+          pageNumber: null, //page ? parseInt(page.toString()) : 1,
+          pageSize: null, //PAGE_SIZE,
+          schemaType: null, //schemaType?.toString() ?? null,
+        },
+        context,
+      ),
+  );
 
   return {
     props: {
@@ -77,7 +83,8 @@ const MyPassport: NextPageWithLayout<{
   query?: string;
   schemaType?: string;
   page?: string;
-}> = ({ id, query, schemaType, page }) => {
+  error: string;
+}> = ({ id, query, schemaType, page, error }) => {
   const [credentialDialogVisible, setCredentialDialogVisible] = useState(false);
   const [activeCredential, setActiveCredential] =
     useState<SSICredentialInfo | null>(null);
@@ -97,6 +104,7 @@ const MyPassport: NextPageWithLayout<{
         pageSize: null, //PAGE_SIZE,
         schemaType: null, //schemaType?.toString() ?? null,
       }),
+    enabled: !!error,
   });
 
   // 🔔 pager change event
@@ -128,6 +136,8 @@ const MyPassport: NextPageWithLayout<{
     },
     [setActiveCredential, setCredentialDialogVisible],
   );
+
+  if (error) return <AccessDenied />;
 
   return (
     <>
@@ -361,4 +371,4 @@ MyPassport.getLayout = function getLayout(page: ReactElement) {
   return <YoIDTabbedLayout>{page}</YoIDTabbedLayout>;
 };
 
-export default withAuth(MyPassport);
+export default MyPassport;

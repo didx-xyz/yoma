@@ -38,6 +38,7 @@ try {
 
 export type NextPageWithLayout<P = object, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
+  theme?: string;
 };
 
 type AppPropsWithLayout<P> = AppProps<P> & {
@@ -63,9 +64,9 @@ const MyApp = ({
     <Provider>
       <SessionProvider session={pageProps.session}>
         <ThemeProvider
-          attribute="class"
+          //attribute="class"
           enableSystem={false}
-          forcedTheme="light"
+          forcedTheme={Component.theme ?? undefined}
         >
           <QueryClientProvider client={queryClient}>
             {/* eslint-disable-next-line */}
@@ -77,9 +78,7 @@ const MyApp = ({
                 <ConfirmationModalContextProvider>
                   <Global />
                   <Navbar />
-
                   {getLayout(<Component {...pageProps} key={router.asPath} />)}
-
                   <ToastContainer
                     containerId="toastContainer"
                     className="mt-16 w-full md:mt-10 md:w-[340px]"

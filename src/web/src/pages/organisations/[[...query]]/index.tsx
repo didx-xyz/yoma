@@ -18,16 +18,26 @@ import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
 import { SearchInput } from "~/components/SearchInput";
-import withAuth from "~/context/withAuth";
+import { AccessDenied } from "~/components/Status/AccessDenied";
+import { THEME_GREEN } from "~/lib/constants";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { query, page } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  const { query, page } = context.query;
   const queryClient = new QueryClient();
+
   if (session) {
     // 👇 prefetch queries (on server)
     await queryClient.prefetchQuery(
@@ -61,7 +71,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      user: session?.user ?? null,
     },
   };
 }
@@ -108,7 +118,9 @@ export const OrganisationCardComponent: React.FC<{
   );
 };
 
-const Opportunities: NextPageWithLayout = () => {
+const Opportunities: NextPageWithLayout<{
+  error: string;
+}> = ({ error }) => {
   const router = useRouter();
 
   // get query parameter from route
@@ -124,6 +136,7 @@ const Opportunities: NextPageWithLayout = () => {
         valueContains: query?.toString() ?? "",
         statuses: [Status.Active],
       }),
+    enabled: !!error,
   });
   const { data: organisationsInactive } = useQuery<OrganizationSearchResults>({
     queryKey: [
@@ -136,6 +149,7 @@ const Opportunities: NextPageWithLayout = () => {
         valueContains: query?.toString() ?? "",
         statuses: [Status.Inactive],
       }),
+    enabled: !!error,
   });
 
   const onSearch = useCallback(
@@ -153,6 +167,8 @@ const Opportunities: NextPageWithLayout = () => {
     },
     [router],
   );
+
+  if (error) return <AccessDenied />;
 
   return (
     <>
@@ -247,4 +263,6 @@ Opportunities.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(Opportunities);
+Opportunities.theme = THEME_GREEN;
+
+export default Opportunities;

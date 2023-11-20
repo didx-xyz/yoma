@@ -7,7 +7,7 @@ import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
 import type { ParsedUrlQuery } from "querystring";
 import { UnderConstruction } from "~/components/Status/UnderConstruction";
 import type { ReactElement } from "react";
-import withAuth from "~/context/withAuth";
+import { AccessDenied } from "~/components/Status/AccessDenied";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -16,17 +16,24 @@ interface IParams extends ParsedUrlQuery {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id } = context.params as IParams;
-  const { query, page } = context.query;
-
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  const { id } = context.params as IParams;
+  const { query, page } = context.query;
   const queryClient = new QueryClient();
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      user: session?.user ?? null,
       id: id ?? null,
       query: query ?? null,
       page: page ?? "1",
@@ -34,11 +41,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-const MySkills: NextPageWithLayout<{
+const MyHistory: NextPageWithLayout<{
   id: string;
   query?: string;
   page?: string;
-}> = (/*{ id, query, page }*/) => {
+  error: string;
+}> = ({ /*id, query, page,*/ error }) => {
+  if (error) return <AccessDenied />;
+
   return (
     <>
       <UnderConstruction />
@@ -46,8 +56,8 @@ const MySkills: NextPageWithLayout<{
   );
 };
 
-MySkills.getLayout = function getLayout(page: ReactElement) {
+MyHistory.getLayout = function getLayout(page: ReactElement) {
   return <YoIDTabbedLayout>{page}</YoIDTabbedLayout>;
 };
 
-export default withAuth(MySkills);
+export default MyHistory;

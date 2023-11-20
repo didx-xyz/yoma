@@ -14,7 +14,6 @@ import {
   updateOpportunityStatus,
 } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
-import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
@@ -41,6 +40,8 @@ import { toast } from "react-toastify";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { type AxiosError } from "axios";
 import { Loading } from "~/components/Status/Loading";
+import { AccessDenied } from "~/components/Status/AccessDenied";
+import { THEME_GREEN } from "~/lib/constants";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -48,14 +49,22 @@ interface IParams extends ParsedUrlQuery {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id, opportunityId } = context.params as IParams;
-  const queryClient = new QueryClient();
   const session = await getServerSession(context.req, context.res, authOptions);
 
-  if (session)
-    await queryClient.prefetchQuery(["opportunityInfo", opportunityId], () =>
-      getOpportunityInfoByIdAdmin(opportunityId, context),
-    );
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  const { id, opportunityId } = context.params as IParams;
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery(["opportunityInfo", opportunityId], () =>
+    getOpportunityInfoByIdAdmin(opportunityId, context),
+  );
 
   return {
     props: {
@@ -71,13 +80,15 @@ const OpportunityDetails: NextPageWithLayout<{
   id: string;
   opportunityId: string;
   user: User;
-}> = ({ id, opportunityId, user }) => {
+  error: string;
+}> = ({ id, opportunityId, user, error }) => {
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: opportunity } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
     queryFn: () => getOpportunityInfoByIdAdmin(opportunityId),
+    enabled: !!error,
   });
 
   const [manageOpportunityMenuVisible, setManageOpportunityMenuVisible] =
@@ -110,6 +121,8 @@ const OpportunityDetails: NextPageWithLayout<{
     },
     [opportunityId, queryClient],
   );
+
+  if (error) return <AccessDenied />;
 
   return (
     <>
@@ -480,4 +493,6 @@ OpportunityDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(OpportunityDetails);
+OpportunityDetails.theme = THEME_GREEN;
+
+export default OpportunityDetails;

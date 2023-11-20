@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { type ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
-import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "~/pages/_app";
 import Link from "next/link";
@@ -13,25 +12,33 @@ import { IoIosAdd, IoMdSettings } from "react-icons/io";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { getSchemas } from "~/api/services/credentials";
 import type { SSISchema } from "~/api/models/credential";
+import { THEME_BLUE } from "~/lib/constants";
+import { AccessDenied } from "~/components/Status/AccessDenied";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { query, page } = context.query;
-
   const session = await getServerSession(context.req, context.res, authOptions);
 
-  const queryClient = new QueryClient();
-  if (session) {
-    // 👇 prefetch queries (on server)
-    await queryClient.prefetchQuery(
-      [`Schemas_${query?.toString()}_${page?.toString()}`],
-      () => getSchemas(undefined, context),
-    );
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
   }
+
+  const { query, page } = context.query;
+  const queryClient = new QueryClient();
+
+  // 👇 prefetch queries (on server)
+  await queryClient.prefetchQuery(
+    [`Schemas_${query?.toString()}_${page?.toString()}`],
+    () => getSchemas(undefined, context),
+  );
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      user: session?.user ?? null,
       query: query ?? null,
       page: page ?? null,
     },
@@ -41,12 +48,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const Schemas: NextPageWithLayout<{
   query?: string;
   page?: string;
-}> = ({ query, page }) => {
+  error: string;
+}> = ({ query, page, error }) => {
   // 👇 use prefetched queries (from server)
   const { data: schemas } = useQuery<SSISchema[]>({
     queryKey: [`Schemas_${query?.toString()}_${page?.toString()}`],
     queryFn: () => getSchemas(),
+    enabled: !!error,
   });
+
+  if (error) return <AccessDenied />;
 
   return (
     <>
@@ -131,4 +142,6 @@ Schemas.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(Schemas);
+Schemas.theme = THEME_BLUE;
+
+export default Schemas;

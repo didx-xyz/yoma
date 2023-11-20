@@ -25,7 +25,6 @@ import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
 import { PageBackground } from "~/components/PageBackground";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
-import withAuth from "~/context/withAuth";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { type User, authOptions } from "~/server/auth";
 import { useAtomValue, useSetAtom } from "jotai";
@@ -35,30 +34,39 @@ import {
   userProfileAtom,
 } from "~/lib/store";
 import { getUserProfile } from "~/api/services/user";
+import { AccessDenied } from "~/components/Status/AccessDenied";
+import { THEME_GREEN } from "~/lib/constants";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
 
-  const queryClient = new QueryClient();
-  if (session) {
-    // 👇 prefetch queries (on server)
-    await queryClient.prefetchQuery(["organisationProviderTypes"], () =>
-      getOrganisationProviderTypes(context),
-    );
-    await queryClient.prefetchQuery(["organisation", id], () =>
-      getOrganisationById(id, context),
-    );
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
   }
+
+  const { id } = context.params as IParams;
+  const queryClient = new QueryClient();
+
+  // 👇 prefetch queries (on server)
+  await queryClient.prefetchQuery(["organisationProviderTypes"], () =>
+    getOrganisationProviderTypes(context),
+  );
+  await queryClient.prefetchQuery(["organisation", id], () =>
+    getOrganisationById(id, context),
+  );
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null, // (required for 'withAuth' HOC component),
+      user: session?.user ?? null,
       id: id,
     },
   };
@@ -67,7 +75,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const OrganisationUpdate: NextPageWithLayout<{
   id: string;
   user: User | null;
-}> = ({ id, user }) => {
+  error: string;
+}> = ({ id, user, error }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
@@ -79,6 +88,7 @@ const OrganisationUpdate: NextPageWithLayout<{
 
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
+    enabled: !!error,
   });
 
   const [OrganizationRequestBase, setOrganizationRequestBase] =
@@ -165,6 +175,8 @@ const OrganisationUpdate: NextPageWithLayout<{
     },
     [OrganizationRequestBase, onSubmit],
   );
+
+  if (error) return <AccessDenied />;
 
   return (
     <>
@@ -290,5 +302,6 @@ const OrganisationUpdate: NextPageWithLayout<{
 OrganisationUpdate.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
+OrganisationUpdate.theme = THEME_GREEN;
 
-export default withAuth(OrganisationUpdate);
+export default OrganisationUpdate;

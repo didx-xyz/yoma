@@ -36,19 +36,29 @@ import { Overview } from "~/components/Organisation/Detail/Overview";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
-import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 import { PageBackground } from "~/components/PageBackground";
+import { AccessDenied } from "~/components/Status/AccessDenied";
+import { THEME_GREEN } from "~/lib/constants";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const session = await getServerSession(context.req, context.res, authOptions);
+
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
   const { id } = context.params as IParams;
   const queryClient = new QueryClient();
-  const session = await getServerSession(context.req, context.res, authOptions);
 
   await queryClient.prefetchQuery(["organisation", id], () =>
     getOrganisationById(id, context),
@@ -69,7 +79,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const OrganisationDetails: NextPageWithLayout<{
   id: string;
   user: User;
-}> = ({ id }) => {
+  error: string;
+}> = ({ id, error }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
@@ -80,6 +91,7 @@ const OrganisationDetails: NextPageWithLayout<{
 
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
+    enabled: !!error,
   });
 
   const onSubmit = useCallback(async () => {
@@ -126,6 +138,8 @@ const OrganisationDetails: NextPageWithLayout<{
     verifyActionApprove,
     verifyComments,
   ]);
+
+  if (error) return <AccessDenied />;
 
   return (
     <>
@@ -260,4 +274,6 @@ OrganisationDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(OrganisationDetails);
+OrganisationDetails.theme = THEME_GREEN;
+
+export default OrganisationDetails;

@@ -19,32 +19,41 @@ import { OrgInfoEdit } from "~/components/Organisation/Upsert/OrgInfoEdit";
 import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
-import withAuth from "~/context/withAuth";
 import { userProfileAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 import { useSetAtom } from "jotai";
+import { AccessDenied } from "~/components/Status/AccessDenied";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
-  const queryClient = new QueryClient();
-  if (session) {
-    // 👇 prefetch queries (on server)
-    await queryClient.prefetchQuery(["organisationProviderTypes"], () =>
-      getOrganisationProviderTypes(context),
-    );
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
   }
+
+  const queryClient = new QueryClient();
+
+  // 👇 prefetch queries (on server)
+  await queryClient.prefetchQuery(["organisationProviderTypes"], () =>
+    getOrganisationProviderTypes(context),
+  );
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      user: session?.user ?? null,
     },
   };
 }
 
-const OrganisationCreate: NextPageWithLayout = () => {
+const OrganisationCreate: NextPageWithLayout<{
+  error: string;
+}> = ({ error }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
   const setUserProfile = useSetAtom(userProfileAtom);
@@ -144,6 +153,8 @@ const OrganisationCreate: NextPageWithLayout = () => {
     window.scrollTo(0, 0);
   }, [step]);
 
+  if (error) return <AccessDenied />;
+
   return (
     <div className="w-full bg-purple px-2 py-12">
       {isLoading && <Loading />}
@@ -240,4 +251,4 @@ OrganisationCreate.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(OrganisationCreate);
+export default OrganisationCreate;

@@ -2,6 +2,7 @@ import Head from "next/head";
 import type { ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
 import { UnderConstruction } from "~/components/Status/UnderConstruction";
+import { THEME_BLUE } from "~/lib/constants";
 import type { NextPageWithLayout } from "~/pages/_app";
 
 const AdminOpportunities: NextPageWithLayout = () => {
@@ -20,5 +21,7 @@ const AdminOpportunities: NextPageWithLayout = () => {
 AdminOpportunities.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
+
+AdminOpportunities.theme = THEME_BLUE;
 
 export default AdminOpportunities;

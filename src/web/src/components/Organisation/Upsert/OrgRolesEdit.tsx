@@ -100,7 +100,6 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
       }
 
       // if education is selected, education provider documents are required
-      //  debugger;
       const educationPT = organisationProviderTypes?.find(
         (x) => x.name == "Education",
       );

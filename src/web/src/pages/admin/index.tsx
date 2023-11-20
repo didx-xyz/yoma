@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
 import type { NextPageWithLayout } from "../_app";
 import { UnderConstruction } from "~/components/Status/UnderConstruction";
+import { THEME_BLUE } from "~/lib/constants";
 
 const AdminHome: NextPageWithLayout = () => {
   return (
@@ -20,5 +21,7 @@ const AdminHome: NextPageWithLayout = () => {
 AdminHome.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
+
+AdminHome.theme = THEME_BLUE;
 
 export default AdminHome;

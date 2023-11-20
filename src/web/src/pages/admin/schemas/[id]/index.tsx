@@ -27,7 +27,6 @@ import { type OpportunityRequestBase } from "~/api/models/opportunity";
 import MainLayout from "~/components/Layout/Main";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
-import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
@@ -48,16 +47,26 @@ import {
 } from "~/api/models/credential";
 import { SchemaAttributesEdit } from "~/components/Schema/SchemaAttributesEdit";
 import type { SelectOption } from "~/api/models/lookups";
+import { THEME_BLUE } from "~/lib/constants";
+import { AccessDenied } from "~/components/Status/AccessDenied";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id } = context.params as IParams;
-  const queryClient = new QueryClient();
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  const { id } = context.params as IParams;
+  const queryClient = new QueryClient();
   if (id !== "create") {
     await queryClient.prefetchQuery(["schema", id], () =>
       getSchemaByName(id, context),
@@ -83,7 +92,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const SchemaCreateEdit: NextPageWithLayout<{
   id: string;
   user: User;
-}> = ({ id }) => {
+  error: string;
+}> = ({ id, error }) => {
   const queryClient = useQueryClient();
 
   const { data: schema } = useQuery<SSISchema>({
@@ -257,7 +267,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
             ?.label as keyof typeof SchemaType
         ],
       ),
-    enabled: formData.typeId != null,
+    enabled: formData.typeId != null && !!error,
   });
   const systemSchemaEntities = useMemo(
     () =>
@@ -267,6 +277,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
       })) ?? [],
     [schemaEntities],
   );
+
   const renderAttribute = useCallback(
     (attributeName: string, index: number) => {
       const schemaEntity = schemaEntities?.find(
@@ -286,6 +297,8 @@ const SchemaCreateEdit: NextPageWithLayout<{
     },
     [schemaEntities],
   );
+
+  if (error) return <AccessDenied />;
 
   return (
     <>
@@ -837,4 +850,6 @@ SchemaCreateEdit.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(SchemaCreateEdit);
+SchemaCreateEdit.theme = THEME_BLUE;
+
+export default SchemaCreateEdit;
