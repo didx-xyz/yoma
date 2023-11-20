@@ -104,7 +104,7 @@ const MyPassport: NextPageWithLayout<{
         pageSize: null, //PAGE_SIZE,
         schemaType: null, //schemaType?.toString() ?? null,
       }),
-    enabled: !!error,
+    enabled: !error,
   });
 
   // 🔔 pager change event

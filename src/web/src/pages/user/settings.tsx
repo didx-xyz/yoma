@@ -56,7 +56,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 const Settings: NextPageWithLayout<{
   user: User;
-  error: string;
+  error?: string;
 }> = ({ user, error }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [logoFiles, setLogoFiles] = useState<File[]>([]);
@@ -66,17 +66,17 @@ const Settings: NextPageWithLayout<{
   const { data: genders } = useQuery({
     queryKey: ["genders"],
     queryFn: async () => await getGenders(),
-    enabled: !!error,
+    enabled: !error,
   });
   const { data: countries } = useQuery({
     queryKey: ["countries"],
     queryFn: async () => await getCountries(),
-    enabled: !!error,
+    enabled: !error,
   });
   const { data: userProfile } = useQuery({
     queryKey: ["userProfile"],
     queryFn: async () => await getUserProfile(),
-    enabled: !!error,
+    enabled: !error,
   });
 
   const { update } = useSession();
@@ -206,7 +206,6 @@ const Settings: NextPageWithLayout<{
 
       <div className="container z-10 max-w-2xl px-2 py-4">
         <h2 className="font-boldx pb-8 text-white">User Settings</h2>
-
         <div className="flex flex-col items-center justify-start">
           <div className="flex w-full max-w-2xl flex-col rounded-lg bg-white p-8">
             <form

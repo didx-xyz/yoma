@@ -7,7 +7,7 @@ import Link from "next/link";
 
 const Success: NextPageWithLayout = () => {
   return (
-    <div className="flex justify-center bg-purple md:w-screen">
+    <div className="bg-theme flex justify-center md:w-screen">
       <div className="container my-auto max-w-md md:w-[28rem]">
         <div className="flex flex-col place-items-center justify-center rounded-xl bg-white p-12 text-center">
           <Image src={iconRocket} alt="Icon Rocket" className="-mt-4" />

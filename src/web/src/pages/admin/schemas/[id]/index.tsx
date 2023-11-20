@@ -267,7 +267,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
             ?.label as keyof typeof SchemaType
         ],
       ),
-    enabled: formData.typeId != null && !!error,
+    enabled: formData.typeId != null && !error,
   });
   const systemSchemaEntities = useMemo(
     () =>

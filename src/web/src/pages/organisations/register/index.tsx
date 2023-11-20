@@ -156,7 +156,7 @@ const OrganisationCreate: NextPageWithLayout<{
   if (error) return <AccessDenied />;
 
   return (
-    <div className="w-full bg-purple px-2 py-12">
+    <div className="bg-theme w-full px-2 py-12">
       {isLoading && <Loading />}
 
       {/* CONTENT */}

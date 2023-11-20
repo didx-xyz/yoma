@@ -150,7 +150,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           VerificationStatus.Rejected,
         ],
       }),
-    enabled: !!error,
+    enabled: !error,
   });
   const { data: dataOpportunitiesForVerification } = useQuery<SelectOption[]>({
     queryKey: [`OpportunitiesForVerification_${id}`],
@@ -159,7 +159,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         value: x.id,
         label: x.title,
       })),
-    enabled: !!error,
+    enabled: !error,
   });
   const dataBulkActions: SelectOption[] = [
     { value: "Approve", label: "Approve" },

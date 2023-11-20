@@ -160,7 +160,7 @@ const OpportunityDetails: NextPageWithLayout<{
         value: c.id,
         label: c.name,
       })),
-    enabled: !!error,
+    enabled: !error,
   });
   const { data: countries } = useQuery<SelectOption[]>({
     queryKey: ["countries"],
@@ -169,7 +169,7 @@ const OpportunityDetails: NextPageWithLayout<{
         value: c.id,
         label: c.name,
       })),
-    enabled: !!error,
+    enabled: !error,
   });
   const { data: languages } = useQuery<SelectOption[]>({
     queryKey: ["languages"],
@@ -178,7 +178,7 @@ const OpportunityDetails: NextPageWithLayout<{
         value: c.id,
         label: c.name,
       })),
-    enabled: !!error,
+    enabled: !error,
   });
   const { data: opportunityTypes } = useQuery<SelectOption[]>({
     queryKey: ["opportunityTypes"],
@@ -187,12 +187,12 @@ const OpportunityDetails: NextPageWithLayout<{
         value: c.id,
         label: c.name,
       })),
-    enabled: !!error,
+    enabled: !error,
   });
   const { data: verificationTypes } = useQuery<OpportunityVerificationType[]>({
     queryKey: ["verificationTypes"],
     queryFn: async () => await getVerificationTypes(),
-    enabled: !!error,
+    enabled: !error,
   });
   const { data: difficulties } = useQuery<SelectOption[]>({
     queryKey: ["difficulties"],
@@ -201,7 +201,7 @@ const OpportunityDetails: NextPageWithLayout<{
         value: c.id,
         label: c.name,
       })),
-    enabled: !!error,
+    enabled: !error,
   });
   const { data: timeIntervals } = useQuery<SelectOption[]>({
     queryKey: ["timeIntervals"],
@@ -210,7 +210,7 @@ const OpportunityDetails: NextPageWithLayout<{
         value: c.id,
         label: c.name,
       })),
-    enabled: !!error,
+    enabled: !error,
   });
   const { data: skills } = useQuery<SelectOption[]>({
     queryKey: ["skills"],
@@ -221,12 +221,12 @@ const OpportunityDetails: NextPageWithLayout<{
         value: c.id,
         label: c.name,
       })),
-    enabled: !!error,
+    enabled: !error,
   });
   const { data: schemas } = useQuery({
     queryKey: ["schemas"],
     queryFn: async () => getSchemas(SchemaType.Opportunity),
-    enabled: !!error,
+    enabled: !error,
   });
   const schemasOptions = useMemo<SelectOption[]>(
     () =>
@@ -245,7 +245,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const { data: opportunity } = useQuery<Opportunity>({
     queryKey: ["opportunity", opportunityId],
     queryFn: () => getOpportunityById(opportunityId),
-    enabled: opportunityId !== "create" && !!error,
+    enabled: opportunityId !== "create" && !error,
   });
 
   const loadSkills = useCallback(
@@ -284,7 +284,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCancel = () => {
-    void router.push(`/organisations/${id}/opportunities`);
+    void router.push(`/orgAdmin/organisations/${id}/opportunities`);
   };
 
   const [formData, setFormData] = useState<OpportunityRequestBase>({
@@ -374,7 +374,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
       // redirect to list after create
       if (opportunityId === "create")
-        void router.push(`/organisations/${id}/opportunities`);
+        void router.push(`/orgAdmin/organisations/${id}/opportunities`);
     },
     [setIsLoading, id, opportunityId, opportunity, queryClient],
   );
@@ -673,7 +673,7 @@ const OpportunityDetails: NextPageWithLayout<{
             <li>
               <Link
                 className="font-bold text-white hover:text-gray"
-                href={`/organisations/${id}/opportunities`}
+                href={`/orgAdmin/organisations/${id}/opportunities`}
               >
                 <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
                 Opportunities
@@ -686,7 +686,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 ) : (
                   <Link
                     className="text-white hover:text-gray"
-                    href={`/organisations/${id}/opportunities/${opportunityId}/info`}
+                    href={`/orgAdmin/organisations/${id}/opportunities/${opportunityId}/info`}
                   >
                     {opportunity?.title}
                   </Link>

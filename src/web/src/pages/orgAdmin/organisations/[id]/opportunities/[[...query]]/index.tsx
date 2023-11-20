@@ -114,7 +114,7 @@ const Opportunities: NextPageWithLayout<{
         commitmentIntervals: null,
         zltoRewardRanges: null,
       }),
-    enabled: !!error,
+    enabled: !error,
   });
 
   const onSearch = useCallback(
@@ -125,10 +125,10 @@ const Opportunities: NextPageWithLayout<{
 
         // redirect to the search page
         void router.push(
-          `/organisations/${id}/opportunities?query=${queryEncoded}`,
+          `/orgAdmin/organisations/${id}/opportunities?query=${queryEncoded}`,
         );
       } else {
-        void router.push(`/organisations/${id}/opportunities`);
+        void router.push(`/orgAdmin/organisations/${id}/opportunities`);
       }
     },
     [router, id],
@@ -139,7 +139,7 @@ const Opportunities: NextPageWithLayout<{
     (value: number) => {
       // redirect
       void router.push({
-        pathname: `/organisations/${id}/opportunities`,
+        pathname: `/orgAdmin/organisations/${id}/opportunities`,
         query: { query: query, page: value },
       });
 
@@ -167,7 +167,7 @@ const Opportunities: NextPageWithLayout<{
             <SearchInput defaultValue={query} onSearch={onSearch} />
 
             <Link
-              href={`/organisations/${id}/opportunities/create`}
+              href={`/orgAdmin/organisations/${id}/opportunities/create`}
               className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
             >
               <IoIosAdd className="mr-1 h-5 w-5" />
@@ -209,7 +209,7 @@ const Opportunities: NextPageWithLayout<{
                     <tr key={opportunity.id}>
                       <td>
                         <Link
-                          href={`/organisations/${id}/opportunities/${opportunity.id}/info`}
+                          href={`/orgAdmin/organisations/${id}/opportunities/${opportunity.id}/info`}
                         >
                           {opportunity.title}
                         </Link>

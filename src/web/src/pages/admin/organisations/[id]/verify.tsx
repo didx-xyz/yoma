@@ -37,10 +37,10 @@ import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { authOptions, type User } from "~/server/auth";
-import { type NextPageWithLayout } from "../../_app";
 import { PageBackground } from "~/components/PageBackground";
 import { AccessDenied } from "~/components/Status/AccessDenied";
-import { THEME_GREEN } from "~/lib/constants";
+import { THEME_BLUE } from "~/lib/constants";
+import type { NextPageWithLayout } from "~/pages/_app";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -91,7 +91,7 @@ const OrganisationDetails: NextPageWithLayout<{
 
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
-    enabled: !!error,
+    enabled: !error,
   });
 
   const onSubmit = useCallback(async () => {
@@ -274,6 +274,6 @@ OrganisationDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-OrganisationDetails.theme = THEME_GREEN;
+OrganisationDetails.theme = THEME_BLUE;
 
 export default OrganisationDetails;

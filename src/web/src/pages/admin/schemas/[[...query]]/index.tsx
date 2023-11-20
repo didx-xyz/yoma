@@ -54,7 +54,7 @@ const Schemas: NextPageWithLayout<{
   const { data: schemas } = useQuery<SSISchema[]>({
     queryKey: [`Schemas_${query?.toString()}_${page?.toString()}`],
     queryFn: () => getSchemas(),
-    enabled: !!error,
+    enabled: !error,
   });
 
   if (error) return <AccessDenied />;

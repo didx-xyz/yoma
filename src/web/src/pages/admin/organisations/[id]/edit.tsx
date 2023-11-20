@@ -35,6 +35,7 @@ import {
 } from "~/lib/store";
 import { getUserProfile } from "~/api/services/user";
 import { AccessDenied } from "~/components/Status/AccessDenied";
+import { THEME_BLUE } from "~/lib/constants";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -193,7 +194,7 @@ const OrganisationUpdate: NextPageWithLayout<{
           {activeRoleView === RoleView.Admin && (
             <Link
               className="font-bold hover:text-gray"
-              href={"/orgAdmin/organisations"}
+              href={"/admin/organisations"}
             >
               Organisations
             </Link>
@@ -207,7 +208,7 @@ const OrganisationUpdate: NextPageWithLayout<{
           {activeRoleView === RoleView.Admin && (
             <Link
               className="font-bold hover:text-gray"
-              href={`/orgAdmin/organisations/${id}`}
+              href={`/organisations/${id}`}
             >
               {organisation?.name}
             </Link>
@@ -304,5 +305,6 @@ const OrganisationUpdate: NextPageWithLayout<{
 OrganisationUpdate.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
+OrganisationUpdate.theme = THEME_BLUE;
 
 export default OrganisationUpdate;

@@ -12,7 +12,7 @@ import {
   IoMdSettings,
 } from "react-icons/io";
 import ReactModal from "react-modal";
-import { ROLE_ADMIN } from "~/lib/constants";
+import { ROLE_ADMIN, ROLE_ORG_ADMIN } from "~/lib/constants";
 import { shimmer, toBase64 } from "~/lib/image";
 import {
   RoleView,
@@ -28,6 +28,7 @@ export const UserMenu: React.FC = () => {
   const currentOrganisationLogo = useAtomValue(currentOrganisationLogoAtom);
   const { data: session } = useSession();
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
+  const isOrgAdmin = session?.user?.roles.includes(ROLE_ORG_ADMIN);
 
   const handleLogout = () => {
     setUserMenuVisible(false);
@@ -200,7 +201,9 @@ export const UserMenu: React.FC = () => {
                       key={organisation.id}
                       href={
                         organisation.status == "Active"
-                          ? `/organisations/${organisation.id}`
+                          ? `/orgAdmin/organisations/${organisation.id}`
+                          : isOrgAdmin
+                          ? `/orgAdmin/organisations/${organisation.id}/edit`
                           : `/organisations/${organisation.id}/edit`
                       }
                       className="text-gray-dark"

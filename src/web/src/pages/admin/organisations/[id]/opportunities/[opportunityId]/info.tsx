@@ -41,7 +41,7 @@ import { ApiErrors } from "~/components/Status/ApiErrors";
 import { type AxiosError } from "axios";
 import { Loading } from "~/components/Status/Loading";
 import { AccessDenied } from "~/components/Status/AccessDenied";
-import { THEME_GREEN } from "~/lib/constants";
+import { THEME_BLUE } from "~/lib/constants";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -88,7 +88,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const { data: opportunity } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
     queryFn: () => getOpportunityInfoByIdAdmin(opportunityId),
-    enabled: !!error,
+    enabled: !error,
   });
 
   const [manageOpportunityMenuVisible, setManageOpportunityMenuVisible] =
@@ -137,7 +137,7 @@ const OpportunityDetails: NextPageWithLayout<{
               <li>
                 <Link
                   className="font-bold text-white hover:text-gray"
-                  href={`/organisations/${id}/opportunities`}
+                  href={`/admin/organisations/${id}/opportunities`}
                 >
                   <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
                   Opportunities
@@ -176,7 +176,7 @@ const OpportunityDetails: NextPageWithLayout<{
           >
             <div className="flex flex-col gap-4 p-4 text-xs">
               <Link
-                href={`/organisations/${id}/opportunities/${opportunityId}`}
+                href={`/admin/organisations/${id}/opportunities/${opportunityId}`}
                 className="flex flex-row items-center text-gray-dark hover:brightness-50"
               >
                 <FaPencilAlt className="mr-2 h-3 w-3" />
@@ -184,7 +184,7 @@ const OpportunityDetails: NextPageWithLayout<{
               </Link>
               {/* TODO */}
               <Link
-                href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
+                href={`/admin/organisations/${id}/opportunities/${opportunityId}/edit`}
                 className="flex flex-row items-center text-gray-dark hover:brightness-50"
               >
                 <FaClipboard className="mr-2 h-3 w-3" />
@@ -217,7 +217,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
               {/* TODO */}
               <Link
-                href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
+                href={`/admin/organisations/${id}/opportunities/${opportunityId}/edit`}
                 className="flex flex-row items-center text-gray-dark hover:brightness-50"
               >
                 <FaArrowCircleUp className="mr-2 h-3 w-3" />
@@ -226,7 +226,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
               {/* TODO */}
               <Link
-                href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
+                href={`/admin/organisations/${id}/opportunities/${opportunityId}/edit`}
                 className="flex flex-row items-center text-gray-dark hover:brightness-50"
               >
                 <FaLink className="mr-2 h-3 w-3" />
@@ -354,7 +354,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   {opportunity?.participantCountVerificationPending &&
                     opportunity?.participantCountVerificationPending > 0 && (
                       <Link
-                        href={`/organisations/${id}/verifications?opportunity=${opportunityId}`}
+                        href={`/admin/organisations/${id}/verifications?opportunity=${opportunityId}`}
                       >
                         <div className="flex flex-row items-center gap-2 rounded-lg bg-yellow-light p-1">
                           <div className="badge badge-warning rounded-lg bg-yellow text-white">
@@ -493,6 +493,6 @@ OpportunityDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-OpportunityDetails.theme = THEME_GREEN;
+OpportunityDetails.theme = THEME_BLUE;
 
 export default OpportunityDetails;

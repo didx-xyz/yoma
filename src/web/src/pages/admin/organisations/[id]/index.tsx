@@ -10,10 +10,10 @@ import { getOrganisationById } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { authOptions, type User } from "~/server/auth";
-import { type NextPageWithLayout } from "../../_app";
 import Link from "next/link";
-import { THEME_GREEN } from "~/lib/constants";
+import { THEME_BLUE } from "~/lib/constants";
 import { AccessDenied } from "~/components/Status/AccessDenied";
+import { NextPageWithLayout } from "~/pages/_app";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -213,7 +213,7 @@ const OrganisationOverview: NextPageWithLayout<{
         </div>
         <div>
           <Link
-            href={`/organisations/${id}/opportunities`}
+            href={`/admin/organisations/${id}/opportunities`}
             className="font-helvetica-neue relative inline-block h-[20.52px] w-[205.08px] shrink-0 text-lg font-medium leading-[119%]"
           >
             Opportunities
@@ -717,7 +717,7 @@ const OrganisationOverview: NextPageWithLayout<{
 OrganisationOverview.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
-OrganisationOverview.theme = THEME_GREEN;
+OrganisationOverview.theme = THEME_BLUE;
 
 export default OrganisationOverview;
 /* eslint-enable */

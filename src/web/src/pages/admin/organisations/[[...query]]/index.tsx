@@ -19,7 +19,7 @@ import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
 import { SearchInput } from "~/components/SearchInput";
 import { AccessDenied } from "~/components/Status/AccessDenied";
-import { THEME_GREEN } from "~/lib/constants";
+import { THEME_BLUE } from "~/lib/constants";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
@@ -82,8 +82,8 @@ export const OrganisationCardComponent: React.FC<{
   const link =
     props.item.status.toString() ===
     OrganizationStatus[OrganizationStatus.Active]
-      ? `/organisations/${props.item.id}/info`
-      : `/organisations/${props.item.id}/verify`;
+      ? `/admin/organisations/${props.item.id}/info`
+      : `/admin/organisations/${props.item.id}/verify`;
 
   return (
     <div className="flex h-[100px] flex-col rounded-lg bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:bg-neutral-700 md:max-w-xl md:flex-row">
@@ -136,7 +136,7 @@ const Opportunities: NextPageWithLayout<{
         valueContains: query?.toString() ?? "",
         statuses: [Status.Active],
       }),
-    enabled: !!error,
+    enabled: !error,
   });
   const { data: organisationsInactive } = useQuery<OrganizationSearchResults>({
     queryKey: [
@@ -149,7 +149,7 @@ const Opportunities: NextPageWithLayout<{
         valueContains: query?.toString() ?? "",
         statuses: [Status.Inactive],
       }),
-    enabled: !!error,
+    enabled: !error,
   });
 
   const onSearch = useCallback(
@@ -159,10 +159,10 @@ const Opportunities: NextPageWithLayout<{
         const searchValueEncoded = encodeURIComponent(query);
 
         // redirect to the search page
-        void router.push(`/organisations?query=${searchValueEncoded}`);
+        void router.push(`/admin/organisations?query=${searchValueEncoded}`);
       } else {
         // redirect to the search page
-        void router.push("/organisations");
+        void router.push("/admin/organisations");
       }
     },
     [router],
@@ -186,7 +186,7 @@ const Opportunities: NextPageWithLayout<{
             <SearchInput defaultValue={query as string} onSearch={onSearch} />
 
             <Link
-              href="/organisations/register"
+              href="/admin/organisations/register"
               className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
             >
               <IoMdAdd className="h-5 w-5" />
@@ -263,6 +263,6 @@ Opportunities.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-Opportunities.theme = THEME_GREEN;
+Opportunities.theme = THEME_BLUE;
 
 export default Opportunities;

@@ -61,7 +61,7 @@ const navBarLinksAdmin: TabItem[] = [
   {
     title: "Organisations",
     description: "Organisations",
-    url: "/organisations",
+    url: "/admin/organisations",
     badgeCount: null,
     selected: false,
     icon: null,
@@ -114,7 +114,7 @@ export const Navbar: React.FC = () => {
         {
           title: "Opportunities",
           description: "Opportunities",
-          url: `/organisations/${currentOrganisationId}/opportunities`,
+          url: `/orgAdmin/organisations/${currentOrganisationId}/opportunities`,
           badgeCount: null,
           selected: false,
           icon: null,
@@ -122,7 +122,7 @@ export const Navbar: React.FC = () => {
         {
           title: "Verifications",
           description: "Verifications",
-          url: `/organisations/${currentOrganisationId}/verifications`,
+          url: `/orgAdmin/organisations/${currentOrganisationId}/verifications`,
           badgeCount: null,
           selected: false,
           icon: null,

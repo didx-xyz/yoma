@@ -12,10 +12,10 @@ import MainLayout from "~/components/Layout/Main";
 import { Overview } from "~/components/Organisation/Detail/Overview";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { authOptions, type User } from "~/server/auth";
-import { type NextPageWithLayout } from "../../_app";
 import { PageBackground } from "~/components/PageBackground";
-import { THEME_GREEN } from "~/lib/constants";
+import { THEME_BLUE } from "~/lib/constants";
 import { AccessDenied } from "~/components/Status/AccessDenied";
+import type { NextPageWithLayout } from "~/pages/_app";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -55,7 +55,7 @@ const OrganisationOverview: NextPageWithLayout<{
 }> = ({ id, error }) => {
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
-    enabled: !!error,
+    enabled: !error,
   });
 
   if (error) return <AccessDenied />;
@@ -73,7 +73,7 @@ const OrganisationOverview: NextPageWithLayout<{
         <div className="flex flex-row text-xs text-gray">
           <Link
             className="font-bold text-white hover:text-gray"
-            href={"/organisations"}
+            href={"/admin/organisations"}
           >
             Organisations
           </Link>
@@ -99,7 +99,7 @@ const OrganisationOverview: NextPageWithLayout<{
         {/* BUTTONS */}
         <div className="my-4 flex items-center justify-center gap-2">
           <Link
-            href={`/organisations/${id}/edit`}
+            href={`/admin/organisations/${id}/edit`}
             type="button"
             className="btn btn-info btn-xs"
           >
@@ -115,6 +115,6 @@ OrganisationOverview.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-OrganisationOverview.theme = THEME_GREEN;
+OrganisationOverview.theme = THEME_BLUE;
 
 export default OrganisationOverview;
