@@ -1,7 +1,7 @@
 import { captureException } from "@sentry/nextjs";
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession, type User } from "next-auth";
+import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import { type ParsedUrlQuery } from "querystring";
@@ -27,7 +27,14 @@ import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import withAuth from "~/context/withAuth";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { type User, authOptions } from "~/server/auth";
+import { useAtomValue, useSetAtom } from "jotai";
+import {
+  RoleView,
+  activeNavigationRoleViewAtom,
+  userProfileAtom,
+} from "~/lib/store";
+import { getUserProfile } from "~/api/services/user";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -63,6 +70,12 @@ const OrganisationUpdate: NextPageWithLayout<{
 }> = ({ id, user }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
+  const userProfile = useAtomValue(userProfileAtom);
+  const setUserProfile = useSetAtom(userProfileAtom);
+
+  const isUserAdminOfCurrentOrg =
+    userProfile?.adminsOf?.find((x) => x.id == id) != null;
 
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
@@ -108,6 +121,12 @@ const OrganisationUpdate: NextPageWithLayout<{
         // update api
         await patchOrganisation(model);
 
+        // refresh user profile for updated organisation to reflect on user menu
+        if (isUserAdminOfCurrentOrg) {
+          const userProfile = await getUserProfile();
+          setUserProfile(userProfile);
+        }
+
         toast("Your organisation has been updated", {
           type: "success",
           toastId: "patchOrganisation",
@@ -127,7 +146,7 @@ const OrganisationUpdate: NextPageWithLayout<{
         return;
       }
     },
-    [setIsLoading],
+    [setIsLoading, setUserProfile, isUserAdminOfCurrentOrg],
   );
 
   // form submission handler
@@ -160,16 +179,29 @@ const OrganisationUpdate: NextPageWithLayout<{
 
         {/* BREADCRUMB */}
         <div className="flex flex-row text-xs text-white">
-          <Link className="font-bold hover:text-gray" href={"/organisations"}>
-            Organisations
-          </Link>
+          {activeRoleView === RoleView.Admin && (
+            <Link className="font-bold hover:text-gray" href={"/organisations"}>
+              Organisations
+            </Link>
+          )}
+          {activeRoleView !== RoleView.Admin && (
+            <div className="font-bold">Organisations</div>
+          )}
+
           <div className="mx-2">/</div>
-          <Link
-            className="font-bold hover:text-gray"
-            href={`/organisations/${id}`}
-          >
-            {organisation?.name}
-          </Link>
+
+          {activeRoleView === RoleView.Admin && (
+            <Link
+              className="font-bold hover:text-gray"
+              href={`/organisations/${id}`}
+            >
+              {organisation?.name}
+            </Link>
+          )}
+          {activeRoleView !== RoleView.Admin && (
+            <div className="font-bold">{organisation?.name}</div>
+          )}
+
           <div className="mx-2">/</div>
           <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
             Edit

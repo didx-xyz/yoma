@@ -12,7 +12,7 @@ import {
   IoMdSettings,
 } from "react-icons/io";
 import ReactModal from "react-modal";
-import { ROLE_ADMIN, ROLE_ORG_ADMIN } from "~/lib/constants";
+import { ROLE_ADMIN } from "~/lib/constants";
 import { shimmer, toBase64 } from "~/lib/image";
 import {
   RoleView,
@@ -28,7 +28,6 @@ export const UserMenu: React.FC = () => {
   const currentOrganisationLogo = useAtomValue(currentOrganisationLogoAtom);
   const { data: session } = useSession();
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
-  const isOrgAdmin = session?.user?.roles.includes(ROLE_ORG_ADMIN);
 
   const handleLogout = () => {
     setUserMenuVisible(false);
@@ -175,9 +174,7 @@ export const UserMenu: React.FC = () => {
               </div>
             </Link>
           </li>
-
           <div className="divider m-0" />
-
           <li>
             <Link
               href="/yoid/passport"
@@ -192,71 +189,75 @@ export const UserMenu: React.FC = () => {
           </li>
 
           {/* organisations */}
-          {(isAdmin == true || isOrgAdmin == true) &&
-            (userProfile?.adminsOf?.length ?? 0) > 0 && (
-              <>
-                <div className="divider m-0" />
+          {(userProfile?.adminsOf?.length ?? 0) > 0 && (
+            <>
+              <div className="divider m-0" />
 
-                <div className="max-h-[200px] overflow-y-scroll">
-                  {userProfile?.adminsOf?.map((organisation) => (
-                    <li key={`userMenu_orgs_${organisation.id}`}>
-                      <Link
-                        key={organisation.id}
-                        href={`/organisations/${organisation.id}`}
-                        className="text-gray-dark"
-                        onClick={() => setUserMenuVisible(false)}
-                      >
-                        {!organisation.logoURL && (
-                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
-                            <IoMdImage className="h-6 w-6 text-gray-dark" />
-                          </div>
-                        )}
-
-                        {organisation.logoURL && (
-                          <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full shadow">
-                            <Image
-                              src={organisation.logoURL}
-                              alt={`${organisation.name} logo`}
-                              width={44}
-                              height={44}
-                              sizes="(max-width: 44px) 30vw, 50vw"
-                              priority={true}
-                              placeholder="blur"
-                              blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                                shimmer(44, 44),
-                              )}`}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                maxWidth: "44px",
-                                maxHeight: "44px",
-                              }}
-                            />
-                          </div>
-                        )}
-                        <div className="flex h-10 items-center overflow-hidden text-ellipsis">
-                          {organisation.name}
+              <div className="max-h-[200px] overflow-y-scroll">
+                {userProfile?.adminsOf?.map((organisation) => (
+                  <li key={`userMenu_orgs_${organisation.id}`}>
+                    <Link
+                      key={organisation.id}
+                      href={
+                        organisation.status == "Active"
+                          ? `/organisations/${organisation.id}`
+                          : `/organisations/${organisation.id}/edit`
+                      }
+                      className="text-gray-dark"
+                      onClick={() => setUserMenuVisible(false)}
+                    >
+                      {!organisation.logoURL && (
+                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
+                          <IoMdImage className="h-6 w-6 text-gray-dark" />
                         </div>
-                      </Link>
-                    </li>
-                  ))}
-                </div>
-                <div className="divider m-0" />
-                <li>
-                  <Link
-                    href="/organisations/register"
-                    className="text-gray-dark"
-                    onClick={() => setUserMenuVisible(false)}
-                  >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
-                      <IoMdAdd className="h-6 w-6 text-gray-dark" />
-                    </div>
-                    Create new organisation
-                  </Link>
-                </li>
-              </>
-            )}
+                      )}
 
+                      {organisation.logoURL && (
+                        <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full shadow">
+                          <Image
+                            src={organisation.logoURL}
+                            alt={`${organisation.name} logo`}
+                            width={44}
+                            height={44}
+                            sizes="(max-width: 44px) 30vw, 50vw"
+                            priority={true}
+                            placeholder="blur"
+                            blurDataURL={`data:image/svg+xml;base64,${toBase64(
+                              shimmer(44, 44),
+                            )}`}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              maxWidth: "44px",
+                              maxHeight: "44px",
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div className="flex h-10 items-center overflow-hidden text-ellipsis">
+                        {organisation.name}
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </div>
+
+              <div className="divider m-0" />
+
+              <li>
+                <Link
+                  href="/organisations/register"
+                  className="text-gray-dark"
+                  onClick={() => setUserMenuVisible(false)}
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
+                    <IoMdAdd className="h-6 w-6 text-gray-dark" />
+                  </div>
+                  Create new organisation
+                </Link>
+              </li>
+            </>
+          )}
           {(activeRoleView == RoleView.Admin || isAdmin) && (
             <>
               <div className="divider m-0" />
@@ -274,9 +275,7 @@ export const UserMenu: React.FC = () => {
               </li>
             </>
           )}
-
           <div className="divider m-0" />
-
           <li>
             <button className="text-left text-gray-dark" onClick={handleLogout}>
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">

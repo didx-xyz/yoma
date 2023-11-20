@@ -12,6 +12,7 @@ import {
   getOrganisationProviderTypes,
   postOrganisation,
 } from "~/api/services/organisations";
+import { getUserProfile } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
 import { OrgAdminsEdit } from "~/components/Organisation/Upsert/OrgAdminsEdit";
 import { OrgInfoEdit } from "~/components/Organisation/Upsert/OrgInfoEdit";
@@ -19,8 +20,10 @@ import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import withAuth from "~/context/withAuth";
+import { userProfileAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
+import { useSetAtom } from "jotai";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -44,6 +47,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const OrganisationCreate: NextPageWithLayout = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const setUserProfile = useSetAtom(userProfileAtom);
 
   const [OrganizationRequestBase, setOrganizationRequestBase] =
     useState<OrganizationRequestBase>({
@@ -89,7 +93,11 @@ const OrganisationCreate: NextPageWithLayout = () => {
         });
         setIsLoading(false);
 
-        void router.push("/partner/success");
+        // refresh user profile for new organisation to reflect on user menu
+        const userProfile = await getUserProfile();
+        setUserProfile(userProfile);
+
+        void router.push("/organisations/register/success");
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
@@ -104,7 +112,7 @@ const OrganisationCreate: NextPageWithLayout = () => {
         return;
       }
     },
-    [setIsLoading],
+    [setIsLoading, setUserProfile],
   );
 
   // form submission handler

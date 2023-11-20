@@ -215,7 +215,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
 
   const form = useForm({
     mode: "all",
-    // resolver: zodResolver(schema),
+    resolver: zodResolver(schema),
   });
   const { register, handleSubmit, formState, setValue, getValues, reset } =
     form;
