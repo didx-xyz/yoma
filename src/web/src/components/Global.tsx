@@ -14,14 +14,14 @@ import {
   userProfileAtom,
 } from "~/lib/store";
 
-// * global app concerns
+// * GLOBAL APP CONCERNS
 // * needs to be done here as jotai atoms are not available in _app.tsx
 export const Global: React.FC = () => {
   const router = useRouter();
   const { data: session } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
-  const setactiveNavigationRoleViewAtom = useSetAtom(
+  const setActiveNavigationRoleViewAtom = useSetAtom(
     activeNavigationRoleViewAtom,
   );
   const currentOrganisationIdValue = useAtomValue(currentOrganisationIdAtom);
@@ -31,30 +31,8 @@ export const Global: React.FC = () => {
   );
   const setSmallDisplay = useSetAtom(smallDisplayAtom);
 
+  // 🔔 USER PROFILE
   useEffect(() => {
-    // // 🔔 PROFILE SWITCHING: SET DEFAULT COLOR BASED ON ROLE
-    // if (!session) {
-    //   setactiveNavigationRoleViewAtom(RoleView.User);
-    //   setNavbarColor("bg-purple");
-    //   return;
-    // }
-
-    // set the active role view atom (based on roles)
-    // const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
-    // const isOrgAdmin = session?.user?.roles.includes(ROLE_ORG_ADMIN);
-
-    // if (isAdmin) {
-    //   setactiveNavigationRoleViewAtom(RoleView.Admin);
-    //   setNavbarColor("bg-blue");
-    // } else if (isOrgAdmin) {
-    //   setactiveNavigationRoleViewAtom(RoleView.OrgAdmin);
-    //   setNavbarColor("bg-green");
-    // } else {
-    //   setactiveNavigationRoleViewAtom(RoleView.User);
-    //   setNavbarColor("bg-purple");
-    // }
-
-    // 🔔 USER PROFILE
     if (!userProfile) {
       getUserProfile()
         .then((res) => {
@@ -62,13 +40,7 @@ export const Global: React.FC = () => {
         })
         .catch((e) => console.error(e));
     }
-  }, [
-    router,
-    session,
-    userProfile,
-    setUserProfile,
-    setactiveNavigationRoleViewAtom,
-  ]);
+  }, [router, session, userProfile, setUserProfile]);
 
   // 🔔 SMALL DISPLAY
   // track the screen size for responsive elements
@@ -87,8 +59,7 @@ export const Global: React.FC = () => {
   // 🔔 ROUTE CHANGE HANDLER
   useEffect(() => {
     if (!session) {
-      setactiveNavigationRoleViewAtom(RoleView.User);
-
+      setActiveNavigationRoleViewAtom(RoleView.User);
       return;
     }
 
@@ -97,14 +68,14 @@ export const Global: React.FC = () => {
     const isOrgAdmin = session?.user?.roles.includes(ROLE_ORG_ADMIN);
 
     if (isAdmin && router.asPath.startsWith("/admin")) {
-      setactiveNavigationRoleViewAtom(RoleView.Admin);
+      setActiveNavigationRoleViewAtom(RoleView.Admin);
     } else if (isOrgAdmin && router.asPath.startsWith("/orgAdmin")) {
-      setactiveNavigationRoleViewAtom(RoleView.OrgAdmin);
+      setActiveNavigationRoleViewAtom(RoleView.OrgAdmin);
     } else {
-      setactiveNavigationRoleViewAtom(RoleView.User);
+      setActiveNavigationRoleViewAtom(RoleView.User);
     }
 
-    //  if organisation page, OrgAdmins sees green. navbar links & company logo changes
+    //  if organisation page, change navbar links & company logo
     if (router.asPath.startsWith("/orgAdmin")) {
       const matches = router.asPath.match(
         /\/orgAdmin\/organisations\/([a-z0-9-]{36})/,
@@ -130,18 +101,13 @@ export const Global: React.FC = () => {
     } else {
       setCurrentOrganisationIdAtom(null);
       setCurrentOrganisationLogoAtom(null);
-
-      //   // admins sees blue
-      //   // if (router.asPath.startsWith("/admin")) setNavbarColor("bg-blue");
-      //   // // everyone else sees purple (public youth)
-      //   // else setNavbarColor("bg-purple");
     }
   }, [
     router,
     session,
     setCurrentOrganisationIdAtom,
     setCurrentOrganisationLogoAtom,
-    setactiveNavigationRoleViewAtom,
+    setActiveNavigationRoleViewAtom,
     currentOrganisationIdValue,
   ]);
 
