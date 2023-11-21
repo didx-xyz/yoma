@@ -28,7 +28,7 @@ import { Loading } from "~/components/Status/Loading";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { type User, authOptions } from "~/server/auth";
 import { useAtomValue, useSetAtom } from "jotai";
-import { activeNavigationRoleViewAtom, userProfileAtom } from "~/lib/store";
+import { userProfileAtom } from "~/lib/store";
 import { getUserProfile } from "~/api/services/user";
 import { AccessDenied } from "~/components/Status/AccessDenied";
 import { THEME_GREEN } from "~/lib/constants";
