@@ -129,7 +129,7 @@ const OrganisationDetails: NextPageWithLayout<{
 
     setIsLoading(false);
 
-    void router.push("/organisations");
+    void router.push("/admin/organisations");
   }, [
     setIsLoading,
     router,
@@ -155,7 +155,7 @@ const OrganisationDetails: NextPageWithLayout<{
         <div className="flex flex-row text-xs text-gray">
           <Link
             className="font-bold text-white hover:text-gray"
-            href={"/organisations"}
+            href={"/admin/organisations"}
           >
             Organisations
           </Link>

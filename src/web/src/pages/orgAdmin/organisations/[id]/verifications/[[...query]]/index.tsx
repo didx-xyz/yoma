@@ -23,7 +23,7 @@ import {
   IoMdThumbsUp,
 } from "react-icons/io";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { DATETIME_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
+import { DATETIME_FORMAT_HUMAN, PAGE_SIZE, THEME_GREEN } from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import {
   getOpportunitiesForVerification,
@@ -175,11 +175,11 @@ const OpportunityVerifications: NextPageWithLayout<{
 
         // redirect to the search page
         void router.push({
-          pathname: `/admin/organisations/${id}/verifications`,
+          pathname: `/orgAdmin/organisations/${id}/verifications`,
           query: { query: queryEncoded, opportunity: opportunity },
         });
       } else {
-        void router.push(`/admin/organisations/${id}/verifications`);
+        void router.push(`/orgAdmin/organisations/${id}/verifications`);
       }
     },
     [router, id, opportunity],
@@ -188,11 +188,11 @@ const OpportunityVerifications: NextPageWithLayout<{
     (opportunityId: string) => {
       if (opportunityId) {
         void router.push({
-          pathname: `/admin/organisations/${id}/verifications`,
+          pathname: `/orgAdmin/organisations/${id}/verifications`,
           query: { query: query, opportunity: opportunityId },
         });
       } else {
-        void router.push(`/admin/organisations/${id}/verifications`);
+        void router.push(`/orgAdmin/organisations/${id}/verifications`);
       }
     },
     [router, id, query],
@@ -203,7 +203,7 @@ const OpportunityVerifications: NextPageWithLayout<{
     (value: number) => {
       // redirect
       void router.push({
-        pathname: `/admin/organisations/${id}/verifications`,
+        pathname: `/orgAdmin/organisations/${id}/verifications`,
         query: { query: query, opportunity: opportunity, page: value },
       });
 
@@ -667,7 +667,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                       <td>{item.userDisplayName}</td>
                       <td>
                         <Link
-                          href={`/admin/organisations/${id}/opportunities/${item.opportunityId}/info`}
+                          href={`/orgAdmin/organisations/${id}/opportunities/${item.opportunityId}/info`}
                         >
                           {item.opportunityTitle}
                         </Link>
@@ -739,6 +739,6 @@ OpportunityVerifications.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-OpportunityVerifications.theme = THEME_BLUE;
+OpportunityVerifications.theme = THEME_GREEN;
 
 export default OpportunityVerifications;

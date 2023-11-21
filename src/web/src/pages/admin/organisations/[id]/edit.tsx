@@ -191,31 +191,21 @@ const OrganisationUpdate: NextPageWithLayout<{
 
         {/* BREADCRUMB */}
         <div className="flex flex-row text-xs text-white">
-          {activeRoleView === RoleView.Admin && (
-            <Link
-              className="font-bold hover:text-gray"
-              href={"/admin/organisations"}
-            >
-              Organisations
-            </Link>
-          )}
-          {activeRoleView !== RoleView.Admin && (
-            <div className="font-bold">Organisations</div>
-          )}
+          <Link
+            className="font-bold hover:text-gray"
+            href={"/admin/organisations"}
+          >
+            Organisations
+          </Link>
 
           <div className="mx-2">/</div>
 
-          {activeRoleView === RoleView.Admin && (
-            <Link
-              className="font-bold hover:text-gray"
-              href={`/organisations/${id}`}
-            >
-              {organisation?.name}
-            </Link>
-          )}
-          {activeRoleView !== RoleView.Admin && (
-            <div className="font-bold">{organisation?.name}</div>
-          )}
+          <Link
+            className="font-bold hover:text-gray"
+            href={`/admin/organisations/${id}`}
+          >
+            {organisation?.name}
+          </Link>
 
           <div className="mx-2">/</div>
           <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
