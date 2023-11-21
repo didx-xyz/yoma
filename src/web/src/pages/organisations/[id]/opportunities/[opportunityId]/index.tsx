@@ -63,7 +63,12 @@ import { IoMdArrowRoundBack } from "react-icons/io";
 import CreatableSelect from "react-select/creatable";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { getSchemas } from "~/api/services/credentials";
-import { THEME_GREEN } from "~/lib/constants";
+import {
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+} from "~/lib/constants";
 import { AccessDenied } from "~/components/Status/AccessDenied";
 
 interface IParams extends ParsedUrlQuery {
@@ -71,9 +76,11 @@ interface IParams extends ParsedUrlQuery {
   opportunityId: string;
 }
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  // 👇 ensure authenticated
   if (!session) {
     return {
       props: {
@@ -85,50 +92,64 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id, opportunityId } = context.params as IParams;
   const queryClient = new QueryClient();
 
-  // UND_ERR_HEADERS_OVERFLOW ISSUE: disable prefetching for now
-  //   await queryClient.prefetchQuery(["categories"], async () =>
-  //   (await getCategories(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["countries"], async () =>
-  //   (await getCountries(context)).map((c) => ({
-  //     value: c.codeNumeric,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["languages"], async () =>
-  //   (await getLanguages(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["opportunityTypes"], async () =>
-  //   (await getTypes(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["verificationTypes"], async () =>
-  //   (await getVerificationTypes(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.displayName,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["difficulties"], async () =>
-  //   (await getDifficulties(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
-  // await queryClient.prefetchQuery(["timeIntervals"], async () =>
-  //   (await getTimeIntervals(context)).map((c) => ({
-  //     value: c.id,
-  //     label: c.name,
-  //   })),
-  // );
+  // 👇 set theme based on role
+  let theme;
 
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  // 👇 prefetch queries on server
+  await queryClient.prefetchQuery(["categories"], async () =>
+    (await getCategories(context)).map((c) => ({
+      value: c.id,
+      label: c.name,
+    })),
+  );
+  await queryClient.prefetchQuery(["countries"], async () =>
+    (await getCountries(context)).map((c) => ({
+      value: c.codeNumeric,
+      label: c.name,
+    })),
+  );
+  await queryClient.prefetchQuery(["languages"], async () =>
+    (await getLanguages(context)).map((c) => ({
+      value: c.id,
+      label: c.name,
+    })),
+  );
+  await queryClient.prefetchQuery(["opportunityTypes"], async () =>
+    (await getTypes(context)).map((c) => ({
+      value: c.id,
+      label: c.name,
+    })),
+  );
+  await queryClient.prefetchQuery(["verificationTypes"], async () =>
+    (await getVerificationTypes(context)).map((c) => ({
+      value: c.id,
+      label: c.displayName,
+    })),
+  );
+  await queryClient.prefetchQuery(["difficulties"], async () =>
+    (await getDifficulties(context)).map((c) => ({
+      value: c.id,
+      label: c.name,
+    })),
+  );
+  await queryClient.prefetchQuery(["timeIntervals"], async () =>
+    (await getTimeIntervals(context)).map((c) => ({
+      value: c.id,
+      label: c.name,
+    })),
+  );
   if (opportunityId !== "create") {
     await queryClient.prefetchQuery(["opportunity", opportunityId], () =>
       getOpportunityById(opportunityId, context),
@@ -141,6 +162,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       user: session?.user ?? null,
       id: id,
       opportunityId: opportunityId,
+      theme: theme,
     },
   };
 }
@@ -149,10 +171,12 @@ const OpportunityDetails: NextPageWithLayout<{
   id: string;
   opportunityId: string;
   user: User;
+  theme: string;
   error: string;
 }> = ({ id, opportunityId, error }) => {
   const queryClient = useQueryClient();
 
+  // 👇 use prefetched queries from server
   const { data: categories } = useQuery<SelectOption[]>({
     queryKey: ["categories"],
     queryFn: async () =>
@@ -228,6 +252,7 @@ const OpportunityDetails: NextPageWithLayout<{
     queryFn: async () => getSchemas(SchemaType.Opportunity),
     enabled: !error,
   });
+
   const schemasOptions = useMemo<SelectOption[]>(
     () =>
       schemas?.map((c) => ({
@@ -236,6 +261,7 @@ const OpportunityDetails: NextPageWithLayout<{
       })) ?? [],
     [schemas],
   );
+
   // skills cache. searched items are added to this cache
   const [skillsCache, setSkillsCache] = useState<SelectOption[]>([]);
   useMemo(() => {
@@ -284,7 +310,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCancel = () => {
-    void router.push(`/orgAdmin/organisations/${id}/opportunities`);
+    void router.push(`/organisations/${id}/opportunities`);
   };
 
   const [formData, setFormData] = useState<OpportunityRequestBase>({
@@ -374,7 +400,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
       // redirect to list after create
       if (opportunityId === "create")
-        void router.push(`/orgAdmin/organisations/${id}/opportunities`);
+        void router.push(`/organisations/${id}/opportunities`);
     },
     [setIsLoading, id, opportunityId, opportunity, queryClient],
   );
@@ -673,7 +699,7 @@ const OpportunityDetails: NextPageWithLayout<{
             <li>
               <Link
                 className="font-bold text-white hover:text-gray"
-                href={`/orgAdmin/organisations/${id}/opportunities`}
+                href={`/organisations/${id}/opportunities`}
               >
                 <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
                 Opportunities
@@ -686,7 +712,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 ) : (
                   <Link
                     className="text-white hover:text-gray"
-                    href={`/orgAdmin/organisations/${id}/opportunities/${opportunityId}/info`}
+                    href={`/organisations/${id}/opportunities/${opportunityId}/info`}
                   >
                     {opportunity?.title}
                   </Link>
@@ -2479,6 +2505,10 @@ OpportunityDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-OpportunityDetails.theme = THEME_GREEN;
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+OpportunityDetails.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
+};
 
 export default OpportunityDetails;

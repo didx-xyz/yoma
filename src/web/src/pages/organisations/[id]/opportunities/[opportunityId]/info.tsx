@@ -41,17 +41,39 @@ import { ApiErrors } from "~/components/Status/ApiErrors";
 import { type AxiosError } from "axios";
 import { Loading } from "~/components/Status/Loading";
 import { AccessDenied } from "~/components/Status/AccessDenied";
-import { THEME_BLUE } from "~/lib/constants";
+import {
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+} from "~/lib/constants";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
   opportunityId: string;
 }
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  // 👇 ensure authenticated
   if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
     return {
       props: {
         error: "Unauthorized",
@@ -62,6 +84,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id, opportunityId } = context.params as IParams;
   const queryClient = new QueryClient();
 
+  // 👇 prefetch queries on server
   await queryClient.prefetchQuery(["opportunityInfo", opportunityId], () =>
     getOpportunityInfoByIdAdmin(opportunityId, context),
   );
@@ -72,6 +95,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       user: session?.user ?? null,
       id: id,
       opportunityId: opportunityId,
+      theme: theme,
     },
   };
 }
@@ -81,10 +105,12 @@ const OpportunityDetails: NextPageWithLayout<{
   opportunityId: string;
   user: User;
   error: string;
+  theme: string;
 }> = ({ id, opportunityId, user, error }) => {
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
 
+  // 👇 use prefetched queries from server
   const { data: opportunity } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
     queryFn: () => getOpportunityInfoByIdAdmin(opportunityId),
@@ -137,7 +163,7 @@ const OpportunityDetails: NextPageWithLayout<{
               <li>
                 <Link
                   className="font-bold text-white hover:text-gray"
-                  href={`/admin/organisations/${id}/opportunities`}
+                  href={`/organisations/${id}/opportunities`}
                 >
                   <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
                   Opportunities
@@ -176,7 +202,7 @@ const OpportunityDetails: NextPageWithLayout<{
           >
             <div className="flex flex-col gap-4 p-4 text-xs">
               <Link
-                href={`/admin/organisations/${id}/opportunities/${opportunityId}`}
+                href={`/organisations/${id}/opportunities/${opportunityId}`}
                 className="flex flex-row items-center text-gray-dark hover:brightness-50"
               >
                 <FaPencilAlt className="mr-2 h-3 w-3" />
@@ -184,7 +210,7 @@ const OpportunityDetails: NextPageWithLayout<{
               </Link>
               {/* TODO */}
               <Link
-                href={`/admin/organisations/${id}/opportunities/${opportunityId}/edit`}
+                href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
                 className="flex flex-row items-center text-gray-dark hover:brightness-50"
               >
                 <FaClipboard className="mr-2 h-3 w-3" />
@@ -217,7 +243,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
               {/* TODO */}
               <Link
-                href={`/admin/organisations/${id}/opportunities/${opportunityId}/edit`}
+                href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
                 className="flex flex-row items-center text-gray-dark hover:brightness-50"
               >
                 <FaArrowCircleUp className="mr-2 h-3 w-3" />
@@ -226,7 +252,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
               {/* TODO */}
               <Link
-                href={`/admin/organisations/${id}/opportunities/${opportunityId}/edit`}
+                href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
                 className="flex flex-row items-center text-gray-dark hover:brightness-50"
               >
                 <FaLink className="mr-2 h-3 w-3" />
@@ -354,7 +380,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   {opportunity?.participantCountVerificationPending &&
                     opportunity?.participantCountVerificationPending > 0 && (
                       <Link
-                        href={`/admin/organisations/${id}/verifications?opportunity=${opportunityId}`}
+                        href={`/organisations/${id}/verifications?opportunity=${opportunityId}`}
                       >
                         <div className="flex flex-row items-center gap-2 rounded-lg bg-yellow-light p-1">
                           <div className="badge badge-warning rounded-lg bg-yellow text-white">
@@ -493,6 +519,10 @@ OpportunityDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-OpportunityDetails.theme = THEME_BLUE;
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+OpportunityDetails.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
+};
 
 export default OpportunityDetails;

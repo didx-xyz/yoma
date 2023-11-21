@@ -39,17 +39,39 @@ import { Loading } from "~/components/Status/Loading";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import { AccessDenied } from "~/components/Status/AccessDenied";
-import { THEME_BLUE } from "~/lib/constants";
+import {
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+} from "~/lib/constants";
 import type { NextPageWithLayout } from "~/pages/_app";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
 }
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  // 👇 ensure authenticated
   if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
     return {
       props: {
         error: "Unauthorized",
@@ -60,6 +82,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
   const queryClient = new QueryClient();
 
+  // 👇 prefetch queries on server
   await queryClient.prefetchQuery(["organisation", id], () =>
     getOrganisationById(id, context),
   );
@@ -72,6 +95,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       id: id,
+      theme: theme,
     },
   };
 }
@@ -80,6 +104,7 @@ const OrganisationDetails: NextPageWithLayout<{
   id: string;
   user: User;
   error: string;
+  theme: string;
 }> = ({ id, error }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -89,6 +114,7 @@ const OrganisationDetails: NextPageWithLayout<{
   const [verifyComments, setVerifyComments] = useState("");
   const [verifyActionApprove, setVerifyActionApprove] = useState(false);
 
+  // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
     enabled: !error,
@@ -129,7 +155,7 @@ const OrganisationDetails: NextPageWithLayout<{
 
     setIsLoading(false);
 
-    void router.push("/admin/organisations");
+    void router.push("/organisations");
   }, [
     setIsLoading,
     router,
@@ -155,7 +181,7 @@ const OrganisationDetails: NextPageWithLayout<{
         <div className="flex flex-row text-xs text-gray">
           <Link
             className="font-bold text-white hover:text-gray"
-            href={"/admin/organisations"}
+            href={"/organisations"}
           >
             Organisations
           </Link>
@@ -274,6 +300,10 @@ OrganisationDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-OrganisationDetails.theme = THEME_BLUE;
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+OrganisationDetails.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
+};
 
 export default OrganisationDetails;

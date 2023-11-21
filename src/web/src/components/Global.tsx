@@ -67,19 +67,21 @@ export const Global: React.FC = () => {
     const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
     const isOrgAdmin = session?.user?.roles.includes(ROLE_ORG_ADMIN);
 
-    if (isAdmin && router.asPath.startsWith("/admin")) {
+    if (
+      isAdmin &&
+      (router.asPath.startsWith("/admin") ||
+        router.asPath.startsWith("/organisations"))
+    ) {
       setActiveNavigationRoleViewAtom(RoleView.Admin);
-    } else if (isOrgAdmin && router.asPath.startsWith("/orgAdmin")) {
+    } else if (isOrgAdmin && router.asPath.startsWith("/organisations")) {
       setActiveNavigationRoleViewAtom(RoleView.OrgAdmin);
     } else {
       setActiveNavigationRoleViewAtom(RoleView.User);
     }
 
     //  if organisation page, change navbar links & company logo
-    if (router.asPath.startsWith("/orgAdmin")) {
-      const matches = router.asPath.match(
-        /\/orgAdmin\/organisations\/([a-z0-9-]{36})/,
-      );
+    if (router.asPath.startsWith("/organisations")) {
+      const matches = router.asPath.match(/\/organisations\/([a-z0-9-]{36})/);
 
       if (matches && matches.length > 1) {
         const orgId = matches[1];

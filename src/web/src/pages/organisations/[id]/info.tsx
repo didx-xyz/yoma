@@ -13,7 +13,12 @@ import { Overview } from "~/components/Organisation/Detail/Overview";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
-import { THEME_BLUE } from "~/lib/constants";
+import {
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+} from "~/lib/constants";
 import { AccessDenied } from "~/components/Status/AccessDenied";
 import type { NextPageWithLayout } from "~/pages/_app";
 
@@ -21,10 +26,27 @@ interface IParams extends ParsedUrlQuery {
   id: string;
 }
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  // 👇 ensure authenticated
   if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
     return {
       props: {
         error: "Unauthorized",
@@ -35,6 +57,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
   const queryClient = new QueryClient();
 
+  // 👇 prefetch queries on server
   await queryClient.prefetchQuery(["organisation", id], () =>
     getOrganisationById(id, context),
   );
@@ -44,6 +67,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       id: id,
+      theme: theme,
     },
   };
 }
@@ -52,7 +76,9 @@ const OrganisationOverview: NextPageWithLayout<{
   id: string;
   user: User;
   error: string;
+  theme: string;
 }> = ({ id, error }) => {
+  // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
     enabled: !error,
@@ -73,7 +99,7 @@ const OrganisationOverview: NextPageWithLayout<{
         <div className="flex flex-row text-xs text-gray">
           <Link
             className="font-bold text-white hover:text-gray"
-            href={"/admin/organisations"}
+            href={"/organisations"}
           >
             Organisations
           </Link>
@@ -99,7 +125,7 @@ const OrganisationOverview: NextPageWithLayout<{
         {/* BUTTONS */}
         <div className="my-4 flex items-center justify-center gap-2">
           <Link
-            href={`/admin/organisations/${id}/edit`}
+            href={`/organisations/${id}/edit`}
             type="button"
             className="btn btn-info btn-xs"
           >
@@ -115,6 +141,10 @@ OrganisationOverview.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-OrganisationOverview.theme = THEME_BLUE;
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+OrganisationOverview.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
+};
 
 export default OrganisationOverview;

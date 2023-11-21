@@ -50,7 +50,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
   const { query, schemaType, page } = context.query;
 
-  // 👇 prefetch queries (on server)
+  // 👇 prefetch queries on server
   await queryClient.prefetchQuery(
     [
       `Credentials_${id}_${query?.toString()}_${schemaType}_${page?.toString()}`,

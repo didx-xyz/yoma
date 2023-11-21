@@ -23,7 +23,14 @@ import {
   IoMdThumbsUp,
 } from "react-icons/io";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { DATETIME_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
+import {
+  DATETIME_FORMAT_HUMAN,
+  PAGE_SIZE,
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+} from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import {
   getOpportunitiesForVerification,
@@ -57,10 +64,27 @@ interface IParams extends ParsedUrlQuery {
   page?: string;
 }
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  // 👇 ensure authenticated
   if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
     return {
       props: {
         error: "Unauthorized",
@@ -72,7 +96,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query, opportunity, page } = context.query;
   const queryClient = new QueryClient();
 
-  // 👇 prefetch queries (on server)
+  // 👇 prefetch queries on server
   await queryClient.prefetchQuery(
     [
       `Verifications_${id}_${query?.toString()}_${opportunity}_${page?.toString()}`,
@@ -96,7 +120,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         context,
       ),
   );
-
   await queryClient.prefetchQuery(
     ["OpportunitiesForVerification", id],
     async () =>
@@ -116,6 +139,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       query: query ?? null,
       opportunity: opportunity ?? null,
       page: page ?? "1",
+      theme: theme,
     },
   };
 }
@@ -126,11 +150,12 @@ const OpportunityVerifications: NextPageWithLayout<{
   opportunity?: string;
   page?: string;
   error: string;
+  theme: string;
 }> = ({ id, query, opportunity, page, error }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
-  // 👇 use prefetched queries (from server)
+  // 👇 use prefetched queries from server
   const { data: data } = useQuery<MyOpportunitySearchResults>({
     queryKey: [
       `Verifications_${id}_${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
@@ -175,11 +200,11 @@ const OpportunityVerifications: NextPageWithLayout<{
 
         // redirect to the search page
         void router.push({
-          pathname: `/admin/organisations/${id}/verifications`,
+          pathname: `/organisations/${id}/verifications`,
           query: { query: queryEncoded, opportunity: opportunity },
         });
       } else {
-        void router.push(`/admin/organisations/${id}/verifications`);
+        void router.push(`/organisations/${id}/verifications`);
       }
     },
     [router, id, opportunity],
@@ -188,11 +213,11 @@ const OpportunityVerifications: NextPageWithLayout<{
     (opportunityId: string) => {
       if (opportunityId) {
         void router.push({
-          pathname: `/admin/organisations/${id}/verifications`,
+          pathname: `/organisations/${id}/verifications`,
           query: { query: query, opportunity: opportunityId },
         });
       } else {
-        void router.push(`/admin/organisations/${id}/verifications`);
+        void router.push(`/organisations/${id}/verifications`);
       }
     },
     [router, id, query],
@@ -203,7 +228,7 @@ const OpportunityVerifications: NextPageWithLayout<{
     (value: number) => {
       // redirect
       void router.push({
-        pathname: `/admin/organisations/${id}/verifications`,
+        pathname: `/organisations/${id}/verifications`,
         query: { query: query, opportunity: opportunity, page: value },
       });
 
@@ -667,7 +692,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                       <td>{item.userDisplayName}</td>
                       <td>
                         <Link
-                          href={`/admin/organisations/${id}/opportunities/${item.opportunityId}/info`}
+                          href={`/organisations/${id}/opportunities/${item.opportunityId}/info`}
                         >
                           {item.opportunityTitle}
                         </Link>
@@ -739,6 +764,10 @@ OpportunityVerifications.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-OpportunityVerifications.theme = THEME_BLUE;
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+OpportunityVerifications.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
+};
 
 export default OpportunityVerifications;

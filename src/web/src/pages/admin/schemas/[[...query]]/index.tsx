@@ -29,7 +29,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query, page } = context.query;
   const queryClient = new QueryClient();
 
-  // 👇 prefetch queries (on server)
+  // 👇 prefetch queries on server
   await queryClient.prefetchQuery(
     [`Schemas_${query?.toString()}_${page?.toString()}`],
     () => getSchemas(undefined, context),
@@ -142,6 +142,8 @@ Schemas.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-Schemas.theme = THEME_BLUE;
+Schemas.theme = function getTheme() {
+  return THEME_BLUE;
+};
 
 export default Schemas;

@@ -19,7 +19,12 @@ import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
 import { SearchInput } from "~/components/SearchInput";
 import { AccessDenied } from "~/components/Status/AccessDenied";
-import { THEME_BLUE } from "~/lib/constants";
+import {
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+} from "~/lib/constants";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
@@ -27,7 +32,23 @@ import { authOptions } from "~/server/auth";
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  // 👇 ensure authenticated
   if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
     return {
       props: {
         error: "Unauthorized",
@@ -38,40 +59,39 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query, page } = context.query;
   const queryClient = new QueryClient();
 
-  if (session) {
-    // 👇 prefetch queries (on server)
-    await queryClient.prefetchQuery(
-      [`OrganisationsActive_${query?.toString()}_${page?.toString()}`],
-      () =>
-        getOrganisations(
-          {
-            pageNumber: page ? parseInt(page.toString()) : 1,
-            pageSize: 20,
-            valueContains: query?.toString() ?? null,
-            statuses: [Status.Active],
-          },
-          context,
-        ),
-    );
-    await queryClient.prefetchQuery(
-      [`OrganisationsInactive_${query?.toString()}_${page?.toString()}`],
-      () =>
-        getOrganisations(
-          {
-            pageNumber: page ? parseInt(page.toString()) : 1,
-            pageSize: 20,
-            valueContains: query?.toString() ?? null,
-            statuses: [Status.Inactive],
-          },
-          context,
-        ),
-    );
-  }
+  // 👇 prefetch queries on server
+  await queryClient.prefetchQuery(
+    [`OrganisationsActive_${query?.toString()}_${page?.toString()}`],
+    () =>
+      getOrganisations(
+        {
+          pageNumber: page ? parseInt(page.toString()) : 1,
+          pageSize: 20,
+          valueContains: query?.toString() ?? null,
+          statuses: [Status.Active],
+        },
+        context,
+      ),
+  );
+  await queryClient.prefetchQuery(
+    [`OrganisationsInactive_${query?.toString()}_${page?.toString()}`],
+    () =>
+      getOrganisations(
+        {
+          pageNumber: page ? parseInt(page.toString()) : 1,
+          pageSize: 20,
+          valueContains: query?.toString() ?? null,
+          statuses: [Status.Inactive],
+        },
+        context,
+      ),
+  );
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
+      theme: theme,
     },
   };
 }
@@ -82,8 +102,8 @@ export const OrganisationCardComponent: React.FC<{
   const link =
     props.item.status.toString() ===
     OrganizationStatus[OrganizationStatus.Active]
-      ? `/admin/organisations/${props.item.id}/info`
-      : `/admin/organisations/${props.item.id}/verify`;
+      ? `/organisations/${props.item.id}/info`
+      : `/organisations/${props.item.id}/verify`;
 
   return (
     <div className="flex h-[100px] flex-col rounded-lg bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:bg-neutral-700 md:max-w-xl md:flex-row">
@@ -120,13 +140,14 @@ export const OrganisationCardComponent: React.FC<{
 
 const Opportunities: NextPageWithLayout<{
   error: string;
+  theme: string;
 }> = ({ error }) => {
   const router = useRouter();
 
   // get query parameter from route
   const { query, page } = router.query;
 
-  // 👇 use prefetched queries (from server)
+  // 👇 use prefetched queries from server
   const { data: organisationsActive } = useQuery<OrganizationSearchResults>({
     queryKey: [`OrganisationsActive_${query?.toString()}_${page?.toString()}`],
     queryFn: () =>
@@ -159,10 +180,10 @@ const Opportunities: NextPageWithLayout<{
         const searchValueEncoded = encodeURIComponent(query);
 
         // redirect to the search page
-        void router.push(`/admin/organisations?query=${searchValueEncoded}`);
+        void router.push(`/organisations?query=${searchValueEncoded}`);
       } else {
         // redirect to the search page
-        void router.push("/admin/organisations");
+        void router.push("/organisations");
       }
     },
     [router],
@@ -173,7 +194,7 @@ const Opportunities: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma Admin | Organisations</title>
+        <title>Yoma | Organisations</title>
       </Head>
 
       <PageBackground />
@@ -186,7 +207,7 @@ const Opportunities: NextPageWithLayout<{
             <SearchInput defaultValue={query as string} onSearch={onSearch} />
 
             <Link
-              href="/admin/organisations/register"
+              href="/organisations/register"
               className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
             >
               <IoMdAdd className="h-5 w-5" />
@@ -263,6 +284,10 @@ Opportunities.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-Opportunities.theme = THEME_BLUE;
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+Opportunities.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
+};
 
 export default Opportunities;

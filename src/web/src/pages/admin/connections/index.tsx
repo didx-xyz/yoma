@@ -22,6 +22,8 @@ AdminOpportunities.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-AdminOpportunities.theme = THEME_BLUE;
+AdminOpportunities.theme = function getTheme() {
+  return THEME_BLUE;
+};
 
 export default AdminOpportunities;

@@ -11,7 +11,12 @@ import MainLayout from "~/components/Layout/Main";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { authOptions, type User } from "~/server/auth";
 import Link from "next/link";
-import { THEME_BLUE } from "~/lib/constants";
+import {
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+} from "~/lib/constants";
 import { AccessDenied } from "~/components/Status/AccessDenied";
 import { NextPageWithLayout } from "~/pages/_app";
 
@@ -19,10 +24,27 @@ interface IParams extends ParsedUrlQuery {
   id: string;
 }
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  // 👇 ensure authenticated
   if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
     return {
       props: {
         error: "Unauthorized",
@@ -33,6 +55,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
   const queryClient = new QueryClient();
 
+  // 👇 prefetch queries on server
   await queryClient.prefetchQuery(["organisation", id], () =>
     getOrganisationById(id, context),
   );
@@ -42,6 +65,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       id: id,
+      theme: theme,
     },
   };
 }
@@ -50,12 +74,15 @@ const OrganisationOverview: NextPageWithLayout<{
   id: string;
   user: User;
   error: string;
+  theme: string;
 }> = ({ id, error }) => {
-  if (error) return <AccessDenied />;
-
+  // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
+    enabled: !error,
   });
+
+  if (error) return <AccessDenied />;
 
   return (
     <div className="bg-lightest-grey font-small-12px-regular relative h-[969px] w-full overflow-hidden text-left text-sm text-white">
@@ -213,7 +240,7 @@ const OrganisationOverview: NextPageWithLayout<{
         </div>
         <div>
           <Link
-            href={`/admin/organisations/${id}/opportunities`}
+            href={`/organisations/${id}/opportunities`}
             className="font-helvetica-neue relative inline-block h-[20.52px] w-[205.08px] shrink-0 text-lg font-medium leading-[119%]"
           >
             Opportunities
@@ -717,7 +744,11 @@ const OrganisationOverview: NextPageWithLayout<{
 OrganisationOverview.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
-OrganisationOverview.theme = THEME_BLUE;
+
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+OrganisationOverview.theme = function getTheme(page: ReactElement) {
+  return page.props.theme;
+};
 
 export default OrganisationOverview;
 /* eslint-enable */

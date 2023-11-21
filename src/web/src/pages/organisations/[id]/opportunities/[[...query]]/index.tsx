@@ -18,7 +18,13 @@ import { PageBackground } from "~/components/PageBackground";
 import { IoIosAdd } from "react-icons/io";
 import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { PAGE_SIZE, THEME_GREEN } from "~/lib/constants";
+import {
+  PAGE_SIZE,
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+} from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { AccessDenied } from "~/components/Status/AccessDenied";
 
@@ -28,9 +34,11 @@ interface IParams extends ParsedUrlQuery {
   page?: string;
 }
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  // 👇 ensure authenticated
   if (!session) {
     return {
       props: {
@@ -43,7 +51,22 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query, page } = context.query;
   const queryClient = new QueryClient();
 
-  // 👇 prefetch queries (on server)
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  // 👇 prefetch queries on server
   await queryClient.prefetchQuery(
     [`OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`],
     () =>
@@ -55,7 +78,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           startDate: null,
           endDate: null,
           // admins can see deleted opportunities, org admins can see Active, Expired & Inactive
-          statuses: session?.user?.roles.some((x) => x === "Admin")
+          statuses: session?.user?.roles.some((x) => x === ROLE_ADMIN)
             ? null
             : [Status.Active, Status.Expired, Status.Inactive],
           types: null,
@@ -77,6 +100,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       id: id ?? null,
       query: query ?? null,
       page: page ?? null,
+      theme: theme,
     },
   };
 }
@@ -87,10 +111,11 @@ const Opportunities: NextPageWithLayout<{
   page?: string;
   user?: User;
   error: string;
+  theme: string;
 }> = ({ id, query, page, user, error }) => {
   const router = useRouter();
 
-  // 👇 use prefetched queries (from server)
+  // 👇 use prefetched queries from server
   const { data: opportunities } = useQuery<OpportunitySearchResults>({
     queryKey: [
       `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`,
@@ -103,7 +128,7 @@ const Opportunities: NextPageWithLayout<{
         startDate: null,
         endDate: null,
         // admins can see deleted opportunities, org admins can see Active, Expired & Inactive
-        statuses: user?.roles.some((x) => x === "Admin")
+        statuses: user?.roles.some((x) => x === ROLE_ADMIN)
           ? null
           : [Status.Active, Status.Expired, Status.Inactive],
         types: null,
@@ -125,10 +150,10 @@ const Opportunities: NextPageWithLayout<{
 
         // redirect to the search page
         void router.push(
-          `/orgAdmin/organisations/${id}/opportunities?query=${queryEncoded}`,
+          `/organisations/${id}/opportunities?query=${queryEncoded}`,
         );
       } else {
-        void router.push(`/orgAdmin/organisations/${id}/opportunities`);
+        void router.push(`/organisations/${id}/opportunities`);
       }
     },
     [router, id],
@@ -139,7 +164,7 @@ const Opportunities: NextPageWithLayout<{
     (value: number) => {
       // redirect
       void router.push({
-        pathname: `/orgAdmin/organisations/${id}/opportunities`,
+        pathname: `/organisations/${id}/opportunities`,
         query: { query: query, page: value },
       });
 
@@ -167,7 +192,7 @@ const Opportunities: NextPageWithLayout<{
             <SearchInput defaultValue={query} onSearch={onSearch} />
 
             <Link
-              href={`/orgAdmin/organisations/${id}/opportunities/create`}
+              href={`/organisations/${id}/opportunities/create`}
               className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
             >
               <IoIosAdd className="mr-1 h-5 w-5" />
@@ -209,7 +234,7 @@ const Opportunities: NextPageWithLayout<{
                     <tr key={opportunity.id}>
                       <td>
                         <Link
-                          href={`/orgAdmin/organisations/${id}/opportunities/${opportunity.id}/info`}
+                          href={`/organisations/${id}/opportunities/${opportunity.id}/info`}
                         >
                           {opportunity.title}
                         </Link>
@@ -256,6 +281,11 @@ const Opportunities: NextPageWithLayout<{
 Opportunities.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
-Opportunities.theme = THEME_GREEN;
+
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+Opportunities.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
+};
 
 export default Opportunities;

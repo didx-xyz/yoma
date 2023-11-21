@@ -850,6 +850,8 @@ SchemaCreateEdit.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-SchemaCreateEdit.theme = THEME_BLUE;
+SchemaCreateEdit.theme = function getTheme() {
+  return THEME_BLUE;
+};
 
 export default SchemaCreateEdit;

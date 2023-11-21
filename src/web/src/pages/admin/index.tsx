@@ -22,6 +22,8 @@ AdminHome.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-AdminHome.theme = THEME_BLUE;
+AdminHome.theme = function getTheme() {
+  return THEME_BLUE;
+};
 
 export default AdminHome;

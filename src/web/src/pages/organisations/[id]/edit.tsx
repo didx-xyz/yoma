@@ -28,21 +28,26 @@ import { Loading } from "~/components/Status/Loading";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { type User, authOptions } from "~/server/auth";
 import { useAtomValue, useSetAtom } from "jotai";
-import {
-  RoleView,
-  activeNavigationRoleViewAtom,
-  userProfileAtom,
-} from "~/lib/store";
+import { userProfileAtom } from "~/lib/store";
 import { getUserProfile } from "~/api/services/user";
 import { AccessDenied } from "~/components/Status/AccessDenied";
+import {
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+  THEME_PURPLE,
+} from "~/lib/constants";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
 }
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  // 👇 ensure authenticated
   if (!session) {
     return {
       props: {
@@ -51,10 +56,21 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
+    theme = THEME_PURPLE;
+  }
+
   const { id } = context.params as IParams;
   const queryClient = new QueryClient();
 
-  // 👇 prefetch queries (on server)
+  // 👇 prefetch queries on server
   await queryClient.prefetchQuery(["organisationProviderTypes"], () =>
     getOrganisationProviderTypes(context),
   );
@@ -67,6 +83,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       id: id,
+      theme: theme,
     },
   };
 }
@@ -75,16 +92,17 @@ const OrganisationUpdate: NextPageWithLayout<{
   id: string;
   user: User | null;
   error: string;
+  theme: string;
 }> = ({ id, user, error }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
 
   const isUserAdminOfCurrentOrg =
     userProfile?.adminsOf?.find((x) => x.id == id) != null;
 
+  // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
     enabled: !error,
@@ -190,31 +208,18 @@ const OrganisationUpdate: NextPageWithLayout<{
 
         {/* BREADCRUMB */}
         <div className="flex flex-row text-xs text-white">
-          {activeRoleView === RoleView.Admin && (
-            <Link
-              className="font-bold hover:text-gray"
-              href={"/orgAdmin/organisations"}
-            >
-              Organisations
-            </Link>
-          )}
-          {activeRoleView !== RoleView.Admin && (
-            <div className="font-bold">Organisations</div>
-          )}
+          <Link className="font-bold hover:text-gray" href={"/organisations"}>
+            Organisations
+          </Link>
 
           <div className="mx-2">/</div>
 
-          {activeRoleView === RoleView.Admin && (
-            <Link
-              className="font-bold hover:text-gray"
-              href={`/orgAdmin/organisations/${id}`}
-            >
-              {organisation?.name}
-            </Link>
-          )}
-          {activeRoleView !== RoleView.Admin && (
-            <div className="font-bold">{organisation?.name}</div>
-          )}
+          <Link
+            className="font-bold hover:text-gray"
+            href={`/organisations/${id}`}
+          >
+            {organisation?.name}
+          </Link>
 
           <div className="mx-2">/</div>
           <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
@@ -303,6 +308,12 @@ const OrganisationUpdate: NextPageWithLayout<{
 
 OrganisationUpdate.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
+};
+
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+OrganisationUpdate.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
 };
 
 export default OrganisationUpdate;

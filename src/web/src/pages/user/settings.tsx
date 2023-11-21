@@ -39,7 +39,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const queryClient = new QueryClient();
 
-  // 👇 prefetch queries (on server)
+  // 👇 prefetch queries on server
   await queryClient.prefetchQuery(["genders"], async () => await getGenders());
   await queryClient.prefetchQuery(
     ["countries"],

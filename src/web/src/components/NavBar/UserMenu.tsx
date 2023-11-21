@@ -30,7 +30,6 @@ export const UserMenu: React.FC = () => {
   const currentOrganisationLogo = useAtomValue(currentOrganisationLogoAtom);
   const { data: session } = useSession();
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
-  const isOrgAdmin = session?.user?.roles.includes(ROLE_ORG_ADMIN);
 
   const handleLogout = () => {
     setUserMenuVisible(false);
@@ -203,9 +202,7 @@ export const UserMenu: React.FC = () => {
                       key={organisation.id}
                       href={
                         organisation.status == "Active"
-                          ? `/orgAdmin/organisations/${organisation.id}`
-                          : isOrgAdmin
-                          ? `/orgAdmin/organisations/${organisation.id}/edit`
+                          ? `/organisations/${organisation.id}`
                           : `/organisations/${organisation.id}/edit`
                       }
                       className="text-gray-dark"

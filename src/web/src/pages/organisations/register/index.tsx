@@ -24,10 +24,19 @@ import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 import { useSetAtom } from "jotai";
 import { AccessDenied } from "~/components/Status/AccessDenied";
+import {
+  ROLE_ADMIN,
+  THEME_BLUE,
+  ROLE_ORG_ADMIN,
+  THEME_GREEN,
+  THEME_PURPLE,
+} from "~/lib/constants";
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  // 👇 ensure authenticated
   if (!session) {
     return {
       props: {
@@ -36,9 +45,20 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
+    theme = THEME_PURPLE;
+  }
+
   const queryClient = new QueryClient();
 
-  // 👇 prefetch queries (on server)
+  // 👇 prefetch queries on server
   await queryClient.prefetchQuery(["organisationProviderTypes"], () =>
     getOrganisationProviderTypes(context),
   );
@@ -47,12 +67,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
+      theme: theme,
     },
   };
 }
 
 const OrganisationCreate: NextPageWithLayout<{
   error: string;
+  theme: string;
 }> = ({ error }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
@@ -249,6 +271,12 @@ const OrganisationCreate: NextPageWithLayout<{
 
 OrganisationCreate.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
+};
+
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+OrganisationCreate.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
 };
 
 export default OrganisationCreate;
