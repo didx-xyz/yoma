@@ -103,7 +103,7 @@ namespace Yoma.Core.Api
             #endregion 3rd Party (post ConfigureServices_InfrastructureDatabase)
         }
 
-        public void Configure(IApplicationBuilder app, IServiceProvider serviceProvider)
+        public void Configure(IApplicationBuilder app)
         {
             #region 3rd Party
             app.UseSwagger();
@@ -169,7 +169,7 @@ namespace Yoma.Core.Api
 
             #region 3rd Partry
             //migrations applied as part of ConfigureHangfire to ensure db exist prior to executing Hangfire migrations
-            serviceProvider.Configure_RecurringJobs(_configuration, _environment);
+            _configuration.Configure_RecurringJobs(_environment);
             #endregion 3rd Party
         }
         #endregion
