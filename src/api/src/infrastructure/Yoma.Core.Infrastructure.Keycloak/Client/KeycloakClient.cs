@@ -12,6 +12,9 @@ using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.IdentityProvider.Models;
 using Yoma.Core.Infrastructure.Keycloak.Models;
 using Yoma.Core.Infrastructure.Keycloak.Extensions;
+using FS.Keycloak.RestApiClient.Authentication.ClientFactory;
+using FS.Keycloak.RestApiClient.Authentication.Flow;
+using FS.Keycloak.RestApiClient.Authentication.Client;
 
 namespace Yoma.Core.Infrastructure.Keycloak.Client
 {
@@ -20,7 +23,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         #region Class Variables
         private readonly KeycloakAdminOptions _keycloakAdminOptions;
         private readonly KeycloakAuthenticationOptions _keycloakAuthenticationOptions;
-        private readonly KeycloakHttpClient _httpClient;
+        private readonly AuthenticationHttpClient _httpClient;
         #endregion
 
         #region Constructor
@@ -30,8 +33,15 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
             _keycloakAdminOptions = keycloakAdminOptions;
             _keycloakAuthenticationOptions = keycloakAuthenticationOptions;
 
-            _httpClient = new KeycloakHttpClient(_keycloakAuthenticationOptions.AuthServerUrl, _keycloakAdminOptions.Admin.Realm,
-                _keycloakAdminOptions.Admin.Username, _keycloakAdminOptions.Admin.Password);
+            var credentials = new PasswordGrantFlow
+            {
+                KeycloakUrl = _keycloakAuthenticationOptions.AuthServerUrl,
+                Realm = _keycloakAdminOptions.Admin.Realm,
+                UserName = _keycloakAdminOptions.Admin.Username,
+                Password = _keycloakAdminOptions.Admin.Password
+            };
+
+            _httpClient = AuthenticationHttpClientFactory.Create(credentials);
         }
         #endregion
 
