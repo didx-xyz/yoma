@@ -103,7 +103,7 @@ namespace Yoma.Core.Api
             #endregion 3rd Party (post ConfigureServices_InfrastructureDatabase)
         }
 
-        public void Configure(IApplicationBuilder app)            
+        public void Configure(IApplicationBuilder app)
         {
             #region 3rd Party
             app.UseSwagger();
