@@ -102,7 +102,7 @@ const Schemas: NextPageWithLayout<{
             <div className="overflow-x-auto">
               <table className="table">
                 <thead>
-                  <tr>
+                  <tr className="border-gray text-gray-dark">
                     <th>Name</th>
                     <th>Version</th>
                     <th>Attributes</th>
@@ -112,7 +112,7 @@ const Schemas: NextPageWithLayout<{
                 </thead>
                 <tbody>
                   {schemas.map((schema) => (
-                    <tr key={schema.id}>
+                    <tr key={schema.id} className="border-gray text-gray-dark">
                       <td>
                         <Link href={`/admin/schemas/${schema.name}`}>
                           {schema.displayName}

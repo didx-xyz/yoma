@@ -4,7 +4,7 @@ import { FaExclamationTriangle } from "react-icons/fa";
 export const AccessDenied = () => (
   <>
     <Head>
-      <title>Yoma Partner | Access Denied</title>
+      <title>Yoma | Access Denied</title>
     </Head>
     <div className="container max-w-md">
       <div className="flex flex-col place-items-center justify-center rounded-xl bg-white p-4">

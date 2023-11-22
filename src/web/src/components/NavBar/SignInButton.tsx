@@ -28,7 +28,7 @@ export const SignInButton: React.FC = () => {
         <span className="loading loading-spinner loading-md mr-2 text-warning"></span>
       )}
       {!isButtonLoading && <IoMdFingerPrint className="h-8 w-8 text-white" />}
-      <p className="text-white">Sign In</p>
+      <p className="uppercase text-white">Sign In</p>
     </button>
   );
 };

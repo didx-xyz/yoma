@@ -168,7 +168,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         opportunity: opportunity?.toString() ?? null,
         userId: null,
         valueContains: query?.toString() ?? null,
-        action: Action.Verification, //TODO
+        action: Action.Verification,
         verificationStatuses: [
           VerificationStatus.Pending,
           VerificationStatus.Completed,
@@ -409,37 +409,39 @@ const OpportunityVerifications: NextPageWithLayout<{
   );
   //#endregion Click Handlers
 
-  const handleRowSelect = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    row: MyOpportunityInfo,
-  ) => {
-    if (e.target.checked) {
-      setSelectedRows((prev: MyOpportunityInfo[] | undefined) => [
-        ...(prev ?? []),
-        row,
-      ]);
-    } else {
-      setSelectedRows(
-        (prev: MyOpportunityInfo[] | undefined) =>
-          prev?.filter((item) => item.id !== row.id),
-      );
-    }
-  };
+  const handleRowSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>, row: MyOpportunityInfo) => {
+      if (e.target.checked) {
+        setSelectedRows((prev: MyOpportunityInfo[] | undefined) => [
+          ...(prev ?? []),
+          row,
+        ]);
+      } else {
+        setSelectedRows(
+          (prev: MyOpportunityInfo[] | undefined) =>
+            prev?.filter((item) => item.id !== row.id),
+        );
+      }
+    },
+    [setSelectedRows],
+  );
 
-  const handleAllSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedRows(data?.items ?? []);
-    } else {
-      setSelectedRows([]);
-    }
-  };
-
+  const handleAllSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.checked) {
+        setSelectedRows(data?.items ?? []);
+      } else {
+        setSelectedRows([]);
+      }
+    },
+    [data, setSelectedRows],
+  );
   if (error) return <AccessDenied />;
 
   return (
     <>
       <Head>
-        <title>Yoma Partner | Verifications</title>
+        <title>Yoma | Verifications</title>
       </Head>
 
       {isLoading && <Loading />}
@@ -620,7 +622,7 @@ const OpportunityVerifications: NextPageWithLayout<{
               {/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */}
               <Select
                 classNames={{
-                  control: () => "input input-bordered input-xs w-[200px]",
+                  control: () => "input input-xs w-[200px]",
                 }}
                 options={dataOpportunitiesForVerification}
                 onChange={(val) => onFilterOpportunity(val?.value!)}
@@ -636,7 +638,7 @@ const OpportunityVerifications: NextPageWithLayout<{
               {/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */}
               <Select
                 classNames={{
-                  control: () => "input input-bordered input-xs w-[200px]",
+                  control: () => "input input-xs w-[200px]",
                 }}
                 options={dataBulkActions}
                 onChange={(val) => {
@@ -650,7 +652,6 @@ const OpportunityVerifications: NextPageWithLayout<{
               <SearchInput defaultValue={query} onSearch={onSearch} />
             </div>
           </div>
-
           {/* NO ROWS */}
           {/* {data && data.items?.length === 0 && !query && (
             <NoRowsMessage
@@ -666,16 +667,17 @@ const OpportunityVerifications: NextPageWithLayout<{
               description={"Please try refining your search query."}
             />
           )}
+
           {/* GRID */}
           {data && data.items?.length > 0 && (
             <div className="overflow-x-auto">
               <table className="table">
                 <thead>
-                  <tr>
+                  <tr className="border-gray text-gray-dark">
                     <th>
                       <input
                         type="checkbox"
-                        className="checkbox"
+                        className="checkbox-primary checkbox"
                         checked={selectedRows?.length === data.items?.length}
                         onChange={handleAllSelect}
                       />
@@ -688,11 +690,11 @@ const OpportunityVerifications: NextPageWithLayout<{
                 </thead>
                 <tbody>
                   {data.items.map((item) => (
-                    <tr key={item.id}>
+                    <tr key={item.id} className="border-gray text-gray-dark">
                       <td>
                         <input
                           type="checkbox"
-                          className="checkbox"
+                          className="checkbox-primary checkbox"
                           checked={selectedRows?.some((x) => x.id == item.id)}
                           onChange={(e) => handleRowSelect(e, item)}
                         />
@@ -751,7 +753,6 @@ const OpportunityVerifications: NextPageWithLayout<{
               </table>
             </div>
           )}
-
           <div className="mt-2 grid place-items-center justify-center">
             {/* PAGINATION */}
             <PaginationButtons

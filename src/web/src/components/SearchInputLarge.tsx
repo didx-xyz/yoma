@@ -32,9 +32,9 @@ export const SearchInputLarge: React.FC<InputProps> = ({
   );
 
   return (
-    <form onSubmit={handleSubmit} className="w-full md:max-w-[600px]">
-      <div className="input-group">
-        <div className="inline-flex items-center justify-center bg-[#653A72] text-white">
+    <form onSubmit={handleSubmit}>
+      <div className="join">
+        <div className="join-item inline-flex items-center justify-center bg-[#653A72] text-white">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="ml-5 h-5 w-5"
@@ -50,37 +50,17 @@ export const SearchInputLarge: React.FC<InputProps> = ({
             />
           </svg>
         </div>
+
         <input
           type="search"
           placeholder={placeholder ?? "Search..."}
-          className="input-sm w-full bg-[#653A72] py-5 text-sm text-white placeholder-white focus:outline-0"
+          className="join-item input-md w-[300px] bg-[#653A72] py-5 text-sm text-white placeholder-white focus:outline-0  md:w-[600px]"
           value={searchInputValue ?? ""}
           onChange={(e) => setSearchInputValue(e.target.value)}
           onFocus={(e) => (e.target.placeholder = "")}
           onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
         />
       </div>
-      {/* <div className="search flex">
-        <input
-          type="search"
-          className="input input-bordered input-sm w-full rounded-br-none rounded-tr-none text-sm"
-          placeholder={placeholder ?? "Search..."}
-          autoComplete="off"
-          value={searchInputValue ?? ""}
-          onChange={(e) => setSearchInputValue(e.target.value)}
-          onFocus={(e) => (e.target.placeholder = "")}
-          onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
-        />
-
-        <button
-          type="submit"
-          aria-label="Search"
-          className="btn-search btn btn-sm rounded-bl-none rounded-tl-none border-gray"
-          onSubmit={handleSubmit}
-        >
-          <IoMdSearch className="icon-search h-6 w-6" />
-        </button>
-      </div> */}
     </form>
   );
 };

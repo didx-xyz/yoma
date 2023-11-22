@@ -13,8 +13,8 @@ export const useHomeLink = () => {
     activeRoleView === RoleView.Admin
       ? "/admin"
       : activeRoleView === RoleView.OrgAdmin && currentOrganisationId
-      ? `/organisations/${currentOrganisationId}`
-      : "/";
+        ? `/organisations/${currentOrganisationId}`
+        : "/";
 
   return href;
 };

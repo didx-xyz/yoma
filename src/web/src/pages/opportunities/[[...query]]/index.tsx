@@ -584,7 +584,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         onRequestClose={() => {
           setFilterFullWindowVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-scroll rounded-lg bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px]`}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll rounded-lg bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px]`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >

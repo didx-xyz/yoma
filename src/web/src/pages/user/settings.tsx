@@ -221,7 +221,7 @@ const Settings: NextPageWithLayout<{
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                   {...register("email")}
                 />
                 {errors.email && (
@@ -239,7 +239,7 @@ const Settings: NextPageWithLayout<{
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered"
+                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                   {...register("firstName")}
                 />
                 {errors.firstName && (
@@ -257,7 +257,7 @@ const Settings: NextPageWithLayout<{
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered"
+                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                   {...register("surname")}
                 />
                 {errors.surname && (
@@ -275,7 +275,7 @@ const Settings: NextPageWithLayout<{
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered"
+                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                   {...register("displayName")}
                 />
                 {errors.displayName && (
@@ -293,7 +293,7 @@ const Settings: NextPageWithLayout<{
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered"
+                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                   {...register("phoneNumber")}
                 />
                 {errors.phoneNumber && (
@@ -310,7 +310,7 @@ const Settings: NextPageWithLayout<{
                   <span className="label-text">Country</span>
                 </label>
                 <select
-                  className="select select-bordered"
+                  className="select select-bordered border-gray focus:border-gray focus:outline-none"
                   {...register("countryId")}
                 >
                   <option value="">Please select</option>
@@ -334,7 +334,7 @@ const Settings: NextPageWithLayout<{
                   <span className="label-text">Country Of Residence</span>
                 </label>
                 <select
-                  className="select select-bordered"
+                  className="select select-bordered border-gray focus:border-gray focus:outline-none"
                   {...register("countryOfResidenceId")}
                 >
                   <option value="">Please select</option>
@@ -358,7 +358,7 @@ const Settings: NextPageWithLayout<{
                   <span className="label-text">Gender</span>
                 </label>
                 <select
-                  className="select select-bordered"
+                  className="select select-bordered border-gray focus:border-gray focus:outline-none"
                   {...register("genderId")}
                 >
                   <option value="">Please select</option>
@@ -383,7 +383,7 @@ const Settings: NextPageWithLayout<{
                 </label>
                 <input
                   type="date"
-                  className="input input-bordered"
+                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                   {...register("dateOfBirth")}
                 />
                 {errors.dateOfBirth && (

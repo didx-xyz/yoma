@@ -14,7 +14,7 @@ import {
   IoMdSettings,
 } from "react-icons/io";
 import ReactModal from "react-modal";
-import { ROLE_ADMIN, ROLE_ORG_ADMIN } from "~/lib/constants";
+import { ROLE_ADMIN } from "~/lib/constants";
 import { shimmer, toBase64 } from "~/lib/image";
 import {
   RoleView,

@@ -181,7 +181,7 @@ const Opportunities: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma Partner | Opportunities</title>
+        <title>Yoma | Opportunities</title>
       </Head>
 
       <PageBackground />
@@ -224,7 +224,7 @@ const Opportunities: NextPageWithLayout<{
             <div className="overflow-x-auto">
               <table className="table">
                 <thead>
-                  <tr>
+                  <tr className="border-gray text-gray-dark">
                     <th>Opportunity title</th>
                     <th>Reward</th>
                     <th>Url</th>
@@ -233,7 +233,7 @@ const Opportunities: NextPageWithLayout<{
                 </thead>
                 <tbody>
                   {opportunities.items.map((opportunity) => (
-                    <tr key={opportunity.id}>
+                    <tr key={opportunity.id} className="border-gray">
                       <td>
                         <Link
                           href={`/organisations/${id}/opportunities/${opportunity.id}/info`}

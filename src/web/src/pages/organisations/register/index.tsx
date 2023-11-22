@@ -119,10 +119,6 @@ const OrganisationCreate: NextPageWithLayout<{
         // update api
         await postOrganisation(model);
 
-        toast("Your organisation has been updated", {
-          type: "success",
-          toastId: "organisationRegistration",
-        });
         setIsLoading(false);
 
         // refresh user profile for new organisation to reflect on user menu

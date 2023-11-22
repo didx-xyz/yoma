@@ -142,11 +142,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   });
   await queryClient.prefetchQuery({
     queryKey: ["verificationTypes"],
-    queryFn: async () =>
-      (await getVerificationTypes(context)).map((c) => ({
-        value: c.id,
-        label: c.displayName,
-      })),
+    queryFn: async () => await getVerificationTypes(context),
   });
   await queryClient.prefetchQuery({
     queryKey: ["difficulties"],
@@ -518,11 +514,6 @@ const OpportunityDetails: NextPageWithLayout<{
 
   const schemaStep4 = z.object({
     keywords: z.array(z.string()).optional(),
-    // keywords: z
-    //   .array(z.string(), {
-    //     required_error: "At least one keyword is required.",
-    //   })
-    //   .min(1, "At least one keyword is required."),
   });
 
   const schemaStep5 = z
@@ -747,13 +738,13 @@ const OpportunityDetails: NextPageWithLayout<{
 
         <div className="flex flex-col gap-2 md:flex-row">
           {/* LEFT VERTICAL MENU */}
-          <ul className="menu hidden w-64 gap-2 rounded-lg bg-base-200 font-semibold md:flex">
+          <ul className="menu hidden max-h-[320px] w-64 flex-none gap-2 rounded-lg bg-white p-2 font-semibold md:flex">
             <li onClick={() => setStep(1)}>
               <a
-                className={`menu-title ${
+                className={`${
                   step === 1
                     ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark"
+                    : "bg-gray text-gray-dark hover:bg-gray"
                 }`}
               >
                 <span
@@ -768,10 +759,10 @@ const OpportunityDetails: NextPageWithLayout<{
             </li>
             <li onClick={() => setStep(2)}>
               <a
-                className={`menu-title ${
+                className={`${
                   step === 2
                     ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark"
+                    : "bg-gray text-gray-dark hover:bg-gray"
                 }`}
               >
                 <span
@@ -786,10 +777,10 @@ const OpportunityDetails: NextPageWithLayout<{
             </li>
             <li onClick={() => setStep(3)}>
               <a
-                className={`menu-title ${
+                className={`${
                   step === 3
                     ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark"
+                    : "bg-gray text-gray-dark hover:bg-gray"
                 }`}
               >
                 <span
@@ -804,10 +795,10 @@ const OpportunityDetails: NextPageWithLayout<{
             </li>
             <li onClick={() => setStep(4)}>
               <a
-                className={`menu-title ${
+                className={`${
                   step === 4
                     ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark"
+                    : "bg-gray text-gray-dark hover:bg-gray"
                 }`}
               >
                 <span
@@ -822,10 +813,10 @@ const OpportunityDetails: NextPageWithLayout<{
             </li>
             <li onClick={() => setStep(5)}>
               <a
-                className={`menu-title ${
+                className={`${
                   step === 5
                     ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark"
+                    : "bg-gray text-gray-dark hover:bg-gray"
                 }`}
               >
                 <span
@@ -840,10 +831,10 @@ const OpportunityDetails: NextPageWithLayout<{
             </li>
             <li onClick={() => setStep(6)}>
               <a
-                className={`menu-title ${
+                className={`${
                   step === 6
                     ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark"
+                    : "bg-gray text-gray-dark hover:bg-gray"
                 }`}
               >
                 <span
@@ -860,10 +851,10 @@ const OpportunityDetails: NextPageWithLayout<{
             {opportunityId === "create" && (
               <li onClick={() => setStep(7)}>
                 <a
-                  className={`menu-title ${
+                  className={`${
                     step === 7
                       ? "bg-green-light text-green hover:bg-green-light"
-                      : "bg-gray text-gray-dark"
+                      : "bg-gray text-gray-dark hover:bg-gray"
                   }`}
                 >
                   <span
@@ -953,7 +944,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       </label>
                       <input
                         type="text"
-                        className="input input-bordered rounded-md"
+                        className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                         placeholder="Opportunity Title"
                         {...registerStep1("title")}
                         contentEditable
@@ -977,7 +968,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input input-bordered",
+                              control: () => "input h-full",
                             }}
                             options={opportunityTypes}
                             onChange={(val) => onChange(val?.value)}
@@ -1009,7 +1000,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input input-bordered",
+                              control: () => "input h-full",
                             }}
                             isMulti={true}
                             options={categories}
@@ -1039,7 +1030,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                       <input
                         type="text"
-                        className="input input-bordered rounded-md"
+                        className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                         placeholder="Opportunity Link"
                         {...registerStep1("uRL")}
                         contentEditable
@@ -1058,7 +1049,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         <span className="label-text">Description</span>
                       </label>
                       <textarea
-                        className="textarea textarea-bordered h-24"
+                        className="input textarea textarea-bordered h-24 rounded-md border-gray focus:border-gray focus:outline-none"
                         placeholder="Description"
                         {...registerStep1("description")}
                         onChange={(e) =>
@@ -1120,7 +1111,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input input-bordered",
+                              control: () => "input h-full",
                             }}
                             isMulti={true}
                             options={languages}
@@ -1155,7 +1146,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input input-bordered",
+                              control: () => "input h-full",
                             }}
                             isMulti={true}
                             options={countries}
@@ -1190,7 +1181,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input input-bordered",
+                              control: () => "input h-full",
                             }}
                             isMulti={false}
                             options={difficulties}
@@ -1216,7 +1207,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                         <input
                           type="number"
-                          className="input input-bordered w-full"
+                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                           placeholder="Enter number"
                           {...registerStep2("commitmentIntervalCount", {
                             valueAsNumber: true,
@@ -1241,7 +1232,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           render={({ field: { onChange, value } }) => (
                             <Select
                               classNames={{
-                                control: () => "input input-bordered",
+                                control: () => "input h-full",
                               }}
                               options={timeIntervals}
                               onChange={(val) => onChange(val?.value)}
@@ -1274,7 +1265,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           name="dateStart"
                           render={({ field: { onChange, value } }) => (
                             <DatePicker
-                              className="input input-bordered w-full"
+                              className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                               onChange={(date) => onChange(date)}
                               selected={value ? new Date(value) : null}
                               placeholderText="Start Date"
@@ -1302,7 +1293,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           name="dateEnd"
                           render={({ field: { onChange, value } }) => (
                             <DatePicker
-                              className="input input-bordered w-full"
+                              className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                               onChange={(date) => onChange(date)}
                               selected={value ? new Date(value) : null}
                               placeholderText="Select End Date"
@@ -1330,7 +1321,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       <div className="grid grid-cols-2 gap-2">
                         <input
                           type="number"
-                          className="input input-bordered rounded-md"
+                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                           placeholder="Count of participants"
                           {...registerStep2("participantLimit", {
                             valueAsNumber: true,
@@ -1392,12 +1383,11 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                         <input
                           type="number"
-                          className="input input-bordered rounded-md"
+                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                           placeholder="Enter reward amount"
                           {...registerStep3("yomaReward", {
                             valueAsNumber: true,
                           })}
-                          // setValueAs={(v) => (v === "" ? undefined : parseInt(v, 60))}
                         />
                         {errorsStep3.yomaReward && (
                           <label className="label">
@@ -1413,12 +1403,11 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                         <input
                           type="number"
-                          className="input input-bordered rounded-md"
+                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                           placeholder="Enter reward pool amount"
                           {...registerStep3("yomaRewardPool", {
                             valueAsNumber: true,
                           })}
-                          // setValueAs={(v) => (v === "" ? undefined : parseInt(v, 60))}
                         />
                         {errorsStep3.yomaRewardPool && (
                           <label className="label">
@@ -1437,12 +1426,11 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                         <input
                           type="number"
-                          className="input input-bordered rounded-md"
+                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                           placeholder="Enter reward amount"
                           {...registerStep3("zltoReward", {
                             valueAsNumber: true,
                           })}
-                          // setValueAs={(v) => (v === "" ? undefined : parseInt(v, 60))}
                         />
                         {errorsStep3.zltoReward && (
                           <label className="label">
@@ -1458,12 +1446,11 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                         <input
                           type="number"
-                          className="input input-bordered rounded-md"
+                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                           placeholder="Enter reward pool amount"
                           {...registerStep3("zltoRewardPool", {
                             valueAsNumber: true,
                           })}
-                          // setValueAs={(v) => (v === "" ? undefined : parseInt(v, 60))}
                         />
                         {errorsStep3.zltoRewardPool && (
                           <label className="label">
@@ -1492,14 +1479,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             {/* eslint-disable  */}
                             <AsyncSelect
                               classNames={{
-                                control: () =>
-                                  "input input-bordered-full overflow-y-scroll",
-                              }}
-                              styles={{
-                                control: (base) => ({
-                                  ...base,
-                                  maxHeight: 200,
-                                }),
+                                control: () => "input h-full",
                               }}
                               isMulti={true}
                               defaultOptions={skillsCache}
@@ -1576,14 +1556,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             {/* eslint-disable */}
                             <CreatableSelect
                               classNames={{
-                                control: () =>
-                                  "input input-bordered-full overflow-y-scroll",
-                              }}
-                              styles={{
-                                control: (base) => ({
-                                  ...base,
-                                  maxHeight: 200,
-                                }),
+                                control: () => "input h-full",
                               }}
                               isMulti={true}
                               onChange={(val) =>
@@ -1806,7 +1779,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                     </label>
                                     <input
                                       type="text"
-                                      className="input input-bordered input-sm rounded-md"
+                                      className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                                       placeholder="Enter description"
                                       onChange={(e) => {
                                         // update the description in the verificationTypes array
@@ -1933,7 +1906,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             render={({ field: { onChange, value } }) => (
                               <Select
                                 classNames={{
-                                  control: () => "input input-bordered",
+                                  control: () => "input h-full",
                                 }}
                                 options={schemasOptions}
                                 onChange={(val) => onChange(val?.value)}
@@ -1958,7 +1931,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             <div className="flex flex-col gap-2">
                               <table className="table w-full">
                                 <thead>
-                                  <tr>
+                                  <tr className="border-gray text-gray-dark">
                                     <th>Datasource</th>
                                     <th>Attribute</th>
                                   </tr>
@@ -1968,7 +1941,10 @@ const OpportunityDetails: NextPageWithLayout<{
                                     <>
                                       {attribute.properties?.map(
                                         (property, index) => (
-                                          <tr key={`${index}_${property.id}`}>
+                                          <tr
+                                            key={`${index}_${property.id}`}
+                                            className="border-gray text-gray-dark"
+                                          >
                                             <td>{attribute?.name}</td>
                                             <td>{property.nameDisplay}</td>
                                           </tr>
@@ -2430,7 +2406,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         <div className="flex flex-col gap-2">
                           <table className="table w-full">
                             <thead>
-                              <tr>
+                              <tr className="border-gray text-gray-dark">
                                 <th>Datasource</th>
                                 <th>Attribute</th>
                               </tr>
@@ -2440,7 +2416,10 @@ const OpportunityDetails: NextPageWithLayout<{
                                 <>
                                   {attribute.properties?.map(
                                     (property, index) => (
-                                      <tr key={`${index}_${property.id}`}>
+                                      <tr
+                                        key={`${index}_${property.id}`}
+                                        className="border-gray text-gray-dark"
+                                      >
                                         <td>{attribute?.name}</td>
                                         <td>{property.nameDisplay}</td>
                                       </tr>
@@ -2493,7 +2472,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       </button>
                       <button
                         type="submit"
-                        className="btn btn-success btn-sm flex-grow"
+                        className="btn btn-success btn-sm flex-grow disabled:bg-gray-light"
                         disabled={
                           !(
                             isValidStep1 &&

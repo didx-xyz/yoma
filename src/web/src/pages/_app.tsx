@@ -1,4 +1,8 @@
-import { QueryClient, QueryClientProvider ,HydrationBoundary} from '@tanstack/react-query'
+import {
+  QueryClient,
+  QueryClientProvider,
+  HydrationBoundary,
+} from "@tanstack/react-query";
 import { Provider } from "jotai";
 import type { NextPage } from "next";
 import { type Session } from "next-auth";
