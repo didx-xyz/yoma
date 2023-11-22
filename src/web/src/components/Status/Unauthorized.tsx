@@ -16,7 +16,7 @@ export const Unauthorized: React.FC = () => {
   return (
     <>
       <Head>
-        <title>Yoma Partner | Unauthorized</title>
+        <title>Yoma | Unauthorized</title>
       </Head>
       <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
         <div className="flex h-full max-h-[350px] w-full max-w-md flex-col items-center justify-center gap-1 rounded-lg bg-white">

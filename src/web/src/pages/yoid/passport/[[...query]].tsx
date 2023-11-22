@@ -38,6 +38,7 @@ interface IParams extends ParsedUrlQuery {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  // 👇 ensure authenticated
   if (!session) {
     return {
       props: {
@@ -51,11 +52,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query, schemaType, page } = context.query;
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery(
-    [
+  await queryClient.prefetchQuery({
+    queryKey: [
       `Credentials_${id}_${query?.toString()}_${schemaType}_${page?.toString()}`,
     ],
-    () =>
+    queryFn: () =>
       searchCredentials(
         {
           pageNumber: null, //page ? parseInt(page.toString()) : 1,
@@ -64,7 +65,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         },
         context,
       ),
-  );
+  });
 
   return {
     props: {
@@ -89,7 +90,7 @@ const MyPassport: NextPageWithLayout<{
   const [activeCredential, setActiveCredential] =
     useState<SSICredentialInfo | null>(null);
 
-  // 👇 use prefetched queries (from server)
+  // 👇 use prefetched queries from server
   const {
     data: data,
     error: dataError,

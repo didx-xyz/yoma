@@ -83,12 +83,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery(["organisation", id], () =>
-    getOrganisationById(id, context),
-  );
-  await queryClient.prefetchQuery(["organisationAdmins", id], () =>
-    getOrganisationAdminsById(id, context),
-  );
+  await queryClient.prefetchQuery({
+    queryKey: ["organisation", id],
+    queryFn: () => getOrganisationById(id, context),
+  });
+  await queryClient.prefetchQuery({
+    queryKey: ["organisationAdmins", id],
+    queryFn: () => getOrganisationAdminsById(id, context),
+  });
 
   return {
     props: {
@@ -137,8 +139,8 @@ const OrganisationDetails: NextPageWithLayout<{
       });
 
       // invalidate queries
-      await queryClient.invalidateQueries(["organisations"]);
-      await queryClient.invalidateQueries([id, "organisation"]);
+      await queryClient.invalidateQueries({ queryKey: ["organisations"] });
+      await queryClient.invalidateQueries({ queryKey: [id, "organisation"] });
     } catch (error) {
       toast(<ApiErrors error={error as AxiosError} />, {
         type: "error",

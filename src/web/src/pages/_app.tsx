@@ -1,7 +1,7 @@
 import {
-  Hydrate,
   QueryClient,
   QueryClientProvider,
+  HydrationBoundary,
 } from "@tanstack/react-query";
 import { Provider } from "jotai";
 import type { NextPage } from "next";
@@ -76,7 +76,7 @@ const MyApp = ({
         <ThemeProvider enableSystem={false} forcedTheme={theme}>
           <QueryClientProvider client={queryClient}>
             {/* eslint-disable-next-line */}
-            <Hydrate state={pageProps.dehydratedState}>
+            <HydrationBoundary state={pageProps.dehydratedState}>
               <div
                 id="mainContent"
                 className={`${openSans.variable} font-openSans`}
@@ -91,7 +91,7 @@ const MyApp = ({
                   />
                 </ConfirmationModalContextProvider>
               </div>
-            </Hydrate>
+            </HydrationBoundary>
           </QueryClientProvider>
         </ThemeProvider>
       </SessionProvider>

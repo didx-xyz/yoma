@@ -20,6 +20,9 @@ ingress:
           - path: /resources
           - path: /js
 
+postInstallHook:
+  enabled: true
+
 keycloak:
   replicas: 1
   resources:

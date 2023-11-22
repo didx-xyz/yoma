@@ -40,11 +40,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery(["genders"], async () => await getGenders());
-  await queryClient.prefetchQuery(
-    ["countries"],
-    async () => await getCountries(),
-  );
+  await queryClient.prefetchQuery({
+    queryKey: ["genders"],
+    queryFn: async () => await getGenders(),
+  });
+  await queryClient.prefetchQuery({
+    queryKey: ["countries"],
+    queryFn: async () => await getCountries(),
+  });
 
   return {
     props: {
@@ -62,7 +65,7 @@ const Settings: NextPageWithLayout<{
   const [logoFiles, setLogoFiles] = useState<File[]>([]);
   const setUserProfileAtom = useSetAtom(userProfileAtom);
 
-  // 👇 use prefetched queries (from server)
+  // 👇 use prefetched queries from server
   const { data: genders } = useQuery({
     queryKey: ["genders"],
     queryFn: async () => await getGenders(),
@@ -218,7 +221,7 @@ const Settings: NextPageWithLayout<{
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                   {...register("email")}
                 />
                 {errors.email && (
@@ -236,7 +239,7 @@ const Settings: NextPageWithLayout<{
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered"
+                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                   {...register("firstName")}
                 />
                 {errors.firstName && (
@@ -254,7 +257,7 @@ const Settings: NextPageWithLayout<{
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered"
+                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                   {...register("surname")}
                 />
                 {errors.surname && (
@@ -272,7 +275,7 @@ const Settings: NextPageWithLayout<{
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered"
+                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                   {...register("displayName")}
                 />
                 {errors.displayName && (
@@ -290,7 +293,7 @@ const Settings: NextPageWithLayout<{
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered"
+                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                   {...register("phoneNumber")}
                 />
                 {errors.phoneNumber && (
@@ -307,7 +310,7 @@ const Settings: NextPageWithLayout<{
                   <span className="label-text">Country</span>
                 </label>
                 <select
-                  className="select select-bordered"
+                  className="select select-bordered border-gray focus:border-gray focus:outline-none"
                   {...register("countryId")}
                 >
                   <option value="">Please select</option>
@@ -331,7 +334,7 @@ const Settings: NextPageWithLayout<{
                   <span className="label-text">Country Of Residence</span>
                 </label>
                 <select
-                  className="select select-bordered"
+                  className="select select-bordered border-gray focus:border-gray focus:outline-none"
                   {...register("countryOfResidenceId")}
                 >
                   <option value="">Please select</option>
@@ -355,7 +358,7 @@ const Settings: NextPageWithLayout<{
                   <span className="label-text">Gender</span>
                 </label>
                 <select
-                  className="select select-bordered"
+                  className="select select-bordered border-gray focus:border-gray focus:outline-none"
                   {...register("genderId")}
                 >
                   <option value="">Please select</option>
@@ -380,7 +383,7 @@ const Settings: NextPageWithLayout<{
                 </label>
                 <input
                   type="date"
-                  className="input input-bordered"
+                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                   {...register("dateOfBirth")}
                 />
                 {errors.dateOfBirth && (

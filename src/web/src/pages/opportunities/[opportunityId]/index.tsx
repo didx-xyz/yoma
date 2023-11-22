@@ -69,10 +69,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       session != null,
       context,
     );
-    await queryClient.prefetchQuery(
-      ["opportunityInfo", opportunityId],
-      () => data,
-    );
+    await queryClient.prefetchQuery({
+      queryKey: ["opportunityInfo", opportunityId],
+      queryFn: () => data,
+    });
 
     return {
       props: {
@@ -423,10 +423,9 @@ const OpportunityDetails: NextPageWithLayout<{
                   onSave={async () => {
                     setCompleteOpportunityDialogVisible(false);
                     setCompleteOpportunitySuccessDialogVisible(true);
-                    await queryClient.invalidateQueries([
-                      "verificationStatus",
-                      opportunityId,
-                    ]);
+                    await queryClient.invalidateQueries({
+                      queryKey: ["verificationStatus", opportunityId],
+                    });
                     //setRefreshVerificationStatus(true);
                   }}
                 />
@@ -617,7 +616,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           <div className="flex flex-grow gap-4">
                             <button
                               type="button"
-                              className="btn btn-xs rounded-full bg-green normal-case text-white md:btn-sm md:h-10 md:w-[250px]"
+                              className="btn btn-xs rounded-full bg-green normal-case text-white md:btn-sm hover:bg-green-dark md:h-10 md:w-[250px]"
                               onClick={() =>
                                 setGotoOpportunityDialogVisible(true)
                               }
@@ -646,7 +645,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                     !verificationStatusIsLoading && (
                                       <button
                                         type="button"
-                                        className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm md:h-10 md:w-[300px]"
+                                        className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm hover:bg-green-dark hover:text-white md:h-10 md:w-[300px]"
                                         onClick={() =>
                                           user
                                             ? setCompleteOpportunityDialogVisible(
@@ -705,7 +704,7 @@ const OpportunityDetails: NextPageWithLayout<{
                               opportunity.verificationMethod == "Automatic" && (
                                 <button
                                   type="button"
-                                  className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm lg:btn-md md:w-[300px]"
+                                  className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm lg:btn-md hover:bg-green-dark hover:text-white md:w-[300px]"
                                   onClick={() =>
                                     user
                                       ? setCompleteOpportunityDialogVisible(
@@ -733,7 +732,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           <div className="flex gap-4 md:justify-end lg:justify-end">
                             <button
                               type="button"
-                              className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm md:h-10 md:w-[100px]"
+                              className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10 md:w-[100px]"
                             >
                               <Image
                                 src={iconBookmark}
@@ -750,7 +749,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                             <button
                               type="button"
-                              className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm md:h-10 md:w-[100px]"
+                              className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10 md:w-[100px]"
                             >
                               <Image
                                 src={iconShare}
@@ -811,7 +810,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             {opportunity?.skills?.map((item) => (
                               <div
                                 key={item.id}
-                                className="badge min-h-6 mr-1 h-full rounded-md border-0 bg-green text-xs text-white"
+                                className="min-h-6 badge mr-1 h-full rounded-md border-0 bg-green text-xs text-white"
                               >
                                 {item.name}
                               </div>
@@ -859,7 +858,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             {opportunity?.categories?.map((item) => (
                               <div
                                 key={item.id}
-                                className="badge min-h-6 mr-1 h-full rounded-md bg-green text-xs text-white"
+                                className="min-h-6 badge mr-1 h-full rounded-md bg-green text-xs text-white"
                               >
                                 {item.name}
                               </div>
@@ -885,7 +884,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             {opportunity?.languages?.map((item) => (
                               <div
                                 key={item.id}
-                                className="badge min-h-6 mr-1 h-full rounded-md bg-green text-xs text-white"
+                                className="min-h-6 badge mr-1 h-full rounded-md bg-green text-xs text-white"
                               >
                                 {item.name}
                               </div>

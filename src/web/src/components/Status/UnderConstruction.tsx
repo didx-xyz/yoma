@@ -5,7 +5,7 @@ import Image from "next/image";
 export const UnderConstruction = () => (
   <>
     <Head>
-      <title>Yoma Partner | Coming soon!</title>
+      <title>Yoma | Coming soon!</title>
     </Head>
 
     <div className="flex h-full max-h-[350px] w-full max-w-md flex-col items-center justify-center gap-1 rounded-lg bg-white">
