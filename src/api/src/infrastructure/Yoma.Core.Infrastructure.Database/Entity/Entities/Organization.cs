@@ -12,7 +12,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     public class Organization : BaseEntity<Guid>
     {
         [Required]
-        [Column(TypeName = "varchar(255)")]
+        [Column(TypeName = "nvarchar(255)")]
         public string Name { get; set; }
 
         [Column(TypeName = "varchar(2048)")]
@@ -52,10 +52,10 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
         [Column(TypeName = "varchar(10)")]
         public string? PostalCode { get; set; }
 
-        [Column(TypeName = "varchar(MAX)")]
+        [Column(TypeName = "nvarchar(MAX)")]
         public string? Tagline { get; set; }
 
-        [Column(TypeName = "varchar(MAX)")]
+        [Column(TypeName = "nvarchar(MAX)")]
         public string? Biography { get; set; }
 
         [Required]

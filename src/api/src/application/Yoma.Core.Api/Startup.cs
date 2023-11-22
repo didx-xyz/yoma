@@ -217,9 +217,11 @@ namespace Yoma.Core.Api
         {
             services.AddHangfire((serviceProvider, config) =>
             {
+                var scopeFactory = serviceProvider.GetService<IServiceScopeFactory>() ?? throw new InvalidOperationException($"Failed to retrieve service '{nameof(IServiceScopeFactory)}'");
                 serviceProvider.Configure_InfrastructureDatabase();
                 serviceProvider.Configure_InfrastructureDatabaseSSIProvider();
                 config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+               .UseActivator(new HangfireActivator(scopeFactory))
                .UseSimpleAssemblyNameTypeSerializer()
                .UseRecommendedSerializerSettings()
                .UseSqlServerStorage(configuration.Configuration_ConnectionString(), new SqlServerStorageOptions

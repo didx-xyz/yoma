@@ -105,45 +105,37 @@ namespace Yoma.Core.Domain
         {
             var options = configuration.GetSection(ScheduleJobOptions.Section).Get<ScheduleJobOptions>() ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{ScheduleJobOptions.Section}'");
 
-            using var scope = serviceProvider.CreateScope();
-
             var scheduledJobs = JobStorage.Current.GetMonitoringApi().ScheduledJobs(0, int.MaxValue);
             foreach (var job in scheduledJobs) BackgroundJob.Delete(job.Key);
 
             //skills
-            var skillService = scope.ServiceProvider.GetRequiredService<ISkillService>();
-
-            BackgroundJob.Enqueue(() => skillService.SeedSkills()); //execute on startup
-            RecurringJob.AddOrUpdate("Skill Reference Seeding", () => skillService.SeedSkills(), options.SeedSkillsSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            BackgroundJob.Enqueue<ISkillService>(s => s.SeedSkills()); //execute on startup
+            RecurringJob.AddOrUpdate<ISkillService>("Skill Reference Seeding", s => s.SeedSkills(), options.SeedSkillsSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
             //opportunity
-            var opportunityBackgroundService = scope.ServiceProvider.GetRequiredService<IOpportunityBackgroundService>();
-            RecurringJob.AddOrUpdate($"Opportunity Expiration ({Status.Active} or {Status.Inactive} that has ended)",
-                () => opportunityBackgroundService.ProcessExpiration(), options.OpportunityExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-            RecurringJob.AddOrUpdate($"Opportunity Expiration Notifications ({Status.Active} or {Status.Inactive} ending within {options.OpportunityExpirationNotificationIntervalInDays} days)",
-                () => opportunityBackgroundService.ProcessExpirationNotifications(), options.OpportunityExpirationNotificationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-            RecurringJob.AddOrUpdate($"Opportunity Deletion ({Status.Inactive} or {Status.Expired} for more than {options.OpportunityDeletionIntervalInDays} days)",
-                () => opportunityBackgroundService.ProcessDeletion(), options.OpportunityDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration ({Status.Active} or {Status.Inactive} that has ended)",
+                s => s.ProcessExpiration(), options.OpportunityExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration Notifications ({Status.Active} or {Status.Inactive} ending within {options.OpportunityExpirationNotificationIntervalInDays} days)",
+                s => s.ProcessExpirationNotifications(), options.OpportunityExpirationNotificationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Deletion ({Status.Inactive} or {Status.Expired} for more than {options.OpportunityDeletionIntervalInDays} days)",
+                s => s.ProcessDeletion(), options.OpportunityDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
             //my opportunity
-            var myOpportunityBackgroundService = scope.ServiceProvider.GetRequiredService<IMyOpportunityBackgroundService>();
-            RecurringJob.AddOrUpdate($"'My' Opportunity Verification Rejection ({VerificationStatus.Pending} for more than {options.MyOpportunityRejectionIntervalInDays} days)",
-               () => myOpportunityBackgroundService.ProcessVerificationRejection(), options.MyOpportunityRejectionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            RecurringJob.AddOrUpdate<IMyOpportunityBackgroundService>($"'My' Opportunity Verification Rejection ({VerificationStatus.Pending} for more than {options.MyOpportunityRejectionIntervalInDays} days)",
+               s => s.ProcessVerificationRejection(), options.MyOpportunityRejectionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
             //organization
-            var organizationBackgroundService = scope.ServiceProvider.GetRequiredService<IOrganizationBackgroundService>();
-            RecurringJob.AddOrUpdate($"Organization Declination ({OrganizationStatus.Inactive} for more than {options.OrganizationDeclinationIntervalInDays} days)",
-               () => organizationBackgroundService.ProcessDeclination(), options.OrganizationDeclinationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-            RecurringJob.AddOrUpdate($"Organization Deletion ({OrganizationStatus.Declined} for more than {options.OrganizationDeletionIntervalInDays} days)",
-               () => organizationBackgroundService.ProcessDeletion(), options.OrganizationDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            RecurringJob.AddOrUpdate<IOrganizationBackgroundService>($"Organization Declination ({OrganizationStatus.Inactive} for more than {options.OrganizationDeclinationIntervalInDays} days)",
+               s => s.ProcessDeclination(), options.OrganizationDeclinationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            RecurringJob.AddOrUpdate<IOrganizationBackgroundService>($"Organization Deletion ({OrganizationStatus.Declined} for more than {options.OrganizationDeletionIntervalInDays} days)",
+               s => s.ProcessDeletion(), options.OrganizationDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
             //ssi
-            var ssiTenantBackgroundService = scope.ServiceProvider.GetRequiredService<ISSIBackgroundService>();
-            BackgroundJob.Enqueue(() => ssiTenantBackgroundService.SeedSchemas()); //seed default schemas
-            RecurringJob.AddOrUpdate($"SSI Tenant Creation",
-               () => ssiTenantBackgroundService.ProcessTenantCreation(), options.SSITenantCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-            RecurringJob.AddOrUpdate($"SSI Credential Issuance",
-               () => ssiTenantBackgroundService.ProcessCredentialIssuance(), options.SSICredentialIssuanceSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            BackgroundJob.Enqueue<ISSIBackgroundService>(s => s.SeedSchemas()); //seed default schemas
+            RecurringJob.AddOrUpdate<ISSIBackgroundService>($"SSI Tenant Creation",
+               s => s.ProcessTenantCreation(), options.SSITenantCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            RecurringJob.AddOrUpdate<ISSIBackgroundService>($"SSI Credential Issuance",
+               s => s.ProcessCredentialIssuance(), options.SSICredentialIssuanceSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
             //seeding (local and development)
             switch (environment)
@@ -152,14 +144,13 @@ namespace Yoma.Core.Domain
                 case Core.Environment.Development:
                 case Core.Environment.Staging: //TODO: Remove this when we have a proper staging environment (seeded for demo purposes)
                     //organization
-                    BackgroundJob.Schedule(() => organizationBackgroundService.SeedLogoAndDocuments(), TimeSpan.FromMinutes(5));
+                    BackgroundJob.Schedule<IOrganizationBackgroundService>(s => s.SeedLogoAndDocuments(), TimeSpan.FromMinutes(5));
 
                     //user
-                    var userBackgroundService = scope.ServiceProvider.GetRequiredService<IUserBackgroundService>();
-                    BackgroundJob.Schedule(() => userBackgroundService.SeedPhotos(), TimeSpan.FromMinutes(5));
+                    BackgroundJob.Schedule<IUserBackgroundService>(s => s.SeedPhotos(), TimeSpan.FromMinutes(5));
 
                     //my opportunity verifications
-                    BackgroundJob.Schedule(() => myOpportunityBackgroundService.SeedPendingVerifications(), TimeSpan.FromMinutes(5));
+                    BackgroundJob.Schedule<IMyOpportunityBackgroundService>(s => s.SeedPendingVerifications(), TimeSpan.FromMinutes(5));
                     break;
             }
         }

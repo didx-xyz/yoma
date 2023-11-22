@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -368,7 +369,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "varchar(255)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(255)", nullable: false),
                     WebsiteURL = table.Column<string>(type: "varchar(2048)", nullable: true),
                     PrimaryContactName = table.Column<string>(type: "varchar(255)", nullable: true),
                     PrimaryContactEmail = table.Column<string>(type: "varchar(320)", nullable: true),
@@ -381,8 +382,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     StreetAddress = table.Column<string>(type: "varchar(500)", nullable: true),
                     Province = table.Column<string>(type: "varchar(255)", nullable: true),
                     PostalCode = table.Column<string>(type: "varchar(10)", nullable: true),
-                    Tagline = table.Column<string>(type: "varchar(MAX)", nullable: true),
-                    Biography = table.Column<string>(type: "varchar(MAX)", nullable: true),
+                    Tagline = table.Column<string>(type: "nvarchar(MAX)", nullable: true),
+                    Biography = table.Column<string>(type: "nvarchar(MAX)", nullable: true),
                     StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CommentApproval = table.Column<string>(type: "varchar(500)", nullable: true),
                     DateStatusModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),

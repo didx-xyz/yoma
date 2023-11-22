@@ -230,21 +230,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
             var existingRoles = new List<Role>() { Role.Holder };
 
-            var clientPublic = _clientFactory.CreatePublicClient();
-            ICollection<Actor>? actors = null;
-            try
-            {
-                actors = await clientPublic.GetTrustRegistryActorsAsync(null, tenant.Wallet_id, null);
-            }
-            catch (AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
-            {
-                if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
-            }
-
-            if (actors?.Count > 1)
-                throw new InvalidOperationException($"More than one actor found for tenant with id '{tenant.Wallet_id}'");
-
-            var actor = actors?.SingleOrDefault();
+            var actor = await GetActorById(tenant.Wallet_id);
             if (actor != null) existingRoles.AddRange(actor.Roles.ToSSIRoles());
 
             var diffs = request.Roles.Except(existingRoles).ToList();
@@ -430,7 +416,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             if (tenants?.Count > 1)
                 throw new InvalidOperationException($"More than one tenant found with wallet name '{walletName}'");
 
-            return tenants?.SingleOrDefault(o => string.Equals(walletName, o.Wallet_name, StringComparison.InvariantCultureIgnoreCase));
+            return tenants?.SingleOrDefault();
         }
 
         private async Task<Tenant> GetTenantById(string id)
@@ -448,6 +434,25 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             }
 
             return tenant ?? throw new ArgumentOutOfRangeException(nameof(id), $"Tenant with id '{id}' does not exist");
+        }
+
+        private async Task<Actor?> GetActorById(string id)
+        {
+            var clientPublic = _clientFactory.CreatePublicClient();
+            ICollection<Actor>? actors = null;
+            try
+            {
+                actors = await clientPublic.GetTrustRegistryActorsAsync(null, id, null);
+            }
+            catch (AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+            {
+                if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+            }
+
+            if (actors?.Count > 1)
+                throw new InvalidOperationException($"More than one actor found for tenant with id '{id}'");
+
+            return actors?.SingleOrDefault();
         }
 
         /// <summary>

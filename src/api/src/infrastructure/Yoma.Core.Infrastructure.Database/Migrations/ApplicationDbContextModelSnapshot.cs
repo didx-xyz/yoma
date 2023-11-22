@@ -110,7 +110,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Biography")
-                        .HasColumnType("varchar(MAX)");
+                        .HasColumnType("nvarchar(MAX)");
 
                     b.Property<string>("City")
                         .HasColumnType("varchar(50)");
@@ -135,7 +135,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("PostalCode")
                         .HasColumnType("varchar(10)");
@@ -162,7 +162,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("varchar(500)");
 
                     b.Property<string>("Tagline")
-                        .HasColumnType("varchar(MAX)");
+                        .HasColumnType("nvarchar(MAX)");
 
                     b.Property<string>("TaxNumber")
                         .HasColumnType("varchar(255)");
