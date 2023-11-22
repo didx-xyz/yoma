@@ -85,9 +85,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery(["opportunityInfo", opportunityId], () =>
-    getOpportunityInfoByIdAdmin(opportunityId, context),
-  );
+  await queryClient.prefetchQuery({
+    queryKey: ["opportunityInfo", opportunityId],
+    queryFn: () => getOpportunityInfoByIdAdmin(opportunityId, context),
+  });
 
   return {
     props: {
@@ -129,7 +130,9 @@ const OpportunityDetails: NextPageWithLayout<{
         await updateOpportunityStatus(opportunityId, status);
 
         // invalidate cache
-        await queryClient.invalidateQueries(["opportunityInfo", opportunityId]);
+        await queryClient.invalidateQueries({
+          queryKey: ["opportunityInfo", opportunityId],
+        });
 
         toast.success("Opportunity status updated");
       } catch (error) {

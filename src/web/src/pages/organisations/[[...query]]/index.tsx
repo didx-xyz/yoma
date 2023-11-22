@@ -60,9 +60,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery(
-    [`OrganisationsActive_${query?.toString()}_${page?.toString()}`],
-    () =>
+  await queryClient.prefetchQuery({
+    queryKey: [`OrganisationsActive_${query?.toString()}_${page?.toString()}`],
+    queryFn: () =>
       getOrganisations(
         {
           pageNumber: page ? parseInt(page.toString()) : 1,
@@ -72,10 +72,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         },
         context,
       ),
-  );
-  await queryClient.prefetchQuery(
-    [`OrganisationsInactive_${query?.toString()}_${page?.toString()}`],
-    () =>
+  });
+  await queryClient.prefetchQuery({
+    queryKey: [
+      `OrganisationsInactive_${query?.toString()}_${page?.toString()}`,
+    ],
+    queryFn: () =>
       getOrganisations(
         {
           pageNumber: page ? parseInt(page.toString()) : 1,
@@ -85,7 +87,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         },
         context,
       ),
-  );
+  });
 
   return {
     props: {

@@ -108,52 +108,67 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery(["categories"], async () =>
-    (await getCategories(context)).map((c) => ({
-      value: c.id,
-      label: c.name,
-    })),
-  );
-  await queryClient.prefetchQuery(["countries"], async () =>
-    (await getCountries(context)).map((c) => ({
-      value: c.codeNumeric,
-      label: c.name,
-    })),
-  );
-  await queryClient.prefetchQuery(["languages"], async () =>
-    (await getLanguages(context)).map((c) => ({
-      value: c.id,
-      label: c.name,
-    })),
-  );
-  await queryClient.prefetchQuery(["opportunityTypes"], async () =>
-    (await getTypes(context)).map((c) => ({
-      value: c.id,
-      label: c.name,
-    })),
-  );
-  await queryClient.prefetchQuery(["verificationTypes"], async () =>
-    (await getVerificationTypes(context)).map((c) => ({
-      value: c.id,
-      label: c.displayName,
-    })),
-  );
-  await queryClient.prefetchQuery(["difficulties"], async () =>
-    (await getDifficulties(context)).map((c) => ({
-      value: c.id,
-      label: c.name,
-    })),
-  );
-  await queryClient.prefetchQuery(["timeIntervals"], async () =>
-    (await getTimeIntervals(context)).map((c) => ({
-      value: c.id,
-      label: c.name,
-    })),
-  );
+  await queryClient.prefetchQuery({
+    queryKey: ["categories"],
+    queryFn: async () =>
+      (await getCategories(context)).map((c) => ({
+        value: c.id,
+        label: c.name,
+      })),
+  });
+  await queryClient.prefetchQuery({
+    queryKey: ["countries"],
+    queryFn: async () =>
+      (await getCountries(context)).map((c) => ({
+        value: c.codeNumeric,
+        label: c.name,
+      })),
+  });
+  await queryClient.prefetchQuery({
+    queryKey: ["languages"],
+    queryFn: async () =>
+      (await getLanguages(context)).map((c) => ({
+        value: c.id,
+        label: c.name,
+      })),
+  });
+  await queryClient.prefetchQuery({
+    queryKey: ["opportunityTypes"],
+    queryFn: async () =>
+      (await getTypes(context)).map((c) => ({
+        value: c.id,
+        label: c.name,
+      })),
+  });
+  await queryClient.prefetchQuery({
+    queryKey: ["verificationTypes"],
+    queryFn: async () =>
+      (await getVerificationTypes(context)).map((c) => ({
+        value: c.id,
+        label: c.displayName,
+      })),
+  });
+  await queryClient.prefetchQuery({
+    queryKey: ["difficulties"],
+    queryFn: async () =>
+      (await getDifficulties(context)).map((c) => ({
+        value: c.id,
+        label: c.name,
+      })),
+  });
+  await queryClient.prefetchQuery({
+    queryKey: ["timeIntervals"],
+    queryFn: async () =>
+      (await getTimeIntervals(context)).map((c) => ({
+        value: c.id,
+        label: c.name,
+      })),
+  });
   if (opportunityId !== "create") {
-    await queryClient.prefetchQuery(["opportunity", opportunityId], () =>
-      getOpportunityById(opportunityId, context),
-    );
+    await queryClient.prefetchQuery({
+      queryKey: ["opportunity", opportunityId],
+      queryFn: () => getOpportunityById(opportunityId, context),
+    });
   }
 
   return {
@@ -379,9 +394,13 @@ const OpportunityDetails: NextPageWithLayout<{
         }
 
         // invalidate queries
-        await queryClient.invalidateQueries(["opportunities"]);
-        await queryClient.invalidateQueries(["opportunities", id]);
-        await queryClient.invalidateQueries(["opportunity", opportunityId]);
+        await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+        await queryClient.invalidateQueries({
+          queryKey: ["opportunities", id],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ["opportunity", opportunityId],
+        });
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",

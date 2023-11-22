@@ -67,9 +67,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery(
-    [`OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`],
-    () =>
+  await queryClient.prefetchQuery({
+    queryKey: [
+      `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`,
+    ],
+    queryFn: () =>
       getOpportunitiesAdmin(
         {
           organizations: [id],
@@ -91,7 +93,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         },
         context,
       ),
-  );
+  });
 
   return {
     props: {

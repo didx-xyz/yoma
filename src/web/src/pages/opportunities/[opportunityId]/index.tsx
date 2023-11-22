@@ -69,10 +69,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       session != null,
       context,
     );
-    await queryClient.prefetchQuery(
-      ["opportunityInfo", opportunityId],
-      () => data,
-    );
+    await queryClient.prefetchQuery({
+      queryKey: ["opportunityInfo", opportunityId],
+      queryFn: () => data,
+    });
 
     return {
       props: {
@@ -423,10 +423,9 @@ const OpportunityDetails: NextPageWithLayout<{
                   onSave={async () => {
                     setCompleteOpportunityDialogVisible(false);
                     setCompleteOpportunitySuccessDialogVisible(true);
-                    await queryClient.invalidateQueries([
-                      "verificationStatus",
-                      opportunityId,
-                    ]);
+                    await queryClient.invalidateQueries({
+                      queryKey: ["verificationStatus", opportunityId],
+                    });
                     //setRefreshVerificationStatus(true);
                   }}
                 />

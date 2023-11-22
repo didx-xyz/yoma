@@ -97,11 +97,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery(
-    [
+  await queryClient.prefetchQuery({
+    queryKey: [
       `Verifications_${id}_${query?.toString()}_${opportunity}_${page?.toString()}`,
     ],
-    () =>
+    queryFn: () =>
       searchMyOpportunitiesAdmin(
         {
           organizations: [id],
@@ -119,17 +119,17 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         },
         context,
       ),
-  );
-  await queryClient.prefetchQuery(
-    ["OpportunitiesForVerification", id],
-    async () =>
+  });
+  await queryClient.prefetchQuery({
+    queryKey: ["OpportunitiesForVerification", id],
+    queryFn: async () =>
       (await getOpportunitiesForVerification([id], undefined, context)).map(
         (x) => ({
           value: x.id,
           label: x.title,
         }),
       ),
-  );
+  });
 
   return {
     props: {
@@ -266,10 +266,14 @@ const OpportunityVerifications: NextPageWithLayout<{
         await performActionVerifyManual(model);
 
         // invalidate query
-        await queryClient.invalidateQueries(["opportunityParticipants", id]);
-        await queryClient.invalidateQueries([
-          `Verifications_${id}_${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
-        ]);
+        await queryClient.invalidateQueries({
+          queryKey: ["opportunityParticipants", id],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: [
+            `Verifications_${id}_${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
+          ],
+        });
       } catch (error) {
         toast(<ApiErrors error={error} />, {
           type: "error",
@@ -356,10 +360,14 @@ const OpportunityVerifications: NextPageWithLayout<{
         await performActionVerifyBulk(model);
 
         // invalidate query
-        await queryClient.invalidateQueries(["opportunityParticipants", id]);
-        await queryClient.invalidateQueries([
-          `Verifications_${id}_${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
-        ]);
+        await queryClient.invalidateQueries({
+          queryKey: ["opportunityParticipants", id],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: [
+            `Verifications_${id}_${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
+          ],
+        });
       } catch (error) {
         toast(<ApiErrors error={error} />, {
           type: "error",

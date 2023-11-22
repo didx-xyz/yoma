@@ -30,10 +30,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery(
-    [`Schemas_${query?.toString()}_${page?.toString()}`],
-    () => getSchemas(undefined, context),
-  );
+  await queryClient.prefetchQuery({
+    queryKey: [`Schemas_${query?.toString()}_${page?.toString()}`],
+    queryFn: () => getSchemas(undefined, context),
+  });
 
   return {
     props: {
@@ -50,7 +50,7 @@ const Schemas: NextPageWithLayout<{
   page?: string;
   error: string;
 }> = ({ query, page, error }) => {
-  // 👇 use prefetched queries (from server)
+  // 👇 use prefetched queries from server
   const { data: schemas } = useQuery<SSISchema[]>({
     queryKey: [`Schemas_${query?.toString()}_${page?.toString()}`],
     queryFn: () => getSchemas(),

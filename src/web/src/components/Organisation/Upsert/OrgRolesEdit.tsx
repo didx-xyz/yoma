@@ -47,7 +47,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
     (formData?.businessDocuments as any) ?? [],
   );
 
-  // 👇 use prefetched queries (from server)
+  // 👇 use prefetched queries from server
   const { data: organisationProviderTypes } = useQuery<
     OrganizationProviderType[]
   >({

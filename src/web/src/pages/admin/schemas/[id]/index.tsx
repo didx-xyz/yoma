@@ -68,17 +68,20 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
   const queryClient = new QueryClient();
   if (id !== "create") {
-    await queryClient.prefetchQuery(["schema", id], () =>
-      getSchemaByName(id, context),
-    );
+    await queryClient.prefetchQuery({
+      queryKey: ["schema", id],
+      queryFn: () => getSchemaByName(id, context),
+    });
   }
 
-  await queryClient.prefetchQuery(["schemaTypes"], async () =>
-    (await getSchemaTypes()).map((c) => ({
-      value: c.id,
-      label: c.name,
-    })),
-  );
+  await queryClient.prefetchQuery({
+    queryKey: ["schemaTypes"],
+    queryFn: async () =>
+      (await getSchemaTypes()).map((c) => ({
+        value: c.id,
+        label: c.name,
+      })),
+  });
 
   return {
     props: {
@@ -148,8 +151,8 @@ const SchemaCreateEdit: NextPageWithLayout<{
         });
 
         // invalidate queries
-        await queryClient.invalidateQueries(["schemas"]);
-        await queryClient.invalidateQueries(["schema", id]);
+        await queryClient.invalidateQueries({ queryKey: ["schemas"] });
+        await queryClient.invalidateQueries({ queryKey: ["schema", id] });
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",

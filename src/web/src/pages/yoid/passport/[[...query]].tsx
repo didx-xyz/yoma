@@ -89,7 +89,7 @@ const MyPassport: NextPageWithLayout<{
   const [activeCredential, setActiveCredential] =
     useState<SSICredentialInfo | null>(null);
 
-  // 👇 use prefetched queries (from server)
+  // 👇 use prefetched queries from server
   const {
     data: data,
     error: dataError,
