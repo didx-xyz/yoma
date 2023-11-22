@@ -47,7 +47,6 @@ namespace Yoma.Core.Api.Controllers
             var authorized = false;
             try
             {
-
                 authorized = _identityProviderClient.AuthenticateWebhook(HttpContext);
 
                 return authorized ? StatusCode(StatusCodes.Status200OK) : StatusCode(StatusCodes.Status403Forbidden);
