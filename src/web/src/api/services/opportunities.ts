@@ -113,12 +113,13 @@ export const getOpportunityInfoByIdAdmin = async (
 
 export const getOpportunityInfoById = async (
   id: string,
+  includeExpired?: boolean,
   context?: GetServerSidePropsContext,
 ): Promise<OpportunityInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.get<OpportunityInfo>(
-    `/opportunity/${id}/info`,
+    `/opportunity/${id}/info${includeExpired ? "?includeExpired=true" : ""}`,
   );
   return data;
 };

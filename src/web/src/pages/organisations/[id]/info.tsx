@@ -11,20 +11,53 @@ import { getOrganisationById } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
 import { Overview } from "~/components/Organisation/Detail/Overview";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
-import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
-import { type NextPageWithLayout } from "../../_app";
 import { PageBackground } from "~/components/PageBackground";
+import {
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+} from "~/lib/constants";
+import { AccessDenied } from "~/components/Status/AccessDenied";
+import type { NextPageWithLayout } from "~/pages/_app";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
 }
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id } = context.params as IParams;
-  const queryClient = new QueryClient();
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  // 👇 ensure authenticated
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  const { id } = context.params as IParams;
+  const queryClient = new QueryClient();
+
+  // 👇 prefetch queries on server
   await queryClient.prefetchQuery(["organisation", id], () =>
     getOrganisationById(id, context),
   );
@@ -34,6 +67,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       id: id,
+      theme: theme,
     },
   };
 }
@@ -41,10 +75,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const OrganisationOverview: NextPageWithLayout<{
   id: string;
   user: User;
-}> = ({ id }) => {
+  error: string;
+  theme: string;
+}> = ({ id, error }) => {
+  // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
+    enabled: !error,
   });
+
+  if (error) return <AccessDenied />;
 
   return (
     <>
@@ -101,4 +141,10 @@ OrganisationOverview.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(OrganisationOverview);
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+OrganisationOverview.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
+};
+
+export default OrganisationOverview;

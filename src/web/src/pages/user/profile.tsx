@@ -3,21 +3,33 @@ import { getServerSession } from "next-auth";
 import { type ReactElement } from "react";
 import { IoMdPerson } from "react-icons/io";
 import MainLayout from "~/components/Layout/Main";
-import withAuth from "~/context/withAuth";
 import { authOptions } from "~/server/auth";
 import type { NextPageWithLayout } from "../_app";
+import { AccessDenied } from "~/components/Status/AccessDenied";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
   return {
     props: {
-      user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      user: session?.user ?? null,
     },
   };
 }
 
-const UserProfile: NextPageWithLayout = () => {
+const UserProfile: NextPageWithLayout<{
+  error: string;
+}> = ({ error }) => {
+  if (error) return <AccessDenied />;
+
   return (
     <>
       <div className="container-centered">
@@ -75,4 +87,4 @@ UserProfile.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(UserProfile);
+export default UserProfile;

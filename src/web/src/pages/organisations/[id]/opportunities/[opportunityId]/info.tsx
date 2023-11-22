@@ -14,7 +14,6 @@ import {
   updateOpportunityStatus,
 } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
-import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
@@ -41,21 +40,54 @@ import { toast } from "react-toastify";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { type AxiosError } from "axios";
 import { Loading } from "~/components/Status/Loading";
+import { AccessDenied } from "~/components/Status/AccessDenied";
+import {
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+} from "~/lib/constants";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
   opportunityId: string;
 }
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id, opportunityId } = context.params as IParams;
-  const queryClient = new QueryClient();
   const session = await getServerSession(context.req, context.res, authOptions);
 
-  if (session)
-    await queryClient.prefetchQuery(["opportunityInfo", opportunityId], () =>
-      getOpportunityInfoByIdAdmin(opportunityId, context),
-    );
+  // 👇 ensure authenticated
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  const { id, opportunityId } = context.params as IParams;
+  const queryClient = new QueryClient();
+
+  // 👇 prefetch queries on server
+  await queryClient.prefetchQuery(["opportunityInfo", opportunityId], () =>
+    getOpportunityInfoByIdAdmin(opportunityId, context),
+  );
 
   return {
     props: {
@@ -63,6 +95,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       user: session?.user ?? null,
       id: id,
       opportunityId: opportunityId,
+      theme: theme,
     },
   };
 }
@@ -71,13 +104,17 @@ const OpportunityDetails: NextPageWithLayout<{
   id: string;
   opportunityId: string;
   user: User;
-}> = ({ id, opportunityId, user }) => {
+  error: string;
+  theme: string;
+}> = ({ id, opportunityId, user, error }) => {
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
 
+  // 👇 use prefetched queries from server
   const { data: opportunity } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
     queryFn: () => getOpportunityInfoByIdAdmin(opportunityId),
+    enabled: !error,
   });
 
   const [manageOpportunityMenuVisible, setManageOpportunityMenuVisible] =
@@ -110,6 +147,8 @@ const OpportunityDetails: NextPageWithLayout<{
     },
     [opportunityId, queryClient],
   );
+
+  if (error) return <AccessDenied />;
 
   return (
     <>
@@ -324,7 +363,9 @@ const OpportunityDetails: NextPageWithLayout<{
 
           <div className="flex flex-col gap-2 md:flex-row">
             <div className="w-full flex-grow rounded-lg bg-white p-6 md:w-[66%]">
-              {opportunity?.description}
+              <div style={{ whiteSpace: "pre-wrap" }}>
+                {opportunity?.description}
+              </div>
             </div>
             <div className="flex w-full  flex-col gap-2 md:w-[33%]">
               <div className="flex flex-col rounded-lg bg-white p-6">
@@ -478,4 +519,10 @@ OpportunityDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(OpportunityDetails);
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+OpportunityDetails.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
+};
+
+export default OpportunityDetails;

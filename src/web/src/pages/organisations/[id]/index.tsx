@@ -1,6 +1,5 @@
 /* eslint-disable */
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { type ParsedUrlQuery } from "querystring";
@@ -10,21 +9,53 @@ import { type Organization } from "~/api/models/organisation";
 import { getOrganisationById } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
-import withAuth from "~/context/withAuth";
-import { navbarColorAtom } from "~/lib/store";
 import { authOptions, type User } from "~/server/auth";
-import { type NextPageWithLayout } from "../../_app";
 import Link from "next/link";
+import {
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+} from "~/lib/constants";
+import { AccessDenied } from "~/components/Status/AccessDenied";
+import { NextPageWithLayout } from "~/pages/_app";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
 }
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id } = context.params as IParams;
-  const queryClient = new QueryClient();
   const session = await getServerSession(context.req, context.res, authOptions);
 
+  // 👇 ensure authenticated
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  const { id } = context.params as IParams;
+  const queryClient = new QueryClient();
+
+  // 👇 prefetch queries on server
   await queryClient.prefetchQuery(["organisation", id], () =>
     getOrganisationById(id, context),
   );
@@ -34,6 +65,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       id: id,
+      theme: theme,
     },
   };
 }
@@ -41,18 +73,20 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const OrganisationOverview: NextPageWithLayout<{
   id: string;
   user: User;
-}> = ({ id }) => {
+  error: string;
+  theme: string;
+}> = ({ id, error }) => {
+  // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
+    enabled: !error,
   });
 
-  const navbarColor = useAtomValue(navbarColorAtom);
+  if (error) return <AccessDenied />;
 
   return (
     <div className="bg-lightest-grey font-small-12px-regular relative h-[969px] w-full overflow-hidden text-left text-sm text-white">
-      <div
-        className={`absolute bottom-[72.58%] left-[-0.02%] right-[0%] top-[0.02%] h-[27.41%] w-[100.03%] ${navbarColor}`}
-      />
+      <div className="bg-theme absolute bottom-[72.58%] left-[-0.02%] right-[0%] top-[0.02%] h-[27.41%] w-[100.03%]" />
       <div className="text-13xl absolute left-[112px] top-[105px] flex flex-col items-start justify-center">
         <div className="relative flex h-[38.03px] w-[589px] shrink-0 items-center font-semibold leading-[166%]">
           {/* Good morning, Julie ☀️ */}
@@ -711,5 +745,10 @@ OrganisationOverview.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(OrganisationOverview);
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+OrganisationOverview.theme = function getTheme(page: ReactElement) {
+  return page.props.theme;
+};
+
+export default OrganisationOverview;
 /* eslint-enable */

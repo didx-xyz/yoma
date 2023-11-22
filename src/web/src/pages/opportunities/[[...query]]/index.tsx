@@ -188,6 +188,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     organizations,
     zltoRewardRanges,
     mostViewed,
+    expired,
   } = router.query;
 
   const [opportunitySearchFilter, setOpportunitySearchFilter] =
@@ -195,7 +196,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       pageNumber: page ? parseInt(page.toString()) : 1,
       pageSize: PAGE_SIZE,
       categories: null,
-      includeExpired: false,
+      includeExpired: expired ? Boolean(expired) : null,
       countries: null,
       languages: null,
       types: null,
@@ -217,7 +218,8 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       commitmentIntervals != undefined ||
       organizations != undefined ||
       zltoRewardRanges != undefined ||
-      mostViewed != undefined
+      mostViewed != undefined ||
+      expired != undefined
     );
   }, [
     query,
@@ -229,6 +231,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     organizations,
     zltoRewardRanges,
     mostViewed,
+    expired,
   ]);
 
   const getSearchFilterAsQueryString = useCallback(
@@ -298,6 +301,12 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
           opportunitySearchFilter?.mostViewed ? "true" : "false",
         );
       if (
+        opportunitySearchFilter?.includeExpired !== undefined &&
+        opportunitySearchFilter?.includeExpired !== null &&
+        opportunitySearchFilter?.includeExpired === true
+      )
+        params.append("expired", "true");
+      if (
         opportunitySearchFilter.pageNumber !== null &&
         opportunitySearchFilter.pageNumber !== undefined &&
         opportunitySearchFilter.pageNumber !== 1
@@ -327,13 +336,14 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         organizations,
         zltoRewardRanges,
         mostViewed,
+        expired,
       ],
       queryFn: async () =>
         await searchOpportunities({
           pageNumber: page ? parseInt(page.toString()) : 1,
           pageSize: PAGE_SIZE,
           valueContains: query?.toString() ?? null,
-          includeExpired: false,
+          includeExpired: expired ? Boolean(expired) : null,
           mostViewed: mostViewed ? Boolean(mostViewed) : null,
           types:
             types != undefined
@@ -410,8 +420,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
         valueContains: query?.toString() ?? null,
-
-        includeExpired: false,
+        includeExpired: expired ? Boolean(expired) : null,
         mostViewed: mostViewed ? Boolean(mostViewed) : null,
         types: types != undefined ? types?.toString().split(",") : null,
         categories:
@@ -448,6 +457,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     organizations,
     zltoRewardRanges,
     mostViewed,
+    expired,
   ]);
 
   // memo for results info based on filter parameters
@@ -464,6 +474,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       opportunitySearchFilter.valueContains &&
         `'${opportunitySearchFilter.valueContains}'`,
       opportunitySearchFilter.mostViewed && `'Trending'`,
+      opportunitySearchFilter.includeExpired && `'Expired'`,
       opportunitySearchFilter.categories?.map((c) => `'${c}'`)?.join(", "),
       opportunitySearchFilter.countries?.map((c) => `'${c}'`)?.join(", "),
       opportunitySearchFilter.languages?.map((c) => `'${c}'`).join(", "),
@@ -480,7 +491,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     return `${countText} for ${filterText}`;
   }, [opportunitySearchFilter, searchResults]);
 
-  const redirectwithSearchFilterParams = useCallback(
+  const redirectWithSearchFilterParams = useCallback(
     (item: OpportunitySearchFilter) => {
       let url = "/opportunities";
       const params = getSearchFilterAsQueryString(item);
@@ -501,10 +512,10 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         query = searchValueEncoded;
 
         opportunitySearchFilter.valueContains = query;
-        redirectwithSearchFilterParams(opportunitySearchFilter);
+        redirectWithSearchFilterParams(opportunitySearchFilter);
       } else void router.push("/opportunities", undefined, { scroll: false });
     },
-    [router, opportunitySearchFilter, redirectwithSearchFilterParams],
+    [router, opportunitySearchFilter, redirectWithSearchFilterParams],
   );
 
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
@@ -524,12 +535,12 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     (val: OpportunitySearchFilter) => {
       setFilterFullWindowVisible(false);
       setOpportunitySearchFilter(val);
-      redirectwithSearchFilterParams(val);
+      redirectWithSearchFilterParams(val);
     },
     [
       setFilterFullWindowVisible,
       setOpportunitySearchFilter,
-      redirectwithSearchFilterParams,
+      redirectWithSearchFilterParams,
     ],
   );
 
@@ -546,12 +557,12 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
   const handlePagerChange = useCallback(
     (value: number) => {
       opportunitySearchFilter.pageNumber = value;
-      redirectwithSearchFilterParams(opportunitySearchFilter);
+      redirectWithSearchFilterParams(opportunitySearchFilter);
 
       // scroll to the top of the page
       window.scrollTo(0, 0);
     },
-    [opportunitySearchFilter, redirectwithSearchFilterParams],
+    [opportunitySearchFilter, redirectWithSearchFilterParams],
   );
 
   return (
@@ -642,6 +653,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
             onOpenFilterFullWindow={() => {
               setFilterFullWindowVisible(!filterFullWindowVisible);
             }}
+            isSearchExecuted={isSearchExecuted}
           />
         </div>
 

@@ -1,7 +1,7 @@
 import { captureException } from "@sentry/nextjs";
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
-import { getServerSession, type User } from "next-auth";
+import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import { type ParsedUrlQuery } from "querystring";
@@ -25,34 +25,65 @@ import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
 import { PageBackground } from "~/components/PageBackground";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
-import withAuth from "~/context/withAuth";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { type User, authOptions } from "~/server/auth";
+import { useAtomValue, useSetAtom } from "jotai";
+import { userProfileAtom } from "~/lib/store";
+import { getUserProfile } from "~/api/services/user";
+import { AccessDenied } from "~/components/Status/AccessDenied";
+import {
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+  THEME_PURPLE,
+} from "~/lib/constants";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
 }
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
 
-  const queryClient = new QueryClient();
-  if (session) {
-    // 👇 prefetch queries (on server)
-    await queryClient.prefetchQuery(["organisationProviderTypes"], () =>
-      getOrganisationProviderTypes(context),
-    );
-    await queryClient.prefetchQuery(["organisation", id], () =>
-      getOrganisationById(id, context),
-    );
+  // 👇 ensure authenticated
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
   }
+
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
+    theme = THEME_PURPLE;
+  }
+
+  const { id } = context.params as IParams;
+  const queryClient = new QueryClient();
+
+  // 👇 prefetch queries on server
+  await queryClient.prefetchQuery(["organisationProviderTypes"], () =>
+    getOrganisationProviderTypes(context),
+  );
+  await queryClient.prefetchQuery(["organisation", id], () =>
+    getOrganisationById(id, context),
+  );
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null, // (required for 'withAuth' HOC component),
+      user: session?.user ?? null,
       id: id,
+      theme: theme,
     },
   };
 }
@@ -60,12 +91,21 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const OrganisationUpdate: NextPageWithLayout<{
   id: string;
   user: User | null;
-}> = ({ id, user }) => {
+  error: string;
+  theme: string;
+}> = ({ id, user, error }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const userProfile = useAtomValue(userProfileAtom);
+  const setUserProfile = useSetAtom(userProfileAtom);
 
+  const isUserAdminOfCurrentOrg =
+    userProfile?.adminsOf?.find((x) => x.id == id) != null;
+
+  // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
+    enabled: !error,
   });
 
   const [OrganizationRequestBase, setOrganizationRequestBase] =
@@ -108,6 +148,12 @@ const OrganisationUpdate: NextPageWithLayout<{
         // update api
         await patchOrganisation(model);
 
+        // refresh user profile for updated organisation to reflect on user menu
+        if (isUserAdminOfCurrentOrg) {
+          const userProfile = await getUserProfile();
+          setUserProfile(userProfile);
+        }
+
         toast("Your organisation has been updated", {
           type: "success",
           toastId: "patchOrganisation",
@@ -127,7 +173,7 @@ const OrganisationUpdate: NextPageWithLayout<{
         return;
       }
     },
-    [setIsLoading],
+    [setIsLoading, setUserProfile, isUserAdminOfCurrentOrg],
   );
 
   // form submission handler
@@ -147,6 +193,8 @@ const OrganisationUpdate: NextPageWithLayout<{
     [OrganizationRequestBase, onSubmit],
   );
 
+  if (error) return <AccessDenied />;
+
   return (
     <>
       <Head>
@@ -163,13 +211,16 @@ const OrganisationUpdate: NextPageWithLayout<{
           <Link className="font-bold hover:text-gray" href={"/organisations"}>
             Organisations
           </Link>
+
           <div className="mx-2">/</div>
+
           <Link
             className="font-bold hover:text-gray"
             href={`/organisations/${id}`}
           >
             {organisation?.name}
           </Link>
+
           <div className="mx-2">/</div>
           <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
             Edit
@@ -259,4 +310,10 @@ OrganisationUpdate.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(OrganisationUpdate);
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+OrganisationUpdate.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
+};
+
+export default OrganisationUpdate;

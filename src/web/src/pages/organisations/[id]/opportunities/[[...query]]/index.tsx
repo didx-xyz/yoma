@@ -6,7 +6,6 @@ import { useRouter } from "next/router";
 import { useCallback, type ReactElement } from "react";
 import { getOpportunitiesAdmin } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
-import withAuth from "~/context/withAuth";
 import { type User, authOptions } from "~/server/auth";
 import {
   Status,
@@ -19,8 +18,15 @@ import { PageBackground } from "~/components/PageBackground";
 import { IoIosAdd } from "react-icons/io";
 import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { PAGE_SIZE } from "~/lib/constants";
+import {
+  PAGE_SIZE,
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+} from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
+import { AccessDenied } from "~/components/Status/AccessDenied";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -28,49 +34,73 @@ interface IParams extends ParsedUrlQuery {
   page?: string;
 }
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id } = context.params as IParams;
-  const { query, page } = context.query;
-
   const session = await getServerSession(context.req, context.res, authOptions);
 
-  const queryClient = new QueryClient();
-  if (session) {
-    // 👇 prefetch queries (on server)
-    await queryClient.prefetchQuery(
-      [`OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`],
-      () =>
-        getOpportunitiesAdmin(
-          {
-            organizations: [id],
-            pageNumber: page ? parseInt(page.toString()) : 1,
-            pageSize: PAGE_SIZE,
-            startDate: null,
-            endDate: null,
-            // admins can see deleted opportunities, org admins can see Active, Expired & Inactive
-            statuses: session?.user?.roles.some((x) => x === "Admin")
-              ? null
-              : [Status.Active, Status.Expired, Status.Inactive],
-            types: null,
-            categories: null,
-            languages: null,
-            countries: null,
-            valueContains: query?.toString() ?? null,
-            commitmentIntervals: null,
-            zltoRewardRanges: null,
-          },
-          context,
-        ),
-    );
+  // 👇 ensure authenticated
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
   }
+
+  const { id } = context.params as IParams;
+  const { query, page } = context.query;
+  const queryClient = new QueryClient();
+
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
+  }
+
+  // 👇 prefetch queries on server
+  await queryClient.prefetchQuery(
+    [`OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`],
+    () =>
+      getOpportunitiesAdmin(
+        {
+          organizations: [id],
+          pageNumber: page ? parseInt(page.toString()) : 1,
+          pageSize: PAGE_SIZE,
+          startDate: null,
+          endDate: null,
+          // admins can see deleted opportunities, org admins can see Active, Expired & Inactive
+          statuses: session?.user?.roles.some((x) => x === ROLE_ADMIN)
+            ? null
+            : [Status.Active, Status.Expired, Status.Inactive],
+          types: null,
+          categories: null,
+          languages: null,
+          countries: null,
+          valueContains: query?.toString() ?? null,
+          commitmentIntervals: null,
+          zltoRewardRanges: null,
+        },
+        context,
+      ),
+  );
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      user: session?.user ?? null,
       id: id ?? null,
       query: query ?? null,
       page: page ?? null,
+      theme: theme,
     },
   };
 }
@@ -80,10 +110,12 @@ const Opportunities: NextPageWithLayout<{
   query?: string;
   page?: string;
   user?: User;
-}> = ({ id, query, page, user }) => {
+  error: string;
+  theme: string;
+}> = ({ id, query, page, user, error }) => {
   const router = useRouter();
 
-  // 👇 use prefetched queries (from server)
+  // 👇 use prefetched queries from server
   const { data: opportunities } = useQuery<OpportunitySearchResults>({
     queryKey: [
       `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`,
@@ -96,7 +128,7 @@ const Opportunities: NextPageWithLayout<{
         startDate: null,
         endDate: null,
         // admins can see deleted opportunities, org admins can see Active, Expired & Inactive
-        statuses: user?.roles.some((x) => x === "Admin")
+        statuses: user?.roles.some((x) => x === ROLE_ADMIN)
           ? null
           : [Status.Active, Status.Expired, Status.Inactive],
         types: null,
@@ -107,6 +139,7 @@ const Opportunities: NextPageWithLayout<{
         commitmentIntervals: null,
         zltoRewardRanges: null,
       }),
+    enabled: !error,
   });
 
   const onSearch = useCallback(
@@ -140,6 +173,8 @@ const Opportunities: NextPageWithLayout<{
     },
     [query, id, router],
   );
+
+  if (error) return <AccessDenied />;
 
   return (
     <>
@@ -247,4 +282,10 @@ Opportunities.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(Opportunities);
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+Opportunities.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
+};
+
+export default Opportunities;

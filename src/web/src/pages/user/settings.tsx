@@ -16,7 +16,6 @@ import { getUserProfile, patchPhoto, patchUser } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
-import withAuth from "~/context/withAuth";
 import { authOptions, type User } from "~/server/auth";
 import { type NextPageWithLayout } from "../_app";
 import { FileUploader } from "~/components/Organisation/Upsert/FileUpload";
@@ -25,34 +24,40 @@ import Image from "next/image";
 import { PageBackground } from "~/components/PageBackground";
 import { useSetAtom } from "jotai";
 import { userProfileAtom } from "~/lib/store";
+import { AccessDenied } from "~/components/Status/AccessDenied";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
-  const queryClient = new QueryClient();
-  if (session) {
-    // 👇 prefetch queries (on server)
-    await queryClient.prefetchQuery(
-      ["genders"],
-      async () => await getGenders(),
-    );
-    await queryClient.prefetchQuery(
-      ["countries"],
-      async () => await getCountries(),
-    );
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
   }
+
+  const queryClient = new QueryClient();
+
+  // 👇 prefetch queries on server
+  await queryClient.prefetchQuery(["genders"], async () => await getGenders());
+  await queryClient.prefetchQuery(
+    ["countries"],
+    async () => await getCountries(),
+  );
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      user: session?.user ?? null,
     },
   };
 }
 
 const Settings: NextPageWithLayout<{
   user: User;
-}> = ({ user }) => {
+  error?: string;
+}> = ({ user, error }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [logoFiles, setLogoFiles] = useState<File[]>([]);
   const setUserProfileAtom = useSetAtom(userProfileAtom);
@@ -61,14 +66,17 @@ const Settings: NextPageWithLayout<{
   const { data: genders } = useQuery({
     queryKey: ["genders"],
     queryFn: async () => await getGenders(),
+    enabled: !error,
   });
   const { data: countries } = useQuery({
     queryKey: ["countries"],
     queryFn: async () => await getCountries(),
+    enabled: !error,
   });
   const { data: userProfile } = useQuery({
     queryKey: ["userProfile"],
     queryFn: async () => await getUserProfile(),
+    enabled: !error,
   });
 
   const { update } = useSession();
@@ -189,6 +197,8 @@ const Settings: NextPageWithLayout<{
     router.back();
   };
 
+  if (error) return <AccessDenied />;
+
   return (
     <>
       <PageBackground />
@@ -196,7 +206,6 @@ const Settings: NextPageWithLayout<{
 
       <div className="container z-10 max-w-2xl px-2 py-4">
         <h2 className="font-boldx pb-8 text-white">User Settings</h2>
-
         <div className="flex flex-col items-center justify-start">
           <div className="flex w-full max-w-2xl flex-col rounded-lg bg-white p-8">
             <form
@@ -487,4 +496,4 @@ Settings.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(Settings);
+export default Settings;

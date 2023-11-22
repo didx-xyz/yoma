@@ -22,6 +22,7 @@ import ConfirmationModalContextProvider from "~/context/modalConfirmationContext
 import { config } from "~/lib/react-query-config";
 import "~/styles/globals.scss";
 import "~/styles/FileUpload.css";
+import { THEME_PURPLE } from "~/lib/constants";
 
 // configure font for tailwindcss
 // see https://nextjs.org/docs/pages/building-your-application/optimizing/fonts
@@ -38,6 +39,7 @@ try {
 
 export type NextPageWithLayout<P = object, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
+  theme?: (page: ReactElement) => string;
 };
 
 type AppPropsWithLayout<P> = AppProps<P> & {
@@ -56,17 +58,22 @@ const MyApp = ({
   // between different users and requests
   const [queryClient] = useState(() => new QueryClient(config));
 
+  const component = <Component {...pageProps} key={router.asPath} />;
+
   // Use the layout defined at the page level, if available
   const getLayout = Component.getLayout ?? ((page) => page);
+
+  // get theme from component properties if available
+  const getTheme = Component.theme ?? (() => THEME_PURPLE);
+  const theme =
+    getTheme != null && getTheme != undefined
+      ? getTheme(component)
+      : THEME_PURPLE;
 
   return (
     <Provider>
       <SessionProvider session={pageProps.session}>
-        <ThemeProvider
-          attribute="class"
-          enableSystem={false}
-          forcedTheme="light"
-        >
+        <ThemeProvider enableSystem={false} forcedTheme={theme}>
           <QueryClientProvider client={queryClient}>
             {/* eslint-disable-next-line */}
             <Hydrate state={pageProps.dehydratedState}>
@@ -77,9 +84,7 @@ const MyApp = ({
                 <ConfirmationModalContextProvider>
                   <Global />
                   <Navbar />
-
-                  {getLayout(<Component {...pageProps} key={router.asPath} />)}
-
+                  {getLayout(component)}
                   <ToastContainer
                     containerId="toastContainer"
                     className="mt-16 w-full md:mt-10 md:w-[340px]"

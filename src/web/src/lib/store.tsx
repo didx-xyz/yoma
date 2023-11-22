@@ -1,10 +1,6 @@
 import { atom } from "jotai";
 import type { UserProfile } from "~/api/models/user";
 
-// used to change navbar color per page (updated in global.tsx)
-// default to white to avoid flickering on initial page load
-const navbarColorAtom = atom("bg-white");
-
 // user profile atom
 const userProfileAtom = atom<UserProfile | null>(null);
 
@@ -24,7 +20,6 @@ const currentOrganisationIdAtom = atom<string | null>(null);
 const currentOrganisationLogoAtom = atom<string | null>(null);
 
 export {
-  navbarColorAtom,
   userProfileAtom,
   smallDisplayAtom,
   activeNavigationRoleViewAtom,

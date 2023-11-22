@@ -12,38 +12,73 @@ import {
   getOrganisationProviderTypes,
   postOrganisation,
 } from "~/api/services/organisations";
+import { getUserProfile } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
 import { OrgAdminsEdit } from "~/components/Organisation/Upsert/OrgAdminsEdit";
 import { OrgInfoEdit } from "~/components/Organisation/Upsert/OrgInfoEdit";
 import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
-import withAuth from "~/context/withAuth";
+import { userProfileAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
+import { useSetAtom } from "jotai";
+import { AccessDenied } from "~/components/Status/AccessDenied";
+import {
+  ROLE_ADMIN,
+  THEME_BLUE,
+  ROLE_ORG_ADMIN,
+  THEME_GREEN,
+  THEME_PURPLE,
+} from "~/lib/constants";
 
+// ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
-  const queryClient = new QueryClient();
-  if (session) {
-    // 👇 prefetch queries (on server)
-    await queryClient.prefetchQuery(["organisationProviderTypes"], () =>
-      getOrganisationProviderTypes(context),
-    );
+  // 👇 ensure authenticated
+  if (!session) {
+    return {
+      props: {
+        error: "Unauthorized",
+      },
+    };
   }
+
+  // 👇 set theme based on role
+  let theme;
+
+  if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
+  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+    theme = THEME_GREEN;
+  } else {
+    theme = THEME_PURPLE;
+  }
+
+  const queryClient = new QueryClient();
+
+  // 👇 prefetch queries on server
+  await queryClient.prefetchQuery(["organisationProviderTypes"], () =>
+    getOrganisationProviderTypes(context),
+  );
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      user: session?.user ?? null,
+      theme: theme,
     },
   };
 }
 
-const OrganisationCreate: NextPageWithLayout = () => {
+const OrganisationCreate: NextPageWithLayout<{
+  error: string;
+  theme: string;
+}> = ({ error }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const setUserProfile = useSetAtom(userProfileAtom);
 
   const [OrganizationRequestBase, setOrganizationRequestBase] =
     useState<OrganizationRequestBase>({
@@ -89,7 +124,11 @@ const OrganisationCreate: NextPageWithLayout = () => {
         });
         setIsLoading(false);
 
-        void router.push("/partner/success");
+        // refresh user profile for new organisation to reflect on user menu
+        const userProfile = await getUserProfile();
+        setUserProfile(userProfile);
+
+        void router.push("/organisations/register/success");
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
@@ -104,7 +143,7 @@ const OrganisationCreate: NextPageWithLayout = () => {
         return;
       }
     },
-    [setIsLoading],
+    [setIsLoading, setUserProfile],
   );
 
   // form submission handler
@@ -136,8 +175,10 @@ const OrganisationCreate: NextPageWithLayout = () => {
     window.scrollTo(0, 0);
   }, [step]);
 
+  if (error) return <AccessDenied />;
+
   return (
-    <div className="w-full bg-purple px-2 py-12">
+    <div className="bg-theme w-full px-2 py-12">
       {isLoading && <Loading />}
 
       {/* CONTENT */}
@@ -232,4 +273,10 @@ OrganisationCreate.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-export default withAuth(OrganisationCreate);
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+OrganisationCreate.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
+};
+
+export default OrganisationCreate;

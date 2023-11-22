@@ -49,13 +49,14 @@ releases:
         value: ghcr.io/didx-xyz/mssql-server
       - name: image.tag
         value: 2022-latest
-    secrets:
-      - ./helm/mssql/conf/{{ .Environment.Name }}/secrets.yaml
+    values:
       - service:
           type: LoadBalancer
           annotations:
             service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
             service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+    secrets:
+      - ./helm/mssql/conf/{{ .Environment.Name }}/secrets.yaml
 
   - name: keycloak
     labels:

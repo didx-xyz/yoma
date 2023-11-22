@@ -11,7 +11,6 @@ import {
   RoleView,
   activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
-  navbarColorAtom,
 } from "~/lib/store";
 import type { TabItem } from "~/api/models/common";
 
@@ -94,7 +93,6 @@ const navBarLinksAdmin: TabItem[] = [
 ];
 
 export const Navbar: React.FC = () => {
-  const navbarColor = useAtomValue(navbarColorAtom);
   const [menuVisible, setMenuVisible] = useState(false);
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
@@ -136,8 +134,8 @@ export const Navbar: React.FC = () => {
   }, [activeRoleView, currentOrganisationId]);
 
   return (
-    <div id="topNav" className="fixed left-0 right-0 top-0 z-40">
-      <div className={`${navbarColor} navbar z-40`}>
+    <div className="fixed left-0 right-0 top-0 z-40">
+      <div className={`bg-theme navbar z-40`}>
         <div className="navbar-start w-full">
           <button
             type="button"
@@ -153,7 +151,7 @@ export const Navbar: React.FC = () => {
             onRequestClose={() => {
               setMenuVisible(false);
             }}
-            className={`${navbarColor} fixed left-0 right-0 top-16 flex-grow items-center animate-in fade-in`}
+            className="bg-theme fixed left-0 right-0 top-16 flex-grow items-center animate-in fade-in"
             portalClassName={"fixed z-50"}
             overlayClassName="fixed inset-0"
           >

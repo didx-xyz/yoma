@@ -16,6 +16,7 @@ import { shimmer, toBase64 } from "src/lib/image";
 import iconRocket from "public/images/icon-rocket.svg";
 import Select from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
+import { useSession } from "next-auth/react";
 
 export interface InputProps {
   htmlRef: HTMLDivElement;
@@ -48,6 +49,8 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
   cancelButtonText = "Cancel",
   submitButtonText = "Submit",
 }) => {
+  const { data: session } = useSession();
+
   const schema = zod.object({
     types: zod.array(zod.string()).optional().nullable(),
     categories: zod.array(zod.string()).optional().nullable(),
@@ -56,6 +59,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
     organizations: zod.array(zod.string()).optional().nullable(),
     commitmentIntervals: zod.array(zod.string()).optional().nullable(),
     zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
+    includeExpired: zod.boolean().optional().nullable(),
   });
   const form = useForm({
     mode: "all",
@@ -439,6 +443,42 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
+            {session && (
+              <div className="collapse join-item collapse-arrow border border-base-300">
+                <input type="radio" name="my-accordion-7" />
+                <div className="collapse-title text-xl font-medium">
+                  Expired
+                </div>
+                <div className="collapse-content">
+                  <label className="label cursor-pointer font-bold">
+                    <span className="label-text">
+                      Include opportunities that have expired
+                    </span>
+
+                    <Controller
+                      name="includeExpired"
+                      control={form.control}
+                      render={({ field }) => (
+                        <input
+                          type="checkbox"
+                          className="checkbox-secondary checkbox"
+                          {...field}
+                          checked={field.value ?? false}
+                        />
+                      )}
+                    />
+                  </label>
+
+                  {formState.errors.includeExpired && (
+                    <label className="label font-bold">
+                      <span className="label-text-alt italic text-red-500">
+                        {`${formState.errors.includeExpired.message}`}
+                      </span>
+                    </label>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

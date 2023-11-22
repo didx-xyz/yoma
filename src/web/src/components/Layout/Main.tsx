@@ -20,7 +20,7 @@ const MainLayout: LayoutProps = ({ children }) => {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex min-h-screen justify-center bg-gray-light pt-[66px]">
+      <main className="flex min-h-screen justify-center bg-gray-light pt-[64px]">
         {children}
       </main>
       <Footer />

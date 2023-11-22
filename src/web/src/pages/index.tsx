@@ -9,7 +9,6 @@ import { authOptions, type User } from "~/server/auth";
 import { NextPageWithLayout } from "./_app";
 import Image from "next/image";
 import iconRocket from "public/images/icon-rocket.svg";
-import { shimmer, toBase64 } from "src/lib/image";
 import Link from "next/link";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -29,7 +28,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 }
 
 // NB: this a placeholder page for the home page
-// exported from figma and everything it's absolutely positioned... don't do things like this!!!
 const Home: NextPageWithLayout<{
   id: string;
   user: User;
