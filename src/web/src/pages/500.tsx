@@ -16,7 +16,7 @@ const Status500: NextPageWithLayout = () => {
   };
 
   return (
-    <div className="container w-[28rem] max-w-md">
+    <div className="container mt-8 w-[28rem] max-w-md">
       <div className="flex flex-col place-items-center justify-center rounded-xl bg-white p-4">
         <h4>500 - Error</h4>
 

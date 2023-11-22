@@ -25,10 +25,10 @@ export const SearchInput: React.FC<InputProps> = ({
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="search flex">
+      <div className="join">
         <input
           type="search"
-          className="input input-bordered input-sm h-9 w-full rounded-br-none rounded-tr-none text-sm focus:outline-0"
+          className="input join-item input-sm w-full border-0 focus:outline-0"
           placeholder={placeholder ?? "Search..."}
           autoComplete="off"
           value={searchInputValue ?? ""}
@@ -40,10 +40,10 @@ export const SearchInput: React.FC<InputProps> = ({
         <button
           type="submit"
           aria-label="Search"
-          className="btn-search btn btn-sm h-9 rounded-bl-none rounded-tl-none border-gray"
+          className="btn-search btn join-item btn-sm border-0 bg-green-dark hover:border-gray hover:bg-green-dark"
           onSubmit={handleSubmit}
         >
-          <IoMdSearch className="icon-search h-6 w-6" />
+          <IoMdSearch className="icon-search h-6 w-6 text-white" />
         </button>
       </div>
     </form>

@@ -323,7 +323,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       name="dateStart"
                       render={({ field: { onChange, value } }) => (
                         <DatePicker
-                          className="input input-bordered input-sm w-full"
+                          className="input input-bordered input-sm w-full rounded-md border-gray focus:border-gray focus:outline-none"
                           onChange={(date) =>
                             onChange(toISOStringForTimezone(date))
                           }
@@ -349,7 +349,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       name="dateEnd"
                       render={({ field: { onChange, value } }) => (
                         <DatePicker
-                          className="input input-bordered input-sm w-full"
+                          className="input input-bordered input-sm w-full rounded-md border-gray focus:border-gray focus:outline-none"
                           onChange={(date) =>
                             onChange(toISOStringForTimezone(date))
                           }

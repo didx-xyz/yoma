@@ -86,7 +86,7 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
 
         <table className="table w-full">
           <thead>
-            <tr>
+            <tr className="border-gray text-gray-dark">
               <th>Datasource</th>
               <th>Attribute</th>
             </tr>
@@ -95,7 +95,10 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
             {systemSchemaEntities.map((attribute) => (
               <>
                 {attribute.properties?.map((property, index) => (
-                  <tr key={`${index}_${property.id}`}>
+                  <tr
+                    key={`${index}_${property.id}`}
+                    className="border-gray text-gray-dark"
+                  >
                     <td>{attribute?.name}</td>
                     <td>{property.nameDisplay}</td>
                   </tr>

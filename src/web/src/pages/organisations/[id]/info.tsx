@@ -58,9 +58,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery(["organisation", id], () =>
-    getOrganisationById(id, context),
-  );
+  await queryClient.prefetchQuery({
+    queryKey: ["organisation", id],
+    queryFn: () => getOrganisationById(id, context),
+  });
 
   return {
     props: {

@@ -204,7 +204,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               render={({ field: { onChange, value } }) => (
                 <Select
                   classNames={{
-                    control: () => "input input-bordered input-xs",
+                    control: () => "input input-xs",
                   }}
                   isMulti={true}
                   options={lookups_types.map((c) => ({
@@ -247,7 +247,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               render={({ field: { onChange, value } }) => (
                 <Select
                   classNames={{
-                    control: () => "input input-bordered input-xs",
+                    control: () => "input input-xs",
                   }}
                   isMulti={true}
                   options={lookups_countries.map((c) => ({
@@ -289,7 +289,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               render={({ field: { onChange, value } }) => (
                 <Select
                   classNames={{
-                    control: () => "input input-bordered input-xs",
+                    control: () => "input input-xs",
                   }}
                   isMulti={true}
                   options={lookups_languages.map((c) => ({
@@ -332,7 +332,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               render={({ field: { onChange, value } }) => (
                 <Select
                   classNames={{
-                    control: () => "input input-bordered input-xs",
+                    control: () => "input input-xs",
                   }}
                   isMulti={true}
                   options={lookups_organisations.map((c) => ({
@@ -376,7 +376,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               render={({ field: { onChange, value } }) => (
                 <Select
                   classNames={{
-                    control: () => "input input-bordered input-xs",
+                    control: () => "input input-xs",
                   }}
                   isMulti={true}
                   options={lookups_commitmentIntervals.map((c) => ({
@@ -419,7 +419,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               render={({ field: { onChange, value } }) => (
                 <Select
                   classNames={{
-                    control: () => "input input-bordered input-xs",
+                    control: () => "input input-xs",
                   }}
                   isMulti={true}
                   options={lookups_zltoRewardRanges.map((c) => ({

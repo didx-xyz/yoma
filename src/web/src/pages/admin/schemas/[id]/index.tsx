@@ -68,17 +68,20 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
   const queryClient = new QueryClient();
   if (id !== "create") {
-    await queryClient.prefetchQuery(["schema", id], () =>
-      getSchemaByName(id, context),
-    );
+    await queryClient.prefetchQuery({
+      queryKey: ["schema", id],
+      queryFn: () => getSchemaByName(id, context),
+    });
   }
 
-  await queryClient.prefetchQuery(["schemaTypes"], async () =>
-    (await getSchemaTypes()).map((c) => ({
-      value: c.id,
-      label: c.name,
-    })),
-  );
+  await queryClient.prefetchQuery({
+    queryKey: ["schemaTypes"],
+    queryFn: async () =>
+      (await getSchemaTypes()).map((c) => ({
+        value: c.id,
+        label: c.name,
+      })),
+  });
 
   return {
     props: {
@@ -148,8 +151,8 @@ const SchemaCreateEdit: NextPageWithLayout<{
         });
 
         // invalidate queries
-        await queryClient.invalidateQueries(["schemas"]);
-        await queryClient.invalidateQueries(["schema", id]);
+        await queryClient.invalidateQueries({ queryKey: ["schemas"] });
+        await queryClient.invalidateQueries({ queryKey: ["schema", id] });
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
@@ -332,18 +335,18 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
         <div className="flex flex-col gap-2 md:flex-row">
           {/* left vertical menu */}
-          <ul className="menu hidden w-64 gap-2 rounded-lg bg-base-200 font-semibold md:flex">
+          <ul className="menu hidden max-h-[105px] w-64 flex-none gap-2 rounded-lg bg-white p-2 font-semibold md:flex">
             <li onClick={() => setStep(1)}>
               <a
-                className={`menu-title ${
+                className={`${
                   step === 1
-                    ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark"
+                    ? "bg-green-light text-green  hover:bg-green-light"
+                    : "bg-gray text-gray-dark  hover:bg-gray"
                 }`}
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    isValidStep1 ? "bg- bg-green" : "bg-gray-dark"
+                    isValidStep1 ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   1
@@ -353,15 +356,15 @@ const SchemaCreateEdit: NextPageWithLayout<{
             </li>
             <li onClick={() => setStep(2)}>
               <a
-                className={`menu-title ${
+                className={`${
                   step === 2
                     ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark"
+                    : "bg-gray text-gray-dark hover:bg-gray"
                 }`}
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    isValidStep2 ? "bg- bg-green" : "bg-gray-dark"
+                    isValidStep2 ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   2
@@ -374,9 +377,9 @@ const SchemaCreateEdit: NextPageWithLayout<{
             {id === "create" && (
               <li onClick={() => setStep(3)}>
                 <a
-                  className={`menu-title ${
+                  className={`${
                     step === 3
-                      ? "bg-green-light text-green hover:bg-green-light"
+                      ? "bg-green-light text-green hover:bg-green-light active:bg-green-light"
                       : "bg-gray text-gray-dark"
                   }`}
                 >
@@ -445,7 +448,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       {id === "create" && (
                         <input
                           type="text"
-                          className="input input-bordered rounded-md"
+                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                           placeholder="Enter schema name"
                           {...registerStep1("name")}
                           contentEditable
@@ -456,7 +459,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       {id !== "create" && (
                         <input
                           type="text"
-                          className="input input-bordered rounded-md"
+                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                           value={schema?.displayName ?? ""}
                           contentEditable
                           disabled={true}
@@ -491,7 +494,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input input-bordered",
+                              control: () => "input",
                             }}
                             options={schemaTypes}
                             onChange={(val) => onChange(val?.value)}
@@ -531,7 +534,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input input-bordered",
+                              control: () => "input",
                             }}
                             isMulti={false}
                             options={[
@@ -752,7 +755,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                         <table className="table w-full">
                           <thead>
-                            <tr>
+                            <tr className="border-gray text-gray-dark">
                               <th>Datasource</th>
                               <th>Attribute</th>
                             </tr>
@@ -785,7 +788,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                         <table className="table w-full">
                           <thead>
-                            <tr>
+                            <tr className="border-gray text-gray-dark">
                               <th>Datasource</th>
                               <th>Attribute</th>
                             </tr>

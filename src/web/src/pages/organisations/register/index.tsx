@@ -59,9 +59,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery(["organisationProviderTypes"], () =>
-    getOrganisationProviderTypes(context),
-  );
+  await queryClient.prefetchQuery({
+    queryKey: ["organisationProviderTypes"],
+    queryFn: () => getOrganisationProviderTypes(context),
+  });
 
   return {
     props: {
@@ -118,10 +119,6 @@ const OrganisationCreate: NextPageWithLayout<{
         // update api
         await postOrganisation(model);
 
-        toast("Your organisation has been updated", {
-          type: "success",
-          toastId: "organisationRegistration",
-        });
         setIsLoading(false);
 
         // refresh user profile for new organisation to reflect on user menu

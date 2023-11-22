@@ -104,7 +104,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
         </div>
         <div className="flex flex-col bg-gray">
           <div className="join join-vertical w-full">
-            <div className="collapse join-item collapse-arrow border border-base-300">
+            <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-1" checked={true} />
               <div className="collapse-title text-xl font-medium">Topics</div>
               <div className="collapse-content">
@@ -199,7 +199,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
-            <div className="collapse join-item collapse-arrow border border-base-300">
+            <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-2" />
               <div className="collapse-title text-xl font-medium">
                 Opportunity type
@@ -241,7 +241,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
-            <div className="collapse join-item collapse-arrow border border-base-300">
+            <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-3" />
               <div className="collapse-title text-xl font-medium">Location</div>
               <div className="collapse-content">
@@ -281,7 +281,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
-            <div className="collapse join-item collapse-arrow border border-base-300">
+            <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-4" />
               <div className="collapse-title text-xl font-medium">Language</div>
               <div className="collapse-content">
@@ -321,7 +321,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
-            <div className="collapse join-item collapse-arrow border border-base-300">
+            <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-5" />
               <div className="collapse-title text-xl font-medium">
                 Organisation
@@ -363,7 +363,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
-            <div className="collapse join-item collapse-arrow border border-base-300">
+            <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-6" />
               <div className="collapse-title text-xl font-medium">Effort</div>
               <div className="collapse-content">
@@ -403,7 +403,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
-            <div className="collapse join-item collapse-arrow border border-base-300">
+            <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-7" />
               <div className="collapse-title text-xl font-medium">Reward</div>
               <div className="collapse-content">
@@ -444,7 +444,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
               </div>
             </div>
             {session && (
-              <div className="collapse join-item collapse-arrow border border-base-300">
+              <div className="collapse join-item collapse-arrow">
                 <input type="radio" name="my-accordion-7" />
                 <div className="collapse-title text-xl font-medium">
                   Expired
@@ -483,7 +483,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
         </div>
 
         {/* BUTTONS */}
-        <div className="my-4 flex items-center justify-center gap-2">
+        <div className="m-4 flex items-center justify-center gap-2">
           {onCancel && (
             <button
               type="button"
