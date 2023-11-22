@@ -4,9 +4,9 @@ dependencies:
   version: 2.13.3
 - name: keycloakx
   repository: https://codecentric.github.io/helm-charts
-  version: 2.2.2
+  version: 2.3.0
 - name: keycloak-config-cli
   repository: git+https://github.com/didx-xyz/keycloak-config-cli@contrib/charts?ref=init-containers&sparse=0
   version: 5.8.1-SNAPSHOT
-digest: sha256:5005b9a70b9666d8cafe2e2a5d87eb135ce43c78693f3ebdd04c2a8814e37ecd
-generated: "2023-11-10T16:21:18.435932+02:00"
+digest: sha256:8be440d990f8aea69573e99b268d7b418e7f24e53c815de5d9b50bd67b935a22
+generated: "2023-11-22T15:07:27.595353+02:00"

@@ -11,7 +11,7 @@ on:
     branches:
       - "master"
   release:
-    types: [released,prereleased]
+    types: [released, prereleased]
 
 env:
   REGISTRY: ghcr.io/${{ github.repository_owner }}
@@ -262,11 +262,11 @@ jobs:
       id-token: write
       contents: read
       packages: read
-    needs: [ test-e2e, build ]
+    needs: [test-e2e, build]
     runs-on: ubuntu-latest
 
     env:
-      TAILSCALE_VERSION: 1.52.1
+      TAILSCALE_VERSION: 1.54.0
       HELMFILE_VERSION: v0.158.1
       HELM_VERSION: v3.13.2
       TAG: ${{ needs.build.outputs.image_version }}

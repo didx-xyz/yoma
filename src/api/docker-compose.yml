@@ -57,9 +57,9 @@ services:
     container_name: keycloak-init
     user: root
     command: |
-      sh -c 'curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.3.0/keycloak-webhook-0.3.0-all.jar \
-      -o /opt/keycloak/providers/keycloak-webhook-0.3.0.jar && \
-      chown 1000:1000 /opt/keycloak/providers/keycloak-webhook-0.3.0.jar'
+      sh -c 'curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.4.0/keycloak-webhook-0.4.0-all.jar \
+      -o /opt/keycloak/providers/keycloak-webhook-0.4.0.jar && \
+      chown 1000:1000 /opt/keycloak/providers/keycloak-webhook-0.4.0.jar'
     volumes:
       - keycloak:/opt/keycloak/providers
 
@@ -81,8 +81,8 @@ services:
       retries: 3
 
   keycloak: # Local Keycloak server
-    # https://github.com/adorsys/keycloak-config-cli/pull/928
-    image: quay.io/keycloak/keycloak:22.0.1
+    # Pinned to 22.0.4 due to https://github.com/keycloak/keycloak/issues/23943
+    image: quay.io/keycloak/keycloak:22.0.4
     container_name: keycloak
     environment:
       WEBHOOK_EVENTS_TAKEN: "LOGIN,REGISTER,LOGOUT,UPDATE_PROFILE"
@@ -124,7 +124,7 @@ services:
         condition: service_started
 
   keycloak-config: # Import Keycloak configuration
-    image: adorsys/keycloak-config-cli:5.8.0-22.0.0
+    image: adorsys/keycloak-config-cli:5.9.0-22.0.4
     container_name: keycloak-config
     environment:
       KEYCLOAK_URL: "http://keycloak:8080/"

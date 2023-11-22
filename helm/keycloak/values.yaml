@@ -128,7 +128,7 @@ keycloak:
   replicas: 1
 
   image:
-    tag: 22.0.1
+    tag: 22.0.4
 
   command:
     - "/opt/keycloak/bin/kc.sh"
@@ -163,7 +163,7 @@ keycloak:
     runAsNonRoot: true
 
   webhook:
-    version: 0.3.0
+    version: 0.4.0
   themes:
     enabled: false
     ref: develop
@@ -300,7 +300,8 @@ keycloak:
     tags.datadoghq.com/version: '{{ default .Chart.AppVersion .Values.image.tag }}'
     admission.datadoghq.com/enabled: "false" # disabled by default (for now)
   podAnnotations:
-    admission.datadoghq.com/java-lib.version: v1.20.0
+    # https://gcr.io/datadoghq/dd-lib-java-init
+    admission.datadoghq.com/java-lib.version: v1.24.2
     ad.datadoghq.com/keycloak.logs: '[{ "service": "keycloak", "source": "jboss_wildfly"}]'
 
   resources:
@@ -374,7 +375,7 @@ config-cli:
   enabled: false
 
   image:
-    tag: 5.8.0-22.0.0
+    tag: 5.9.0-22.0.4
 
   env:
     KEYCLOAK_AVAILABILITYCHECK_ENABLED: "true"
