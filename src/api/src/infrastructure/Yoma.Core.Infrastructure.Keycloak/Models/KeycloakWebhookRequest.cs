@@ -17,7 +17,6 @@ namespace Yoma.Core.Domain.Keycloak.Models
         public string auth_method { get; set; }
         public string auth_type { get; set; }
         public string redirect_uri { get; set; }
-        public string consent { get; set; }
         public string code_id { get; set; }
         public string username { get; set; }
     }

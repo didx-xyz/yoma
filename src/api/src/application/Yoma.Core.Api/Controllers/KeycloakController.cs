@@ -47,6 +47,7 @@ namespace Yoma.Core.Api.Controllers
             var authorized = false;
             try
             {
+    
                 authorized = _identityProviderClient.AuthenticateWebhook(HttpContext);
 
                 return authorized ? StatusCode(StatusCodes.Status200OK) : StatusCode(StatusCodes.Status403Forbidden);
@@ -133,7 +134,7 @@ namespace Yoma.Core.Api.Controllers
                         userRequest = new UserRequest();
                     }
 
-                    userRequest.Email = kcUser.Email.Trim();
+                    userRequest.Email = kcUser.Username.Trim();
                     userRequest.FirstName = kcUser.FirstName.Trim();
                     userRequest.Surname = kcUser.LastName.Trim();
                     userRequest.EmailConfirmed = kcUser.EmailVerified;
