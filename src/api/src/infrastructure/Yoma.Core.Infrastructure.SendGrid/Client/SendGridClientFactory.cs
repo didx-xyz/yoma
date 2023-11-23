@@ -20,7 +20,7 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
 
         #region Constructor
         public SendGridClientFactory(ILogger<SendGridClient> logger,
-            IOptions<AppSettings> appSettings,  
+            IOptions<AppSettings> appSettings,
             IEnvironmentProvider environmentProvider,
             IOptions<SendGridOptions> options,
             ISendGridClient sendGridClient)

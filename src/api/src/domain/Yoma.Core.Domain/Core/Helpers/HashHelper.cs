@@ -14,7 +14,7 @@ namespace Yoma.Core.Domain.Core.Helpers
             var builder = new StringBuilder();
             for (int i = 0; i < hash.Length; i++)
                 builder.Append(hash[i].ToString("x2"));
-  
+
             return builder.ToString();
         }
     }

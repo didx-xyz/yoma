@@ -9,9 +9,9 @@ namespace Yoma.Core.Domain.Core
         [Description("Local")]
         Local = 1,
         [Description("Development")]
-        Development= 2,
+        Development = 2,
         [Description("Testing / Staging")]
-        Staging= 4,
+        Staging = 4,
         [Description("Production")]
         Production = 8
     }
