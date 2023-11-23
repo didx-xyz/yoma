@@ -2,26 +2,26 @@ using System.ComponentModel;
 
 namespace Yoma.Core.Domain.Core
 {
+    [Flags]
     public enum Environment
     {
-        None,
+        None = 0,
         [Description("Local")]
-        Local,
+        Local = 1,
         [Description("Development")]
-        Development,
+        Development= 2,
         [Description("Testing / Staging")]
-        Staging,
+        Staging= 4,
         [Description("Production")]
-        Production
+        Production = 8
     }
 
     [Flags]
     public enum CacheItemType
     {
-        None,
-        Lookups, //lookup entities i.e. countries; reference data store in lookup db namespace
-        AmazonS3Client,
-        TrustRegistry
+        None = 0,
+        Lookups = 1, //lookup entities i.e. countries; reference data store in lookup db namespace
+        AmazonS3Client = 2
     }
 
     public enum FileType

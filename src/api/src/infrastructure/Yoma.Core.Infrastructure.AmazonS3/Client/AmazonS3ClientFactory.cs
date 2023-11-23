@@ -31,7 +31,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
             if (!_options.Buckets.TryGetValue(storageType, out var optionsBucket) || optionsBucket == null)
                 throw new InvalidOperationException($"Failed to retrieve configuration section '{AWSS3Options.Section}' for storage type '{storageType}'");
 
-            if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(CacheItemType.AmazonS3Client))
+            if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.AmazonS3Client))
                 return new AmazonS3Client(storageType, optionsBucket);
 
             var result = _memoryCache.GetOrCreate($"{nameof(AmazonS3Client)}:{storageType}", entry =>

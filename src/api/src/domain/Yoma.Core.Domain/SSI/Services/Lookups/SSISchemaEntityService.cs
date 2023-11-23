@@ -71,7 +71,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         public List<SSISchemaEntity> List(SchemaType? type)
         {
             List<SSISchemaEntity> results;
-            if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(Core.CacheItemType.Lookups))
+            if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
             {
                 results = _ssiSchemaEntityRepository.Query(true).ToList();
                 ReflectEntityTypeInformation(results);

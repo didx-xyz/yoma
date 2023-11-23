@@ -1,5 +1,4 @@
 using FS.Keycloak.RestApiClient.Api;
-using FS.Keycloak.RestApiClient.Client;
 using Keycloak.AuthServices.Authentication;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core;

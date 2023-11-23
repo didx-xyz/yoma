@@ -58,7 +58,7 @@ namespace Yoma.Core.Domain.Lookups.Services
 
         public List<TimeInterval> List()
         {
-            if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(Core.CacheItemType.Lookups))
+            if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
                 return _timeIntervalRepository.Query().OrderBy(o => o.Name).ToList();
 
             var result = _memoryCache.GetOrCreate(nameof(TimeInterval), entry =>

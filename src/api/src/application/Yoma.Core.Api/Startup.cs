@@ -121,7 +121,7 @@ namespace Yoma.Core.Api
             app.UseMiddleware<ExceptionResponseMiddleware>();
             app.UseMiddleware<ExceptionLogMiddleware>();
             app.UseCors();
-            if (_environment != Domain.Core.Environment.Local) app.UseHttpsRedirection();
+            if (_appSettings.HttpsRedirectionEnabledEnvironmentsAsEnum.HasFlag(_environment)) app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
 

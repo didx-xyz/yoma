@@ -58,7 +58,7 @@ namespace Yoma.Core.Domain.Lookups.Services
 
         public List<Gender> List()
         {
-            if (!_appSettings.CacheEnabledByCacheItemTypes.HasFlag(Core.CacheItemType.Lookups))
+            if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
                 return _genderRepository.Query().OrderBy(o => o.Name).ToList();
 
             var result = _memoryCache.GetOrCreate(nameof(Gender), entry =>

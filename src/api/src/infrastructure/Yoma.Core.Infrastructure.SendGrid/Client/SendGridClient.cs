@@ -9,20 +9,30 @@ using Newtonsoft.Json;
 using SendGrid.Helpers.Errors.Model;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.EmailProvider.Interfaces;
+using Yoma.Core.Domain.Core.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Yoma.Core.Infrastructure.SendGrid.Client
 {
     public class SendGridClient : IEmailProviderClient
     {
         #region Class Variables
+        private readonly ILogger<SendGridClient> _logger;
+        private readonly AppSettings _appSettings;
         private readonly IEnvironmentProvider _environmentProvider;
         private readonly SendGridOptions _options;
         private readonly ISendGridClient _sendGridClient;
         #endregion
 
         #region Constructor
-        public SendGridClient(IEnvironmentProvider environmentProvider, SendGridOptions options, ISendGridClient sendGridClient)
+        public SendGridClient(ILogger<SendGridClient> logger,
+            AppSettings appSettings,
+            IEnvironmentProvider environmentProvider,
+            SendGridOptions options,
+            ISendGridClient sendGridClient)
         {
+            _logger = logger;
+            _appSettings = appSettings;
             _environmentProvider = environmentProvider;
             _options = options;
             _sendGridClient = sendGridClient;
@@ -33,11 +43,10 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
         public async Task Send<T>(EmailType type, List<EmailRecipient> recipients, T data)
             where T : EmailBase
         {
-            switch (_environmentProvider.Environment)
+            if (!_appSettings.SendGridEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
             {
-                case Domain.Core.Environment.Local:
-                case Domain.Core.Environment.Development:
-                    return; //emails not send on local or development
+                _logger.LogInformation("Sending of email skipped for environment '{environment}'", _environmentProvider.Environment);
+                return;
             }
 
             if (recipients == null || !recipients.Any())
