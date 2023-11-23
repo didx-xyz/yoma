@@ -7,7 +7,7 @@ import {
   Organization,
   type OrganizationRequestBase,
 } from "~/api/models/organisation";
-import { ACCEPTED_IMAGE_TYPES } from "~/lib/constants";
+import { ACCEPTED_IMAGE_TYPES, REGEX_URL_VALIDATION } from "~/lib/constants";
 import { FileUploader } from "./FileUpload";
 
 export interface InputProps {
@@ -42,7 +42,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
       postalCode: zod.string().min(1, "Postal code is required."),
       websiteURL: zod
         .string()
-        .url("Please enter a valid URL (e.g. http://www.example.com)")
+        .regex(REGEX_URL_VALIDATION, "Please enter a valid URL.")
         .optional()
         .or(zod.literal("")),
       logo: zod.any().optional(),
@@ -223,7 +223,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         <input
           type="text"
           className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-          placeholder="www.website.com"
+          placeholder="https://website.com"
           {...register("websiteURL")}
           data-autocomplete="url"
         />
@@ -341,11 +341,11 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
       </div>
 
       {/* BUTTONS */}
-      <div className="mt-4 flex flex-col items-center justify-center gap-4">
+      <div className="mt-4 flex flex-row items-center justify-center gap-4">
         {onCancel && (
           <button
             type="button"
-            className="btn btn-warning btn-md w-full flex-grow normal-case"
+            className="btn btn-warning btn-md flex-grow normal-case"
             onClick={onCancel}
           >
             {cancelButtonText}
@@ -354,7 +354,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         {onSubmit && (
           <button
             type="submit"
-            className="btn btn-success btn-md w-full flex-grow normal-case"
+            className="btn btn-success btn-md flex-grow normal-case"
           >
             {submitButtonText}
           </button>

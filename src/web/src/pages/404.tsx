@@ -5,8 +5,8 @@ import { type NextPageWithLayout } from "./_app";
 
 const Status404: NextPageWithLayout = () => {
   return (
-    <div className="container mt-8 w-[28rem] max-w-md">
-      <div className="flex flex-col place-items-center justify-center rounded-xl bg-white p-4">
+    <div className="container mt-8 flex flex-col items-center justify-center gap-12 px-4">
+      <div className="flex w-full max-w-md flex-col place-items-center justify-center rounded-xl bg-white p-4">
         <h4>404 - Not found</h4>
 
         <FaExclamationTriangle size={100} className="my-10 text-yellow" />

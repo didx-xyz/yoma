@@ -40,7 +40,7 @@ import { toast } from "react-toastify";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { type AxiosError } from "axios";
 import { Loading } from "~/components/Status/Loading";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   ROLE_ADMIN,
   ROLE_ORG_ADMIN,
@@ -151,7 +151,7 @@ const OpportunityDetails: NextPageWithLayout<{
     [opportunityId, queryClient],
   );
 
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthorized/>;
 
   return (
     <>

@@ -26,7 +26,7 @@ import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import ReactModal from "react-modal";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { LoadingInline } from "~/components/Status/LoadingInline";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -138,7 +138,7 @@ const MyPassport: NextPageWithLayout<{
     [setActiveCredential, setCredentialDialogVisible],
   );
 
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthorized />;
 
   return (
     <>

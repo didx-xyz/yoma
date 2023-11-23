@@ -13,7 +13,7 @@ import NoRowsMessage from "~/components/NoRowsMessage";
 import { getSchemas } from "~/api/services/credentials";
 import type { SSISchema } from "~/api/models/credential";
 import { THEME_BLUE } from "~/lib/constants";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -57,7 +57,7 @@ const Schemas: NextPageWithLayout<{
     enabled: !error,
   });
 
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthorized />;
 
   return (
     <>

@@ -38,7 +38,7 @@ import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   ROLE_ADMIN,
   ROLE_ORG_ADMIN,
@@ -167,7 +167,7 @@ const OrganisationDetails: NextPageWithLayout<{
     verifyComments,
   ]);
 
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthorized />;
 
   return (
     <>

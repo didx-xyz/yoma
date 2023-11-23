@@ -18,7 +18,7 @@ import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
 import { SearchInput } from "~/components/SearchInput";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   ROLE_ADMIN,
   ROLE_ORG_ADMIN,
@@ -191,7 +191,7 @@ const Opportunities: NextPageWithLayout<{
     [router],
   );
 
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthorized />;
 
   return (
     <>

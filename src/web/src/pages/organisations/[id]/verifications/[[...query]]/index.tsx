@@ -55,7 +55,7 @@ import { type SelectOption } from "~/api/models/lookups";
 import { Loading } from "~/components/Status/Loading";
 import { OpportunityCompletionRead } from "~/components/Opportunity/OpportunityCompletionRead";
 import Moment from "react-moment";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -436,7 +436,7 @@ const OpportunityVerifications: NextPageWithLayout<{
     },
     [data, setSelectedRows],
   );
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthorized />;
 
   return (
     <>

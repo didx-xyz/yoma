@@ -23,7 +23,7 @@ import { userProfileAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 import { useSetAtom } from "jotai";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import {
   ROLE_ADMIN,
   THEME_BLUE,
@@ -172,7 +172,7 @@ const OrganisationCreate: NextPageWithLayout<{
     window.scrollTo(0, 0);
   }, [step]);
 
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthenticated />;
 
   return (
     <div className="bg-theme w-full px-2 py-12">

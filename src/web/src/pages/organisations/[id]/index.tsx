@@ -17,7 +17,7 @@ import {
   THEME_BLUE,
   THEME_GREEN,
 } from "~/lib/constants";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 import { NextPageWithLayout } from "~/pages/_app";
 
 interface IParams extends ParsedUrlQuery {
@@ -83,7 +83,7 @@ const OrganisationOverview: NextPageWithLayout<{
     enabled: !error,
   });
 
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthorized />;
 
   return (
     <div className="bg-lightest-grey font-small-12px-regular relative h-[969px] w-full overflow-hidden text-left text-sm text-white">

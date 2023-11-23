@@ -68,8 +68,9 @@ import {
   ROLE_ORG_ADMIN,
   THEME_BLUE,
   THEME_GREEN,
+  REGEX_URL_VALIDATION,
 } from "~/lib/constants";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -462,7 +463,7 @@ const OpportunityDetails: NextPageWithLayout<{
       .string()
       .min(1, "Opportunity URL is required.")
       .max(2048, "Opportunity URL cannot exceed 2048 characters.")
-      .url("Please enter a valid URL (e.g. http://www.example.com)"),
+      .regex(REGEX_URL_VALIDATION, "Please enter a valid URL."),
   });
 
   const schemaStep2 = z.object({
@@ -695,7 +696,7 @@ const OpportunityDetails: NextPageWithLayout<{
     }
   }, [schemas, watcSSISchemaName]);
 
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthorized />;
 
   return (
     <>

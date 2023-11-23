@@ -24,7 +24,7 @@ import Image from "next/image";
 import { PageBackground } from "~/components/PageBackground";
 import { useSetAtom } from "jotai";
 import { userProfileAtom } from "~/lib/store";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -200,7 +200,7 @@ const Settings: NextPageWithLayout<{
     router.back();
   };
 
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthorized />;
 
   return (
     <>

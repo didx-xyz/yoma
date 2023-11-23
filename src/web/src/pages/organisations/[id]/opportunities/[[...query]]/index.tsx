@@ -26,7 +26,7 @@ import {
   THEME_GREEN,
 } from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -176,7 +176,7 @@ const Opportunities: NextPageWithLayout<{
     [query, id, router],
   );
 
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthorized />;
 
   return (
     <>

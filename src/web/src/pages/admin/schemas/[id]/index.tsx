@@ -48,7 +48,7 @@ import {
 import { SchemaAttributesEdit } from "~/components/Schema/SchemaAttributesEdit";
 import type { SelectOption } from "~/api/models/lookups";
 import { THEME_BLUE } from "~/lib/constants";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -301,7 +301,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
     [schemaEntities],
   );
 
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthorized />;
 
   return (
     <>

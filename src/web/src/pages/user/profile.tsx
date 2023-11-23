@@ -5,7 +5,7 @@ import { IoMdPerson } from "react-icons/io";
 import MainLayout from "~/components/Layout/Main";
 import { authOptions } from "~/server/auth";
 import type { NextPageWithLayout } from "../_app";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -28,7 +28,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const UserProfile: NextPageWithLayout<{
   error: string;
 }> = ({ error }) => {
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthorized />;
 
   return (
     <>

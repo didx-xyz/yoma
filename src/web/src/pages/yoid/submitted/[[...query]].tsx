@@ -7,7 +7,7 @@ import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
 import type { ParsedUrlQuery } from "querystring";
 import { UnderConstruction } from "~/components/Status/UnderConstruction";
 import type { ReactElement } from "react";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -47,7 +47,7 @@ const MySubmitted: NextPageWithLayout<{
   page?: string;
   error: string;
 }> = ({ /*id, query, page,*/ error }) => {
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthorized />;
 
   return (
     <>

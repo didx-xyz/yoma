@@ -28,9 +28,13 @@ import { Loading } from "~/components/Status/Loading";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { type User, authOptions } from "~/server/auth";
 import { useAtomValue, useSetAtom } from "jotai";
-import { userProfileAtom } from "~/lib/store";
+import {
+  RoleView,
+  activeNavigationRoleViewAtom,
+  userProfileAtom,
+} from "~/lib/store";
 import { getUserProfile } from "~/api/services/user";
-import { AccessDenied } from "~/components/Status/AccessDenied";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   ROLE_ADMIN,
   ROLE_ORG_ADMIN,
@@ -100,6 +104,7 @@ const OrganisationUpdate: NextPageWithLayout<{
   const [step, setStep] = useState(1);
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
+  const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
 
   const isUserAdminOfCurrentOrg =
     userProfile?.adminsOf?.find((x) => x.id == id) != null;
@@ -147,6 +152,7 @@ const OrganisationUpdate: NextPageWithLayout<{
       setIsLoading(true);
 
       try {
+        debugger;
         // update api
         await patchOrganisation(model);
 
@@ -195,7 +201,7 @@ const OrganisationUpdate: NextPageWithLayout<{
     [OrganizationRequestBase, onSubmit],
   );
 
-  if (error) return <AccessDenied />;
+  if (error) return <Unauthorized />;
 
   return (
     <>
@@ -209,25 +215,27 @@ const OrganisationUpdate: NextPageWithLayout<{
         {isLoading && <Loading />}
 
         {/* BREADCRUMB */}
-        <div className="flex flex-row text-xs text-white">
-          <Link className="font-bold hover:text-gray" href={"/organisations"}>
-            Organisations
-          </Link>
+        {activeRoleView !== RoleView.User && (
+          <div className="flex flex-row text-xs text-white">
+            <Link className="font-bold hover:text-gray" href={"/organisations"}>
+              Organisations
+            </Link>
 
-          <div className="mx-2">/</div>
+            <div className="mx-2">/</div>
 
-          <Link
-            className="font-bold hover:text-gray"
-            href={`/organisations/${id}`}
-          >
-            {organisation?.name}
-          </Link>
+            <Link
+              className="font-bold hover:text-gray"
+              href={`/organisations/${id}`}
+            >
+              {organisation?.name}
+            </Link>
 
-          <div className="mx-2">/</div>
-          <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
-            Edit
+            <div className="mx-2">/</div>
+            <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
+              Edit
+            </div>
           </div>
-        </div>
+        )}
 
         {/* LOGO/TITLE */}
         <LogoTitle logoUrl={organisation?.logoURL} title={organisation?.name} />
