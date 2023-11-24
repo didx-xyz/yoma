@@ -1,4 +1,5 @@
 using Yoma.Core.Domain.Entity;
+using Yoma.Core.Domain.Lookups.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Models
 {
@@ -83,5 +84,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
         public DateTimeOffset DateModified { get; set; }
 
         public List<MyOpportunityVerification>? Verifications { get; set; }
+
+        public List<Skill>? Skills { get; set; }
     }
 }

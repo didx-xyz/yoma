@@ -47,7 +47,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 DateYoIDOnboarded = entity.DateYoIDOnboarded,
                 DateCreated = entity.DateCreated,
                 DateModified = entity.DateModified,
-                Skills = includeChildItems ?
+                Skills = entity.Skills == null ? null : includeChildItems ?
                     entity.Skills.Select(o => new Domain.Entity.Models.UserSkillInfo
                     {
                         Id = o.SkillId,
