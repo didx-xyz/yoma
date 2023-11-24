@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.Entity.Models
 {
     public class UserSkillInfo : Skill
     {
-        public List<UserSkillOrganizationInfo> Organizations { get; set; } 
+        public List<UserSkillOrganizationInfo> Organizations { get; set; }
     }
 }

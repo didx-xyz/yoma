@@ -90,7 +90,7 @@ namespace Yoma.Core.Domain.Entity.Services
             if (includeComputed)
             {
                 result.PhotoURL = GetBlobObjectURL(result.PhotoId);
-                result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId))); 
+                result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId)));
             }
 
             return result;

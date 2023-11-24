@@ -53,12 +53,12 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                         Id = o.SkillId,
                         Name = o.Skill.Name,
                         InfoURL = o.Skill.InfoURL,
-                        Organizations =  o.Organizations.Select(o => new Domain.Entity.Models.UserSkillOrganizationInfo
+                        Organizations = o.Organizations.Select(o => new Domain.Entity.Models.UserSkillOrganizationInfo
                         {
                             Id = o.Id,
                             Name = o.Organization.Name,
                             LogoId = o.Organization.LogoId
-                        }).OrderBy(o => o.Name).ToList()    
+                        }).OrderBy(o => o.Name).ToList()
 
                     }).OrderBy(o => o.Name).ToList() : null
             }).AsSplitQuery();

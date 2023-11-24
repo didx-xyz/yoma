@@ -8,6 +8,6 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public Guid? LogoId { get; set; }
 
-        public string? LogoURL { get; set; }   
+        public string? LogoURL { get; set; }
     }
 }
