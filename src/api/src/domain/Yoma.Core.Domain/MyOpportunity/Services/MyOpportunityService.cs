@@ -487,9 +487,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     item.YomaReward = yomaReward;
                     item.DateCompleted = DateTimeOffset.Now;
 
-                    var skillIds = opportunity.Skills?.Select(o => o.Id).ToList();
-                    if (skillIds != null && skillIds.Any())
-                        await _userService.AssignSkills(user.Id, skillIds);
+                    await _userService.AssignSkills(user, opportunity);
 
                     if (item.OpportunityCredentialIssuanceEnabled)
                     {

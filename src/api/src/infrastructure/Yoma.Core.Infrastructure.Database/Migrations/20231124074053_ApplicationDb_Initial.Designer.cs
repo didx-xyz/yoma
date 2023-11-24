@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231122050450_ApplicationDb_Initial")]
+    [Migration("20231124074053_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -377,6 +377,31 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsUnique();
 
                     b.ToTable("UserSkills", "Entity");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserSkillOrganization", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserSkillId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.HasIndex("UserSkillId", "OrganizationId")
+                        .IsUnique();
+
+                    b.ToTable("UserSkillOrganizations", "Entity");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", b =>
@@ -1419,6 +1444,25 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserSkillOrganization", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.UserSkill", "UserSkill")
+                        .WithMany("Organizations")
+                        .HasForeignKey("UserSkillId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+
+                    b.Navigation("UserSkill");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunity", b =>
                 {
                     b.HasOne("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups.MyOpportunityAction", "Action")
@@ -1717,6 +1761,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.User", b =>
                 {
                     b.Navigation("Skills");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserSkill", b =>
+                {
+                    b.Navigation("Organizations");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunity", b =>

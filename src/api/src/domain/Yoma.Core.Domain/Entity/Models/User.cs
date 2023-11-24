@@ -1,5 +1,3 @@
-using Yoma.Core.Domain.Lookups.Models;
-
 namespace Yoma.Core.Domain.Entity.Models
 {
     public class User
@@ -52,6 +50,6 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public DateTimeOffset DateModified { get; set; }
 
-        public List<Skill>? Skills { get; set; }
+        public List<UserSkillInfo>? Skills { get; set; }
     }
 }

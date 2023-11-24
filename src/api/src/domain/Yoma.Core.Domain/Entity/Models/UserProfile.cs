@@ -1,5 +1,3 @@
-using Yoma.Core.Domain.Lookups.Models;
-
 namespace Yoma.Core.Domain.Entity.Models
 {
     public class UserProfile
@@ -36,7 +34,7 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public DateTimeOffset? DateYoIDOnboarded { get; set; }
 
-        public List<Skill>? Skills { get; set; }
+        public List<UserSkillInfo>? Skills { get; set; }
 
         public List<OrganizationInfo> AdminsOf { get; set; }
 

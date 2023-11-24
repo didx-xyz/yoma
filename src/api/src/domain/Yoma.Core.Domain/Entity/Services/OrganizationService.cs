@@ -567,6 +567,7 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
+        //TODO: Ensure file name remains the same; utilize organization id
         public async Task<Organization> UpdateLogo(Guid id, IFormFile? file, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, true, true, ensureOrganizationAuthorization);

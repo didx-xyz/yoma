@@ -22,5 +22,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 
         [Required]
         public DateTimeOffset DateCreated { get; set; }
+
+        public ICollection<UserSkillOrganization> Organizations { get; set; }
     }
 }

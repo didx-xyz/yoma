@@ -236,7 +236,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             var diffs = request.Roles.Except(existingRoles).ToList();
             if (diffs.Any())
                 throw new DataInconsistencyException(
-                    $"Role mismatched detected for tenant with id '{tenant.Wallet_id}'. Updating of tenant are not supported");
+                    $"Role mismatched detected for tenant with label {tenant.Wallet_label} and id '{tenant.Wallet_id}'. Updating of tenant are not supported");
 
             return tenant.Wallet_id;
         }

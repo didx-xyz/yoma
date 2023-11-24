@@ -31,6 +31,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly UserSearchFilterValidator _userSearchFilterValidator;
         private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
         private readonly IRepository<UserSkill> _userSkillRepository;
+        private readonly IRepository<UserSkillOrganization> _userSkillOrganizationRepository;
         #endregion
 
         #region Constructor
@@ -46,7 +47,8 @@ namespace Yoma.Core.Domain.Entity.Services
             UserRequestValidator userValidator,
             UserSearchFilterValidator userSearchFilterValidator,
             IRepositoryValueContainsWithNavigation<User> userRepository,
-            IRepository<UserSkill> userSkillRepository)
+            IRepository<UserSkill> userSkillRepository,
+            IRepository<UserSkillOrganization> userSkillOrganizationRepository)
         {
             _appSettings = appSettings.Value;
             _identityProviderClient = identityProviderClientFactory.CreateClient();
@@ -60,6 +62,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _userSearchFilterValidator = userSearchFilterValidator;
             _userRepository = userRepository;
             _userSkillRepository = userSkillRepository;
+            _userSkillOrganizationRepository = userSkillOrganizationRepository;
         }
         #endregion
 
@@ -84,7 +87,11 @@ namespace Yoma.Core.Domain.Entity.Services
             var result = _userRepository.Query(includeChildItems).SingleOrDefault(o => o.Email == email);
             if (result == null) return null;
 
-            if (includeComputed) result.PhotoURL = GetBlobObjectURL(result.PhotoId);
+            if (includeComputed)
+            {
+                result.PhotoURL = GetBlobObjectURL(result.PhotoId);
+                result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId))); 
+            }
 
             return result;
         }
@@ -108,7 +115,11 @@ namespace Yoma.Core.Domain.Entity.Services
             var result = _userRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
             if (result == null) return null;
 
-            if (includeComputed) result.PhotoURL = GetBlobObjectURL(result.PhotoId);
+            if (includeComputed)
+            {
+                result.PhotoURL = GetBlobObjectURL(result.PhotoId);
+                result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId)));
+            }
 
             return result;
         }
@@ -121,7 +132,11 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var results = _userRepository.Contains(_userRepository.Query(), value).ToList();
 
-            if (includeComputed) results.ForEach(o => o.PhotoURL = GetBlobObjectURL(o.PhotoId));
+            if (includeComputed)
+            {
+                results.ForEach(o => o.PhotoURL = GetBlobObjectURL(o.PhotoId));
+                results.ForEach(o => o.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId))));
+            }
 
             return results;
         }
@@ -195,6 +210,7 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
+        //TODO: Ensure file name remains the same; utilize user id
         public async Task<User> UpsertPhoto(string? email, IFormFile? file)
         {
             var result = GetByEmail(email, true, false);
@@ -235,33 +251,37 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
-        public async Task AssignSkills(Guid id, List<Guid> skillIds)
+        public async Task AssignSkills(User user, Opportunity.Models.Opportunity opportunity)
         {
-            var user = GetById(id, false, false);
+            if (user == null)
+                throw new ArgumentNullException(nameof(user));
 
-            if (skillIds == null || !skillIds.Any())
-                throw new ArgumentNullException(nameof(skillIds));
+            if (opportunity == null)
+                throw new ArgumentNullException(nameof(opportunity));
 
-            skillIds = skillIds.Distinct().ToList();
-
-            var results = new List<Domain.Lookups.Models.Skill>();
+            var skillIds = opportunity.Skills?.Select(o => o.Id).ToList();
+            if (skillIds == null || !skillIds.Any()) return;
 
             using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
             foreach (var skillId in skillIds)
             {
                 var skill = _skillService.GetById(skillId);
-                results.Add(skill);
 
                 var item = _userSkillRepository.Query().SingleOrDefault(o => o.UserId == user.Id && o.SkillId == skill.Id);
-                if (item != null) continue;
+                var itemOrganization = item != null ?
+                    _userSkillOrganizationRepository.Query().SingleOrDefault(o => o.UserSkillId == item.Id && o.OrganizationId == opportunity.OrganizationId) : null;
 
-                item = new UserSkill
+                if (item == null)
                 {
-                    UserId = user.Id,
-                    SkillId = skill.Id
-                };
+                    item = new UserSkill { UserId = user.Id, SkillId = skill.Id };
+                    await _userSkillRepository.Create(item);
+                }
 
-                await _userSkillRepository.Create(item);
+                if (itemOrganization == null)
+                {
+                    itemOrganization = new UserSkillOrganization { UserSkillId = item.Id, OrganizationId = opportunity.OrganizationId };
+                    await _userSkillOrganizationRepository.Create(itemOrganization);
+                }
             }
 
             scope.Complete();
