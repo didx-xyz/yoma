@@ -12,9 +12,9 @@ import { toBase64, shimmer } from "~/lib/image";
 import iconZlto from "public/images/icon-zlto.svg";
 import iconCheckmark from "public/images/icon-checkmark.png";
 import iconTools from "public/images/icon-tools.png";
-import iconMap from "public/images/icon-map.png";
-import iconSaved from "public/images/icon-saved.png";
-import iconHourglass from "public/images/icon-hourglass.png";
+import iconCredential from "public/images/icon-credential.png";
+import iconSmiley from "public/images/icon-smiley.png";
+import iconShare from "public/images/icon-share.png";
 import type { TabItem } from "~/api/models/common";
 
 export type TabProps = ({
@@ -37,11 +37,11 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
   useEffect(() => {
     setTabItems([
       {
-        title: "My Passport",
-        description: "My verified opportunities",
-        url: "/yoid/passport",
+        title: "Opportunities",
+        description: "Completed, pending & saved",
+        url: "/yoid/opportunities/completed",
         badgeCount: null,
-        selected: router.asPath === "/yoid/passport",
+        selected: router.asPath === "/yoid/opportunities/completed",
         icon: iconCheckmark,
       },
       {
@@ -53,28 +53,28 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         icon: iconTools,
       },
       {
-        title: "Travel History",
-        description: "Track my journey through Yoma so far",
-        url: "/yoid/history",
+        title: "Wallet",
+        description: "Digital credentials",
+        url: "/yoid/credentials",
         badgeCount: null,
-        selected: router.asPath === "/yoid/history",
-        icon: iconMap,
+        selected: router.asPath === "/yoid/credentials",
+        icon: iconCredential,
       },
       {
-        title: "Saved",
-        description: "My saved learning and task opportunities",
-        url: "/yoid/saved",
+        title: "Personal Info",
+        description: "My personal data",
+        url: "/yoid/settings",
         badgeCount: null,
-        selected: router.asPath === "/yoid/saved",
-        icon: iconSaved,
+        selected: router.asPath === "/yoid/settings",
+        icon: iconSmiley,
       },
       {
-        title: "Submitted",
+        title: "Open Digital CV",
         description: "My opportunities submitted for verification",
         url: "/yoid/submitted",
         badgeCount: null,
         selected: router.asPath === "/yoid/submitted",
-        icon: iconHourglass,
+        icon: iconShare,
       },
     ]);
   }, [router.asPath, setTabItems]);

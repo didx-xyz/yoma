@@ -179,7 +179,7 @@ export const UserMenu: React.FC = () => {
           <div className="divider m-0" />
           <li className="md:max-w-[300px]">
             <Link
-              href="/yoid/passport"
+              href="/yoid/opportunities/completed"
               className="text-gray-dark"
               onClick={() => setUserMenuVisible(false)}
             >

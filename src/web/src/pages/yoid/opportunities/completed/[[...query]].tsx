@@ -2,10 +2,10 @@ import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import router from "next/router";
-import { useCallback, useState, type ReactElement } from "react";
+import { useCallback, useState, type ReactElement, useMemo } from "react";
 import { toast } from "react-toastify";
 import { authOptions } from "~/server/auth";
-import { type NextPageWithLayout } from "../../_app";
+import { type NextPageWithLayout } from "../../../_app";
 import { DATETIME_FORMAT_SYSTEM, PAGE_SIZE } from "~/lib/constants";
 import Image from "next/image";
 import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
@@ -25,8 +25,15 @@ import Moment from "react-moment";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import ReactModal from "react-modal";
 import { ApiErrors } from "~/components/Status/ApiErrors";
-import { LoadingInline } from "~/components/Status/LoadingInline";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { searchMyOpportunities } from "~/api/services/myOpportunities";
+import {
+  Action,
+  MyOpportunityInfo,
+  VerificationStatus,
+} from "~/api/models/myOpportunity";
+import YoIDTabbedOpportunities from "~/components/Layout/YoIDTabbedOpportunities";
+import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListItem";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -66,6 +73,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         context,
       ),
   });
+  await queryClient.prefetchQuery({
+    queryKey: ["MyOpportunities_Completed"],
+    queryFn: () =>
+      searchMyOpportunities({
+        action: Action.Verification,
+        verificationStatuses: [VerificationStatus.Completed],
+        pageNumber: 1,
+        pageSize: 1000,
+      }),
+  });
 
   return {
     props: {
@@ -79,7 +96,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-const MyPassport: NextPageWithLayout<{
+const MyOpportunities: NextPageWithLayout<{
   id: string;
   query?: string;
   schemaType?: string;
@@ -108,12 +125,30 @@ const MyPassport: NextPageWithLayout<{
     enabled: !error,
   });
 
+  const {
+    data: dataMyOpportunities,
+    error: dataMyOpportunitiesError,
+    isLoading: dataMyOpportunitiesIsLoading,
+  } = useQuery({
+    queryKey: [`MyOpportunities_Completed`],
+    queryFn: () =>
+      searchMyOpportunities({
+        action: Action.Verification,
+        verificationStatuses: [VerificationStatus.Completed],
+        pageNumber: 1,
+        pageSize: 1000,
+      }),
+    enabled: !error,
+  });
+
+  // memos for each verification status
+
   // 🔔 pager change event
   const handlePagerChange = useCallback(
     (value: number) => {
       // redirect
       void router.push({
-        pathname: `/yoid/passport`,
+        pathname: `/yoid/opportunities/completed`,
         query: { query: query, opportunity: schemaType, page: value },
       });
 
@@ -139,6 +174,132 @@ const MyPassport: NextPageWithLayout<{
   );
 
   if (error) return <Unauthorized />;
+
+  // const renderOpportunity = (key: string, item: MyOpportunityInfo) => {
+  //   return (
+  //     <div
+  //       key={key}
+  //       className="flex h-[180px] w-[280px] cursor-pointer flex-col rounded-lg bg-white p-2"
+  //     >
+  //       <div className="flex h-full flex-row">
+  //         <div className="flex flex-grow flex-row items-start justify-start">
+  //           <div className="flex flex-col items-start justify-start gap-2">
+  //             <p className="max-h-[35px] overflow-hidden text-ellipsis text-sm font-semibold text-gray-dark">
+  //               {item.organizationName}
+  //             </p>
+  //             <p className="max-h-[80px] overflow-hidden text-ellipsis text-sm font-bold">
+  //               {item.opportunityTitle}
+  //             </p>
+  //           </div>
+  //         </div>
+  //         <div className="flex flex-row items-start">
+  //           <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-full shadow">
+  //             <Image
+  //               src={item.organizationLogoURL!}
+  //               alt={`${item.organizationName} Logo`}
+  //               width={60}
+  //               height={60}
+  //               sizes="(max-width: 60px) 30vw, 50vw"
+  //               priority={true}
+  //               placeholder="blur"
+  //               blurDataURL={`data:image/svg+xml;base64,${toBase64(
+  //                 shimmer(44, 44),
+  //               )}`}
+  //               style={{
+  //                 width: "100%",
+  //                 height: "100%",
+  //                 maxWidth: "60px",
+  //                 maxHeight: "60px",
+  //               }}
+  //             />
+  //           </div>
+  //         </div>
+  //       </div>
+  //       <div className="flex flex-row items-center justify-center">
+  //         <div className="flex flex-grow text-xs tracking-widest">
+  //           <Moment format={DATETIME_FORMAT_SYSTEM}>
+  //             {new Date(item.dateCompleted!)}
+  //           </Moment>
+  //         </div>
+  //         <div className="badge h-6 rounded-md bg-green-light text-xs font-bold text-green">
+  //           <IoMdCheckmark className="mr-1 h-4 w-4" />
+  //           Verified
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // };
+
+  // const renderOpportunities = (
+  //   key: string,
+  //   title: string,
+  //   items: MyOpportunityInfo[],
+  //   isLoading: boolean,
+  //   error: any,
+  // ) => {
+  //   return (
+  //     <div key={key}>
+  //       <h5 className="uppercase tracking-wider text-gray-dark">{title}</h5>
+  //       {isLoading && (
+  //         <div className="flex w-40 flex-col gap-3">
+  //           <div className="flex items-center gap-3">
+  //             <div className="skeleton h-12 w-12 shrink-0 rounded-full bg-purple-soft"></div>
+  //             <div className="flex flex-col gap-3">
+  //               <div className="skeleton h-3 w-16 bg-purple-soft"></div>
+  //               <div className="skeleton h-3 w-24 bg-purple-soft"></div>
+  //             </div>
+  //           </div>
+  //           <div className="skeleton h-24 w-full bg-purple-soft"></div>
+  //         </div>
+  //       )}
+  //       {error && (
+  //         <div className="flex items-center justify-center">
+  //           <ApiErrors error={error} />
+  //         </div>
+  //       )}
+  //       {!isLoading && items && items?.length > 0 && (
+  //         // <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+  //         //   {items.map((item, index) =>
+  //         //     renderOpportunity(`${key}_${index}`, item),
+  //         //   )}
+  //         // </div>
+  //         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+  //           {items
+  //             .slice(0, 4)
+  //             .map((item, index) => renderOpportunity(`${key}_${index}`, item))}
+
+  //           {items.length > 4 && (
+  //             <div className="collapse bg-base-200">
+  //               <input type="checkbox" id="collapseCheckbox" className="peer" />
+  //               <label
+  //                 htmlFor="collapseCheckbox"
+  //                 //className="collapse-title bg-primary text-primary-content peer-checked:bg-secondary peer-checked:text-secondary-content"
+  //                 className="text-center"
+  //               >
+  //                 Click me to show/hide content
+  //               </label>
+  //               <div className="collapse-content peer-checked:block">
+  //                 {items
+  //                   .slice(4)
+  //                   .map((item, index) =>
+  //                     renderOpportunity(`${key}_${index + 4}`, item),
+  //                   )}
+  //               </div>
+  //             </div>
+  //           )}
+  //         </div>
+  //       )}
+  //       {!isLoading && items && items?.length == 0 && (
+  //         <div className="flex items-center justify-center">
+  //           <NoRowsMessage
+  //             title={"No results found"}
+  //             description={"Please try refining your search query."}
+  //           />
+  //         </div>
+  //       )}
+  //     </div>
+  //   );
+  // };
 
   return (
     <>
@@ -276,100 +437,62 @@ const MyPassport: NextPageWithLayout<{
         </div>
       </ReactModal>
 
-      <div className="flex items-center justify-center">
-        <div className="mt-10">
-          <>
-            {/* ERRROR */}
-            {dataError && <ApiErrors error={dataError} />}
+      <div className="flex flex-col gap-4">
+        <h6 className="font-bold tracking-wider">
+          Opportunities for approval ⌛
+        </h6>
 
-            {/* LOADING */}
-            {dataIsLoading && <LoadingInline />}
+        {/* ERRROR */}
+        {dataError && <ApiErrors error={dataError} />}
 
-            {/* NO ROWS */}
-            {data && data.totalCount === 0 && (
-              <NoRowsMessage
-                title={"No results found"}
-                description={"Please try refining your search query."}
-              />
-            )}
-          </>
-        </div>
-
-        {/* GRID */}
-        {data && data.items?.length > 0 && (
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
-            {data.items.map((item, index) => (
-              <div
-                key={index}
-                className="flex h-[180px] w-[280px] cursor-pointer flex-col rounded-lg bg-white p-2"
-                onClick={() => handleOnClickCredential(item)}
-              >
-                <div className="flex h-full flex-row">
-                  <div className="flex flex-grow flex-row items-start justify-start">
-                    <div className="flex flex-col items-start justify-start gap-2">
-                      <p className="max-h-[35px] overflow-hidden text-ellipsis text-sm font-semibold text-gray-dark">
-                        {item.issuer}
-                      </p>
-                      <p className="max-h-[80px] overflow-hidden text-ellipsis text-sm font-bold">
-                        {item.title}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-row items-start">
-                    <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-full shadow">
-                      <Image
-                        src={item.issuerLogoURL}
-                        alt={`${item.issuer} Logo`}
-                        width={60}
-                        height={60}
-                        sizes="(max-width: 60px) 30vw, 50vw"
-                        priority={true}
-                        placeholder="blur"
-                        blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                          shimmer(44, 44),
-                        )}`}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          maxWidth: "60px",
-                          maxHeight: "60px",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-row items-center justify-center">
-                  <div className="flex flex-grow text-xs tracking-widest">
-                    <Moment format={DATETIME_FORMAT_SYSTEM}>
-                      {new Date(item.dateIssued!)}
-                    </Moment>
-                  </div>
-                  <div className="badge h-6 rounded-md bg-green-light text-xs font-bold text-green">
-                    <IoMdCheckmark className="mr-1 h-4 w-4" />
-                    Verified
-                  </div>
-                </div>
+        {/* LOADING */}
+        {/* {dataIsLoading && <LoadingInline />} */}
+        {dataIsLoading && (
+          <div className="flex w-52 flex-col gap-4">
+            <div className="flex items-center gap-4">
+              <div className="skeleton h-16 w-16 shrink-0 rounded-full bg-purple"></div>
+              <div className="flex flex-col gap-4">
+                <div className="skeleton h-4 w-20 bg-purple"></div>
+                <div className="skeleton h-4 w-28 bg-purple"></div>
               </div>
-            ))}
+            </div>
+            <div className="skeleton h-32 w-full bg-purple"></div>
           </div>
         )}
-        <div className="mt-2 grid place-items-center justify-center">
-          {/* PAGINATION */}
-          <PaginationButtons
-            currentPage={page ? parseInt(page) : 1}
-            totalItems={data?.totalCount ?? 0}
-            pageSize={PAGE_SIZE}
-            onClick={handlePagerChange}
-            showPages={false}
+        {/* NO ROWS */}
+        {data && data.totalCount === 0 && (
+          <NoRowsMessage
+            title={"No results found"}
+            description={"Please try refining your search query."}
           />
-        </div>
+        )}
+        {/* GRID */}
+        {dataMyOpportunities && dataMyOpportunities.items?.length > 0 && (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4">
+              {dataMyOpportunities.items.map((item, index) => (
+                <OpportunityListItem key={index} data={item} />
+              ))}
+            </div>
+            <div className="mt-2 grid place-items-center justify-center">
+              {/* PAGINATION */}
+              <PaginationButtons
+                currentPage={page ? parseInt(page) : 1}
+                totalItems={data?.totalCount ?? 0}
+                pageSize={PAGE_SIZE}
+                onClick={handlePagerChange}
+                showPages={false}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
 };
 
-MyPassport.getLayout = function getLayout(page: ReactElement) {
-  return <YoIDTabbedLayout>{page}</YoIDTabbedLayout>;
+MyOpportunities.getLayout = function getLayout(page: ReactElement) {
+  return <YoIDTabbedOpportunities>{page}</YoIDTabbedOpportunities>;
 };
 
-export default MyPassport;
+export default MyOpportunities;
