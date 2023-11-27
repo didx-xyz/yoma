@@ -18,9 +18,9 @@ export const PaginationInfoComponent: React.FC<InputProps> = ({
 }) => {
   // 🧮 calculated fields
   const totalPages = useMemo(() => {
-    let totalItemCount = totalItems ?? 0;
+    const totalItemCount = totalItems ?? 0;
     if (totalItemCount == 0) return 0;
-    let totalPages = totalItemCount / pageSize;
+    const totalPages = totalItemCount / pageSize;
     if (totalPages < 1) return 1;
     else return Math.ceil(totalPages);
   }, [totalItems, pageSize]);
@@ -28,7 +28,7 @@ export const PaginationInfoComponent: React.FC<InputProps> = ({
   const startRow = useMemo(() => {
     if (!currentPage) return 1;
 
-    var numPage = parseInt(currentPage.toString());
+    const numPage = parseInt(currentPage.toString());
     return (numPage - 1) * pageSize + 1;
   }, [currentPage, pageSize]);
 

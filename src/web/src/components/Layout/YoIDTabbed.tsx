@@ -171,15 +171,12 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
           </div>
 
           <div className="flex flex-col gap-5 md:flex-row">
-            {/* MENU NAVIGATION: MEDIUM DISPLAY */}
+            {/* TABBED NAVIGATION: MEDIUM DISPLAY */}
             <div className="hidden md:block">
               <ul className="menu w-64 gap-2 rounded-lg bg-gray-light">
                 {/* TABS */}
                 {tabItems.map((tabItem, index) => (
-                  <li
-                    key={`MenuNavigation_${index}`}
-                    // className="md:rounded-bl-none md:rounded-br-lg md:rounded-tl-none md:rounded-tr-lg"
-                  >
+                  <li key={`MenuNavigation_${index}`}>
                     <Link
                       href={tabItem.url}
                       key={index}
@@ -244,7 +241,9 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
               </div>
 
               {/* CHILDREN */}
-              <div className="flex items-center justify-center">{children}</div>
+              <div className="flex flex-grow items-center justify-center">
+                {children}
+              </div>
             </div>
           </div>
         </div>

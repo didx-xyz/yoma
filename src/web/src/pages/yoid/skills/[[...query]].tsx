@@ -1,32 +1,20 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
-import router from "next/router";
-import { useCallback, useState, type ReactElement } from "react";
-import { authOptions } from "~/server/auth";
+import { useState, type ReactElement } from "react";
+import { User, authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
-import { DATETIME_FORMAT_SYSTEM, PAGE_SIZE } from "~/lib/constants";
 import Image from "next/image";
-import {
-  getCredentialById,
-  searchCredentials,
-} from "~/api/services/credentials";
+import { searchCredentials } from "~/api/services/credentials";
 import { type ParsedUrlQuery } from "querystring";
-import type {
-  SSICredentialInfo,
-  SSIWalletSearchResults,
-} from "~/api/models/credential";
+import type { SSICredentialInfo } from "~/api/models/credential";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { PaginationButtons } from "~/components/PaginationButtons";
 import { toBase64, shimmer } from "~/lib/image";
-import Moment from "react-moment";
-import { IoMdCheckmark, IoMdClose } from "react-icons/io";
-import ReactModal from "react-modal";
-import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import YoIDTabbed from "~/components/Layout/YoIDTabbed";
-import { toast } from "react-toastify";
+import { userProfileAtom } from "~/lib/store";
+import { useAtomValue } from "jotai";
+import Link from "next/link";
 
 interface IParams extends ParsedUrlQuery {
   query?: string;
@@ -78,64 +66,38 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 }
 
 const MyCredentials: NextPageWithLayout<{
+  user: User;
   query?: string;
   page?: string;
   error: string;
-}> = ({ query, page, error }) => {
+}> = ({ /*user, query, page,*/ error }) => {
   const [credentialDialogVisible, setCredentialDialogVisible] = useState(false);
   const [activeCredential, setActiveCredential] =
     useState<SSICredentialInfo | null>(null);
 
-  // 👇 use prefetched queries from server
-  const {
-    data: data,
-    error: dataError,
-    isLoading: dataIsLoading,
-  } = useQuery<SSIWalletSearchResults>({
-    queryKey: [`Credentials_${query?.toString()}_${page?.toString()}`],
-    queryFn: () =>
-      searchCredentials({
-        //TODO: PAGING NOT SUPPORTED BY API (ARIES CLOUD)
-        pageNumber: null, //page ? parseInt(page.toString()) : 1,
-        pageSize: null, //PAGE_SIZE,
-        schemaType: null, //schemaType?.toString() ?? null,
-      }),
-    enabled: !error,
-  });
+  const userProfile = useAtomValue(userProfileAtom);
 
-  // 🔔 pager change event
-  const handlePagerChange = useCallback(
-    (value: number) => {
-      // redirect
-      void router.push({
-        pathname: `/yoid/credentials`,
-        query: { query: query, page: value },
-      });
-    },
-    [query],
-  );
-
-  const handleOnClickCredential = useCallback(
-    (item: SSICredentialInfo) => {
-      getCredentialById(item.id)
-        .then((res) => {
-          setActiveCredential(res);
-          setCredentialDialogVisible(true);
-        })
-        .catch((err) => {
-          toast.error("Unable to retrieve your credential");
-          console.error(err);
-        });
-    },
-    [setActiveCredential, setCredentialDialogVisible],
-  );
+  // const handleOnClickCredential = useCallback(
+  //   (item: SSICredentialInfo) => {
+  //     getCredentialById(item.id)
+  //       .then((res) => {
+  //         setActiveCredential(res);
+  //         setCredentialDialogVisible(true);
+  //       })
+  //       .catch((err) => {
+  //         toast.error("Unable to retrieve your credential");
+  //         console.error(err);
+  //       });
+  //   },
+  //   [setActiveCredential, setCredentialDialogVisible],
+  // );
 
   if (error) return <Unauthorized />;
 
   return (
     <>
       {/* CREDENTIAL DIALOG */}
-      <ReactModal
+      {/* <ReactModal
         isOpen={credentialDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
@@ -187,7 +149,7 @@ const MyCredentials: NextPageWithLayout<{
                 <div className="overflow-y-scrollx flex flex-grow flex-col gap-4 overflow-x-hidden p-4 pt-0 md:max-h-[480px] md:min-h-[350px]">
                   <h4 className="text-center">{activeCredential?.title}</h4>
 
-                  {/* CREDENTIAL DETAILS */}
+                   * CREDENTIAL DETAILS
                   <div className="rounded border-dotted bg-gray-light p-4 shadow">
                     <ul className="divide-gray-200 divide-y">
                       <li className="py-4">
@@ -234,7 +196,7 @@ const MyCredentials: NextPageWithLayout<{
                           </p>
                         </div>
                       </li>
-                      {/* ATTRIBUTES */}
+                       * ATTRIBUTES
                       {activeCredential?.attributes?.map((attr, index) => (
                         <li key={index} className="py-4">
                           <div className="flex justify-between text-sm">
@@ -266,21 +228,23 @@ const MyCredentials: NextPageWithLayout<{
             )}
           </div>
         </div>
-      </ReactModal>
+      </ReactModal> */}
 
       <div className="flex flex-col gap-4">
         {/* ERRROR */}
-        {dataError && <ApiErrors error={dataError} />}
+        {/* {dataError && <ApiErrors error={dataError} />} */}
 
         {/* LOADING */}
-        {dataIsLoading && (
+        {/* {dataIsLoading && (
           <div className="flex justify-center rounded-lg bg-white p-8">
             <LoadingSkeleton />
           </div>
-        )}
+        )} */}
 
         {/* NO ROWS */}
-        {data && (data.totalCount === null || data.totalCount === 0) && (
+        {(userProfile?.skills === null ||
+          userProfile?.skills === undefined ||
+          userProfile?.skills.length === 0) && (
           <div className="flex justify-center rounded-lg bg-white p-8">
             <NoRowsMessage
               title={"No results found"}
@@ -291,79 +255,90 @@ const MyCredentials: NextPageWithLayout<{
           </div>
         )}
 
-        {data && data.items?.length > 0 && (
-          <div className="flex flex-col items-center gap-4">
-            {/* GRID */}
-            {data && data.items?.length > 0 && (
+        {userProfile?.skills !== null &&
+          userProfile?.skills !== undefined &&
+          userProfile?.skills.length > 0 && (
+            <div className="flex flex-col items-center gap-4">
+              {/* GRID */}
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {data.items.map((item, index) => (
+                {userProfile?.skills.map((item, index) => (
                   <div
-                    key={index}
+                    key={`${item.id}_${index}`}
                     className="flex h-[180px] w-[280px] cursor-pointer flex-col rounded-lg bg-white p-2"
-                    onClick={() => handleOnClickCredential(item)}
+                    // onClick={() => handleOnClickCredential(item)}
                   >
-                    <div className="flex h-full flex-row">
+                    <div className="flex h-full flex-col gap-2">
                       <div className="flex flex-grow flex-row items-start justify-start">
                         <div className="flex flex-col items-start justify-start gap-2">
-                          <p className="max-h-[35px] overflow-hidden text-ellipsis text-sm font-semibold text-gray-dark">
-                            {item.issuer}
+                          <p className="max-h-[45px] overflow-hidden text-ellipsis text-base font-semibold text-gray-dark">
+                            {item.name}
                           </p>
-                          <p className="max-h-[80px] overflow-hidden text-ellipsis text-sm font-bold">
-                            {item.title}
-                          </p>
+                          {/* <p className="max-h-[80px] overflow-hidden text-ellipsis text-sm font-bold">
+                            Updated: ?
+                          </p> */}
+                          {item.infoURL && (
+                            <Link
+                              href={item.infoURL}
+                              className="max-h-[80px] overflow-hidden text-ellipsis text-sm font-bold"
+                            >
+                              {item.infoURL}
+                            </Link>
+                          )}
                         </div>
                       </div>
+
+                      <div className="flex flex-row text-gray-dark">
+                        Across {item.organizations.length} partner
+                        {item.organizations.length > 1 ? "s" : ""}
+                      </div>
+
                       <div className="flex flex-row items-start">
-                        <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-full shadow">
-                          <Image
-                            src={item.issuerLogoURL}
-                            alt={`${item.issuer} Logo`}
-                            width={60}
-                            height={60}
-                            sizes="(max-width: 60px) 30vw, 50vw"
-                            priority={true}
-                            placeholder="blur"
-                            blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                              shimmer(44, 44),
-                            )}`}
+                        {item.organizations.map((org, index) => (
+                          <div
+                            className="cursor-pointerx relative -mr-4 overflow-hidden rounded-full shadow"
                             style={{
-                              width: "100%",
-                              height: "100%",
-                              maxWidth: "60px",
-                              maxHeight: "60px",
+                              zIndex: item.organizations.length - index,
                             }}
-                          />
+                            key={`${item.id}_${index}`}
+                          >
+                            <Image
+                              src={org.logoURL!}
+                              alt={`${org.name} Logo`}
+                              width={40}
+                              height={40}
+                              sizes="(max-width: 40px) 30vw, 50vw"
+                              priority={true}
+                              placeholder="blur"
+                              blurDataURL={`data:image/svg+xml;base64,${toBase64(
+                                shimmer(40, 40),
+                              )}`}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                maxWidth: "40px",
+                                maxHeight: "40px",
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* <div className="flex flex-row items-center justify-center">
+                        <div className="flex flex-grow text-xs tracking-widest">
+                          <Moment format={DATETIME_FORMAT_SYSTEM}>
+                            {new Date(item.dateIssued!)}
+                          </Moment>
                         </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-row items-center justify-center">
-                      <div className="flex flex-grow text-xs tracking-widest">
-                        <Moment format={DATETIME_FORMAT_SYSTEM}>
-                          {new Date(item.dateIssued!)}
-                        </Moment>
-                      </div>
-                      <div className="badge h-6 rounded-md bg-green-light text-xs font-bold text-green">
-                        <IoMdCheckmark className="mr-1 h-4 w-4" />
-                        Verified
-                      </div>
-                    </div>
+                        <div className="badge h-6 rounded-md bg-green-light text-xs font-bold text-green">
+                          <IoMdCheckmark className="mr-1 h-4 w-4" />
+                          Verified
+                        </div>
+                      </div> */}
                   </div>
                 ))}
               </div>
-            )}
-
-            <div className="mt-2 grid place-items-center justify-center">
-              {/* PAGINATION BUTTONS */}
-              <PaginationButtons
-                currentPage={page ? parseInt(page) : 1}
-                totalItems={data?.totalCount ?? 0}
-                pageSize={PAGE_SIZE}
-                onClick={handlePagerChange}
-                showPages={false}
-              />
             </div>
-          </div>
-        )}
+          )}
       </div>
     </>
   );

@@ -1,20 +1,10 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, type ReactElement, useState } from "react";
-import MainLayout from "./Main";
-import { PageBackground } from "../PageBackground";
-import iconCards from "public/images/cards.png";
 import Image from "next/image";
 import { userProfileAtom } from "~/lib/store";
 import { useAtom } from "jotai";
-import { IoMdArrowForward, IoMdPerson } from "react-icons/io";
 import { toBase64, shimmer } from "~/lib/image";
-import iconZlto from "public/images/icon-zlto.svg";
-import iconCheckmark from "public/images/icon-checkmark.png";
-import iconTools from "public/images/icon-tools.png";
-import iconCredential from "public/images/icon-credential.png";
-import iconSmiley from "public/images/icon-smiley.png";
-import iconShare from "public/images/icon-share.png";
 import type { TabItem } from "~/api/models/common";
 import YoIDTabbedLayout from "./YoIDTabbed";
 
@@ -28,11 +18,6 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
   const router = useRouter();
   const [userProfile] = useAtom(userProfileAtom);
   const [tabItems, setTabItems] = useState<TabItem[]>([]);
-
-  // 🔔 dropdown navigation change event
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    router.push(e.target.value);
-  };
 
   // set the tab items based on the current route
   useEffect(() => {
@@ -79,10 +64,9 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
             <ul className="-mb-px flex flex-wrap">
               {/* TABS */}
               {tabItems.map((tabItem, index) => (
-                <li className="me-2">
+                <li className="me-2" key={`TabNavigation_${index}`}>
                   <Link
                     href={tabItem.url}
-                    key={`TabNavigation_${index}`}
                     className={`inline-block rounded-t-lg border-b-2 px-4 py-2 ${
                       tabItem.selected
                         ? "active border-green"

@@ -151,7 +151,7 @@ const OpportunityDetails: NextPageWithLayout<{
     [opportunityId, queryClient],
   );
 
-  if (error) return <Unauthorized/>;
+  if (error) return <Unauthorized />;
 
   return (
     <>

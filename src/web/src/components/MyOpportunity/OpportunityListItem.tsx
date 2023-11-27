@@ -1,11 +1,7 @@
 import Image from "next/image";
-import Link from "next/link";
 import { shimmer, toBase64 } from "src/lib/image";
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
 import iconRocket from "public/images/icon-rocket.svg";
-import iconClock from "public/images/icon-clock.svg";
-import iconUser from "public/images/icon-user.svg";
-import iconZlto from "public/images/icon-zlto.svg";
 import Moment from "react-moment";
 import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
 import { useCallback } from "react";
@@ -89,8 +85,11 @@ const OpportunityListItem: React.FC<InputProps> = ({ data, onClick }) => {
         </div>
 
         <div className="flex flex-row flex-wrap gap-2">
-          {data.skills?.map((skill) => (
-            <div className="badge whitespace-nowrap rounded-md bg-green-light text-[12px] font-semibold text-green">
+          {data.skills?.map((skill, index) => (
+            <div
+              className="badge whitespace-nowrap rounded-md bg-green-light text-[12px] font-semibold text-green"
+              key={`skill_${index}`}
+            >
               {skill.name}
             </div>
           ))}

@@ -12,7 +12,7 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
-import { Action, MyOpportunityInfo } from "~/api/models/myOpportunity";
+import { Action, type MyOpportunityInfo } from "~/api/models/myOpportunity";
 import YoIDTabbedOpportunities from "~/components/Layout/YoIDTabbedOpportunities";
 import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListItem";
 import { PaginationInfoComponent } from "~/components/PaginationInfo";
@@ -37,7 +37,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const queryClient = new QueryClient();
   const { id } = context.params as IParams;
-  const { query, schemaType, page } = context.query;
+  const { query, page } = context.query;
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
@@ -93,7 +93,7 @@ const MyOpportunitiesSaved: NextPageWithLayout<{
         query: { query: query, page: value },
       });
     },
-    [query, page],
+    [query],
   );
 
   const handleOnClickOportunity = useCallback((item: MyOpportunityInfo) => {
@@ -130,7 +130,7 @@ const MyOpportunitiesSaved: NextPageWithLayout<{
         <div className="flex flex-col gap-4">
           {/* PAGINATION INFO */}
           <PaginationInfoComponent
-            currentPage={page ? parseInt(page as string) : 1}
+            currentPage={parseInt(page as string)}
             itemCount={
               dataMyOpportunities?.items ? dataMyOpportunities.items.length : 0
             }

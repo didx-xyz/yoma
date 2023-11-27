@@ -9,13 +9,12 @@ import { PAGE_SIZE } from "~/lib/constants";
 import { type ParsedUrlQuery } from "querystring";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
-
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
 import {
   Action,
-  MyOpportunityInfo,
+  type MyOpportunityInfo,
   VerificationStatus,
 } from "~/api/models/myOpportunity";
 import YoIDTabbedOpportunities from "~/components/Layout/YoIDTabbedOpportunities";
@@ -42,7 +41,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const queryClient = new QueryClient();
   const { id } = context.params as IParams;
-  const { query, schemaType, page } = context.query;
+  const { query, page } = context.query;
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
@@ -98,7 +97,7 @@ const MyOpportunitiesCompleted: NextPageWithLayout<{
         query: { query: query, page: value },
       });
     },
-    [query, page],
+    [query],
   );
 
   const handleOnClickOportunity = useCallback((item: MyOpportunityInfo) => {
@@ -133,7 +132,7 @@ const MyOpportunitiesCompleted: NextPageWithLayout<{
         <div className="flex flex-col gap-4">
           {/* PAGINATION INFO */}
           <PaginationInfoComponent
-            currentPage={page ? parseInt(page as string) : 1}
+            currentPage={parseInt(page as string)}
             itemCount={
               dataMyOpportunities?.items ? dataMyOpportunities.items.length : 0
             }
