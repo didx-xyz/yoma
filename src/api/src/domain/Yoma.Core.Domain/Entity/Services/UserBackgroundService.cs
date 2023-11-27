@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Reflection;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 
@@ -11,6 +13,7 @@ namespace Yoma.Core.Domain.Entity.Services
     {
         #region Class Variables
         private readonly ILogger<UserBackgroundService> _logger;
+        private readonly AppSettings _appSettings;
         private readonly IEnvironmentProvider _environmentProvider;
         private readonly IUserService _userService;
         private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
@@ -20,11 +23,13 @@ namespace Yoma.Core.Domain.Entity.Services
 
         #region Constructor
         public UserBackgroundService(ILogger<UserBackgroundService> logger,
+            IOptions<AppSettings> appSettings,
             IEnvironmentProvider environmentProvider,
             IUserService userService,
             IRepositoryValueContainsWithNavigation<User> userRepository)
         {
             _logger = logger;
+            _appSettings = appSettings.Value;
             _environmentProvider = environmentProvider;
             _userService = userService;
             _userRepository = userRepository;
@@ -36,15 +41,10 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
-                switch (_environmentProvider.Environment) //locally en development only
+                if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
                 {
-                    case Core.Environment.Local:
-                    case Core.Environment.Development:
-                    case Core.Environment.Staging: //TODO: Remove this when we have a proper staging environment (seeded for demo purposes)
-                        break;
-                    default:
-                        _logger.LogInformation("SSI seeding skipped for environment '{environment}'", _environmentProvider.Environment);
-                        return;
+                    _logger.LogInformation("User image seeding seeding skipped for environment '{environment}'", _environmentProvider.Environment);
+                    return;
                 }
 
                 _logger.LogInformation("Processing user image seeding");

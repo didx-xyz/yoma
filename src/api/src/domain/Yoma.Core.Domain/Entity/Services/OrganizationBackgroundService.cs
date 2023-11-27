@@ -155,15 +155,10 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
-                switch (_environmentProvider.Environment) //locally en development only
+                if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
                 {
-                    case Core.Environment.Local:
-                    case Core.Environment.Development:
-                    case Core.Environment.Staging: //TODO: Remove this when we have a proper staging environment (seeded for demo purposes)
-                        break;
-                    default:
-                        _logger.LogInformation("SSI seeding skipped for environment '{environment}'", _environmentProvider.Environment);
-                        return;
+                    _logger.LogInformation("Organization logo and document seeding skipped for environment '{environment}'", _environmentProvider.Environment);
+                    return;
                 }
 
                 _logger.LogInformation("Processing organization logo and document seeding");

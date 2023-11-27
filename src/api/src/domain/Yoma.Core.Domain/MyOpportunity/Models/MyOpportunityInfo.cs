@@ -1,3 +1,5 @@
+using Yoma.Core.Domain.Lookups.Models;
+
 namespace Yoma.Core.Domain.MyOpportunity.Models
 {
     public class MyOpportunityInfo
@@ -61,5 +63,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
         public decimal? YomaReward { get; set; }
 
         public List<MyOpportunityInfoVerification>? Verifications { get; set; }
+
+        public List<Skill>? Skills { get; set; }
     }
 }

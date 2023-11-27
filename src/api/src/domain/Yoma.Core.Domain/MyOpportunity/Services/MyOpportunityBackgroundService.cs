@@ -140,14 +140,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
             lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
-                switch (_environmentProvider.Environment) //locally en development only
+                if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
                 {
-                    case Core.Environment.Local:
-                    case Core.Environment.Development:
-                        break;
-                    default:
-                        _logger.LogInformation("Pending verification seeding skipped for environment '{environment}'", _environmentProvider.Environment);
-                        return;
+                    _logger.LogInformation("Pending verification seeding skipped for environment '{environment}'", _environmentProvider.Environment);
+                    return;
                 }
 
                 _logger.LogInformation("Processing pending verification seeding seeding");

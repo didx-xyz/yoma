@@ -34,7 +34,7 @@ namespace Yoma.Core.Infrastructure.Database
             return result;
         }
 
-        public static void ConfigureServices_InfrastructureDatabase(this IServiceCollection services, IConfiguration configuration, Domain.Core.Environment environment)
+        public static void ConfigureServices_InfrastructureDatabase(this IServiceCollection services, IConfiguration configuration)
         {
             // infrastructure
             services.AddDbContext<ApplicationDbContext>(options =>
@@ -60,6 +60,7 @@ namespace Yoma.Core.Infrastructure.Database
             services.AddScoped<IRepository<OrganizationUser>, OrganizationUserRepository>();
             services.AddScoped<IRepositoryValueContainsWithNavigation<User>, UserRepository>();
             services.AddScoped<IRepository<UserSkill>, UserSkillRepository>();
+            services.AddScoped<IRepository<UserSkillOrganization>, UserSkillOrganizationRepository>();
             #endregion Entity
 
             #region Lookups

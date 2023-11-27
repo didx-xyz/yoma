@@ -47,8 +47,20 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 DateYoIDOnboarded = entity.DateYoIDOnboarded,
                 DateCreated = entity.DateCreated,
                 DateModified = entity.DateModified,
-                Skills = includeChildItems ?
-                    entity.Skills.Select(o => new Domain.Lookups.Models.Skill { Id = o.SkillId, Name = o.Skill.Name, InfoURL = o.Skill.InfoURL }).ToList() : null
+                Skills = entity.Skills == null ? null : includeChildItems ?
+                    entity.Skills.Select(o => new Domain.Entity.Models.UserSkillInfo
+                    {
+                        Id = o.SkillId,
+                        Name = o.Skill.Name,
+                        InfoURL = o.Skill.InfoURL,
+                        Organizations = o.Organizations.Select(o => new Domain.Entity.Models.UserSkillOrganizationInfo
+                        {
+                            Id = o.Id,
+                            Name = o.Organization.Name,
+                            LogoId = o.Organization.LogoId
+                        }).OrderBy(o => o.Name).ToList()
+
+                    }).OrderBy(o => o.Name).ToList() : null
             }).AsSplitQuery();
         }
 

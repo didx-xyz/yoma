@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Collections;
 using Yoma.Core.Domain.Core.Helpers;
-using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -24,7 +23,6 @@ namespace Yoma.Core.Domain.SSI.Services
         private readonly ILogger<SSIBackgroundService> _logger;
         private readonly AppSettings _appSettings;
         private readonly ScheduleJobOptions _scheduleJobOptions;
-        private readonly IEnvironmentProvider _environmentProvider;
         private readonly IUserService _userService;
         private readonly IOrganizationService _organizationService;
         private readonly IOpportunityService _opportunityService;
@@ -41,7 +39,6 @@ namespace Yoma.Core.Domain.SSI.Services
         public SSIBackgroundService(ILogger<SSIBackgroundService> logger,
             IOptions<AppSettings> appSettings,
             IOptions<ScheduleJobOptions> scheduleJobOptions,
-            IEnvironmentProvider environmentProvider,
             IUserService userService,
             IOrganizationService organizationService,
             IOpportunityService opportunityService,
@@ -54,7 +51,6 @@ namespace Yoma.Core.Domain.SSI.Services
             _logger = logger;
             _appSettings = appSettings.Value;
             _scheduleJobOptions = scheduleJobOptions.Value;
-            _environmentProvider = environmentProvider;
             _userService = userService;
             _organizationService = organizationService;
             _opportunityService = opportunityService;
@@ -135,6 +131,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
                                     request = new TenantRequest
                                     {
+                                        //TODO compute hash of name upon creation and store in db; ensuring hash remains the same even if the organization name is changed later
                                         Referent = HashHelper.ComputeSHA256Hash(org.Name), //use hash value of the name; these are published to the trust registry and both the name and label must be unique
                                         Name = org.Name,
                                         ImageUrl = org.LogoURL,

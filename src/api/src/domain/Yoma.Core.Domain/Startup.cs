@@ -103,6 +103,7 @@ namespace Yoma.Core.Domain
 
         public static void Configure_RecurringJobs(this IConfiguration configuration, Core.Environment environment)
         {
+            var appSettings = configuration.GetSection(AppSettings.Section).Get<AppSettings>() ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{AppSettings.Section}'");
             var options = configuration.GetSection(ScheduleJobOptions.Section).Get<ScheduleJobOptions>() ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{ScheduleJobOptions.Section}'");
 
             var scheduledJobs = JobStorage.Current.GetMonitoringApi().ScheduledJobs(0, int.MaxValue);
@@ -137,22 +138,17 @@ namespace Yoma.Core.Domain
             RecurringJob.AddOrUpdate<ISSIBackgroundService>($"SSI Credential Issuance",
                s => s.ProcessCredentialIssuance(), options.SSICredentialIssuanceSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
-            //seeding (local and development)
-            switch (environment)
-            {
-                case Core.Environment.Local:
-                case Core.Environment.Development:
-                case Core.Environment.Staging: //TODO: Remove this when we have a proper staging environment (seeded for demo purposes)
-                    //organization
-                    BackgroundJob.Schedule<IOrganizationBackgroundService>(s => s.SeedLogoAndDocuments(), TimeSpan.FromMinutes(5));
+            //seeding of test data
+            if (!appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(environment)) return;
 
-                    //user
-                    BackgroundJob.Schedule<IUserBackgroundService>(s => s.SeedPhotos(), TimeSpan.FromMinutes(5));
+            //organization
+            BackgroundJob.Schedule<IOrganizationBackgroundService>(s => s.SeedLogoAndDocuments(), TimeSpan.FromMinutes(appSettings.TestDataSeedingDelayInMinutes));
 
-                    //my opportunity verifications
-                    BackgroundJob.Schedule<IMyOpportunityBackgroundService>(s => s.SeedPendingVerifications(), TimeSpan.FromMinutes(5));
-                    break;
-            }
+            //user
+            BackgroundJob.Schedule<IUserBackgroundService>(s => s.SeedPhotos(), TimeSpan.FromMinutes(appSettings.TestDataSeedingDelayInMinutes));
+
+            //my opportunity verifications
+            BackgroundJob.Schedule<IMyOpportunityBackgroundService>(s => s.SeedPendingVerifications(), TimeSpan.FromMinutes(appSettings.TestDataSeedingDelayInMinutes));
         }
         #endregion
     }

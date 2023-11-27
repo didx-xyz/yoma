@@ -393,6 +393,30 @@ FROM
 		AND MO.[VerificationStatusId] = (SELECT [Id] FROM [Opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Completed')) AS [Skills]
 GO
 
+--verification (completed): assign user skill organizations
+INSERT INTO [Entity].[UserSkillOrganizations] ([Id], [UserSkillId], [OrganizationId], [DateCreated])
+SELECT
+    NEWID() AS [Id],
+    [UserSkills].[Id] AS [UserSkillId],
+    OP.[OrganizationId] AS [OrganizationId],
+    GETDATE() AS [DateCreated]
+FROM
+    [Entity].[UserSkills] [UserSkills]
+INNER JOIN
+    [Opportunity].[OpportunitySkills] OS
+    ON [UserSkills].[SkillId] = OS.[SkillId]
+INNER JOIN [Opportunity].[Opportunity] OP
+    ON OP.Id = OS.OpportunityId
+INNER JOIN
+    [Opportunity].[MyOpportunity] MO
+    ON MO.[OpportunityId] = OS.[opportunityId]
+    AND MO.[ActionId] = (SELECT [Id] FROM [Opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification')
+    AND MO.[VerificationStatusId] = (SELECT [Id] FROM [Opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Completed')
+GROUP BY
+    [UserSkills].[Id],
+    OP.[OrganizationId]
+GO
+
 --opporutnity: update running totals
 WITH AggregatedData AS (
     SELECT

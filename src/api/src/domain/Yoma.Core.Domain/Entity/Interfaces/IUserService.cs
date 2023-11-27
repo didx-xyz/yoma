@@ -21,7 +21,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         Task<User> UpsertPhoto(string? email, IFormFile? file);
 
-        Task AssignSkills(Guid id, List<Guid> skillIds);
+        Task AssignSkills(User user, Opportunity.Models.Opportunity opportunity);
 
         Task<User> YoIDOnboard(string? email);
     }

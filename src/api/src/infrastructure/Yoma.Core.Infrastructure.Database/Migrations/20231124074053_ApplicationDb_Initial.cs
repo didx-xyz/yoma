@@ -706,6 +706,35 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserSkillOrganizations",
+                schema: "Entity",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserSkillId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserSkillOrganizations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserSkillOrganizations_Organization_OrganizationId",
+                        column: x => x.OrganizationId,
+                        principalSchema: "Entity",
+                        principalTable: "Organization",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserSkillOrganizations_UserSkills_UserSkillId",
+                        column: x => x.UserSkillId,
+                        principalSchema: "Entity",
+                        principalTable: "UserSkills",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "MyOpportunity",
                 schema: "Opportunity",
                 columns: table => new
@@ -1501,6 +1530,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 column: "PhotoId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserSkillOrganizations_OrganizationId",
+                schema: "Entity",
+                table: "UserSkillOrganizations",
+                column: "OrganizationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSkillOrganizations_UserSkillId_OrganizationId",
+                schema: "Entity",
+                table: "UserSkillOrganizations",
+                columns: new[] { "UserSkillId", "OrganizationId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserSkills_SkillId",
                 schema: "Entity",
                 table: "UserSkills",
@@ -1572,7 +1614,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI");
 
             migrationBuilder.DropTable(
-                name: "UserSkills",
+                name: "UserSkillOrganizations",
                 schema: "Entity");
 
             migrationBuilder.DropTable(
@@ -1612,8 +1654,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI");
 
             migrationBuilder.DropTable(
-                name: "Skill",
-                schema: "Lookup");
+                name: "UserSkills",
+                schema: "Entity");
 
             migrationBuilder.DropTable(
                 name: "MyOpportunityAction",
@@ -1626,6 +1668,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             migrationBuilder.DropTable(
                 name: "Opportunity",
                 schema: "Opportunity");
+
+            migrationBuilder.DropTable(
+                name: "Skill",
+                schema: "Lookup");
 
             migrationBuilder.DropTable(
                 name: "User",

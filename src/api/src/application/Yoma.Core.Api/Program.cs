@@ -1,4 +1,5 @@
 using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Api
 {
@@ -16,10 +17,12 @@ namespace Yoma.Core.Api
                 {
                     webBuilder.ConfigureAppConfiguration((hostingContext, config) =>
                     {
+                        var appSettings = config.Build().GetSection(AppSettings.Section).Get<AppSettings>() ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{AppSettings.Section}'");
+
                         IWebHostEnvironment webHostEnvironment = hostingContext.HostingEnvironment;
                         var environment = EnvironmentHelper.FromString(webHostEnvironment.EnvironmentName);
 
-                        if (environment != Domain.Core.Environment.Local) webBuilder.UseSentry();
+                        if (appSettings.SentryEnabledEnvironmentsAsEnum.HasFlag(environment)) webBuilder.UseSentry();
                     });
                     webBuilder.UseStartup<Startup>();
                 });

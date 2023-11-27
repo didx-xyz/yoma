@@ -95,7 +95,7 @@ namespace Yoma.Core.Api
             services.ConfigureServices_InfrastructureLaborMarketProvider();
             services.ConfigureServices_InfrastructureEmailProvider(_configuration);
             services.ConfigureServices_InfrastructureRewardsProvider();
-            services.ConfigureServices_InfrastructureDatabase(_configuration, _environment);
+            services.ConfigureServices_InfrastructureDatabase(_configuration);
             #endregion Services & Infrastructure
 
             #region 3rd Party (post ConfigureServices_InfrastructureDatabase)
@@ -121,7 +121,7 @@ namespace Yoma.Core.Api
             app.UseMiddleware<ExceptionResponseMiddleware>();
             app.UseMiddleware<ExceptionLogMiddleware>();
             app.UseCors();
-            if (_environment != Domain.Core.Environment.Local) app.UseHttpsRedirection();
+            if (_appSettings.HttpsRedirectionEnabledEnvironmentsAsEnum.HasFlag(_environment)) app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
 
