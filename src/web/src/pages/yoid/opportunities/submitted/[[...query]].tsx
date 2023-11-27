@@ -9,7 +9,6 @@ import { PAGE_SIZE } from "~/lib/constants";
 import { type ParsedUrlQuery } from "querystring";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
-
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
@@ -42,15 +41,15 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const queryClient = new QueryClient();
   const { id } = context.params as IParams;
-  const { query, schemaType, page } = context.query;
+  const { query, page } = context.query;
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
-    queryKey: ["MyOpportunities_Completed"],
+    queryKey: ["MyOpportunities_Pending"],
     queryFn: () =>
       searchMyOpportunities({
         action: Action.Verification,
-        verificationStatuses: [VerificationStatus.Completed],
+        verificationStatuses: [VerificationStatus.Pending],
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
       }),
@@ -67,7 +66,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-const MyOpportunitiesCompleted: NextPageWithLayout<{
+const MyOpportunitiesSubmitted: NextPageWithLayout<{
   query?: string;
   page?: string;
   error: string;
@@ -78,11 +77,11 @@ const MyOpportunitiesCompleted: NextPageWithLayout<{
     error: dataMyOpportunitiesError,
     isLoading: dataMyOpportunitiesIsLoading,
   } = useQuery({
-    queryKey: [`MyOpportunities_Completed`],
+    queryKey: [`MyOpportunities_Pending`],
     queryFn: () =>
       searchMyOpportunities({
         action: Action.Verification,
-        verificationStatuses: [VerificationStatus.Completed],
+        verificationStatuses: [VerificationStatus.Pending],
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
       }),
@@ -94,7 +93,7 @@ const MyOpportunitiesCompleted: NextPageWithLayout<{
     (value: number) => {
       // redirect
       void router.push({
-        pathname: `/yoid/opportunities/completed`,
+        pathname: `/yoid/opportunities/submitted`,
         query: { query: query, page: value },
       });
     },
@@ -109,7 +108,9 @@ const MyOpportunitiesCompleted: NextPageWithLayout<{
 
   return (
     <div className="flex flex-col gap-4">
-      <h6 className="font-bold tracking-wider">Completed opportunities 👍</h6>
+      <h6 className="font-bold tracking-wider">
+        Opportunities for approval ⌛
+      </h6>
 
       {/* ERRROR */}
       {dataMyOpportunitiesError && (
@@ -168,8 +169,8 @@ const MyOpportunitiesCompleted: NextPageWithLayout<{
   );
 };
 
-MyOpportunitiesCompleted.getLayout = function getLayout(page: ReactElement) {
+MyOpportunitiesSubmitted.getLayout = function getLayout(page: ReactElement) {
   return <YoIDTabbedOpportunities>{page}</YoIDTabbedOpportunities>;
 };
 
-export default MyOpportunitiesCompleted;
+export default MyOpportunitiesSubmitted;

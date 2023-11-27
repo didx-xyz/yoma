@@ -9,15 +9,10 @@ import { PAGE_SIZE } from "~/lib/constants";
 import { type ParsedUrlQuery } from "querystring";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
-
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
-import {
-  Action,
-  MyOpportunityInfo,
-  VerificationStatus,
-} from "~/api/models/myOpportunity";
+import { Action, MyOpportunityInfo } from "~/api/models/myOpportunity";
 import YoIDTabbedOpportunities from "~/components/Layout/YoIDTabbedOpportunities";
 import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListItem";
 import { PaginationInfoComponent } from "~/components/PaginationInfo";
@@ -46,11 +41,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
-    queryKey: ["MyOpportunities_Completed"],
+    queryKey: ["MyOpportunities_Saved"],
     queryFn: () =>
       searchMyOpportunities({
-        action: Action.Verification,
-        verificationStatuses: [VerificationStatus.Completed],
+        action: Action.Saved,
+        verificationStatuses: null,
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
       }),
@@ -67,7 +62,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-const MyOpportunitiesCompleted: NextPageWithLayout<{
+const MyOpportunitiesSaved: NextPageWithLayout<{
   query?: string;
   page?: string;
   error: string;
@@ -78,11 +73,11 @@ const MyOpportunitiesCompleted: NextPageWithLayout<{
     error: dataMyOpportunitiesError,
     isLoading: dataMyOpportunitiesIsLoading,
   } = useQuery({
-    queryKey: [`MyOpportunities_Completed`],
+    queryKey: [`MyOpportunities_Saved`],
     queryFn: () =>
       searchMyOpportunities({
-        action: Action.Verification,
-        verificationStatuses: [VerificationStatus.Completed],
+        action: Action.Saved,
+        verificationStatuses: null,
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
       }),
@@ -94,7 +89,7 @@ const MyOpportunitiesCompleted: NextPageWithLayout<{
     (value: number) => {
       // redirect
       void router.push({
-        pathname: `/yoid/opportunities/completed`,
+        pathname: `/yoid/opportunities/saved`,
         query: { query: query, page: value },
       });
     },
@@ -109,7 +104,9 @@ const MyOpportunitiesCompleted: NextPageWithLayout<{
 
   return (
     <div className="flex flex-col gap-4">
-      <h6 className="font-bold tracking-wider">Completed opportunities 👍</h6>
+      <h6 className="font-bold tracking-wider">
+        Saved opportunities <span className="text-red-600">❤</span>
+      </h6>
 
       {/* ERRROR */}
       {dataMyOpportunitiesError && (
@@ -168,8 +165,8 @@ const MyOpportunitiesCompleted: NextPageWithLayout<{
   );
 };
 
-MyOpportunitiesCompleted.getLayout = function getLayout(page: ReactElement) {
+MyOpportunitiesSaved.getLayout = function getLayout(page: ReactElement) {
   return <YoIDTabbedOpportunities>{page}</YoIDTabbedOpportunities>;
 };
 
-export default MyOpportunitiesCompleted;
+export default MyOpportunitiesSaved;

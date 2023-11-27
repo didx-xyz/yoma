@@ -39,38 +39,34 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
     setTabItems([
       {
         title: "Completed",
-        description: "", //"Completed, pending & saved",
+        description: "",
         url: "/yoid/opportunities/completed",
-        badgeCount: 17,
-        selected: router.asPath === "/yoid/opportunities/completed",
-        //icon: iconCheckmark,
+        badgeCount: userProfile?.opportunityCountCompleted,
+        selected: router.asPath.startsWith("/yoid/opportunities/completed"),
       },
       {
         title: "Submitted",
-        description: "", //"Skills gained through opportunities",
+        description: "",
         url: "/yoid/opportunities/submitted",
-        badgeCount: null,
-        selected: router.asPath === "/yoid/opportunities/submitted",
-        //icon: iconTools,
+        badgeCount: userProfile?.opportunityCountPending,
+        selected: router.asPath.startsWith("/yoid/opportunities/submitted"),
       },
       {
         title: "Declined",
-        description: "", //"Digital credentials",
+        description: "",
         url: "/yoid/opportunities/declined",
-        badgeCount: null,
-        selected: router.asPath === "/yoid/opportunities/declined",
-        //icon: iconCredential,
+        badgeCount: null, //TODO: api
+        selected: router.asPath.startsWith("/yoid/opportunities/declined"),
       },
       {
         title: "Saved",
-        description: "", //"My personal data",
+        description: "",
         url: "/yoid/opportunities/saved",
-        badgeCount: null,
-        selected: router.asPath === "/yoid/opportunities/saved",
-        //icon: iconSmiley,
+        badgeCount: userProfile?.opportunityCountSaved,
+        selected: router.asPath.startsWith("/yoid/opportunities/saved"),
       },
     ]);
-  }, [router.asPath, setTabItems]);
+  }, [router.asPath, setTabItems, userProfile]);
 
   return (
     <YoIDTabbedLayout>
@@ -79,82 +75,74 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
 
         {/* TABBED NAVIGATION */}
         <div className="gap-2x tabs tabs-bordered" role="tablist">
-          {/* TABS */}
-          {tabItems.map((tabItem, index) => (
-            <Link
-              href={tabItem.url}
-              key={`TabNavigation_${index}`}
-              className={`tab w-[3px] justify-start border-b-2 ${
-                tabItem.selected ? "border-green" : "border-gray"
-              }`}
-              role="tab"
-            >
-              {tabItem.icon && (
-                <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full shadow">
-                  <Image
-                    src={tabItem.icon}
-                    alt={`${tabItem.title} icon`}
-                    width={20}
-                    height={20}
-                    sizes="(max-width: 20px) 30vw, 50vw"
-                    priority={true}
-                    placeholder="blur"
-                    blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                      shimmer(20, 20),
-                    )}`}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      maxWidth: "20px",
-                      maxHeight: "20px",
-                    }}
-                  />
-                </div>
-              )}
+          <div className="border-b border-gray text-center text-sm font-medium text-gray-dark">
+            <ul className="-mb-px flex flex-wrap">
+              {/* TABS */}
+              {tabItems.map((tabItem, index) => (
+                <li className="me-2">
+                  <Link
+                    href={tabItem.url}
+                    key={`TabNavigation_${index}`}
+                    className={`inline-block rounded-t-lg border-b-2 px-4 py-2 ${
+                      tabItem.selected
+                        ? "active border-green"
+                        : "border-transparent hover:border-gray hover:text-gray"
+                    }`}
+                    role="tab"
+                  >
+                    {tabItem.icon && (
+                      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full shadow">
+                        <Image
+                          src={tabItem.icon}
+                          alt={`${tabItem.title} icon`}
+                          width={20}
+                          height={20}
+                          sizes="(max-width: 20px) 30vw, 50vw"
+                          priority={true}
+                          placeholder="blur"
+                          blurDataURL={`data:image/svg+xml;base64,${toBase64(
+                            shimmer(20, 20),
+                          )}`}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            maxWidth: "20px",
+                            maxHeight: "20px",
+                          }}
+                        />
+                      </div>
+                    )}
 
-              <div className="flex flex-row">
-                <div className="flex flex-col">
-                  <div className="font-boldx uppercasex tracking-widestx text-sm">
-                    {tabItem.title}
-                  </div>
-                  <div className="text-xs text-gray-dark">
-                    {tabItem.description}
-                  </div>
-                </div>
-                {tabItem.badgeCount && (
-                  <div className="badge ml-2 rounded-md bg-warning text-[12px] font-semibold text-white">
-                    {tabItem.badgeCount}
-                  </div>
-                )}
-              </div>
-            </Link>
-          ))}
+                    <div className="flex flex-row">
+                      <div className="flex flex-col">
+                        <div
+                          className={`text-sm ${
+                            tabItem.selected ? "font-bold" : ""
+                          }`}
+                        >
+                          {tabItem.title}
+                        </div>
+                        <div className="text-xs text-gray-dark">
+                          {tabItem.description}
+                        </div>
+                      </div>
+                      {tabItem.badgeCount && (
+                        <div className="badge ml-2 rounded-md bg-warning text-[12px] font-semibold text-white">
+                          {tabItem.badgeCount}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {/* MAIN CONTENT */}
         <div className="flex-grow">
-          {/* DROPDOWN NAVIGATION: SMALL DISPLAY */}
-          <div className="visible flex flex-none items-center justify-center pb-4 md:hidden">
-            <select
-              className="select max-w-lg"
-              onChange={handleChange}
-              value={router.asPath}
-            >
-              {tabItems.map((tabItem, index) => (
-                <option
-                  value={tabItem.url}
-                  key={`DropdownNavigation_${index}`}
-                  selected={tabItem.selected}
-                >
-                  {tabItem.title}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            {/* CHILDREN */}
-            {children}
-          </div>
+          {/* CHILDREN */}
+          {children}
         </div>
       </div>
     </YoIDTabbedLayout>

@@ -41,7 +41,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         description: "Completed, pending & saved",
         url: "/yoid/opportunities/completed",
         badgeCount: null,
-        selected: router.asPath === "/yoid/opportunities/completed",
+        selected: router.asPath.startsWith("/yoid/opportunities"),
         icon: iconCheckmark,
       },
       {
@@ -49,7 +49,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         description: "Skills gained through opportunities",
         url: "/yoid/skills",
         badgeCount: null,
-        selected: router.asPath === "/yoid/skills",
+        selected: router.asPath.startsWith("/yoid/skills"),
         icon: iconTools,
       },
       {
@@ -57,7 +57,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         description: "Digital credentials",
         url: "/yoid/credentials",
         badgeCount: null,
-        selected: router.asPath === "/yoid/credentials",
+        selected: router.asPath.startsWith("/yoid/credentials"),
         icon: iconCredential,
       },
       {
@@ -65,15 +65,15 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         description: "My personal data",
         url: "/yoid/settings",
         badgeCount: null,
-        selected: router.asPath === "/yoid/settings",
+        selected: router.asPath.startsWith("/yoid/settings"),
         icon: iconSmiley,
       },
       {
         title: "Open Digital CV",
         description: "My opportunities submitted for verification",
-        url: "/yoid/submitted",
+        url: "/yoid/cv",
         badgeCount: null,
-        selected: router.asPath === "/yoid/submitted",
+        selected: router.asPath.startsWith("/yoid/cv"),
         icon: iconShare,
       },
     ]);
@@ -84,7 +84,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
       <>
         <PageBackground />
 
-        <div className="container z-10 max-w-6xl py-4">
+        <div className="container z-10 py-4">
           {/* USER CARD */}
           <div className="flex items-center justify-center">
             <div className="relative h-[215px] w-[410px]">
@@ -95,7 +95,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                 objectFit="cover"
                 priority={true}
               />
-              <div className="absolute left-[30px] top-[30px]  w-[335px] p-4 ">
+              <div className="absolute left-[30px] top-[30px]  max-w-[335px] p-4 ">
                 <div className="flex flex-col text-white">
                   <div className="flex flex-row items-center justify-center">
                     <p className="flex-grow text-center text-sm tracking-widest brightness-95">
@@ -170,13 +170,16 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
             </div>
           </div>
 
-          <div className="mt-8 flex gap-5">
+          <div className="flex flex-col gap-5 md:flex-row">
             {/* MENU NAVIGATION: MEDIUM DISPLAY */}
             <div className="hidden md:block">
-              <ul className="menu w-64 gap-2 md:rounded-2xl">
+              <ul className="menu w-64 gap-2 rounded-lg bg-gray-light">
                 {/* TABS */}
                 {tabItems.map((tabItem, index) => (
-                  <li key={`MenuNavigation_${index}`}>
+                  <li
+                    key={`MenuNavigation_${index}`}
+                    // className="md:rounded-bl-none md:rounded-br-lg md:rounded-tl-none md:rounded-tr-lg"
+                  >
                     <Link
                       href={tabItem.url}
                       key={index}
@@ -219,13 +222,14 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
             </div>
 
             {/* MAIN CONTENT */}
-            <div className="flex-grow">
+            <div className="flex flex-grow flex-col">
               {/* DROPDOWN NAVIGATION: SMALL DISPLAY */}
               <div className="visible flex flex-none items-center justify-center pb-4 md:hidden">
                 <select
                   className="select max-w-lg"
                   onChange={handleChange}
                   value={router.asPath}
+                  title="Select a page"
                 >
                   {tabItems.map((tabItem, index) => (
                     <option
@@ -238,10 +242,9 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                   ))}
                 </select>
               </div>
-              <div>
-                {/* CHILDREN */}
-                {children}
-              </div>
+
+              {/* CHILDREN */}
+              <div className="flex items-center justify-center">{children}</div>
             </div>
           </div>
         </div>

@@ -48,10 +48,10 @@ export interface MyOpportunityInfo {
   userId: string;
   userEmail: string;
   userDisplayName: string | null;
-  userPhotoId: string | null;
-  userPhotoURL: string | null;
   userCountry: string | null;
   userCountryOfResidence: string | null;
+  userPhotoId: string | null;
+  userPhotoURL: string | null;
   opportunityId: string;
   opportunityTitle: string;
   opportunityDescription: string;
@@ -67,12 +67,20 @@ export interface MyOpportunityInfo {
   action: Action;
   verificationStatusId: string | null;
   verificationStatus: VerificationStatus | null | string; //NB
+  commentVerification: string | null;
   dateStart: string | null;
   dateEnd: string | null;
   dateCompleted: string | null;
   zltoReward: number | null;
   yomaReward: number | null;
   verifications: MyOpportunityInfoVerification[] | null;
+  skills: Skill[] | null;
+}
+
+export interface Skill {
+  id: string;
+  name: string;
+  infoURL: string | null;
 }
 
 export interface MyOpportunityInfoVerification {

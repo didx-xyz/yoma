@@ -8,30 +8,27 @@ import iconUser from "public/images/icon-user.svg";
 import iconZlto from "public/images/icon-zlto.svg";
 import Moment from "react-moment";
 import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
+import { useCallback } from "react";
 
 interface InputProps {
   data: MyOpportunityInfo;
-  //onClick?: (certificate: OpportunityInfo) => void;
+  onClick?: (certificate: MyOpportunityInfo) => void;
   [key: string]: any;
 }
 
-const OpportunityListItem: React.FC<InputProps> = ({
-  data,
-  //onClick,
-}) => {
-  // // 🔔 click handler: use callback parameter
-  // const handleClick = useCallback(() => {
-  //   if (!onClick) return;
-  //   onClick(data);
-  // }, [data, onClick]);
+const OpportunityListItem: React.FC<InputProps> = ({ data, onClick }) => {
+  // 🔔 click handler: use callback parameter
+  const handleClick = useCallback(() => {
+    if (!onClick) return;
+    onClick(data);
+  }, [data, onClick]);
 
   return (
     <div
-      //href={`/opportunities/${data.id}`}
-      //onClick={handleClick}
-      className="flex max-h-[250px] flex-col gap-1 rounded-lg border-[1px] border-gray bg-white px-5 py-2"
+      onClick={handleClick}
+      className="flex cursor-pointer flex-col gap-1 rounded-lg border-[1px] border-gray bg-white px-5 py-2"
     >
-      <div className="flex flex-row gap-2  overflow-hidden text-ellipsis">
+      <div className="flex flex-row gap-2">
         {!data.organizationLogoURL && (
           <Image
             src={iconRocket}
@@ -42,7 +39,7 @@ const OpportunityListItem: React.FC<InputProps> = ({
             priority={true}
             placeholder="blur"
             blurDataURL={`data:image/svg+xml;base64,${toBase64(
-              shimmer(288, 182),
+              shimmer(80, 80),
             )}`}
             style={{
               width: "80px",
@@ -60,7 +57,7 @@ const OpportunityListItem: React.FC<InputProps> = ({
             priority={true}
             placeholder="blur"
             blurDataURL={`data:image/svg+xml;base64,${toBase64(
-              shimmer(288, 182),
+              shimmer(60, 60),
             )}`}
             style={{
               width: "60px",
@@ -69,11 +66,11 @@ const OpportunityListItem: React.FC<InputProps> = ({
           />
         )}
 
-        <div className="flex flex-grow flex-col items-center justify-center gap-1">
-          <h1 className="w-full overflow-hidden text-ellipsis text-xs font-medium text-gray-dark">
+        <div className="lg:max-w-g flex flex-col justify-center gap-1 truncate md:max-w-md xl:max-w-xl">
+          <h1 className="text-xs font-medium text-gray-dark">
             {data.organizationName}
           </h1>
-          <h2 className="line-clamp-3 w-full overflow-hidden text-ellipsis whitespace-nowrap text-[18px] font-semibold leading-tight">
+          <h2 className="line-clamp-3 text-[18px] font-semibold leading-tight">
             {data.opportunityTitle}
           </h2>
         </div>
@@ -90,16 +87,13 @@ const OpportunityListItem: React.FC<InputProps> = ({
         <div className="flex flex-row">
           <h4 className="line-clamp-4 text-sm font-bold">Skills developed</h4>
         </div>
-        <div className="flex flex-row gap-2">
-          <div className="rozunded-md badge bg-green-light text-[12px] font-semibold text-green">
-            TODO 1
-          </div>
-          <div className="badge rounded-md bg-green-light text-[12px] font-semibold text-green">
-            TODO 2
-          </div>
-          <div className="badge rounded-md bg-green-light text-[12px] font-semibold text-green">
-            TODO 2
-          </div>
+
+        <div className="flex flex-row flex-wrap gap-2">
+          {data.skills?.map((skill) => (
+            <div className="badge whitespace-nowrap rounded-md bg-green-light text-[12px] font-semibold text-green">
+              {skill.name}
+            </div>
+          ))}
         </div>
 
         {/* DATE */}

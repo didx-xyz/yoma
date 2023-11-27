@@ -50,11 +50,31 @@ export interface UserProfile {
   photoId: string | null;
   photoURL: string | null;
   dateLastLogin: string | null;
+  yoIDOnboarded: boolean | null;
+  dateYoIDOnboarded: string | null;
+  skills: UserSkillInfo[] | null;
   adminsOf: OrganizationInfo[];
   zltoBalance: number;
   opportunityCountSaved: number;
   opportunityCountPending: number;
   opportunityCountCompleted: number;
+}
+
+export interface UserSkillInfo extends Skill {
+  organizations: UserSkillOrganizationInfo[];
+}
+
+export interface Skill {
+  id: string;
+  name: string;
+  infoURL: string | null;
+}
+
+export interface UserSkillOrganizationInfo {
+  id: string;
+  name: string;
+  logoId: string | null;
+  logoURL: string | null;
 }
 
 export interface OrganizationInfo {
