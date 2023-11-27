@@ -18,7 +18,7 @@
     "@t3-oss/env-nextjs": "^0.7.1",
     "@tanstack/react-query": "^5.8.4",
     "axios": "^1.6.2",
-    "daisyui": "^4.4.2",
+    "daisyui": "^4.4.10",
     "jotai": "^2.5.1",
     "moment": "^2.29.4",
     "next": "^14.0.3",
