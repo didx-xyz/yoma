@@ -116,6 +116,9 @@ const OrganisationCreate: NextPageWithLayout<{
       setIsLoading(true);
 
       try {
+        // clear all toasts
+        toast.dismiss();
+
         // update api
         await postOrganisation(model);
 
@@ -130,7 +133,7 @@ const OrganisationCreate: NextPageWithLayout<{
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
           toastId: "organisationRegistration",
-          autoClose: false,
+          autoClose: 4000,
           icon: false,
         });
 
