@@ -121,7 +121,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     queryKey: ["countries"],
     queryFn: async () =>
       (await getCountries(context)).map((c) => ({
-        value: c.codeNumeric,
+        value: c.id,
         label: c.name,
       })),
   });
