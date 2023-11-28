@@ -154,6 +154,9 @@ namespace Yoma.Core.Domain.Entity.Services
             filter.VerificationStatuses = new List<VerificationStatus> { VerificationStatus.Completed };
             result.OpportunityCountCompleted = _myOpportunityService.Search(filter).TotalCount ?? default;
 
+            filter.VerificationStatuses = new List<VerificationStatus> { VerificationStatus.Rejected };
+            result.OpportunityCountRejected = _myOpportunityService.Search(filter).TotalCount ?? default;
+
             return result;
         }
         #endregion

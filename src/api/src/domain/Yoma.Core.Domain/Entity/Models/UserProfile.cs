@@ -45,5 +45,7 @@ namespace Yoma.Core.Domain.Entity.Models
         public int OpportunityCountPending { get; set; }
 
         public int OpportunityCountCompleted { get; set; }
+
+        public int OpportunityCountRejected { get; set; }
     }
 }
