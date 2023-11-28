@@ -24,7 +24,7 @@ postInstallHook:
   enabled: true
 
 keycloak:
-  replicas: 1
+  replicas: 2
   resources:
     requests:
       cpu: 10m
