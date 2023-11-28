@@ -1545,8 +1545,6 @@ const OpportunityDetails: NextPageWithLayout<{
                             // default pool to limit & reward
                             const participantLimit =
                               getValuesStep2("participantLimit");
-                            const zltoRewardPool =
-                              getValuesStep3("zltoRewardPool");
                             const zltoReward = parseInt(e.target.value);
 
                             if (

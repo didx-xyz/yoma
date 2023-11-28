@@ -54,7 +54,6 @@ import axios from "axios";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
 import Moment from "react-moment";
-import { SignInButton } from "~/components/NavBar/SignInButton";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
