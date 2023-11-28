@@ -2084,7 +2084,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       </label>
                       <label className="label-text text-sm">
                         <Link
-                          className="link-primary link"
+                          className="link link-primary"
                           href={formData.uRL ?? "#"}
                           target="new"
                         >
