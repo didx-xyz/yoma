@@ -564,11 +564,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"6342C98A-0572-4E6A-A4FB-A1AEAFD3C053","Female",DateTimeOffset.Now}
                     ,
-                    {"1BDCBFAD-67AA-4556-A326-5D263761F920","Transgender Male",DateTimeOffset.Now}
+                    {"1BDCBFAD-67AA-4556-A326-5D263761F920","Non-Binary",DateTimeOffset.Now}
                     ,
-                    {"0BE24DF8-D4C5-453C-AADF-EEDF673E1FE3","Transgender Female",DateTimeOffset.Now}
+                    {"0BE24DF8-D4C5-453C-AADF-EEDF673E1FE3","Other",DateTimeOffset.Now}
                     ,
-                    {"26BA24A5-9209-48B2-A885-95C43EF142B5","Unknown",DateTimeOffset.Now}
+                    {"26BA24A5-9209-48B2-A885-95C43EF142B5","Prefer not to say",DateTimeOffset.Now}
             },
             schema: "Lookup");
 

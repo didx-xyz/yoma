@@ -24,6 +24,8 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public Guid? CountryId { get; set; }
 
+        public string? Country { get; set; }
+
         public string? StreetAddress { get; set; }
 
         public string? Province { get; set; }

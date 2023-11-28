@@ -36,6 +36,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 RegistrationNumber = entity.RegistrationNumber,
                 City = entity.City,
                 CountryId = entity.CountryId,
+                Country = entity.Country == null ? null : entity.Country.Name,
                 StreetAddress = entity.StreetAddress,
                 Province = entity.Province,
                 PostalCode = entity.PostalCode,

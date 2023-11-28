@@ -92,9 +92,9 @@ userProfile:
         options:
           - Male
           - Female
-          - Transgender Male
-          - Transgender Female
-          - Unknown
+          - Non-Binary
+          - Other
+          - Prefer not to say
     required:
       roles:
         - user
