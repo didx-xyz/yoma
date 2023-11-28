@@ -152,7 +152,6 @@ const OrganisationUpdate: NextPageWithLayout<{
       setIsLoading(true);
 
       try {
-        debugger;
         // update api
         await patchOrganisation(model);
 

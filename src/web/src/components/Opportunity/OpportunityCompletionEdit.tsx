@@ -317,7 +317,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
                 <div className="-mt-2 grid grid-cols-2 gap-4 px-4 pb-4">
                   <div className="form-control">
-                    {/* eslint-disable @typescript-eslint/no-unsafe-argument  */}
+                    {/* eslint-disable @typescript-eslint/no-unsafe-argument */}
                     <Controller
                       control={control}
                       name="dateStart"
@@ -332,7 +332,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         />
                       )}
                     />
-                    {/* eslint-enable @typescript-eslint/no-unsafe-argument  */}
+                    {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
                     {errors.dateStart && (
                       <label className="label">
                         <span className="label-text-alt px-4 text-base italic text-red-500">
@@ -343,7 +343,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                   </div>
 
                   <div className="form-control">
-                    {/* eslint-disable @typescript-eslint/no-unsafe-argument  */}
+                    {/* eslint-disable @typescript-eslint/no-unsafe-argument */}
                     <Controller
                       control={control}
                       name="dateEnd"
@@ -358,7 +358,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         />
                       )}
                     />
-                    {/* eslint-enable @typescript-eslint/no-unsafe-argument  */}
+                    {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
 
                     {errors.dateEnd && (
                       <label className="label">
