@@ -13,7 +13,7 @@ environments:
     values:
       - namespace: yoma-v3-stage
       - arch: amd64
-      - lifecycle: spot
+      - lifecycle: on-demand
       - tag: {{ env "TAG" | default "master" }}
       - ddInjectEnabled: false
 ---
