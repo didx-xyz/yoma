@@ -6,6 +6,9 @@ import iconRocket from "public/images/icon-rocket.svg";
 import iconClock from "public/images/icon-clock.svg";
 import iconUser from "public/images/icon-user.svg";
 import iconZlto from "public/images/icon-zlto.svg";
+import iconAction from "public/images/icon-action.svg";
+import Moment from "react-moment";
+import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
 
 interface InputProps {
   data: OpportunityInfo;
@@ -90,15 +93,45 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
         </div>
       </div>
 
-      <div className="flex max-w-[280px] flex-row">
+      <div className="flex max-w-[280px] flex-grow flex-row">
         <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-sm font-light">
           {data.description}
         </p>
       </div>
 
+      {/* DATES */}
+      {data.status == "Active" && (
+        <div className="flex flex-col text-sm text-gray-dark">
+          <div>
+            {data.dateStart && (
+              <>
+                <span className="mr-2 font-bold">Starts:</span>
+                <span className="text-xs tracking-widest text-black">
+                  <Moment format={DATETIME_FORMAT_HUMAN}>
+                    {new Date(data.dateStart)}
+                  </Moment>
+                </span>
+              </>
+            )}
+          </div>
+          <div>
+            {data.dateEnd && (
+              <>
+                <span className="mr-2 font-bold">Ends:</span>
+                <span className="text-xs tracking-widest text-black">
+                  <Moment format={DATETIME_FORMAT_HUMAN}>
+                    {new Date(data.dateEnd)}
+                  </Moment>
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* BADGES */}
-      <div className="absolute bottom-5 flex flex-row gap-1 whitespace-nowrap pt-2 text-xs font-normal text-green-dark">
-        <div className="badge rounded-md bg-green-light text-[12px] font-semibold text-green">
+      <div className="absolutex bottom-5x flex flex-row gap-1 whitespace-nowrap pt-2 text-xs font-normal text-green-dark">
+        <div className="badge rounded-md bg-green-light text-xs font-semibold text-green">
           <Image
             src={iconClock}
             alt="Icon Clock"
@@ -111,11 +144,9 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
           />
           {`${data?.commitmentIntervalCount} ${data?.commitmentInterval}`}
         </div>
-        <div className="badge rounded-md bg-green-light text-[12px] font-semibold text-green">
-          Ongoing
-        </div>
+
         {(data?.participantCountTotal ?? 0) > 0 && (
-          <div className="badge rounded-md bg-green-light text-[12px] font-semibold text-green">
+          <div className="badge rounded-md bg-green-light text-xs font-semibold text-green">
             <Image
               src={iconUser}
               alt="Icon User"
@@ -141,9 +172,29 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
               priority={true}
               style={{ width: "16px", height: "16px" }}
             />
-            <span className="ml-1 text-[12px] font-semibold">
+            <span className="ml-1 text-xs font-semibold">
               {Math.ceil(data?.zltoReward)}
             </span>
+          </div>
+        )}
+
+        {data.status == "Active" && (
+          <div className="badge rounded-md bg-purple-light text-purple">
+            <Image
+              src={iconAction}
+              alt="Icon Action"
+              width={18}
+              height={18}
+              sizes="100vw"
+              priority={true}
+              style={{ width: "18px", height: "18px" }}
+            />
+            <span className="ml-1 text-xs font-semibold">Ongoing</span>
+          </div>
+        )}
+        {data.status == "Expired" && (
+          <div className="badge rounded-md bg-green-light text-xs font-semibold text-yellow">
+            Expired
           </div>
         )}
       </div>

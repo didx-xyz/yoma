@@ -52,6 +52,8 @@ import type { AxiosError } from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import axios from "axios";
 import { LoadingInline } from "~/components/Status/LoadingInline";
+import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
+import Moment from "react-moment";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -580,7 +582,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                 priority={true}
                                 style={{ width: "18px", height: "18px" }}
                               />
-                              <span className="ml-1 text-xs">Action</span>
+                              <span className="ml-1 text-xs">Ongoing</span>
                             </div>
                           )}
                           {opportunity?.status == "Expired" && (
@@ -588,28 +590,39 @@ const OpportunityDetails: NextPageWithLayout<{
                               Expired
                             </div>
                           )}
-
-                          {/* {opportunity?.status == "Inactive" && (
-                      <div className="badge h-6 rounded-md bg-green-light text-red-400">
-                        Inactive
-                      </div>
-                    )}
-                    {opportunity?.status == "Deleted" && (
-                      <div className="badge h-6 rounded-md bg-green-light text-red-400">
-                        Deleted
-                      </div>
-                    )}
-                    {opportunity?.published && (
-                      <div className="badge h-6 rounded-md bg-green-light text-blue">
-                        Published
-                      </div>
-                    )}
-                    {!opportunity?.published && (
-                      <div className="badge h-6 rounded-md bg-green-light text-red-400">
-                        Not published
-                      </div>
-                    )} */}
                         </div>
+
+                        {/* DATES */}
+                        {opportunity.status == "Active" && (
+                          <div className="flex flex-col text-sm text-gray-dark">
+                            <div>
+                              {opportunity.dateStart && (
+                                <>
+                                  <span className="mr-2 font-bold">
+                                    Starts:
+                                  </span>
+                                  <span className="text-xs tracking-widest text-black">
+                                    <Moment format={DATETIME_FORMAT_HUMAN}>
+                                      {new Date(opportunity.dateStart)}
+                                    </Moment>
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            <div>
+                              {opportunity.dateEnd && (
+                                <>
+                                  <span className="mr-2 font-bold">Ends:</span>
+                                  <span className="text-xs tracking-widest text-black">
+                                    <Moment format={DATETIME_FORMAT_HUMAN}>
+                                      {new Date(opportunity.dateEnd)}
+                                    </Moment>
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
 
                         {/* BUTTONS */}
                         <div className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-2">
