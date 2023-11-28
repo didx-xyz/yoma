@@ -431,7 +431,17 @@ const OpportunityDetails: NextPageWithLayout<{
       };
       setFormData(model);
 
-      console.log("model", model);
+      //console.log("model", model);
+
+      // default pool to limit & reward
+      // if (model.participantLimit !== null) {
+      //   if (model.zltoReward !== null && model.zltoRewardPool === null) {
+      //     model.zltoRewardPool = model.participantLimit * model.zltoReward;
+      //   }
+      //   if (model.yomaReward !== null && model.yomaRewardPool === null) {
+      //     model.yomaRewardPool = model.participantLimit * model.yomaReward;
+      //   }
+      // }
 
       if (opportunityId === "create") {
         if (step === 8) {
@@ -512,6 +522,32 @@ const OpportunityDetails: NextPageWithLayout<{
       }),
     skills: z.array(z.string()).optional(),
   });
+  // .transform((values) => {
+  //   // debugger;
+  //   const participantLimit = getValuesStep2("participantLimit");
+  //   // default pool to limit & reward
+  //   if (participantLimit !== null) {
+  //     if (
+  //       values.zltoReward !== null &&
+  //       values.zltoReward !== undefined &&
+  //       (values.zltoRewardPool === null ||
+  //         values.zltoRewardPool === undefined)
+  //     ) {
+  //       //values.zltoRewardPool = participantLimit * values.zltoReward;
+  //       setValueStep3("zltoRewardPool", participantLimit * values.zltoReward);
+  //     }
+  //     if (
+  //       values.yomaReward !== null &&
+  //       values.yomaReward !== undefined &&
+  //       (values.yomaRewardPool === null ||
+  //         values.yomaRewardPool === undefined)
+  //     ) {
+  //       //values.yomaRewardPool = participantLimit * values.yomaReward;
+
+  //       setValueStep3("yomaRewardPool", participantLimit * values.yomaReward);
+  //     }
+  //   }
+  // });
 
   const schemaStep4 = z.object({
     keywords: z.array(z.string()).optional(),
@@ -617,6 +653,7 @@ const OpportunityDetails: NextPageWithLayout<{
     handleSubmit: handleSubmitStep2,
     formState: { errors: errorsStep2, isValid: isValidStep2 },
     control: controlStep2,
+    getValues: getValuesStep2,
   } = useForm({
     resolver: zodResolver(schemaStep2),
     defaultValues: formData,
@@ -627,6 +664,8 @@ const OpportunityDetails: NextPageWithLayout<{
     handleSubmit: handleSubmitStep3,
     formState: { errors: errorsStep3, isValid: isValidStep3 },
     control: controlStep3,
+    getValues: getValuesStep3,
+    setValue: setValueStep3,
   } = useForm({
     resolver: zodResolver(schemaStep3),
     defaultValues: formData,
@@ -1327,6 +1366,34 @@ const OpportunityDetails: NextPageWithLayout<{
                           {...registerStep2("participantLimit", {
                             valueAsNumber: true,
                           })}
+                          onBlur={(e) => {
+                            // default pool to limit & reward
+                            const participantLimit = parseInt(e.target.value);
+                            const yomaReward = getValuesStep3("yomaReward");
+                            const zltoReward = getValuesStep3("zltoReward");
+
+                            if (participantLimit !== null) {
+                              if (
+                                yomaReward !== null &&
+                                yomaReward !== undefined &&
+                                !isNaN(yomaReward)
+                              )
+                                setValueStep3(
+                                  "yomaRewardPool",
+                                  participantLimit * yomaReward,
+                                );
+
+                              if (
+                                zltoReward !== null &&
+                                zltoReward !== undefined &&
+                                !isNaN(zltoReward)
+                              )
+                                setValueStep3(
+                                  "zltoRewardPool",
+                                  participantLimit * zltoReward,
+                                );
+                            }
+                          }}
                         />
                       </div>
                       {errorsStep2.participantLimit && (
@@ -1389,6 +1456,22 @@ const OpportunityDetails: NextPageWithLayout<{
                           {...registerStep3("yomaReward", {
                             valueAsNumber: true,
                           })}
+                          onBlur={(e) => {
+                            // default pool to limit & reward
+                            const participantLimit =
+                              getValuesStep2("participantLimit");
+                            const yomaReward = parseInt(e.target.value);
+
+                            if (
+                              participantLimit !== null &&
+                              !isNaN(yomaReward)
+                            ) {
+                              setValueStep3(
+                                "yomaRewardPool",
+                                participantLimit * yomaReward,
+                              );
+                            }
+                          }}
                         />
                         {errorsStep3.yomaReward && (
                           <label className="label">
@@ -1400,7 +1483,10 @@ const OpportunityDetails: NextPageWithLayout<{
                       </div>
                       <div className="form-control">
                         <label className="label">
-                          <span className="label-text">Yoma Reward Pool</span>
+                          <span className="label-text">Yoma Reward Pool</span>{" "}
+                          <span className="font-gray-light label-text text-xs">
+                            (default limit * reward)
+                          </span>
                         </label>
                         <input
                           type="number"
@@ -1409,6 +1495,29 @@ const OpportunityDetails: NextPageWithLayout<{
                           {...registerStep3("yomaRewardPool", {
                             valueAsNumber: true,
                           })}
+                          onBlur={(e) => {
+                            // default pool to limit & reward (when clearing the pool value)
+                            const participantLimit =
+                              getValuesStep2("participantLimit");
+                            const yomaReward = getValuesStep3("yomaReward");
+                            const yomaRewardPool = parseInt(e.target.value);
+
+                            if (participantLimit !== null) {
+                              if (
+                                yomaReward !== null &&
+                                yomaReward !== undefined &&
+                                !isNaN(yomaReward) &&
+                                (yomaRewardPool === null ||
+                                  yomaRewardPool === undefined ||
+                                  isNaN(yomaRewardPool))
+                              ) {
+                                setValueStep3(
+                                  "yomaRewardPool",
+                                  participantLimit * yomaReward,
+                                );
+                              }
+                            }
+                          }}
                         />
                         {errorsStep3.yomaRewardPool && (
                           <label className="label">
@@ -1432,6 +1541,24 @@ const OpportunityDetails: NextPageWithLayout<{
                           {...registerStep3("zltoReward", {
                             valueAsNumber: true,
                           })}
+                          onBlur={(e) => {
+                            // default pool to limit & reward
+                            const participantLimit =
+                              getValuesStep2("participantLimit");
+                            const zltoRewardPool =
+                              getValuesStep3("zltoRewardPool");
+                            const zltoReward = parseInt(e.target.value);
+
+                            if (
+                              participantLimit !== null &&
+                              !isNaN(zltoReward)
+                            ) {
+                              setValueStep3(
+                                "zltoRewardPool",
+                                participantLimit * zltoReward,
+                              );
+                            }
+                          }}
                         />
                         {errorsStep3.zltoReward && (
                           <label className="label">
@@ -1444,6 +1571,9 @@ const OpportunityDetails: NextPageWithLayout<{
                       <div className="form-control">
                         <label className="label">
                           <span className="label-text">ZLTO Reward Pool</span>
+                          <span className="font-gray-light label-text text-xs">
+                            (default limit * reward)
+                          </span>
                         </label>
                         <input
                           type="number"
@@ -1452,6 +1582,29 @@ const OpportunityDetails: NextPageWithLayout<{
                           {...registerStep3("zltoRewardPool", {
                             valueAsNumber: true,
                           })}
+                          onBlur={(e) => {
+                            // default pool to limit & reward (when clearing the pool value)
+                            const participantLimit =
+                              getValuesStep2("participantLimit");
+                            const zltoReward = getValuesStep3("zltoReward");
+                            const zltoRewardPool = parseInt(e.target.value);
+
+                            if (participantLimit !== null) {
+                              if (
+                                zltoReward !== null &&
+                                zltoReward !== undefined &&
+                                !isNaN(zltoReward) &&
+                                (zltoRewardPool === null ||
+                                  zltoRewardPool === undefined ||
+                                  isNaN(zltoRewardPool))
+                              ) {
+                                setValueStep3(
+                                  "zltoRewardPool",
+                                  participantLimit * zltoReward,
+                                );
+                              }
+                            }
+                          }}
                         />
                         {errorsStep3.zltoRewardPool && (
                           <label className="label">
