@@ -1,13 +1,12 @@
 import { QueryClient, dehydrate } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
-import { useState, type ReactElement } from "react";
-import { User, authOptions } from "~/server/auth";
+import { type ReactElement } from "react";
+import { type User, authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 import Image from "next/image";
 import { searchCredentials } from "~/api/services/credentials";
 import { type ParsedUrlQuery } from "querystring";
-import type { SSICredentialInfo } from "~/api/models/credential";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { toBase64, shimmer } from "~/lib/image";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -71,9 +70,9 @@ const MyCredentials: NextPageWithLayout<{
   page?: string;
   error: string;
 }> = ({ /*user, query, page,*/ error }) => {
-  const [credentialDialogVisible, setCredentialDialogVisible] = useState(false);
-  const [activeCredential, setActiveCredential] =
-    useState<SSICredentialInfo | null>(null);
+  // const [credentialDialogVisible, setCredentialDialogVisible] = useState(false);
+  // const [activeCredential, setActiveCredential] =
+  //   useState<SSICredentialInfo | null>(null);
 
   const userProfile = useAtomValue(userProfileAtom);
 
@@ -230,7 +229,7 @@ const MyCredentials: NextPageWithLayout<{
         </div>
       </ReactModal> */}
 
-      <div className="flex flex-col gap-4">
+      <div className="flex w-full flex-col gap-4">
         {/* ERRROR */}
         {/* {dataError && <ApiErrors error={dataError} />} */}
 
@@ -249,7 +248,7 @@ const MyCredentials: NextPageWithLayout<{
             <NoRowsMessage
               title={"No results found"}
               description={
-                "Credentials that you receive by completing opportunities will be diplayed here."
+                "Skills that you receive by completing opportunities will be diplayed here."
               }
             />
           </div>
@@ -264,13 +263,13 @@ const MyCredentials: NextPageWithLayout<{
                 {userProfile?.skills.map((item, index) => (
                   <div
                     key={`${item.id}_${index}`}
-                    className="flex h-[180px] w-[280px] cursor-pointer flex-col rounded-lg bg-white p-2"
+                    className="flex h-[180px] flex-col rounded-lg bg-white p-2"
                     // onClick={() => handleOnClickCredential(item)}
                   >
                     <div className="flex h-full flex-col gap-2">
                       <div className="flex flex-grow flex-row items-start justify-start">
                         <div className="flex flex-col items-start justify-start gap-2">
-                          <p className="max-h-[45px] overflow-hidden text-ellipsis text-base font-semibold text-gray-dark">
+                          <p className="max-h-[45px] overflow-hidden text-ellipsis text-base font-semibold text-black">
                             {item.name}
                           </p>
                           {/* <p className="max-h-[80px] overflow-hidden text-ellipsis text-sm font-bold">
@@ -292,7 +291,7 @@ const MyCredentials: NextPageWithLayout<{
                         {item.organizations.length > 1 ? "s" : ""}
                       </div>
 
-                      <div className="flex flex-row items-start">
+                      <div className="flex flex-row items-start overflow-hidden">
                         {item.organizations.map((org, index) => (
                           <div
                             className="cursor-pointerx relative -mr-4 overflow-hidden rounded-full shadow"

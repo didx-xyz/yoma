@@ -58,6 +58,7 @@ export interface UserProfile {
   opportunityCountSaved: number;
   opportunityCountPending: number;
   opportunityCountCompleted: number;
+  opportunityCountRejected: number;
 }
 
 export interface UserSkillInfo extends Skill {

@@ -733,6 +733,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             <button
                               type="button"
                               className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10 md:w-[100px]"
+                              onClick={onSaveOpportunity}
                             >
                               <Image
                                 src={iconBookmark}

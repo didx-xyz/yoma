@@ -40,7 +40,7 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
         title: "Declined",
         description: "",
         url: "/yoid/opportunities/declined",
-        badgeCount: null, //TODO: api
+        badgeCount: userProfile?.opportunityCountRejected,
         selected: router.asPath.startsWith("/yoid/opportunities/declined"),
       },
       {
@@ -55,7 +55,7 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
 
   return (
     <YoIDTabbedLayout>
-      <div className="flex flex-col gap-4 rounded-lg bg-white p-4">
+      <div className="flex w-full flex-col gap-4 rounded-lg bg-white p-4">
         <h5 className="font-bold tracking-wider">My Opportunities</h5>
 
         {/* TABBED NAVIGATION */}
@@ -106,11 +106,15 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
                         >
                           {tabItem.title}
                         </div>
-                        <div className="text-xs text-gray-dark">
-                          {tabItem.description}
-                        </div>
+
+                        {tabItem.description && (
+                          <div className="text-xs text-gray-dark">
+                            {tabItem.description}
+                          </div>
+                        )}
                       </div>
-                      {tabItem.badgeCount && (
+
+                      {!!tabItem.badgeCount && (
                         <div className="badge ml-2 rounded-md bg-warning text-[12px] font-semibold text-white">
                           {tabItem.badgeCount}
                         </div>

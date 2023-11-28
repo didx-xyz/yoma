@@ -268,10 +268,9 @@ const MyCredentials: NextPageWithLayout<{
         </div>
       </ReactModal>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex w-full flex-col gap-4">
         {/* ERRROR */}
         {dataError && <ApiErrors error={dataError} />}
-
         {/* LOADING */}
         {dataIsLoading && (
           <div className="flex justify-center rounded-lg bg-white p-8">
@@ -280,7 +279,9 @@ const MyCredentials: NextPageWithLayout<{
         )}
 
         {/* NO ROWS */}
-        {data && (data.totalCount === null || data.totalCount === 0) && (
+        {/* TODO:data.totalCount not populated by API */}
+        {/* {data && (data.totalCount === null || data.totalCount === 0) && ( */}
+        {data && data.items.length === 0 && (
           <div className="flex justify-center rounded-lg bg-white p-8">
             <NoRowsMessage
               title={"No results found"}
@@ -299,7 +300,7 @@ const MyCredentials: NextPageWithLayout<{
                 {data.items.map((item, index) => (
                   <div
                     key={index}
-                    className="flex h-[180px] w-[280px] cursor-pointer flex-col rounded-lg bg-white p-2"
+                    className="flex h-[180px] cursor-pointer flex-col rounded-lg bg-white p-2"
                     onClick={() => handleOnClickCredential(item)}
                   >
                     <div className="flex h-full flex-row">
