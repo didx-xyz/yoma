@@ -27,6 +27,7 @@ import {
 } from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { config } from "~/lib/react-query-config";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -49,7 +50,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const { id } = context.params as IParams;
   const { query, page } = context.query;
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient(config);
 
   // 👇 set theme based on role
   let theme;

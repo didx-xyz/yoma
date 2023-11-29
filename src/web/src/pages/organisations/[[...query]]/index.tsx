@@ -27,6 +27,7 @@ import {
 } from "~/lib/constants";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
+import { config } from "~/lib/react-query-config";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -57,37 +58,41 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   const { query, page } = context.query;
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient(config);
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: [`OrganisationsActive_${query?.toString()}_${page?.toString()}`],
-    queryFn: () =>
-      getOrganisations(
-        {
-          pageNumber: page ? parseInt(page.toString()) : 1,
-          pageSize: 20,
-          valueContains: query?.toString() ?? null,
-          statuses: [Status.Active],
-        },
-        context,
-      ),
-  });
-  await queryClient.prefetchQuery({
-    queryKey: [
-      `OrganisationsInactive_${query?.toString()}_${page?.toString()}`,
-    ],
-    queryFn: () =>
-      getOrganisations(
-        {
-          pageNumber: page ? parseInt(page.toString()) : 1,
-          pageSize: 20,
-          valueContains: query?.toString() ?? null,
-          statuses: [Status.Inactive],
-        },
-        context,
-      ),
-  });
+  await Promise.all([
+    await queryClient.prefetchQuery({
+      queryKey: [
+        `OrganisationsActive_${query?.toString()}_${page?.toString()}`,
+      ],
+      queryFn: () =>
+        getOrganisations(
+          {
+            pageNumber: page ? parseInt(page.toString()) : 1,
+            pageSize: 20,
+            valueContains: query?.toString() ?? null,
+            statuses: [Status.Active],
+          },
+          context,
+        ),
+    }),
+    await queryClient.prefetchQuery({
+      queryKey: [
+        `OrganisationsInactive_${query?.toString()}_${page?.toString()}`,
+      ],
+      queryFn: () =>
+        getOrganisations(
+          {
+            pageNumber: page ? parseInt(page.toString()) : 1,
+            pageSize: 20,
+            valueContains: query?.toString() ?? null,
+            statuses: [Status.Inactive],
+          },
+          context,
+        ),
+    }),
+  ]);
 
   return {
     props: {

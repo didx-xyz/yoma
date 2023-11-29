@@ -54,6 +54,7 @@ import axios from "axios";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
 import Moment from "react-moment";
+import { config } from "~/lib/react-query-config";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -62,7 +63,7 @@ interface IParams extends ParsedUrlQuery {
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { opportunityId } = context.params as IParams;
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient(config);
   const session = await getServerSession(context.req, context.res, authOptions);
 
   try {

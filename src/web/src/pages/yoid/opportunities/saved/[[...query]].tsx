@@ -17,6 +17,7 @@ import YoIDTabbedOpportunities from "~/components/Layout/YoIDTabbedOpportunities
 import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListItem";
 import { PaginationInfoComponent } from "~/components/PaginationInfo";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
+import { config } from "~/lib/react-query-config";
 
 interface IParams extends ParsedUrlQuery {
   query?: string;
@@ -35,7 +36,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient(config);
   const { id } = context.params as IParams;
   const { query, page } = context.query;
 

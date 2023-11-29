@@ -71,6 +71,7 @@ import {
   REGEX_URL_VALIDATION,
 } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { config } from "~/lib/react-query-config";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -91,7 +92,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   const { id, opportunityId } = context.params as IParams;
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient(config);
 
   // 👇 set theme based on role
   let theme;
@@ -109,64 +110,66 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: ["categories"],
-    queryFn: async () =>
-      (await getCategories(context)).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
-  });
-  await queryClient.prefetchQuery({
-    queryKey: ["countries"],
-    queryFn: async () =>
-      (await getCountries(context)).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
-  });
-  await queryClient.prefetchQuery({
-    queryKey: ["languages"],
-    queryFn: async () =>
-      (await getLanguages(context)).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
-  });
-  await queryClient.prefetchQuery({
-    queryKey: ["opportunityTypes"],
-    queryFn: async () =>
-      (await getTypes(context)).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
-  });
-  await queryClient.prefetchQuery({
-    queryKey: ["verificationTypes"],
-    queryFn: async () => await getVerificationTypes(context),
-  });
-  await queryClient.prefetchQuery({
-    queryKey: ["difficulties"],
-    queryFn: async () =>
-      (await getDifficulties(context)).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
-  });
-  await queryClient.prefetchQuery({
-    queryKey: ["timeIntervals"],
-    queryFn: async () =>
-      (await getTimeIntervals(context)).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
-  });
-  if (opportunityId !== "create") {
+  await Promise.all([
     await queryClient.prefetchQuery({
-      queryKey: ["opportunity", opportunityId],
-      queryFn: () => getOpportunityById(opportunityId, context),
-    });
-  }
+      queryKey: ["categories"],
+      queryFn: async () =>
+        (await getCategories(context)).map((c) => ({
+          value: c.id,
+          label: c.name,
+        })),
+    }),
+    await queryClient.prefetchQuery({
+      queryKey: ["countries"],
+      queryFn: async () =>
+        (await getCountries(context)).map((c) => ({
+          value: c.id,
+          label: c.name,
+        })),
+    }),
+    await queryClient.prefetchQuery({
+      queryKey: ["languages"],
+      queryFn: async () =>
+        (await getLanguages(context)).map((c) => ({
+          value: c.id,
+          label: c.name,
+        })),
+    }),
+    await queryClient.prefetchQuery({
+      queryKey: ["opportunityTypes"],
+      queryFn: async () =>
+        (await getTypes(context)).map((c) => ({
+          value: c.id,
+          label: c.name,
+        })),
+    }),
+    await queryClient.prefetchQuery({
+      queryKey: ["verificationTypes"],
+      queryFn: async () => await getVerificationTypes(context),
+    }),
+    await queryClient.prefetchQuery({
+      queryKey: ["difficulties"],
+      queryFn: async () =>
+        (await getDifficulties(context)).map((c) => ({
+          value: c.id,
+          label: c.name,
+        })),
+    }),
+    await queryClient.prefetchQuery({
+      queryKey: ["timeIntervals"],
+      queryFn: async () =>
+        (await getTimeIntervals(context)).map((c) => ({
+          value: c.id,
+          label: c.name,
+        })),
+    }),
+    opportunityId !== "create"
+      ? await queryClient.prefetchQuery({
+          queryKey: ["opportunity", opportunityId],
+          queryFn: () => getOpportunityById(opportunityId, context),
+        })
+      : null,
+  ]);
 
   return {
     props: {

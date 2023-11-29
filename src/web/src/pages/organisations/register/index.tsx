@@ -31,6 +31,7 @@ import {
   THEME_GREEN,
   THEME_PURPLE,
 } from "~/lib/constants";
+import { config } from "~/lib/react-query-config";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -56,7 +57,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     theme = THEME_PURPLE;
   }
 
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient(config);
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({

@@ -27,6 +27,7 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import YoIDTabbed from "~/components/Layout/YoIDTabbed";
 import { toast } from "react-toastify";
+import { config } from "~/lib/react-query-config";
 
 interface IParams extends ParsedUrlQuery {
   query?: string;
@@ -45,7 +46,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient(config);
   const { id } = context.params as IParams;
   const { query, schemaType, page } = context.query;
 

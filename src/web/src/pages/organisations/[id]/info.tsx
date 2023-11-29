@@ -21,6 +21,7 @@ import {
 } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import type { NextPageWithLayout } from "~/pages/_app";
+import { config } from "~/lib/react-query-config";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -55,7 +56,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   const { id } = context.params as IParams;
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient(config);
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({

@@ -56,6 +56,7 @@ import { Loading } from "~/components/Status/Loading";
 import { OpportunityCompletionRead } from "~/components/Opportunity/OpportunityCompletionRead";
 import Moment from "react-moment";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { config } from "~/lib/react-query-config";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -94,42 +95,44 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const { id } = context.params as IParams;
   const { query, opportunity, page } = context.query;
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient(config);
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: [
-      `Verifications_${id}_${query?.toString()}_${opportunity}_${page?.toString()}`,
-    ],
-    queryFn: () =>
-      searchMyOpportunitiesAdmin(
-        {
-          organizations: [id],
-          pageNumber: page ? parseInt(page.toString()) : 1,
-          pageSize: PAGE_SIZE,
-          opportunity: opportunity?.toString() ?? null,
-          userId: null,
-          valueContains: query?.toString() ?? null,
-          action: Action.Verification,
-          verificationStatuses: [
-            VerificationStatus.Pending,
-            VerificationStatus.Completed,
-            VerificationStatus.Rejected,
-          ],
-        },
-        context,
-      ),
-  });
-  await queryClient.prefetchQuery({
-    queryKey: ["OpportunitiesForVerification", id],
-    queryFn: async () =>
-      (await getOpportunitiesForVerification([id], undefined, context)).map(
-        (x) => ({
-          value: x.id,
-          label: x.title,
-        }),
-      ),
-  });
+  await Promise.all([
+    await queryClient.prefetchQuery({
+      queryKey: [
+        `Verifications_${id}_${query?.toString()}_${opportunity}_${page?.toString()}`,
+      ],
+      queryFn: () =>
+        searchMyOpportunitiesAdmin(
+          {
+            organizations: [id],
+            pageNumber: page ? parseInt(page.toString()) : 1,
+            pageSize: PAGE_SIZE,
+            opportunity: opportunity?.toString() ?? null,
+            userId: null,
+            valueContains: query?.toString() ?? null,
+            action: Action.Verification,
+            verificationStatuses: [
+              VerificationStatus.Pending,
+              VerificationStatus.Completed,
+              VerificationStatus.Rejected,
+            ],
+          },
+          context,
+        ),
+    }),
+    await queryClient.prefetchQuery({
+      queryKey: ["OpportunitiesForVerification", id],
+      queryFn: async () =>
+        (await getOpportunitiesForVerification([id], undefined, context)).map(
+          (x) => ({
+            value: x.id,
+            label: x.title,
+          }),
+        ),
+    }),
+  ]);
 
   return {
     props: {

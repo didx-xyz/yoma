@@ -47,6 +47,7 @@ import {
   THEME_BLUE,
   THEME_GREEN,
 } from "~/lib/constants";
+import { config } from "~/lib/react-query-config";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -82,7 +83,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   const { id, opportunityId } = context.params as IParams;
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient(config);
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({

@@ -14,6 +14,7 @@ import { getSchemas } from "~/api/services/credentials";
 import type { SSISchema } from "~/api/models/credential";
 import { THEME_BLUE } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { config } from "~/lib/react-query-config";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -27,7 +28,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   const { query, page } = context.query;
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient(config);
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({

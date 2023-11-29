@@ -49,6 +49,7 @@ import { SchemaAttributesEdit } from "~/components/Schema/SchemaAttributesEdit";
 import type { SelectOption } from "~/api/models/lookups";
 import { THEME_BLUE } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { config } from "~/lib/react-query-config";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -66,22 +67,24 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   const { id } = context.params as IParams;
-  const queryClient = new QueryClient();
-  if (id !== "create") {
-    await queryClient.prefetchQuery({
-      queryKey: ["schema", id],
-      queryFn: () => getSchemaByName(id, context),
-    });
-  }
+  const queryClient = new QueryClient(config);
 
-  await queryClient.prefetchQuery({
-    queryKey: ["schemaTypes"],
-    queryFn: async () =>
-      (await getSchemaTypes()).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
-  });
+  await Promise.all([
+    await queryClient.prefetchQuery({
+      queryKey: ["schemaTypes"],
+      queryFn: async () =>
+        (await getSchemaTypes()).map((c) => ({
+          value: c.id,
+          label: c.name,
+        })),
+    }),
+    id !== "create"
+      ? await queryClient.prefetchQuery({
+          queryKey: ["schema", id],
+          queryFn: () => getSchemaByName(id, context),
+        })
+      : null,
+  ]);
 
   return {
     props: {

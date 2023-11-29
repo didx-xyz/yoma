@@ -14,6 +14,7 @@ import YoIDTabbed from "~/components/Layout/YoIDTabbed";
 import { userProfileAtom } from "~/lib/store";
 import { useAtomValue } from "jotai";
 import Link from "next/link";
+import { config } from "~/lib/react-query-config";
 
 interface IParams extends ParsedUrlQuery {
   query?: string;
@@ -32,7 +33,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient(config);
   const { id } = context.params as IParams;
   const { query, schemaType, page } = context.query;
 

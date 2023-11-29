@@ -24,6 +24,7 @@ import { userProfileAtom } from "~/lib/store";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import type { NextPageWithLayout } from "~/pages/_app";
 import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
+import { config } from "~/lib/react-query-config";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -36,17 +37,23 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient(config);
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: ["genders"],
-    queryFn: async () => await getGenders(),
-  });
-  await queryClient.prefetchQuery({
-    queryKey: ["countries"],
-    queryFn: async () => await getCountries(),
-  });
+  await Promise.all([
+    await queryClient.prefetchQuery({
+      queryKey: ["genders"],
+      queryFn: async () => await getGenders(),
+    }),
+    await queryClient.prefetchQuery({
+      queryKey: ["countries"],
+      queryFn: async () => await getCountries(),
+    }),
+    await queryClient.prefetchQuery({
+      queryKey: ["userProfile"],
+      queryFn: async () => await getUserProfile(),
+    }),
+  ]);
 
   return {
     props: {

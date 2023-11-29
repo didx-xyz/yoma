@@ -10,9 +10,10 @@ import { NextPageWithLayout } from "./_app";
 import Image from "next/image";
 import iconRocket from "public/images/icon-rocket.svg";
 import Link from "next/link";
+import { config } from "~/lib/react-query-config";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient(config);
   const session = await getServerSession(context.req, context.res, authOptions);
 
   // await queryClient.prefetchQuery(["organisation", id], () =>
