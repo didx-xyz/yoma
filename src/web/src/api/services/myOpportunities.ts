@@ -39,12 +39,13 @@ export const performActionSendForVerificationManual = async (
 
 export const getVerificationStatus = async (
   opportunityId: string,
+  context?: GetServerSidePropsContext,
 ): Promise<MyOpportunityResponseVerify | ""> => {
-  const { data } = await (
-    await ApiClient
-  ).post<MyOpportunityResponseVerify | "">(
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.post<MyOpportunityResponseVerify | "">(
     `/myopportunity/action/verify/status?opportunityId=${opportunityId}`,
   );
+
   return data;
 };
 
@@ -86,6 +87,14 @@ export const performActionVerifyBulk = async (
   await (
     await ApiClient
   ).patch(`/myopportunity/verification/finalize/batch`, model);
+};
+
+export const performActionViewed = async (
+  opportunityId: string,
+  context?: GetServerSidePropsContext,
+): Promise<any> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  await instance.put(`/myopportunity/action/${opportunityId}/view`);
 };
 
 export const getOpportunitiesForVerification = async (

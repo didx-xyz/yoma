@@ -14,7 +14,6 @@ export async function fetchClientEnv() {
       if (resp.ok) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const data = await resp.json();
-        console.debug("Client environment variables:", data);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return data;
       } else {

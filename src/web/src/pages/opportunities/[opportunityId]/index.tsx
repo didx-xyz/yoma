@@ -38,6 +38,7 @@ import iconSuccess from "public/images/icon-success.svg";
 import Image from "next/image";
 import {
   getVerificationStatus,
+  performActionViewed,
   saveMyOpportunity,
 } from "~/api/services/myOpportunities";
 import { toast } from "react-toastify";
@@ -67,15 +68,23 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
   try {
-    const data = await getOpportunityInfoById(
-      opportunityId,
-      session != null,
-      context,
-    );
-    await queryClient.prefetchQuery({
-      queryKey: ["opportunityInfo", opportunityId],
-      queryFn: () => data,
-    });
+    // 👇 prefetch queries on server
+    await Promise.all([
+      await queryClient.prefetchQuery({
+        queryKey: ["opportunityInfo", opportunityId],
+        queryFn: () =>
+          getOpportunityInfoById(opportunityId, session != null, context),
+      }),
+      session
+        ? await queryClient.prefetchQuery({
+            queryKey: ["verificationStatus", opportunityId],
+            queryFn: () => getVerificationStatus(opportunityId, context),
+          })
+        : null,
+    ]);
+
+    // perform viewed action
+    await performActionViewed(opportunityId, context);
 
     return {
       props: {
