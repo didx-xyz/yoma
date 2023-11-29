@@ -25,3 +25,8 @@ export const patchPhoto = async (file: any): Promise<UserProfile> => {
 
   return data;
 };
+
+export const patchYoIDOnboarding = async (): Promise<UserProfile> => {
+  const { data } = await (await ApiClient).patch<UserProfile>("/user/yoId");
+  return data;
+};
