@@ -35,11 +35,6 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Provider
         Task<Credential> GetCredentialById(string tenantId, string id);
 
         /// <summary>
-        /// Get the credential for the specified tenant / wallet and id, or null if not found
-        /// </summary>
-        Task<Credential?> GetCredentialByOrNullId(string tenantId, string id);
-
-        /// <summary>
         /// List the credentials for the specified tenant / wallet, with optional pagination
         /// </summary>
         Task<List<Credential>?> ListCredentials(string tenantId, int? start, int? count);

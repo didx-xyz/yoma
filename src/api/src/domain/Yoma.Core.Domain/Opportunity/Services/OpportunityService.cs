@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using System.Transactions;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -113,7 +114,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(id));
 
             var result = GetByIdOrNull(id, includeChildItems, includeComputed, ensureOrganizationAuthorization)
-                ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(Models.Opportunity)} with id '{id}' does not exist");
+                ?? throw new EntityNotFoundException("{nameof(Models.Opportunity)} with id '{id}' does not exist");
 
             return result;
         }

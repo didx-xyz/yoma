@@ -60,14 +60,6 @@ namespace Yoma.Core.Domain.Entity.Services
             return ToProfile(user);
         }
 
-        public UserProfile? GetOrNull()
-        {
-            var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-            var user = _userService.GetByEmailOrNull(username, true, true);
-            if (user == null) return null;
-            return ToProfile(user);
-        }
-
         public async Task<UserProfile> UpsertPhoto(IFormFile file)
         {
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);

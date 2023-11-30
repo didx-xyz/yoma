@@ -20,6 +20,7 @@ using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.IdentityProvider.Helpers;
 using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.SSI.Interfaces;
+using Yoma.Core.Domain.Core.Exceptions;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -107,7 +108,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new ArgumentNullException(nameof(id));
 
             var result = GetByIdOrNull(id, includeChildItems, includeComputed, ensureOrganizationAuthorization)
-                ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(Organization)} with id '{id}' does not exist");
+                ?? throw new EntityNotFoundException($"{nameof(Organization)} with id '{id}' does not exist");
 
             return result;
         }

@@ -41,11 +41,11 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
-            var result = _myOpportunityService.GetByIdOrNull(id, true, true, true);
+            var result = _myOpportunityService.GetById(id, true, true, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetById));
 
-            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Return a list of opportunities sent for verification with optional organization and/or verification status filtering (Admin or Organization Admin roles required)")]
@@ -120,11 +120,11 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetVerificationStatus));
 
-            var result = _myOpportunityService.GetVerificationStatusOrNull(opportunityId);
+            var result = _myOpportunityService.GetVerificationStatus(opportunityId);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetVerificationStatus));
 
-            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter (Authenticated User)")]

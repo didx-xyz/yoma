@@ -45,18 +45,6 @@ namespace Yoma.Core.Domain.SSI.Services
             return await ParseCredential<SSICredential>(item);
         }
 
-        public async Task<SSICredential?> GetUserCredentialByIdOrNull(string id)
-        {
-            if (string.IsNullOrWhiteSpace(id))
-                throw new ArgumentNullException(nameof(id));
-            id = id.Trim();
-
-            var item = await _ssiProviderClient.GetCredentialByOrNullId(GetUserTenantId(), id);
-            if (item == null) return null;
-
-            return await ParseCredential<SSICredential>(item);
-        }
-
         public async Task<SSIWalletSearchResults> SearchUserCredentials(SSIWalletFilter filter)
         {
             if (filter == null)

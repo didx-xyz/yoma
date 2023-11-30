@@ -44,11 +44,11 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
-            var result = _userService.GetByIdOrNull(id, true, true);
+            var result = _userService.GetById(id, true, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetById));
 
-            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Search for users based on the supplied filter (Admin or Organization Admin roles required)")]
@@ -77,11 +77,11 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(Get));
 
-            var result = _userProfileService.GetOrNull();
+            var result = _userProfileService.Get();
 
             _logger.LogInformation("Request {requestName} handled", nameof(Get));
 
-            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Update the user's profile, within Yoma and the identity provider, optionally requesting a email verification and/or password reset (Authenticated User)")]

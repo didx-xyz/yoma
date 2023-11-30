@@ -59,11 +59,11 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
 
-            var result = _opportunityInfoService.GetActiveExpiredByIdOrNull(id, includeExpired);
+            var result = _opportunityInfoService.GetActiveExpiredById(id, includeExpired);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
 
-            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter (Anonymous)")]
@@ -257,11 +257,11 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
 
-            var result = _opportunityInfoService.GetByIdOrNull(id, true);
+            var result = _opportunityInfoService.GetById(id, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
 
-            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Get the specified opportunity by id")]
@@ -273,11 +273,11 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
-            var result = _opportunityService.GetByIdOrNull(id, true, true, true);
+            var result = _opportunityService.GetById(id, true, true, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetById));
 
-            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Create a new opportunity")]

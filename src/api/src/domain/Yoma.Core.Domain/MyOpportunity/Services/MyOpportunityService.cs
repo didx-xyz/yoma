@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Transactions;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -99,19 +100,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
 
-            var result = GetByIdOrNull(id, includeChildItems, includeComputed, ensureOrganizationAuthorization)
-                ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(Models.MyOpportunity)} with id '{id}' does not exist");
-
-            return result;
-        }
-
-        public Models.MyOpportunity? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization)
-        {
-            if (id == Guid.Empty)
-                throw new ArgumentNullException(nameof(id));
-
-            var result = _myOpportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
-            if (result == null) return null;
+            var result = _myOpportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id)
+                ?? throw new EntityNotFoundException($"{nameof(Models.MyOpportunity)} with id '{id}' does not exist");
 
             if (ensureOrganizationAuthorization)
                 _organizationService.IsAdmin(result.OrganizationId, true);
@@ -172,7 +162,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             return results;
         }
 
-        public MyOpportunityResponseVerify? GetVerificationStatusOrNull(Guid opportunityId)
+        public MyOpportunityResponseVerify? GetVerificationStatus(Guid opportunityId)
         {
             var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
 
@@ -180,7 +170,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
             var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
-            if (myOpportunity == null) return null;
+            if (myOpportunity == null)
+                throw new EntityNotFoundException($"Opportunity with id '{opportunity.Id}' has not been sent for verification");    
 
             if (!myOpportunity.VerificationStatus.HasValue)
                 throw new InvalidOperationException($"Verification status expected for 'my' opportunity with id '{myOpportunity.Id}'");

@@ -2,6 +2,7 @@ using AriesCloudAPI.DotnetSDK.AspCore.Clients;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Interfaces;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -54,7 +55,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
         public async Task<Domain.SSI.Models.Provider.Schema> GetSchemaByName(string name)
         {
-            var result = await GetSchemaByNameOrNull(name) ?? throw new ArgumentException($"{nameof(Domain.SSI.Models.Provider.Schema)} with name '{name}' does not exists", nameof(name));
+            var result = await GetSchemaByNameOrNull(name) ?? throw new EntityNotFoundException($"{nameof(Domain.SSI.Models.Provider.Schema)} with name '{name}' does not exists");
             return result;
         }
 
@@ -104,31 +105,13 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
         public async Task<Domain.SSI.Models.Provider.Credential> GetCredentialById(string tenantId, string id)
         {
-            var result = await GetCredentialByOrNullId(tenantId, id);
-            return result == null
-                ? throw new ArgumentOutOfRangeException($"Credential not found for tenant id '{tenantId}' and id '{id}")
-                : result;
-        }
-
-        public async Task<Domain.SSI.Models.Provider.Credential?> GetCredentialByOrNullId(string tenantId, string id)
-        {
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentNullException(nameof(id));
             id = id.Trim();
 
             var client = _clientFactory.CreateTenantClient(tenantId);
 
-            //TODO: ld_proofs
-            IndyCredInfo? result = null;
-            try
-            {
-                result = await client.GetIndyCredentialAsync(id);
-            }
-            catch (AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
-            {
-                if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
-            }
-            if (result == null) return null;
+            var result = await client.GetIndyCredentialAsync(id);
 
             return result.ToCredential();
         }

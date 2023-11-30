@@ -13,6 +13,7 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core.Exceptions;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -102,7 +103,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new ArgumentNullException(nameof(id));
 
             var result = GetByIdOrNull(id, includeChildItems, includeComputed)
-                ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(User)} with id '{id}' does not exist");
+                ?? throw new EntityNotFoundException($"{nameof(User)} with id '{id}' does not exist");
 
             return result;
         }

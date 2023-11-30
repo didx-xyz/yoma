@@ -96,11 +96,11 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetShemaByName));
 
-            var result = await _ssiSchemaService.GetByFullNameOrNull(name);
+            var result = await _ssiSchemaService.GetByFullName(name);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetShemaByName));
 
-            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Create a new schema with the specified entities (objects) and properties")]
@@ -159,11 +159,11 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetUserWalletCredentialById));
 
-            var result = await _ssiWalletService.GetUserCredentialByIdOrNull(id);
+            var result = await _ssiWalletService.GetUserCredentialById(id);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetUserWalletCredentialById));
 
-            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
+            return StatusCode((int)HttpStatusCode.OK, result);
         }
         #endregion Authenticated User Based Actions
         #endregion

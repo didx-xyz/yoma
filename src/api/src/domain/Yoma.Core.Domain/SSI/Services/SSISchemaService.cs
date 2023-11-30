@@ -51,13 +51,6 @@ namespace Yoma.Core.Domain.SSI.Services
             return ConvertToSSISchema(schema);
         }
 
-        public async Task<SSISchema?> GetByIdOrNull(string id)
-        {
-            var schema = await _ssiProviderClient.GetSchemaByIdOrNull(id);
-            if (schema == null) return null;
-            return ConvertToSSISchema(schema);
-        }
-
         public async Task<SSISchema> GetByFullName(string fullName)
         {
             var schema = await _ssiProviderClient.GetSchemaByName(fullName);
