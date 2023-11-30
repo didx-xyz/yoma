@@ -86,6 +86,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Update the specified organization")]
         [HttpPatch()]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> Update([FromForm] OrganizationRequestUpdate request)
         {
@@ -102,6 +103,7 @@ namespace Yoma.Core.Api.Controllers
             Description = $"An Admin have the power to activate, deactivate, decline or delete an organization, whilst an Organization Admin can only delete. With a decline, an approval comment is required")]
         [HttpPatch("{id}/status")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> UpdateStatus([FromRoute] Guid id, [FromBody] OrganizationRequestUpdateStatus request)
         {
@@ -132,6 +134,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Assign provider type(s) to the specified organization")]
         [HttpPatch("{id}/assign/providerTypes")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignProviderTypes([FromRoute] Guid id, [Required][FromBody] List<Guid> providerTypeIds)
         {
@@ -147,6 +150,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Remove provider type(s) from the specified organization")]
         [HttpPatch("{id}/remove/providerTypes")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> RemoveProviderTypes([FromRoute] Guid id, [Required][FromBody] List<Guid> providerTypeIds)
         {
@@ -162,6 +166,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Update the organization's logo")]
         [HttpPatch("{id}/logo")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> UpdateLogo([FromRoute] Guid id, [Required] IFormFile file)
         {
@@ -177,6 +182,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Add document(s) for the specified organization's")]
         [HttpPatch("{id}/documents/{type}")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AddDocuments([FromRoute] Guid id, [FromRoute] OrganizationDocumentType type, [Required] List<IFormFile> documents)
         {
@@ -191,6 +197,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Delete document(s) from the specified organization")]
         [HttpDelete("{id}/documents/{type}")]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> DeleteDocuments([FromRoute] Guid id, [FromRoute] OrganizationDocumentType type, [Required] List<Guid> documentIds)
@@ -207,6 +214,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Assign administrators to the specified organization")]
         [HttpPatch("{id}/assign/admins")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignAdmins([FromRoute] Guid id, [FromRoute] List<string> emails)
         {
@@ -222,6 +230,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Remove administrators from the specified organization")]
         [HttpPatch("{id}/remove/admins")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> RemoveAdmins([FromRoute] Guid id, [FromRoute] List<string> emails)
         {
@@ -237,6 +246,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Return a list of administrators for the specified organization")]
         [HttpGet("{id}/admin")]
         [ProducesResponseType(typeof(List<UserInfo>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult ListAdmins([FromRoute] Guid id)
         {

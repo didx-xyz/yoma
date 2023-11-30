@@ -114,7 +114,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(id));
 
             var result = GetByIdOrNull(id, includeChildItems, includeComputed, ensureOrganizationAuthorization)
-                ?? throw new EntityNotFoundException("{nameof(Models.Opportunity)} with id '{id}' does not exist");
+                ?? throw new EntityNotFoundException($"{nameof(Models.Opportunity)} with id '{id}' does not exist");
 
             return result;
         }

@@ -80,7 +80,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
         public async Task<Domain.SSI.Models.Provider.Schema> GetSchemaById(string id)
         {
-            var result = await GetSchemaByIdOrNull(id) ?? throw new ArgumentException($"{nameof(Domain.SSI.Models.Provider.Schema)} with id '{id}' does not exists", nameof(id));
+            var result = await GetSchemaByIdOrNull(id) ?? throw new EntityNotFoundException($"{nameof(Domain.SSI.Models.Provider.Schema)} with id '{id}' does not exists");
             return result;
         }
 
@@ -109,7 +109,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 throw new ArgumentNullException(nameof(id));
             id = id.Trim();
 
-            var client = _clientFactory.CreateTenantClient(tenantId);
+            var client = _clientFactory.CreateTenantClient(tenantId); //will result in a HttpClientException(StatusCode=NotFound)
 
             var result = await client.GetIndyCredentialAsync(id);
 

@@ -74,7 +74,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new ArgumentNullException(nameof(email));
 
             var result = GetByEmailOrNull(email, includeChildItems, includeComputed)
-                ?? throw new ValidationException($"User with email '{email}' does not exist");
+                ?? throw new EntityNotFoundException($"User with email '{email}' does not exist");
 
             return result;
         }

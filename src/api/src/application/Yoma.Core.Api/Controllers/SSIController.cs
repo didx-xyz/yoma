@@ -121,6 +121,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Update the schema with the specified entities (objects) and properties", Description = "This operation will create a new version of the schema automatically")]
         [HttpPatch("schema")]
         [ProducesResponseType(typeof(SSISchema), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = Constants.Role_Admin)]
         public async Task<IActionResult> UpdateSchema([FromBody] SSISchemaRequestUpdate request)
         {

@@ -131,8 +131,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
             await _schemaRequestValidatorUpdate.ValidateAndThrowAsync(request);
 
-            var schemaExisting = await GetByFullNameOrNull(request.Name)
-                ?? throw new ValidationException($"Schema '{request.Name}' does not exist");
+            var schemaExisting = await GetByFullName(request.Name);
 
             var mismatchedEntities = _ssiSchemaEntityService.List(null)
               .Where(entity => !entity.Types?.Any(t => t?.Id == schemaExisting.TypeId) == true &&

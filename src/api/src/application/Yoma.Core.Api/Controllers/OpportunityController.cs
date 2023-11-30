@@ -298,6 +298,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Update the specified opportunity")]
         [HttpPatch()]
         [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> Update([FromBody] OpportunityRequestUpdate request)
         {
@@ -313,6 +314,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Update opportunity status (Active / Inactive / Deleted)")]
         [HttpPatch("{id}/{status}")]
         [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> UpdateStatus([FromRoute] Guid id, [FromRoute] Status status)
         {
@@ -328,6 +330,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Assign category(ies) to the specified opportunity")]
         [HttpPatch("{id}/assign/categories")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignCategories([FromRoute] Guid id, [Required][FromBody] List<Guid> categoryIds)
         {
@@ -343,6 +346,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Remove category(ies) from the specified opportunity")]
         [HttpPatch("{id}/remove/categories")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> RemoveCategories([FromRoute] Guid id, [Required][FromBody] List<Guid> categoryIds)
         {
@@ -358,6 +362,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Assign country(ies) to the specified opportunity")]
         [HttpPatch("{id}/assign/countries")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignCountries([FromRoute] Guid id, [Required][FromBody] List<Guid> countryIds)
         {
@@ -373,6 +378,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Remove country(ies) from the specified opportunity")]
         [HttpPatch("{id}/remove/countries")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> RemoveCountries([FromRoute] Guid id, [Required][FromBody] List<Guid> countryIds)
         {
@@ -388,6 +394,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Assign language(s) to the specified opportunity")]
         [HttpPatch("{id}/assign/languages")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignLanguages([FromRoute] Guid id, [Required][FromBody] List<Guid> languageIds)
         {
@@ -403,6 +410,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Remove language(s) from the specified opportunity")]
         [HttpPatch("{id}/remove/languages")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> RemoveLanguages([FromRoute] Guid id, [Required][FromBody] List<Guid> languageIds)
         {
@@ -418,6 +426,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Assign skill(s) to the specified opportunity")]
         [HttpPatch("{id}/assign/skills")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignSkills([FromRoute] Guid id, [Required][FromBody] List<Guid> skillIds)
         {
@@ -433,6 +442,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Remove skill(s) from the specified opportunity")]
         [HttpPatch("{id}/remove/skills")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> RemoveSkills([FromRoute] Guid id, [Required][FromBody] List<Guid> skillIds)
         {
@@ -448,6 +458,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Assign verification types(s) to the specified opportunity")]
         [HttpPatch("{id}/assign/verificationTypes")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> AssignVerificationTypes([FromRoute] Guid id, [Required][FromBody] List<OpportunityRequestVerificationType> verificationTypes)
         {
@@ -463,6 +474,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Remove verification type(s) from the specified opportunity")]
         [HttpPatch("{id}/remove/verificationTypes")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> RemoveVerificationTypes([FromRoute] Guid id, [Required][FromBody] List<VerificationType> verificationTypes)
         {

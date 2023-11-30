@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider.Extensions;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -35,7 +36,7 @@ namespace Yoma.Core.Domain.Core.Services
 
             var result = _blobObjectRepository.Query().SingleOrDefault(o => o.Id == id);
 
-            return result ?? throw new ArgumentOutOfRangeException(nameof(id), $"Blob with id '{id}' does not exist");
+            return result ?? throw new EntityNotFoundException($"Blob with id '{id}' does not exist");
         }
 
         // Create the blob object only, preserving the tracking record; used for rollbacks
