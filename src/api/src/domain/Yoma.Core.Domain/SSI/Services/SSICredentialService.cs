@@ -51,7 +51,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 StatusId = statusPendingId
             };
 
-            switch (item.SchemaType)
+            switch (schema.Type)
             {
                 case SchemaType.Opportunity:
                     existingItem = _ssiCredentialIssuanceRepository.Query().SingleOrDefault(o => o.SchemaTypeId == item.SchemaTypeId && o.MyOpportunityId == entityId);
