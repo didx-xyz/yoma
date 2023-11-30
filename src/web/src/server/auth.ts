@@ -80,19 +80,18 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, account, trigger, session }) {
-      // called when user profile is updated (update function from settings.tsx)
+      // called when the user profile is updated (update function from settings.tsx)
+      // also used to force a refresh of token (/organisation/register/index.tsx)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      if (trigger === "update" && session?.name) {
-        token.user = session as User;
+      if (trigger === "update") {
+        token.user = session.user;
+        return refreshAccessToken(token);
       }
 
       // Initial sign in
       if (account && user) {
         // get roles from access_token
         const { realm_access } = decode(account.access_token); // eslint-disable-line
-
-        // get user profile from yoma-api
-        //const userProfile = await getYomaUserProfile(account.access_token!);
 
         return {
           accessToken: account.accessToken,
@@ -110,7 +109,7 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      // Access token has expired, try to update it
+      // Access token has expired or trigger is update, try to update it
       return refreshAccessToken(token);
     },
     // eslint-disable-next-line
@@ -149,27 +148,6 @@ const decode = function (token: any) {
   return JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
 };
 
-// async function getYomaUserProfile(
-//   access_token: string,
-// ): Promise<UserProfile | null> {
-//   const response = await fetch(`${env.API_BASE_URL}/user`, {
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${access_token}`,
-//     },
-//     method: "GET",
-//   });
-
-//   if (!response.ok) {
-//     console.error(
-//       "Failed to get user profile from yoma-api: " + response.statusText,
-//     );
-//     return null;
-//   }
-
-//   return await response.json(); // eslint-disable-line
-// }
-
 /**
  * Takes a token, and returns a new token with updated
  * `accessToken` and `accessTokenExpires`. If an error occurs,
@@ -199,12 +177,19 @@ async function refreshAccessToken(token: any) {
       throw refreshedTokens;
     }
 
+    // get roles from access_token
+    const { realm_access } = decode(refreshedTokens.access_token); // eslint-disable-line
+
     /* eslint-disable */
     return {
       ...token,
       accessToken: refreshedTokens.access_token,
       accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
+      user: {
+        ...token.user,
+        roles: realm_access.roles, // eslint-disable-line
+      },
     };
     /* eslint-enable */
   } catch (error) {
