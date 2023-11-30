@@ -32,6 +32,7 @@ import {
   THEME_PURPLE,
 } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
+import { getCountries } from "~/api/services/lookups";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -60,10 +61,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient(config);
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: ["organisationProviderTypes"],
-    queryFn: () => getOrganisationProviderTypes(context),
-  });
+  await Promise.all([
+    await queryClient.prefetchQuery({
+      queryKey: ["organisationProviderTypes"],
+      queryFn: () => getOrganisationProviderTypes(context),
+    }),
+    await queryClient.prefetchQuery({
+      queryKey: ["countries"],
+      queryFn: async () => await getCountries(),
+    }),
+  ]);
 
   return {
     props: {

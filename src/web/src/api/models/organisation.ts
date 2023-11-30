@@ -46,6 +46,7 @@ export interface Organization {
   registrationNumber: string | null;
   city: string | null;
   countryId: string | null;
+  country: string | null;
   streetAddress: string | null;
   province: string | null;
   postalCode: string | null;
@@ -54,12 +55,12 @@ export interface Organization {
   statusId: string;
   status: OrganizationStatus;
   commentApproval: string | null;
-  dateStatusModified: string;
+  dateStatusModified: string | null;
   logoId: string | null;
   logoURL: string | null;
-  documents: OrganizationDocument[] | null;
   dateCreated: string;
   dateModified: string;
+  documents: OrganizationDocument[] | null;
   providerTypes: OrganizationProviderType[] | null;
   administrators: UserInfo[] | null;
 }

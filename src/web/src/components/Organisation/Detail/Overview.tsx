@@ -91,8 +91,15 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
           </label>
           <label className="label">
             <div className="label-text">
-              {organisation?.streetAddress} {organisation?.province}{" "}
-              {organisation?.city} {organisation?.postalCode}
+              {organisation?.streetAddress}
+              <br />
+              {organisation?.province}
+              <br />
+              {organisation?.city}
+              <br />
+              {organisation?.postalCode}
+              <br />
+              {organisation?.country}
             </div>
           </label>
         </div>
