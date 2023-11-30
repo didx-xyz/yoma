@@ -35,16 +35,17 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Get 'my' opportunity by id (Admin or Organization Admin roles required)")]
         [HttpGet("{id}/admin")]
         [ProducesResponseType(typeof(MyOpportunity), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult GetById([FromRoute] Guid id)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
-            var result = _myOpportunityService.GetById(id, true, true, true);
+            var result = _myOpportunityService.GetByIdOrNull(id, true, true, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetById));
 
-            return result == null ? StatusCode((int)HttpStatusCode.NoContent) : StatusCode((int)HttpStatusCode.OK, result);
+            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Return a list of opportunities sent for verification with optional organization and/or verification status filtering (Admin or Organization Admin roles required)")]
@@ -113,7 +114,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Get 'my' opportunity verification status for the specified opportunity (Authenticated User)")]
         [HttpPost("action/verify/status")]
         [ProducesResponseType(typeof(MyOpportunityResponseVerify), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.NoContent)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_User}")]
         public IActionResult GetVerificationStatus([FromQuery] Guid opportunityId)
         {
@@ -123,7 +124,7 @@ namespace Yoma.Core.Api.Controllers
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetVerificationStatus));
 
-            return result == null ? StatusCode((int)HttpStatusCode.NoContent) : StatusCode((int)HttpStatusCode.OK, result);
+            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter (Authenticated User)")]

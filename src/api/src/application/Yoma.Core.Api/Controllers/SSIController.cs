@@ -90,16 +90,17 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Get the latest version of the configured schema with the specified name (Admin or Organization Admin roles required)", Description = "Results includes the schema's associated entities (objects) and properties")]
         [HttpGet("schema/{name}")]
         [ProducesResponseType(typeof(SSISchema), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> GetShemaByName([FromRoute] string name)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetShemaByName));
 
-            var result = await _ssiSchemaService.GetByFullName(name);
+            var result = await _ssiSchemaService.GetByFullNameOrNull(name);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetShemaByName));
 
-            return StatusCode((int)HttpStatusCode.OK, result);
+            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Create a new schema with the specified entities (objects) and properties")]
@@ -152,16 +153,17 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Get a specific credential from the user's wallet by id (Authenticated User)")]
         [HttpPost("wallet/user/{id}")]
         [ProducesResponseType(typeof(SSIWalletSearchResults), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_User}")]
         public async Task<IActionResult> GetUserWalletCredentialById([FromRoute] string id)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetUserWalletCredentialById));
 
-            var result = await _ssiWalletService.GetUserCredentialById(id);
+            var result = await _ssiWalletService.GetUserCredentialByIdOrNull(id);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetUserWalletCredentialById));
 
-            return StatusCode((int)HttpStatusCode.OK, result);
+            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
         }
         #endregion Authenticated User Based Actions
         #endregion

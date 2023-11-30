@@ -7,7 +7,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
     {
         Models.Opportunity GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization);
 
-        Models.Opportunity? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed);
+        Models.Opportunity? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization);
 
         Models.Opportunity? GetByTitleOrNull(string title, bool includeChildItems, bool includeComputed);
 

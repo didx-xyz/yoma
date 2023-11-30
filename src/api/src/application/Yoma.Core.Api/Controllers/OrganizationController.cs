@@ -40,16 +40,17 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Get the specified organization by id")]
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult GetById([FromRoute] Guid id)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
-            var result = _organizationService.GetById(id, true, true, true);
+            var result = _organizationService.GetByIdOrNull(id, true, true, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetById));
 
-            return StatusCode((int)HttpStatusCode.OK, result);
+            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Search for organizations based on the supplied filter")]

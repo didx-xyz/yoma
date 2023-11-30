@@ -251,31 +251,33 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Get the specified opportunity info by id")]
         [HttpGet("{id}/admin/info")]
         [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult GetInfoById([FromRoute] Guid id)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
 
-            var result = _opportunityInfoService.GetById(id, true);
+            var result = _opportunityInfoService.GetByIdOrNull(id, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
 
-            return StatusCode((int)HttpStatusCode.OK, result);
+            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Get the specified opportunity by id")]
         [HttpGet("{id}/admin")]
         [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult GetById([FromRoute] Guid id)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
-            var result = _opportunityService.GetById(id, true, true, true);
+            var result = _opportunityService.GetByIdOrNull(id, true, true, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetById));
 
-            return StatusCode((int)HttpStatusCode.OK, result);
+            return result == null ? StatusCode((int)HttpStatusCode.NotFound) : StatusCode((int)HttpStatusCode.OK, result);
         }
 
         [SwaggerOperation(Summary = "Create a new opportunity")]

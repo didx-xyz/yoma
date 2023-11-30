@@ -99,8 +99,19 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
 
-            var result = _myOpportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id)
+            var result = GetByIdOrNull(id, includeChildItems, includeComputed, ensureOrganizationAuthorization)
                 ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(Models.MyOpportunity)} with id '{id}' does not exist");
+
+            return result;
+        }
+
+        public Models.MyOpportunity? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization)
+        {
+            if (id == Guid.Empty)
+                throw new ArgumentNullException(nameof(id));
+
+            var result = _myOpportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
+            if (result == null) return null;
 
             if (ensureOrganizationAuthorization)
                 _organizationService.IsAdmin(result.OrganizationId, true);

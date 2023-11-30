@@ -23,7 +23,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Public Members
-        public OpportunityInfo? GetById(Guid id, bool ensureOrganizationAuthorization)
+        public OpportunityInfo GetById(Guid id, bool ensureOrganizationAuthorization)
         {
             var opportunity = _opportunityService.GetById(id, true, true, ensureOrganizationAuthorization);
 
@@ -32,9 +32,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return result;
         }
 
+        public OpportunityInfo? GetByIdOrNull(Guid id, bool ensureOrganizationAuthorization)
+        {
+            var opportunity = _opportunityService.GetByIdOrNull(id, true, true, ensureOrganizationAuthorization);
+            if (opportunity == null) return null;
+
+            var result = opportunity.ToOpportunityInfo();
+            SetParticipantCounts(result);
+            return result;
+        }
+
         public OpportunityInfo? GetActiveExpiredByIdOrNull(Guid id, bool? includeExpired)
         {
-            var opportunity = _opportunityService.GetByIdOrNull(id, true, true);
+            var opportunity = _opportunityService.GetByIdOrNull(id, true, true, false);
 
             //inactive organization
             if (opportunity == null || opportunity.OrganizationStatus != Entity.OrganizationStatus.Active) return null;

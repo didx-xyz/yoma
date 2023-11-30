@@ -104,6 +104,14 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
         public async Task<Domain.SSI.Models.Provider.Credential> GetCredentialById(string tenantId, string id)
         {
+            var result = await GetCredentialByOrNullId(tenantId, id);
+            return result == null
+                ? throw new ArgumentOutOfRangeException($"Credential not found for tenant id '{tenantId}' and id '{id}")
+                : result;
+        }
+
+        public async Task<Domain.SSI.Models.Provider.Credential?> GetCredentialByOrNullId(string tenantId, string id)
+        {
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentNullException(nameof(id));
             id = id.Trim();
@@ -111,9 +119,18 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             var client = _clientFactory.CreateTenantClient(tenantId);
 
             //TODO: ld_proofs
-            var indyCredential = await client.GetIndyCredentialAsync(id);
+            IndyCredInfo? result = null;
+            try
+            {
+                result = await client.GetIndyCredentialAsync(id);
+            }
+            catch (AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+            {
+                if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+            }
+            if (result == null) return null;
 
-            return indyCredential.ToCredential();
+            return result.ToCredential();
         }
 
         public async Task<List<Domain.SSI.Models.Provider.Credential>?> ListCredentials(string tenantId, int? start, int? count)
