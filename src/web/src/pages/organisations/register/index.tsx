@@ -33,7 +33,7 @@ import {
 } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getCountries } from "~/api/services/lookups";
-import { getSession, signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { fetchClientEnv } from "~/lib/utils";
 
 // ⚠️ SSR
@@ -137,7 +137,7 @@ const OrganisationCreate: NextPageWithLayout<{
 
         // refresh the access token to get new roles (OrganisationAdmin is added to the user roles after organisation is registered)
         // trigger a silent refresh by updating the session (see /server/auth.ts)
-        // await update(session);
+        await update(session);
 
         // refresh user profile for new organisation to reflect on user menu
         const userProfile = await getUserProfile();
@@ -160,20 +160,6 @@ const OrganisationCreate: NextPageWithLayout<{
     },
     [setIsLoading, setUserProfile, update, session],
   );
-
-  //https://github.com/nextauthjs/next-auth/discussions/4229
-  // const refreshSession = async () => {
-  //   await fetch("/api/auth/session?refresh=true", {
-  //     method: "GET",
-  //     headers: { "Content-Type": "application/json" },
-  //   });
-  //    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  //    signIn(
-  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  //     ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
-  //       "") as string,  { redirect: false }
-  //   );
-  // }
 
   // form submission handler
   const onSubmitStep = useCallback(
