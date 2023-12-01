@@ -90,6 +90,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Get the latest version of the configured schema with the specified name (Admin or Organization Admin roles required)", Description = "Results includes the schema's associated entities (objects) and properties")]
         [HttpGet("schema/{name}")]
         [ProducesResponseType(typeof(SSISchema), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> GetShemaByName([FromRoute] string name)
         {
@@ -120,6 +121,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Update the schema with the specified entities (objects) and properties", Description = "This operation will create a new version of the schema automatically")]
         [HttpPatch("schema")]
         [ProducesResponseType(typeof(SSISchema), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = Constants.Role_Admin)]
         public async Task<IActionResult> UpdateSchema([FromBody] SSISchemaRequestUpdate request)
         {
@@ -152,6 +154,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Get a specific credential from the user's wallet by id (Authenticated User)")]
         [HttpPost("wallet/user/{id}")]
         [ProducesResponseType(typeof(SSIWalletSearchResults), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_User}")]
         public async Task<IActionResult> GetUserWalletCredentialById([FromRoute] string id)
         {

@@ -32,7 +32,7 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Provider
         /// <summary>
         /// Get the credential for the specified tenant / wallet and id
         /// </summary>
-        Task<Domain.SSI.Models.Provider.Credential> GetCredentialById(string tenantId, string id);
+        Task<Credential> GetCredentialById(string tenantId, string id);
 
         /// <summary>
         /// List the credentials for the specified tenant / wallet, with optional pagination

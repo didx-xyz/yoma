@@ -35,7 +35,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
 
         private bool OpportunityExist(Guid userId)
         {
-            return _opportunityService.GetByIdOrNull(userId, false, false) != null;
+            return _opportunityService.GetByIdOrNull(userId, false, false, false) != null;
         }
         #endregion
     }

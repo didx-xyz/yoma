@@ -1,3 +1,5 @@
+using System.Linq;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
@@ -23,7 +25,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Public Members
-        public OpportunityInfo? GetById(Guid id, bool ensureOrganizationAuthorization)
+        public OpportunityInfo GetById(Guid id, bool ensureOrganizationAuthorization)
         {
             var opportunity = _opportunityService.GetById(id, true, true, ensureOrganizationAuthorization);
 
@@ -32,17 +34,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return result;
         }
 
-        public OpportunityInfo? GetActiveExpiredByIdOrNull(Guid id, bool? includeExpired)
+        public OpportunityInfo GetActiveExpiredById(Guid id, bool? includeExpired)
         {
-            var opportunity = _opportunityService.GetByIdOrNull(id, true, true);
+            var opportunity = _opportunityService.GetById(id, true, true, false);
 
             //inactive organization
-            if (opportunity == null || opportunity.OrganizationStatus != Entity.OrganizationStatus.Active) return null;
+            if (opportunity.OrganizationStatus != Entity.OrganizationStatus.Active)
+                throw new EntityNotFoundException($"Opportunity with id '{id}' belongs to an inactive organization");
 
             //status criteria not met
             var statuses = new List<Status>() { Status.Active };
             if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
-            if (!statuses.Contains(opportunity.Status)) return null;
+            if (!statuses.Contains(opportunity.Status))
+                throw new EntityNotFoundException($"Opportunity with id '{id}' has an invalid status. Expected status(es): '{string.Join(", ", statuses)}'");
 
             var result = opportunity.ToOpportunityInfo();
             SetParticipantCounts(result);

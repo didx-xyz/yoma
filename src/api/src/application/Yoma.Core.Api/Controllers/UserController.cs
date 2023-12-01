@@ -38,6 +38,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Get the specified user by id (Admin role required)")]
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(User), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = Constants.Role_Admin)]
         public IActionResult GetById([FromRoute] Guid id)
         {
@@ -70,6 +71,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Get the user (Authenticated User)")]
         [HttpGet("")]
         [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult Get()
         {
@@ -85,6 +87,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Update the user's profile, within Yoma and the identity provider, optionally requesting a email verification and/or password reset (Authenticated User)")]
         [HttpPatch()]
         [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> UpdateProfile([FromBody] UserRequestProfile request)
         {
@@ -100,6 +103,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Insert or update the user's profile photo (Authenticated User)")]
         [HttpPatch("photo")]
         [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> UpsertPhoto([Required] IFormFile file)
         {
@@ -115,6 +119,7 @@ namespace Yoma.Core.Api.Controllers
         [SwaggerOperation(Summary = "Complete YoID onboarding (Authenticated User)")]
         [HttpPatch("yoId")]
         [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public async Task<IActionResult> YoIDOnboard()
         {

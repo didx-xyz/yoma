@@ -9,7 +9,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         Organization GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization);
 
-        Organization? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed);
+        Organization? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization);
 
         Organization? GetByNameOrNull(string name, bool includeChildItems, bool includeComputed);
 

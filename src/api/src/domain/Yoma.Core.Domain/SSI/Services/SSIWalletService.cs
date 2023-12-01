@@ -40,10 +40,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 throw new ArgumentNullException(nameof(id));
             id = id.Trim();
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-            var tenantId = _ssiTenantService.GetTenantId(Entity.EntityType.User, user.Id);
-
-            var item = await _ssiProviderClient.GetCredentialById(tenantId, id);
+            var item = await _ssiProviderClient.GetCredentialById(GetUserTenantId(), id);
 
             return await ParseCredential<SSICredential>(item);
         }
@@ -63,6 +60,13 @@ namespace Yoma.Core.Domain.SSI.Services
         #endregion
 
         #region Private Members
+        private string GetUserTenantId()
+        {
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+            var tenantId = _ssiTenantService.GetTenantId(Entity.EntityType.User, user.Id);
+            return tenantId;
+        }
+
         private async Task<SSIWalletSearchResults> Search(SSIWalletFilter filter)
         {
             if (filter == null)

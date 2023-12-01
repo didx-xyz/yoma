@@ -20,6 +20,7 @@ using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.IdentityProvider.Helpers;
 using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.SSI.Interfaces;
+using Yoma.Core.Domain.Core.Exceptions;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -96,7 +97,7 @@ namespace Yoma.Core.Domain.Entity.Services
         #region Public Members
         public bool Updatable(Guid id, bool throwNotFound)
         {
-            var org = throwNotFound ? GetById(id, false, false, false) : GetByIdOrNull(id, false, false);
+            var org = throwNotFound ? GetById(id, false, false, false) : GetByIdOrNull(id, false, false, false);
             if (org == null) return false;
             return Statuses_Updatable.Contains(org.Status);
         }
@@ -106,22 +107,22 @@ namespace Yoma.Core.Domain.Entity.Services
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
 
-            var result = GetByIdOrNull(id, includeChildItems, includeComputed)
-                ?? throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(Organization)} with id '{id}' does not exist");
-
-            if (ensureOrganizationAuthorization)
-                IsAdmin(result, true);
+            var result = GetByIdOrNull(id, includeChildItems, includeComputed, ensureOrganizationAuthorization)
+                ?? throw new EntityNotFoundException($"{nameof(Organization)} with id '{id}' does not exist");
 
             return result;
         }
 
-        public Organization? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed)
+        public Organization? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization)
         {
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
 
             var result = _organizationRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
             if (result == null) return null;
+
+            if (ensureOrganizationAuthorization)
+                IsAdmin(result, true);
 
             if (includeComputed)
             {

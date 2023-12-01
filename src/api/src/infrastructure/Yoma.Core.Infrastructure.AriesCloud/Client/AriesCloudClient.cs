@@ -2,6 +2,7 @@ using AriesCloudAPI.DotnetSDK.AspCore.Clients;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Interfaces;
 using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -54,7 +55,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
         public async Task<Domain.SSI.Models.Provider.Schema> GetSchemaByName(string name)
         {
-            var result = await GetSchemaByNameOrNull(name) ?? throw new ArgumentException($"{nameof(Domain.SSI.Models.Provider.Schema)} with name '{name}' does not exists", nameof(name));
+            var result = await GetSchemaByNameOrNull(name) ?? throw new EntityNotFoundException($"{nameof(Domain.SSI.Models.Provider.Schema)} with name '{name}' does not exists");
             return result;
         }
 
@@ -79,7 +80,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
         public async Task<Domain.SSI.Models.Provider.Schema> GetSchemaById(string id)
         {
-            var result = await GetSchemaByIdOrNull(id) ?? throw new ArgumentException($"{nameof(Domain.SSI.Models.Provider.Schema)} with id '{id}' does not exists", nameof(id));
+            var result = await GetSchemaByIdOrNull(id) ?? throw new EntityNotFoundException($"{nameof(Domain.SSI.Models.Provider.Schema)} with id '{id}' does not exists");
             return result;
         }
 
@@ -108,12 +109,11 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 throw new ArgumentNullException(nameof(id));
             id = id.Trim();
 
-            var client = _clientFactory.CreateTenantClient(tenantId);
+            var client = _clientFactory.CreateTenantClient(tenantId); //will result in a HttpClientException(StatusCode=NotFound)
 
-            //TODO: ld_proofs
-            var indyCredential = await client.GetIndyCredentialAsync(id);
+            var result = await client.GetIndyCredentialAsync(id);
 
-            return indyCredential.ToCredential();
+            return result.ToCredential();
         }
 
         public async Task<List<Domain.SSI.Models.Provider.Credential>?> ListCredentials(string tenantId, int? start, int? count)
