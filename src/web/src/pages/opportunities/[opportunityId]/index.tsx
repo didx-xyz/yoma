@@ -138,19 +138,23 @@ const OpportunityDetails: NextPageWithLayout<{
     isLoading: dataIsLoading,
   } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
-    queryFn: () => getOpportunityInfoById(opportunityId + "1", user != null),
+    queryFn: () => getOpportunityInfoById(opportunityId, user != null),
   });
 
   const { data: verificationStatus, isLoading: verificationStatusIsLoading } =
     useQuery<MyOpportunityResponseVerify | "">({
       queryKey: ["verificationStatus", opportunityId],
-      queryFn: () => getVerificationStatus(opportunityId),
-      enabled:
-        !!user &&
-        !!opportunity &&
-        !!serverError &&
-        opportunity.verificationEnabled &&
-        opportunity.verificationMethod == "Manual",
+      queryFn: () => {
+        if (
+          !!user &&
+          !!opportunity &&
+          !!serverError &&
+          opportunity.verificationEnabled &&
+          opportunity.verificationMethod == "Manual"
+        )
+          return getVerificationStatus(opportunityId);
+        else return "";
+      },
     });
 
   // memo for spots left i.e participantLimit - participantCountTotal
@@ -193,6 +197,14 @@ const OpportunityDetails: NextPageWithLayout<{
         "") as string,
     );
   }, [setIsButtonLoading]);
+
+  const onOpportunityCompleted = useCallback(async () => {
+    setCompleteOpportunityDialogVisible(false);
+    setCompleteOpportunitySuccessDialogVisible(true);
+    await queryClient.invalidateQueries({
+      queryKey: ["verificationStatus", opportunityId],
+    });
+  }, [opportunityId, queryClient]);
 
   return (
     <>
@@ -426,14 +438,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   onClose={() => {
                     setCompleteOpportunityDialogVisible(false);
                   }}
-                  onSave={async () => {
-                    setCompleteOpportunityDialogVisible(false);
-                    setCompleteOpportunitySuccessDialogVisible(true);
-                    await queryClient.invalidateQueries({
-                      queryKey: ["verificationStatus", opportunityId],
-                    });
-                    //setRefreshVerificationStatus(true);
-                  }}
+                  onSave={onOpportunityCompleted}
                 />
               </ReactModal>
 
