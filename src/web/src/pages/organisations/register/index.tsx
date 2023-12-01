@@ -34,7 +34,6 @@ import {
 import { config } from "~/lib/react-query-config";
 import { getCountries } from "~/api/services/lookups";
 import { useSession } from "next-auth/react";
-import { fetchClientEnv } from "~/lib/utils";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {

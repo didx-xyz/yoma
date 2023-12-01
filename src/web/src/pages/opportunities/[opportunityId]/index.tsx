@@ -447,7 +447,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 <OpportunityCompletionEdit
                   id="op-complete"
                   opportunityInfo={opportunity}
-                  onClose={async () => {
+                  onClose={() => {
                     setCompleteOpportunityDialogVisible(false);
                   }}
                   onSave={onOpportunityCompleted}
