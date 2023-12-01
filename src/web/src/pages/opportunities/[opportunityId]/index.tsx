@@ -88,12 +88,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         queryKey: ["opportunityInfo", opportunityId],
         queryFn: () => dataOpportunityInfo,
       }),
-      dataVerificationStatus
-        ? queryClient.prefetchQuery({
-            queryKey: ["verificationStatus", opportunityId],
-            queryFn: () => dataVerificationStatus,
-          })
-        : null,
+      queryClient.prefetchQuery({
+        queryKey: ["verificationStatus", opportunityId],
+        queryFn: () => dataVerificationStatus ?? null,
+      }),
     ]);
 
     // 👇 perform viewed action
@@ -162,12 +160,12 @@ const OpportunityDetails: NextPageWithLayout<{
         if (
           !!user &&
           !!opportunity &&
-          !!serverError &&
+          serverError == null &&
           opportunity.verificationEnabled &&
           opportunity.verificationMethod == "Manual"
-        )
+        ) {
           return getVerificationStatus(opportunityId);
-        else return null;
+        } else return null;
       },
     });
 
@@ -449,7 +447,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 <OpportunityCompletionEdit
                   id="op-complete"
                   opportunityInfo={opportunity}
-                  onClose={() => {
+                  onClose={async () => {
                     setCompleteOpportunityDialogVisible(false);
                   }}
                   onSave={onOpportunityCompleted}
