@@ -200,7 +200,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
             <Controller
               name="types"
               control={form.control}
-              defaultValue={opportunitySearchFilter?.countries}
+              defaultValue={opportunitySearchFilter?.types}
               render={({ field: { onChange, value } }) => (
                 <Select
                   classNames={{
@@ -266,7 +266,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                   value={lookups_countries
                     .filter((c) => value?.includes(c.name))
                     .map((c) => ({ value: c.name, label: c.name }))}
-                  placeholder="Location"
+                  placeholder="Worldwide"
                   components={{
                     ValueContainer,
                   }}
