@@ -658,10 +658,10 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
-        public List<UserInfo>? ListAdmins(Guid id, bool includeComputed, bool ensureOrganizationAuthorization)
+        public List<UserInfo> ListAdmins(Guid id, bool includeComputed, bool ensureOrganizationAuthorization)
         {
             var org = GetById(id, true, includeComputed, ensureOrganizationAuthorization);
-            return org.Administrators;
+            return org.Administrators ?? new List<UserInfo>();
         }
 
         public List<OrganizationInfo> ListAdminsOf(bool includeComputed)
