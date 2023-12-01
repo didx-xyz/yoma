@@ -9,6 +9,7 @@ namespace Yoma.Core.Domain.MyOpportunity
 
     public enum VerificationStatus
     {
+        None,
         Pending, //flagged as rejected if pending for x days
         Rejected,
         Completed

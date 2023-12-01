@@ -7,7 +7,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
     {
         Models.MyOpportunity GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization);
 
-        MyOpportunityResponseVerify? GetVerificationStatus(Guid opportunityId);
+        MyOpportunityResponseVerify GetVerificationStatus(Guid opportunityId);
 
         List<MyOpportunitySearchCriteriaOpportunity> ListMyOpportunityVerificationSearchCriteriaOpportunity(List<Guid>? organizations, List<VerificationStatus>? verificationStatuses, bool ensureOrganizationAuthorization);
 
