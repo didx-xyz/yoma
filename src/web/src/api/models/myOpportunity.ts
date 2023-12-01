@@ -11,6 +11,7 @@ export interface MyOpportunityRequestVerify {
 }
 
 export enum VerificationStatus {
+  None,
   Pending,
   Rejected,
   Completed,

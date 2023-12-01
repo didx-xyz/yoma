@@ -473,6 +473,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                         void handleSubmit(onSubmitHandler)();
                       }}
                       checked={field.value ?? false}
+                      value={field.value ?? false}
                     />
                   )}
                 />

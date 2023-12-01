@@ -40,9 +40,9 @@ export const performActionSendForVerificationManual = async (
 export const getVerificationStatus = async (
   opportunityId: string,
   context?: GetServerSidePropsContext,
-): Promise<MyOpportunityResponseVerify | ""> => {
+): Promise<MyOpportunityResponseVerify> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.post<MyOpportunityResponseVerify | "">(
+  const { data } = await instance.post<MyOpportunityResponseVerify>(
     `/myopportunity/action/verify/status?opportunityId=${opportunityId}`,
   );
 
