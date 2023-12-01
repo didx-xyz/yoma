@@ -350,7 +350,7 @@ defaultRole:
   containerId: 38946a18-e1b9-4469-a85b-d109e170a2dd
 requiredCredentials:
   - password
-passwordPolicy: hashAlgorithm(pbkdf2-sha256)
+passwordPolicy: hashAlgorithm(pbkdf2-sha256) and hashIterations(27500) and length(8) and lowerCase(1) and upperCase(1) and digits(1) and specialChars(1) and notUsername(undefined)
 otpPolicyType: totp
 otpPolicyAlgorithm: HmacSHA1
 otpPolicyInitialCounter: 0
@@ -924,7 +924,7 @@ clients:
       - address
       - phone
       - microprofile-jwt
-  - id:  9D68AFBD-B27A-49CD-9F9C-FFE08B11FABD
+  - id: 9D68AFBD-B27A-49CD-9F9C-FFE08B11FABD
     clientId: yoma-web-admin
     name: yoma-web-admin
     description: Yoma Opportunity Admin Portal (public client)
@@ -1056,8 +1056,7 @@ clientScopes:
       consent.screen.text: ""
   - id: a388e80a-6709-4c49-9f2c-2796b3483993
     name: acr
-    description:
-      OpenID Connect scope for add acr (authentication context class reference)
+    description: OpenID Connect scope for add acr (authentication context class reference)
       to the token
     protocol: openid-connect
     attributes:
@@ -1734,8 +1733,7 @@ authenticationFlows:
         userSetupAllowed: false
   - id: 361a5b37-b233-4ed9-95c1-28998b2d5727
     alias: Handle Existing Account
-    description:
-      Handle what to do if there is existing account with same email/username
+    description: Handle what to do if there is existing account with same email/username
       like authenticated identity provider
     providerId: basic-flow
     topLevel: false
@@ -1755,8 +1753,7 @@ authenticationFlows:
         userSetupAllowed: false
   - id: 0db8ab32-b5c4-4b3d-a861-99f8ebb17df8
     alias: Reset - Conditional OTP
-    description:
-      Flow to determine if the OTP should be reset or not. Set to REQUIRED
+    description: Flow to determine if the OTP should be reset or not. Set to REQUIRED
       to force.
     providerId: basic-flow
     topLevel: false
@@ -1915,8 +1912,7 @@ authenticationFlows:
         userSetupAllowed: false
   - id: 555b2df8-f646-40ac-8a19-0ea06aa2a6e9
     alias: first broker login
-    description:
-      Actions taken after first broker login with identity provider account,
+    description: Actions taken after first broker login with identity provider account,
       which is not yet linked to any Keycloak account
     providerId: basic-flow
     topLevel: true
