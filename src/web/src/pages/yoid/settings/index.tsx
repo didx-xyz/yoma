@@ -70,6 +70,7 @@ const Settings: NextPageWithLayout<{
   const [isLoading, setIsLoading] = useState(false);
   const [logoFiles, setLogoFiles] = useState<File[]>([]);
   const setUserProfileAtom = useSetAtom(userProfileAtom);
+  const { data: session } = useSession();
 
   // 👇 use prefetched queries from server
   const { data: genders } = useQuery({
@@ -170,12 +171,17 @@ const Settings: NextPageWithLayout<{
         const userProfile = await patchUser(data as UserProfileRequest);
 
         // update session
+        // eslint-disable
         await update({
-          ...user, // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-          name: data.displayName, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-          email: data.email, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-          profile: data,
+          ...session,
+          user: {
+            ...user,
+            name: data.displayName,
+            email: data.email,
+            profile: data,
+          },
         });
+        // eslint-enable
 
         // update userProfile Atom (used by NavBar/UserMenu.tsx, refresh profile picture)
         setUserProfileAtom(userProfile);
@@ -199,7 +205,7 @@ const Settings: NextPageWithLayout<{
       });
       setIsLoading(false);
     },
-    [update, user, logoFiles, setIsLoading, setUserProfileAtom],
+    [update, user, logoFiles, session, setIsLoading, setUserProfileAtom],
   );
 
   const handleCancel = () => {

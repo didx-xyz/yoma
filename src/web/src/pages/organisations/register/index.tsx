@@ -32,6 +32,9 @@ import {
   THEME_PURPLE,
 } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
+import { getCountries } from "~/api/services/lookups";
+import { useSession } from "next-auth/react";
+import { fetchClientEnv } from "~/lib/utils";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -60,10 +63,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient(config);
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: ["organisationProviderTypes"],
-    queryFn: () => getOrganisationProviderTypes(context),
-  });
+  await Promise.all([
+    await queryClient.prefetchQuery({
+      queryKey: ["organisationProviderTypes"],
+      queryFn: () => getOrganisationProviderTypes(context),
+    }),
+    await queryClient.prefetchQuery({
+      queryKey: ["countries"],
+      queryFn: async () => await getCountries(),
+    }),
+  ]);
 
   return {
     props: {
@@ -81,6 +90,7 @@ const OrganisationCreate: NextPageWithLayout<{
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
   const setUserProfile = useSetAtom(userProfileAtom);
+  const { data: session, update } = useSession();
 
   const [OrganizationRequestBase, setOrganizationRequestBase] =
     useState<OrganizationRequestBase>({
@@ -125,6 +135,10 @@ const OrganisationCreate: NextPageWithLayout<{
 
         setIsLoading(false);
 
+        // refresh the access token to get new roles (OrganisationAdmin is added to the user roles after organisation is registered)
+        // trigger a silent refresh by updating the session (see /server/auth.ts)
+        await update(session);
+
         // refresh user profile for new organisation to reflect on user menu
         const userProfile = await getUserProfile();
         setUserProfile(userProfile);
@@ -144,7 +158,7 @@ const OrganisationCreate: NextPageWithLayout<{
         return;
       }
     },
-    [setIsLoading, setUserProfile],
+    [setIsLoading, setUserProfile, update, session],
   );
 
   // form submission handler

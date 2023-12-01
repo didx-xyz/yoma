@@ -9,6 +9,8 @@ import {
 } from "~/api/models/organisation";
 import { ACCEPTED_IMAGE_TYPES, REGEX_URL_VALIDATION } from "~/lib/constants";
 import { FileUploader } from "./FileUpload";
+import { useQuery } from "@tanstack/react-query";
+import { getCountries } from "~/api/services/lookups";
 
 export interface InputProps {
   formData: OrganizationRequestBase | null;
@@ -30,6 +32,11 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
   const [logoExisting, setLogoExisting] = useState(organisation?.logoURL);
   const [logoFiles, setLogoFiles] = useState<File[]>(formData?.logo as any);
 
+  const { data: countries } = useQuery({
+    queryKey: ["countries"],
+    queryFn: async () => await getCountries(),
+  });
+
   const schema = zod
     .object({
       name: zod
@@ -39,6 +46,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
       streetAddress: zod.string().min(1, "Street address is required."),
       province: zod.string().min(1, "Province is required."),
       city: zod.string().min(1, "City is required."),
+      countryId: zod.string().min(1, "Country is required."),
       postalCode: zod.string().min(1, "Postal code is required."),
       websiteURL: zod
         .string()
@@ -191,6 +199,30 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           <label className="label font-bold">
             <span className="label-text-alt italic text-red-500">
               {`${formState.errors.city.message}`}
+            </span>
+          </label>
+        )}
+      </div>
+
+      <div className="form-control">
+        <label className="label font-bold">
+          <span className="label-text">Country</span>
+        </label>
+        <select
+          className="select select-bordered border-gray focus:border-gray focus:outline-none"
+          {...register("countryId")}
+        >
+          <option value="">Please select</option>
+          {countries?.map((country) => (
+            <option key={country.id} value={country.id}>
+              {country.name}
+            </option>
+          ))}
+        </select>
+        {formState.errors.countryId && (
+          <label className="label font-bold">
+            <span className="label-text-alt italic text-red-500">
+              {`${formState.errors.countryId.message}`}
             </span>
           </label>
         )}

@@ -43,6 +43,7 @@ import {
   THEME_PURPLE,
 } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
+import { getCountries } from "~/api/services/lookups";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -80,6 +81,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     await queryClient.prefetchQuery({
       queryKey: ["organisationProviderTypes"],
       queryFn: () => getOrganisationProviderTypes(context),
+    }),
+    await queryClient.prefetchQuery({
+      queryKey: ["countries"],
+      queryFn: async () => await getCountries(),
     }),
     await queryClient.prefetchQuery({
       queryKey: ["organisation", id],

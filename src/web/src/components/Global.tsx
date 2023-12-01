@@ -138,6 +138,8 @@ export const Global: React.FC = () => {
 
       const userProfile = await patchYoIDOnboarding();
       setUserProfile(userProfile);
+
+      setOnboardingDialogVisible(false);
     } catch (error) {
       console.error(error);
       toast(<ApiErrors error={error} />, {
@@ -146,7 +148,7 @@ export const Global: React.FC = () => {
         icon: false,
       });
     }
-  }, [setUserProfile]);
+  }, [setUserProfile, setOnboardingDialogVisible]);
 
   return (
     <>

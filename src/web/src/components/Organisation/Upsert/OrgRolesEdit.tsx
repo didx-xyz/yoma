@@ -381,51 +381,52 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
         </div>
 
         {/* education provider documents */}
-        {watchVerificationTypes?.includes(
-          organisationProviderTypes?.find((x) => x.name == "Education")?.id,
-        ) && (
-          <div className="form-control">
-            <label className="label font-bold">
-              <span className="label-text">Education provider documents</span>
-            </label>
-
-            <div className="flex flex-col gap-2">
-              {/* show existing documents */}
-              {organisation?.documents
-                ?.filter((x) => x.type == "EducationProvider")
-                .map((item) => (
-                  <Document
-                    key={item.fileId}
-                    doc={item}
-                    onRemove={onRemoveEducationProviderDocument}
-                  />
-                ))}
-
-              {/* upload documents */}
-              <FileUploader
-                files={educationProviderDocuments}
-                allowMultiple={true}
-                fileTypes={ACCEPTED_DOC_TYPES}
-                onUploadComplete={(files) => {
-                  setEducationProviderDocuments(files.map((x) => x.file));
-                  setValue(
-                    "educationProviderDocuments",
-                    files && files.length > 0 ? files.map((x) => x.file) : [],
-                  );
-                }}
-              />
-            </div>
-
-            {formState.errors.educationProviderDocuments && (
+        {watchVerificationTypes &&
+          watchVerificationTypes?.includes(
+            organisationProviderTypes?.find((x) => x.name == "Education")?.id,
+          ) && (
+            <div className="form-control">
               <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                  {`${formState.errors.educationProviderDocuments.message}`}
-                </span>
+                <span className="label-text">Education provider documents</span>
               </label>
-            )}
-          </div>
-        )}
+
+              <div className="flex flex-col gap-2">
+                {/* show existing documents */}
+                {organisation?.documents
+                  ?.filter((x) => x.type == "EducationProvider")
+                  .map((item) => (
+                    <Document
+                      key={item.fileId}
+                      doc={item}
+                      onRemove={onRemoveEducationProviderDocument}
+                    />
+                  ))}
+
+                {/* upload documents */}
+                <FileUploader
+                  files={educationProviderDocuments}
+                  allowMultiple={true}
+                  fileTypes={ACCEPTED_DOC_TYPES}
+                  onUploadComplete={(files) => {
+                    setEducationProviderDocuments(files.map((x) => x.file));
+                    setValue(
+                      "educationProviderDocuments",
+                      files && files.length > 0 ? files.map((x) => x.file) : [],
+                    );
+                  }}
+                />
+              </div>
+
+              {formState.errors.educationProviderDocuments && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                    {`${formState.errors.educationProviderDocuments.message}`}
+                  </span>
+                </label>
+              )}
+            </div>
+          )}
 
         {watchVerificationTypes?.includes(
           organisationProviderTypes?.find((x) => x.name == "Marketplace")?.id,
