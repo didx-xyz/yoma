@@ -26,4 +26,11 @@ namespace Yoma.Core.Domain.Entity
         User,
         Organization
     }
+
+    internal enum OrganizationReapprovalAction
+    {
+        None,
+        Reapproval,
+        ReapprovalWithEmail
+    }
 }

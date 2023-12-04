@@ -52,7 +52,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private static readonly Status[] Statuses_Updatable = { Status.Active, Status.Inactive };
         private static readonly Status[] Statuses_Activatable = { Status.Inactive };
         private static readonly Status[] Statuses_CanDelete = { Status.Active, Status.Inactive };
-        private static readonly Status[] Statuses_DeActivatable = { Status.Active, Status.Deleted, Status.Expired };
+        private static readonly Status[] Statuses_DeActivatable = { Status.Active, Status.Expired };
         #endregion
 
         #region Constructor
