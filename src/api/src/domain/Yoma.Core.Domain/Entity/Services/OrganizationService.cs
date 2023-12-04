@@ -426,7 +426,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
                 if (request.BusinessDocuments != null && request.BusinessDocuments.Any())
                 {
-                    var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Business, request.RegistrationDocuments);
+                    var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Business, request.BusinessDocuments);
                     result = resultDocuments.Organization;
                     itemsAdded.AddRange(resultDocuments.ItemsAdded);
                 }
