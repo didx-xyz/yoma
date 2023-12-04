@@ -36,11 +36,11 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
         #endregion
 
         #region Public Members
-        public async Task Create(string key, string contentType, byte[] file)
+        public async Task Create(string filename, string contentType, byte[] file)
         {
-            if (string.IsNullOrWhiteSpace(key))
-                throw new ArgumentNullException(nameof(key));
-            key = key.Trim().ToLower();
+            if (string.IsNullOrWhiteSpace(filename))
+                throw new ArgumentNullException(nameof(filename));
+            filename = filename.Trim().ToLower();
 
             if (string.IsNullOrWhiteSpace(contentType))
                 throw new ArgumentNullException(nameof(contentType));
@@ -54,31 +54,31 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
             var request = new PutObjectRequest
             {
                 BucketName = _optionsBucket.BucketName,
-                Key = key,
+                Key = filename,
                 InputStream = stream,
-                ContentType = contentType
+                ContentType = contentType,
             };
 
             try
             {
-                await _client.PutObjectAsync(request);
+                await _client.PutObjectAsync(request); //override an object with the same key(filename)
             }
             catch (AmazonS3Exception ex)
             {
-                throw new HttpClientException(ex.StatusCode, $"Failed to upload object with key '{key}': {ex.Message}");
+                throw new HttpClientException(ex.StatusCode, $"Failed to upload object with filename '{filename}': {ex.Message}");
             }
         }
 
-        public async Task<(string ContentType, byte[] Data)> Download(string key)
+        public async Task<(string ContentType, byte[] Data)> Download(string filename)
         {
-            if (string.IsNullOrWhiteSpace(key))
-                throw new ArgumentNullException(nameof(key));
-            key = key.Trim().ToLower();
+            if (string.IsNullOrWhiteSpace(filename))
+                throw new ArgumentNullException(nameof(filename));
+            filename = filename.Trim().ToLower();
 
             var request = new GetObjectRequest
             {
                 BucketName = _optionsBucket.BucketName,
-                Key = key
+                Key = filename
             };
 
             try
@@ -90,15 +90,15 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
             }
             catch (AmazonS3Exception ex)
             {
-                throw new HttpClientException(ex.StatusCode, $"Failed to download S3 object with key '{key}': {ex.Message}");
+                throw new HttpClientException(ex.StatusCode, $"Failed to download S3 object with filename '{filename}': {ex.Message}");
             }
         }
 
-        public string GetUrl(string key)
+        public string GetUrl(string filename)
         {
-            if (string.IsNullOrWhiteSpace(key))
-                throw new ArgumentNullException(nameof(key));
-            key = key.Trim().ToLower();
+            if (string.IsNullOrWhiteSpace(filename))
+                throw new ArgumentNullException(nameof(filename));
+            filename = filename.Trim().ToLower();
 
             if (_storageType == StorageType.Private && !_optionsBucket.URLExpirationInMinutes.HasValue)
                 throw new InvalidOperationException($"'{AWSS3Options.Section}.{nameof(_optionsBucket.URLExpirationInMinutes)}' required for storage type '{_storageType}'");
@@ -106,7 +106,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
             var request = new GetPreSignedUrlRequest
             {
                 BucketName = _optionsBucket.BucketName,
-                Key = key,
+                Key = filename,
                 Verb = HttpVerb.GET,
                 Expires = DateTime.UtcNow.AddMinutes(_optionsBucket.URLExpirationInMinutes ?? 1)
             };
@@ -118,7 +118,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
             }
             catch (AmazonS3Exception ex)
             {
-                throw new HttpClientException(ex.StatusCode, $"Failed to retrieve URL for S3 object with key '{key}': {ex.Message}");
+                throw new HttpClientException(ex.StatusCode, $"Failed to retrieve URL for S3 object with filename '{filename}': {ex.Message}");
             }
 
             if (_optionsBucket.URLExpirationInMinutes.HasValue) return url;
@@ -127,16 +127,16 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
             return url;
         }
 
-        public async Task Delete(string key)
+        public async Task Delete(string filename)
         {
-            if (string.IsNullOrWhiteSpace(key))
-                throw new ArgumentNullException(nameof(key));
-            key = key.Trim().ToLower();
+            if (string.IsNullOrWhiteSpace(filename))
+                throw new ArgumentNullException(nameof(filename));
+            filename = filename.Trim().ToLower();
 
             var deleteRequest = new DeleteObjectRequest
             {
                 BucketName = _optionsBucket.BucketName,
-                Key = key
+                Key = filename
             };
 
             try
@@ -146,7 +146,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
             }
             catch (AmazonS3Exception ex)
             {
-                throw new HttpClientException(ex.StatusCode, $"Failed to delete S3 object with key '{key}': {ex.Message}");
+                throw new HttpClientException(ex.StatusCode, $"Failed to delete S3 object with filename '{filename}': {ex.Message}");
             }
         }
         #endregion

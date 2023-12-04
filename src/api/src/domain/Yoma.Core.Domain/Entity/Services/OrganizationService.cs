@@ -280,6 +280,8 @@ namespace Yoma.Core.Domain.Entity.Services
                     var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
                     admins.Add(username);
                 }
+                else if(HttpContextAccessorHelper.IsUserRoleOnly(_httpContextAccessor))
+                    throw new ValidationException($"The registering user must be added as an organization admin by default ('{nameof(request.AddCurrentUserAsAdmin)}' must be true).");
                 result = await AssignAdmins(result, admins);
 
                 //upload documents
@@ -809,20 +811,23 @@ namespace Yoma.Core.Domain.Entity.Services
                     throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
                 var item = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == organization.Id && o.UserId == user.Id);
-                if (item != null) continue;
-
-                item = new OrganizationUser
+                if (item == null)
                 {
-                    OrganizationId = organization.Id,
-                    UserId = user.Id
-                };
 
-                await _organizationUserRepository.Create(item);
+                    item = new OrganizationUser
+                    {
+                        OrganizationId = organization.Id,
+                        UserId = user.Id
+                    };
 
+                    await _organizationUserRepository.Create(item);
+
+                    organization.Administrators ??= new List<UserInfo>();
+                    organization.Administrators.Add(user.ToInfo());
+                }
+
+                //ensure organization admin role
                 await _identityProviderClient.EnsureRoles(user.ExternalId.Value, new List<string> { Constants.Role_OrganizationAdmin });
-
-                organization.Administrators ??= new List<UserInfo>();
-                organization.Administrators.Add(user.ToInfo());
             }
 
             scope.Complete();
@@ -843,14 +848,19 @@ namespace Yoma.Core.Domain.Entity.Services
                 if (!user.ExternalId.HasValue)
                     throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
-                var item = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == organization.Id && o.UserId == user.Id);
-                if (item == null) continue;
+                var items = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).ToList();
 
-                await _organizationUserRepository.Delete(item);
+                var item = items.SingleOrDefault(o => o.OrganizationId == organization.Id);
+                if (item != null)
+                {
+                    await _organizationUserRepository.Delete(item);
+                    items.Remove(item);
 
-                await _identityProviderClient.RemoveRoles(user.ExternalId.Value, new List<string> { Constants.Role_OrganizationAdmin });
+                    organization.Administrators?.Remove(organization.Administrators.Single(o => o.Id == user.Id));
+                }
 
-                organization.Administrators?.Remove(organization.Administrators.Single(o => o.Id == user.Id));
+                if (!items.Any()) //no longer an admin of any organization, remove organization admin role
+                    await _identityProviderClient.RemoveRoles(user.ExternalId.Value, new List<string> { Constants.Role_OrganizationAdmin });
             }
 
             scope.Complete();

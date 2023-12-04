@@ -2,12 +2,12 @@ namespace Yoma.Core.Domain.BlobProvider.Interfaces
 {
     public interface IBlobProviderClient
     {
-        Task Create(string key, string contentType, byte[] file);
+        Task Create(string filename, string contentType, byte[] file);
 
-        Task<(string ContentType, byte[] Data)> Download(string key);
+        Task<(string ContentType, byte[] Data)> Download(string filename);
 
-        string GetUrl(string key);
+        string GetUrl(string filename);
 
-        Task Delete(string key);
+        Task Delete(string filename);
     }
 }
