@@ -280,7 +280,7 @@ namespace Yoma.Core.Domain.Entity.Services
                     var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
                     admins.Add(username);
                 }
-                else if(HttpContextAccessorHelper.IsUserRoleOnly(_httpContextAccessor))
+                else if (HttpContextAccessorHelper.IsUserRoleOnly(_httpContextAccessor))
                     throw new ValidationException($"The registering user must be added as an organization admin by default ('{nameof(request.AddCurrentUserAsAdmin)}' must be true).");
                 result = await AssignAdmins(result, admins);
 
