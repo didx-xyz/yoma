@@ -89,7 +89,7 @@ jobs:
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         working-directory: ${{ matrix.dir }}
 
-      - uses: actions/setup-dotnet@v3
+      - uses: actions/setup-dotnet@v4
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
         with:
           dotnet-version: 7.x
