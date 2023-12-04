@@ -66,7 +66,13 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 DateModified = entity.DateModified,
                 ModifiedBy = entity.ModifiedBy,
                 Categories = includeChildItems ?
-                    entity.Categories.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityCategory { Id = o.CategoryId, Name = o.Category.Name, ImageURL = o.Category.ImageURL }).ToList() : null,
+                    entity.Categories.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityCategory
+                    {
+                        Id = o.CategoryId,
+                        Name = o.Category.Name,
+                        ImageURL =
+                        o.Category.ImageURL
+                    }).OrderBy(o => o.Name).ToList() : null,
                 Countries = includeChildItems ?
                     entity.Countries.Select(o => new Domain.Lookups.Models.Country
                     {
@@ -75,13 +81,23 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                         CodeAlpha2 = o.Country.CodeAlpha2,
                         CodeAlpha3 = o.Country.CodeAlpha3,
                         CodeNumeric = o.Country.CodeNumeric
-                    }).ToList() : null,
+                    }).OrderBy(o => o.Name).ToList() : null,
                 Languages = includeChildItems ?
                     entity.Languages.Select(o => new Domain.Lookups.Models.Language
-                    { Id = o.LanguageId, Name = o.Language.Name, CodeAlpha2 = o.Language.CodeAlpha2 }).ToList() : null,
+                    {
+                        Id = o.LanguageId,
+                        Name = o.Language.Name,
+                        CodeAlpha2 =
+                        o.Language.CodeAlpha2
+                    }).OrderBy(o => o.Name).ToList() : null,
                 Skills = entity.Skills == null ? null : includeChildItems ?
                     entity.Skills.Select(o => new Domain.Lookups.Models.Skill
-                    { Id = o.SkillId, Name = o.Skill.Name, InfoURL = o.Skill.InfoURL }).ToList() : null,
+                    {
+                        Id = o.SkillId,
+                        Name = o.Skill.Name,
+                        InfoURL =
+                        o.Skill.InfoURL
+                    }).OrderBy(o => o.Name).ToList() : null,
                 VerificationTypes = entity.VerificationTypes == null ? null : includeChildItems ?
                     entity.VerificationTypes.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityVerificationType
                     {
@@ -89,7 +105,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                         Type = Enum.Parse<VerificationType>(o.VerificationType.Name, true),
                         DisplayName = o.VerificationType.DisplayName,
                         Description = o.Description ?? o.VerificationType.Description
-                    }).ToList() : null,
+                    }).OrderBy(o => o.DisplayName).ToList() : null,
             }).AsSplitQuery();
         }
 

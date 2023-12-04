@@ -71,10 +71,14 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                         GeometryProperties = o.GeometryProperties,
                         FileId = o.FileId,
                         DateCreated = o.DateCreated
-                    }).ToList() : null,
+                    }).OrderBy(o => o.DateCreated).ToList() : null,
                 Skills = entity.Opportunity.Skills == null ? null : includeChildItems ?
-                        entity.Opportunity.Skills.Select(o => new Domain.Lookups.Models.Skill
-                        { Id = o.SkillId, Name = o.Skill.Name, InfoURL = o.Skill.InfoURL }).OrderBy(o => o.Name).ToList() : null,
+                    entity.Opportunity.Skills.Select(o => new Domain.Lookups.Models.Skill
+                    {
+                        Id = o.SkillId,
+                        Name = o.Skill.Name,
+                        InfoURL = o.Skill.InfoURL
+                    }).OrderBy(o => o.Name).ToList() : null,
             }).AsSplitQuery();
         }
 

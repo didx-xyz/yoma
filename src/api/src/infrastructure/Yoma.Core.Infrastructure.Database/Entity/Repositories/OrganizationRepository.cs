@@ -70,7 +70,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                         FirstName = o.User.FirstName,
                         Surname = o.User.Surname,
                         DisplayName = o.User.DisplayName
-                    }).ToList() : null
+                    }).OrderBy(o => o.DisplayName).ToList() : null
 
             }).AsSplitQuery();
         }
