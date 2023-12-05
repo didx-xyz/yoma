@@ -28,7 +28,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
                 Key = entity.Key,
                 ContentType = entity.ContentType,
                 OriginalFileName = entity.OriginalFileName,
-                ParentId = entity.ParentId, 
+                ParentId = entity.ParentId,
                 DateCreated = entity.DateCreated
             });
         }
@@ -45,7 +45,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
                 Key = item.Key,
                 ContentType = item.ContentType,
                 OriginalFileName = item.OriginalFileName,
-                ParentId = item.ParentId,   
+                ParentId = item.ParentId,
                 DateCreated = item.DateCreated
             };
 

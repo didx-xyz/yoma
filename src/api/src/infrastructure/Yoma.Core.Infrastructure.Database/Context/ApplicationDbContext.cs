@@ -118,7 +118,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
         {
             builder.Entity<Opportunity.Entities.Opportunity>()
                 .HasOne(o => o.CreatedByUser)
-                .WithMany() 
+                .WithMany()
                 .HasForeignKey(o => o.CreatedByUserId)
                 .OnDelete(DeleteBehavior.NoAction);
 

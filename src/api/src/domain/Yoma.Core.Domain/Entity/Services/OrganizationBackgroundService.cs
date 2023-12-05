@@ -52,7 +52,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _organizationService = organizationService;
             _organizationStatusService = organizationStatusService;
             _emailProviderClient = emailProviderClientFactory.CreateClient();
-            _userService = userService;        
+            _userService = userService;
             _organizationRepository = organizationRepository;
             _organizationDocumentRepository = organizationDocumentRepository;
         }
