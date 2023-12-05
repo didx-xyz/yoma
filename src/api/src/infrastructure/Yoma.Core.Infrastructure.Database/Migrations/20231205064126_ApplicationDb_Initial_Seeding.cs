@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore.Migrations;
+using Yoma.Core.Domain.Core.Helpers;
 
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
@@ -50,7 +51,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             columns: new[] { "Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "DateCreated", "DateModified" },
             values: new object[,]
             {
-                    {"8929632E-2911-42FF-9A44-055DEF231B87","system@yoma.world",false,"Yoma","System","Yoma System",DateTimeOffset.Now,DateTimeOffset.Now}
+                    {"8929632E-2911-42FF-9A44-055DEF231B87",HttpContextAccessorHelper.GetUsernameSystem,false,"Yoma","System","Yoma System",DateTimeOffset.Now,DateTimeOffset.Now}
             },
             schema: "Entity");
 

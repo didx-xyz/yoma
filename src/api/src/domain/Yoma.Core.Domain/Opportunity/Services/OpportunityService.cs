@@ -515,7 +515,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 status = Status.Expired;
             }
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
             var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
@@ -598,7 +598,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (existingByTitle != null && result.Id != existingByTitle.Id)
                 throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' already exists");
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
             var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
@@ -712,7 +712,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
             var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
             switch (status)
             {
@@ -761,7 +761,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignCategories(result, categoryIds);
@@ -781,7 +781,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await RemoveCategories(result, categoryIds);
@@ -798,7 +798,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignCountries(result, countryIds);
@@ -829,7 +829,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignLanguages(result, languageIds);
@@ -849,7 +849,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await RemoveLanguages(result, languageIds);
@@ -869,7 +869,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignSkills(result, skillIds);
@@ -889,7 +889,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await RemoveSkills(result, skillIds);
@@ -909,7 +909,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignVerificationTypes(result, verificationTypes);
@@ -932,7 +932,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (result.VerificationEnabled && (result.VerificationTypes == null || result.VerificationTypes.All(o => verificationTypes.Contains(o.Type))))
                 throw new ValidationException("One or more verification types are required when verification is supported. Removal will result in no associated verification types");
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await RemoveVerificationTypes(result, verificationTypes);
