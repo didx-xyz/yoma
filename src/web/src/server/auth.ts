@@ -180,6 +180,8 @@ async function refreshAccessToken(token: any) {
     // get roles from access_token
     const { realm_access } = decode(refreshedTokens.access_token); // eslint-disable-line
 
+    console.log("ROLES: ", realm_access.roles);
+
     /* eslint-disable */
     return {
       ...token,
