@@ -230,7 +230,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
                 if (currentPhotoId.HasValue)
                     await _blobService.Archive(currentPhotoId.Value, blobObject); //preserve / archive previous photo as they might be referenced in credentials
-                    
+
                 scope.Complete();
             }
             catch

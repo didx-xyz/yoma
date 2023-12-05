@@ -829,7 +829,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
                 if (currentLogoId.HasValue)
                     await _blobService.Archive(currentLogoId.Value, blobObject); //preserve / archive previous logo as they might be referenced in credentials
-             
+
                 organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
 
                 scope.Complete();
