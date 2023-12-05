@@ -85,11 +85,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public DateTimeOffset DateCreated { get; set; }
 
-        public string CreatedBy { get; set; }
+        public Guid CreatedByUserId { get; set; }
 
         public DateTimeOffset DateModified { get; set; }
 
-        public string ModifiedBy { get; set; }
+        public Guid ModifiedByUserId { get; set; }
 
         public bool Published { get; set; }
 

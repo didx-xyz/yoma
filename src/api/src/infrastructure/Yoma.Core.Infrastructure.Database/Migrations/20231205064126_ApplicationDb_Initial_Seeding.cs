@@ -44,6 +44,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     {"41690ADD-B95C-44C3-AD3B-8E02E5890FD4","Marketplace",DateTimeOffset.Now}
             },
             schema: "Entity");
+
+            migrationBuilder.InsertData(
+            table: "User",
+            columns: new[] { "Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "DateCreated", "DateModified" },
+            values: new object[,]
+            {
+                    {"8929632E-2911-42FF-9A44-055DEF231B87","system@yoma.world",false,"Yoma","System","Yoma System",DateTimeOffset.Now,DateTimeOffset.Now}
+            },
+            schema: "Entity");
+
             #endregion Entity
 
             #region Lookups

@@ -62,9 +62,9 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 CredentialIssuanceEnabled = entity.CredentialIssuanceEnabled,
                 SSISchemaName = entity.SSISchemaName,
                 DateCreated = entity.DateCreated,
-                CreatedBy = entity.CreatedBy,
+                CreatedByUserId = entity.CreatedByUserId,
                 DateModified = entity.DateModified,
-                ModifiedBy = entity.ModifiedBy,
+                ModifiedByUserId = entity.ModifiedByUserId,
                 Categories = includeChildItems ?
                     entity.Categories.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityCategory
                     {
@@ -152,9 +152,9 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 CredentialIssuanceEnabled = item.CredentialIssuanceEnabled,
                 SSISchemaName = item.SSISchemaName,
                 DateCreated = item.DateCreated,
-                CreatedBy = item.CreatedBy,
+                CreatedByUserId = item.CreatedByUserId,
                 DateModified = item.DateModified,
-                ModifiedBy = item.ModifiedBy,
+                ModifiedByUserId = item.ModifiedByUserId,
             };
 
             _context.Opportunity.Add(entity);
@@ -198,9 +198,9 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                   CredentialIssuanceEnabled = item.CredentialIssuanceEnabled,
                   SSISchemaName = item.SSISchemaName,
                   DateCreated = DateTimeOffset.Now,
-                  CreatedBy = item.CreatedBy,
+                  CreatedByUserId = item.CreatedByUserId,
                   DateModified = DateTimeOffset.Now,
-                  ModifiedBy = item.ModifiedBy
+                  ModifiedByUserId = item.ModifiedByUserId
               });
 
             _context.Opportunity.AddRange(entities);
@@ -249,7 +249,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
             entity.CredentialIssuanceEnabled = item.CredentialIssuanceEnabled;
             entity.SSISchemaName = item.SSISchemaName;
             entity.DateModified = item.DateModified;
-            entity.ModifiedBy = item.ModifiedBy;
+            entity.ModifiedByUserId = item.ModifiedByUserId;
 
             await _context.SaveChangesAsync();
 
@@ -295,7 +295,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 entity.CredentialIssuanceEnabled = item.CredentialIssuanceEnabled;
                 entity.SSISchemaName = item.SSISchemaName;
                 entity.DateModified = item.DateModified;
-                entity.ModifiedBy = item.ModifiedBy;
+                entity.ModifiedByUserId = item.ModifiedByUserId;
             }
 
             _context.Opportunity.UpdateRange(entities);

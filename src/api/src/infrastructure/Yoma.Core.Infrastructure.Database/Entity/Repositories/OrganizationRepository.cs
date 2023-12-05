@@ -48,7 +48,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 DateStatusModified = entity.DateStatusModified,
                 LogoId = entity.LogoId,
                 DateCreated = entity.DateCreated,
+                CreatedByUserId = entity.CreatedByUserId,
                 DateModified = entity.DateModified,
+                ModifiedByUserId = entity.ModifiedByUserId,
                 ProviderTypes = includeChildItems ?
                     entity.ProviderTypes.Select(o => new Domain.Entity.Models.Lookups.OrganizationProviderType { Id = o.ProviderTypeId, Name = o.ProviderType.Name }).ToList() : null,
                 Documents = includeChildItems ?
@@ -114,7 +116,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 DateStatusModified = item.DateStatusModified,
                 LogoId = item.LogoId,
                 DateCreated = item.DateCreated,
-                DateModified = item.DateModified
+                CreatedByUserId = item.CreatedByUserId,
+                DateModified = item.DateModified,
+                ModifiedByUserId = item.ModifiedByUserId,
             };
 
             _context.Organization.Add(entity);
@@ -153,7 +157,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                    DateStatusModified = DateTimeOffset.Now,
                    LogoId = item.LogoId,
                    DateCreated = DateTimeOffset.Now,
-                   DateModified = DateTimeOffset.Now
+                   CreatedByUserId = item.CreatedByUserId,
+                   DateModified = DateTimeOffset.Now,
+                   ModifiedByUserId = item.ModifiedByUserId
                });
 
             _context.Organization.AddRange(entities);
@@ -198,6 +204,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             entity.CommentApproval = item.CommentApproval;
             entity.LogoId = item.LogoId;
             entity.DateModified = item.DateModified;
+            entity.ModifiedByUserId = item.ModifiedByUserId;
 
             await _context.SaveChangesAsync();
 
@@ -239,6 +246,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 entity.CommentApproval = item.CommentApproval;
                 entity.LogoId = item.LogoId;
                 entity.DateModified = item.DateModified;
+                entity.ModifiedByUserId = item.ModifiedByUserId;
             }
 
             _context.Organization.UpdateRange(entities);

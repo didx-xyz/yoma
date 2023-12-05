@@ -21,7 +21,6 @@ using Yoma.Core.Domain.IdentityProvider.Helpers;
 using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.Core.Exceptions;
-using System.Data.Common;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -224,7 +223,6 @@ namespace Yoma.Core.Domain.Entity.Services
             return results;
         }
 
-        //TODO: Track CreatedByUser and UpdatedByUser
         public async Task<Organization> Create(OrganizationRequestCreate request)
         {
             if (request == null)
@@ -235,6 +233,8 @@ namespace Yoma.Core.Domain.Entity.Services
             var existingByName = GetByNameOrNull(request.Name, false, false);
             if (existingByName != null)
                 throw new ValidationException($"{nameof(Organization)} with the specified name '{request.Name}' already exists");
+
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
             var result = new Organization
             {
@@ -254,7 +254,9 @@ namespace Yoma.Core.Domain.Entity.Services
                 Tagline = request.Tagline,
                 Biography = request.Biography,
                 StatusId = _organizationStatusService.GetByName(OrganizationStatus.Inactive.ToString()).Id, //new organization defaults to inactive / unapproved
-                Status = OrganizationStatus.Inactive
+                Status = OrganizationStatus.Inactive,
+                CreatedByUserId = user.Id,
+                ModifiedByUserId = user.Id
             };
 
             var blobObjects = new List<BlobObject>();
@@ -342,6 +344,8 @@ namespace Yoma.Core.Domain.Entity.Services
             if (existingByName != null && result.Id != existingByName.Id)
                 throw new ValidationException($"{nameof(Organization)} with the specified name '{request.Name}' already exists");
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
             result.Name = request.Name;
             result.WebsiteURL = request.WebsiteURL;
             result.PrimaryContactName = request.PrimaryContactName;
@@ -357,6 +361,7 @@ namespace Yoma.Core.Domain.Entity.Services
             result.PostalCode = request.PostalCode;
             result.Tagline = request.Tagline;
             result.Biography = request.Biography;
+            result.ModifiedByUserId = user.Id;
 
             ValidateUpdatable(result);
 
@@ -479,7 +484,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-            var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
@@ -541,6 +546,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             result.StatusId = statusId;
             result.Status = request.Status;
+            result.ModifiedByUserId = user.Id;
 
             result = await _organizationRepository.Update(result);
 
@@ -563,7 +569,13 @@ namespace Yoma.Core.Domain.Entity.Services
             if (isProviderTypeMarketplace && (result.Documents == null || !result.Documents.Where(o => o.Type == OrganizationDocumentType.Business).Any()))
                 throw new ValidationException($"Business documents are required. Add the required documents before assigning the provider type");
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignProviderTypes(result, providerTypeIds, OrganizationReapprovalAction.ReapprovalWithEmail);
+            result.ModifiedByUserId = user.Id;
+            result = await _organizationRepository.Update(result);
+            scope.Complete();
 
             return result;
         }
@@ -580,7 +592,13 @@ namespace Yoma.Core.Domain.Entity.Services
             if (result.ProviderTypes == null || result.ProviderTypes.All(o => providerTypeIds.Contains(o.Id)))
                 throw new ValidationException("One or more provider types are required. Removal will result in no associated provider types");
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await RemoveProviderTypes(result, providerTypeIds, OrganizationReapprovalAction.ReapprovalWithEmail);
+            result.ModifiedByUserId = user.Id;
+            result = await _organizationRepository.Update(result);
+            scope.Complete();
 
             return result;
         }
@@ -592,7 +610,13 @@ namespace Yoma.Core.Domain.Entity.Services
 
             ValidateUpdatable(result);
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, true), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             var resultLogo = await UpdateLogo(result, file, OrganizationReapprovalAction.ReapprovalWithEmail);
+            result.ModifiedByUserId = user.Id;
+            result = await _organizationRepository.Update(result);
+            scope.Complete();
 
             return resultLogo.Organization;
         }
@@ -603,7 +627,13 @@ namespace Yoma.Core.Domain.Entity.Services
 
             ValidateUpdatable(result);
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, true), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             var resultDocuments = await AddDocuments(result, type, documents, OrganizationReapprovalAction.ReapprovalWithEmail);
+            result.ModifiedByUserId = user.Id;
+            result = await _organizationRepository.Update(result);
+            scope.Complete();
 
             return resultDocuments.Organization;
         }
@@ -625,7 +655,13 @@ namespace Yoma.Core.Domain.Entity.Services
             if (isProviderTypeMarketplace && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Business).All(o => documentFileIds.Contains(o.FileId))))
                 throw new ValidationException($"Business documents are required. Removal will result in no associated documents");
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             var resultDelete = await DeleteDocuments(result, type, documentFileIds, OrganizationReapprovalAction.ReapprovalWithEmail);
+            result.ModifiedByUserId = user.Id;
+            result = await _organizationRepository.Update(result);
+            scope.Complete();
 
             return resultDelete.Organization;
         }
@@ -636,7 +672,13 @@ namespace Yoma.Core.Domain.Entity.Services
 
             ValidateUpdatable(result);
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignAdmins(result, emails, OrganizationReapprovalAction.ReapprovalWithEmail);
+            result.ModifiedByUserId = user.Id;
+            result = await _organizationRepository.Update(result);
+            scope.Complete();
 
             return result;
         }
@@ -650,7 +692,13 @@ namespace Yoma.Core.Domain.Entity.Services
 
             ValidateUpdatable(result);
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await RemoveAdmins(result, emails, OrganizationReapprovalAction.ReapprovalWithEmail);
+            result.ModifiedByUserId = user.Id;
+            result = await _organizationRepository.Update(result);
+            scope.Complete();
 
             return result;
         }

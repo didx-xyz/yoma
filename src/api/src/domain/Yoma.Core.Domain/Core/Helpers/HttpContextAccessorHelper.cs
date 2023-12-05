@@ -5,6 +5,8 @@ namespace Yoma.Core.Domain.Core.Helpers
 {
     public static class HttpContextAccessorHelper
     {
+        public static string GetUsernameSystem => Constants.ModifiedBy_System_Username;
+        
         public static string GetUsername(IHttpContextAccessor? httpContextAccessor, bool useSystemDefault)
         {
             var claimsPrincipal = httpContextAccessor?.HttpContext?.User;

@@ -116,6 +116,30 @@ namespace Yoma.Core.Infrastructure.Database.Context
         #region Protected Members
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            builder.Entity<Opportunity.Entities.Opportunity>()
+                .HasOne(o => o.CreatedByUser)
+                .WithMany() 
+                .HasForeignKey(o => o.CreatedByUserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<Opportunity.Entities.Opportunity>()
+                .HasOne(o => o.ModifiedByUser)
+                .WithMany()
+                .HasForeignKey(o => o.ModifiedByUserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<Organization>()
+                .HasOne(o => o.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(o => o.CreatedByUserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<Organization>()
+                .HasOne(o => o.ModifiedByUser)
+                .WithMany()
+                .HasForeignKey(o => o.ModifiedByUserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
             builder.Entity<SSITenantCreation>()
                 .HasIndex(e => new { e.EntityType, e.UserId, e.OrganizationId })
                 .IsUnique()

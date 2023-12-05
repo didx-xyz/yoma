@@ -56,14 +56,15 @@ BEGIN
 			    [City],[CountryId],[StreetAddress],[Province],[PostalCode],
 			    [Tagline],
 			    [Biography],
-			    [StatusId],[CommentApproval],[DateStatusModified],[LogoId],[DateCreated],[DateModified])
+			    [StatusId],[CommentApproval],[DateStatusModified],[LogoId],[DateCreated],[CreatedByUserId],[DateModified],[ModifiedByUserId])
     SELECT TOP 1 NEWID(),
             (SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthName) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) + ' ' + CAST(ABS(CHECKSUM(NEWID())) % 2147483647 AS VARCHAR(10)),
 		    'https://www.google.com/','Primary Contact','primarycontact@gmail.com','+27125555555', 'GB123456789', '0123456789', '12345/28/14',
 		    'My City',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),'My Street Address 1000', 'My Province', '12345-1234',
 		    (SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthOther) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords),
 		    (SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthOther) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords),
-		    (SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active'),'Approved',GETDATE(), NULL,GETDATE(),GETDATE()
+		    (SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active'),'Approved',GETDATE(), NULL,
+        GETDATE(),(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testorgadminuser@gmail.com'),GETDATE(),(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testorgadminuser@gmail.com')
     FROM sys.all_columns
   	SET @RowCount = @RowCount + 1;
 END;
@@ -71,10 +72,11 @@ GO
 
 --Yoma (Youth Agency Marketplace) organization
 INSERT INTO [Entity].[Organization]([Id],[Name],[WebsiteURL],[PrimaryContactName],[PrimaryContactEmail],[PrimaryContactPhone],[VATIN],[TaxNumber],[RegistrationNumber]
-           ,[City],[CountryId],[StreetAddress],[Province],[PostalCode],[Tagline],[Biography],[StatusId],[CommentApproval],[DateStatusModified],[LogoId],[DateCreated],[DateModified])
+           ,[City],[CountryId],[StreetAddress],[Province],[PostalCode],[Tagline],[Biography],[StatusId],[CommentApproval],[DateStatusModified],[LogoId],[DateCreated],[CreatedByUserId],[DateModified],[ModifiedByUserId])
 VALUES(NEWID(),'Yoma (Youth Agency Marketplace)','https://www.yoma.world/','Primary Contact','primarycontact@gmail.com','+27125555555', 'GB123456789', '0123456789', '12345/28/14',
 		'My City',(SELECT [Id] FROM [Lookup].[Country] WHERE CodeAlpha2 = 'ZA'),'My Street Address 1000', 'My Province', '12345-1234','Tag Line','Biography',
-		(SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active'),'Approved',GETDATE(), NULL,GETDATE(),GETDATE())
+		(SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active'),'Approved',GETDATE(), NULL,
+    GETDATE(),(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testorgadminuser@gmail.com'),GETDATE(),(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testorgadminuser@gmail.com'))
 GO
 
 --organization admins
@@ -138,9 +140,9 @@ BEGIN
 		[CredentialIssuanceEnabled],
 		[SSISchemaName],
 		[DateCreated],
-		[CreatedBy],
+		[CreatedByUserId],
 		[DateModified],
-		[ModifiedBy])
+		[ModifiedByUserId])
   SELECT TOP 1 NEWID(),
 		(SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (ABS(CHECKSUM(NEWID()) % 10) + 5) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) + ' ' + CAST(ABS(CHECKSUM(NEWID())) % 2147483647 AS VARCHAR(10)) as [Title],
 		(SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (ABS(CHECKSUM(NEWID()) % 101) + 100) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) as [Description],
@@ -169,9 +171,9 @@ BEGIN
    	CASE WHEN @VerificationEnabled = 1 THEN 1 ELSE 0 END,
 		NULL,
 		@DateCreated,
-		'testuser@gmail.com',
+		(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testorgadminuser@gmail.com'),
 		GETDATE(),
-		'testuser@gmail.com'
+		(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testorgadminuser@gmail.com')
   FROM sys.all_columns
 
   SET @RowCount = @RowCount + 1;

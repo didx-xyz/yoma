@@ -35,6 +35,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
         private readonly ITimeIntervalService _timeIntervalService;
         private readonly IBlobService _blobService;
+        private readonly IUserService _userService;
 
         private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
         private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
@@ -69,6 +70,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             IOpportunityVerificationTypeService opportunityVerificationTypeService,
             ITimeIntervalService timeIntervalService,
             IBlobService blobService,
+            IUserService userService,
             OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
             OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
             OpportunitySearchFilterValidator searchFilterValidator,
@@ -93,6 +95,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             _opportunityVerificationTypeService = opportunityVerificationTypeService;
             _timeIntervalService = timeIntervalService;
             _blobService = blobService;
+            _userService = userService;
 
             _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate;
             _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate;
@@ -497,8 +500,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             await _opportunityRequestValidatorCreate.ValidateAndThrowAsync(request);
 
-            var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
-
             if (ensureOrganizationAuthorization)
                 _organizationService.IsAdmin(request.OrganizationId, true);
 
@@ -513,6 +514,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
                     throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' has already ended and can not be posted as active");
                 status = Status.Expired;
             }
+
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
             var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
@@ -549,8 +552,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 SSISchemaName = request.SSISchemaName,
                 StatusId = _opportunityStatusService.GetByName(status.ToString()).Id,
                 Status = status,
-                CreatedBy = username,
-                ModifiedBy = username
+                CreatedByUserId = user.Id,
+                ModifiedByUserId = user.Id
             };
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
@@ -584,8 +587,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             await _opportunityRequestValidatorUpdate.ValidateAndThrowAsync(request);
 
-            var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
-
             if (ensureOrganizationAuthorization)
                 _organizationService.IsAdmin(request.OrganizationId, true);
 
@@ -596,6 +597,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             var existingByTitle = GetByTitleOrNull(request.Title, false, false);
             if (existingByTitle != null && result.Id != existingByTitle.Id)
                 throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' already exists");
+
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
             var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
@@ -629,7 +632,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.DateEnd = !request.DateEnd.HasValue ? null : request.DateEnd.Value.ToEndOfDay();
             result.CredentialIssuanceEnabled = request.CredentialIssuanceEnabled;
             result.SSISchemaName = request.SSISchemaName;
-            result.ModifiedBy = username;
+            result.ModifiedByUserId = user.Id;
 
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await _opportunityRepository.Update(result);
@@ -660,7 +663,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return result;
         }
 
-        public async Task<(decimal? ZltoReward, decimal? YomaReward)> AllocateRewards(Guid id, bool ensureOrganizationAuthorization)
+        public async Task<(decimal? ZltoReward, decimal? YomaReward)> AllocateRewards(Guid id, Guid userId, bool ensureOrganizationAuthorization)
         {
             var opportunity = GetById(id, false, true, ensureOrganizationAuthorization);
 
@@ -674,6 +677,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
             var count = (opportunity.ParticipantCount ?? 0) + 1;
             if (opportunity.ParticipantLimit.HasValue && count > opportunity.ParticipantLimit.Value)
                 throw new ValidationException($"Increment will exceed limit (current count '{opportunity.ParticipantCount ?? 0}' vs current limit '{opportunity.ParticipantLimit.Value}')");
+
+            var user = _userService.GetById(userId, false, false);
+
             opportunity.ParticipantCount = count;
 
             var zltoReward = opportunity.ZltoReward;
@@ -694,6 +700,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 opportunity.YomaRewardCumulative ??= 0 + yomaReward;
             }
 
+            opportunity.ModifiedByUserId = user.Id;
+
             //modifiedBy preserved
             await _opportunityRepository.Update(opportunity);
 
@@ -704,7 +712,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
             var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-            var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization);
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
             switch (status)
             {
@@ -740,7 +748,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             result.StatusId = statusId;
             result.Status = status;
-            result.ModifiedBy = username;
+            result.ModifiedByUserId = user.Id;
 
             result = await _opportunityRepository.Update(result);
 
@@ -753,7 +761,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignCategories(result, categoryIds);
+            result.ModifiedByUserId = user.Id;
+            result = await _opportunityRepository.Update(result);
+            scope.Complete();
 
             return result;
         }
@@ -767,7 +781,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await RemoveCategories(result, categoryIds);
+            result.ModifiedByUserId = user.Id;
+            result = await _opportunityRepository.Update(result);
+            scope.Complete();
 
             return result;
         }
@@ -778,7 +798,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignCountries(result, countryIds);
+            result.ModifiedByUserId = user.Id;
+            result = await _opportunityRepository.Update(result);
+            scope.Complete();
 
             return result;
         }
@@ -803,7 +829,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignLanguages(result, languageIds);
+            result.ModifiedByUserId = user.Id;
+            result = await _opportunityRepository.Update(result);
+            scope.Complete();
 
             return result;
         }
@@ -817,7 +849,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await RemoveLanguages(result, languageIds);
+            result.ModifiedByUserId = user.Id;
+            result = await _opportunityRepository.Update(result);
+            scope.Complete();
 
             return result;
         }
@@ -831,7 +869,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignSkills(result, skillIds);
+            result.ModifiedByUserId = user.Id;
+            result = await _opportunityRepository.Update(result);
+            scope.Complete();
 
             return result;
         }
@@ -845,7 +889,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await RemoveSkills(result, skillIds);
+            result.ModifiedByUserId = user.Id;
+            result = await _opportunityRepository.Update(result);
+            scope.Complete();
 
             return result;
         }
@@ -859,7 +909,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             ValidateUpdatable(result);
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await AssignVerificationTypes(result, verificationTypes);
+            result.ModifiedByUserId = user.Id;
+            result = await _opportunityRepository.Update(result);
+            scope.Complete();
 
             return result;
         }
@@ -876,7 +932,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (result.VerificationEnabled && (result.VerificationTypes == null || result.VerificationTypes.All(o => verificationTypes.Contains(o.Type))))
                 throw new ValidationException("One or more verification types are required when verification is supported. Removal will result in no associated verification types");
 
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             result = await RemoveVerificationTypes(result, verificationTypes);
+            result.ModifiedByUserId = user.Id;
+            result = await _opportunityRepository.Update(result);
+            scope.Complete();
 
             return result;
         }

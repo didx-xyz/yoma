@@ -47,6 +47,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("StorageType")
                         .IsRequired()
                         .HasColumnType("varchar(25)");
@@ -56,7 +59,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Key")
                         .IsUnique();
 
-                    b.HasIndex("StorageType", "FileType");
+                    b.HasIndex("ParentId");
+
+                    b.HasIndex("StorageType", "FileType", "ParentId");
 
                     b.ToTable("Blob", "Object");
                 });
@@ -121,6 +126,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<Guid?>("CountryId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTimeOffset>("DateCreated")
                         .HasColumnType("datetimeoffset");
 
@@ -131,6 +139,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<Guid?>("LogoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
@@ -177,12 +188,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("CountryId");
 
+                    b.HasIndex("CreatedByUserId");
+
                     b.HasIndex("LogoId");
+
+                    b.HasIndex("ModifiedByUserId");
 
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.HasIndex("StatusId", "DateStatusModified", "DateModified", "DateCreated");
+                    b.HasIndex("StatusId", "DateStatusModified", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId");
 
                     b.ToTable("Organization", "Entity");
                 });
@@ -807,9 +822,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<Guid>("CommitmentIntervalId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("varchar(320)");
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("CredentialIssuanceEnabled")
                         .HasColumnType("bit");
@@ -839,9 +853,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<string>("Keywords")
                         .HasColumnType("varchar(500)");
 
-                    b.Property<string>("ModifiedBy")
-                        .IsRequired()
-                        .HasColumnType("varchar(320)");
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("OrganizationId")
                         .HasColumnType("uniqueidentifier");
@@ -899,7 +912,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("CommitmentIntervalId");
 
+                    b.HasIndex("CreatedByUserId");
+
                     b.HasIndex("DifficultyId");
+
+                    b.HasIndex("ModifiedByUserId");
 
                     b.HasIndex("OrganizationId");
 
@@ -908,7 +925,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Title")
                         .IsUnique();
 
-                    b.HasIndex("TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "DateCreated", "DateModified");
+                    b.HasIndex("TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId");
 
                     b.ToTable("Opportunity", "Opportunity");
                 });
@@ -1315,15 +1332,36 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.ToTable("TenantCreation", "SSI");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", "Parent")
+                        .WithMany()
+                        .HasForeignKey("ParentId");
+
+                    b.Navigation("Parent");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>
                 {
                     b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "Country")
                         .WithMany()
                         .HasForeignKey("CountryId");
 
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", "Logo")
                         .WithMany()
                         .HasForeignKey("LogoId");
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "ModifiedByUser")
+                        .WithMany()
+                        .HasForeignKey("ModifiedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
                     b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups.OrganizationStatus", "Status")
                         .WithMany()
@@ -1333,7 +1371,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Navigation("Country");
 
+                    b.Navigation("CreatedByUser");
+
                     b.Navigation("Logo");
+
+                    b.Navigation("ModifiedByUser");
 
                     b.Navigation("Status");
                 });
@@ -1526,10 +1568,22 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityDifficulty", "Difficulty")
                         .WithMany()
                         .HasForeignKey("DifficultyId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "ModifiedByUser")
+                        .WithMany()
+                        .HasForeignKey("ModifiedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
@@ -1552,7 +1606,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Navigation("CommitmentInterval");
 
+                    b.Navigation("CreatedByUser");
+
                     b.Navigation("Difficulty");
+
+                    b.Navigation("ModifiedByUser");
 
                     b.Navigation("Organization");
 

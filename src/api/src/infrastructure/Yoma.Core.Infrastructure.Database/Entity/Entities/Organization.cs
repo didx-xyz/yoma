@@ -8,7 +8,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 {
     [Table("Organization", Schema = "Entity")]
     [Index(nameof(Name), IsUnique = true)]
-    [Index(nameof(StatusId), nameof(DateStatusModified), nameof(DateModified), nameof(DateCreated))]
+    [Index(nameof(StatusId), nameof(DateStatusModified), nameof(DateCreated), nameof(CreatedByUserId), nameof(DateModified), nameof(ModifiedByUserId))]
     public class Organization : BaseEntity<Guid>
     {
         [Required]
@@ -76,7 +76,17 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
         public DateTimeOffset DateCreated { get; set; }
 
         [Required]
+        [ForeignKey("CreatedByUserId")]
+        public Guid CreatedByUserId { get; set; }
+        public User CreatedByUser { get; set; }
+
+        [Required]
         public DateTimeOffset DateModified { get; set; }
+
+        [Required]
+        [ForeignKey("ModifiedByUserId")]
+        public Guid ModifiedByUserId { get; set; }
+        public User ModifiedByUser { get; set; }
 
         public ICollection<OrganizationProviderType> ProviderTypes { get; set; }
 

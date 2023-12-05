@@ -11,7 +11,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [Table("Opportunity", Schema = "Opportunity")]
     [Index(nameof(Title), IsUnique = true)]
     [Index(nameof(TypeId), nameof(OrganizationId), nameof(ZltoReward), nameof(DifficultyId), nameof(CommitmentIntervalId), nameof(CommitmentIntervalCount), nameof(StatusId), nameof(Keywords),
-        nameof(DateStart), nameof(DateEnd), nameof(CredentialIssuanceEnabled), nameof(DateCreated), nameof(DateModified))]
+        nameof(DateStart), nameof(DateEnd), nameof(CredentialIssuanceEnabled), nameof(DateCreated), nameof(CreatedByUserId), nameof(DateModified), nameof(ModifiedByUserId))]
     public class Opportunity : BaseEntity<Guid>
     {
         //support specials characters like emojis  
@@ -109,15 +109,17 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
         public DateTimeOffset DateCreated { get; set; }
 
         [Required]
-        [Column(TypeName = "varchar(320)")]
-        public string CreatedBy { get; set; }
+        [ForeignKey("CreatedByUserId")]
+        public Guid CreatedByUserId { get; set; }
+        public User CreatedByUser { get; set; }
 
         [Required]
         public DateTimeOffset DateModified { get; set; }
 
         [Required]
-        [Column(TypeName = "varchar(320)")]
-        public string ModifiedBy { get; set; }
+        [ForeignKey("ModifiedByUserId")]
+        public Guid ModifiedByUserId { get; set; }
+        public User ModifiedByUser { get; set; }
 
         public ICollection<OpportunityCategory> Categories { get; set; }
 
