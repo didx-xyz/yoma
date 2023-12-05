@@ -381,7 +381,6 @@ namespace Yoma.Core.Domain.Entity.Services
                     var resultLogo = await UpdateLogo(result, request.Logo, OrganizationReapprovalAction.None);
                     result = resultLogo.Organization;
                     itemsAdded.Add(resultLogo.ItemAdded);
-                    if (resultLogo.ItemDeleted != null) itemsDeleted.Add(resultLogo.ItemDeleted.Value);
                 }
 
                 //admins
@@ -597,7 +596,6 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
-        //TODO: Ensure file name remains the same; utilize organization id
         public async Task<Organization> UpdateLogo(Guid id, IFormFile? file, bool ensureOrganizationAuthorization)
         {
             var result = GetById(id, true, true, ensureOrganizationAuthorization);
@@ -813,15 +811,13 @@ namespace Yoma.Core.Domain.Entity.Services
             return organization;
         }
 
-        private async Task<(Organization Organization, BlobObject ItemAdded, (Guid Id, IFormFile File)? ItemDeleted)> UpdateLogo(
+        private async Task<(Organization Organization, BlobObject ItemAdded)> UpdateLogo(
             Organization organization, IFormFile? file, OrganizationReapprovalAction reapprovalAction)
         {
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
 
-            (Guid Id, IFormFile File)? currentLogo = null;
-            if (organization.LogoId.HasValue)
-                currentLogo = (organization.LogoId.Value, await _blobService.Download(organization.LogoId.Value));
+            var currentLogoId = organization.LogoId;
 
             BlobObject? blobObject = null;
             try
@@ -831,9 +827,9 @@ namespace Yoma.Core.Domain.Entity.Services
                 organization.LogoId = blobObject.Id;
                 organization = await _organizationRepository.Update(organization);
 
-                if (currentLogo != null)
-                    await _blobService.Delete(currentLogo.Value.Id);
-
+                if (currentLogoId.HasValue)
+                    await _blobService.Archive(currentLogoId.Value, blobObject); //preserve / archive previous logo as they might be referenced in credentials
+             
                 organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
 
                 scope.Complete();
@@ -843,15 +839,12 @@ namespace Yoma.Core.Domain.Entity.Services
                 if (blobObject != null)
                     await _blobService.Delete(blobObject);
 
-                if (currentLogo != null)
-                    await _blobService.Create(currentLogo.Value.Id, currentLogo.Value.File);
-
                 throw;
             }
 
             organization.LogoURL = GetBlobObjectURL(organization.LogoId);
 
-            return (organization, blobObject, currentLogo);
+            return (organization, blobObject);
         }
 
         private async Task<Organization> AssignAdmins(Organization organization, List<string> emails, OrganizationReapprovalAction reapprovalAction)

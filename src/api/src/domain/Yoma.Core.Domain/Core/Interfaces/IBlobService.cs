@@ -24,5 +24,7 @@ namespace Yoma.Core.Domain.Core.Interfaces
         /// Delete the blob object only; used for rollbacks
         /// </summary>
         Task Delete(BlobObject blobObject);
+
+        Task Archive(Guid id, BlobObject blobObjectReplacement);
     }
 }
