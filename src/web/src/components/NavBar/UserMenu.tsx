@@ -14,7 +14,7 @@ import {
   IoMdSettings,
 } from "react-icons/io";
 import ReactModal from "react-modal";
-import { OrganizationInfo } from "~/api/models/user";
+import { type OrganizationInfo } from "~/api/models/user";
 import { ROLE_ADMIN } from "~/lib/constants";
 import { shimmer, toBase64 } from "~/lib/image";
 import {
