@@ -7,6 +7,6 @@ image:
 ingress:
   internal:
     annotations:
-      nginx.ingress.kubernetes.io/proxy-buffer-size: "32k"
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "64k"
     rules:
       - host: v3app.dev.yoma.world
