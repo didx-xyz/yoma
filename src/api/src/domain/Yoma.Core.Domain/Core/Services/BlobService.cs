@@ -133,6 +133,17 @@ namespace Yoma.Core.Domain.Core.Services
 
             await client.Delete(blobObject.Key);
         }
+
+        public async Task Archive(Guid id, BlobObject blobObjectReplacement)
+        {
+            var item = GetById(id);
+
+            if (blobObjectReplacement == null)
+                throw new ArgumentNullException(nameof(blobObjectReplacement));
+
+            item.ParentId = blobObjectReplacement.Id;
+            await _blobObjectRepository.Update(item);
+        }
         #endregion
     }
 }

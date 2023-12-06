@@ -16,6 +16,8 @@ namespace Yoma.Core.Domain.Core.Models
 
         public string OriginalFileName { get; set; }
 
+        public Guid? ParentId { get; set; }
+
         public DateTimeOffset DateCreated { get; set; }
     }
 }

@@ -24,6 +24,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IOrganizationService _organizationService;
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IEmailProviderClient _emailProviderClient;
+        private readonly IUserService _userService;
         private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
         private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
         private static readonly OrganizationStatus[] Statuses_Declination = { OrganizationStatus.Inactive };
@@ -40,6 +41,7 @@ namespace Yoma.Core.Domain.Entity.Services
             IOrganizationService organizationService,
             IOrganizationStatusService organizationStatusService,
             IEmailProviderClientFactory emailProviderClientFactory,
+            IUserService userService,
             IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
             IRepository<OrganizationDocument> organizationDocumentRepository)
         {
@@ -50,6 +52,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _organizationService = organizationService;
             _organizationStatusService = organizationStatusService;
             _emailProviderClient = emailProviderClientFactory.CreateClient();
+            _userService = userService;
             _organizationRepository = organizationRepository;
             _organizationDocumentRepository = organizationDocumentRepository;
         }
@@ -72,10 +75,13 @@ namespace Yoma.Core.Domain.Entity.Services
                         .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeclinationBatchSize).ToList();
                     if (!items.Any()) break;
 
+                    var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+
                     foreach (var item in items)
                     {
                         item.CommentApproval = $"Auto-Declined due to being {string.Join("/", Statuses_Declination).ToLower()} for more than {_scheduleJobOptions.OrganizationDeclinationIntervalInDays} days";
                         item.StatusId = statusDeclinedId;
+                        item.ModifiedByUserId = user.Id;
                         _logger.LogInformation("Organization with id '{id}' flagged for declination", item.Id);
                     }
 
@@ -137,9 +143,12 @@ namespace Yoma.Core.Domain.Entity.Services
                         .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeletionBatchSize).ToList();
                     if (!items.Any()) break;
 
+                    var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+
                     foreach (var item in items)
                     {
                         item.StatusId = statusDeletedId;
+                        item.ModifiedByUserId = user.Id;
                         _logger.LogInformation("Organization with id '{id}' flagged for deletion", item.Id);
                     }
 

@@ -6,7 +6,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
 {
     [Table("Blob", Schema = "Object")]
     [Index(nameof(Key), IsUnique = true)]
-    [Index(nameof(StorageType), nameof(FileType))]
+    [Index(nameof(StorageType), nameof(FileType), nameof(ParentId))]
     public class BlobObject : BaseEntity<Guid>
     {
         [Required]
@@ -28,6 +28,10 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
         [Required]
         [Column(TypeName = "varchar(255)")]
         public string OriginalFileName { get; set; }
+
+        [ForeignKey("ParentId")]
+        public Guid? ParentId { get; set; }
+        public BlobObject? Parent { get; set; }
 
         [Required]
         public DateTimeOffset DateCreated { get; set; }

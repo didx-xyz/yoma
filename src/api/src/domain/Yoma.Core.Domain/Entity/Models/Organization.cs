@@ -50,7 +50,11 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public DateTimeOffset DateCreated { get; set; }
 
+        public Guid CreatedByUserId { get; set; }
+
         public DateTimeOffset DateModified { get; set; }
+
+        public Guid ModifiedByUserId { get; set; }
 
         public List<OrganizationDocument>? Documents { get; set; }
 

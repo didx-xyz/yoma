@@ -211,7 +211,6 @@ namespace Yoma.Core.Domain.Entity.Services
             return result;
         }
 
-        //TODO: Ensure file name remains the same; utilize user id
         public async Task<User> UpsertPhoto(string? email, IFormFile? file)
         {
             var result = GetByEmail(email, true, false);
@@ -219,7 +218,7 @@ namespace Yoma.Core.Domain.Entity.Services
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
 
-            var currentPhoto = result.PhotoId.HasValue ? new { Id = result.PhotoId.Value, File = await _blobService.Download(result.PhotoId.Value) } : null;
+            var currentPhotoId = result.PhotoId;
 
             BlobObject? blobObject = null;
             try
@@ -229,8 +228,8 @@ namespace Yoma.Core.Domain.Entity.Services
                 result.PhotoId = blobObject.Id;
                 result = await _userRepository.Update(result);
 
-                if (currentPhoto != null)
-                    await _blobService.Delete(currentPhoto.Id);
+                if (currentPhotoId.HasValue)
+                    await _blobService.Archive(currentPhotoId.Value, blobObject); //preserve / archive previous photo as they might be referenced in credentials
 
                 scope.Complete();
             }
@@ -239,9 +238,6 @@ namespace Yoma.Core.Domain.Entity.Services
                 //roll back
                 if (blobObject != null)
                     await _blobService.Delete(blobObject);
-
-                if (currentPhoto != null)
-                    await _blobService.Create(currentPhoto.Id, currentPhoto.File);
 
                 throw;
             }

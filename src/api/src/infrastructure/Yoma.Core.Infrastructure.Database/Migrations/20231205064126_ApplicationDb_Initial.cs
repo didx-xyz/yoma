@@ -36,11 +36,18 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     Key = table.Column<string>(type: "varchar(125)", nullable: false),
                     ContentType = table.Column<string>(type: "varchar(127)", nullable: false),
                     OriginalFileName = table.Column<string>(type: "varchar(255)", nullable: false),
+                    ParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Blob", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Blob_Blob_ParentId",
+                        column: x => x.ParentId,
+                        principalSchema: "Object",
+                        principalTable: "Blob",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -363,58 +370,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Organization",
-                schema: "Entity",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(255)", nullable: false),
-                    WebsiteURL = table.Column<string>(type: "varchar(2048)", nullable: true),
-                    PrimaryContactName = table.Column<string>(type: "varchar(255)", nullable: true),
-                    PrimaryContactEmail = table.Column<string>(type: "varchar(320)", nullable: true),
-                    PrimaryContactPhone = table.Column<string>(type: "varchar(50)", nullable: true),
-                    VATIN = table.Column<string>(type: "varchar(255)", nullable: true),
-                    TaxNumber = table.Column<string>(type: "varchar(255)", nullable: true),
-                    RegistrationNumber = table.Column<string>(type: "varchar(255)", nullable: true),
-                    City = table.Column<string>(type: "varchar(50)", nullable: true),
-                    CountryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    StreetAddress = table.Column<string>(type: "varchar(500)", nullable: true),
-                    Province = table.Column<string>(type: "varchar(255)", nullable: true),
-                    PostalCode = table.Column<string>(type: "varchar(10)", nullable: true),
-                    Tagline = table.Column<string>(type: "nvarchar(MAX)", nullable: true),
-                    Biography = table.Column<string>(type: "nvarchar(MAX)", nullable: true),
-                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CommentApproval = table.Column<string>(type: "varchar(500)", nullable: true),
-                    DateStatusModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    LogoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Organization", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Organization_Blob_LogoId",
-                        column: x => x.LogoId,
-                        principalSchema: "Object",
-                        principalTable: "Blob",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Organization_Country_CountryId",
-                        column: x => x.CountryId,
-                        principalSchema: "Lookup",
-                        principalTable: "Country",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Organization_OrganizationStatus_StatusId",
-                        column: x => x.StatusId,
-                        principalSchema: "Entity",
-                        principalTable: "OrganizationStatus",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "SchemaEntityProperty",
                 schema: "SSI",
                 columns: table => new
@@ -468,6 +423,72 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         principalTable: "SchemaType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Organization",
+                schema: "Entity",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(255)", nullable: false),
+                    WebsiteURL = table.Column<string>(type: "varchar(2048)", nullable: true),
+                    PrimaryContactName = table.Column<string>(type: "varchar(255)", nullable: true),
+                    PrimaryContactEmail = table.Column<string>(type: "varchar(320)", nullable: true),
+                    PrimaryContactPhone = table.Column<string>(type: "varchar(50)", nullable: true),
+                    VATIN = table.Column<string>(type: "varchar(255)", nullable: true),
+                    TaxNumber = table.Column<string>(type: "varchar(255)", nullable: true),
+                    RegistrationNumber = table.Column<string>(type: "varchar(255)", nullable: true),
+                    City = table.Column<string>(type: "varchar(50)", nullable: true),
+                    CountryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    StreetAddress = table.Column<string>(type: "varchar(500)", nullable: true),
+                    Province = table.Column<string>(type: "varchar(255)", nullable: true),
+                    PostalCode = table.Column<string>(type: "varchar(10)", nullable: true),
+                    Tagline = table.Column<string>(type: "nvarchar(MAX)", nullable: true),
+                    Biography = table.Column<string>(type: "nvarchar(MAX)", nullable: true),
+                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CommentApproval = table.Column<string>(type: "varchar(500)", nullable: true),
+                    DateStatusModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    LogoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Organization", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Organization_Blob_LogoId",
+                        column: x => x.LogoId,
+                        principalSchema: "Object",
+                        principalTable: "Blob",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Organization_Country_CountryId",
+                        column: x => x.CountryId,
+                        principalSchema: "Lookup",
+                        principalTable: "Country",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Organization_OrganizationStatus_StatusId",
+                        column: x => x.StatusId,
+                        principalSchema: "Entity",
+                        principalTable: "OrganizationStatus",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Organization_User_CreatedByUserId",
+                        column: x => x.CreatedByUserId,
+                        principalSchema: "Entity",
+                        principalTable: "User",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Organization_User_ModifiedByUserId",
+                        column: x => x.ModifiedByUserId,
+                        principalSchema: "Entity",
+                        principalTable: "User",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -532,9 +553,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     CredentialIssuanceEnabled = table.Column<bool>(type: "bit", nullable: false),
                     SSISchemaName = table.Column<string>(type: "varchar(255)", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    CreatedBy = table.Column<string>(type: "varchar(320)", nullable: false),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    ModifiedBy = table.Column<string>(type: "varchar(320)", nullable: false)
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -574,6 +595,18 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         principalTable: "TimeInterval",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Opportunity_User_CreatedByUserId",
+                        column: x => x.CreatedByUserId,
+                        principalSchema: "Entity",
+                        principalTable: "User",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Opportunity_User_ModifiedByUserId",
+                        column: x => x.ModifiedByUserId,
+                        principalSchema: "Entity",
+                        principalTable: "User",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -1033,10 +1066,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Blob_StorageType_FileType",
+                name: "IX_Blob_ParentId",
                 schema: "Object",
                 table: "Blob",
-                columns: new[] { "StorageType", "FileType" });
+                column: "ParentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Blob_StorageType_FileType_ParentId",
+                schema: "Object",
+                table: "Blob",
+                columns: new[] { "StorageType", "FileType", "ParentId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Country_CodeAlpha2",
@@ -1196,10 +1235,22 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 column: "CommitmentIntervalId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Opportunity_CreatedByUserId",
+                schema: "Opportunity",
+                table: "Opportunity",
+                column: "CreatedByUserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Opportunity_DifficultyId",
                 schema: "Opportunity",
                 table: "Opportunity",
                 column: "DifficultyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Opportunity_ModifiedByUserId",
+                schema: "Opportunity",
+                table: "Opportunity",
+                column: "ModifiedByUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Opportunity_OrganizationId",
@@ -1224,7 +1275,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 name: "IX_Opportunity_TypeId_OrganizationId_ZltoReward_DifficultyId_CommitmentIntervalId_CommitmentIntervalCount_StatusId_Keywords_Dat~",
                 schema: "Opportunity",
                 table: "Opportunity",
-                columns: new[] { "TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "DateCreated", "DateModified" });
+                columns: new[] { "TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OpportunityCategories_CategoryId",
@@ -1333,10 +1384,22 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 column: "CountryId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Organization_CreatedByUserId",
+                schema: "Entity",
+                table: "Organization",
+                column: "CreatedByUserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Organization_LogoId",
                 schema: "Entity",
                 table: "Organization",
                 column: "LogoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Organization_ModifiedByUserId",
+                schema: "Entity",
+                table: "Organization",
+                column: "ModifiedByUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Organization_Name",
@@ -1346,10 +1409,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Organization_StatusId_DateStatusModified_DateModified_DateCreated",
+                name: "IX_Organization_StatusId_DateStatusModified_DateCreated_CreatedByUserId_DateModified_ModifiedByUserId",
                 schema: "Entity",
                 table: "Organization",
-                columns: new[] { "StatusId", "DateStatusModified", "DateModified", "DateCreated" });
+                columns: new[] { "StatusId", "DateStatusModified", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrganizationDocuments_FileId",
@@ -1673,10 +1736,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Lookup");
 
             migrationBuilder.DropTable(
-                name: "User",
-                schema: "Entity");
-
-            migrationBuilder.DropTable(
                 name: "OpportunityDifficulty",
                 schema: "Opportunity");
 
@@ -1697,8 +1756,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Lookup");
 
             migrationBuilder.DropTable(
-                name: "Gender",
-                schema: "Lookup");
+                name: "OrganizationStatus",
+                schema: "Entity");
+
+            migrationBuilder.DropTable(
+                name: "User",
+                schema: "Entity");
 
             migrationBuilder.DropTable(
                 name: "Blob",
@@ -1709,8 +1772,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Lookup");
 
             migrationBuilder.DropTable(
-                name: "OrganizationStatus",
-                schema: "Entity");
+                name: "Gender",
+                schema: "Lookup");
         }
     }
 }

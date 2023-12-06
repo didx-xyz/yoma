@@ -1,13 +1,13 @@
 using Flurl;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.EmailProvider;
 using Yoma.Core.Domain.EmailProvider.Interfaces;
 using Yoma.Core.Domain.EmailProvider.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
-using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 
@@ -22,6 +22,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly IOpportunityStatusService _opportunityStatusService;
         private readonly IOrganizationService _organizationService;
         private readonly IEmailProviderClient _emailProviderClient;
+        private readonly IUserService _userService;
         private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
         private static readonly Status[] Statuses_Expirable = { Status.Active, Status.Inactive };
         private static readonly Status[] Statuses_Deletion = { Status.Inactive, Status.Expired };
@@ -36,6 +37,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             IOpportunityStatusService opportunityStatusService,
             IOrganizationService organizationService,
             IEmailProviderClientFactory emailProviderClientFactory,
+            IUserService userService,
             IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository)
         {
             _logger = logger;
@@ -44,6 +46,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             _opportunityStatusService = opportunityStatusService;
             _organizationService = organizationService;
             _emailProviderClient = emailProviderClientFactory.CreateClient();
+            _userService = userService;
             _opportunityRepository = opportunityRepository;
         }
         #endregion
@@ -64,9 +67,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
                         o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.Now).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
                     if (!items.Any()) break;
 
+                    var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+
                     foreach (var item in items)
                     {
                         item.StatusId = statusExpiredId;
+                        item.ModifiedByUserId = user.Id;
                         _logger.LogInformation("Opportunity with id '{id}' flagged for expiration", item.Id);
                     }
 
@@ -117,9 +123,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
                         .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
                     if (!items.Any()) break;
 
+                    var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+
                     foreach (var item in items)
                     {
                         item.StatusId = statusDeletedId;
+                        item.ModifiedByUserId = user.Id;
                         _logger.LogInformation("Opportunity with id '{id}' flagged for deletion", item.Id);
                     }
 

@@ -28,6 +28,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
                 Key = entity.Key,
                 ContentType = entity.ContentType,
                 OriginalFileName = entity.OriginalFileName,
+                ParentId = entity.ParentId,
                 DateCreated = entity.DateCreated
             });
         }
@@ -44,6 +45,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
                 Key = item.Key,
                 ContentType = item.ContentType,
                 OriginalFileName = item.OriginalFileName,
+                ParentId = item.ParentId,
                 DateCreated = item.DateCreated
             };
 
@@ -54,14 +56,21 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
             return item;
         }
 
-        public Task<Domain.Core.Models.BlobObject> Update(Domain.Core.Models.BlobObject item)
+        public async Task<Domain.Core.Models.BlobObject> Update(Domain.Core.Models.BlobObject item)
         {
-            throw new NotImplementedException();
+            var entity = _context.BlobObject.Where(o => o.Id == item.Id).SingleOrDefault()
+              ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(BlobObject)} with id '{item.Id}' does not exist");
+
+            entity.ParentId = item.ParentId;
+
+            await _context.SaveChangesAsync();
+
+            return item;
         }
 
         public async Task Delete(Domain.Core.Models.BlobObject item)
         {
-            var entity = _context.BlobObject.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"S3Object with id '{item.Id}' does not exist");
+            var entity = _context.BlobObject.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(BlobObject)} with id '{item.Id}' does not exist");
             _context.BlobObject.Remove(entity);
             await _context.SaveChangesAsync();
         }

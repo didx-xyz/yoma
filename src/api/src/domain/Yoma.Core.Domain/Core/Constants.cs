@@ -8,6 +8,6 @@ namespace Yoma.Core.Domain.Core
 
         public static readonly string[] Roles_Supported = { Role_User, Role_Admin, Role_OrganizationAdmin };
 
-        public const string ModifiedBy_System_Username = "System";
+        public const string ModifiedBy_System_Username = "system@yoma.world";
     }
 }

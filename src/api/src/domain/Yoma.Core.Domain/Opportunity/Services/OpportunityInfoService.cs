@@ -1,4 +1,3 @@
-using System.Linq;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;

@@ -483,7 +483,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     if (item.DateEnd.HasValue && item.DateEnd.Value > dateCompleted)
                         throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd}')");
 
-                    var (zltoReward, yomaReward) = await _opportunityService.AllocateRewards(opportunity.Id, true);
+                    var (zltoReward, yomaReward) = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, true);
                     item.ZltoReward = zltoReward;
                     item.YomaReward = yomaReward;
                     item.DateCompleted = DateTimeOffset.Now;
