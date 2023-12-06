@@ -82,7 +82,7 @@ export const Global: React.FC = () => {
       return;
     }
 
-    // set the active role view atom (based on roles)
+    // set the active navigation role view atom (based on roles)
     const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
     const isOrgAdmin = session?.user?.roles.includes(ROLE_ORG_ADMIN);
 
@@ -105,6 +105,11 @@ export const Global: React.FC = () => {
       if (matches && matches.length > 1) {
         const orgId = matches[1];
         if (!orgId) return;
+
+        // override the active navigation role view if admin of the organisation
+        if (session.user.adminsOf.includes(orgId)) {
+          setActiveNavigationRoleViewAtom(RoleView.OrgAdmin);
+        }
 
         if (orgId != currentOrganisationIdValue) {
           // update atom (navbar items)

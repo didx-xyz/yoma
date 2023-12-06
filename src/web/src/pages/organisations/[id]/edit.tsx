@@ -37,7 +37,6 @@ import { getUserProfile } from "~/api/services/user";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   ROLE_ADMIN,
-  ROLE_ORG_ADMIN,
   THEME_BLUE,
   THEME_GREEN,
   THEME_PURPLE,
@@ -51,6 +50,7 @@ interface IParams extends ParsedUrlQuery {
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { id } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
 
   // 👇 ensure authenticated
@@ -65,18 +65,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   let theme;
 
-  if (session?.user?.roles.includes(ROLE_ADMIN)) {
-    theme = THEME_BLUE;
-  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+  if (session?.user?.adminsOf?.includes(id)) {
     theme = THEME_GREEN;
+  } else if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
   } else {
     theme = THEME_PURPLE;
   }
 
-  const { id } = context.params as IParams;
-  const queryClient = new QueryClient(config);
-
   // 👇 prefetch queries on server
+  const queryClient = new QueryClient(config);
   await Promise.all([
     await queryClient.prefetchQuery({
       queryKey: ["organisationProviderTypes"],

@@ -65,9 +65,9 @@ import type { NextPageWithLayout } from "~/pages/_app";
 import { getSchemas } from "~/api/services/credentials";
 import {
   ROLE_ADMIN,
-  ROLE_ORG_ADMIN,
   THEME_BLUE,
   THEME_GREEN,
+  THEME_PURPLE,
   REGEX_URL_VALIDATION,
 } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -80,6 +80,7 @@ interface IParams extends ParsedUrlQuery {
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { id, opportunityId } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
 
   // 👇 ensure authenticated
@@ -91,25 +92,19 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  const { id, opportunityId } = context.params as IParams;
-  const queryClient = new QueryClient(config);
-
   // 👇 set theme based on role
   let theme;
 
-  if (session?.user?.roles.includes(ROLE_ADMIN)) {
-    theme = THEME_BLUE;
-  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+  if (session?.user?.adminsOf?.includes(id)) {
     theme = THEME_GREEN;
+  } else if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
   } else {
-    return {
-      props: {
-        error: "Unauthorized",
-      },
-    };
+    theme = THEME_PURPLE;
   }
 
   // 👇 prefetch queries on server
+  const queryClient = new QueryClient(config);
   await Promise.all([
     await queryClient.prefetchQuery({
       queryKey: ["categories"],
