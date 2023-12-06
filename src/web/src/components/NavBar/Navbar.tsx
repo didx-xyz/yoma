@@ -127,6 +127,14 @@ export const Navbar: React.FC = () => {
           selected: false,
           icon: null,
         },
+        {
+          title: "Settings",
+          description: "Settings",
+          url: `/organisations/${currentOrganisationId}/edit`,
+          badgeCount: null,
+          selected: false,
+          icon: null,
+        },
       ];
     } else {
       return navBarLinksUser;
