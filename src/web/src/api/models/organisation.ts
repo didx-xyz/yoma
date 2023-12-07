@@ -110,7 +110,7 @@ export interface OrganizationInfo {
   id: string;
   name: string;
   tagline: string | null;
-  status: OrganizationStatus;
+  status: OrganizationStatus | string; //NB
   logoURL: string | null;
 }
 

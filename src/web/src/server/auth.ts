@@ -11,6 +11,7 @@ import KeycloakProvider, {
   type KeycloakProfile,
 } from "next-auth/providers/keycloak";
 import { env } from "process";
+import { type UserProfile } from "~/api/models/user";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -27,6 +28,7 @@ declare module "next-auth" {
 }
 export interface User extends DefaultUser {
   roles: string[];
+  adminsOf: string[];
   //adminsOf: OrganizationInfo[];
   //photoURL: string | null;
 }
@@ -93,6 +95,9 @@ export const authOptions: NextAuthOptions = {
         // get roles from access_token
         const { realm_access } = decode(account.access_token); // eslint-disable-line
 
+        // get user profile from yoma-api
+        const userProfile = await getYomaUserProfile(account.access_token!);
+
         return {
           accessToken: account.accessToken,
           accessTokenExpires: account.expires_at,
@@ -100,6 +105,7 @@ export const authOptions: NextAuthOptions = {
           user: {
             ...user,
             roles: realm_access.roles, // eslint-disable-line
+            adminsOf: userProfile?.adminsOf.map((org) => org.id) ?? [],
           },
         };
       }
@@ -180,6 +186,9 @@ async function refreshAccessToken(token: any) {
     // get roles from access_token
     const { realm_access } = decode(refreshedTokens.access_token); // eslint-disable-line
 
+    // get user profile from yoma-api
+    const userProfile = await getYomaUserProfile(refreshedTokens.access_token!);
+
     /* eslint-disable */
     return {
       ...token,
@@ -189,6 +198,7 @@ async function refreshAccessToken(token: any) {
       user: {
         ...token.user,
         roles: realm_access.roles, // eslint-disable-line
+        adminsOf: userProfile?.adminsOf.map((org) => org.id) ?? [],
       },
     };
     /* eslint-enable */
@@ -202,6 +212,27 @@ async function refreshAccessToken(token: any) {
     };
     /* eslint-enable */
   }
+}
+
+async function getYomaUserProfile(
+  access_token: string,
+): Promise<UserProfile | null> {
+  const response = await fetch(`${env.API_BASE_URL}/user`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${access_token}`,
+    },
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    console.error(
+      "Failed to get user profile from yoma-api: " + response.statusText,
+    );
+    return null;
+  }
+
+  return await response.json(); // eslint-disable-line
 }
 
 /**

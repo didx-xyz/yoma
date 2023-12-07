@@ -21,9 +21,9 @@ import NoRowsMessage from "~/components/NoRowsMessage";
 import {
   PAGE_SIZE,
   ROLE_ADMIN,
-  ROLE_ORG_ADMIN,
   THEME_BLUE,
   THEME_GREEN,
+  THEME_PURPLE,
 } from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -37,6 +37,7 @@ interface IParams extends ParsedUrlQuery {
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { id } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
 
   // 👇 ensure authenticated
@@ -48,26 +49,20 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  const { id } = context.params as IParams;
-  const { query, page } = context.query;
-  const queryClient = new QueryClient(config);
-
   // 👇 set theme based on role
   let theme;
 
-  if (session?.user?.roles.includes(ROLE_ADMIN)) {
-    theme = THEME_BLUE;
-  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+  if (session?.user?.adminsOf?.includes(id)) {
     theme = THEME_GREEN;
+  } else if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
   } else {
-    return {
-      props: {
-        error: "Unauthorized",
-      },
-    };
+    theme = THEME_PURPLE;
   }
 
   // 👇 prefetch queries on server
+  const { query, page } = context.query;
+  const queryClient = new QueryClient(config);
   await queryClient.prefetchQuery({
     queryKey: [
       `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`,

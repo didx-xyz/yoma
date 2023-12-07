@@ -136,13 +136,16 @@ const OrganisationCreate: NextPageWithLayout<{
 
         // refresh the access token to get new roles (OrganisationAdmin is added to the user roles after organisation is registered)
         // trigger a silent refresh by updating the session (see /server/auth.ts)
+        // this updates the client-side token, but NOT the server. workaround is to reload the page below
         await update(session);
 
         // refresh user profile for new organisation to reflect on user menu
         const userProfile = await getUserProfile();
         setUserProfile(userProfile);
 
-        void router.push("/organisations/register/success");
+        void router
+          .push("/organisations/register/success")
+          .then(() => router.reload()); // 👈 NB: force a reload of the page to update the session on the server
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",

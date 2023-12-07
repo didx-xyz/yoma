@@ -65,9 +65,9 @@ import type { NextPageWithLayout } from "~/pages/_app";
 import { getSchemas } from "~/api/services/credentials";
 import {
   ROLE_ADMIN,
-  ROLE_ORG_ADMIN,
   THEME_BLUE,
   THEME_GREEN,
+  THEME_PURPLE,
   REGEX_URL_VALIDATION,
 } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -80,6 +80,7 @@ interface IParams extends ParsedUrlQuery {
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { id, opportunityId } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
 
   // 👇 ensure authenticated
@@ -91,78 +92,74 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  const { id, opportunityId } = context.params as IParams;
-  const queryClient = new QueryClient(config);
-
   // 👇 set theme based on role
   let theme;
 
-  if (session?.user?.roles.includes(ROLE_ADMIN)) {
-    theme = THEME_BLUE;
-  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
+  if (session?.user?.adminsOf?.includes(id)) {
     theme = THEME_GREEN;
+  } else if (session?.user?.roles.includes(ROLE_ADMIN)) {
+    theme = THEME_BLUE;
   } else {
-    return {
-      props: {
-        error: "Unauthorized",
-      },
-    };
+    theme = THEME_PURPLE;
   }
 
   // 👇 prefetch queries on server
+  const queryClient = new QueryClient(config);
+
   await Promise.all([
-    await queryClient.prefetchQuery({
-      queryKey: ["categories"],
-      queryFn: async () =>
-        (await getCategories(context)).map((c) => ({
-          value: c.id,
-          label: c.name,
-        })),
-    }),
-    await queryClient.prefetchQuery({
-      queryKey: ["countries"],
-      queryFn: async () =>
-        (await getCountries(context)).map((c) => ({
-          value: c.id,
-          label: c.name,
-        })),
-    }),
-    await queryClient.prefetchQuery({
-      queryKey: ["languages"],
-      queryFn: async () =>
-        (await getLanguages(context)).map((c) => ({
-          value: c.id,
-          label: c.name,
-        })),
-    }),
-    await queryClient.prefetchQuery({
-      queryKey: ["opportunityTypes"],
-      queryFn: async () =>
-        (await getTypes(context)).map((c) => ({
-          value: c.id,
-          label: c.name,
-        })),
-    }),
-    await queryClient.prefetchQuery({
-      queryKey: ["verificationTypes"],
-      queryFn: async () => await getVerificationTypes(context),
-    }),
-    await queryClient.prefetchQuery({
-      queryKey: ["difficulties"],
-      queryFn: async () =>
-        (await getDifficulties(context)).map((c) => ({
-          value: c.id,
-          label: c.name,
-        })),
-    }),
-    await queryClient.prefetchQuery({
-      queryKey: ["timeIntervals"],
-      queryFn: async () =>
-        (await getTimeIntervals(context)).map((c) => ({
-          value: c.id,
-          label: c.name,
-        })),
-    }),
+    // ⚠ disabled due to proxy header buffer size limit (UND_HEADER_OVERFLOW)
+    // await queryClient.prefetchQuery({
+    //   queryKey: ["categories"],
+    //   queryFn: async () =>
+    //     (await getCategories(context)).map((c) => ({
+    //       value: c.id,
+    //       label: c.name,
+    //     })),
+    // }),
+    // await queryClient.prefetchQuery({
+    //   queryKey: ["countries"],
+    //   queryFn: async () =>
+    //     (await getCountries(context)).map((c) => ({
+    //       value: c.id,
+    //       label: c.name,
+    //     })),
+    // }),
+    // await queryClient.prefetchQuery({
+    //   queryKey: ["languages"],
+    //   queryFn: async () =>
+    //     (await getLanguages(context)).map((c) => ({
+    //       value: c.id,
+    //       label: c.name,
+    //     })),
+    // }),
+    // await queryClient.prefetchQuery({
+    //   queryKey: ["opportunityTypes"],
+    //   queryFn: async () =>
+    //     (await getTypes(context)).map((c) => ({
+    //       value: c.id,
+    //       label: c.name,
+    //     })),
+    // }),
+    // await queryClient.prefetchQuery({
+    //   queryKey: ["verificationTypes"],
+    //   queryFn: async () => await getVerificationTypes(context),
+    // }),
+    // await queryClient.prefetchQuery({
+    //   queryKey: ["difficulties"],
+    //   queryFn: async () =>
+    //     (await getDifficulties(context)).map((c) => ({
+    //       value: c.id,
+    //       label: c.name,
+    //     })),
+    // }),
+    // await queryClient.prefetchQuery({
+    //   queryKey: ["timeIntervals"],
+    //   queryFn: async () =>
+    //     (await getTimeIntervals(context)).map((c) => ({
+    //       value: c.id,
+    //       label: c.name,
+    //     })),
+    // }),
     opportunityId !== "create"
       ? await queryClient.prefetchQuery({
           queryKey: ["opportunity", opportunityId],

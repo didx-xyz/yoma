@@ -560,7 +560,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       redirectWithSearchFilterParams(opportunitySearchFilter);
 
       // scroll to the top of the page
-      window.scrollTo(0, 0);
+      //window.scrollTo(0, 0);
     },
     [opportunitySearchFilter, redirectWithSearchFilterParams],
   );

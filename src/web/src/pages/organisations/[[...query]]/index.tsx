@@ -11,7 +11,6 @@ import {
   type OrganizationInfo,
   type OrganizationSearchResults,
   Status,
-  OrganizationStatus,
 } from "~/api/models/organisation";
 import { getOrganisations } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
@@ -26,7 +25,7 @@ import {
   THEME_GREEN,
 } from "~/lib/constants";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { type User, authOptions } from "~/server/auth";
 import { config } from "~/lib/react-query-config";
 
 // ⚠️ SSR
@@ -104,16 +103,23 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 }
 
 export const OrganisationCardComponent: React.FC<{
+  key: string;
   item: OrganizationInfo;
+  user: User;
 }> = (props) => {
-  const link =
-    props.item.status.toString() ===
-    OrganizationStatus[OrganizationStatus.Active]
+  const link = props.user.roles.includes(ROLE_ADMIN)
+    ? props.item.status === "Active"
       ? `/organisations/${props.item.id}/info`
-      : `/organisations/${props.item.id}/verify`;
+      : `/organisations/${props.item.id}/verify`
+    : props.item.status === "Active"
+      ? `/organisations/${props.item.id}`
+      : `/organisations/${props.item.id}/edit`;
 
   return (
-    <div className="flex h-[100px] flex-col rounded-lg bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:bg-neutral-700 md:max-w-xl md:flex-row">
+    <div
+      key={props.key}
+      className="flex h-[100px] flex-col rounded-lg bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:bg-neutral-700 md:max-w-xl md:flex-row"
+    >
       <div className="flex items-center justify-center p-4">
         {!props.item.logoURL && <IoMdSquare className="-ml-4 h-28 w-28" />}
 
@@ -147,8 +153,9 @@ export const OrganisationCardComponent: React.FC<{
 
 const Opportunities: NextPageWithLayout<{
   error: string;
+  user: User;
   theme: string;
-}> = ({ error }) => {
+}> = ({ error, user }) => {
   const router = useRouter();
 
   // get query parameter from route
@@ -252,7 +259,11 @@ const Opportunities: NextPageWithLayout<{
                 <>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
                     {organisationsInactive.items.map((item) => (
-                      <OrganisationCardComponent key={item.id} item={item} />
+                      <OrganisationCardComponent
+                        key={item.id}
+                        item={item}
+                        user={user}
+                      />
                     ))}
                   </div>
                 </>
@@ -265,9 +276,15 @@ const Opportunities: NextPageWithLayout<{
               (organisationsActive.items.length === 0 && (
                 <NoRowsMessage
                   title={"No organisations found"}
-                  description={
-                    "Opportunities that you add will be displayed here."
-                  }
+                  description={"Approved organisations will be displayed here."}
+                />
+              ))}
+
+            {!organisationsActive ||
+              (organisationsActive.items.length === 0 && query && (
+                <NoRowsMessage
+                  title={"No organisations found"}
+                  description={"Please try refining your search query."}
                 />
               ))}
 
@@ -275,7 +292,11 @@ const Opportunities: NextPageWithLayout<{
               <>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
                   {organisationsActive.items.map((item) => (
-                    <OrganisationCardComponent key={item.id} item={item} />
+                    <OrganisationCardComponent
+                      key={item.id}
+                      item={item}
+                      user={user}
+                    />
                   ))}
                 </div>
               </>
