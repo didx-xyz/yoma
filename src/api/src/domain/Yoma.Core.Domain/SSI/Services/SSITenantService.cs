@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -11,16 +12,19 @@ namespace Yoma.Core.Domain.SSI.Services
     public class SSITenantService : ISSITenantService
     {
         #region Class Variables
+        private readonly ILogger<SSITenantService> _logger;
         private readonly AppSettings _appSettings;
         private readonly ISSITenantCreationStatusService _ssiTenantCreationStatusService;
         private readonly IRepository<SSITenantCreation> _ssiTenantCreationRepository;
         #endregion
 
         #region Constructor
-        public SSITenantService(IOptions<AppSettings> appSettings,
+        public SSITenantService(ILogger<SSITenantService> logger,
+            IOptions<AppSettings> appSettings,
             ISSITenantCreationStatusService ssiTenantCreationStatusService,
             IRepository<SSITenantCreation> ssiTenantCreationRepository)
         {
+            _logger = logger;
             _appSettings = appSettings.Value;
             _ssiTenantCreationStatusService = ssiTenantCreationStatusService;
             _ssiTenantCreationRepository = ssiTenantCreationRepository;
@@ -81,7 +85,10 @@ namespace Yoma.Core.Domain.SSI.Services
             }
 
             if (existingItem != null)
-                throw new InvalidOperationException($"Tenant creation item already exists for entity type '{entityType}' and entity id '{entityId}'");
+            {
+                _logger.LogInformation("Scheduling of tenant creation skipped: Already scheduled for entity type '{entityType}' and entity id '{entityId}'", entityType, entityId);
+                return;
+            }
 
             await _ssiTenantCreationRepository.Create(item);
         }
