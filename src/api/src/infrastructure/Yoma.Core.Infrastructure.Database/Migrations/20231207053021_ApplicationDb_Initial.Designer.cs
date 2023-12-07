@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231205064126_ApplicationDb_Initial")]
+    [Migration("20231207053021_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -150,6 +150,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("NameHashValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("PostalCode")
                         .HasColumnType("varchar(10)");

@@ -148,6 +148,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("NameHashValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(128)");
+
                     b.Property<string>("PostalCode")
                         .HasColumnType("varchar(10)");
 

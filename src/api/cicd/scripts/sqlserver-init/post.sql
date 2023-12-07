@@ -50,15 +50,19 @@ DECLARE @RowCount INT = 0;
 --organizations
 WHILE @RowCount < 10
 BEGIN
+    DECLARE @Name varchar(255) = (SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthName) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) + ' ' + CAST(ABS(CHECKSUM(NEWID())) % 2147483647 AS VARCHAR(10))
+
     INSERT INTO [Entity].[Organization]([Id],
 			    [Name],
+				[NameHashValue],
 			    [WebsiteURL],[PrimaryContactName],[PrimaryContactEmail],[PrimaryContactPhone],[VATIN],[TaxNumber],[RegistrationNumber],
 			    [City],[CountryId],[StreetAddress],[Province],[PostalCode],
 			    [Tagline],
 			    [Biography],
 			    [StatusId],[CommentApproval],[DateStatusModified],[LogoId],[DateCreated],[CreatedByUserId],[DateModified],[ModifiedByUserId])
     SELECT TOP 1 NEWID(),
-            (SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthName) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords) + ' ' + CAST(ABS(CHECKSUM(NEWID())) % 2147483647 AS VARCHAR(10)),
+			  @Name,
+			  CONVERT(NVARCHAR(128), HASHBYTES('SHA2_256', @Name), 2),
 		    'https://www.google.com/','Primary Contact','primarycontact@gmail.com','+27125555555', 'GB123456789', '0123456789', '12345/28/14',
 		    'My City',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),'My Street Address 1000', 'My Province', '12345-1234',
 		    (SELECT TOP 1 STRING_AGG(Word, ' ') WITHIN GROUP (ORDER BY NEWID()) FROM (SELECT TOP (@RandomLengthOther) value AS Word FROM STRING_SPLIT(@Words, ',')) AS RandomWords),
@@ -71,11 +75,13 @@ END;
 GO
 
 --Yoma (Youth Agency Marketplace) organization
-INSERT INTO [Entity].[Organization]([Id],[Name],[WebsiteURL],[PrimaryContactName],[PrimaryContactEmail],[PrimaryContactPhone],[VATIN],[TaxNumber],[RegistrationNumber]
+DECLARE @Name varchar(255) = 'Yoma (Youth Agency Marketplace)'
+
+INSERT INTO [Entity].[Organization]([Id],[Name],[NameHashValue],[WebsiteURL],[PrimaryContactName],[PrimaryContactEmail],[PrimaryContactPhone],[VATIN],[TaxNumber],[RegistrationNumber]
            ,[City],[CountryId],[StreetAddress],[Province],[PostalCode],[Tagline],[Biography],[StatusId],[CommentApproval],[DateStatusModified],[LogoId],[DateCreated],[CreatedByUserId],[DateModified],[ModifiedByUserId])
-VALUES(NEWID(),'Yoma (Youth Agency Marketplace)','https://www.yoma.world/','Primary Contact','primarycontact@gmail.com','+27125555555', 'GB123456789', '0123456789', '12345/28/14',
+VALUES(NEWID(), @Name, CONVERT(NVARCHAR(128), HASHBYTES('SHA2_256', @Name), 2), 'https://www.yoma.world/', 'Primary Contact', 'primarycontact@gmail.com', '+27125555555', 'GB123456789', '0123456789', '12345/28/14',
 		'My City',(SELECT [Id] FROM [Lookup].[Country] WHERE CodeAlpha2 = 'ZA'),'My Street Address 1000', 'My Province', '12345-1234','Tag Line','Biography',
-		(SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active'),'Approved',GETDATE(), NULL,
+		SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active'),'Approved',GETDATE(), NULL,
     GETDATE(),(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testorgadminuser@gmail.com'),GETDATE(),(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testorgadminuser@gmail.com'))
 GO
 

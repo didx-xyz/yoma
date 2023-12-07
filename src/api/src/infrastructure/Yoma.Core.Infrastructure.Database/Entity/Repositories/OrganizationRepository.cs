@@ -27,6 +27,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             {
                 Id = entity.Id,
                 Name = entity.Name,
+                NameHashValue = entity.NameHashValue,   
                 WebsiteURL = entity.WebsiteURL,
                 PrimaryContactName = entity.PrimaryContactName,
                 PrimaryContactEmail = entity.PrimaryContactEmail,
@@ -97,6 +98,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             {
                 Id = item.Id,
                 Name = item.Name,
+                NameHashValue = item.NameHashValue, 
                 WebsiteURL = item.WebsiteURL,
                 PrimaryContactName = item.PrimaryContactName,
                 PrimaryContactEmail = item.PrimaryContactEmail,
@@ -138,6 +140,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                {
                    Id = item.Id,
                    Name = item.Name,
+                   NameHashValue = item.NameHashValue,    
                    WebsiteURL = item.WebsiteURL,
                    PrimaryContactName = item.PrimaryContactName,
                    PrimaryContactEmail = item.PrimaryContactEmail,

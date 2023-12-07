@@ -239,6 +239,7 @@ namespace Yoma.Core.Domain.Entity.Services
             var result = new Organization
             {
                 Name = request.Name,
+                NameHashValue = HashHelper.ComputeSHA256Hash(request.Name),
                 WebsiteURL = request.WebsiteURL,
                 PrimaryContactName = request.PrimaryContactName,
                 PrimaryContactEmail = request.PrimaryContactEmail,

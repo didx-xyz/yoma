@@ -6,6 +6,8 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public string Name { get; set; }
 
+        public string NameHashValue { get; set; }
+
         public string? WebsiteURL { get; set; }
 
         public string? PrimaryContactName { get; set; }

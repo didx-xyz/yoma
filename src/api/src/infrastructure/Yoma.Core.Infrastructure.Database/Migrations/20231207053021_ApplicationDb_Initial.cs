@@ -432,6 +432,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(255)", nullable: false),
+                    NameHashValue = table.Column<string>(type: "nvarchar(128)", nullable: false),
                     WebsiteURL = table.Column<string>(type: "varchar(2048)", nullable: true),
                     PrimaryContactName = table.Column<string>(type: "varchar(255)", nullable: true),
                     PrimaryContactEmail = table.Column<string>(type: "varchar(320)", nullable: true),
