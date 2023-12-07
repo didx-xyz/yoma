@@ -29,11 +29,17 @@ WHERE U.[YoIDOnboarded] = 1
 GO
 
 --Yoma (Youth Agency Marketplace) organization
-INSERT INTO [Entity].[Organization]([Id],[Name],[WebsiteURL],[PrimaryContactName],[PrimaryContactEmail],[PrimaryContactPhone],[VATIN],[TaxNumber],[RegistrationNumber]
-           ,[City],[CountryId],[StreetAddress],[Province],[PostalCode],[Tagline],[Biography],[StatusId],[CommentApproval],[DateStatusModified],[LogoId],[DateCreated],[DateModified])
-VALUES(NEWID(),'Yoma (Youth Agency Marketplace)','https://www.yoma.world/','Primary Contact','primarycontact@gmail.com','+27125555555', 'GB123456789', '0123456789', '12345/28/14',
+DECLARE @Name varchar(255) = 'Yoma (Youth Agency Marketplace)'
+
+INSERT INTO [Entity].[Organization]([Id],[Name],[NameHashValue],[WebsiteURL],[PrimaryContactName],[PrimaryContactEmail],[PrimaryContactPhone],[VATIN],[TaxNumber],[RegistrationNumber]
+           ,[City],[CountryId],[StreetAddress],[Province],[PostalCode],[Tagline],[Biography],[StatusId],[CommentApproval],[DateStatusModified],[LogoId],[DateCreated],[CreatedByUserId],[DateModified],[ModifiedByUserId])
+VALUES(NEWID(),@Name,CONVERT(NVARCHAR(128), HASHBYTES('SHA2_256', @Name), 2),'https://www.yoma.world/','Primary Contact','primarycontact@gmail.com','+27125555555', 'GB123456789', '0123456789', '12345/28/14',
 		'My City',(SELECT [Id] FROM [Lookup].[Country] WHERE CodeAlpha2 = 'ZA'),'My Street Address 1000', 'My Province', '12345-1234','Unlock your future','The yoma platform enables you to build and transform your future by unlocking your hidden potential.',
-		(SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active'),'Approved',GETDATE(), NULL,GETDATE(),GETDATE())
+		(SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active'),'Approved',GETDATE(),NULL,
+		GETDATE(),
+		(SELECT [Id] FROM [Entity].[User] WHERE [Email] = '{org_admin_user}'),
+		GETDATE(),
+		(SELECT [Id] FROM [Entity].[User] WHERE [Email] = '{org_admin_user}'))
 GO
 
 --organization admins
@@ -83,9 +89,9 @@ INSERT INTO [Opportunity].[Opportunity]([Id],
 	[CredentialIssuanceEnabled],
 	[SSISchemaName],
 	[DateCreated],
-	[CreatedBy],
+	[CreatedByUserId],
 	[DateModified],
-	[ModifiedBy])
+	[ModifiedByUserId])
 VALUES(NEWID(),
 	N'HEY YOMA USERS 🌟 Your input matters! How does Yoma impact you? Share your thoughts! 🚀(15-30mins)',
 	N'Curious about how Yoma is impacting your social groove? 😃📈 We''re on a quest to understand just that, and we need YOUR voice to uncover the magic! 🎉✨ Take our Relational Wellbeing Impact Survey and let''s dig into the details. 🚀📋 Ready to share your thoughts? Dive in! 👇🤗 i) Click on "Go to Opportuntiy" and you will be redirected to our Google Form. ii) Complete the Survey by answering the questions provided. iii) Don''t forget to Submit Your Responses by clicking on "Submit". Your insights will help us create a Yoma that boosts your connections and happiness! 🚀🤗 iii) Once submitted, take a screenshot and upload the screenshot to earn Zltos',
@@ -114,9 +120,9 @@ VALUES(NEWID(),
 	1,
 	'Opportunity|Default',
 	GETDATE(),
-	'{org_admin_user}',
+	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = '{org_admin_user}'),
 	GETDATE(),
-	'{org_admin_user}')
+	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = '{org_admin_user}'))
 GO
 
 --categories
