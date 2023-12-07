@@ -98,8 +98,12 @@ export const Global: React.FC = () => {
       setActiveNavigationRoleViewAtom(RoleView.User);
     }
 
+    // override for registration page
+    if (router.asPath.startsWith("/organisations/register")) {
+      setActiveNavigationRoleViewAtom(RoleView.User);
+    }
     //  if organisation page, change navbar links & company logo
-    if (router.asPath.startsWith("/organisations")) {
+    else if (router.asPath.startsWith("/organisations")) {
       const matches = router.asPath.match(/\/organisations\/([a-z0-9-]{36})/);
 
       if (matches && matches.length > 1) {

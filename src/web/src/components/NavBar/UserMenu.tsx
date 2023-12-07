@@ -50,7 +50,7 @@ export const UserMenu: React.FC = () => {
               ? `/organisations/${organisation.id}`
               : `/organisations/${organisation.id}/edit`
           }
-          className="text-gray-dark"
+          className="flex-grow text-gray-dark"
           onClick={() => setUserMenuVisible(false)}
         >
           {!organisation.logoURL && (
@@ -115,7 +115,7 @@ export const UserMenu: React.FC = () => {
         <Link
           key={organisation.id}
           href={`/organisations/${organisation.id}/edit`}
-          className="flex items-center p-0 text-gray-dark"
+          className="flex items-center p-2 text-gray-dark"
           onClick={() => setUserMenuVisible(false)}
         >
           <IoMdSettings className="h-6 w-6" />
