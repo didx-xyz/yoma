@@ -17,7 +17,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 
         [Required]
         [Column(TypeName = "nvarchar(128)")]
-        public string NameHashValue { get; set; }   
+        public string NameHashValue { get; set; }
 
         [Column(TypeName = "varchar(2048)")]
         public string? WebsiteURL { get; set; }
