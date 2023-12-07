@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { useCallback } from "react";
-import { shimmer, toBase64 } from "src/lib/image";
 import type { OpportunityCategory } from "~/api/models/opportunity";
 import iconRocket from "public/images/icon-rocket.svg";
 
@@ -39,10 +38,6 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
               height={31}
               sizes="100vw"
               priority={true}
-              placeholder="blur"
-              blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                shimmer(288, 182),
-              )}`}
               style={{
                 width: "31px",
                 height: "31px",
@@ -57,10 +52,6 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
               height={31}
               sizes="100vw"
               priority={true}
-              placeholder="blur"
-              blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                shimmer(288, 182),
-              )}`}
               style={{
                 width: "31px",
                 height: "31px",
