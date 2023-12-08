@@ -558,12 +558,19 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     (value: number) => {
       opportunitySearchFilter.pageNumber = value;
       redirectWithSearchFilterParams(opportunitySearchFilter);
-
-      // scroll to the top of the page
-      //window.scrollTo(0, 0);
     },
     [opportunitySearchFilter, redirectWithSearchFilterParams],
   );
+
+  // scroll to results when search is executed
+  useEffect(() => {
+    if (isSearchExecuted) {
+      setTimeout(() => {
+        const element = document.getElementById("results");
+        element?.scrollIntoView({ behavior: "smooth" });
+      }, 500);
+    }
+  }, [isSearchExecuted]);
 
   return (
     <>
@@ -721,45 +728,46 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
 
         {/* SEARCH EXECUTED, SHOW RESULTS */}
         {isSearchExecuted && (
-          <>
-            <div className="flex flex-col items-center rounded-lg p-4">
-              <div className="flex w-full flex-col gap-2">
-                {/* NO ROWS */}
-                {!searchResults ||
-                  (searchResults.items.length === 0 && (
-                    <NoRowsMessage
-                      title={"No opportunities found"}
-                      description={
-                        "Please try refining your search query or filters above."
-                      }
-                    />
-                  ))}
-
-                {/* GRID */}
-                {searchResults && searchResults.items.length > 0 && (
-                  <OpportunityRow
-                    id="opportunities_search"
-                    title={searchFilterText}
-                    data={searchResults}
+          <div
+            id="results"
+            className="flex flex-col items-center rounded-lg p-4"
+          >
+            <div className="flex w-full flex-col gap-2">
+              {/* NO ROWS */}
+              {!searchResults ||
+                (searchResults.items.length === 0 && (
+                  <NoRowsMessage
+                    title={"No opportunities found"}
+                    description={
+                      "Please try refining your search query or filters above."
+                    }
                   />
-                )}
+                ))}
 
-                {/* PAGINATION */}
-                {searchResults && (searchResults.totalCount as number) > 0 && (
-                  <div className="mt-2 grid place-items-center justify-center">
-                    <PaginationButtons
-                      currentPage={currentPage}
-                      totalItems={searchResults.totalCount as number}
-                      pageSize={PAGE_SIZE}
-                      showPages={false}
-                      showInfo={true}
-                      onClick={handlePagerChange}
-                    />
-                  </div>
-                )}
-              </div>
+              {/* GRID */}
+              {searchResults && searchResults.items.length > 0 && (
+                <OpportunityRow
+                  id="opportunities_search"
+                  title={searchFilterText}
+                  data={searchResults}
+                />
+              )}
+
+              {/* PAGINATION */}
+              {searchResults && (searchResults.totalCount as number) > 0 && (
+                <div className="mt-2 grid place-items-center justify-center">
+                  <PaginationButtons
+                    currentPage={currentPage}
+                    totalItems={searchResults.totalCount as number}
+                    pageSize={PAGE_SIZE}
+                    showPages={false}
+                    showInfo={true}
+                    onClick={handlePagerChange}
+                  />
+                </div>
+              )}
             </div>
-          </>
+          </div>
         )}
       </div>
     </>
