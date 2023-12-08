@@ -28,6 +28,9 @@ import {
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
+import { currentOrganisationInactiveAtom } from "~/lib/store";
+import { useAtomValue } from "jotai";
+import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -111,6 +114,10 @@ const Opportunities: NextPageWithLayout<{
   error: string;
   theme: string;
 }> = ({ id, query, page, user, error }) => {
+  const currentOrganisationInactive = useAtomValue(
+    currentOrganisationInactiveAtom,
+  );
+
   const router = useRouter();
 
   // 👇 use prefetched queries from server
@@ -184,18 +191,26 @@ const Opportunities: NextPageWithLayout<{
 
       <div className="container z-10 max-w-5xl px-2 py-8">
         <div className="flex flex-col gap-2 py-4 sm:flex-row">
-          <h3 className="flex flex-grow text-white">Opportunities</h3>
+          <h3 className="flex flex-grow items-center text-white">
+            Opportunities <LimitedFunctionalityBadge />
+          </h3>
 
           <div className="flex gap-2 sm:justify-end">
             <SearchInput defaultValue={query} onSearch={onSearch} />
 
-            <Link
-              href={`/organisations/${id}/opportunities/create`}
-              className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
-            >
-              <IoIosAdd className="mr-1 h-5 w-5" />
-              Add opportunity
-            </Link>
+            {currentOrganisationInactive ? (
+              <span className="flex w-56 cursor-not-allowed flex-row items-center justify-center whitespace-nowrap rounded-full bg-gray-dark p-1 text-xs text-white">
+                Add opportunity (disabled)
+              </span>
+            ) : (
+              <Link
+                href={`/organisations/${id}/opportunities/create`}
+                className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
+              >
+                <IoIosAdd className="mr-1 h-5 w-5" />
+                Add opportunity
+              </Link>
+            )}
           </div>
         </div>
 

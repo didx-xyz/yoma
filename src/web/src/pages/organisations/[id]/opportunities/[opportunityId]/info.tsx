@@ -48,6 +48,9 @@ import {
   THEME_PURPLE,
 } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
+import { useAtomValue } from "jotai";
+import { currentOrganisationInactiveAtom } from "~/lib/store";
+import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -106,6 +109,9 @@ const OpportunityDetails: NextPageWithLayout<{
 }> = ({ id, opportunityId, user, error }) => {
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
+  const currentOrganisationInactive = useAtomValue(
+    currentOrganisationInactiveAtom,
+  );
 
   // 👇 use prefetched queries from server
   const { data: opportunity } = useQuery<OpportunityInfo>({
@@ -169,19 +175,21 @@ const OpportunityDetails: NextPageWithLayout<{
                 </Link>
               </li>
               <li>
-                <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
+                <div className="max-w-[500px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
                   {opportunity?.title}
                 </div>
+                <LimitedFunctionalityBadge />
               </li>
             </ul>
           </div>
 
           <div className="flex gap-2 sm:justify-end">
             <button
-              className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
+              className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white disabled:cursor-not-allowed disabled:bg-gray-dark"
               onClick={() => {
                 setManageOpportunityMenuVisible(true);
               }}
+              disabled={currentOrganisationInactive}
             >
               <IoIosSettings className="mr-1 h-5 w-5" />
               Manage opportunity

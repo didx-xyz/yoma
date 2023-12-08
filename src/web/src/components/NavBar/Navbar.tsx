@@ -106,7 +106,7 @@ export const Navbar: React.FC = () => {
         {
           title: "Home",
           description: "Home",
-          url: "/",
+          url: `/organisations/${currentOrganisationId}`,
           badgeCount: null,
           selected: false,
           icon: null,

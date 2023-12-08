@@ -18,6 +18,9 @@ export enum RoleView {
 const activeNavigationRoleViewAtom = atom<RoleView>(RoleView.User);
 const currentOrganisationIdAtom = atom<string | null>(null);
 const currentOrganisationLogoAtom = atom<string | null>(null);
+// this atom is used to check if the organisation is active or not
+// and show "limited functionality" message on organisation pages
+const currentOrganisationInactiveAtom = atom(false);
 
 export {
   userProfileAtom,
@@ -25,4 +28,5 @@ export {
   activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
   currentOrganisationLogoAtom,
+  currentOrganisationInactiveAtom,
 };

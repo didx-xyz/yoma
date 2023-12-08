@@ -20,6 +20,9 @@ import {
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
+import { currentOrganisationInactiveAtom } from "~/lib/store";
+import { useAtomValue } from "jotai";
+import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -91,6 +94,7 @@ const OrganisationOverview: NextPageWithLayout<{
             logoUrl={organisation?.logoURL}
             title={organisation?.name}
           />
+          <LimitedFunctionalityBadge />
         </div>
         <div className="relative mt-[-5px] flex h-[38.03px] w-[589px] shrink-0 items-center text-sm leading-[153%]">
           <span className="w-full [line-break:anywhere]">

@@ -53,7 +53,7 @@ export interface Organization {
   tagline: string | null;
   biography: string | null;
   statusId: string;
-  status: OrganizationStatus;
+  status: OrganizationStatus | string; //NB
   commentApproval: string | null;
   dateStatusModified: string | null;
   logoId: string | null;

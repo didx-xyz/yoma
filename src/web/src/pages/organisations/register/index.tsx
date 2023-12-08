@@ -111,7 +111,7 @@ const OrganisationCreate: NextPageWithLayout<{
       biography: "",
       providerTypes: [],
       logo: null,
-      addCurrentUserAsAdmin: false,
+      addCurrentUserAsAdmin: true,
       adminEmails: [],
       registrationDocuments: [],
       educationProviderDocuments: [],

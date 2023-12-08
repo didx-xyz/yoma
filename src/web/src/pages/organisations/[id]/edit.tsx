@@ -43,6 +43,7 @@ import {
 } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getCountries } from "~/api/services/lookups";
+import { IoMdWarning } from "react-icons/io";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -297,6 +298,14 @@ const OrganisationUpdate: NextPageWithLayout<{
                 <div className="flex flex-col text-center">
                   <h2>Organisation roles</h2>
                 </div>
+
+                <p className="my-2 flex flex-row border-2 border-dotted border-warning p-2 text-warning">
+                  <IoMdWarning className="mr-2 inline-block h-12 w-12" />
+                  Kindly note that expanding the roles your organization plays
+                  in Yoma will necessitate re-verification of your organization.
+                  <br /> During this process, functionalities such as creating
+                  opportunities may be limited.
+                </p>
 
                 <OrgRolesEdit
                   formData={OrganizationRequestBase}

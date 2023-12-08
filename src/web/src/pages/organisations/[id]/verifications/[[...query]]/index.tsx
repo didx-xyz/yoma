@@ -57,6 +57,7 @@ import { OpportunityCompletionRead } from "~/components/Opportunity/OpportunityC
 import Moment from "react-moment";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
+import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -612,7 +613,9 @@ const OpportunityVerifications: NextPageWithLayout<{
       </ReactModal>
 
       <div className="container z-10 max-w-5xl px-2 py-8">
-        <h3 className="flex flex-grow py-4 text-white">Verifications</h3>
+        <h3 className="flex flex-grow items-center py-4 text-white">
+          Verifications <LimitedFunctionalityBadge />
+        </h3>
 
         <div className="rounded-lg bg-white p-4">
           <div className="flex flex-row">

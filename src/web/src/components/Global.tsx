@@ -9,6 +9,7 @@ import {
   RoleView,
   activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
+  currentOrganisationInactiveAtom,
   currentOrganisationLogoAtom,
   smallDisplayAtom,
   userProfileAtom,
@@ -34,6 +35,9 @@ export const Global: React.FC = () => {
   const setCurrentOrganisationIdAtom = useSetAtom(currentOrganisationIdAtom);
   const setCurrentOrganisationLogoAtom = useSetAtom(
     currentOrganisationLogoAtom,
+  );
+  const setCurrentOrganisationInactiveAtom = useSetAtom(
+    currentOrganisationInactiveAtom,
   );
   const setSmallDisplay = useSetAtom(smallDisplayAtom);
 
@@ -123,6 +127,10 @@ export const Global: React.FC = () => {
           getOrganisationById(orgId).then((res) => {
             if (res.logoURL) setCurrentOrganisationLogoAtom(res.logoURL);
             else setCurrentOrganisationLogoAtom(null);
+
+            if (res.status !== "Active") {
+              setCurrentOrganisationInactiveAtom(true);
+            }
           });
         }
 
@@ -131,6 +139,7 @@ export const Global: React.FC = () => {
     } else {
       setCurrentOrganisationIdAtom(null);
       setCurrentOrganisationLogoAtom(null);
+      setCurrentOrganisationInactiveAtom(false);
     }
   }, [
     router,
@@ -138,6 +147,7 @@ export const Global: React.FC = () => {
     setCurrentOrganisationIdAtom,
     setCurrentOrganisationLogoAtom,
     setActiveNavigationRoleViewAtom,
+    setCurrentOrganisationInactiveAtom,
     currentOrganisationIdValue,
   ]);
 
