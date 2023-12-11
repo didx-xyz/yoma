@@ -1,9 +1,11 @@
 {
   "scripts": {
-    "postinstall": "husky install"
+    "postinstall": "husky install",
+    "test:cypress": "cypress open"
   },
   "devDependencies": {
     "cypress": "^13.6.0",
+    "cypress-file-upload": "^5.0.8",
     "husky": "^8.0.3"
   }
 }

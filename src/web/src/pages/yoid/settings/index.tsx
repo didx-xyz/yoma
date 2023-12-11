@@ -456,6 +456,7 @@ const Settings: NextPageWithLayout<{
 
                 {/* upload image */}
                 <FileUploader
+                  name="logo"
                   files={logoFiles as any}
                   allowMultiple={false}
                   fileTypes={ACCEPTED_IMAGE_TYPES}
