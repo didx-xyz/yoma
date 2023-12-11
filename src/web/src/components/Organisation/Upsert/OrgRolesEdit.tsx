@@ -108,7 +108,6 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
         values.providerTypes?.findIndex((x: string) => x == educationPT?.id) >
         -1
       ) {
-        debugger;
         const docCount = getActualDocumentCount(
           values.educationProviderDocumentsExisting,
           values.educationProviderDocumentsDelete,
@@ -357,6 +356,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
 
             {/* upload documents */}
             <FileUploader
+              name="registration"
               files={registrationDocuments}
               allowMultiple={true}
               fileTypes={ACCEPTED_DOC_TYPES}
@@ -404,6 +404,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
 
                 {/* upload documents */}
                 <FileUploader
+                  name="education"
                   files={educationProviderDocuments}
                   allowMultiple={true}
                   fileTypes={ACCEPTED_DOC_TYPES}
@@ -450,6 +451,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
 
               {/* upload documents */}
               <FileUploader
+                name="business"
                 files={businessDocuments}
                 allowMultiple={true}
                 fileTypes={ACCEPTED_DOC_TYPES}

@@ -52,6 +52,7 @@ export const UserMenu: React.FC = () => {
           }
           className="flex-grow text-gray-dark"
           onClick={() => setUserMenuVisible(false)}
+          id={`userMenu_orgs_${organisation.name}`}
         >
           {!organisation.logoURL && (
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
@@ -132,6 +133,7 @@ export const UserMenu: React.FC = () => {
         aria-label="User Menu"
         className="text-center text-white"
         onClick={() => setUserMenuVisible(!userMenuVisible)}
+        id="btnUserMenu"
       >
         {/* USER/ADMIN, SHOW USER IMAGE */}
         {(activeRoleView == RoleView.User ||

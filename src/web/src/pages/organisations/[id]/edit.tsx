@@ -176,6 +176,8 @@ const OrganisationUpdate: NextPageWithLayout<{
           toastId: "patchOrganisation",
         });
         setIsLoading(false);
+
+        console.log("Your organisation has been updated"); // 👈 for e2e tests
       } catch (error) {
         toast(<ApiErrors error={error} />, {
           type: "error",
@@ -259,7 +261,9 @@ const OrganisationUpdate: NextPageWithLayout<{
                   : "bg-gray-light"
               }`}
             >
-              <a onClick={() => setStep(1)}>Organisation details</a>
+              <a onClick={() => setStep(1)} id="lnkOrganisationDetails">
+                Organisation details
+              </a>
             </li>
             <li
               className={`w-full rounded ${
@@ -268,7 +272,9 @@ const OrganisationUpdate: NextPageWithLayout<{
                   : "bg-gray-light"
               }`}
             >
-              <a onClick={() => setStep(2)}>Organisation roles</a>
+              <a onClick={() => setStep(2)} id="lnkOrganisationRoles">
+                Organisation roles
+              </a>
             </li>
             <li
               className={`w-full rounded ${
@@ -277,7 +283,9 @@ const OrganisationUpdate: NextPageWithLayout<{
                   : "bg-gray-light"
               }`}
             >
-              <a onClick={() => setStep(3)}>Organisation admins</a>
+              <a onClick={() => setStep(3)} id="lnkOrganisationAdmins">
+                Organisation admins
+              </a>
             </li>
           </ul>
           <div className="flex w-full flex-col rounded-lg bg-white p-8">

@@ -21,6 +21,7 @@ registerPlugin(
 );
 
 export interface InputProps {
+  name: string;
   files: any[];
   fileTypes: string[];
   allowMultiple: boolean;
@@ -28,6 +29,7 @@ export interface InputProps {
 }
 
 export const FileUploader: React.FC<InputProps> = ({
+  name,
   files,
   fileTypes,
   allowMultiple,
@@ -44,7 +46,7 @@ export const FileUploader: React.FC<InputProps> = ({
       }}
       allowMultiple={allowMultiple}
       dropOnPage
-      name="files"
+      name={name}
       dropValidation
       acceptedFileTypes={fileTypes}
       //labelIdle='Drag & Drop your files or <span class="filepond--label-action">Browse</span>'
