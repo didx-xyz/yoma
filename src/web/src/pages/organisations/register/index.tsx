@@ -143,9 +143,11 @@ const OrganisationCreate: NextPageWithLayout<{
         const userProfile = await getUserProfile();
         setUserProfile(userProfile);
 
-        void router
-          .push("/organisations/register/success")
-          .then(() => router.reload()); // 👈 NB: force a reload of the page to update the session on the server
+        void router.push("/organisations/register/success").then(() => {
+          // 👈 NB: force a reload of the page to update the session on the server
+          // get new roles if the user is not yet an organisation admin
+          if (!session?.user.roles.includes(ROLE_ORG_ADMIN)) router.reload();
+        });
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",

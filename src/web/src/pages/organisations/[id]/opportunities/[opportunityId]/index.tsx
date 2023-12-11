@@ -27,7 +27,6 @@ import {
   useFieldArray,
 } from "react-hook-form";
 import Select from "react-select";
-import AsyncSelect from "react-select/async";
 import { toast } from "react-toastify";
 import z from "zod";
 import { type SelectOption } from "~/api/models/lookups";
@@ -69,6 +68,7 @@ import {
   THEME_GREEN,
   THEME_PURPLE,
   REGEX_URL_VALIDATION,
+  MAXINT32,
 } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
@@ -252,7 +252,11 @@ const OpportunityDetails: NextPageWithLayout<{
     queryKey: ["skills"],
     queryFn: async () =>
       (
-        await getSkills({ nameContains: null, pageNumber: 1, pageSize: 60 })
+        await getSkills({
+          nameContains: null,
+          pageNumber: 1,
+          pageSize: MAXINT32,
+        })
       ).items.map((c) => ({
         value: c.id,
         label: c.name,
@@ -274,49 +278,11 @@ const OpportunityDetails: NextPageWithLayout<{
     [schemas],
   );
 
-  // skills cache. searched items are added to this cache
-  const [skillsCache, setSkillsCache] = useState<SelectOption[]>([]);
-  useMemo(() => {
-    setSkillsCache(skills!);
-  }, [skills, setSkillsCache]);
-
   const { data: opportunity } = useQuery<Opportunity>({
     queryKey: ["opportunity", opportunityId],
     queryFn: () => getOpportunityById(opportunityId),
     enabled: opportunityId !== "create" && !error,
   });
-
-  const loadSkills = useCallback(
-    (inputValue: string) =>
-      new Promise<SelectOption[]>((resolve) => {
-        /* eslint-disable */
-        setTimeout(() => {
-          if (inputValue.length < 3) resolve(skillsCache!);
-          else {
-            const data = getSkills({
-              nameContains: inputValue,
-              pageNumber: 1,
-              pageSize: 60,
-            }).then(
-              (res) => res?.items?.map((c) => ({ value: c.id, label: c.name })),
-            );
-
-            // add skills if not already added to skillsCache
-            data?.then((res) => {
-              res?.forEach((s) => {
-                if (!skillsCache.find((x) => x.value === s.value)) {
-                  setSkillsCache((prev) => [...prev, s]);
-                }
-              });
-            });
-
-            resolve(data as any);
-          }
-        }, 6000);
-        /* eslint-enable */
-      }),
-    [skillsCache, setSkillsCache],
-  );
 
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -361,12 +327,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
     organizationId: id,
     postAsActive: opportunity?.published ?? false,
-
-    //TODO:
     instructions: opportunity?.instructions ?? "",
-    //noEndDate: opportunity?.noEndDate ?? false,
-    //participantLimit: null,
-    //instructions: "..",
   });
 
   const onSubmit = useCallback(
@@ -430,18 +391,6 @@ const OpportunityDetails: NextPageWithLayout<{
         ...(data as OpportunityRequestBase),
       };
       setFormData(model);
-
-      //console.log("model", model);
-
-      // default pool to limit & reward
-      // if (model.participantLimit !== null) {
-      //   if (model.zltoReward !== null && model.zltoRewardPool === null) {
-      //     model.zltoRewardPool = model.participantLimit * model.zltoReward;
-      //   }
-      //   if (model.yomaReward !== null && model.yomaRewardPool === null) {
-      //     model.yomaRewardPool = model.participantLimit * model.yomaReward;
-      //   }
-      // }
 
       if (opportunityId === "create") {
         if (step === 8) {
@@ -522,32 +471,6 @@ const OpportunityDetails: NextPageWithLayout<{
       }),
     skills: z.array(z.string()).optional(),
   });
-  // .transform((values) => {
-  //   // debugger;
-  //   const participantLimit = getValuesStep2("participantLimit");
-  //   // default pool to limit & reward
-  //   if (participantLimit !== null) {
-  //     if (
-  //       values.zltoReward !== null &&
-  //       values.zltoReward !== undefined &&
-  //       (values.zltoRewardPool === null ||
-  //         values.zltoRewardPool === undefined)
-  //     ) {
-  //       //values.zltoRewardPool = participantLimit * values.zltoReward;
-  //       setValueStep3("zltoRewardPool", participantLimit * values.zltoReward);
-  //     }
-  //     if (
-  //       values.yomaReward !== null &&
-  //       values.yomaReward !== undefined &&
-  //       (values.yomaRewardPool === null ||
-  //         values.yomaRewardPool === undefined)
-  //     ) {
-  //       //values.yomaRewardPool = participantLimit * values.yomaReward;
-
-  //       setValueStep3("yomaRewardPool", participantLimit * values.yomaReward);
-  //     }
-  //   }
-  // });
 
   const schemaStep4 = z.object({
     keywords: z.array(z.string()).optional(),
@@ -1629,18 +1552,16 @@ const OpportunityDetails: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <>
                             {/* eslint-disable  */}
-                            <AsyncSelect
+                            <Select
                               classNames={{
                                 control: () => "input h-full",
                               }}
                               isMulti={true}
-                              defaultOptions={skillsCache}
-                              cacheOptions
-                              loadOptions={loadSkills as any}
+                              options={skills}
                               onChange={(val) =>
-                                onChange(val.map((c) => c.value))
+                                onChange(val?.map((c) => c.value ?? ""))
                               }
-                              value={skillsCache?.filter(
+                              value={skills?.filter(
                                 (c) => value?.includes(c.value),
                               )}
                             />
