@@ -70,7 +70,7 @@ export default withSentryConfig(
     silent: true,
 
     org: "yoma-sp",
-    project: "yoma-new-youth-webapp",
+    project: "yoma-web-youth-v3",
   },
   {
     // For all available options, see:
