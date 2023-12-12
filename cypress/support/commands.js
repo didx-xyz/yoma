@@ -53,7 +53,7 @@ Cypress.Commands.add("login", (username, password) => {
   //     cy.log(c);
   //   });
   // });
-  cy.get("div.navbar-end button").click();
+  cy.get("div.navbar-end button").should("exist").click();
   cy.wait(1000);
   cy.origin("http://keycloak:8080", { args: { username, password } }, ({ username, password }) => {
     cy.reload(); // Reload the page to get cookies to load
