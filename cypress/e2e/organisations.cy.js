@@ -3,7 +3,7 @@ describe("Test User", () => {
     cy.login("testuser@gmail.com", "P@ssword1");
   });
 
-  it("should register an organisation", function () {
+  it("should register and edit an organisation", function () {
     cy.visit("http://localhost:3000/organisations/register"); // visit the registration page
     cy.wait(500);
 
@@ -32,7 +32,8 @@ describe("Test User", () => {
     });
 
     cy.wait(500);
-    cy.get("button[type=submit]").click();
+    // Assert that the submit button exists before clicking it
+    cy.get("button[type=submit]").should("exist").click();
     cy.wait(500);
 
     //* step 2: fill out form and click next
@@ -47,19 +48,21 @@ describe("Test User", () => {
     });
 
     cy.wait(500);
-    cy.get("button[type=submit]").click();
+    // Assert that the submit button exists before clicking it
+    cy.get("button[type=submit]").should("exist").click();
     cy.wait(500);
 
     //* step 3: click submit
-    cy.get("button[type=submit]").click();
+    // Assert that the submit button exists before clicking it
+    cy.get("button[type=submit]").should("exist").click();
     cy.wait(5000);
 
     //* success page
     cy.location("href").should("eq", "http://localhost:3000/organisations/register/success");
     //});
 
-    //it("should edit an organisation", function () {
-    //cy.visit("http://localhost:3000/"); // visit the home page
+    // it("should edit an organisation", function () {
+    cy.visit("http://localhost:3000/"); // visit the home page
 
     cy.wait(500);
 
@@ -100,13 +103,16 @@ describe("Test User", () => {
     });
 
     cy.wait(500);
-    cy.get("button[type=submit]").click();
+    // Assert that the submit button exists before clicking it
+    cy.get("button[type=submit]").should("exist").click();
     cy.wait(500);
 
     // assert toast message
     cy.get(".Toastify__toast-container").should("be.visible");
     // assert console with the expected message
     cy.get("@consoleLog").should("be.calledWith", "Your organisation has been updated");
+    // assert that the organisation admins tab is not active before clicking it
+    cy.get("a[id=lnkOrganisationRoles]").should("not.have.class", "active").click();
 
     //* step 2: update form and click submit
     cy.get("a[id=lnkOrganisationRoles]").click(); // click on the roles tab
@@ -122,7 +128,8 @@ describe("Test User", () => {
     });
 
     cy.wait(500);
-    cy.get("button[type=submit]").click();
+    // assert that the submit button exists before clicking it
+    cy.get("button[type=submit]").should("exist").click();
     cy.wait(500);
 
     // assert toast message
@@ -134,7 +141,8 @@ describe("Test User", () => {
     cy.get("a[id=lnkOrganisationAdmins]").click(); // click on the admins tab
     cy.wait(500);
 
-    cy.get("button[type=submit]").click();
+    // assert that the submit button exists before clicking it
+    cy.get("button[type=submit]").should("exist").click();
     cy.wait(500);
 
     // assert toast message

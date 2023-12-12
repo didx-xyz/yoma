@@ -182,6 +182,11 @@ jobs:
       packages: read
     needs: build
     runs-on: ubuntu-latest
+    env:
+      PUBLIC_S3_ACCESS_KEY: ${{ secrets.PUBLIC_S3_ACCESS_KEY }}
+      PUBLIC_S3_SECRET_KEY: ${{ secrets.PUBLIC_S3_SECRET_KEY }}
+      PRIVATE_S3_ACCESS_KEY: ${{ secrets.PRIVATE_S3_ACCESS_KEY }}
+      PRIVATE_S3_SECRET_KEY: ${{ secrets.PRIVATE_S3_SECRET_KEY }}
 
     concurrency:
       group: ${{ github.workflow }}-e2e-${{ github.ref }}
