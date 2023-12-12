@@ -11,7 +11,7 @@ on:
     branches:
       - "master"
   release:
-    types: [released,prereleased]
+    types: [released, prereleased]
 
 env:
   REGISTRY: ghcr.io/${{ github.repository_owner }}
@@ -226,6 +226,8 @@ jobs:
           node-version: 18
           cache: yarn
       - uses: cypress-io/github-action@v6
+        env:
+          BucketName: yoma-v3-public-storage
       - name: Upload Cypress Screenshots
         uses: actions/upload-artifact@v3
         if: always()
@@ -262,7 +264,7 @@ jobs:
       id-token: write
       contents: read
       packages: read
-    needs: [ test-e2e, build ]
+    needs: [test-e2e, build]
     runs-on: ubuntu-latest
 
     env:
