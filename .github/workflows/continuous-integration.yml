@@ -226,8 +226,6 @@ jobs:
           node-version: 18
           cache: yarn
       - uses: cypress-io/github-action@v6
-        env:
-          BucketName: yoma-v3-public-storage
       - name: Upload Cypress Screenshots
         uses: actions/upload-artifact@v3
         if: always()
