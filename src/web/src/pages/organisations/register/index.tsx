@@ -131,6 +131,7 @@ const OrganisationCreate: NextPageWithLayout<{
 
         // update api
         await postOrganisation(model);
+        console.log("Organisation registered");
 
         setIsLoading(false);
 

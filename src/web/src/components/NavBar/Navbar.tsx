@@ -150,6 +150,7 @@ export const Navbar: React.FC = () => {
             aria-label="Navigation Menu"
             className="ml-1 text-white  lg:hidden"
             onClick={() => setMenuVisible(!menuVisible)}
+            id="btnNavbarMenu"
           >
             <IoMdMenu className="h-8 w-8" />
           </button>
@@ -170,6 +171,7 @@ export const Navbar: React.FC = () => {
                   key={index}
                   className="px-7 py-3 text-white hover:brightness-50"
                   onClick={() => setMenuVisible(false)}
+                  id={`lnkNavbarMenuModal_${link.title}`}
                 >
                   {link.title}
                 </Link>
@@ -187,6 +189,7 @@ export const Navbar: React.FC = () => {
                   href={link.url}
                   tabIndex={index}
                   className="text-white hover:brightness-50"
+                  id={`lnkNavbarMenu_${link.title}`}
                 >
                   {link.title}
                 </Link>

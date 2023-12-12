@@ -312,6 +312,7 @@ export const UserMenu: React.FC = () => {
                   href="/admin"
                   className="text-gray-dark"
                   onClick={() => setUserMenuVisible(false)}
+                  id={`userMenu_admin`}
                 >
                   <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
                     <IoMdSettings className="h-6 w-6 text-gray-dark" />

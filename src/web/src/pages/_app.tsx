@@ -87,6 +87,8 @@ const MyApp = ({
                   {getLayout(component)}
                   <ToastContainer
                     containerId="toastContainer"
+                    bodyClassName={"test1"}
+                    toastClassName={"test2"}
                     className="mt-16 w-full md:mt-10 md:w-[340px]"
                   />
                 </ConfirmationModalContextProvider>

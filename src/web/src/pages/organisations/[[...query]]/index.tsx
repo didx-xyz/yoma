@@ -124,7 +124,7 @@ export const OrganisationCardComponent: React.FC<{
         {!props.item.logoURL && <IoMdSquare className="-ml-4 h-28 w-28" />}
 
         {props.item.logoURL && (
-          <Link href={link}>
+          <Link href={link} id={`lnkOrganisation_${props.item.name}`}>
             <Image
               src={props.item.logoURL}
               alt={props.item.name}
@@ -138,7 +138,9 @@ export const OrganisationCardComponent: React.FC<{
 
       <div className="flex w-[300px] flex-col justify-start p-1">
         <h5 className="mb-2 truncate overflow-ellipsis whitespace-nowrap text-xl  font-medium text-neutral-800 dark:text-neutral-50">
-          <Link href={link}>{props.item.name}</Link>
+          <Link href={link} id={`lnkOrganisation2_${props.item.name}`}>
+            {props.item.name}
+          </Link>
         </h5>
         <p className="mb-4 truncate overflow-ellipsis whitespace-nowrap  text-base text-neutral-600 dark:text-neutral-200">
           {props.item.tagline}

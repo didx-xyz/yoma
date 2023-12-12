@@ -136,10 +136,14 @@ const OrganisationDetails: NextPageWithLayout<{
           : OrganizationStatus.Declined,
         comment: verifyComments,
       });
-      toast(`Organisation ${verifyActionApprove ? "approved" : "declined"}`, {
+      let message = `Organisation ${
+        verifyActionApprove ? "approved" : "declined"
+      }`;
+      toast(message, {
         type: "success",
         toastId: "verifyOrganisation",
       });
+      console.log(message);
 
       // invalidate queries
       await queryClient.invalidateQueries({ queryKey: ["organisations"] });
@@ -213,6 +217,7 @@ const OrganisationDetails: NextPageWithLayout<{
                   setVerifyActionApprove(false);
                   setModalVerifySingleVisible(true);
                 }}
+                id="btnReject"
               >
                 <IoMdThumbsDown className="h-6 w-6" />
                 Reject
@@ -223,6 +228,7 @@ const OrganisationDetails: NextPageWithLayout<{
                   setVerifyActionApprove(true);
                   setModalVerifySingleVisible(true);
                 }}
+                id="btnApprove"
               >
                 <IoMdThumbsUp className="h-6 w-6" />
                 Approve
@@ -261,6 +267,7 @@ const OrganisationDetails: NextPageWithLayout<{
                   <textarea
                     className="input input-bordered w-full"
                     onChange={(e) => setVerifyComments(e.target.value)}
+                    id="txtVerifyComments"
                   />
                 </div>
 
@@ -277,6 +284,7 @@ const OrganisationDetails: NextPageWithLayout<{
                     <button
                       className="btn btn-success btn-sm flex-nowrap"
                       onClick={() => onSubmit()}
+                      id="btnApproveModal"
                     >
                       <IoMdThumbsUp className="h-6 w-6" />
                       Approve
@@ -286,6 +294,7 @@ const OrganisationDetails: NextPageWithLayout<{
                     <button
                       className="btn btn-warning btn-sm flex-nowrap"
                       onClick={() => onSubmit()}
+                      id="btnRejectModal"
                     >
                       <IoMdThumbsDown className="h-6 w-6" />
                       Reject
