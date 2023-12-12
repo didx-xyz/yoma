@@ -136,7 +136,7 @@ const OrganisationDetails: NextPageWithLayout<{
           : OrganizationStatus.Declined,
         comment: verifyComments,
       });
-      let message = `Organisation ${
+      const message = `Organisation ${
         verifyActionApprove ? "approved" : "declined"
       }`;
       toast(message, {
