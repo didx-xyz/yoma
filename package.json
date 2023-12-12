@@ -4,8 +4,8 @@
     "test:cypress": "cypress open"
   },
   "devDependencies": {
-    "cypress": "^13.6.1",
-    "cypress-file-upload": "^5.0.8",
+    "cypress": "^13.6.1", 
+    "cypress-file-upload": "^5.0.8", 
     "husky": "^8.0.3"
   }
 }
