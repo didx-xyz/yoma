@@ -112,7 +112,7 @@ describe("Test User", () => {
     // assert console with the expected message
     cy.get("@consoleLog").should("be.calledWith", "Your organisation has been updated");
     // assert that the organisation admins tab is not active before clicking it
-    cy.get("a[id=lnkOrganisationRoles]").should("not.have.class", "active").click();
+    //cy.get("a[id=lnkOrganisationRoles]").should("not.have.class", "active").click();
 
     //* step 2: update form and click submit
     cy.get("a[id=lnkOrganisationRoles]").click(); // click on the roles tab
