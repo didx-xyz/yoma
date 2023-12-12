@@ -1,5 +1,5 @@
 import withBundleAnalyzer from "@next/bundle-analyzer";
-import { withSentryConfig } from "@sentry/nextjs";
+//import { withSentryConfig } from "@sentry/nextjs";
 import withPWA from "next-pwa";
 
 const pwa = withPWA({
@@ -58,37 +58,41 @@ const config = {
   },
 };
 
+//TODO: sentry removed for now, as it is not working with the current setup
 /** sentry config */
-export default withSentryConfig(
-  // @ts-ignore
-  bundleAnalyzer(pwa(config)),
-  {
-    // For all available options, see:
-    // https://github.com/getsentry/sentry-webpack-plugin#options
+// export default withSentryConfig(
+//   // @ts-ignore
+//   bundleAnalyzer(pwa(config)),
+//   {
+//     // For all available options, see:
+//     // https://github.com/getsentry/sentry-webpack-plugin#options
 
-    // Suppresses source map uploading logs during build
-    silent: true,
+//     // Suppresses source map uploading logs during build
+//     silent: true,
 
-    org: "yoma-sp",
-    project: "yoma-web-youth-v3",
-  },
-  {
-    // For all available options, see:
-    // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+//     org: "yoma-sp",
+//     project: "yoma-web-youth-v3",
+//   },
+//   {
+//     // For all available options, see:
+//     // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
 
-    // Upload a larger set of source maps for prettier stack traces (increases build time)
-    widenClientFileUpload: true,
+//     // Upload a larger set of source maps for prettier stack traces (increases build time)
+//     widenClientFileUpload: true,
 
-    // Transpiles SDK to be compatible with IE11 (increases bundle size)
-    transpileClientSDK: true,
+//     // Transpiles SDK to be compatible with IE11 (increases bundle size)
+//     transpileClientSDK: true,
 
-    // Routes browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers (increases server load)
-    tunnelRoute: "/monitoring",
+//     // Routes browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers (increases server load)
+//     tunnelRoute: "/monitoring",
 
-    // Hides source maps from generated client bundles
-    hideSourceMaps: true,
+//     // Hides source maps from generated client bundles
+//     hideSourceMaps: true,
 
-    // Automatically tree-shake Sentry logger statements to reduce bundle size
-    disableLogger: true,
-  },
-);
+//     // Automatically tree-shake Sentry logger statements to reduce bundle size
+//     disableLogger: true,
+//   },
+// );
+
+// @ts-ignore
+export default bundleAnalyzer(pwa(config));
