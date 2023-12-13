@@ -1,6 +1,15 @@
-import { TESTUSER_EMAIL, TESTUSER_PASSWORD, TESTADMINUSER_EMAIL, TESTADMINUSER_PASSWORD } from "./constants";
+import {
+  TESTUSER_EMAIL,
+  TESTUSER_PASSWORD,
+  TESTADMINUSER_EMAIL,
+  TESTADMINUSER_PASSWORD,
+  COUNTRY_ID,
+  COUNTRY_ID2,
+  PROVIDER_TYPE_IMPACT_ID,
+  PROVIDER_TYPE_EDUCATION_ID,
+} from "./constants";
 
-describe(`Organisations`, function () {
+describe(`Organisation Registration & Approval`, function () {
   const randomNum = Math.floor(Math.random() * 1000000);
   this.organisationName = `Test Organisation ${randomNum}`;
 
@@ -9,7 +18,8 @@ describe(`Organisations`, function () {
     this.organisationName = `Test Organisation ${randomNum}`;
   });
 
-  describe(`Role=User (${TESTUSER_EMAIL})`, () => {
+  // 🧪
+  describe(`${TESTUSER_EMAIL} (User role)`, () => {
     beforeEach(() => {
       cy.login(TESTUSER_EMAIL, TESTUSER_PASSWORD);
     });
@@ -17,6 +27,7 @@ describe(`Organisations`, function () {
     it("should register an organisation", function () {
       // visit the registration page
       cy.visit("http://localhost:3000/organisations/register", {
+        // stub the console log and error methods for console assertions
         onBeforeLoad(win) {
           cy.stub(win.console, "log").as("consoleLog");
           cy.stub(win.console, "error").as("consoleError");
@@ -29,7 +40,7 @@ describe(`Organisations`, function () {
       cy.get("textarea[name=streetAddress]").type("123 Fake Street");
       cy.get("input[name=province]").type("Bogusville");
       cy.get("input[name=city]").type("Fake City");
-      cy.get("select[name=countryId]").select("a0d029b2-49ca-4e89-81aa-8d06be5d2241");
+      cy.get("select[name=countryId]").select(COUNTRY_ID);
       cy.get("input[name=postalCode]").type("1234");
       cy.get("input[name=websiteURL]").type("http://www.google.com");
       cy.get("input[name=tagline]").type("Lorem ipsum dolor sit amet, consectetuer adipiscing elit.");
@@ -51,7 +62,7 @@ describe(`Organisations`, function () {
       cy.wait(500);
 
       //* step 2: fill out form and click next
-      cy.get('input[type=checkbox][name=providerTypes][value="6fb02f6f-34fe-4e6e-9094-2e3b54115235"]').check(); //  check the "Impact" checkbox
+      cy.get(`input[type=checkbox][name=providerTypes][value="${PROVIDER_TYPE_IMPACT_ID}"]`).check(); //  check the "Impact" checkbox
 
       cy.fixture("dummy.pdf").then((fileContent) => {
         cy.get("input[type=file][name=registration]").attachFile({
@@ -79,11 +90,9 @@ describe(`Organisations`, function () {
     });
 
     it("should edit an organisation", function () {
-      // if this.organisationName is not set, skip this test
-      if (!this.organisationName) this.skip();
-
       // visit the home page
       cy.visit("http://localhost:3000/", {
+        // stub the console log and error methods for console assertions
         onBeforeLoad(win) {
           cy.stub(win.console, "log").as("consoleLog");
           cy.stub(win.console, "error").as("consoleError");
@@ -107,7 +116,7 @@ describe(`Organisations`, function () {
       cy.get("textarea[name=streetAddress]").type(" updated", { moveToEnd: true });
       cy.get("input[name=province]").type(" updated", { moveToEnd: true });
       cy.get("input[name=city]").type(" updated", { moveToEnd: true });
-      cy.get("select[name=countryId]").select("fb8c57b0-255a-4528-ae87-4b324f47a4d5");
+      cy.get("select[name=countryId]").select(COUNTRY_ID2);
       cy.get("input[name=postalCode]").type("4321");
       cy.get("input[name=websiteURL]").type(".2", { moveToEnd: true });
       cy.get("input[name=tagline]").type(" updated", { moveToEnd: true });
@@ -138,7 +147,7 @@ describe(`Organisations`, function () {
       //* step 2: update form and click submit
       cy.get("a[id=lnkOrganisationRoles]").click(); // click on the roles tab
       cy.wait(500);
-      cy.get('input[type=checkbox][name=providerTypes][value="a3bcaa03-b31c-4830-aae8-06bba701d3f0"]').check(); //  check the "Education" checkbox
+      cy.get(`input[type=checkbox][name=providerTypes][value="${PROVIDER_TYPE_EDUCATION_ID}"]`).check(); //  check the "Education" checkbox
 
       cy.fixture("dummy.pdf").then((fileContent) => {
         cy.get("input[type=file][name=education]").attachFile({
@@ -173,17 +182,15 @@ describe(`Organisations`, function () {
     });
   });
 
-  describe(`Role=Admin (${TESTADMINUSER_EMAIL})`, () => {
+  describe(`${TESTADMINUSER_EMAIL} (Admin role)`, () => {
     beforeEach(() => {
       cy.login(TESTADMINUSER_EMAIL, TESTADMINUSER_PASSWORD);
     });
 
     it("should approve the organisation", function () {
-      // if this.organisationName is not set, skip this test
-      if (!this.organisationName) this.skip();
-
-      // visit the registration page
+      // visit the admin page
       cy.visit("http://localhost:3000/admin", {
+        // stub the console log and error methods for console assertions
         onBeforeLoad(win) {
           cy.stub(win.console, "log").as("consoleLog");
           cy.stub(win.console, "error").as("consoleError");

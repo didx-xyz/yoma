@@ -938,6 +938,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             value={opportunityTypes?.find(
                               (c) => c.value === value,
                             )}
+                            name="typeId"
                           />
                         )}
                       />

@@ -206,6 +206,7 @@ const Opportunities: NextPageWithLayout<{
               <Link
                 href={`/organisations/${id}/opportunities/create`}
                 className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
+                id="btnCreateOpportunity" // e2e
               >
                 <IoIosAdd className="mr-1 h-5 w-5" />
                 Add opportunity
