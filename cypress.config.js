@@ -7,6 +7,7 @@ module.exports = defineConfig({
     keycloak: "127.0.0.1",
   },
   e2e: {
+    specPattern: "**/*.cy.{js,ts}",
     setupNodeEvents(on, config) {
       // implement node event listeners here
     },
