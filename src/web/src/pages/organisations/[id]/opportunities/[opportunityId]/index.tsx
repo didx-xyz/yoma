@@ -332,24 +332,23 @@ const OpportunityDetails: NextPageWithLayout<{
 
   const onSubmit = useCallback(
     async (data: OpportunityRequestBase) => {
-      //return;
       setIsLoading(true);
 
       try {
+        let message = "";
         // update api
         if (opportunity) {
           await updateOpportunity(data);
-          toast("Opportunity updated.", {
-            type: "success",
-            toastId: "opportunity",
-          });
+          message = "Opportunity updated";
         } else {
           await createOpportunity(data);
-          toast("Opportunity created.", {
-            type: "success",
-            toastId: "opportunity",
-          });
+          message = "Opportunity created";
         }
+        toast(message, {
+          type: "success",
+          toastId: "opportunity",
+        });
+        console.log(message); // e2e
 
         // invalidate queries
         await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
@@ -938,7 +937,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             value={opportunityTypes?.find(
                               (c) => c.value === value,
                             )}
-                            name="typeId"
+                            inputId="input_typeid" // e2e
                           />
                         )}
                       />
@@ -974,6 +973,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             value={categories?.filter(
                               (c) => value?.includes(c.value),
                             )}
+                            inputId="input_categories" // e2e
                           />
                         )}
                       />
@@ -1085,6 +1085,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             value={languages?.filter(
                               (c) => value?.includes(c.value),
                             )}
+                            inputId="input_languages" // e2e
                           />
                         )}
                       />
@@ -1120,6 +1121,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             value={countries?.filter(
                               (c) => value?.includes(c.value),
                             )}
+                            inputId="input_countries" // e2e
                           />
                         )}
                       />
@@ -1151,6 +1153,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             options={difficulties}
                             onChange={(val) => onChange(val?.value)}
                             value={difficulties?.find((c) => c.value === value)}
+                            inputId="input_difficultyId" // e2e
                           />
                         )}
                       />
@@ -1203,6 +1206,7 @@ const OpportunityDetails: NextPageWithLayout<{
                               value={timeIntervals?.find(
                                 (c) => c.value === value,
                               )}
+                              inputId="input_commitmentIntervalId" // e2e
                             />
                           )}
                         />
@@ -1233,6 +1237,7 @@ const OpportunityDetails: NextPageWithLayout<{
                               onChange={(date) => onChange(date)}
                               selected={value ? new Date(value) : null}
                               placeholderText="Start Date"
+                              id="input_dateStart" // e2e
                             />
                           )}
                         />
@@ -1261,6 +1266,7 @@ const OpportunityDetails: NextPageWithLayout<{
                               onChange={(date) => onChange(date)}
                               selected={value ? new Date(value) : null}
                               placeholderText="Select End Date"
+                              id="input_dateEnd" // e2e
                             />
                           )}
                         />
@@ -1565,6 +1571,7 @@ const OpportunityDetails: NextPageWithLayout<{
                               value={skills?.filter(
                                 (c) => value?.includes(c.value),
                               )}
+                              inputId="input_skills" // e2e
                             />
                             {/* eslint-enable  */}
                           </>
@@ -1640,6 +1647,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                 value: c,
                                 label: c,
                               }))}
+                              inputId="input_keywords" // e2e
                             />
                             {/* eslint-enable  */}
                           </>
@@ -1807,7 +1815,7 @@ const OpportunityDetails: NextPageWithLayout<{
                               <div className="flex flex-col" key={item.id}>
                                 {/* verification type: checkbox label */}
                                 <label
-                                  htmlFor={item.id}
+                                  htmlFor={`chk_verificationType_${item.displayName}`}
                                   className="label w-full cursor-pointer justify-normal"
                                 >
                                   <input
@@ -1825,7 +1833,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                         remove(index);
                                       }
                                     }}
-                                    id={item.id}
+                                    id={`chk_verificationType_${item.displayName}`} // e2e
                                     className="checkbox-primary checkbox"
                                     disabled={!watchVerificationEnabled}
                                     checked={
@@ -1879,6 +1887,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                         )?.description ?? item.description
                                       }
                                       disabled={!watchVerificationEnabled}
+                                      id={`input_verificationType_${item.displayName}`} // e2e
                                     />
                                   </div>
                                 )}
@@ -1987,6 +1996,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                 value={schemasOptions?.find(
                                   (c) => c.value === value,
                                 )}
+                                inputId="input_ssiSchemaName" // e2e
                               />
                             )}
                           />
