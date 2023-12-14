@@ -26,6 +26,7 @@ describe(`Opportunities`, function () {
     it("should create an opportunity", function () {
       // visit the home page
       cy.visit("http://localhost:3000", {
+        // stub the console log and error methods for console assertions
         onBeforeLoad(win) {
           cy.stub(win.console, "log").as("consoleLog");
           cy.stub(win.console, "error").as("consoleError");
@@ -34,7 +35,7 @@ describe(`Opportunities`, function () {
       cy.wait(1000);
 
       //* click on the first organisation link on the user menu
-      cy.get(`button[id="btnUserMenu`).should("exist").click();
+      cy.get(`button[id="btnUserMenu"]`).should("exist").click();
       cy.get(`#organisations a`).first().click();
       cy.wait(4000);
 
@@ -50,7 +51,7 @@ describe(`Opportunities`, function () {
       });
 
       //* click on the opportunities link on the navigation menu
-      cy.get(`button[id="btnNavbarMenu`).should("exist").click();
+      cy.get(`button[id="btnNavbarMenu"]`).should("exist").click();
       cy.wait(200);
       cy.get(`a[id="lnkNavbarMenuModal_Opportunities"]`).first().click();
       cy.wait(4000);
@@ -61,7 +62,7 @@ describe(`Opportunities`, function () {
       });
 
       //* click on the create opportunity button
-      cy.get(`a[id="btnCreateOpportunity`).should("exist").click();
+      cy.get(`a[id="btnCreateOpportunity"]`).should("exist").click();
       cy.wait(5000);
 
       // href should be /organisations/guid/opportunities/create

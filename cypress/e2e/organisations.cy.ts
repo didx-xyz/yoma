@@ -206,14 +206,14 @@ describe(`Organisation Registration & Approval`, function () {
       cy.get(`button[id="btnNavbarMenu`).should("exist").click();
       cy.wait(200);
       cy.get(`a[id="lnkNavbarMenuModal_Organisations"]`).first().click();
-      cy.wait(1000);
+      cy.wait(2000);
 
       // href should end with /organisations
       cy.location("href").should("match", /\/organisations$/);
 
       //* click on the organisation on the organisations page
       cy.get(`a[id="lnkOrganisation_Test Organisation ${this.magicNumber} updated"]`).should("exist").click();
-      cy.wait(2500);
+      cy.wait(3000);
 
       // href should end with /verify
       cy.location("href").should("match", /\/verify$/);
