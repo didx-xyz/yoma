@@ -212,12 +212,14 @@ services:
       Logging__LogLevel__Microsoft.Hosting.Lifetime: "Information"
       Logging__LogLevel__Microsoft.EntityFrameworkCore: "Error"
       AllowedOrigins: "http://localhost:5000;http://localhost:3000;http://localhost:3001" # can be set to wildcard * to allow all hosts
-      AWSS3__Buckets__Public__AccessKey: ${PUBLIC_S3_ACCESS_KEY}
-      AWSS3__Buckets__Public__SecretKey: ${PUBLIC_S3_SECRET_KEY}
-      AWSS3__Buckets__Public__BucketName: yoma-v3-public-storage
-      AWSS3__Buckets__Private__AccessKey: ${PRIVATE_S3_ACCESS_KEY}
-      AWSS3__Buckets__Private__SecretKey: ${PRIVATE_S3_SECRET_KEY}
-      AWSS3__Buckets__Private__BucketName: yoma-v3-private-storage
+      # AWSS3__Buckets__Public__AccessKey: ${PUBLIC_S3_ACCESS_KEY}
+      # AWSS3__Buckets__Public__SecretKey: ${PUBLIC_S3_SECRET_KEY}
+      # AWSS3__Buckets__Public__BucketName: yoma-v3-public-storage
+      # AWSS3__Buckets__Private__AccessKey: ${PRIVATE_S3_ACCESS_KEY}
+      # AWSS3__Buckets__Private__SecretKey: ${PRIVATE_S3_SECRET_KEY}
+      # AWSS3__Buckets__Private__BucketName: yoma-v3-private-storage
+    env_file:
+      - env.secrets
     ports:
       - "0.0.0.0:5000:5000"
     volumes:
