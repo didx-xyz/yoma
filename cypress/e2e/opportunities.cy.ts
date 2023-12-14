@@ -85,8 +85,10 @@ describe(`Opportunities`, function () {
       cy.get("input[id=input_difficultyId]").type("Beginner{enter}");
       cy.get("input[name=commitmentIntervalCount]").type(`1`);
       cy.get("input[id=input_commitmentIntervalId]").type("Day{enter}");
-      cy.get("input[id=input_dateStart]").type("2023-12-13{enter}");
-      cy.get("input[id=input_dateEnd]").type("2023-12-14{enter}");
+      const today = new Date();
+      cy.get("input[id=input_dateStart]").type(`${today.toISOString().slice(0, 10)}{enter}`);
+      today.setDate(today.getDate() + 1);
+      cy.get("input[id=input_dateEnd]").type(`${today.toISOString().slice(0, 10)}{enter}`);
       cy.get("input[name=participantLimit]").type(`1000`);
 
       cy.get("button[type=submit]").should("exist").click();
@@ -119,6 +121,7 @@ describe(`Opportunities`, function () {
 
       //* step 6: fill out form and click next
       cy.get("input[name=credentialIssuanceEnabled]").check();
+      cy.wait(500);
       cy.get("input[id=input_ssiSchemaName]").type("Default{enter}");
 
       cy.get("button[type=submit]").should("exist").click();

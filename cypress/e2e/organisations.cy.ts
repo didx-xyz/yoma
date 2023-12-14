@@ -111,7 +111,7 @@ describe(`Organisation Registration & Approval`, function () {
 
       //* click on the organisation on the user menu
       cy.get(`button[id="btnUserMenu`).first().click();
-      cy.get(`a[id="userMenu_orgs_${this.organisationName}"]`).first().click();
+      cy.get(`a[id="userMenu_orgs_Test Organisation ${this.magicNumber}"]`).first().click();
       cy.wait(2000);
 
       // href should end with /edit
@@ -212,7 +212,7 @@ describe(`Organisation Registration & Approval`, function () {
       cy.location("href").should("match", /\/organisations$/);
 
       //* click on the organisation on the organisations page
-      cy.get(`a[id="lnkOrganisation_${this.organisationName} updated"]`).should("exist").click();
+      cy.get(`a[id="lnkOrganisation_Test Organisation ${this.magicNumber} updated"]`).should("exist").click();
       cy.wait(2500);
 
       // href should end with /verify
