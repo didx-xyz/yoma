@@ -63,13 +63,12 @@ describe(`Opportunities`, function () {
 
       //* click on the create opportunity button
       cy.get(`a[id="btnCreateOpportunity"]`).should("exist").click();
-      cy.wait(5000);
+      cy.wait(6000);
 
       // href should be /organisations/guid/opportunities/create
       cy.get("@guid").then((guid) => {
         cy.location("href").should("eq", `http://localhost:3000/organisations/${guid}/opportunities/create`);
       });
-      cy.wait(1000);
 
       //* step 1: fill out form and click next
       cy.get("input[name=title]").type(`Test Opportunity ${this.magicNumber}`);
