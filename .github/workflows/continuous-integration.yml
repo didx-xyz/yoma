@@ -210,14 +210,14 @@ jobs:
           echo "AriesCloudAPI__BaseUri=${{ secrets.ARIESCLOUDAPI_BASEURI }}" >> /src/api/env.secrets
           echo "AriesCloudAPI__GroupId=${{ secrets.ARIESCLOUDAPI_GROUPID }}" >> /src/api/env.secrets
           echo "AriesCloudAPI__ProtocolVersion=${{ secrets.ARIESCLOUDAPI_PROTOCOLVERSION }}" >> /src/api/env.secrets
-          echo "AriesCloudAPI__GovernanceAdmin__ClientId=${{ secrets.ARIESCLOUDAPI__GOVERNANCEADMIN__CLIENTID }}" >> /src/api/env.secrets
-          echo "AriesCloudAPI__GovernanceAdmin__ClientSecret=${{ secrets.ARIESCLOUDAPI__GOVERNANCEADMIN__CLIENTSECRET }}" >> /src/api/env.secrets
-          echo "AriesCloudAPI__Customer__ClientId=${{ secrets.ARIESCLOUDAPI__CUSTOMER__CLIENTID }}" >> /src/api/env.secrets
-          echo "AriesCloudAPI__Customer__ClientSecret=${{ secrets.ARIESCLOUDAPI__CUSTOMER__CLIENTSECRET }}" >> /src/api/env.secrets
-          echo "Zlto__Username=${{ secrets.ZLTO__USERNAME }}" >> /src/api/env.secrets
-          echo "Zlto__Password=${{ secrets.ZLTO__PASSWORD }}" >> /src/api/env.secrets
-          echo "AppSettings__SSIIssuerNameYomaOrganization=${{ secrets.APPSETTINGS__SSIISSUERNAMEYOMAORGANIZATION }}" >> /src/api/env.secrets
-          echo "AppSettings__SSISchemaFullNameYoID=${{ secrets.APPSETTINGS__SSISCHEMAFULLNAMEYOID }}" >> /src/api/env.secrets
+          echo "AriesCloudAPI__GovernanceAdmin__ClientId=${{ secrets.ARIESCLOUDAPI_GOVERNANCEADMIN_CLIENTID }}" >> /src/api/env.secrets
+          echo "AriesCloudAPI__GovernanceAdmin__ClientSecret=${{ secrets.ARIESCLOUDAPI_GOVERNANCEADMIN_CLIENTSECRET }}" >> /src/api/env.secrets
+          echo "AriesCloudAPI__Customer__ClientId=${{ secrets.ARIESCLOUDAPI_CUSTOMER_CLIENTID }}" >> /src/api/env.secrets
+          echo "AriesCloudAPI__Customer__ClientSecret=${{ secrets.ARIESCLOUDAPI_CUSTOMER_CLIENTSECRET }}" >> /src/api/env.secrets
+          echo "Zlto__Username=${{ secrets.ZLTO_USERNAME }}" >> /src/api/env.secrets
+          echo "Zlto__Password=${{ secrets.ZLTO_PASSWORD }}" >> /src/api/env.secrets
+          echo "AppSettings__SSIIssuerNameYomaOrganization=${{ secrets.APPSETTINGS_SSIISSUERNAMEYOMAORGANIZATION }}" >> /src/api/env.secrets
+          echo "AppSettings__SSISchemaFullNameYoID=${{ secrets.APPSETTINGS_SSISCHEMAFULLNAMEYOID }}" >> /src/api/env.secrets
       - uses: dorny/paths-filter@v2 # https://github.com/actions/runner/pull/2477
         id: filter
         with:
