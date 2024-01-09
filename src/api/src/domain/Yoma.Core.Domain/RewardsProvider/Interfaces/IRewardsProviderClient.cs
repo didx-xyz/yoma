@@ -6,8 +6,6 @@ namespace Yoma.Core.Domain.RewardsProvider.Interfaces
     {
         Task<Wallet> EnsureWallet(WalletRequestCreate user);
 
-        Task<decimal> GetBalance(string walletId);
-
-        Task<List<Transaction>?> ListTransactions(WalletSearchFilter filter);
+        Task<int> GetBalance(string walletId);
     }
 }

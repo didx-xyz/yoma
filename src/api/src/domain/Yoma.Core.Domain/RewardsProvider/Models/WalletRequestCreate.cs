@@ -7,5 +7,7 @@ namespace Yoma.Core.Domain.RewardsProvider.Models
         public string Email { get; set; }
 
         public string DisplayName { get; set; }
+
+        public int? Balance { get; set; }
     }
 }

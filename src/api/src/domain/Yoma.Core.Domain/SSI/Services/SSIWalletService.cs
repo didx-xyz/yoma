@@ -79,7 +79,11 @@ namespace Yoma.Core.Domain.SSI.Services
             var tenantId = _ssiTenantService.GetTenantIdOrNull(filter.EntityType, filter.EntityId);
             if (string.IsNullOrEmpty(tenantId)) return result; //tenant pending creation
 
-            var items = await _ssiProviderClient.ListCredentials(tenantId, filter.PageNumber, filter.PageSize);
+            var start = default(int?);
+            if (filter.PaginationEnabled)
+                start = filter.PageNumber * filter.PageSize - 1;
+
+            var items = await _ssiProviderClient.ListCredentials(tenantId, start, filter.PageSize);
             if (items == null || !items.Any()) return result;
 
             foreach (var item in items)

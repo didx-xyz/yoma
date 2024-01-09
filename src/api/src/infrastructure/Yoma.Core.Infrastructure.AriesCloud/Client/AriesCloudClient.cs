@@ -120,7 +120,6 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         {
             //TODO: schemaType starts with / contains filter on Schema_id
             //TODO: orderByDescending on attrib _Date_Issued
-            //TODO: totalCount
 
             if (string.IsNullOrWhiteSpace(tenantId))
                 throw new ArgumentNullException(nameof(tenantId));

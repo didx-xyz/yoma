@@ -4,6 +4,15 @@ using System.Runtime.Serialization;
 
 namespace Yoma.Core.Infrastructure.Zlto.Models
 {
+    public class PartnerRequestLogin
+    {
+        [JsonProperty("partner_username")]
+        public string Username { get; set; }
+
+        [JsonProperty("partner_password")]
+        public string Password { get; set; }
+    }
+
     public class PartnerResponseLogin
     {
         [JsonProperty("access_token")]
@@ -36,15 +45,6 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
         [JsonProperty("partner_status")]
         [JsonConverter(typeof(StringEnumConverter))]
         public PartnerAccountStatus PartnerStatus { get; set; }
-    }
-
-    public class PartnerRequestLogin
-    {
-        [JsonProperty("partner_username")]
-        public string PartnerUsername { get; set; }
-
-        [JsonProperty("partner_password")]
-        public string PartnerPassword { get; set; }
     }
 
     public enum PartnerAccountStatus

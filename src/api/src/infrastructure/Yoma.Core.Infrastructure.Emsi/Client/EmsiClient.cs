@@ -21,7 +21,7 @@ namespace Yoma.Core.Infrastructure.Emsi.Client
         private readonly IEnvironmentProvider _environmentProvider;
         private readonly AppSettings _appSettings;
         private readonly EmsiOptions _options;
-        private OAuthResponse _accessToken;
+        private static OAuthResponse _accessToken;
 
         private const string Header_Authorization = "Authorization";
         private const string Header_Authorization_Value_Prefix = "Bearer";
@@ -52,7 +52,7 @@ namespace Yoma.Core.Infrastructure.Emsi.Client
 
             var resp = await _options.BaseUrl
                .AppendPathSegment($"/skills/versions/latest/skills")
-               .WithAuthHeaders(await GetAuthHeaders(AuthScope.Skills))
+               .WithAuthHeader(await GetAuthHeader(AuthScope.Skills))
                .GetAsync()
                .EnsureSuccessStatusCodeAsync();
 
@@ -65,7 +65,7 @@ namespace Yoma.Core.Infrastructure.Emsi.Client
         {
             var resp = await _options.BaseUrl
                .AppendPathSegment($"/titles/versions/latest/titles")
-               .WithAuthHeaders(await GetAuthHeaders(AuthScope.Jobs))
+               .WithAuthHeader(await GetAuthHeader(AuthScope.Jobs))
                .GetAsync()
                .EnsureSuccessStatusCodeAsync();
 
@@ -76,7 +76,7 @@ namespace Yoma.Core.Infrastructure.Emsi.Client
         #endregion
 
         #region Private Members
-        private async Task<KeyValuePair<string, string>> GetAuthHeaders(AuthScope scope)
+        private async Task<KeyValuePair<string, string>> GetAuthHeader(AuthScope scope)
         {
             if (_accessToken != null && _accessToken.DateExpire > DateTimeOffset.Now)
                 return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {_accessToken.Access_token}");
@@ -97,7 +97,7 @@ namespace Yoma.Core.Infrastructure.Emsi.Client
             return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {_accessToken.Access_token}");
         }
 
-        private List<Domain.LaborMarketProvider.Models.Skill> ParsePayloadLocalSkills()
+        private static List<Domain.LaborMarketProvider.Models.Skill> ParsePayloadLocalSkills()
         {
             var resourcePath = "Yoma.Core.Infrastructure.Emsi.payload_local_skills.json";
             var assembly = Assembly.GetExecutingAssembly();

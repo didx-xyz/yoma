@@ -45,7 +45,7 @@ namespace Yoma.Core.Api.Attributes
             }
 
             //store the authenticated organization id in HttpContext.Items for subsequent use (HttpContext.Items.TryGetValue(Constants.HttpContextItemsKey_Authenticated_OrganizationId, out var organizationIdObj) && organizationIdObj is Guid organizationId)
-            context.HttpContext.Items[Constants.HttpContextItemsKey_Authenticated_OrganizationId] = extractedApiKey.ToString();
+            context.HttpContext.Items[Constants.HttpContextItemsKey_Authenticated_OrganizationId] = organization.Id;
 
             await next();
         }

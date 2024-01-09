@@ -1,10 +1,11 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 
 namespace Yoma.Core.Infrastructure.Zlto.Models
 {
-    public partial class AccountRequestCreate
+    public class WalletRequestCreate
     {
         [JsonProperty("owner_id")]
         public string OwnerId { get; set; }
@@ -22,34 +23,37 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
         public string UserPassword { get; set; }
     }
 
-    public class AccountResponseCreateLegacy
+    public class WalletRequestCreateLegacy : WalletRequestCreate
+    {
+        [JsonProperty("init_zlto_amount")]
+        public int Balance { get; set; }
+    }
+
+    public class WalletResponseCreateLegacy
     {
         [JsonProperty("legacy_response")]
-        public string Legacy_response { get; set; }
+        public string LegacyResponse { get; set; }
 
         [JsonProperty("msg")]
         public string Msg { get; set; }
 
-        [JsonProperty("detail")]
-        public string Detail { get; set; }
-
         [JsonProperty("wallet_response")]
-        public WalletResponse? Wallet_response { get; set; }
+        public WalletLegacy? Wallet { get; set; }
     }
 
-    public class WalletResponse
+    public class WalletLegacy
     {
         [JsonProperty("account_info")]
-        public AccountInfo? AccountInfo { get; set; }
+        public WalletAccountInfo? AccountInfo { get; set; }
     }
 
-    public class AccountResponseCreate
+    public class WalletResponseCreate
     {
         [JsonProperty("account_info")]
-        public AccountInfo AccountInfo { get; set; }
+        public WalletAccountInfo AccountInfo { get; set; }
     }
 
-    public class AccountInfo
+    public class WalletAccountInfo
     {
         [JsonProperty("owner_id")]
         public string OwnerId { get; set; }
@@ -79,7 +83,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
         public DateTime LastUpdated { get; set; }
     }
 
-    public class WalletResponseGet
+    public class WalletResponse
     {
         [JsonProperty("wallet_id")]
         public string WalletId { get; set; }
@@ -140,52 +144,39 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public class WalletResponseBalance
     {
         [JsonProperty("zlto_balance")]
-        public decimal ZltoBalance { get; set; }
+        public int ZltoBalance { get; set; }
     }
 
-    public partial class WalletResponseTransactions
+    public class WalletResponseSearchVouchers
     {
-        [JsonProperty("wallet_id")]
-        public string Wallet_id { get; set; }
-
-        [JsonProperty("limit")]
-        public int Limit { get; set; }
-
-        [JsonProperty("offset")]
-        public int Offset { get; set; }
-
         [JsonProperty("data")]
-        public ICollection<WalletTransaction>? Items { get; set; }
+        public List<WalletVoucher> Items { get; set; }
     }
 
-    public partial class WalletTransaction
+    public class WalletVoucher
     {
-        [JsonProperty("transaction_id")]
-        public int Transaction_id { get; set; }
-
-        [JsonProperty("wallet_id")]
-        public string Wallet_id { get; set; }
-
-        [JsonProperty("owner_id")]
-        public string Owner_id { get; set; }
-
-        [JsonProperty("transaction_payload")]
-        public string Transaction_payload { get; set; }
-
-        [JsonProperty("transaction_type")]
-        public int Transaction_type { get; set; }
-
-        [JsonProperty("transaction_amount")]
-        public decimal Transaction_amount { get; set; }
-
-        [JsonProperty("transaction_status")]
-        public int Transaction_status { get; set; }
-
-        [JsonProperty("last_updated")]
-        public DateTimeOffset Last_updated { get; set; }
-
-        [JsonProperty("date_created")]
-        public DateTimeOffset Date_created { get; set; }
+        [JsonProperty("voucher_id"), Required]
+        public string VoucherId { get; set; }
+        [JsonProperty("wallet_id"), Required]
+        public string WalletId { get; set; }
+        [JsonProperty("voucher_name"), Required]
+        public string VoucherName { get; set; }
+        [JsonProperty("voucher_type"), Required]
+        public string VoucherType { get; set; }
+        [JsonProperty("voucher_category"), Required]
+        public string VoucherCategory { get; set; }
+        [JsonProperty("voucher_instructions"), Required]
+        public string VoucherInstructions { get; set; }
+        [JsonProperty("voucher_code"), Required]
+        public string VoucherCode { get; set; }
+        [JsonProperty("zlto_amount"), Required]
+        public string ZltoAmount { get; set; }
+        [JsonProperty("voucher_state"), Required]
+        public string VoucherState { get; set; }
+        [JsonProperty("last_updated"), Required]
+        public string LastUpdated { get; set; }
+        [JsonProperty("date_created"), Required]
+        public string DateCreated { get; set; }
     }
 
     public enum WalletOwnerType

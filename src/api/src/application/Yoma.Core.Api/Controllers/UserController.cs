@@ -12,7 +12,7 @@ namespace Yoma.Core.Api.Controllers
     [Route("api/v3/user")]
     [ApiController]
     [Authorize(Policy = Common.Constants.Authorization_Policy)]
-    [SwaggerTag("(by default, User, Admin or Organization Admin roles required)")]
+    [SwaggerTag("(by default, User role required)")]
     public class UserController : Controller
     {
         #region Class Variables
@@ -53,7 +53,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Search for users based on the supplied filter (Admin or Organization Admin roles required)")]
         [HttpPost("search")]
-        [ProducesResponseType(typeof(List<UserSearchResults>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(UserSearchResults), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult Search([FromBody] UserSearchFilter filter)
         {
@@ -72,7 +72,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpGet("")]
         [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        [Authorize(Roles = $"{Constants.Role_User}")]
         public IActionResult Get()
         {
             _logger.LogInformation("Handling request {requestName}", nameof(Get));
@@ -88,7 +88,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpPatch()]
         [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        [Authorize(Roles = $"{Constants.Role_User}")]
         public async Task<IActionResult> UpdateProfile([FromBody] UserRequestProfile request)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(UpdateProfile));
@@ -104,7 +104,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpPatch("photo")]
         [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        [Authorize(Roles = $"{Constants.Role_User}")]
         public async Task<IActionResult> UpsertPhoto([Required] IFormFile file)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(UpsertPhoto));
@@ -120,7 +120,7 @@ namespace Yoma.Core.Api.Controllers
         [HttpPatch("yoId")]
         [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        [Authorize(Roles = $"{Constants.Role_User}")]
         public async Task<IActionResult> YoIDOnboard()
         {
             _logger.LogInformation("Handling request {requestName}", nameof(YoIDOnboard));

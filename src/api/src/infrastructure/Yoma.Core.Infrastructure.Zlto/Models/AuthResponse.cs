@@ -10,9 +10,6 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
 
         public DateTimeOffset Date { get; } = DateTimeOffset.Now;
 
-        public DateTimeOffset DateExpire
-        {
-            get { return Date.AddHours(24); } //valid for 30 hours; re-request after 24 hours
-        }
+        public DateTimeOffset DateExpire { get; set; }
     }
 }
