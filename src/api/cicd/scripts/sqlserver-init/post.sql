@@ -7,23 +7,23 @@ GO
 
 --testuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO [Entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
-			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[DateZltoWalletCreated],[YoIDOnboarded],[DateYoIDOnboarded],[DateCreated],[DateModified])
+			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[YoIDOnboarded],[DateYoIDOnboarded],[DateCreated],[DateModified])
 VALUES(NEWID(),'testuser@gmail.com',1,'Test','User','Test User','+27125555555',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),
-		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -20, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,1,GETDATE(),GETDATE(),GETDATE())
+		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -20, GETDATE()) AS DATE),NULL,NULL,1,GETDATE(),GETDATE(),GETDATE())
 GO
 
 --testadminuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO [Entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
-			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[DateZltoWalletCreated],[YoIDOnboarded],[DateYoIDOnboarded],[DateCreated],[DateModified])
+			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[YoIDOnboarded],[DateYoIDOnboarded],[DateCreated],[DateModified])
 VALUES(NEWID(),'testadminuser@gmail.com',1,'Test Admin','User','Test Admin User','+27125555555',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),
-		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -21, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,1,GETDATE(),GETDATE(),GETDATE())
+		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -21, GETDATE()) AS DATE),NULL,NULL,1,GETDATE(),GETDATE(),GETDATE())
 GO
 
 --testorgadminuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO [Entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
-			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[DateZltoWalletCreated],[YoIDOnboarded],[DateYoIDOnboarded],[DateCreated],[DateModified])
+			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[YoIDOnboarded],[DateYoIDOnboarded],[DateCreated],[DateModified])
 VALUES(NEWID(),'testorgadminuser@gmail.com',1,'Test Organization Admin','User','Test Organization Admin User','+27125555555',(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),(SELECT TOP 1 [Id] FROM [Lookup].[Country] ORDER BY NEWID()),
-		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -22, GETDATE()) AS DATE),NULL,NULL,NULL,NULL,1,GETDATE(),GETDATE(),GETDATE())
+		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] ORDER BY NEWID()),CAST(DATEADD(YEAR, -22, GETDATE()) AS DATE),NULL,NULL,1,GETDATE(),GETDATE(),GETDATE())
 GO
 
 --ssi tenant creation (pending) for YOID onboarded users
@@ -81,7 +81,7 @@ INSERT INTO [Entity].[Organization]([Id],[Name],[NameHashValue],[WebsiteURL],[Pr
            ,[City],[CountryId],[StreetAddress],[Province],[PostalCode],[Tagline],[Biography],[StatusId],[CommentApproval],[DateStatusModified],[LogoId],[DateCreated],[CreatedByUserId],[DateModified],[ModifiedByUserId])
 VALUES(NEWID(), @Name, CONVERT(NVARCHAR(128), HASHBYTES('SHA2_256', @Name), 2), 'https://www.yoma.world/', 'Primary Contact', 'primarycontact@gmail.com', '+27125555555', 'GB123456789', '0123456789', '12345/28/14',
 		'My City',(SELECT [Id] FROM [Lookup].[Country] WHERE CodeAlpha2 = 'ZA'),'My Street Address 1000', 'My Province', '12345-1234','Tag Line','Biography',
-		SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active'),'Approved',GETDATE(), NULL,
+		(SELECT [Id] FROM [Entity].[OrganizationStatus] WHERE [Name] = 'Active'),'Approved',GETDATE(), NULL,
     GETDATE(),(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testorgadminuser@gmail.com'),GETDATE(),(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testorgadminuser@gmail.com'))
 GO
 

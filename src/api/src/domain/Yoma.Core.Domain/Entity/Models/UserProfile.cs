@@ -1,3 +1,5 @@
+using Yoma.Core.Domain.Reward;
+
 namespace Yoma.Core.Domain.Entity.Models
 {
     public class UserProfile
@@ -29,6 +31,8 @@ namespace Yoma.Core.Domain.Entity.Models
         public string? PhotoURL { get; set; }
 
         public DateTimeOffset? DateLastLogin { get; set; }
+
+        public WalletCreationStatus RewardWalletCreationStatus { get; set; }
 
         public bool? YoIDOnboarded { get; set; }
 

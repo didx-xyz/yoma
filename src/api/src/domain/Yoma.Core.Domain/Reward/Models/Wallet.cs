@@ -1,4 +1,4 @@
-namespace Yoma.Core.Domain.RewardsProvider.Models
+namespace Yoma.Core.Domain.Reward.Models
 {
     public class Wallet
     {

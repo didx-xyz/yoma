@@ -5,6 +5,8 @@ using System.Net;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Marketplace.Models;
 using Yoma.Core.Domain.Marketplace.Interfaces;
+using Yoma.Core.Domain.Reward.Models;
+using Yoma.Core.Domain.Reward.Interfaces;
 
 namespace Yoma.Core.Api.Controllers
 {
@@ -17,15 +19,18 @@ namespace Yoma.Core.Api.Controllers
         #region Class Variables
         private readonly ILogger<MarketplaceController> _logger;
         private readonly IMarketplaceService _marketplaceService;
+        private readonly IWalletService _rewardWalletService;
         #endregion
 
         #region Constructor
         public MarketplaceController(
           ILogger<MarketplaceController> logger,
-          IMarketplaceService marketplaceService)
+          IMarketplaceService marketplaceService,
+          IWalletService rewardWalletService)
         {
             _logger = logger;
             _marketplaceService = marketplaceService;
+            _rewardWalletService = rewardWalletService;
         }
         #endregion
 
@@ -62,14 +67,14 @@ namespace Yoma.Core.Api.Controllers
         }
 
         [SwaggerOperation(Summary = "Return a list of store item categories (Authenticated User)")]
-        [HttpGet("store/{storedId}/category/item")]
+        [HttpGet("store/{storeId}/category/item")]
         [ProducesResponseType(typeof(List<StoreItemCategory>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_User}")]
-        public async Task<IActionResult> ListStoreItemCategories()
+        public async Task<IActionResult> ListStoreItemCategories([FromRoute] string storeId)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListStoreCategories));
 
-            var result = await _marketplaceService.ListStoreCategories();
+            var result = await _marketplaceService.ListStoreItemCategories(storeId);
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListStoreCategories));
 
@@ -85,6 +90,21 @@ namespace Yoma.Core.Api.Controllers
             _logger.LogInformation("Handling request {requestName}", nameof(SearchStoreItems));
 
             var result = await _marketplaceService.SearchStoreItems(filter);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(SearchStoreItems));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Search for vouchers based on the supplied filter (Authenticated User)")]
+        [HttpPost("voucher/search")]
+        [ProducesResponseType(typeof(WalletVoucherSearchResults), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_User}")]
+        public async Task<IActionResult> SearchVouchers([FromBody] WalletVoucherSearchFilter filter)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(SearchStoreItems));
+
+            var result = await _rewardWalletService.SearchVouchers(filter);
 
             _logger.LogInformation("Request {requestName} handled", nameof(SearchStoreItems));
 

@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -5,6 +6,7 @@ using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Marketplace.Interfaces;
 using Yoma.Core.Domain.Marketplace.Interfaces.Provider;
 using Yoma.Core.Domain.Marketplace.Models;
+using Yoma.Core.Domain.Marketplace.Validators;
 
 namespace Yoma.Core.Domain.Marketplace.Services
 {
@@ -15,18 +17,24 @@ namespace Yoma.Core.Domain.Marketplace.Services
         private readonly ICountryService _countryService;
         private readonly IUserService _userService;
         private readonly IMarketplaceProviderClient _marketplaceProviderClient;
+        private readonly StoreSearchFilterValidator _storeSearchFilterValidator;
+        private readonly StoreItemSearchFilterValidator _storeItemSearchFilterValidator;
         #endregion
 
         #region Constructors
         public MarketplaceService(IHttpContextAccessor httpContextAccessor,
             ICountryService countryService,
             IUserService userService,
-            IMarketplaceProviderClientFactory marketplaceProviderClientFactory)
+            IMarketplaceProviderClientFactory marketplaceProviderClientFactory,
+            StoreSearchFilterValidator storeSearchFilterValidator,
+            StoreItemSearchFilterValidator storeItemSearchFilterValidator)
         {
             _httpContextAccessor = httpContextAccessor;
             _countryService = countryService;
             _userService = userService;
             _marketplaceProviderClient = marketplaceProviderClientFactory.CreateClient();
+            _storeSearchFilterValidator = storeSearchFilterValidator;
+            _storeItemSearchFilterValidator = storeItemSearchFilterValidator;
         }
         #endregion
 
@@ -50,18 +58,18 @@ namespace Yoma.Core.Domain.Marketplace.Services
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
 
-            //TODO: Validator
+            await _storeSearchFilterValidator.ValidateAndThrowAsync(filter);
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
             var countryOfResidence = user.CountryOfResidenceId.HasValue ? _countryService.GetByIdOrNull(user.CountryOfResidenceId.Value) : null;
 
-            var start = default(int?);
+            var offset = default(int?);
             if (filter.PaginationEnabled)
-                start = filter.PageNumber * filter.PageSize - 1;
+                offset = filter.PageNumber == 1 ? 0 : ((filter.PageNumber - 1) * filter.PageSize);
 
             var result = new StoreSearchResults
-            { Items = await _marketplaceProviderClient.ListStores(countryOfResidence?.CodeAlpha2, filter.CategoryId, filter.PageSize, start) };
+            { Items = await _marketplaceProviderClient.ListStores(countryOfResidence?.CodeAlpha2, filter.CategoryId, filter.PageSize, offset) };
 
             return result;
         }
@@ -71,13 +79,14 @@ namespace Yoma.Core.Domain.Marketplace.Services
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
 
-            //TODO: Validator
-            var start = default(int?);
+            await _storeItemSearchFilterValidator.ValidateAndThrowAsync(filter);
+
+            var offset = default(int?);
             if (filter.PaginationEnabled)
-                start = filter.PageNumber * filter.PageSize - 1;
+                offset = filter.PageNumber == 1 ? 0 : ((filter.PageNumber - 1) * filter.PageSize);
 
             var result = new StoreItemSearchResults
-            { Items = await _marketplaceProviderClient.ListStoreItems(filter.StoreId, filter.ItemCategoryId, filter.PageSize, start) };
+            { Items = await _marketplaceProviderClient.ListStoreItems(filter.StoreId, filter.ItemCategoryId, filter.PageSize, offset) };
 
             return result;
         }

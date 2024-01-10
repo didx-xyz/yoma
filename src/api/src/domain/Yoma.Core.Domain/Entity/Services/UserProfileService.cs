@@ -12,6 +12,7 @@ using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
+using Yoma.Core.Domain.Reward.Interfaces;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -25,6 +26,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly ICountryService _countryService;
         private readonly IOrganizationService _organizationService;
         private readonly IMyOpportunityService _myOpportunityService;
+        private readonly IWalletService _rewardWalletService;
         private readonly UserProfileRequestValidator _userProfileRequestValidator;
         private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
         #endregion
@@ -37,6 +39,7 @@ namespace Yoma.Core.Domain.Entity.Services
             ICountryService countryService,
             IOrganizationService organizationService,
             IMyOpportunityService myOpportunityService,
+            IWalletService rewardWalletService,
             UserProfileRequestValidator userProfileRequestValidator,
             IRepositoryValueContainsWithNavigation<User> userRepository)
         {
@@ -47,6 +50,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _countryService = countryService;
             _organizationService = organizationService;
             _myOpportunityService = myOpportunityService;
+            _rewardWalletService = rewardWalletService;
             _userProfileRequestValidator = userProfileRequestValidator;
             _userRepository = userRepository;
         }
@@ -138,6 +142,9 @@ namespace Yoma.Core.Domain.Entity.Services
         private UserProfile ToProfile(User user)
         {
             var result = user.ToProfile();
+
+            result.RewardWalletCreationStatus = _rewardWalletService.GetWalletCreationStatus(user.Id);
+
             result.AdminsOf = _organizationService.ListAdminsOf(true);
 
             var filter = new MyOpportunitySearchFilter

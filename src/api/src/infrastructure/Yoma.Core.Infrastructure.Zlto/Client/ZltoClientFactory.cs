@@ -2,12 +2,12 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Marketplace.Interfaces.Provider;
-using Yoma.Core.Domain.RewardsProvider.Interfaces;
+using Yoma.Core.Domain.Reward.Interfaces.Provider;
 using Yoma.Core.Infrastructure.Zlto.Models;
 
 namespace Yoma.Core.Infrastructure.Zlto.Client
 {
-    public class ZltoClientFactory : IRewardsProviderClientFactory, IMarketplaceProviderClientFactory
+    public class ZltoClientFactory : IRewardProviderClientFactory, IMarketplaceProviderClientFactory
     {
         #region Class Variables
         private readonly AppSettings _appSettings;
@@ -32,7 +32,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             return new ZltoClient(_appSettings, _options, _memoryCache);
         }
 
-        IRewardsProviderClient IRewardsProviderClientFactory.CreateClient()
+        IRewardProviderClient IRewardProviderClientFactory.CreateClient()
         {
             return new ZltoClient(_appSettings, _options, _memoryCache);
         }

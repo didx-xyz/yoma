@@ -1,4 +1,4 @@
-namespace Yoma.Core.Domain.RewardsProvider.Models
+namespace Yoma.Core.Domain.Reward.Models
 {
     public class WalletVoucher
     {
@@ -12,7 +12,7 @@ namespace Yoma.Core.Domain.RewardsProvider.Models
 
         public string Instructions { get; set; }
 
-        public int ZltoAmount { get; set; }
+        public decimal Amount { get; set; }
 
         //TODO: type
     }

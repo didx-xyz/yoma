@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -5,6 +6,7 @@ using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
+using Yoma.Core.Domain.SSI.Validators;
 
 namespace Yoma.Core.Domain.SSI.Services
 {
@@ -16,6 +18,7 @@ namespace Yoma.Core.Domain.SSI.Services
         private readonly ISSIProviderClient _ssiProviderClient;
         private readonly ISSITenantService _ssiTenantService;
         private readonly ISSISchemaService _ssiSchemaService;
+        private readonly SSIWalletFilterValidator _ssiWalletFilterValidator;
         #endregion
 
         #region Constructors
@@ -23,13 +26,15 @@ namespace Yoma.Core.Domain.SSI.Services
             IUserService userService,
             ISSIProviderClientFactory ssiProviderClientFactory,
             ISSITenantService ssiTenantService,
-            ISSISchemaService ssiSchemaService)
+            ISSISchemaService ssiSchemaService,
+            SSIWalletFilterValidator ssiWalletFilterValidator)
         {
             _httpContextAccessor = httpContextAccessor;
             _userService = userService;
             _ssiProviderClient = ssiProviderClientFactory.CreateClient();
             _ssiTenantService = ssiTenantService;
             _ssiSchemaService = ssiSchemaService;
+            _ssiWalletFilterValidator = ssiWalletFilterValidator;
         }
         #endregion
 
@@ -72,7 +77,7 @@ namespace Yoma.Core.Domain.SSI.Services
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
 
-            //TODO: validator
+            await _ssiWalletFilterValidator.ValidateAndThrowAsync(filter);
 
             var result = new SSIWalletSearchResults { Items = new List<SSICredentialInfo>() };
 
@@ -81,13 +86,17 @@ namespace Yoma.Core.Domain.SSI.Services
 
             var start = default(int?);
             if (filter.PaginationEnabled)
-                start = filter.PageNumber * filter.PageSize - 1;
+                start = filter.PageNumber == 1 ? 0 : (filter.PageNumber - 1) * filter.PageSize;
 
             var items = await _ssiProviderClient.ListCredentials(tenantId, start, filter.PageSize);
             if (items == null || !items.Any()) return result;
 
             foreach (var item in items)
                 result.Items.Add(await ParseCredential<SSICredentialInfo>(item));
+
+            //TODO: Remove; filter by schema type (pending wql documentation)   
+            if (filter.SchemaType.HasValue)
+                result.Items = result.Items.Where(o => o.SchemaType == filter.SchemaType.Value).ToList();
 
             //TODO: Remove; OrderByDesc by provider (pending wql documentation)
             result.Items = result.Items.OrderByDescending(o => o.DateIssued).ToList();

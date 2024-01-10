@@ -1,6 +1,5 @@
 using Flurl;
 using Flurl.Http;
-using Yoma.Core.Domain.RewardsProvider.Interfaces;
 using Yoma.Core.Infrastructure.Zlto.Models;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -9,12 +8,12 @@ using Microsoft.Extensions.Caching.Memory;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core;
 using System.Net;
-using Yoma.Core.Domain.RewardsProvider.Models;
 using Yoma.Core.Domain.Marketplace.Interfaces.Provider;
+using Yoma.Core.Domain.Reward.Interfaces.Provider;
 
 namespace Yoma.Core.Infrastructure.Zlto.Client
 {
-    public class ZltoClient : IRewardsProviderClient, IMarketplaceProviderClient
+    public class ZltoClient : IRewardProviderClient, IMarketplaceProviderClient
     {
         #region Class Variables
         private readonly AppSettings _appSettings;
@@ -37,16 +36,19 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         #endregion
 
         #region Public Members
-        #region IRewardsProviderClient
-        public async Task<Domain.RewardsProvider.Models.Wallet> EnsureWallet(Domain.RewardsProvider.Models.WalletRequestCreate request)
+        #region IRewardProviderClient
+        public async Task<Domain.Reward.Models.Wallet> EnsureWallet(Domain.Reward.Models.WalletRequestCreate request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
+            if (request.Balance.HasValue && request.Balance.Value % 1 != 0)
+                throw new ArgumentException($"{nameof(request.Balance)} does not support decimal points", nameof(request));
+
             //check of wallet exists
             var result = await GetWalletByUsername(request.Email);
             if (result != null)
-                return new Domain.RewardsProvider.Models.Wallet
+                return new Domain.Reward.Models.Wallet
                 {
                     Id = result.WalletId,
                     OwnerId = Guid.Parse(result.OwnerId),
@@ -65,7 +67,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 account = await CreateAccount(request);
             }
 
-            return new Domain.RewardsProvider.Models.Wallet
+            return new Domain.Reward.Models.Wallet
             {
                 Id = account.WalletId,
                 OwnerId = Guid.Parse(account.OwnerId),
@@ -74,7 +76,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             };
         }
 
-        public async Task<int> GetBalance(string walletId)
+        public async Task<decimal> GetBalance(string walletId)
         {
             if (string.IsNullOrWhiteSpace(walletId))
                 throw new ArgumentNullException(nameof(walletId));
@@ -91,67 +93,58 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             return response.ZltoBalance;
         }
 
-        public async Task<WalletVoucherSearchResults> SearchWalletVouchers(WalletVoucherSearchFilter filter)
+        public async Task<List<Domain.Reward.Models.WalletVoucher>> ListWalletVouchers(string walletId, int? limit, int? offset)
         {
-            if (filter == null)
-                throw new ArgumentNullException(nameof(filter));
-
-            if (string.IsNullOrWhiteSpace(filter.WalletId))
-                throw new ArgumentNullException(nameof(filter), $"{nameof(filter.WalletId)} is required");
-            filter.WalletId = filter.WalletId.Trim();
+            if (string.IsNullOrWhiteSpace(walletId))
+                throw new ArgumentNullException(nameof(walletId));
+            walletId = walletId.Trim();
 
             var query = _options.Wallet.BaseUrl
              .AppendPathSegment("get_vouchers_by_wallet")
-             .SetQueryParam("wallet_id", filter.WalletId)
+             .SetQueryParam("wallet_id", walletId)
              //TODO: filter on state
              .WithAuthHeaders(await GetAuthHeaders());
 
-            if (filter.PaginationEnabled)
-            {
-                if (!filter.PageNumber.HasValue || filter.PageNumber.Value <= default(int))
-                    throw new ArgumentNullException(nameof(filter), $"{nameof(filter.PageNumber)} required");
+            if (limit.HasValue && limit.Value > default(int))
+                query = query.SetQueryParam("limit", limit);
 
-                if (!filter.PageSize.HasValue || filter.PageSize.Value <= default(int))
-                    throw new ArgumentNullException(nameof(filter.PageSize), $"{nameof(filter.PageSize)} required");
-
-                query = query.SetQueryParam("limit", filter.PageSize);
-                query = query.SetQueryParam("offset", filter.PageNumber - 1);
-            }
+            if (offset.HasValue && offset.Value >= default(int))
+                query = query.SetQueryParam("offset", offset);
 
             var response = await query.PatchAsync()
                 .EnsureSuccessStatusCodeAsync()
                 .ReceiveJson<WalletResponseSearchVouchers>();
 
-            var result = new WalletVoucherSearchResults { Items = new List<Domain.RewardsProvider.Models.WalletVoucher>() };
-
-            result.Items = response.Items.Select(o => new Domain.RewardsProvider.Models.WalletVoucher
+            var results = response.Items.Select(o => new Domain.Reward.Models.WalletVoucher
             {
                 Id = o.VoucherId,
                 Category = o.VoucherCategory,
                 Name = o.VoucherName,
                 Code = o.VoucherCode,
                 Instructions = o.VoucherInstructions,
-                ZltoAmount = int.TryParse(o.ZltoAmount, out int parsedAmount)
+                Amount = int.TryParse(o.ZltoAmount, out int parsedAmount)
                     ? parsedAmount
                     : throw new InvalidOperationException($"{nameof(o.ZltoAmount)} of '{o.ZltoAmount}' couldn't be parsed to an integer")
             }).OrderBy(o => o.Name).ToList();
 
-            return result;
+            return results;
 
         }
-        #endregion IRewardsProviderClient 
+        #endregion IRewardProviderClient 
 
         #region IMarketplaceProviderClient
-        public async Task<List<Domain.Marketplace.Models.StoreCategory>> ListStoreCategories(string? CountryCodeAlpha2)
+        public async Task<List<Domain.Marketplace.Models.StoreCategory>> ListStoreCategories(string? countryCodeAlpha2)
         {
-            if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
-                return await ListStoreCategoriesInternal(CountryCodeAlpha2);
+            countryCodeAlpha2 = ResolveCountryCode(countryCodeAlpha2);
 
-            var result = await _memoryCache.GetOrCreateAsync(nameof(Domain.Marketplace.Models.StoreCategory), async entry =>
+            if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
+                return await ListStoreCategoriesInternal(countryCodeAlpha2);
+
+            var result = await _memoryCache.GetOrCreateAsync($"{nameof(Domain.Marketplace.Models.StoreCategory)}|{countryCodeAlpha2}", async entry =>
             {
                 entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-                return await ListStoreCategoriesInternal(CountryCodeAlpha2);
+                return await ListStoreCategoriesInternal(countryCodeAlpha2);
             }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(Domain.Marketplace.Models.StoreCategory)}s'");
 
             return result;
@@ -159,7 +152,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
         public async Task<List<Domain.Marketplace.Models.Store>> ListStores(string? countryCodeAlpha2, string? categoryId, int? limit, int? offset)
         {
-            var response = await ListStoresInternal(countryCodeAlpha2, categoryId, limit, offset);
+            var response = await ListStoresInternal(ResolveCountryCode(countryCodeAlpha2), categoryId, limit, offset);
 
             var result = new StoreSearchResults { Items = new List<Domain.Marketplace.Models.Store>() };
 
@@ -178,8 +171,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 throw new ArgumentNullException(nameof(storeId));
             storeId = storeId.Trim();
 
-            var response = await _options.Wallet.BaseUrl
-              .AppendPathSegment("all_item_categories_by_store_store_id")
+            var response = await _options.Store.BaseUrl
+              .AppendPathSegment("all_item_categories_by_store_store_id/") //TODO: known issue; requires '/' suffix before query params
               .SetQueryParam("store_id", storeId)
               .SetQueryParam("item_state", (int)ItemState.Active)
               .WithAuthHeaders(await GetAuthHeaders())
@@ -196,24 +189,23 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 Summary = o.ItemCatDetails,
                 ImageURL = o.ItemCatImage,
                 ItemCount = o.StoreItemCount,
-                ZltoAmount = o.ItemCatZlto
+                Amount = o.ItemCatZlto
 
             }).OrderBy(o => o.Name).ToList();
 
             return results;
         }
 
-        public async Task<List<Domain.Marketplace.Models.StoreItem>> ListStoreItems(string storeId, string itemCategoryId, int? limit, int? offset)
+        public async Task<List<Domain.Marketplace.Models.StoreItem>> ListStoreItems(string storeId, int itemCategoryId, int? limit, int? offset)
         {
             if (string.IsNullOrWhiteSpace(storeId))
                 throw new ArgumentNullException(nameof(storeId));
             storeId = storeId.Trim();
 
-            if (string.IsNullOrWhiteSpace(itemCategoryId))
+            if (itemCategoryId <= default(int))
                 throw new ArgumentNullException(nameof(itemCategoryId));
-            itemCategoryId = itemCategoryId.Trim();
 
-            var query = _options.Wallet.BaseUrl
+            var query = _options.Store.BaseUrl
                 .AppendPathSegment("all_store_items_by_store_by_category")
                 .SetQueryParam("store_id", storeId)
                 .SetQueryParam("category_id", itemCategoryId)
@@ -238,8 +230,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 Description = o.ItemDescription,
                 Summary = o.ItemDetails,
                 Code = o.ItemCode,
-                ImageURL = o.ItemLogo,
-                ZltoAmount = o.ItemZlto
+                ImageURL = string.Equals(o.ItemLogo, "Default", StringComparison.InvariantCultureIgnoreCase) ? o.StoreInfoSi.StoreLogo : o.ItemLogo,
+                Amount = o.ItemZlto
 
             }).OrderBy(o => o.Name).ToList();
         }
@@ -295,7 +287,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {response.AccessToken}");
         }
 
-        private async Task<WalletAccountInfo?> CreateAccountLegacy(Domain.RewardsProvider.Models.WalletRequestCreate request)
+        private async Task<WalletAccountInfo?> CreateAccountLegacy(Domain.Reward.Models.WalletRequestCreate request)
         {
             var requestAccount = new WalletRequestCreateLegacy
             {
@@ -303,7 +295,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 OwnerOrigin = _accessToken.PartnerName,
                 OwnerName = request.DisplayName,
                 UserName = request.Email,
-                Balance = request.Balance ?? default
+                Balance = (int)(request.Balance ?? default)
                 //UserPassword: used with external wallet activation; with Yoma wallets are internal
             };
 
@@ -319,9 +311,9 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             return response.Wallet?.AccountInfo;
         }
 
-        private async Task<WalletAccountInfo> CreateAccount(Domain.RewardsProvider.Models.WalletRequestCreate user)
+        private async Task<WalletAccountInfo> CreateAccount(Domain.Reward.Models.WalletRequestCreate user)
         {
-            var requestAccount = new Models.WalletRequestCreate
+            var requestAccount = new WalletRequestCreate
             {
                 OwnerId = user.Id.ToString(),
                 OwnerOrigin = _accessToken.PartnerName,
@@ -363,7 +355,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             return null;
         }
 
-        private async Task<List<Domain.Marketplace.Models.StoreCategory>> ListStoreCategoriesInternal(string? CountryCodeAlpha2)
+        private async Task<List<Domain.Marketplace.Models.StoreCategory>> ListStoreCategoriesInternal(string CountryCodeAlpha2)
         {
             var resultSearch = await ListStoresInternal(CountryCodeAlpha2, null, null, null);
 
@@ -383,15 +375,24 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             return results;
         }
 
-        private async Task<StoreResponseSearch> ListStoresInternal(string? countryCodeAlpha2, string? categoryId, int? limit, int? offset)
+        private static string ResolveCountryCode(string? countryCodeAlpha2)
         {
-            var query = _options.Wallet.BaseUrl
-             .AppendPathSegment("get_only_country_store_fronts_by_yoma")
-             .WithAuthHeaders(await GetAuthHeaders());
-
             countryCodeAlpha2 = countryCodeAlpha2?.Trim();
             if (string.IsNullOrEmpty(countryCodeAlpha2))
                 countryCodeAlpha2 = Country.Worldwide.ToDescription();
+
+            return countryCodeAlpha2;
+        }
+
+        private async Task<StoreResponseSearch> ListStoresInternal(string countryCodeAlpha2, string? categoryId, int? limit, int? offset)
+        {
+            var query = _options.Store.BaseUrl
+             .AppendPathSegment("get_only_country_store_fronts_by_yoma")
+             .WithAuthHeaders(await GetAuthHeaders());
+
+            if (string.IsNullOrWhiteSpace(countryCodeAlpha2))
+                throw new ArgumentNullException(nameof(countryCodeAlpha2));
+            countryCodeAlpha2 = countryCodeAlpha2.Trim();
 
             var countryOwner = _options.Store.Owners.SingleOrDefault(o => string.Equals(o.CountryCodeAlpha2, countryCodeAlpha2, StringComparison.InvariantCultureIgnoreCase));
 
@@ -399,8 +400,9 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 .Single(o => string.Equals(o.CountryCodeAlpha2, Country.Worldwide.ToDescription(), StringComparison.InvariantCultureIgnoreCase)).Id;
             query = query.SetQueryParam("country_owner_id", countryOwnerId);
 
+            //TODO: pagination does not work correctly
             if (limit.HasValue && limit.Value > default(int))
-                query = query.SetQueryParam("limit", limit);
+                query = query.SetQueryParam("limit", limit - 1);
 
             if (offset.HasValue && offset.Value >= default(int))
                 query = query.SetQueryParam("offset", offset);

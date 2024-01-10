@@ -1,28 +1,28 @@
 using Yoma.Core.Domain.Core.Interfaces;
-using Yoma.Core.Domain.SSI.Models;
+using Yoma.Core.Domain.Reward;
+using Yoma.Core.Domain.Reward.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
-namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
+namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
 {
-    public class SSITenantCreationRepository : BaseRepository<Entities.SSITenantCreation, Guid>, IRepository<SSITenantCreation>
+    public class WalletCreationRepository : BaseRepository<Entities.WalletCreation, Guid>, IRepository<WalletCreation>
     {
         #region Constructor
-        public SSITenantCreationRepository(ApplicationDbContext context) : base(context) { }
+        public WalletCreationRepository(ApplicationDbContext context) : base(context) { }
         #endregion
 
         #region Public Members
-        public IQueryable<SSITenantCreation> Query()
+        public IQueryable<WalletCreation> Query()
         {
-            return _context.SSITenantCreation.Select(entity => new SSITenantCreation
+            return _context.WalletCreation.Select(entity => new WalletCreation
             {
                 Id = entity.Id,
-                EntityType = entity.EntityType,
                 StatusId = entity.StatusId,
-                Status = Enum.Parse<TenantCreationStatus>(entity.Status.Name, true),
+                Status = Enum.Parse<WalletCreationStatus>(entity.Status.Name, true),
                 UserId = entity.UserId,
-                OrganizationId = entity.OrganizationId,
-                TenantId = entity.TenantId,
+                WalletId = entity.WalletId,
+                Balance = entity.Balance,
                 ErrorReason = entity.ErrorReason,
                 RetryCount = entity.RetryCount,
                 DateCreated = entity.DateCreated,
@@ -30,40 +30,39 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
             });
         }
 
-        public async Task<SSITenantCreation> Create(SSITenantCreation item)
+        public async Task<WalletCreation> Create(WalletCreation item)
         {
             item.DateCreated = DateTimeOffset.Now;
             item.DateModified = DateTimeOffset.Now;
 
-            var entity = new Entities.SSITenantCreation
+            var entity = new Entities.WalletCreation
             {
                 Id = item.Id,
-                EntityType = item.EntityType,
                 StatusId = item.StatusId,
                 UserId = item.UserId,
-                OrganizationId = item.OrganizationId,
-                TenantId = item.TenantId,
+                WalletId = item.WalletId,
+                Balance = item.Balance,
                 ErrorReason = item.ErrorReason,
                 RetryCount = item.RetryCount,
                 DateCreated = item.DateCreated,
                 DateModified = item.DateModified
             };
 
-            _context.SSITenantCreation.Add(entity);
+            _context.WalletCreation.Add(entity);
             await _context.SaveChangesAsync();
 
             item.Id = entity.Id;
             return item;
         }
 
-        public async Task<SSITenantCreation> Update(SSITenantCreation item)
+        public async Task<WalletCreation> Update(WalletCreation item)
         {
-            var entity = _context.SSITenantCreation.Where(o => o.Id == item.Id).SingleOrDefault()
-               ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.SSITenantCreation)} with id '{item.Id}' does not exist");
+            var entity = _context.WalletCreation.Where(o => o.Id == item.Id).SingleOrDefault()
+           ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.WalletCreation)} with id '{item.Id}' does not exist");
 
             item.DateModified = DateTimeOffset.Now;
 
-            entity.TenantId = item.TenantId;
+            entity.WalletId = item.WalletId;
             entity.StatusId = item.StatusId;
             entity.ErrorReason = item.ErrorReason;
             entity.RetryCount = item.RetryCount;
@@ -74,7 +73,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
             return item;
         }
 
-        public Task Delete(SSITenantCreation item)
+        public Task Delete(WalletCreation item)
         {
             throw new NotImplementedException();
         }

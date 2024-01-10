@@ -38,10 +38,6 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public Guid? ExternalId { get; set; }
 
-        public string? ZltoWalletId { get; set; }
-
-        public DateTimeOffset? DateZltoWalletCreated { get; set; }
-
         public bool? YoIDOnboarded { get; set; }
 
         public DateTimeOffset? DateYoIDOnboarded { get; set; }

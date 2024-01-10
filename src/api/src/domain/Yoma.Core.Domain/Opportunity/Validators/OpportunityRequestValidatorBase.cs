@@ -52,12 +52,15 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             RuleFor(x => x.OrganizationId).NotEmpty().Must(OrganizationUpdatable).WithMessage($"Specified organization has been declined / deleted or does not exist.");
             //instructions (varchar(max); auto trimmed
             RuleFor(x => x.URL).Length(1, 2048).Must(ValidURL).When(x => string.IsNullOrEmpty(x.URL)).WithMessage("'{PropertyName}' is invalid.");
-            RuleFor(x => x.ZltoReward).GreaterThan(0).When(x => x.ZltoReward.HasValue).WithMessage("'{PropertyName}' must be greater than 0.");
+            RuleFor(x => x.ZltoReward)
+                .GreaterThan(0).When(x => x.ZltoReward.HasValue).WithMessage("{PropertyName} must be greater than 0")
+                .Must(zltoReward => zltoReward % 1 == 0).When(x => x.ZltoReward.HasValue).WithMessage("{PropertyName} does not support decimal points");
             RuleFor(x => x.YomaReward).GreaterThan(0).When(x => x.YomaReward.HasValue).WithMessage("'{PropertyName}' must be greater than 0.");
-            RuleFor(x => x.ZltoRewardPool).GreaterThan(0).When(x => x.ZltoRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.").
-                Must((model, zltoRewardPool) => !model.ZltoRewardPool.HasValue || (model.ZltoReward.HasValue && zltoRewardPool >= model.ZltoReward)).WithMessage("'{PropertyName}' must be greater than or equal to ZltoReward.");
-            RuleFor(x => x.YomaRewardPool).GreaterThan(0).When(x => x.YomaRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.").
-                Must((model, yomaRewardPool) => !model.YomaRewardPool.HasValue || (model.YomaReward.HasValue && yomaRewardPool >= model.YomaReward)).WithMessage("'{PropertyName}' must be greater than or equal to YomaReward."); ;
+            RuleFor(x => x.ZltoRewardPool).GreaterThan(0).When(x => x.ZltoRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.")
+                .Must((model, zltoRewardPool) => !model.ZltoRewardPool.HasValue || (model.ZltoReward.HasValue && zltoRewardPool >= model.ZltoReward)).WithMessage("'{PropertyName}' must be greater than or equal to ZltoReward.");
+            RuleFor(x => x.YomaRewardPool).GreaterThan(0).When(x => x.YomaRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.")
+                .Must(YomaRewardPool => YomaRewardPool % 1 == 0).When(x => x.ZltoReward.HasValue).WithMessage("{PropertyName} does not support decimal points")
+                .Must((model, yomaRewardPool) => !model.YomaRewardPool.HasValue || (model.YomaReward.HasValue && yomaRewardPool >= model.YomaReward)).WithMessage("'{PropertyName}' must be greater than or equal to YomaReward.");
             RuleFor(x => x.VerificationMethod)
                 .NotNull()
                 .When(x => x.VerificationEnabled)

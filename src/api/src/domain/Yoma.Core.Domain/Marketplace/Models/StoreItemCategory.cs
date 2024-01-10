@@ -16,6 +16,6 @@ namespace Yoma.Core.Domain.Marketplace.Models
 
         public int ItemCount { get; set; }
 
-        public int ZltoAmount { get; set; }
+        public decimal Amount { get; set; }
     }
 }

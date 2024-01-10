@@ -3,6 +3,8 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 using Yoma.Core.Infrastructure.Database.Opportunity.Entities;
+using Yoma.Core.Infrastructure.Database.Reward.Entities;
+using Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.SSI.Entities;
 using Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups;
 
@@ -90,6 +92,14 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
         public DbSet<OpportunityVerificationType> OpportunityVerificationTypes { get; set; }
         #endregion Opportunity
+
+        #region Reward
+        #region Lookups
+        public DbSet<WalletCreationStatus> WalletCreationStatus { get; set; }
+        #endregion Lookups
+
+        public DbSet<WalletCreation> WalletCreation { get; set; }
+        #endregion
 
         #region SSI
         #region Lookups

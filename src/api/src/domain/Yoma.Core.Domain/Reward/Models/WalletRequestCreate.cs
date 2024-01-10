@@ -1,4 +1,4 @@
-namespace Yoma.Core.Domain.RewardsProvider.Models
+namespace Yoma.Core.Domain.Reward.Models
 {
     public class WalletRequestCreate
     {
@@ -8,6 +8,6 @@ namespace Yoma.Core.Domain.RewardsProvider.Models
 
         public string DisplayName { get; set; }
 
-        public int? Balance { get; set; }
+        public decimal? Balance { get; set; }
     }
 }

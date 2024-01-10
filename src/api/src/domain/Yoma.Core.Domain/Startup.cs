@@ -12,6 +12,8 @@ using Yoma.Core.Domain.Entity.Services;
 using Yoma.Core.Domain.Entity.Services.Lookups;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Services;
+using Yoma.Core.Domain.Marketplace.Interfaces;
+using Yoma.Core.Domain.Marketplace.Services;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Services;
@@ -21,6 +23,10 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.Opportunity.Services.Lookups;
+using Yoma.Core.Domain.Reward.Interfaces;
+using Yoma.Core.Domain.Reward.Interfaces.Lookups;
+using Yoma.Core.Domain.Reward.Services;
+using Yoma.Core.Domain.Reward.Services.Lookups;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Services;
@@ -61,6 +67,10 @@ namespace Yoma.Core.Domain
             services.AddScoped<ITimeIntervalService, TimeIntervalService>();
             #endregion Lookups
 
+            #region Marketplace
+            services.AddScoped<IMarketplaceService, MarketplaceService>();
+            #endregion Marketplace
+
             #region My Opportunity
             #region Lookups
             services.AddScoped<IMyOpportunityActionService, MyOpportunityActionService>();
@@ -84,6 +94,14 @@ namespace Yoma.Core.Domain
             services.AddScoped<IOpportunityInfoService, OpportunityInfoService>();
             services.AddScoped<IOpportunityBackgroundService, OpportunityBackgroundService>();
             #endregion Opportunity
+
+            #region Reward
+            #region Lookups
+            services.AddScoped<IWalletCreationStatusService, WalletCreationStatusService>();
+            #endregion
+
+            services.AddScoped<IWalletService, WalletService>();
+            #endregion Reward
 
             #region SSI
             #region Lookups
