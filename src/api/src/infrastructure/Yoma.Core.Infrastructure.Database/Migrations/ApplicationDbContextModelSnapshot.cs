@@ -312,9 +312,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<DateTimeOffset?>("DateYoIDOnboarded")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<DateTimeOffset?>("DateZltoWalletCreated")
-                        .HasColumnType("datetimeoffset");
-
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
@@ -349,9 +346,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<bool?>("YoIDOnboarded")
                         .HasColumnType("bit");
 
-                    b.Property<string>("ZltoWalletId")
-                        .HasColumnType("varchar(50)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CountryId");
@@ -365,7 +359,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("PhotoId");
 
-                    b.HasIndex("FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "ZltoWalletId", "DateZltoWalletCreated", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified");
+                    b.HasIndex("FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified");
 
                     b.ToTable("User", "Entity");
                 });
@@ -1065,6 +1059,67 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.ToTable("OpportunityVerificationTypes", "Opportunity");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups.WalletCreationStatus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("WalletCreationStatus", "Reward");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Reward.Entities.WalletCreation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("Balance")
+                        .HasColumnType("decimal(8,2)");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("DateModified")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ErrorReason")
+                        .HasColumnType("varchar(MAX)");
+
+                    b.Property<byte?>("RetryCount")
+                        .HasColumnType("tinyint");
+
+                    b.Property<Guid>("StatusId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("WalletId")
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.HasIndex("StatusId", "DateCreated", "DateModified");
+
+                    b.ToTable("WalletCreation", "Reward");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSICredentialIssuanceStatus", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1716,6 +1771,25 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Navigation("Opportunity");
 
                     b.Navigation("VerificationType");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Reward.Entities.WalletCreation", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups.WalletCreationStatus", "Status")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Status");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaEntityProperty", b =>

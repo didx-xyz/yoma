@@ -61,21 +61,21 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
             var user = _userService.GetByEmail(username, true, true);
-            return ToProfile(user);
+            return ToProfile(user).Result;
         }
 
         public async Task<UserProfile> UpsertPhoto(IFormFile file)
         {
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
             var user = await _userService.UpsertPhoto(username, file);
-            return ToProfile(user);
+            return await ToProfile(user);
         }
 
         public async Task<UserProfile> YoIDOnboard()
         {
             var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
             var user = await _userService.YoIDOnboard(username);
-            return ToProfile(user);
+            return await ToProfile(user);
         }
 
         public async Task<UserProfile> Update(UserRequestProfile request)
@@ -134,16 +134,23 @@ namespace Yoma.Core.Domain.Entity.Services
                 scope.Complete();
             }
 
-            return ToProfile(user);
+            return await ToProfile(user);
         }
         #endregion
 
         #region Private Members
-        private UserProfile ToProfile(User user)
+        private async Task<UserProfile> ToProfile(User user)
         {
             var result = user.ToProfile();
 
-            result.RewardWalletCreationStatus = _rewardWalletService.GetWalletCreationStatus(user.Id);
+            var rewardWallet = await _rewardWalletService.GetWalletStatusAndBalance(user.Id);
+            result.Zlto = new UserProfileZlto
+            {
+                Pending = rewardWallet.balance.Pending,
+                Available = rewardWallet.balance.Available,
+                Total = rewardWallet.balance.Total,
+                WalletCreationStatus = rewardWallet.status
+            };  
 
             result.AdminsOf = _organizationService.ListAdminsOf(true);
 

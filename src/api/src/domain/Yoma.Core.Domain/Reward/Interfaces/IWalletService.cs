@@ -8,11 +8,13 @@ namespace Yoma.Core.Domain.Reward.Interfaces
 
         string? GetWalletIdOrNull(Guid userId);
 
-        WalletCreationStatus GetWalletCreationStatus(Guid userId);
+        Task<(WalletCreationStatus status, WalletBalance balance)> GetWalletStatusAndBalance(Guid userId);
 
         Task<WalletVoucherSearchResults> SearchVouchers(WalletVoucherSearchFilter filter);
 
-        Task ScheduleCreation(Guid userId);
+        Task<Wallet> CreateWallet(Guid userId);
+
+        Task CreateWalletOrScheduleCreation(Guid? userId);
 
         List<WalletCreation> ListPendingCreationSchedule(int batchSize);
 

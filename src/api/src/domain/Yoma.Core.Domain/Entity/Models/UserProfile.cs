@@ -1,5 +1,3 @@
-using Yoma.Core.Domain.Reward;
-
 namespace Yoma.Core.Domain.Entity.Models
 {
     public class UserProfile
@@ -32,7 +30,7 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public DateTimeOffset? DateLastLogin { get; set; }
 
-        public WalletCreationStatus RewardWalletCreationStatus { get; set; }
+       
 
         public bool? YoIDOnboarded { get; set; }
 
@@ -42,7 +40,7 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public List<OrganizationInfo> AdminsOf { get; set; }
 
-        public decimal ZltoBalance { get; set; }
+        public UserProfileZlto Zlto { get; set; }
 
         public int OpportunityCountSaved { get; set; }
 

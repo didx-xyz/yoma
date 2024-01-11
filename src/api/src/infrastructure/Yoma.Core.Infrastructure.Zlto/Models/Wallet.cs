@@ -141,12 +141,6 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
         public DateTimeOffset DateCreated { get; set; }
     }
 
-    public class WalletResponseBalance
-    {
-        [JsonProperty("zlto_balance")]
-        public int ZltoBalance { get; set; }
-    }
-
     public class WalletResponseSearchVouchers
     {
         [JsonProperty("data")]
@@ -157,24 +151,34 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     {
         [JsonProperty("voucher_id"), Required]
         public string VoucherId { get; set; }
+
         [JsonProperty("wallet_id"), Required]
         public string WalletId { get; set; }
+
         [JsonProperty("voucher_name"), Required]
         public string VoucherName { get; set; }
+
         [JsonProperty("voucher_type"), Required]
         public string VoucherType { get; set; }
+
         [JsonProperty("voucher_category"), Required]
         public string VoucherCategory { get; set; }
+
         [JsonProperty("voucher_instructions"), Required]
         public string VoucherInstructions { get; set; }
+
         [JsonProperty("voucher_code"), Required]
         public string VoucherCode { get; set; }
+
         [JsonProperty("zlto_amount"), Required]
         public string ZltoAmount { get; set; }
+
         [JsonProperty("voucher_state"), Required]
         public string VoucherState { get; set; }
+
         [JsonProperty("last_updated"), Required]
         public string LastUpdated { get; set; }
+
         [JsonProperty("date_created"), Required]
         public string DateCreated { get; set; }
     }

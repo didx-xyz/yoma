@@ -1,9 +1,7 @@
-namespace Yoma.Core.Domain.Reward.Models
+namespace Yoma.Core.Domain.Reward.Models.Provider
 {
     public class WalletRequestCreate
     {
-        public Guid Id { get; set; }
-
         public string Email { get; set; }
 
         public string DisplayName { get; set; }

@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Transactions;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -12,6 +13,7 @@ using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces.Lookups;
 using Yoma.Core.Domain.Reward.Interfaces.Provider;
 using Yoma.Core.Domain.Reward.Models;
+using Yoma.Core.Domain.Reward.Models.Provider;
 using Yoma.Core.Domain.Reward.Validators;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Services;
@@ -70,18 +72,42 @@ namespace Yoma.Core.Domain.Reward.Services
             var result = _walletCreationRepository.Query().SingleOrDefault(o => o.UserId == user.Id && o.StatusId == statusCreatedId);
 
             if (result != null && string.IsNullOrEmpty(result.WalletId))
-                throw new DataInconsistencyException($"Wallet id expected with wallet creation status of 'Created' for item with id '{result.Id}'");
+                throw new DataInconsistencyException($"Wallet id expected with wallet creation status of '{WalletCreationStatus.Created}' for item with id '{result.Id}'");
 
             return result?.WalletId;
         }
 
-        public WalletCreationStatus GetWalletCreationStatus(Guid userId)
+        public async Task<(WalletCreationStatus status, WalletBalance balance)> GetWalletStatusAndBalance(Guid userId)
         {
             var user = _userService.GetById(userId, false, false);
             var item = _walletCreationRepository.Query().SingleOrDefault(o => o.UserId == user.Id);
 
-            if (item == null) return WalletCreationStatus.Unscheduled;
-            return item.Status;
+            var status = item?.Status ?? WalletCreationStatus.Unscheduled;
+
+            var balance = new WalletBalance { Pending = default }; //TODO: query pending awards and calculate balance
+
+            switch (status)
+            {
+                case WalletCreationStatus.Unscheduled:
+                case WalletCreationStatus.Pending:
+                case WalletCreationStatus.Error:
+                    break;
+                case WalletCreationStatus.Created:
+                    if (item == null)
+                        throw new InvalidOperationException($"Wallet creation item excepted with status '{status}'");
+
+                    if (string.IsNullOrEmpty(item.WalletId))
+                        throw new DataInconsistencyException($"Wallet id expected with wallet creation status of 'Created' for item with id '{item.Id}'");
+                    var wallet = await _rewardProviderClient.GetWallet(item.WalletId);
+
+                    balance.Available = wallet.Balance;
+                    break;
+                default:
+                    throw new InvalidOperationException($"Status of '{status}' not supported");
+            }
+
+            balance.Total = balance.Pending + balance.Available;
+            return (status, balance);
         }
 
         public async Task<WalletVoucherSearchResults> SearchVouchers(WalletVoucherSearchFilter filter)
@@ -111,28 +137,75 @@ namespace Yoma.Core.Domain.Reward.Services
             return result;
         }
 
-        public async Task ScheduleCreation(Guid userId)
+        public async Task<Wallet> CreateWallet(Guid userId)
         {
             if (userId == Guid.Empty)
                 throw new ArgumentNullException(nameof(userId));
 
-            var existingItem = _walletCreationRepository.Query().SingleOrDefault(o => o.UserId == userId);
+            var user = _userService.GetById(userId, false, false);
+
+            //query pending awards and calculate balance
+            decimal? balance = null;
+
+            //attempt wallet creation
+            var request = new WalletRequestCreate
+            {
+                Email = user.Email,
+                DisplayName = user.DisplayName,
+                Balance = balance
+            };
+
+            var response = await _rewardProviderClient.CreateWallet(request);
+
+            switch (response.status)
+            {
+                case Models.Provider.WalletCreationStatus.Existing:
+                    break;
+
+                case Models.Provider.WalletCreationStatus.CreatedWithBalance:
+                    //TODO: flag pending awards as processed
+                    break;
+
+                case Models.Provider.WalletCreationStatus.Created:
+                    break;
+
+                default:
+                    throw new InvalidOperationException($"Status of '{response.status}' not supported");
+            }
+
+            return response.wallet;
+        }
+
+        public async Task CreateWalletOrScheduleCreation(Guid? userId)
+        {
+            if (!userId.HasValue || userId.Value == Guid.Empty)
+                throw new ArgumentNullException(nameof(userId));
+
+            var existingItem = _walletCreationRepository.Query().SingleOrDefault(o => o.UserId == userId.Value);
             if (existingItem != null)
             {
-                _logger.LogInformation("Scheduling of wallet creation skipped: Already scheduled for user with id '{userId}'", userId);
+                _logger.LogInformation("Wallet creation skipped: Already '{status}' for user with id '{userId}'", existingItem.Status, userId.Value);
                 return;
             }
 
-            var statusPendingId = _walletCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-            var item = new WalletCreation
+            var item = new WalletCreation { UserId = userId.Value };
+            try
             {
-                StatusId = statusPendingId,
-                UserId = userId,
-                Balance = null //TODO: Query balance from reward
-            };
+                var wallet = await CreateWallet(userId.Value);
+                item.WalletId = wallet.Id;
+                item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Created.ToString()).Id;
+            }
+            catch (Exception)
+            {
+                //schedule creation for delayed execution
+                item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
+            }
 
             await _walletCreationRepository.Create(item);
+
+            scope.Complete();
         }
 
         public List<WalletCreation> ListPendingCreationSchedule(int batchSize)

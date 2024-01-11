@@ -10,6 +10,7 @@ using Yoma.Core.Domain.Core;
 using System.Net;
 using Yoma.Core.Domain.Marketplace.Interfaces.Provider;
 using Yoma.Core.Domain.Reward.Interfaces.Provider;
+using Yoma.Core.Domain.Reward.Models.Provider;
 
 namespace Yoma.Core.Infrastructure.Zlto.Client
 {
@@ -37,60 +38,69 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
         #region Public Members
         #region IRewardProviderClient
-        public async Task<Domain.Reward.Models.Wallet> EnsureWallet(Domain.Reward.Models.WalletRequestCreate request)
+        public async Task<(Domain.Reward.Models.Wallet wallet, WalletCreationStatus status)> CreateWallet(Domain.Reward.Models.Provider.WalletRequestCreate request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            if (request.Balance.HasValue && request.Balance.Value % 1 != 0)
-                throw new ArgumentException($"{nameof(request.Balance)} does not support decimal points", nameof(request));
-
-            //check of wallet exists
-            var result = await GetWalletByUsername(request.Email);
-            if (result != null)
-                return new Domain.Reward.Models.Wallet
-                {
-                    Id = result.WalletId,
-                    OwnerId = Guid.Parse(result.OwnerId),
-                    DateCreated = result.DateCreated,
-                    DateModified = result.LastUpdated
-                };
-
-            //attempt legacy migration
-            var account = await CreateAccountLegacy(request);
-
-            //not a legacy user, create new account with wallet
-            if (account == null)
+            //check if wallet already exists
+            var existing = await GetWalletByUsername(request.Email);
+            if (existing != null)
             {
-                if (request.Balance.HasValue && request.Balance.Value > decimal.Zero)
-                    throw new ArgumentException($"{nameof(request.Balance)} must be zero for non legacy accounts", nameof(request));
-                account = await CreateAccount(request);
+                return (new Domain.Reward.Models.Wallet
+                {
+                    Id = existing.WalletId,
+                    OwnerId = Guid.Parse(existing.OwnerId),
+                    Balance = existing.ZltoBalance,
+                    DateCreated = existing.DateCreated,
+                    DateModified = existing.LastUpdated
+                }, WalletCreationStatus.Existing);
             }
 
-            return new Domain.Reward.Models.Wallet
+            //attempt legacy migration with initial balance
+            var status = WalletCreationStatus.CreatedWithBalance;
+            var account = await CreateAccountLegacy(request);
+
+            var result = new Domain.Reward.Models.Wallet { Balance = request.Balance ?? default };
+
+            //not a legacy user, create new account without initial balance
+            if (account == null)
             {
-                Id = account.WalletId,
-                OwnerId = Guid.Parse(account.OwnerId),
-                DateCreated = account.DateCreated,
-                DateModified = account.LastUpdated
-            };
+                account = await CreateAccount(request);
+                result.Balance = default;
+                status = WalletCreationStatus.Created;
+            }
+
+            result.Id = account.WalletId;
+            result.OwnerId = Guid.Parse(account.OwnerId);
+            result.DateCreated = account.DateCreated;
+            result.DateModified = account.LastUpdated;
+            return (result, status);
         }
 
-        public async Task<decimal> GetBalance(string walletId)
+        public async Task<Domain.Reward.Models.Wallet> GetWallet(string walletId)
         {
             if (string.IsNullOrWhiteSpace(walletId))
                 throw new ArgumentNullException(nameof(walletId));
             walletId = walletId.Trim();
 
-            var response = await _options.Wallet.BaseUrl
-                 .AppendPathSegment("get_wallet_balance")
-                 .SetQueryParam("wallet_id", walletId)
+            var httpResponse = await _options.Wallet.BaseUrl
+                 .AppendPathSegment("get_wallet_details")
+                 .AppendPathSegment(walletId)
                  .WithAuthHeaders(await GetAuthHeaders())
-                 .PostAsync()
-                 .EnsureSuccessStatusCodeAsync()
-                 .ReceiveJson<WalletResponseBalance>();
+                 .GetAsync()
+                 .EnsureSuccessStatusCodeAsync();
 
-            return response.ZltoBalance;
+            var response = await httpResponse.GetJsonAsync<WalletResponse>();   
+
+            return new Domain.Reward.Models.Wallet
+            {
+                Id = response.WalletId,
+                OwnerId = Guid.Parse(response.OwnerId),
+                Balance = response.ZltoBalance,
+                DateCreated = response.DateCreated,
+                DateModified = response.LastUpdated
+            };
         }
 
         public async Task<List<Domain.Reward.Models.WalletVoucher>> ListWalletVouchers(string walletId, int? limit, int? offset)
@@ -111,7 +121,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             if (offset.HasValue && offset.Value >= default(int))
                 query = query.SetQueryParam("offset", offset);
 
-            var response = await query.PatchAsync()
+            var response = await query.PostAsync()
                 .EnsureSuccessStatusCodeAsync()
                 .ReceiveJson<WalletResponseSearchVouchers>();
 
@@ -287,41 +297,53 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {response.AccessToken}");
         }
 
-        private async Task<WalletAccountInfo?> CreateAccountLegacy(Domain.Reward.Models.WalletRequestCreate request)
+        private async Task<WalletAccountInfo?> CreateAccountLegacy(Domain.Reward.Models.Provider.WalletRequestCreate request)
         {
             var requestAccount = new WalletRequestCreateLegacy
             {
-                OwnerId = request.Id.ToString(),
                 OwnerOrigin = _accessToken.PartnerName,
                 OwnerName = request.DisplayName,
                 UserName = request.Email,
                 Balance = (int)(request.Balance ?? default)
+                //OwnerId: system assigned; can not be specified
                 //UserPassword: used with external wallet activation; with Yoma wallets are internal
             };
 
-            var response = await _options.Wallet.BaseUrl
-                .AppendPathSegment("create_legacy_account_for_external_partner")
-                .WithAuthHeaders(await GetAuthHeaders())
-                .PostJsonAsync(requestAccount)
-                .EnsureSuccessStatusCodeAsync()
-                .ReceiveJson<WalletResponseCreateLegacy>();
-
-            //with a failed legacy migration, assume statusCode "OK" with a legacy response message, resulting in no account info returned. Example:
+            //TODO: with a failed legacy migration, is the status code NotFound OR Ok with a legacy response message, resulting in no account info returned. Example:
             //{ "legacy_response": "User someuser@gmail.com does not exist in Yoma Legacy Table", "msg": "wallet and account was not created" }
-            return response.Wallet?.AccountInfo;
+
+            WalletResponseCreateLegacy? response = null;
+            try
+            {
+                response = await _options.Wallet.BaseUrl
+                    .AppendPathSegment("create_legacy_account_for_external_partner")
+                    .WithAuthHeaders(await GetAuthHeaders())
+                    .PostJsonAsync(requestAccount)
+                    .EnsureSuccessStatusCodeAsync()
+                    .ReceiveJson<WalletResponseCreateLegacy>();
+            }
+            catch (HttpClientException ex)
+            {
+                if (ex.StatusCode != HttpStatusCode.NotFound) throw;
+            }
+
+            if (response?.LegacyResponse != null) return null;
+
+            return response?.Wallet?.AccountInfo;
         }
 
-        private async Task<WalletAccountInfo> CreateAccount(Domain.Reward.Models.WalletRequestCreate user)
+        private async Task<WalletAccountInfo> CreateAccount(Domain.Reward.Models.Provider.WalletRequestCreate user)
         {
-            var requestAccount = new WalletRequestCreate
+            var requestAccount = new Models.WalletRequestCreate
             {
-                OwnerId = user.Id.ToString(),
                 OwnerOrigin = _accessToken.PartnerName,
                 OwnerName = user.DisplayName,
                 UserName = user.Email,
+                //OwnerId: system assigned; can not be specified
                 //UserPassword: used with external wallet activation; with Yoma wallets are internal
             };
 
+            //TODO: Results in an internal server error
             var response = await _options.Wallet.BaseUrl
                 .AppendPathSegment("create_account_for_external_partner")
                 .WithAuthHeaders(await GetAuthHeaders())
@@ -338,8 +360,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             try
             {
                 var response = await _options.Wallet.BaseUrl
-                    .AppendPathSegment("get_wallet_details_by_account_username")
-                    .SetQueryParam("wallet_username", WebUtility.UrlEncode(username))
+                    .AppendPathSegment("get_wallet_details_by_account_username/") //TODO: known issue; requires '/' suffix before query params
+                    .SetQueryParam("wallet_username", username)
                     .WithAuthHeaders(await GetAuthHeaders())
                     .PostAsync()
                     .EnsureSuccessStatusCodeAsync()

@@ -55,5 +55,11 @@ namespace Yoma.Core.Domain.Core.Models
         public int SSICredentialIssuanceScheduleBatchSize { get; set; }
 
         public int SSICredentialIssuanceScheduleMaxIntervalInHours { get; set; }
+
+        public string RewardWalletCreationSchedule { get; set; }
+
+        public int RewardWalletCreationScheduleBatchSize { get; set; }
+
+        public int RewardWalletCreationScheduleMaxIntervalInHours { get; set; }
     }
 }

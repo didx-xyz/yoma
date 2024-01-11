@@ -101,6 +101,7 @@ namespace Yoma.Core.Domain
             #endregion
 
             services.AddScoped<IWalletService, WalletService>();
+            services.AddScoped<IRewardBackgrounService, RewardBackgroundService>();
             #endregion Reward
 
             #region SSI
@@ -148,6 +149,10 @@ namespace Yoma.Core.Domain
                s => s.ProcessDeclination(), options.OrganizationDeclinationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
             RecurringJob.AddOrUpdate<IOrganizationBackgroundService>($"Organization Deletion ({OrganizationStatus.Declined} for more than {options.OrganizationDeletionIntervalInDays} days)",
                s => s.ProcessDeletion(), options.OrganizationDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+            //reward
+            RecurringJob.AddOrUpdate<IRewardBackgrounService>($"Rewards Wallet Creation",
+               s => s.ProcessWalletCreation(), options.RewardWalletCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
             //ssi
             BackgroundJob.Enqueue<ISSIBackgroundService>(s => s.SeedSchemas()); //seed default schemas
