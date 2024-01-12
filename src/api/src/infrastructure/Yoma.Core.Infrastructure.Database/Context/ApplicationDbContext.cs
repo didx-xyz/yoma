@@ -3,7 +3,6 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 using Yoma.Core.Infrastructure.Database.Opportunity.Entities;
-using Yoma.Core.Infrastructure.Database.Reward.Entities;
 using Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.SSI.Entities;
 using Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups;
@@ -95,10 +94,14 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
         #region Reward
         #region Lookups
+        public DbSet<RewardTransactionStatus> RewardTransactionStatus { get; set; }
+
         public DbSet<WalletCreationStatus> WalletCreationStatus { get; set; }
         #endregion Lookups
 
-        public DbSet<WalletCreation> WalletCreation { get; set; }
+        public DbSet<Reward.Entities.RewardTransaction> RewardTransaction { get; set; }
+
+        public DbSet<Reward.Entities.WalletCreation> WalletCreation { get; set; }
         #endregion
 
         #region SSI
@@ -159,6 +162,11 @@ namespace Yoma.Core.Infrastructure.Database.Context
                 .HasIndex(e => new { e.SchemaName, e.UserId, e.OrganizationId, e.MyOpportunityId })
                 .IsUnique()
                 .HasFilter(null);
+
+            builder.Entity<Reward.Entities.RewardTransaction>()
+              .HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId })
+              .IsUnique()
+              .HasFilter(null);
         }
         #endregion
     }

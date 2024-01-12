@@ -97,9 +97,11 @@ namespace Yoma.Core.Domain
 
             #region Reward
             #region Lookups
+            services.AddScoped<IRewardTransactionStatusService, RewardTransactionStatusService>();
             services.AddScoped<IWalletCreationStatusService, WalletCreationStatusService>();
             #endregion
 
+            services.AddScoped<IRewardService, RewardService>();
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IRewardBackgrounService, RewardBackgroundService>();
             #endregion Reward
@@ -153,6 +155,8 @@ namespace Yoma.Core.Domain
             //reward
             RecurringJob.AddOrUpdate<IRewardBackgrounService>($"Rewards Wallet Creation",
                s => s.ProcessWalletCreation(), options.RewardWalletCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            RecurringJob.AddOrUpdate<IRewardBackgrounService>($"Rewards Transaction Processing (awarding rewards)",
+              s => s.ProcessRewardTransactions(), options.RewardTransactionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
             //ssi
             BackgroundJob.Enqueue<ISSIBackgroundService>(s => s.SeedSchemas()); //seed default schemas

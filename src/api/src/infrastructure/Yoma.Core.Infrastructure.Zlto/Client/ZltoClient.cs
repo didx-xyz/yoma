@@ -61,7 +61,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             var status = WalletCreationStatus.CreatedWithBalance;
             var account = await CreateAccountLegacy(request);
 
-            var result = new Domain.Reward.Models.Wallet { Balance = request.Balance ?? default };
+            var result = new Domain.Reward.Models.Wallet { Balance = request.Balance };
 
             //not a legacy user, create new account without initial balance
             if (account == null)
@@ -304,7 +304,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 OwnerOrigin = _accessToken.PartnerName,
                 OwnerName = request.DisplayName,
                 UserName = request.Email,
-                Balance = (int)(request.Balance ?? default)
+                Balance = (int)request.Balance
                 //OwnerId: system assigned; can not be specified
                 //UserPassword: used with external wallet activation; with Yoma wallets are internal
             };

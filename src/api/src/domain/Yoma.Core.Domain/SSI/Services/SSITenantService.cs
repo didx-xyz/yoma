@@ -101,6 +101,9 @@ namespace Yoma.Core.Domain.SSI.Services
 
         public List<SSITenantCreation> ListPendingCreationSchedule(int batchSize)
         {
+            if (batchSize <= default(int))
+                throw new ArgumentOutOfRangeException(nameof(batchSize));
+
             var statusPendingId = _ssiTenantCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
 
             var results = _ssiTenantCreationRepository.Query().Where(o => o.StatusId == statusPendingId).OrderBy(o => o.DateModified).Take(batchSize).ToList();

@@ -29,6 +29,7 @@ namespace Yoma.Core.Domain.Reward.Services
         private readonly IRewardProviderClient _rewardProviderClient;
         private readonly IUserService _userService;
         private readonly IWalletCreationStatusService _walletCreationStatusService;
+        private readonly IRewardService _rewardService;
         private readonly IRepository<WalletCreation> _walletCreationRepository;
         private readonly WalletVoucherSearchFilterValidator _walletVoucherSearchFilterValidator;
         #endregion
@@ -39,6 +40,7 @@ namespace Yoma.Core.Domain.Reward.Services
             IHttpContextAccessor httpContextAccessor,
             IRewardProviderClientFactory rewardProviderClientFactory,
             IUserService userService,
+            IRewardService rewardService,
             IWalletCreationStatusService walletCreationStatusService,
             IRepository<WalletCreation> walletCreationRepository,
             WalletVoucherSearchFilterValidator walletVoucherSearchFilterValidator)
@@ -48,6 +50,7 @@ namespace Yoma.Core.Domain.Reward.Services
             _rewardProviderClient = rewardProviderClientFactory.CreateClient();
             _appSettings = appSettings.Value;
             _userService = userService;
+            _rewardService = rewardService;
             _walletCreationStatusService = walletCreationStatusService;
             _walletCreationRepository = walletCreationRepository;
             _walletVoucherSearchFilterValidator = walletVoucherSearchFilterValidator;
@@ -84,7 +87,9 @@ namespace Yoma.Core.Domain.Reward.Services
 
             var status = item?.Status ?? WalletCreationStatus.Unscheduled;
 
-            var balance = new WalletBalance { Pending = default }; //TODO: query pending awards and calculate balance
+            var rewardTransactions = _rewardService.ListPendingTransactionSchedule(user.Id);
+
+            var balance = new WalletBalance { Pending = rewardTransactions.Sum(o => o.Amount) };
 
             switch (status)
             {
@@ -144,8 +149,10 @@ namespace Yoma.Core.Domain.Reward.Services
 
             var user = _userService.GetById(userId, false, false);
 
-            //query pending awards and calculate balance
-            decimal? balance = null;
+            var rewardTransactions = _rewardService.ListPendingTransactionSchedule(user.Id);
+
+            //query pending rewards and calculate balance
+            var balance = rewardTransactions.Sum(o => o.Amount);
 
             //attempt wallet creation
             var request = new WalletRequestCreate
@@ -155,25 +162,31 @@ namespace Yoma.Core.Domain.Reward.Services
                 Balance = balance
             };
 
-            var response = await _rewardProviderClient.CreateWallet(request);
+            var (wallet, status) = await _rewardProviderClient.CreateWallet(request);
 
-            switch (response.status)
+            switch (status)
             {
                 case Models.Provider.WalletCreationStatus.Existing:
                     break;
 
                 case Models.Provider.WalletCreationStatus.CreatedWithBalance:
-                    //TODO: flag pending awards as processed
+                    if (wallet.Balance != balance)
+                        throw new InvalidOperationException($"Initial wallet balance mismatch detected for user with id '{userId}': Calculated '{balance.ToString("0.00")}' vs. Processed '{wallet.Balance.ToString("0.00")}'");
+
+                    rewardTransactions.ForEach(o => o.Status = RewardTransactionStatus.ProcessedInitialBalance);
+
+                    await _rewardService.UpdateTransactions(rewardTransactions);
+                    //flag pending rewards as processed
                     break;
 
                 case Models.Provider.WalletCreationStatus.Created:
                     break;
 
                 default:
-                    throw new InvalidOperationException($"Status of '{response.status}' not supported");
+                    throw new InvalidOperationException($"Status of '{status}' not supported");
             }
 
-            return response.wallet;
+            return wallet;
         }
 
         public async Task CreateWalletOrScheduleCreation(Guid? userId)
@@ -195,6 +208,7 @@ namespace Yoma.Core.Domain.Reward.Services
             {
                 var wallet = await CreateWallet(userId.Value);
                 item.WalletId = wallet.Id;
+                item.Balance = wallet.Balance; //track initial balance upon creation, if any
                 item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Created.ToString()).Id;
             }
             catch (Exception)
@@ -210,6 +224,9 @@ namespace Yoma.Core.Domain.Reward.Services
 
         public List<WalletCreation> ListPendingCreationSchedule(int batchSize)
         {
+            if (batchSize <= default(int))
+                throw new ArgumentOutOfRangeException(nameof(batchSize));
+
             var statusPendingId = _walletCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
 
             var results = _walletCreationRepository.Query().Where(o => o.StatusId == statusPendingId).OrderBy(o => o.DateModified).Take(batchSize).ToList();
@@ -232,6 +249,8 @@ namespace Yoma.Core.Domain.Reward.Services
                 case WalletCreationStatus.Created:
                     if (string.IsNullOrEmpty(item.WalletId))
                         throw new ArgumentNullException(nameof(item), "Wallet id required");
+                    if (!item.Balance.HasValue)
+                        throw new ArgumentNullException(nameof(item), "Balance required (even if 0)");
                     item.ErrorReason = null;
                     item.RetryCount = null;
                     break;

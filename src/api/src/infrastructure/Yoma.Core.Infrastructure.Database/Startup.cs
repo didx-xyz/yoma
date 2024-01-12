@@ -102,8 +102,12 @@ namespace Yoma.Core.Infrastructure.Database
 
             #region Reward
             #region Lookups
+            services.AddScoped<IRepository<Domain.Reward.Models.Lookups.RewardTransactionStatus>, RewardTransactionStatusRepository>();
+
             services.AddScoped<IRepository<Domain.Reward.Models.Lookups.WalletCreationStatus>, WalletCreationStatusRepository>();
             #endregion Lookups
+
+            services.AddScoped<IRepositoryBatched<Domain.Reward.Models.RewardTransaction>, RewardTransactionRepository>();
 
             services.AddScoped<IRepository<Domain.Reward.Models.WalletCreation>, WalletCreationRepository>();
             #endregion

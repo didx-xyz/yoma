@@ -6,6 +6,6 @@ namespace Yoma.Core.Domain.Reward.Models.Provider
 
         public string DisplayName { get; set; }
 
-        public decimal? Balance { get; set; }
+        public decimal Balance { get; set; }
     }
 }

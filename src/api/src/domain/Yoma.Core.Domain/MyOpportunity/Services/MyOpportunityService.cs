@@ -26,6 +26,7 @@ using Yoma.Core.Domain.MyOpportunity.Validators;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
@@ -45,6 +46,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IBlobService _blobService;
         private readonly ISSICredentialService _ssiCredentialService;
+        private readonly IRewardService _rewardService;
         private readonly IEmailProviderClient _emailProviderClient;
         private readonly MyOpportunitySearchFilterValidator _myOpportunitySearchFilterValidator;
         private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
@@ -66,6 +68,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             IOrganizationStatusService organizationStatusService,
             IBlobService blobService,
             ISSICredentialService ssiCredentialService,
+            IRewardService rewardService,
             IEmailProviderClientFactory emailProviderClientFactory,
             MyOpportunitySearchFilterValidator myOpportunitySearchFilterValidator,
             MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
@@ -85,6 +88,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             _organizationStatusService = organizationStatusService;
             _blobService = blobService;
             _ssiCredentialService = ssiCredentialService;
+            _rewardService = rewardService;
             _emailProviderClient = emailProviderClientFactory.CreateClient();
             _myOpportunitySearchFilterValidator = myOpportunitySearchFilterValidator;
             _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify;
@@ -496,6 +500,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                             throw new InvalidOperationException($"Credential Issuance Enabled: Schema name expected for opportunity with id '{item.Id}'");
                         await _ssiCredentialService.ScheduleIssuance(item.OpportunitySSISchemaName, item.Id);
                     }
+
+                    await _rewardService.ScheduleRewardTransaction(user.Id, Reward.RewardTransactionEntityType.MyOpportunity, item.Id, zltoReward ?? default);
 
                     emailType = EmailType.Opportunity_Verification_Completed;
                     break;

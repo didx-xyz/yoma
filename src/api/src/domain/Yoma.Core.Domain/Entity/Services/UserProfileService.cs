@@ -143,13 +143,13 @@ namespace Yoma.Core.Domain.Entity.Services
         {
             var result = user.ToProfile();
 
-            var rewardWallet = await _rewardWalletService.GetWalletStatusAndBalance(user.Id);
+            var (status, balance) = await _rewardWalletService.GetWalletStatusAndBalance(user.Id);
             result.Zlto = new UserProfileZlto
             {
-                Pending = rewardWallet.balance.Pending,
-                Available = rewardWallet.balance.Available,
-                Total = rewardWallet.balance.Total,
-                WalletCreationStatus = rewardWallet.status
+                Pending = balance.Pending,
+                Available = balance.Available,
+                Total = balance.Total,
+                WalletCreationStatus = status
             };  
 
             result.AdminsOf = _organizationService.ListAdminsOf(true);

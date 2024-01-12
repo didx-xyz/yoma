@@ -61,5 +61,11 @@ namespace Yoma.Core.Domain.Core.Models
         public int RewardWalletCreationScheduleBatchSize { get; set; }
 
         public int RewardWalletCreationScheduleMaxIntervalInHours { get; set; }
+
+        public string RewardTransactionSchedule { get; set; }
+
+        public int RewardTransactionScheduleBatchSize { get; set; }
+
+        public int RewardTransactionScheduleMaxIntervalInHours { get; set; }
     }
 }

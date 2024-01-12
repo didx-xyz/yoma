@@ -8,10 +8,16 @@ namespace Yoma.Core.Domain.Reward
         Error
     }
 
-    public enum RewardAwardingStatus
+    public enum RewardTransactionEntityType
+    {
+        MyOpportunity
+    }
+
+    public enum RewardTransactionStatus
     {
         Pending,
-        Awarded,
+        Processed,
+        ProcessedInitialBalance,
         Error
     }   
 }

@@ -24,7 +24,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities
         [Column(TypeName = "varchar(50)")]
         public string? WalletId { get; set; }
 
-        [Column(TypeName = "decimal(8,2)")]
+        [Column(TypeName = "decimal(12,2)")]
         public decimal? Balance { get; set; }
 
         [Column(TypeName = "varchar(MAX)")]
