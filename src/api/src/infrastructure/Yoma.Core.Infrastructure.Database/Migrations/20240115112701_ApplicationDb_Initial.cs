@@ -323,44 +323,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "varchar(20)", nullable: false),
+                    Name = table.Column<string>(type: "varchar(30)", nullable: false),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TransactionStatus", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "User",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Surname = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DisplayName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CountryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Country = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CountryOfResidenceId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CountryOfResidence = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    GenderId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Gender = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DateOfBirth = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    PhotoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    PhotoURL = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DateLastLogin = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    ExternalId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    YoIDOnboarded = table.Column<bool>(type: "bit", nullable: true),
-                    DateYoIDOnboarded = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_User", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -484,28 +452,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         principalTable: "SchemaType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UserSkillInfo",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ExternalId = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    InfoURL = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserSkillInfo", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_UserSkillInfo_User_UserId",
-                        column: x => x.UserId,
-                        principalTable: "User",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -636,26 +582,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         principalTable: "WalletCreationStatus",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UserSkillOrganizationInfo",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LogoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    LogoURL = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserSkillInfoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserSkillOrganizationInfo", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_UserSkillOrganizationInfo_UserSkillInfo_UserSkillInfoId",
-                        column: x => x.UserSkillInfoId,
-                        principalTable: "UserSkillInfo",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -1232,6 +1158,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_Transaction_User_UserId",
                         column: x => x.UserId,
+                        principalSchema: "Entity",
                         principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -1797,16 +1724,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 column: "PhotoId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserSkillInfo_UserId",
-                table: "UserSkillInfo",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UserSkillOrganizationInfo_UserSkillInfoId",
-                table: "UserSkillOrganizationInfo",
-                column: "UserSkillInfoId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_UserSkillOrganizations_OrganizationId",
                 schema: "Entity",
                 table: "UserSkillOrganizations",
@@ -1915,9 +1832,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Reward");
 
             migrationBuilder.DropTable(
-                name: "UserSkillOrganizationInfo");
-
-            migrationBuilder.DropTable(
                 name: "UserSkillOrganizations",
                 schema: "Entity");
 
@@ -1966,9 +1880,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Reward");
 
             migrationBuilder.DropTable(
-                name: "UserSkillInfo");
-
-            migrationBuilder.DropTable(
                 name: "UserSkills",
                 schema: "Entity");
 
@@ -1987,9 +1898,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             migrationBuilder.DropTable(
                 name: "Opportunity",
                 schema: "Opportunity");
-
-            migrationBuilder.DropTable(
-                name: "User");
 
             migrationBuilder.DropTable(
                 name: "Skill",

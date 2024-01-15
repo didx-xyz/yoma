@@ -12,7 +12,7 @@ namespace Yoma.Core.Domain.Marketplace.Models
 
         public string Summary { get; set; }
 
-        public string ImageURL { get; set; }
+        public string? ImageURL { get; set; }
 
         public int ItemCount { get; set; }
 

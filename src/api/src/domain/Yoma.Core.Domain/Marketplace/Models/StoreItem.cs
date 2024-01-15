@@ -12,7 +12,7 @@ namespace Yoma.Core.Domain.Marketplace.Models
 
         public string Code { get; set; }
 
-        public string ImageURL { get; set; }
+        public string? ImageURL { get; set; }
 
         public decimal Amount { get; set; }
     }

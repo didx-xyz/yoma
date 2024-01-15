@@ -24,6 +24,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
         private const string Header_Authorization = "Authorization";
         private const string Header_Authorization_Value_Prefix = "Bearer";
+        private const string Image_Default_Empty_Value = "default";
         #endregion
 
         #region Constructor
@@ -171,7 +172,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 Id = o.StoreId,
                 Name = o.StoreName,
                 Description = o.StoreDescription,
-                ImageURL = o.StoreLogo
+                ImageURL = string.Equals(o.StoreLogo, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? null : o.StoreLogo
             }).OrderBy(o => o.Name).ToList();
         }
 
@@ -197,7 +198,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 Name = o.ItemCatName,
                 Description = o.ItemCatDescription,
                 Summary = o.ItemCatDetails,
-                ImageURL = o.ItemCatImage,
+                ImageURL = string.Equals(o.ItemCatImage, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? null : o.ItemCatImage,
                 ItemCount = o.StoreItemCount,
                 Amount = o.ItemCatZlto
 
@@ -240,7 +241,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 Description = o.ItemDescription,
                 Summary = o.ItemDetails,
                 Code = o.ItemCode,
-                ImageURL = string.Equals(o.ItemLogo, "Default", StringComparison.InvariantCultureIgnoreCase) ? o.StoreInfoSi.StoreLogo : o.ItemLogo,
+                ImageURL = string.Equals(o.ItemLogo, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? o.StoreInfoSi.StoreLogo
+                : string.Equals(o.ItemLogo, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? null : o.ItemLogo,
                 Amount = o.ItemZlto
 
             }).OrderBy(o => o.Name).ToList();
@@ -386,11 +388,19 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 .Select(group =>
                 {
                     var firstItem = group.First();
-                    return new Domain.Marketplace.Models.StoreCategory
+                    return firstItem == null
+                        ? throw new InvalidOperationException("First item in group is null")
+                        : new Domain.Marketplace.Models.StoreCategory
                     {
                         Id = firstItem.Category.Id,
-                        Name = firstItem.Category.CategoryName
-                    };
+                        Name = firstItem.Category.CategoryName,
+                        StoreImageURLs = resultSearch?.Items
+                            .Where(o => o.Category.Id == firstItem.Category.Id && o.StoreLogo != null && !string.Equals(o.StoreLogo, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase))
+                            .OrderBy(o => o.StoreName) 
+                            .Select(o => o.StoreLogo)
+                            .Take(4)  
+                            .ToList() ?? new List<string>()
+                        };
                 })
                 .OrderBy(o => o.Name).ToList() ?? new List<Domain.Marketplace.Models.StoreCategory>();
 

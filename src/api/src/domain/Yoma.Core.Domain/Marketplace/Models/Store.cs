@@ -8,6 +8,6 @@ namespace Yoma.Core.Domain.Marketplace.Models
 
         public string Description { get; set; }
 
-        public string ImageURL { get; set; }
+        public string? ImageURL { get; set; }
     }
 }

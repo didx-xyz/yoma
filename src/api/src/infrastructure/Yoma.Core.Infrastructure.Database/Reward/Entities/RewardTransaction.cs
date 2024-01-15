@@ -2,8 +2,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.Core.Entities;
-using Yoma.Core.Domain.Entity.Models;
 using Microsoft.EntityFrameworkCore;
+using Yoma.Core.Infrastructure.Database.Entity.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Reward.Entities
 {

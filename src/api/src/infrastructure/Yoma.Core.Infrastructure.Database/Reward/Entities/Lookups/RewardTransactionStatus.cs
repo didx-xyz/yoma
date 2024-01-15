@@ -10,7 +10,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups
     public class RewardTransactionStatus : BaseEntity<Guid>
     {
         [Required]
-        [Column(TypeName = "varchar(20)")]
+        [Column(TypeName = "varchar(30)")]
         public string Name { get; set; }
 
         [Required]

@@ -30,8 +30,6 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public DateTimeOffset? DateLastLogin { get; set; }
 
-       
-
         public bool? YoIDOnboarded { get; set; }
 
         public DateTimeOffset? DateYoIDOnboarded { get; set; }
