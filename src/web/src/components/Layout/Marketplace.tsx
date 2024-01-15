@@ -24,7 +24,7 @@ export type TabProps = ({
   children: ReactElement;
 }) => ReactElement;
 
-const YoIDTabbedLayout: TabProps = ({ children }) => {
+const MarketplaceLayout: TabProps = ({ children }) => {
   const router = useRouter();
   const [userProfile] = useAtom(userProfileAtom);
   const [tabItems, setTabItems] = useState<TabItem[]>([]);
@@ -84,7 +84,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
     <MainLayout>
       <>
         <Head>
-          <title>Yoma | YoID</title>
+          <title>Yoma | Marketplace</title>
         </Head>
 
         <PageBackground />
@@ -104,7 +104,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                 <div className="flex flex-col text-white">
                   <div className="flex flex-row items-center justify-center">
                     <p className="flex-grow text-center text-sm tracking-widest brightness-95">
-                      MY YoID
+                      My Zlto balance
                     </p>
                     <IoMdArrowForward className="h-4 w-4" />
                   </div>
@@ -177,9 +177,9 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
 
           <div className="flex flex-col gap-5 md:flex-row">
             {/* TABBED NAVIGATION: MEDIUM DISPLAY */}
-            <div className="hidden md:block">
+            {/* <div className="hidden md:block">
               <ul className="menu w-64 gap-2 rounded-lg bg-gray-light">
-                {/* TABS */}
+                {/* TABS
                 {tabItems.map((tabItem, index) => (
                   <li key={`MenuNavigation_${index}`}>
                     <Link
@@ -221,12 +221,12 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                   </li>
                 ))}
               </ul>
-            </div>
+            </div> */}
 
             {/* MAIN CONTENT */}
             <div className="flex flex-grow flex-col">
               {/* DROPDOWN NAVIGATION: SMALL DISPLAY */}
-              <div className="visible flex flex-none items-center justify-center pb-4 md:hidden">
+              {/* <div className="visible flex flex-none items-center justify-center pb-4 md:hidden">
                 <select
                   className="select max-w-lg"
                   onChange={handleChange}
@@ -243,7 +243,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                     </option>
                   ))}
                 </select>
-              </div>
+              </div> */}
 
               {/* CHILDREN */}
               <div className="flex flex-grow items-center justify-center">
@@ -257,4 +257,4 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
   );
 };
 
-export default YoIDTabbedLayout;
+export default MarketplaceLayout;
