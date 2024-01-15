@@ -200,7 +200,7 @@ namespace Yoma.Core.Api.Controllers
                         _logger.LogError("{type}: Failed to retrieve the Yoma user with email '{email}'", type, kcUser.Username);
                         return;
                     }
-                                    
+
                     //updated here after email verification a login event is raised
                     userRequest.EmailConfirmed = kcUser.EmailVerified;
                     userRequest.DateLastLogin = DateTime.Now;

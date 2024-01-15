@@ -113,7 +113,7 @@ namespace Yoma.Core.Domain.Reward.Services
                                     if (!item.MyOpportunityId.HasValue)
                                         throw new InvalidOperationException($"Source entity type '{item.SourceEntityType}': 'My' opportunity id is null");
 
-                                    var myOpportunity = _myOpportunityService.GetById(item.MyOpportunityId.Value,false, false, false);
+                                    var myOpportunity = _myOpportunityService.GetById(item.MyOpportunityId.Value, false, false, false);
 
                                     //TODO: process reward provider transaction
 

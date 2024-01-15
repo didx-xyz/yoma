@@ -37,7 +37,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     {
         public string BaseUrl { get; set; }
 
-        public List<StoreOwner> Owners { get; set; }    
+        public List<StoreOwner> Owners { get; set; }
     }
 
     public class Task

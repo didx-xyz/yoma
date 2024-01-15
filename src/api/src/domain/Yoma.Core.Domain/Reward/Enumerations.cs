@@ -19,5 +19,5 @@ namespace Yoma.Core.Domain.Reward
         Processed,
         ProcessedInitialBalance,
         Error
-    }   
+    }
 }

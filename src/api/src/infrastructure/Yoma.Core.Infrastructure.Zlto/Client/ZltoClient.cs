@@ -92,7 +92,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                  .GetAsync()
                  .EnsureSuccessStatusCodeAsync();
 
-            var response = await httpResponse.GetJsonAsync<WalletResponse>();   
+            var response = await httpResponse.GetJsonAsync<WalletResponse>();
 
             return new Domain.Reward.Models.Wallet
             {
@@ -391,14 +391,14 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                     return firstItem == null
                         ? throw new InvalidOperationException("First item in group is null")
                         : new Domain.Marketplace.Models.StoreCategory
-                    {
-                        Id = firstItem.Category.Id,
-                        Name = firstItem.Category.CategoryName,
-                        StoreImageURLs = resultSearch?.Items
+                        {
+                            Id = firstItem.Category.Id,
+                            Name = firstItem.Category.CategoryName,
+                            StoreImageURLs = resultSearch?.Items
                             .Where(o => o.Category.Id == firstItem.Category.Id && o.StoreLogo != null && !string.Equals(o.StoreLogo, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase))
-                            .OrderBy(o => o.StoreName) 
+                            .OrderBy(o => o.StoreName)
                             .Select(o => o.StoreLogo)
-                            .Take(4)  
+                            .Take(4)
                             .ToList() ?? new List<string>()
                         };
                 })

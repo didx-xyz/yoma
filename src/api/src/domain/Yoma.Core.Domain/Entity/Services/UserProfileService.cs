@@ -150,7 +150,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 Available = balance.Available,
                 Total = balance.Total,
                 WalletCreationStatus = status
-            };  
+            };
 
             result.AdminsOf = _organizationService.ListAdminsOf(true);
 

@@ -20,7 +20,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             IOptions<ZltoOptions> options,
             IMemoryCache memoryCache)
         {
-            _appSettings = appSettings.Value;   
+            _appSettings = appSettings.Value;
             _options = options.Value;
             _memoryCache = memoryCache;
         }

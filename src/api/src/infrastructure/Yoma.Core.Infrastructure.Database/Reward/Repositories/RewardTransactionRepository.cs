@@ -29,7 +29,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
                 RetryCount = entity.RetryCount,
                 DateCreated = entity.DateCreated,
                 DateModified = entity.DateModified
-            });;
+            }); ;
         }
 
         public async Task<RewardTransaction> Create(RewardTransaction item)
