@@ -183,5 +183,5 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public enum ItemState
     {
         Active = 1,
-    }       
+    }
 }
