@@ -1,6 +1,6 @@
 import type { PaginationFilter } from "./common";
 
- export interface StoreCategory {
+export interface StoreCategory {
   id: string;
   name: string;
 }
