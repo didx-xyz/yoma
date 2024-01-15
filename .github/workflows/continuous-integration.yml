@@ -228,56 +228,56 @@ jobs:
             web:
               - './src/web/**'
 
-      - name: Pre-pull images
-        run: |-
-          docker compose -f ./src/api/docker-compose.yml pull
-          docker compose -f ./src/web/docker-compose.yml pull
-        env:
-          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
-          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
-        continue-on-error: true
-      - name: Start services
-        run: |-
-          docker compose -f ./src/api/docker-compose.yml up -d
-          docker compose -f ./src/web/docker-compose.yml up -d
-        env:
-          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
-          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
+      # - name: Pre-pull images
+      #   run: |-
+      #     docker compose -f ./src/api/docker-compose.yml pull
+      #     docker compose -f ./src/web/docker-compose.yml pull
+      #   env:
+      #     API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
+      #     YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
+      #   continue-on-error: true
+      # - name: Start services
+      #   run: |-
+      #     docker compose -f ./src/api/docker-compose.yml up -d
+      #     docker compose -f ./src/web/docker-compose.yml up -d
+      #   env:
+      #     API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
+      #     YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: yarn
-      - uses: cypress-io/github-action@v6
-      - name: Upload Cypress Screenshots
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: cypress-screenshots
-          path: cypress/screenshots
-          if-no-files-found: ignore
-      - name: Upload Cypress Recording
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: cypress-videos
-          path: cypress/videos
-          if-no-files-found: ignore
+      # - uses: actions/setup-node@v4
+      #   with:
+      #     node-version: 18
+      #     cache: yarn
+      # - uses: cypress-io/github-action@v6
+      # - name: Upload Cypress Screenshots
+      #   uses: actions/upload-artifact@v4
+      #   if: always()
+      #   with:
+      #     name: cypress-screenshots
+      #     path: cypress/screenshots
+      #     if-no-files-found: ignore
+      # - name: Upload Cypress Recording
+      #   uses: actions/upload-artifact@v4
+      #   if: always()
+      #   with:
+      #     name: cypress-videos
+      #     path: cypress/videos
+      #     if-no-files-found: ignore
 
-      - name: Keycloak Config logs
-        if: always()
-        run: docker logs keycloak-config
-      - name: Keycloak logs
-        if: always()
-        run: docker logs keycloak
-      - name: Yoma API logs
-        if: always()
-        run: docker logs yoma-api
-      - name: Yoma Web logs
-        if: always()
-        run: docker logs yoma-web
+      # - name: Keycloak Config logs
+      #   if: always()
+      #   run: docker logs keycloak-config
+      # - name: Keycloak logs
+      #   if: always()
+      #   run: docker logs keycloak
+      # - name: Yoma API logs
+      #   if: always()
+      #   run: docker logs yoma-api
+      # - name: Yoma Web logs
+      #   if: always()
+      #   run: docker logs yoma-web
 
-      - run: docker compose down -v
+      # - run: docker compose down -v
 
   deploy:
     name: Deploy
