@@ -44,7 +44,7 @@ export const getStoreItemCategories = async (
 ): Promise<StoreItemCategory[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<StoreItemCategory[]>(
-    `/marketplace/${storeId}/category/item`,
+    `/marketplace/store/${storeId}/category/item`,
   );
   return data;
 };

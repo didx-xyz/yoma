@@ -3,6 +3,7 @@ import type { PaginationFilter } from "./common";
 export interface StoreCategory {
   id: string;
   name: string;
+  storeImageURLs: string[];
 }
 
 export interface Store {

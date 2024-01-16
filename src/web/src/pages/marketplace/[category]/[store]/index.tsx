@@ -4,17 +4,24 @@ import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import React, { type ReactElement } from "react";
 import { type NextPageWithLayout } from "~/pages/_app";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { getStoreCategories } from "~/api/services/marketplace";
+import { getStoreItemCategories } from "~/api/services/marketplace";
 import { authOptions } from "~/server/auth";
+import { type ParsedUrlQuery } from "querystring";
 import { config } from "~/lib/react-query-config";
-import type { StoreCategory } from "~/api/models/marketplace";
+import type { StoreItemCategory } from "~/api/models/marketplace";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import Link from "next/link";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
 import { THEME_BLUE } from "~/lib/constants";
-import { CategoryCardComponent } from "~/components/Marketplace/CategoryCard";
+import { ItemCardComponent } from "~/components/Marketplace/ItemCard";
+import { IoMdArrowRoundBack } from "react-icons/io";
+
+interface IParams extends ParsedUrlQuery {
+  category: string;
+  store: string;
+}
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -29,33 +36,42 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   const queryClient = new QueryClient(config);
+  const { category, store } = context.params as IParams;
+  const { categoryId, storeId } = context.query;
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
-    queryKey: ["StoreCategories"],
-    queryFn: () => getStoreCategories(context),
+    queryKey: [`StoreCategoryItems_${category}_${store}`],
+    queryFn: () => getStoreItemCategories(storeId!.toString(), context),
   });
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      category: category ?? null,
+      categoryId: categoryId ?? null,
+      store: store ?? null,
+      storeId: storeId ?? null,
     },
   };
 }
 
-const MarketplaceStoreCategories: NextPageWithLayout<{
+const MarketplaceStoreItemCategories: NextPageWithLayout<{
+  category: string;
+  categoryId: string;
+  store: string;
+  storeId: string;
   error: string;
-}> = ({ error }) => {
+}> = ({ category, categoryId, store, storeId, error }) => {
   // 👇 use prefetched queries from server
   const {
     data: data,
     error: dataError,
     isLoading: dataIsLoading,
-  } = useQuery<StoreCategory[]>({
-    queryKey: ["StoreCategories"],
-    queryFn: () => getStoreCategories(),
-
+  } = useQuery<StoreItemCategory[]>({
+    queryKey: [`StoreCategoryItems_${category}_${store}`],
+    queryFn: () => getStoreItemCategories(storeId),
     enabled: !error,
   });
 
@@ -71,8 +87,22 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
               className="font-bold text-white hover:text-gray"
               href={`/marketplace`}
             >
+              <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
               Marketplace
             </Link>
+          </li>
+          <li>
+            <Link
+              className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap font-bold text-white hover:text-gray"
+              href={`/marketplace/${category}?categoryId=${categoryId}`}
+            >
+              {category}
+            </Link>
+          </li>
+          <li>
+            <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
+              {store}
+            </div>
           </li>
           <li>
             <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
@@ -103,16 +133,19 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       )}
 
       {data && data.length > 0 && (
-        <div className="flex w-full flex-col gap-4">
+        <div className="flex flex-col items-center gap-4">
           {/* GRID */}
           {data && data.length > 0 && (
             <div className="flex flex-row flex-wrap gap-2">
               {data.map((item, index) => (
-                <CategoryCardComponent
+                <ItemCardComponent
                   key={index}
+                  company={"TODO: COMPANY"}
                   name={item.name}
-                  imageURLs={item.storeImageURLs}
-                  href={`/marketplace/${item.name}?categoryId=${item.id}`}
+                  imageURL={item.imageURL}
+                  summary={item.summary}
+                  amount={item.amount}
+                  href={`/marketplace/${category}/${store}/${item.name}?categoryId=${categoryId}&storeId=${storeId}&itemCategoryId=${item.id}`}
                 />
               ))}
             </div>
@@ -123,12 +156,14 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   );
 };
 
-MarketplaceStoreCategories.getLayout = function getLayout(page: ReactElement) {
+MarketplaceStoreItemCategories.getLayout = function getLayout(
+  page: ReactElement,
+) {
   return <MarketplaceLayout>{page}</MarketplaceLayout>;
 };
 
-MarketplaceStoreCategories.theme = function getTheme() {
+MarketplaceStoreItemCategories.theme = function getTheme() {
   return THEME_BLUE;
 };
 
-export default MarketplaceStoreCategories;
+export default MarketplaceStoreItemCategories;

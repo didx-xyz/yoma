@@ -9,7 +9,7 @@ export default {
         white: "#FFFFFF",
         black: "#020304",
         blue: "#4CADE9",
-        "blue-dark": "#5F65B9",
+        "blue-dark": "#2487C5",
         purple: "#41204B",
         "purple-light": "#8A8FD6",
         "purple-dark": "#5F65B9",
