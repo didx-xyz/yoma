@@ -141,6 +141,49 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             return results;
 
         }
+
+        public async Task<string> RewardEarn(RewardAwardRequest request)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            var httpRequest = new RewardEarnRequest
+            {
+                TaskTitle = request.Title,
+                TaskOrigin = "Yoma",
+                TaskType = request.Type.ToString(),
+                TaskDescription = request.Description,
+                TaskInstructions = string.IsNullOrEmpty(request.Instructions) ? "n/a" : request.Instructions,
+                TaskExternalId = request.Id.ToString(),
+                TaskProgramId = "n/a",
+                BankTransactionId = "n/a",
+                UserName = request.UserEmail,
+                TaskSkills = (request.Skills != null && request.Skills.Any()) ? string.Join(",", request.Skills.Select(o => o.Name)) : "n/a",
+                TaskCountry = (request.Countries != null && request.Countries.Any()) ? string.Join(",", request.Countries.Select(o => o.Name)) : "n/a",
+                TaskLanguage = (request.Languages != null && request.Languages.Any()) ? string.Join(",", request.Languages.Select(o => o.Name)) : "n/a",
+                TaskPeopleImpacted = 1,
+                TaskTimeInvestedHours = request.TimeInvestedInHours,
+                TaskExternalUrl = string.IsNullOrEmpty(request.ExternalURL) ? "n/a" : request.ExternalURL,
+                TaskExternalProof = "n/a",
+                TaskNeedsReview = 0,
+                TaskStatus = (int)RewardEarnTaskStatus.Completed,
+                TaskStartTime = request.StartDate.HasValue ? request.StartDate.Value.ToLocalTime().ToString() : "n/a",
+                TaskEndTime = request.EndDate.HasValue ? request.EndDate.Value.ToLocalTime().ToString() : "n/a",
+                ZltoWalletId = request.UserWalletId,
+                TaskZltoReward = (int)request.Amount
+            };
+
+            var httpResponse = await _options.Task.BaseUrl
+               .AppendPathSegment("external_program_task_transaction")
+               .WithAuthHeaders(await GetAuthHeaders())
+               .PostJsonAsync(httpRequest)
+               .EnsureSuccessStatusCodeAsync()
+               .ReceiveJson<RewardEarnResponse>();
+
+            var result = httpResponse.TaskResponse.TaskId;
+            return result;
+        }
+
         #endregion IRewardProviderClient 
 
         #region IMarketplaceProviderClient

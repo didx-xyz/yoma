@@ -11,7 +11,7 @@ namespace Yoma.Core.Domain.SSI.Interfaces
 
         Task ScheduleCreation(EntityType entityType, Guid entityId);
 
-        List<SSITenantCreation> ListPendingCreationSchedule(int batchSize);
+        List<SSITenantCreation> ListPendingCreationSchedule(int batchSize, List<Guid> idsToSkip);
 
         Task UpdateScheduleCreation(SSITenantCreation item);
     }

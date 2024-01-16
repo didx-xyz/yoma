@@ -42,6 +42,12 @@ FROM [Entity].[User] U
 WHERE U.[YoIDOnboarded] = 1
 GO
 
+--reward wallet creation (rewards for completed 'my' opportinuties to be awarded; only scheduled for 'testuser@gmail.com')
+INSERT INTO [Reward].[WalletCreation]([Id],[StatusId],[UserId],[WalletId],[Balance],[ErrorReason],[RetryCount],[DateCreated],[DateModified])
+SELECT NEWID(),(SELECT [Id] FROM [Reward].[WalletCreationStatus] WHERE [Name] = 'Pending'),(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
+NULL,NULL,NULL,NULL,GETDATE(),GETDATE()
+GO
+
 DECLARE @Words VARCHAR(500) = 'The,A,An,Awesome,Incredible,Fantastic,Amazing,Wonderful,Exciting,Unbelievable,Great,Marvelous,Stunning,Impressive,Captivating,Extraordinary,Superb,Epic,Spectacular,Magnificent,Phenomenal,Outstanding,Brilliant,Enthralling,Enchanting,Mesmerizing,Riveting,Spellbinding,Unforgettable,Sublime';
 DECLARE @RandomLengthName INT = ABS(CHECKSUM(NEWID()) % 5) + 5;
 DECLARE @RandomLengthOther INT = ABS(CHECKSUM(NEWID()) % 101) + 100;
@@ -384,6 +390,15 @@ INNER JOIN [Opportunity].[Opportunity] O ON MO.OpportunityId = O.Id
 WHERE MO.[ActionId] = (SELECT [Id] FROM [Opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification')
 		AND MO.[VerificationStatusId] = (SELECT [Id] FROM [Opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Completed')
 		AND O.CredentialIssuanceEnabled = 1
+GO
+
+--reward transaction (pending) for verification (completed) for 'testuser@gmail.com'
+INSERT INTO [Reward].[Transaction]([Id],[UserId],[StatusId],[SourceEntityType],[MyOpportunityId],[Amount],[TransactionId],[ErrorReason],[RetryCount],[DateCreated],[DateModified])
+SELECT NEWID(), MO.UserId, (SELECT [Id] FROM [Reward].[TransactionStatus] WHERE [Name] = 'Pending'), 'MyOpportunity', MO.Id, MO.ZltoReward, NULL, NULL,NULL,GETDATE(),GETDATE()
+FROM [Opportunity].[MyOpportunity] MO
+WHERE MO.[ActionId] = (SELECT [Id] FROM [Opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification')
+		AND MO.[VerificationStatusId] = (SELECT [Id] FROM [Opportunity].[MyOpportunityVerificationStatus] WHERE [Name] = 'Completed')
+		AND MO.ZltoReward > 0
 GO
 
 --verification (completed): assign user skills

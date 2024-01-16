@@ -92,9 +92,10 @@ namespace Yoma.Core.Domain.SSI.Services
 
                 var executeUntil = DateTime.Now.AddHours(_scheduleJobOptions.SSITenantCreationScheduleMaxIntervalInHours);
 
+                var itemIdsToSkip = new List<Guid>();
                 while (executeUntil > DateTime.Now)
                 {
-                    var items = _ssiTenantService.ListPendingCreationSchedule(_scheduleJobOptions.SSITenantCreationScheduleBatchSize);
+                    var items = _ssiTenantService.ListPendingCreationSchedule(_scheduleJobOptions.SSITenantCreationScheduleBatchSize, itemIdsToSkip);
                     if (!items.Any()) break;
 
                     foreach (var item in items)
@@ -158,6 +159,8 @@ namespace Yoma.Core.Domain.SSI.Services
                             item.Status = TenantCreationStatus.Error;
                             item.ErrorReason = ex.Message;
                             _ssiTenantService.UpdateScheduleCreation(item).Wait();
+
+                            itemIdsToSkip.Add(item.Id);
                         }
 
                         if (executeUntil <= DateTime.Now) break;
@@ -319,6 +322,8 @@ namespace Yoma.Core.Domain.SSI.Services
                             item.Status = CredentialIssuanceStatus.Error;
                             item.ErrorReason = ex.Message;
                             _ssiCredentialService.UpdateScheduleIssuance(item).Wait();
+
+                            itemIdsToSkip.Add(item.Id);
                         }
 
                         if (executeUntil <= DateTime.Now) break;

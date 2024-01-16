@@ -99,14 +99,19 @@ namespace Yoma.Core.Domain.SSI.Services
             await _ssiTenantCreationRepository.Create(item);
         }
 
-        public List<SSITenantCreation> ListPendingCreationSchedule(int batchSize)
+        public List<SSITenantCreation> ListPendingCreationSchedule(int batchSize, List<Guid> idsToSkip)
         {
             if (batchSize <= default(int))
                 throw new ArgumentOutOfRangeException(nameof(batchSize));
 
             var statusPendingId = _ssiTenantCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
 
-            var results = _ssiTenantCreationRepository.Query().Where(o => o.StatusId == statusPendingId).OrderBy(o => o.DateModified).Take(batchSize).ToList();
+            var query = _ssiTenantCreationRepository.Query().Where(o => o.StatusId == statusPendingId);
+
+            if(idsToSkip != null && idsToSkip.Any())
+                query = query.Where(o => !idsToSkip.Contains(o.Id));
+
+            var results = query.OrderBy(o => o.DateModified).Take(batchSize).ToList();
 
             return results;
         }
@@ -135,8 +140,11 @@ namespace Yoma.Core.Domain.SSI.Services
                         throw new ArgumentNullException(nameof(item), "Error reason required");
 
                     item.ErrorReason = item.ErrorReason?.Trim();
-                    item.RetryCount = (byte?)(item.RetryCount + 1) ?? 1;
-                    if (item.RetryCount == _appSettings.SSIMaximumRetryAttempts) break; //max retry count reached
+                    item.RetryCount = (byte?)(item.RetryCount + 1) ?? 0; //1st attempt not counted as a retry
+
+                    //retry attempts specified and exceeded
+                    if (_appSettings.SSIMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.SSIMaximumRetryAttempts) break;
+
                     item.StatusId = _ssiTenantCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
                     break;
 

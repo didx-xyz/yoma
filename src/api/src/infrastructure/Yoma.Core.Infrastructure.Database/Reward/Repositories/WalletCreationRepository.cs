@@ -63,6 +63,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
             item.DateModified = DateTimeOffset.Now;
 
             entity.WalletId = item.WalletId;
+            entity.Balance = item.Balance;
             entity.StatusId = item.StatusId;
             entity.ErrorReason = item.ErrorReason;
             entity.RetryCount = item.RetryCount;

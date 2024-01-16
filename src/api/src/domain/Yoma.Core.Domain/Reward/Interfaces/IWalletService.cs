@@ -4,9 +4,9 @@ namespace Yoma.Core.Domain.Reward.Interfaces
 {
     public interface IWalletService
     {
-        string GetWalletId(Guid userId);
+        (string userEmail, string walletId) GetWalletId(Guid userId);
 
-        string? GetWalletIdOrNull(Guid userId);
+        (string userEmail, string? walletId) GetWalletIdOrNull(Guid userId);
 
         Task<(WalletCreationStatus status, WalletBalance balance)> GetWalletStatusAndBalance(Guid userId);
 
@@ -16,7 +16,7 @@ namespace Yoma.Core.Domain.Reward.Interfaces
 
         Task CreateWalletOrScheduleCreation(Guid? userId);
 
-        List<WalletCreation> ListPendingCreationSchedule(int batchSize);
+        List<WalletCreation> ListPendingCreationSchedule(int batchSize, List<Guid> idsToSkip);
 
         Task UpdateScheduleCreation(WalletCreation item);
     }
