@@ -131,6 +131,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
                                     request = new TenantRequest
                                     {
+                                        // TODO: Use organization id 
                                         // utilize a hash value generated from the name upon creation, ensuring a consistent tenant reference or name even if the name is altered
                                         // these values are published to the trust registry, requiring uniqueness for both the name and its corresponding label
                                         Referent = org.NameHashValue,

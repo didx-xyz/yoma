@@ -49,6 +49,8 @@ namespace Yoma.Core.Domain.Core.Models
 
         public string SSISchemaFullNameYoID { get; set; }
 
+        public int RewardMaximumRetryAttempts { get; set; }
+
         public string TestDataSeedingEnvironments { get; set; }
 
         public Environment TestDataSeedingEnvironmentsAsEnum => ParseEnvironmentInput(TestDataSeedingEnvironments);

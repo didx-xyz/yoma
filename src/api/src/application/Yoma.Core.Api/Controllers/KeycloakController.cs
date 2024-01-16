@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Yoma.Core.Domain.Keycloak.Models;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
+using Yoma.Core.Domain.Reward.Interfaces;
 
 namespace Yoma.Core.Api.Controllers
 {
@@ -23,6 +24,7 @@ namespace Yoma.Core.Api.Controllers
         private readonly IUserService _userService;
         private readonly IGenderService _genderService;
         private readonly ICountryService _countryService;
+        private readonly IWalletService _walletService;
         #endregion
 
         #region Constructors
@@ -30,13 +32,15 @@ namespace Yoma.Core.Api.Controllers
           IIdentityProviderClientFactory identityProviderClientFactory,
           IUserService userService,
           IGenderService genderService,
-          ICountryService countryService)
+          ICountryService countryService,
+          IWalletService walletService)
         {
             _logger = logger;
             _identityProviderClient = identityProviderClientFactory.CreateClient();
             _userService = userService;
             _genderService = genderService;
             _countryService = countryService;
+            _walletService = walletService;
         }
         #endregion
 
@@ -179,20 +183,38 @@ namespace Yoma.Core.Api.Controllers
 
                     if (type == WebhookRequestEventType.UpdateProfile) break;
 
-                    //add newly registered user to the default "User" role
-                    await _identityProviderClient.EnsureRoles(kcUser.Id, new List<string> { Constants.Role_User });
+                    try
+                    {
+                        //add newly registered user to the default "User" role
+                        await _identityProviderClient.EnsureRoles(kcUser.Id, new List<string> { Constants.Role_User });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "{type}: Failed to assign the default 'User' role to the newly register user with email '{email}'", type, userRequest.Email);
+                    }
                     break;
 
                 case WebhookRequestEventType.Login:
                     if (userRequest == null)
                     {
-                        _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
+                        _logger.LogError("{type}: Failed to retrieve the Yoma user with email '{email}'", type, kcUser.Username);
                         return;
                     }
 
                     //updated here after email verification a login event is raised
                     userRequest.EmailConfirmed = kcUser.EmailVerified;
                     userRequest.DateLastLogin = DateTime.Now;
+
+                    try
+                    {
+                        _logger.LogInformation("Creating or scheduling creation of rewards wallet for user with '{email}'", userRequest.Email);
+                        await _walletService.CreateWalletOrScheduleCreation(userRequest.Id);
+                        _logger.LogInformation("Rewards wallet created or creation scheduled for user with '{email}'", userRequest.Email);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to create or schedule creation of rewards wallet for user with username '{email}'", userRequest.Email);
+                    }
 
                     break;
 

@@ -38,7 +38,7 @@ namespace Yoma.Core.Domain.Entity.Models
 
         public List<OrganizationInfo> AdminsOf { get; set; }
 
-        public decimal ZltoBalance { get; set; }
+        public UserProfileZlto Zlto { get; set; }
 
         public int OpportunityCountSaved { get; set; }
 

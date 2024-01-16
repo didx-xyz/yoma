@@ -1195,6 +1195,34 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     {"B0F16D40-C3FE-4ACA-9EA7-5201158C083D","Error",DateTimeOffset.Now}
             },
             schema: "SSI");
+
+            migrationBuilder.InsertData(
+            table: "WalletCreationStatus",
+            columns: new[] { "Id", "Name", "DateCreated" },
+            values: new object[,]
+            {
+                    {"494B9DBC-3299-42D2-8F2D-8DEC6A583231","Pending",DateTimeOffset.Now}
+                    ,
+                    {"2F46C953-D5B2-4048-B40D-BA3B86A4D926","Created",DateTimeOffset.Now}
+                    ,
+                    {"1B4AEA96-EF82-471E-82E4-5F18FB2B8424","Error",DateTimeOffset.Now}
+            },
+            schema: "Reward");
+
+            migrationBuilder.InsertData(
+            table: "TransactionStatus",
+            columns: new[] { "Id", "Name", "DateCreated" },
+            values: new object[,]
+            {
+                    {"708C3350-F49C-4324-8F43-76E8E8761845","Pending",DateTimeOffset.Now}
+                    ,
+                    {"C522E881-935F-40FA-A2A9-157F613FF3EC","Processed",DateTimeOffset.Now}
+                    ,
+                    {"FB125D05-D6DF-4BFE-ABCA-385D23C851AA","ProcessedInitialBalance",DateTimeOffset.Now}
+                    ,
+                    {"19140FDC-648E-4523-9BC9-32D613476831","Error",DateTimeOffset.Now}
+            },
+            schema: "Reward");
             #endregion SSI
         }
     }

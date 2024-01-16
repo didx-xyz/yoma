@@ -15,6 +15,8 @@ using Yoma.Core.Infrastructure.Database.Entity.Repositories;
 using Yoma.Core.Infrastructure.Database.Lookups.Repositories;
 using Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories;
 using Yoma.Core.Infrastructure.Database.Opportunity.Repositories;
+using Yoma.Core.Infrastructure.Database.Reward.Repositories;
+using Yoma.Core.Infrastructure.Database.Reward.Repositories.Lookup;
 using Yoma.Core.Infrastructure.Database.SSI.Repositories;
 using Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups;
 
@@ -96,6 +98,18 @@ namespace Yoma.Core.Infrastructure.Database
             services.AddScoped<IRepository<OpportunityLanguage>, OpportunityLanguageRepository>();
             services.AddScoped<IRepository<OpportunitySkill>, OpportunitySkillRepository>();
             services.AddScoped<IRepository<OpportunityVerificationType>, OpportunityVerificationTypeRepository>();
+            #endregion
+
+            #region Reward
+            #region Lookups
+            services.AddScoped<IRepository<Domain.Reward.Models.Lookups.RewardTransactionStatus>, RewardTransactionStatusRepository>();
+
+            services.AddScoped<IRepository<Domain.Reward.Models.Lookups.WalletCreationStatus>, WalletCreationStatusRepository>();
+            #endregion Lookups
+
+            services.AddScoped<IRepositoryBatched<Domain.Reward.Models.RewardTransaction>, RewardTransactionRepository>();
+
+            services.AddScoped<IRepository<Domain.Reward.Models.WalletCreation>, WalletCreationRepository>();
             #endregion
 
             #region SSI

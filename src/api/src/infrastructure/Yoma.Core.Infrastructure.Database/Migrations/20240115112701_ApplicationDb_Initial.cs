@@ -25,6 +25,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             migrationBuilder.EnsureSchema(
                 name: "Entity");
 
+            migrationBuilder.EnsureSchema(
+                name: "Reward");
+
             migrationBuilder.CreateTable(
                 name: "Blob",
                 schema: "Object",
@@ -315,6 +318,34 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TransactionStatus",
+                schema: "Reward",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "varchar(30)", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransactionStatus", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "WalletCreationStatus",
+                schema: "Reward",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "varchar(20)", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WalletCreationStatus", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "User",
                 schema: "Entity",
                 columns: table => new
@@ -333,8 +364,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     DateOfBirth = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateLastLogin = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     ExternalId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ZltoWalletId = table.Column<string>(type: "varchar(50)", nullable: true),
-                    DateZltoWalletCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     YoIDOnboarded = table.Column<bool>(type: "bit", nullable: true),
                     DateYoIDOnboarded = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
@@ -517,6 +546,40 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         column: x => x.UserId,
                         principalSchema: "Entity",
                         principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "WalletCreation",
+                schema: "Reward",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    WalletId = table.Column<string>(type: "varchar(50)", nullable: true),
+                    Balance = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
+                    ErrorReason = table.Column<string>(type: "varchar(MAX)", nullable: true),
+                    RetryCount = table.Column<byte>(type: "tinyint", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WalletCreation", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_WalletCreation_User_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "Entity",
+                        principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_WalletCreation_WalletCreationStatus_StatusId",
+                        column: x => x.StatusId,
+                        principalSchema: "Reward",
+                        principalTable: "WalletCreationStatus",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1059,6 +1122,48 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Transaction",
+                schema: "Reward",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SourceEntityType = table.Column<string>(type: "varchar(25)", nullable: false),
+                    MyOpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Amount = table.Column<decimal>(type: "decimal(8,2)", nullable: false),
+                    TransactionId = table.Column<string>(type: "varchar(50)", nullable: true),
+                    ErrorReason = table.Column<string>(type: "varchar(MAX)", nullable: true),
+                    RetryCount = table.Column<byte>(type: "tinyint", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Transaction", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Transaction_MyOpportunity_MyOpportunityId",
+                        column: x => x.MyOpportunityId,
+                        principalSchema: "Opportunity",
+                        principalTable: "MyOpportunity",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Transaction_TransactionStatus_StatusId",
+                        column: x => x.StatusId,
+                        principalSchema: "Reward",
+                        principalTable: "TransactionStatus",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Transaction_User_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "Entity",
+                        principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Blob_Key",
                 schema: "Object",
@@ -1556,6 +1661,32 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Transaction_MyOpportunityId",
+                schema: "Reward",
+                table: "Transaction",
+                column: "MyOpportunityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transaction_StatusId_DateCreated_DateModified",
+                schema: "Reward",
+                table: "Transaction",
+                columns: new[] { "StatusId", "DateCreated", "DateModified" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transaction_UserId_SourceEntityType_MyOpportunityId",
+                schema: "Reward",
+                table: "Transaction",
+                columns: new[] { "UserId", "SourceEntityType", "MyOpportunityId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionStatus_Name",
+                schema: "Reward",
+                table: "TransactionStatus",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_User_CountryId",
                 schema: "Entity",
                 table: "User",
@@ -1575,10 +1706,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_ExternalId_ZltoWalletId_DateZltoWalletCreated_YoIDOnboarded_DateYoIDOnboar~",
+                name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_ExternalId_YoIDOnboarded_DateYoIDOnboarded_DateCreated_DateModified",
                 schema: "Entity",
                 table: "User",
-                columns: new[] { "FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "ZltoWalletId", "DateZltoWalletCreated", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified" });
+                columns: new[] { "FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_User_GenderId",
@@ -1616,6 +1747,26 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Entity",
                 table: "UserSkills",
                 columns: new[] { "UserId", "SkillId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WalletCreation_StatusId_DateCreated_DateModified",
+                schema: "Reward",
+                table: "WalletCreation",
+                columns: new[] { "StatusId", "DateCreated", "DateModified" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WalletCreation_UserId",
+                schema: "Reward",
+                table: "WalletCreation",
+                column: "UserId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WalletCreationStatus_Name",
+                schema: "Reward",
+                table: "WalletCreationStatus",
+                column: "Name",
                 unique: true);
 
             ApplicationDb_Initial_Seeding.Seed(migrationBuilder);
@@ -1677,16 +1828,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI");
 
             migrationBuilder.DropTable(
+                name: "Transaction",
+                schema: "Reward");
+
+            migrationBuilder.DropTable(
                 name: "UserSkillOrganizations",
                 schema: "Entity");
 
             migrationBuilder.DropTable(
-                name: "CredentialIssuanceStatus",
-                schema: "SSI");
+                name: "WalletCreation",
+                schema: "Reward");
 
             migrationBuilder.DropTable(
-                name: "MyOpportunity",
-                schema: "Opportunity");
+                name: "CredentialIssuanceStatus",
+                schema: "SSI");
 
             migrationBuilder.DropTable(
                 name: "OpportunityCategory",
@@ -1717,8 +1872,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI");
 
             migrationBuilder.DropTable(
+                name: "MyOpportunity",
+                schema: "Opportunity");
+
+            migrationBuilder.DropTable(
+                name: "TransactionStatus",
+                schema: "Reward");
+
+            migrationBuilder.DropTable(
                 name: "UserSkills",
                 schema: "Entity");
+
+            migrationBuilder.DropTable(
+                name: "WalletCreationStatus",
+                schema: "Reward");
 
             migrationBuilder.DropTable(
                 name: "MyOpportunityAction",

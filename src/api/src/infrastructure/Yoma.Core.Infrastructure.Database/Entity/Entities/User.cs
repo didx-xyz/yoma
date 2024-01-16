@@ -8,8 +8,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 {
     [Table("User", Schema = "Entity")]
     [Index(nameof(Email), IsUnique = true)]
-    [Index(nameof(FirstName), nameof(Surname), nameof(EmailConfirmed), nameof(PhoneNumber), nameof(ExternalId),
-        nameof(ZltoWalletId), nameof(DateZltoWalletCreated), nameof(YoIDOnboarded), nameof(DateYoIDOnboarded), nameof(DateCreated), nameof(DateModified))]
+    [Index(nameof(FirstName), nameof(Surname), nameof(EmailConfirmed), nameof(PhoneNumber), nameof(ExternalId), nameof(YoIDOnboarded), nameof(DateYoIDOnboarded), nameof(DateCreated), nameof(DateModified))]
     public class User : BaseEntity<Guid>
     {
         [Required]
@@ -55,11 +54,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
         public DateTimeOffset? DateLastLogin { get; set; }
 
         public Guid? ExternalId { get; set; }
-
-        [Column(TypeName = "varchar(50)")]
-        public string? ZltoWalletId { get; set; }
-
-        public DateTimeOffset? DateZltoWalletCreated { get; set; }
 
         public bool? YoIDOnboarded { get; set; }
 

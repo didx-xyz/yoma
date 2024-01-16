@@ -68,7 +68,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter (Anonymous)")]
         [HttpPost("search")]
-        [ProducesResponseType(typeof(List<OpportunitySearchResultsInfo>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(OpportunitySearchResultsInfo), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
         public IActionResult Search([FromBody] OpportunitySearchFilter filter)
         {
@@ -235,7 +235,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter")]
         [HttpPost("search/admin")]
-        [ProducesResponseType(typeof(List<OpportunitySearchResultsInfo>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(OpportunitySearchResultsInfo), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult Search([FromBody] OpportunitySearchFilterAdmin filter)
         {

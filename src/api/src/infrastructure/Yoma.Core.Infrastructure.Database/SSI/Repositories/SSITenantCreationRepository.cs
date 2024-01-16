@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
 {
-    internal class SSITenantCreationRepository : BaseRepository<Entities.SSITenantCreation, Guid>, IRepository<SSITenantCreation>
+    public class SSITenantCreationRepository : BaseRepository<Entities.SSITenantCreation, Guid>, IRepository<SSITenantCreation>
     {
         #region Constructor
         public SSITenantCreationRepository(ApplicationDbContext context) : base(context) { }

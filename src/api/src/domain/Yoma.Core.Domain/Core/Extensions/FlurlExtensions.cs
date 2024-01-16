@@ -9,15 +9,30 @@ namespace Yoma.Core.Domain.Core.Extensions
     {
         #region Public Members
         /// <summary>
-        /// Creates a new FlurlRequest and sets the authorization headers.
+        /// Creates a new FlurlRequest and sets the authorization header.
         /// </summary>
         /// <param name="url">This Flurl.Url.</param>
         /// <param name="name">The header name.</param>
         /// <param name="value">The header value.</param>
         /// <returns>A new IFlurlRequest.</returns>
-        public static IFlurlRequest WithAuthHeaders(this Url url, KeyValuePair<string, string> authHeader)
+        public static IFlurlRequest WithAuthHeader(this Url url, KeyValuePair<string, string> authHeader)
         {
             return new FlurlRequest(url).WithHeader(authHeader.Key, authHeader.Value);
+        }
+
+        /// <summary>
+        /// Creates a new FlurlRequest and sets the authorization headers.
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="authHeaders"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static IFlurlRequest WithAuthHeaders(this Url url, Dictionary<string, string> authHeaders)
+        {
+            if (authHeaders == null || !authHeaders.Any())
+                throw new ArgumentNullException(nameof(authHeaders));
+
+            return new FlurlRequest(url).WithHeaders(authHeaders);
         }
 
         /// <summary>

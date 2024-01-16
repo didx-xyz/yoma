@@ -1,8 +1,10 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
+using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Models;
@@ -36,7 +38,7 @@ namespace Yoma.Core.Domain.SSI.Services
         {
             var result = GetTenantIdOrNull(entityType, entityId);
             if (string.IsNullOrEmpty(result))
-                throw new InvalidOperationException($"Tenant id not found of entity of type '{entityType}' and id '{entityId}'");
+                throw new EntityNotFoundException($"Tenant id not found of entity of type '{entityType}' and id '{entityId}'");
             return result;
         }
 
@@ -56,6 +58,10 @@ namespace Yoma.Core.Domain.SSI.Services
                     _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType == entityType.ToString() && o.OrganizationId == entityId && o.StatusId == statusCreatedId),
                 _ => throw new InvalidOperationException($"Entity type of '{entityType}' not supported"),
             };
+
+            if (result != null && string.IsNullOrEmpty(result.TenantId))
+                throw new DataInconsistencyException($"Tenant id expected with tenant creation status of 'Created' for item with id '{result.Id}'");
+
             return result?.TenantId;
         }
 
@@ -86,7 +92,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
             if (existingItem != null)
             {
-                _logger.LogInformation("Scheduling of tenant creation skipped: Already scheduled for entity type '{entityType}' and entity id '{entityId}'", entityType, entityId);
+                _logger.LogInformation("Scheduling of tenant creation skipped: Already '{status}' for entity type '{entityType}' and entity id '{entityId}'", existingItem.Status, entityType, entityId);
                 return;
             }
 
@@ -95,6 +101,9 @@ namespace Yoma.Core.Domain.SSI.Services
 
         public List<SSITenantCreation> ListPendingCreationSchedule(int batchSize)
         {
+            if (batchSize <= default(int))
+                throw new ArgumentOutOfRangeException(nameof(batchSize));
+
             var statusPendingId = _ssiTenantCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
 
             var results = _ssiTenantCreationRepository.Query().Where(o => o.StatusId == statusPendingId).OrderBy(o => o.DateModified).Take(batchSize).ToList();

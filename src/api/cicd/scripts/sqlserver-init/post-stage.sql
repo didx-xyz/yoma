@@ -2,21 +2,21 @@ USE [yoma-stage]
 GO
 /*****user & organization*****/
 INSERT INTO [Entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
-			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[DateZltoWalletCreated],[YoIDOnboarded],[DateYoIDOnboarded],[DateCreated],[DateModified])
+			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[YoIDOnboarded],[DateYoIDOnboarded],[DateCreated],[DateModified])
 VALUES(NEWID(),'{test_user}',1,'Sam','Henderson','Sam Henderson',null,(SELECT [Id] FROM [Lookup].[Country] WHERE CodeAlpha2 = 'ZA'),(SELECT [Id] FROM [Lookup].[Country] WHERE CodeAlpha2 = 'ZA'),
-		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] WHERE [Name] = 'Male'),NULL,NULL,NULL,NULL,NULL,1,GETDATE(),GETDATE(),GETDATE())
+		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] WHERE [Name] = 'Male'),NULL,NULL,NULL,1,GETDATE(),GETDATE(),GETDATE())
 GO
 
 INSERT INTO [Entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
-			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[DateZltoWalletCreated],[YoIDOnboarded],[DateYoIDOnboarded],[DateCreated],[DateModified])
+			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],,[YoIDOnboarded],[DateYoIDOnboarded],[DateCreated],[DateModified])
 VALUES(NEWID(),'{org_admin_user}',1,'Sam','Henderson','Sam Henderson',null,(SELECT [Id] FROM [Lookup].[Country] WHERE CodeAlpha2 = 'ZA'),(SELECT [Id] FROM [Lookup].[Country] WHERE CodeAlpha2 = 'ZA'),
-		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] WHERE [Name] = 'Male'),NULL,NULL,NULL,NULL,NULL,1,GETDATE(),GETDATE(),GETDATE())
+		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] WHERE [Name] = 'Male'),NULL,NULL,NULL,1,GETDATE(),GETDATE(),GETDATE())
 GO
 
 INSERT INTO [Entity].[User]([Id],[Email],[EmailConfirmed],[FirstName],[Surname],[DisplayName],[PhoneNumber],[CountryId],[CountryOfResidenceId],
-			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[ZltoWalletId],[DateZltoWalletCreated],[YoIDOnboarded],[DateYoIDOnboarded],[DateCreated],[DateModified])
+			[PhotoId],[GenderId],[DateOfBirth],[DateLastLogin],[ExternalId],[YoIDOnboarded],[DateYoIDOnboarded],[DateCreated],[DateModified])
 VALUES(NEWID(),'{admin_user}',1,'Sam','Henderson','Sam Henderson',null,(SELECT [Id] FROM [Lookup].[Country] WHERE CodeAlpha2 = 'ZA'),(SELECT [Id] FROM [Lookup].[Country] WHERE CodeAlpha2 = 'ZA'),
-		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] WHERE [Name] = 'Male'),NULL,NULL,NULL,NULL,NULL,1,GETDATE(),GETDATE(),GETDATE())
+		NULL,(SELECT TOP 1 [Id] FROM [Lookup].[Gender] WHERE [Name] = 'Male'),NULL,NULL,NULL,1,GETDATE(),GETDATE(),GETDATE())
 GO
 
 --ssi credential issuance (pending) for YOID onboarded users
