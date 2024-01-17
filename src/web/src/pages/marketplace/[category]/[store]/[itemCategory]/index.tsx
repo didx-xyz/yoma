@@ -19,6 +19,7 @@ import { PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { ItemCardComponent } from "~/components/Marketplace/ItemCard";
 import { IoMdArrowRoundBack } from "react-icons/io";
+import Breadcrumb from "~/components/Breadcrumb";
 
 interface IParams extends ParsedUrlQuery {
   categoryId: string;
@@ -149,40 +150,29 @@ const MarketplaceSearchStoreItems: NextPageWithLayout<{
   return (
     <div className="flex w-full max-w-5xl flex-col items-start gap-4">
       {/* BREADCRUMB */}
-      <div className="breadcrumbs text-sm text-white">
-        <ul>
-          <li>
-            <Link
-              className="font-bold text-white hover:text-gray"
-              href={`/marketplace`}
-            >
+      <Breadcrumb
+        items={[
+          {
+            title: "Marketplace",
+            url: "/marketplace",
+            iconElement: (
               <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
-              Marketplace
-            </Link>
-          </li>
-          <li>
-            <Link
-              className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap font-bold text-white hover:text-gray"
-              href={`/marketplace/${category}?categoryId=${categoryId}`}
-            >
-              {category}
-            </Link>
-          </li>
-          <li>
-            <Link
-              className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap font-bold text-white hover:text-gray"
-              href={`/marketplace/${category}/${store}?categoryId=${categoryId}&storeId=${storeId}`}
-            >
-              {store}
-            </Link>
-          </li>
-          <li>
-            <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
-              {itemCategory}
-            </div>
-          </li>
-        </ul>
-      </div>
+            ),
+          },
+          {
+            title: category,
+            url: `/marketplace/${category}?categoryId=${categoryId}`,
+          },
+          {
+            title: store,
+            url: `/marketplace/${category}/${store}?categoryId=${categoryId}&storeId=${storeId}`,
+          },
+          {
+            title: itemCategory,
+            url: "",
+          },
+        ]}
+      />
 
       {/* ERRROR */}
       {dataError && <ApiErrors error={dataError} />}

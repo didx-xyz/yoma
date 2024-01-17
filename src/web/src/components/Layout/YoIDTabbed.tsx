@@ -43,7 +43,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         url: "/yoid/opportunities/completed",
         badgeCount: null,
         selected: router.asPath.startsWith("/yoid/opportunities"),
-        icon: iconCheckmark,
+        iconImage: iconCheckmark,
       },
       {
         title: "My Skills",
@@ -51,7 +51,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         url: "/yoid/skills",
         badgeCount: null,
         selected: router.asPath.startsWith("/yoid/skills"),
-        icon: iconTools,
+        iconImage: iconTools,
       },
       {
         title: "Wallet",
@@ -59,7 +59,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         url: "/yoid/credentials",
         badgeCount: null,
         selected: router.asPath.startsWith("/yoid/credentials"),
-        icon: iconCredential,
+        iconImage: iconCredential,
       },
       {
         title: "Personal Info",
@@ -67,7 +67,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         url: "/yoid/settings",
         badgeCount: null,
         selected: router.asPath.startsWith("/yoid/settings"),
-        icon: iconSmiley,
+        iconImage: iconSmiley,
       },
       {
         title: "Open Digital CV",
@@ -75,7 +75,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         url: "/yoid/cv",
         badgeCount: null,
         selected: router.asPath.startsWith("/yoid/cv"),
-        icon: iconShare,
+        iconImage: iconShare,
       },
     ]);
   }, [router.asPath, setTabItems]);
@@ -191,7 +191,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                     >
                       <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full shadow">
                         <Image
-                          src={tabItem.icon}
+                          src={tabItem.iconImage}
                           alt={`${tabItem.title} icon`}
                           width={20}
                           height={20}

@@ -29,9 +29,10 @@ export enum SpatialType {
 
 export interface TabItem {
   title: string;
-  description: string;
+  description?: string;
   url: string;
   badgeCount?: number | null;
-  selected: boolean;
-  icon?: any;
+  selected?: boolean;
+  iconImage?: any;
+  iconElement?: React.ReactElement;
 }

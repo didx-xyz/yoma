@@ -17,6 +17,7 @@ import MarketplaceLayout from "~/components/Layout/Marketplace";
 import { THEME_BLUE } from "~/lib/constants";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { CategoryCardComponent } from "~/components/Marketplace/CategoryCard";
+import Breadcrumb from "~/components/Breadcrumb";
 
 interface IParams extends ParsedUrlQuery {
   category?: string;
@@ -103,40 +104,34 @@ const MarketplaceSearchStores: NextPageWithLayout<{
   return (
     <div className="flex w-full max-w-5xl flex-col items-start gap-4">
       {/* BREADCRUMB */}
-      <div className="breadcrumbs text-sm text-white">
-        <ul>
-          <li>
-            <Link
-              className="font-bold text-white hover:text-gray"
-              href={`/marketplace`}
-            >
+      <Breadcrumb
+        items={[
+          {
+            title: "Marketplace",
+            url: "/marketplace",
+            iconElement: (
               <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
-              Marketplace
-            </Link>
-          </li>
-          <li>
-            <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
-              {category}
-            </div>
-          </li>{" "}
-          <li>
-            <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
-              Select category
-            </div>
-          </li>
-        </ul>
-      </div>
+            ),
+          },
+          {
+            title: category,
+            url: "",
+          },
+          {
+            title: "Select category",
+            url: "",
+          },
+        ]}
+      />
 
       {/* ERRROR */}
       {dataError && <ApiErrors error={dataError} />}
-
       {/* LOADING */}
       {dataIsLoading && (
         <div className="flex justify-center rounded-lg bg-white p-8">
           <LoadingSkeleton />
         </div>
       )}
-
       {/* NO ROWS */}
       {data && data.items?.length === 0 && (
         <div className="flex w-full justify-center rounded-lg bg-white p-8">
@@ -146,7 +141,6 @@ const MarketplaceSearchStores: NextPageWithLayout<{
           />
         </div>
       )}
-
       {data && data.items?.length > 0 && (
         <div className="flex w-full flex-col gap-4">
           {/* GRID */}
@@ -156,7 +150,11 @@ const MarketplaceSearchStores: NextPageWithLayout<{
                 <CategoryCardComponent
                   key={index}
                   name={item.name}
-                  imageURLs={item.imageURL != "default" ? [item.imageURL] : []}
+                  imageURLs={
+                    item.imageURL != null && item.imageURL != "default"
+                      ? [item.imageURL]
+                      : []
+                  }
                   href={`/marketplace/${category}/${item.name}?categoryId=${categoryId}&storeId=${item.id}`}
                 />
               ))}

@@ -21,7 +21,7 @@ const navBarLinksUser: TabItem[] = [
     url: "/",
     badgeCount: null,
     selected: false,
-    icon: null,
+    iconImage: null,
   },
   {
     title: "Opportunities",
@@ -29,7 +29,7 @@ const navBarLinksUser: TabItem[] = [
     url: "/opportunities",
     badgeCount: null,
     selected: false,
-    icon: null,
+    iconImage: null,
   },
   {
     title: "Jobs",
@@ -37,7 +37,7 @@ const navBarLinksUser: TabItem[] = [
     url: "/jobs",
     badgeCount: null,
     selected: false,
-    icon: null,
+    iconImage: null,
   },
   {
     title: "Marketplace",
@@ -45,7 +45,7 @@ const navBarLinksUser: TabItem[] = [
     url: "/marketplace",
     badgeCount: null,
     selected: false,
-    icon: null,
+    iconImage: null,
   },
 ];
 
@@ -56,7 +56,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin",
     badgeCount: null,
     selected: false,
-    icon: null,
+    iconImage: null,
   },
   {
     title: "Organisations",
@@ -64,7 +64,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/organisations",
     badgeCount: null,
     selected: false,
-    icon: null,
+    iconImage: null,
   },
   {
     title: "Opportunities",
@@ -72,7 +72,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin/opportunities",
     badgeCount: null,
     selected: false,
-    icon: null,
+    iconImage: null,
   },
   {
     title: "Schemas",
@@ -80,7 +80,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin/schemas",
     badgeCount: null,
     selected: false,
-    icon: null,
+    iconImage: null,
   },
   {
     title: "Connections",
@@ -88,7 +88,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin/connections",
     badgeCount: null,
     selected: false,
-    icon: null,
+    iconImage: null,
   },
 ];
 
@@ -109,7 +109,7 @@ export const Navbar: React.FC = () => {
           url: `/organisations/${currentOrganisationId}`,
           badgeCount: null,
           selected: false,
-          icon: null,
+          iconImage: null,
         },
         {
           title: "Opportunities",
@@ -117,7 +117,7 @@ export const Navbar: React.FC = () => {
           url: `/organisations/${currentOrganisationId}/opportunities`,
           badgeCount: null,
           selected: false,
-          icon: null,
+          iconImage: null,
         },
         {
           title: "Verifications",
@@ -125,7 +125,7 @@ export const Navbar: React.FC = () => {
           url: `/organisations/${currentOrganisationId}/verifications`,
           badgeCount: null,
           selected: false,
-          icon: null,
+          iconImage: null,
         },
         {
           title: "Settings",
@@ -133,7 +133,7 @@ export const Navbar: React.FC = () => {
           url: `/organisations/${currentOrganisationId}/edit`,
           badgeCount: null,
           selected: false,
-          icon: null,
+          iconImage: null,
         },
       ];
     } else {

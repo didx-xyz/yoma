@@ -74,10 +74,10 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
                     }`}
                     role="tab"
                   >
-                    {tabItem.icon && (
+                    {tabItem.iconImage && (
                       <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full shadow">
                         <Image
-                          src={tabItem.icon}
+                          src={tabItem.iconImage}
                           alt={`${tabItem.title} icon`}
                           width={20}
                           height={20}
