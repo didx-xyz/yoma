@@ -16,6 +16,7 @@ import iconCredential from "public/images/icon-credential.png";
 import iconSmiley from "public/images/icon-smiley.png";
 import iconShare from "public/images/icon-share.png";
 import type { TabItem } from "~/api/models/common";
+import Head from "next/head";
 
 export type TabProps = ({
   children,
@@ -82,6 +83,10 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
   return (
     <MainLayout>
       <>
+        <Head>
+          <title>Yoma | YoID</title>
+        </Head>
+
         <PageBackground />
 
         <div className="container z-10 py-4">
