@@ -42,7 +42,7 @@ namespace Yoma.Core.Domain.Reward.Services
             _rewardService = rewardService;
             _myOpportunityService = myOpportunityService;
             _opportunityService = opportunityService;
-            _rewardProviderClient = rewardProviderClientFactory.CreateClient();   
+            _rewardProviderClient = rewardProviderClientFactory.CreateClient();
         }
         #endregion
 
@@ -73,7 +73,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
                             item.WalletId = wallet.Id;
                             item.Balance = wallet.Balance; //track initial balance upon creation, if any
-                            item.Status = WalletCreationStatus.Created;
+                            item.Status = WalletCreationStatus.Created; //TODO: Distinguish between existing and newly created wallet
                             _walletService.UpdateScheduleCreation(item).Wait();
 
                             scope.Complete();
@@ -166,7 +166,7 @@ namespace Yoma.Core.Domain.Reward.Services
                             item.TransactionId = _rewardProviderClient.RewardEarn(request).Result;
                             item.Status = RewardTransactionStatus.Processed;
                             _rewardService.UpdateTransaction(item).Wait();
-                            
+
                             _logger.LogInformation("Processed reward transaction for item with id '{id}'", item.Id);
                         }
                         catch (Exception ex)
