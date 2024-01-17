@@ -106,7 +106,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         <div className="flex w-full flex-col gap-4">
           {/* GRID */}
           {data && data.length > 0 && (
-            <div className="flex flex-row flex-wrap gap-2">
+            <div className="flex flex-row flex-wrap gap-4">
               {data.map((item, index) => (
                 <CategoryCardComponent
                   key={index}

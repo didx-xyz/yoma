@@ -25,7 +25,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
           <title>Yoma | Marketplace</title>
         </Head>
 
-        <PageBackground />
+        <PageBackground smallHeight={true} />
 
         <div className="container z-10 py-4">
           {/* ZLTO BALANCE CARD */}

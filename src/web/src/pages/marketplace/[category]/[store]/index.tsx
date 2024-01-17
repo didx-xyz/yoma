@@ -129,11 +129,11 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
         <div className="flex flex-col items-center gap-4">
           {/* GRID */}
           {data && data.length > 0 && (
-            <div className="flex flex-row flex-wrap gap-2">
+            <div className="flex flex-row flex-wrap gap-4">
               {data.map((item, index) => (
                 <ItemCardComponent
                   key={index}
-                  company={"TODO: COMPANY"}
+                  company={store}
                   name={item.name}
                   imageURL={item.imageURL}
                   summary={item.summary}

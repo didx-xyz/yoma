@@ -12,13 +12,13 @@ interface InputProps {
 
 const Breadcrumb: React.FC<InputProps> = ({ items }) => {
   return (
-    <div className="breadcrumbs text-sm text-white">
+    <div className="breadcrumbs text-sm text-gray-dark">
       <ul>
         {items.map((item, index) => (
           <li key={index}>
             {item.url ? (
               <Link
-                className="max-w-[200px] overflow-hidden text-ellipsis font-bold text-white hover:text-gray"
+                className="max-w-[200px] overflow-hidden text-ellipsis font-bold hover:text-gray"
                 href={item.url}
               >
                 {item.iconImage && (
@@ -45,7 +45,7 @@ const Breadcrumb: React.FC<InputProps> = ({ items }) => {
                 {item.title}
               </Link>
             ) : (
-              <div className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
+              <div className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap">
                 {item.title}
               </div>
             )}

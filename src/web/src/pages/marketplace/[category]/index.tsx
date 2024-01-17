@@ -124,8 +124,13 @@ const MarketplaceSearchStores: NextPageWithLayout<{
         ]}
       />
 
+      {/* <div className="flex gap-2 text-sm text-gray-dark">
+        2 item categories found
+      </div> */}
+
       {/* ERRROR */}
       {dataError && <ApiErrors error={dataError} />}
+
       {/* LOADING */}
       {dataIsLoading && (
         <div className="flex justify-center rounded-lg bg-white p-8">
@@ -145,7 +150,7 @@ const MarketplaceSearchStores: NextPageWithLayout<{
         <div className="flex w-full flex-col gap-4">
           {/* GRID */}
           {data && data.items?.length > 0 && (
-            <div className="flex flex-row flex-wrap gap-2">
+            <div className="flex flex-row flex-wrap gap-4">
               {data?.items?.map((item, index) => (
                 <CategoryCardComponent
                   key={index}

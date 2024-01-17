@@ -37,55 +37,53 @@ const ItemCardComponent: React.FC<InputProps> = ({
   return (
     <Link
       key={key}
-      className="flex h-[260px] w-full cursor-pointer flex-col items-center gap-4 rounded-lg bg-white p-4 md:w-[320px]"
+      className="relative flex aspect-square h-56 w-full transform-gpu flex-col items-center gap-4 rounded-lg bg-white p-4 shadow-lg transition-transform hover:scale-105 md:w-[340px]"
       href={href ?? "/"}
       onClick={onClick2}
       onAuxClick={onClick2}
     >
-      <div className="flex flex-col">
-        {/* header & image */}
-        <div className="flex flex-grow flex-row items-start justify-start">
-          <div className="flex flex-grow flex-row">
-            <div className="flex flex-grow flex-col items-start justify-start">
-              <p className="max-h-[35px] overflow-hidden text-ellipsis text-sm font-semibold text-gray-dark">
-                {company}
-              </p>
-              <p className="max-h-[60px] overflow-hidden text-ellipsis text-lg font-bold">
-                {name}
-              </p>
-            </div>
+      <div className="flex flex-col gap-2">
+        {/* HEADER & IMAGE */}
+        <div className="flex flex-grow flex-row justify-center">
+          <div className="h-16x flex flex-grow flex-col items-start justify-start gap-1">
+            <p className="h-6x w-64 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark">
+              {company}
+            </p>
+            <p className="h-14x w-64 overflow-hidden overflow-ellipsis whitespace-nowrap text-xl font-semibold">
+              {name}
+            </p>
+          </div>
 
-            <div className="flex flex-row">
-              <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-full shadow">
-                <Image
-                  src={imageURL}
-                  alt={`${name} Logo`}
-                  width={64}
-                  height={64}
-                  sizes="(max-width: 64px) 30vw, 50vw"
-                  priority={true}
-                  placeholder="blur"
-                  blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                    shimmer(64, 64),
-                  )}`}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    maxWidth: "64px",
-                    maxHeight: "64px",
-                  }}
-                />
-              </div>
+          <div className="flex flex-row items-center">
+            <div className="relative h-12 w-12 cursor-pointer overflow-hidden rounded-full shadow">
+              <Image
+                src={imageURL}
+                alt={`${name} Logo`}
+                width={48}
+                height={48}
+                sizes="(max-width: 48px) 30vw, 50vw"
+                priority={true}
+                placeholder="blur"
+                blurDataURL={`data:image/svg+xml;base64,${toBase64(
+                  shimmer(48, 48),
+                )}`}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  maxWidth: "48px",
+                  maxHeight: "48px",
+                }}
+              />
             </div>
           </div>
         </div>
 
-        {/* description */}
-        <div className="my-2 h-[120px] overflow-hidden text-ellipsis text-start text-sm text-gray-dark">
+        {/* DESCRIPTION */}
+        <div className="my-2x h-[100px] overflow-hidden text-start text-sm text-gray-dark">
           {summary}
         </div>
 
-        {/* badges */}
+        {/* BADGES */}
         <div className="flex flex-row items-center justify-start gap-2">
           {(amount ?? 0) > 0 && (
             <div className="badge h-6 whitespace-nowrap rounded-md bg-yellow-light text-yellow">

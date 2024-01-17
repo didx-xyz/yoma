@@ -2,12 +2,10 @@ import React from "react";
 import iconImage from "public/images/icon-rocket.svg";
 import Image from "next/image";
 
-interface InputProps {
+const NoRowsMessage: React.FC<{
   title?: string | null;
   description?: string | null;
-}
-
-const NoRowsMessage: React.FC<InputProps> = ({ title, description }) => {
+}> = ({ title, description }) => {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-1">
       {/* eslint-disable */}

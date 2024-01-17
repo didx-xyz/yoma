@@ -198,11 +198,11 @@ const MarketplaceSearchStoreItems: NextPageWithLayout<{
         <div className="flex flex-col items-center gap-4">
           {/* GRID */}
           {data && data.items?.length > 0 && (
-            <div className="flex flex-row flex-wrap gap-2">
+            <div className="flex flex-row flex-wrap gap-4">
               {data.items?.map((item, index) => (
                 <ItemCardComponent
                   key={`StoreCategoryitem_${index}`}
-                  company={"TODO: COMPANY"}
+                  company={store}
                   name={item.name}
                   imageURL={item.imageURL}
                   summary={item.summary}

@@ -19,7 +19,7 @@ const CategoryCardComponent: React.FC<InputProps> = ({
   return (
     <Link
       key={key}
-      className="flex h-[140px] w-full cursor-pointer flex-col items-center gap-4 rounded-lg bg-white p-4 md:w-[240px]"
+      className="relativex flex aspect-square h-32 w-full transform-gpu flex-col items-center gap-2 rounded-lg bg-white p-4 shadow-lg transition-transform hover:scale-105 md:w-56"
       href={href}
     >
       <div className="flex flex-row">
@@ -70,7 +70,7 @@ const CategoryCardComponent: React.FC<InputProps> = ({
             ))}
         </div>
       </div>
-      <div className="flex flex-grow flex-row justify-center">
+      <div className="flex flex-grow flex-row items-center justify-center">
         <p className="max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-black">
           {name}
         </p>
