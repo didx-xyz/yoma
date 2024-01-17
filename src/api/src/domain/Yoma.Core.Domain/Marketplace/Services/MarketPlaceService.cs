@@ -65,7 +65,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
         public async Task<List<StoreItemCategory>> ListStoreItemCategories(string storeId)
         {
-            if(string.IsNullOrWhiteSpace(storeId))
+            if (string.IsNullOrWhiteSpace(storeId))
                 throw new ArgumentNullException(nameof(storeId));
             storeId = storeId.Trim();
 
@@ -78,7 +78,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
                 throw new ArgumentNullException(nameof(filter));
 
             await _storeSearchFilterValidator.ValidateAndThrowAsync(filter);
-        
+
             var offset = default(int?);
             if (filter.PaginationEnabled)
                 offset = filter.PageNumber == 1 ? 0 : ((filter.PageNumber - 1) * filter.PageSize);

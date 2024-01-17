@@ -13,7 +13,7 @@ namespace Yoma.Core.Domain.Core.Helpers
             var result = claimsPrincipal?.Identity?.Name;
 
             return !string.IsNullOrEmpty(result);
-        }   
+        }
 
         public static string GetUsername(IHttpContextAccessor? httpContextAccessor, bool useSystemDefault)
         {
