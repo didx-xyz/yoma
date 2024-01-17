@@ -1,9 +1,31 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Extensions
 {
     public static class OpportunityExtensions
     {
+        public static int TimeIntervalToHours(this Models.Opportunity opportunity)
+        {
+            if (opportunity == null)
+                throw new ArgumentNullException(nameof(opportunity));
+
+            if (!Enum.TryParse<TimeInterval>(opportunity.CommitmentInterval, true, out var interval))
+                throw new ArgumentOutOfRangeException(nameof(opportunity), $"{nameof(opportunity.CommitmentInterval)} of '{opportunity.CommitmentInterval}' is not supported");
+
+            var hours = 0;
+            hours = interval switch
+            {
+                TimeInterval.Hour => opportunity.CommitmentIntervalCount,
+                TimeInterval.Day => opportunity.CommitmentIntervalCount * 24,
+                TimeInterval.Week => opportunity.CommitmentIntervalCount * 24 * 7,
+                TimeInterval.Month => opportunity.CommitmentIntervalCount * 24 * 30,
+                _ => throw new ArgumentOutOfRangeException(nameof(interval), $"{nameof(TimeInterval)} of '{interval}' not supported"),
+            };
+
+            return hours;
+        }
+
         public static void SetPublished(this Models.Opportunity opportunity)
         {
             if (opportunity == null)

@@ -40,7 +40,7 @@ namespace Yoma.Core.Domain.Reward.Services
             if (entityId == Guid.Empty) //used internally by other services which validates the entity id prior to invocation
                 throw new ArgumentNullException(nameof(entityId));
 
-            if (amount < default(decimal))
+            if (amount <= default(decimal))
                 throw new ArgumentOutOfRangeException(nameof(amount));
 
             var statusPendingId = _rewardTransactionStatusService.GetByName(RewardTransactionStatus.Pending.ToString()).Id;
@@ -80,14 +80,20 @@ namespace Yoma.Core.Domain.Reward.Services
             return results;
         }
 
-        public List<RewardTransaction> ListPendingTransactionSchedule(int batchSize)
+        public List<RewardTransaction> ListPendingTransactionSchedule(int batchSize, List<Guid> idsToSkip)
         {
             if (batchSize <= default(int))
                 throw new ArgumentOutOfRangeException(nameof(batchSize));
 
             var statusPendingId = _rewardTransactionStatusService.GetByName(RewardTransactionStatus.Pending.ToString()).Id;
 
-            var results = _rewardTransactionRepository.Query().Where(o => o.StatusId == statusPendingId).OrderBy(o => o.DateModified).Take(batchSize).ToList();
+            var query = _rewardTransactionRepository.Query().Where(o => o.StatusId == statusPendingId);
+
+            // skipped if wallets were not created (see RewardsBackgroundService)
+            if (idsToSkip != null && idsToSkip.Any())
+                query = query.Where(o => !idsToSkip.Contains(o.Id));
+
+            var results = query.OrderBy(o => o.DateModified).Take(batchSize).ToList();
 
             return results;
         }
@@ -139,8 +145,11 @@ namespace Yoma.Core.Domain.Reward.Services
                         throw new ArgumentNullException(nameof(item), "Error reason required");
 
                     item.ErrorReason = item.ErrorReason?.Trim();
-                    item.RetryCount = (byte?)(item.RetryCount + 1) ?? 1;
-                    if (item.RetryCount == _appSettings.RewardMaximumRetryAttempts) break; //max retry count reached
+                    item.RetryCount = (byte?)(item.RetryCount + 1) ?? 0; //1st attempt not counted as a retry
+
+                    //retry attempts specified and exceeded
+                    if (_appSettings.RewardMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.RewardMaximumRetryAttempts) break;
+
                     item.StatusId = _rewardTransactionStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
                     break;
 

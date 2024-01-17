@@ -70,13 +70,17 @@ namespace Yoma.Core.Domain.SSI.Services
             await _ssiCredentialIssuanceRepository.Create(item);
         }
 
-        public List<SSICredentialIssuance> ListPendingIssuanceSchedule(int batchSize, List<Guid> IdsToSkip)
+        public List<SSICredentialIssuance> ListPendingIssuanceSchedule(int batchSize, List<Guid> idsToSkip)
         {
             var credentialIssuanceStatusPendingId = _ssiCredentialIssuanceStatusService.GetByName(CredentialIssuanceStatus.Pending.ToString()).Id;
 
-            // issuance skipped if tenants were not created (see SSIBackgroundService)
-            var results = _ssiCredentialIssuanceRepository.Query().Where(o => o.StatusId == credentialIssuanceStatusPendingId
-                && !IdsToSkip.Contains(o.Id)).OrderBy(o => o.DateModified).Take(batchSize).ToList();
+            var query = _ssiCredentialIssuanceRepository.Query().Where(o => o.StatusId == credentialIssuanceStatusPendingId);
+
+            // skipped if tenants were not created (see SSIBackgroundService)
+            if (idsToSkip != null && idsToSkip.Any())
+                query = query.Where(o => !idsToSkip.Contains(o.Id));
+
+            var results = query.OrderBy(o => o.DateModified).Take(batchSize).ToList();
 
             return results;
         }
@@ -105,8 +109,11 @@ namespace Yoma.Core.Domain.SSI.Services
                         throw new ArgumentNullException(nameof(item), "Error reason required");
 
                     item.ErrorReason = item.ErrorReason?.Trim();
-                    item.RetryCount = (byte?)(item.RetryCount + 1) ?? 1;
-                    if (item.RetryCount == _appSettings.SSIMaximumRetryAttempts) break; //max retry count reached
+                    item.RetryCount = (byte?)(item.RetryCount + 1) ?? 0; //1st attempt not counted as a retry
+
+                    //retry attempts specified and exceeded
+                    if (_appSettings.SSIMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.SSIMaximumRetryAttempts) break;
+
                     item.StatusId = _ssiCredentialIssuanceStatusService.GetByName(CredentialIssuanceStatus.Pending.ToString()).Id;
                     break;
 

@@ -4,7 +4,9 @@ namespace Yoma.Core.Domain.Marketplace.Interfaces
 {
     public interface IMarketplaceService
     {
-        Task<List<StoreCategory>> ListStoreCategories();
+        List<Lookups.Models.Country> ListSearchCriteriaCountries();
+
+        Task<List<StoreCategory>> ListStoreCategories(string countryCodeAlpha2);
 
         Task<StoreSearchResults> SearchStores(StoreSearchFilter filter);
 

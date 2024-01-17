@@ -43,12 +43,20 @@ namespace Yoma.Core.Domain.Core.Models
             }
         }
 
+        /// <summary>
+        /// -1: Represents infinite retries. Never transitions to an error state.
+        /// 0: Represents no retries. Immediately transitions to an error state.
+        /// >0: Represents the maximum number of retries. Transitions to an error state when retries exceed the specified value.
         public int SSIMaximumRetryAttempts { get; set; }
 
         public string SSIIssuerNameYomaOrganization { get; set; }
 
         public string SSISchemaFullNameYoID { get; set; }
 
+        /// <summary>
+        /// -1: Represents infinite retries. Never transitions to an error state.
+        /// 0: Represents no retries. Immediately transitions to an error state.
+        /// >0: Represents the maximum number of retries. Transitions to an error state when retries exceed the specified value.
         public int RewardMaximumRetryAttempts { get; set; }
 
         public string TestDataSeedingEnvironments { get; set; }

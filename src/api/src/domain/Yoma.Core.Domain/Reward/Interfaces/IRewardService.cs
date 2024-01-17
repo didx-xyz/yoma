@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.Reward.Interfaces
 
         List<RewardTransaction> ListPendingTransactionSchedule(Guid userId);
 
-        List<RewardTransaction> ListPendingTransactionSchedule(int batchSize);
+        List<RewardTransaction> ListPendingTransactionSchedule(int batchSize, List<Guid> idsToSkip);
 
         Task UpdateTransaction(RewardTransaction item);
 

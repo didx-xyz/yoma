@@ -43,4 +43,12 @@ namespace Yoma.Core.Domain.Core
         None,
         Point
     }
+
+    public enum TimeInterval
+    {
+        Hour,
+        Day,
+        Week,
+        Month
+    }
 }

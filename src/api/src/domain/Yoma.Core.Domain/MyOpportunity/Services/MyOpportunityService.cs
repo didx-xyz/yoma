@@ -501,7 +501,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         await _ssiCredentialService.ScheduleIssuance(item.OpportunitySSISchemaName, item.Id);
                     }
 
-                    await _rewardService.ScheduleRewardTransaction(user.Id, Reward.RewardTransactionEntityType.MyOpportunity, item.Id, zltoReward ?? default);
+                    if (zltoReward.HasValue)
+                        await _rewardService.ScheduleRewardTransaction(user.Id, Reward.RewardTransactionEntityType.MyOpportunity, item.Id, zltoReward.Value);
 
                     emailType = EmailType.Opportunity_Verification_Completed;
                     break;

@@ -10,5 +10,7 @@ namespace Yoma.Core.Domain.Reward.Interfaces.Provider
         Task<Wallet> GetWallet(string walletId);
 
         Task<List<WalletVoucher>> ListWalletVouchers(string walletId, int? limit, int? offset);
+
+        Task<string> RewardEarn(RewardAwardRequest request);
     }
 }

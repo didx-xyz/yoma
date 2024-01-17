@@ -58,15 +58,15 @@ namespace Yoma.Core.Domain.Reward.Services
         #endregion
 
         #region Public Members
-        public string GetWalletId(Guid userId)
+        public (string userEmail, string walletId) GetWalletId(Guid userId)
         {
             var result = GetWalletIdOrNull(userId);
-            if (string.IsNullOrEmpty(result))
+            if (string.IsNullOrEmpty(result.walletId))
                 throw new EntityNotFoundException($"Wallet id not found for user with id '{userId}'");
-            return result;
+            return (result.userEmail, result.walletId);
         }
 
-        public string? GetWalletIdOrNull(Guid userId)
+        public (string userEmail, string? walletId) GetWalletIdOrNull(Guid userId)
         {
             var user = _userService.GetById(userId, false, false);
 
@@ -77,7 +77,7 @@ namespace Yoma.Core.Domain.Reward.Services
             if (result != null && string.IsNullOrEmpty(result.WalletId))
                 throw new DataInconsistencyException($"Wallet id expected with wallet creation status of '{WalletCreationStatus.Created}' for item with id '{result.Id}'");
 
-            return result?.WalletId;
+            return (user.Email, result?.WalletId);
         }
 
         public async Task<(WalletCreationStatus status, WalletBalance balance)> GetWalletStatusAndBalance(Guid userId)
@@ -207,9 +207,10 @@ namespace Yoma.Core.Domain.Reward.Services
             try
             {
                 var wallet = await CreateWallet(userId.Value);
+
                 item.WalletId = wallet.Id;
                 item.Balance = wallet.Balance; //track initial balance upon creation, if any
-                item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Created.ToString()).Id;
+                item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Created.ToString()).Id; //TODO: Distinguish between existing and newly created wallet
             }
             catch (Exception)
             {
@@ -222,14 +223,19 @@ namespace Yoma.Core.Domain.Reward.Services
             scope.Complete();
         }
 
-        public List<WalletCreation> ListPendingCreationSchedule(int batchSize)
+        public List<WalletCreation> ListPendingCreationSchedule(int batchSize, List<Guid> idsToSkip)
         {
             if (batchSize <= default(int))
                 throw new ArgumentOutOfRangeException(nameof(batchSize));
 
             var statusPendingId = _walletCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
 
-            var results = _walletCreationRepository.Query().Where(o => o.StatusId == statusPendingId).OrderBy(o => o.DateModified).Take(batchSize).ToList();
+            var query = _walletCreationRepository.Query().Where(o => o.StatusId == statusPendingId);
+
+            if (idsToSkip != null && idsToSkip.Any())
+                query = query.Where(o => !idsToSkip.Contains(o.Id));
+
+            var results = query.OrderBy(o => o.DateModified).Take(batchSize).ToList();
 
             return results;
         }
@@ -260,8 +266,11 @@ namespace Yoma.Core.Domain.Reward.Services
                         throw new ArgumentNullException(nameof(item), "Error reason required");
 
                     item.ErrorReason = item.ErrorReason?.Trim();
-                    item.RetryCount = (byte?)(item.RetryCount + 1) ?? 1;
-                    if (item.RetryCount == _appSettings.RewardMaximumRetryAttempts) break; //max retry count reached
+                    item.RetryCount = (byte?)(item.RetryCount + 1) ?? 0; //1st attempt not counted as a retry
+
+                    //retry attempts specified and exceeded
+                    if (_appSettings.RewardMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.RewardMaximumRetryAttempts) break;
+
                     item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
                     break;
 
