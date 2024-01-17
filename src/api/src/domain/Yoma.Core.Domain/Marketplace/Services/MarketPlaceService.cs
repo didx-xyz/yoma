@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Marketplace.Interfaces;
 using Yoma.Core.Domain.Marketplace.Interfaces.Provider;
 using Yoma.Core.Domain.Marketplace.Models;
@@ -39,17 +40,35 @@ namespace Yoma.Core.Domain.Marketplace.Services
         #endregion
 
         #region Public Members
-        public async Task<List<StoreCategory>> ListStoreCategories()
+        public List<Country> ListSearchCriteriaCountries()
         {
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+            Country? countryOfResidence = null;
+            if (HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
+            {
+                var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+                countryOfResidence = user.CountryOfResidenceId.HasValue ? _countryService.GetByIdOrNull(user.CountryOfResidenceId.Value) : null;
+            }
 
-            var countryOfResidence = user.CountryOfResidenceId.HasValue ? _countryService.GetByIdOrNull(user.CountryOfResidenceId.Value) : null;
+            var countryCodesAlpha2Available = _marketplaceProviderClient.ListSupportedCountryCodesAlpha2(countryOfResidence?.CodeAlpha2);
 
-            return await _marketplaceProviderClient.ListStoreCategories(countryOfResidence?.CodeAlpha2);
+            var results = _countryService.List().Where(o => countryCodesAlpha2Available.Contains(o.CodeAlpha2, StringComparer.InvariantCultureIgnoreCase)).OrderBy(o => o.Name).ToList();
+
+            return results;
+        }
+
+        public async Task<List<StoreCategory>> ListStoreCategories(string countryCodeAlpha2)
+        {
+            var country = _countryService.GetByCodeAplha2(countryCodeAlpha2);
+
+            return await _marketplaceProviderClient.ListStoreCategories(country.CodeAlpha2);
         }
 
         public async Task<List<StoreItemCategory>> ListStoreItemCategories(string storeId)
         {
+            if(string.IsNullOrWhiteSpace(storeId))
+                throw new ArgumentNullException(nameof(storeId));
+            storeId = storeId.Trim();
+
             return await _marketplaceProviderClient.ListStoreItemCategories(storeId);
         }
 
@@ -59,17 +78,13 @@ namespace Yoma.Core.Domain.Marketplace.Services
                 throw new ArgumentNullException(nameof(filter));
 
             await _storeSearchFilterValidator.ValidateAndThrowAsync(filter);
-
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-
-            var countryOfResidence = user.CountryOfResidenceId.HasValue ? _countryService.GetByIdOrNull(user.CountryOfResidenceId.Value) : null;
-
+        
             var offset = default(int?);
             if (filter.PaginationEnabled)
                 offset = filter.PageNumber == 1 ? 0 : ((filter.PageNumber - 1) * filter.PageSize);
 
             var result = new StoreSearchResults
-            { Items = await _marketplaceProviderClient.ListStores(countryOfResidence?.CodeAlpha2, filter.CategoryId, filter.PageSize, offset) };
+            { Items = await _marketplaceProviderClient.ListStores(filter.CountryCodeAlpha2, filter.CategoryId, filter.PageSize, offset) };
 
             return result;
         }

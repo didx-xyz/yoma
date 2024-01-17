@@ -187,6 +187,21 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         #endregion IRewardProviderClient 
 
         #region IMarketplaceProviderClient
+        public List<string> ListSupportedCountryCodesAlpha2(string? countryCodeAlpha2)
+        {
+            countryCodeAlpha2 = countryCodeAlpha2?.Trim();
+
+            var results = new List<string>() { Country.Worldwide.ToDescription() };
+
+            var supportedCountryCodesAlpha2 = _options.Store.Owners
+                .Where(o => string.IsNullOrEmpty(countryCodeAlpha2) || string.Equals(countryCodeAlpha2, o.CountryCodeAlpha2, StringComparison.InvariantCultureIgnoreCase))
+                .Select(o => o.CountryCodeAlpha2).ToList();
+
+            results = results.Union(supportedCountryCodesAlpha2).ToList();
+
+            return results;
+        }
+
         public async Task<List<Domain.Marketplace.Models.StoreCategory>> ListStoreCategories(string? countryCodeAlpha2)
         {
             countryCodeAlpha2 = ResolveCountryCode(countryCodeAlpha2);
