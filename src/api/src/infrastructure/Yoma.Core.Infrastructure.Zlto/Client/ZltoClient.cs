@@ -235,7 +235,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             storeId = storeId.Trim();
 
             var response = await _options.Store.BaseUrl
-              .AppendPathSegment("all_item_categories_by_store_store_id") 
+              .AppendPathSegment("all_item_categories_by_store_store_id")
               .SetQueryParam("store_id", storeId)
               .SetQueryParam("item_state", (int)StoreItemCategoryState.Active)
               .WithAuthHeaders(await GetAuthHeaders())
@@ -379,7 +379,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             try
             {
                 var response = await _options.Wallet.BaseUrl
-                    .AppendPathSegment("get_wallet_details_by_account_username") 
+                    .AppendPathSegment("get_wallet_details_by_account_username")
                     .SetQueryParam("wallet_username", username)
                     .WithAuthHeaders(await GetAuthHeaders())
                     .PostAsync()

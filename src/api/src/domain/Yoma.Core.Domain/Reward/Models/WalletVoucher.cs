@@ -14,6 +14,6 @@ namespace Yoma.Core.Domain.Reward.Models
 
         public decimal Amount { get; set; }
 
-        public VoucherStatus Status { get; set; } 
+        public VoucherStatus Status { get; set; }
     }
 }
