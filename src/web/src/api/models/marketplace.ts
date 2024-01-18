@@ -30,7 +30,6 @@ export interface StoreItemCategory {
   description: string;
   summary: string;
   imageURL: string;
-  itemCount: number;
   amount: number;
 }
 
@@ -44,9 +43,20 @@ export interface StoreItemSearchResults {
 }
 
 export interface StoreSearchFilter extends PaginationFilter {
+  countryCodeAlpha2: string;
   categoryId: string | null;
 }
 
 export interface StoreSearchResults {
   items: Store[];
+}
+
+export interface WalletVoucher {
+  id: string;
+  category: string;
+  name: string;
+  code: string;
+  instructions: string;
+  amount: number;
+ // status: VoucherStatus;
 }

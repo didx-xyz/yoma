@@ -3,7 +3,9 @@ import React, { useState } from "react";
 import { IoMdFingerPrint } from "react-icons/io";
 import { fetchClientEnv } from "~/lib/utils";
 
-export const SignInButton: React.FC = () => {
+export const SignInButton: React.FC<{ className?: string }> = ({
+  className = "hover:brightness-50x btn w-[120px] gap-2 border-0 border-none bg-transparent px-2 disabled:brightness-50",
+}) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -20,7 +22,7 @@ export const SignInButton: React.FC = () => {
   return (
     <button
       type="button"
-      className="hover:bg-transparentx hover:brightness-50x btn w-[120px] gap-2 border-0 border-none bg-transparent px-2 disabled:brightness-50"
+      className={className}
       onClick={handleLogin}
       disabled={isButtonLoading}
     >

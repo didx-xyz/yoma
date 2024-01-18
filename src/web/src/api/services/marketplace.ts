@@ -13,13 +13,25 @@ import type {
   WalletVoucherSearchFilter,
   WalletVoucherSearchResults,
 } from "../models/reward";
+import { Country } from "../models/lookups";
 
-export const getStoreCategories = async (
+export const listSearchCriteriaCountries = async (
+  context?: GetServerSidePropsContext,
+): Promise<Country[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<Country[]>(
+    "/marketplace/store/search/filter/country",
+  );
+  return data;
+};
+
+export const listStoreCategories = async (
+  countryCodeAlpha2: string,
   context?: GetServerSidePropsContext,
 ): Promise<StoreCategory[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<StoreCategory[]>(
-    "/marketplace/store/category",
+    `/marketplace/store/${countryCodeAlpha2}/category`,
   );
   return data;
 };
@@ -38,7 +50,7 @@ export const searchStores = async (
   return data;
 };
 
-export const getStoreItemCategories = async (
+export const listStoreItemCategories = async (
   storeId: string,
   context?: GetServerSidePropsContext,
 ): Promise<StoreItemCategory[]> => {

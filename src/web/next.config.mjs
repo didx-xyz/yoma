@@ -37,13 +37,25 @@ const config = {
     API_BASE_URL: process.env.API_BASE_URL,
   },
 
-  // allow certificate images to be loaded from https
+  // allow S3 bucket images to be loaded from https
   images: {
-    domains: [
-      "yoma-test-file-storage.s3.eu-west-1.amazonaws.com",
-      "yoma-v3-private-storage.s3.eu-west-1.amazonaws.com",
-      "yoma-v3-public-storage.s3.eu-west-1.amazonaws.com",
-      "s3-eu-west-1.amazonaws.com",
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "yoma-v3-public-storage.s3.eu-west-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "yoma-v3-private-storage.s3.eu-west-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "yoma-test-file-storage.s3.eu-west-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "s3-eu-west-1.amazonaws.com",
+      },
     ],
   },
 

@@ -4,7 +4,7 @@ import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import React, { type ReactElement } from "react";
 import { type NextPageWithLayout } from "~/pages/_app";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { getStoreItemCategories } from "~/api/services/marketplace";
+import { listStoreItemCategories } from "~/api/services/marketplace";
 import { authOptions } from "~/server/auth";
 import { type ParsedUrlQuery } from "querystring";
 import { config } from "~/lib/react-query-config";
@@ -43,7 +43,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
     queryKey: [`StoreCategoryItems_${category}_${store}`],
-    queryFn: () => getStoreItemCategories(storeId!.toString(), context),
+    queryFn: () => listStoreItemCategories(storeId!.toString(), context),
   });
 
   return {
@@ -72,7 +72,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
     isLoading: dataIsLoading,
   } = useQuery<StoreItemCategory[]>({
     queryKey: [`StoreCategoryItems_${category}_${store}`],
-    queryFn: () => getStoreItemCategories(storeId),
+    queryFn: () => listStoreItemCategories(storeId),
     enabled: !error,
   });
 
