@@ -6,6 +6,6 @@ namespace Yoma.Core.Domain.Marketplace.Models
     {
         public string StoreId { get; set; }
 
-        public int ItemCategoryId { get; set; }
+        public string ItemCategoryId { get; set; }
     }
 }

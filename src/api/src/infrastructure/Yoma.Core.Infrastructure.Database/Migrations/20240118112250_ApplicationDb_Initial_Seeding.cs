@@ -1223,6 +1223,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     {"19140FDC-648E-4523-9BC9-32D613476831","Error",DateTimeOffset.Now}
             },
             schema: "Reward");
+
+            migrationBuilder.InsertData(
+            table: "TransactionStatus",
+            columns: new[] { "Id", "Name", "DateCreated" },
+            values: new object[,]
+            {
+                    {"262E8AD0-868A-4969-A7B7-2A04FBCCD881","Reserved",DateTimeOffset.Now}
+                    ,
+                    {"33999712-8880-4E87-BF2F-0D94B959EF46","Sold",DateTimeOffset.Now}
+            },
+            schema: "Marketplace");
             #endregion SSI
         }
     }

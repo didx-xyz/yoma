@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using static Yoma.Core.Infrastructure.Zlto.Models.Common;
 
 namespace Yoma.Core.Infrastructure.Zlto.Models
 {
@@ -88,7 +89,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
         public RewardEarnBankWallet BankWalletResponse { get; set; }
 
         [JsonProperty("bank_response")]
-        public RewardEarnBank BankResponse { get; set; }
+        public BankResponse BankResponse { get; set; }
     }
 
     public class RewardEarnTask
@@ -216,7 +217,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
 
     public class RewardEarnService
     {
-        [JsonProperty("Default")]
+        [JsonProperty(nameof(Default))]
         public string Default { get; set; }
     }
 
@@ -254,50 +255,5 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
 
         [JsonProperty("date_created")]
         public string DateCreated { get; set; }
-    }
-
-    public class RewardEarnBank
-    {
-        [JsonProperty("transaction_info")]
-        public RewardEarnTransaction TransactionInfo { get; set; }
-
-        [JsonProperty("wallet_info")]
-        public string WalletInfo { get; set; }
-    }
-
-    public class RewardEarnTransaction
-    {
-        [JsonProperty("ztid")]
-        public int ZtId { get; set; }
-
-        [JsonProperty("acc_from")]
-        public string AccFrom { get; set; }
-
-        [JsonProperty("amount")]
-        public int Amount { get; set; }
-
-        [JsonProperty("trans_status")]
-        public int TransStatus { get; set; }
-
-        [JsonProperty("service_name")]
-        public string ServiceName { get; set; }
-
-        [JsonProperty("last_updated")]
-        public DateTime LastUpdated { get; set; }
-
-        [JsonProperty("trans_type")]
-        public int TransType { get; set; }
-
-        [JsonProperty("acc_to")]
-        public string AccTo { get; set; }
-
-        [JsonProperty("trans_payload")]
-        public string TransPayload { get; set; }
-
-        [JsonProperty("service_ref_id")]
-        public string ServiceRefId { get; set; }
-
-        [JsonProperty("date_created")]
-        public DateTime DateCreated { get; set; }
     }
 }

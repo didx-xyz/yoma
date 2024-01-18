@@ -12,6 +12,6 @@ namespace Yoma.Core.Domain.Marketplace.Interfaces.Provider
 
         Task<List<StoreItemCategory>> ListStoreItemCategories(string storeId);
 
-        Task<List<StoreItem>> ListStoreItems(string storeId, int itemCategoryId, int? limit, int? offset);
+        Task<List<StoreItem>> ListStoreItems(string storeId, string itemCategoryId, int? limit, int? offset);
     }
 }

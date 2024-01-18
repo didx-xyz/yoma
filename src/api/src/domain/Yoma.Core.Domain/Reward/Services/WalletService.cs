@@ -60,10 +60,10 @@ namespace Yoma.Core.Domain.Reward.Services
         #region Public Members
         public (string userEmail, string walletId) GetWalletId(Guid userId)
         {
-            var result = GetWalletIdOrNull(userId);
-            if (string.IsNullOrEmpty(result.walletId))
+            var (userEmail, walletId) = GetWalletIdOrNull(userId);
+            if (string.IsNullOrEmpty(walletId))
                 throw new EntityNotFoundException($"Wallet id not found for user with id '{userId}'");
-            return (result.userEmail, result.walletId);
+            return (userEmail, walletId);
         }
 
         public (string userEmail, string? walletId) GetWalletIdOrNull(Guid userId)
@@ -117,6 +117,8 @@ namespace Yoma.Core.Domain.Reward.Services
 
         public async Task<WalletVoucherSearchResults> SearchVouchers(WalletVoucherSearchFilter filter)
         {
+            await _rewardProviderClient.GetWallet("b6c351ff855e41fcad8bd2cb28d8d516_wlt");
+
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
 
@@ -157,7 +159,7 @@ namespace Yoma.Core.Domain.Reward.Services
             //attempt wallet creation
             var request = new WalletRequestCreate
             {
-                Email = user.Email,
+                Username = user.Email,
                 DisplayName = user.DisplayName,
                 Balance = balance
             };
@@ -171,7 +173,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
                 case Models.Provider.WalletCreationStatus.Created:
                     if (wallet.Balance != balance)
-                        throw new InvalidOperationException($"Initial wallet balance mismatch detected for user with id '{userId}': Calculated '{balance.ToString("0.00")}' vs. Processed '{wallet.Balance.ToString("0.00")}'");
+                        throw new InvalidOperationException($"Initial wallet balance mismatch detected for user with id '{userId}': Calculated '{balance:0.00}' vs. Processed '{wallet.Balance:0.00}'");
 
                     rewardTransactions.ForEach(o => o.Status = RewardTransactionStatus.ProcessedInitialBalance);
 
