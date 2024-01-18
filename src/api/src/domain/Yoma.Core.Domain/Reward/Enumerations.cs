@@ -20,4 +20,10 @@ namespace Yoma.Core.Domain.Reward
         ProcessedInitialBalance,
         Error
     }
+
+    public enum VoucherStatus
+    {
+        New,
+        Viewed
+    }
 }

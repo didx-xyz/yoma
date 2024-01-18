@@ -73,7 +73,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
                             item.WalletId = wallet.Id;
                             item.Balance = wallet.Balance; //track initial balance upon creation, if any
-                            item.Status = WalletCreationStatus.Created; //TODO: Distinguish between existing and newly created wallet
+                            item.Status = WalletCreationStatus.Created;
                             _walletService.UpdateScheduleCreation(item).Wait();
 
                             scope.Complete();
