@@ -111,7 +111,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
         public int ItemCatZlto { get; set; }
 
         [JsonProperty("item_cat_state"), Required]
-        public int ItemCatState { get; set; }
+        public StoreItemCategoryState ItemCatState { get; set; }
 
         [JsonProperty("store_item_count"), Required]
         public int StoreItemCount { get; set; }
@@ -162,7 +162,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
         public string ItemCode { get; set; }
 
         [JsonProperty("item_state")]
-        public int ItemState { get; set; }
+        public StoreItemState ItemState { get; set; }
 
         [JsonProperty("reserved_user_id")]
         public string ReservedUserId { get; set; }
@@ -180,8 +180,17 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
         public DateTime DateCreated { get; set; }
     }
 
-    public enum ItemState
+    public enum StoreItemState
     {
-        Active = 1,
+        Available = 1,
+        Reserved = 2,
+        Purchased = 3,
+        Redeemed = 4
+    }
+
+    public enum StoreItemCategoryState
+    {
+        Active = 1, //live
+        Inactive = 2 //not live
     }
 }

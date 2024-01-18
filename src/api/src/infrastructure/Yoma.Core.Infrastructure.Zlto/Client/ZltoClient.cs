@@ -59,23 +59,17 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             }
 
             //attempt legacy migration with initial balance
-            var status = WalletCreationStatus.CreatedWithBalance;
-            var account = await CreateAccountLegacy(request);
+            var status = WalletCreationStatus.Created;
+            var account = await CreateAccount(request);
 
-            var result = new Domain.Reward.Models.Wallet { Balance = request.Balance };
-
-            //not a legacy user, create new account without initial balance
-            if (account == null)
+            var result = new Domain.Reward.Models.Wallet
             {
-                account = await CreateAccount(request);
-                result.Balance = default;
-                status = WalletCreationStatus.Created;
-            }
-
-            result.Id = account.WalletId;
-            result.OwnerId = Guid.Parse(account.OwnerId);
-            result.DateCreated = account.DateCreated;
-            result.DateModified = account.LastUpdated;
+                Balance = request.Balance,
+                Id = account.WalletId,
+                OwnerId = Guid.Parse(account.OwnerId),
+                DateCreated = account.DateCreated,
+                DateModified = account.LastUpdated
+            };
             return (result, status);
         }
 
@@ -113,7 +107,6 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             var query = _options.Wallet.BaseUrl
              .AppendPathSegment("get_vouchers_by_wallet")
              .SetQueryParam("wallet_id", walletId)
-             //TODO: filter on state
              .WithAuthHeaders(await GetAuthHeaders());
 
             if (limit.HasValue && limit.Value > default(int))
@@ -135,7 +128,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 Instructions = o.VoucherInstructions,
                 Amount = int.TryParse(o.ZltoAmount, out int parsedAmount)
                     ? parsedAmount
-                    : throw new InvalidOperationException($"{nameof(o.ZltoAmount)} of '{o.ZltoAmount}' couldn't be parsed to an integer")
+                    : throw new InvalidOperationException($"{nameof(o.ZltoAmount)} of '{o.ZltoAmount}' couldn't be parsed to an integer"),
+                Status = Enum.Parse<Domain.Reward.VoucherStatus>(o.VoucherState, true),
             }).OrderBy(o => o.Name).ToList();
 
             return results;
@@ -241,9 +235,9 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             storeId = storeId.Trim();
 
             var response = await _options.Store.BaseUrl
-              .AppendPathSegment("all_item_categories_by_store_store_id/") //TODO: known issue; requires '/' suffix before query params
+              .AppendPathSegment("all_item_categories_by_store_store_id") 
               .SetQueryParam("store_id", storeId)
-              .SetQueryParam("item_state", (int)ItemState.Active)
+              .SetQueryParam("item_state", (int)StoreItemCategoryState.Active)
               .WithAuthHeaders(await GetAuthHeaders())
               .PostAsync()
               .EnsureSuccessStatusCodeAsync()
@@ -257,7 +251,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 Description = o.ItemCatDescription,
                 Summary = o.ItemCatDetails,
                 ImageURL = string.Equals(o.ItemCatImage, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? null : o.ItemCatImage,
-                ItemCount = o.StoreItemCount,
+                //ItemCount = o.StoreItemCount,
                 Amount = o.ItemCatZlto
 
             }).OrderBy(o => o.Name).ToList();
@@ -278,7 +272,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 .AppendPathSegment("all_store_items_by_store_by_category")
                 .SetQueryParam("store_id", storeId)
                 .SetQueryParam("category_id", itemCategoryId)
-                .SetQueryParam("item_state", (int)ItemState.Active)
+                .SetQueryParam("item_state", (int)StoreItemState.Available)
                 .WithAuthHeaders(await GetAuthHeaders());
 
             if (limit.HasValue && limit.Value > default(int))
@@ -357,9 +351,9 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {response.AccessToken}");
         }
 
-        private async Task<WalletAccountInfo?> CreateAccountLegacy(Domain.Reward.Models.Provider.WalletRequestCreate request)
+        private async Task<WalletAccountInfo> CreateAccount(Domain.Reward.Models.Provider.WalletRequestCreate request)
         {
-            var requestAccount = new WalletRequestCreateLegacy
+            var requestAccount = new Models.WalletRequestCreate
             {
                 OwnerOrigin = _accessToken.PartnerName,
                 OwnerName = request.DisplayName,
@@ -369,41 +363,6 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 //UserPassword: used with external wallet activation; with Yoma wallets are internal
             };
 
-            //TODO: with a failed legacy migration, is the status code NotFound OR Ok with a legacy response message, resulting in no account info returned. Example:
-            //{ "legacy_response": "User someuser@gmail.com does not exist in Yoma Legacy Table", "msg": "wallet and account was not created" }
-
-            WalletResponseCreateLegacy? response = null;
-            try
-            {
-                response = await _options.Wallet.BaseUrl
-                    .AppendPathSegment("create_legacy_account_for_external_partner")
-                    .WithAuthHeaders(await GetAuthHeaders())
-                    .PostJsonAsync(requestAccount)
-                    .EnsureSuccessStatusCodeAsync()
-                    .ReceiveJson<WalletResponseCreateLegacy>();
-            }
-            catch (HttpClientException ex)
-            {
-                if (ex.StatusCode != HttpStatusCode.NotFound) throw;
-            }
-
-            if (response?.LegacyResponse != null) return null;
-
-            return response?.Wallet?.AccountInfo;
-        }
-
-        private async Task<WalletAccountInfo> CreateAccount(Domain.Reward.Models.Provider.WalletRequestCreate user)
-        {
-            var requestAccount = new Models.WalletRequestCreate
-            {
-                OwnerOrigin = _accessToken.PartnerName,
-                OwnerName = user.DisplayName,
-                UserName = user.Email,
-                //OwnerId: system assigned; can not be specified
-                //UserPassword: used with external wallet activation; with Yoma wallets are internal
-            };
-
-            //TODO: Results in an internal server error
             var response = await _options.Wallet.BaseUrl
                 .AppendPathSegment("create_account_for_external_partner")
                 .WithAuthHeaders(await GetAuthHeaders())
@@ -420,7 +379,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             try
             {
                 var response = await _options.Wallet.BaseUrl
-                    .AppendPathSegment("get_wallet_details_by_account_username/") //TODO: known issue; requires '/' suffix before query params
+                    .AppendPathSegment("get_wallet_details_by_account_username") 
                     .SetQueryParam("wallet_username", username)
                     .WithAuthHeaders(await GetAuthHeaders())
                     .PostAsync()
@@ -477,7 +436,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         private async Task<StoreResponseSearch> ListStoresInternal(string countryCodeAlpha2, string? categoryId, int? limit, int? offset)
         {
             var query = _options.Store.BaseUrl
-             .AppendPathSegment("get_only_country_store_fronts_by_yoma")
+             .AppendPathSegment("get_public_and_country_store_fronts_by_yoma")
              .WithAuthHeaders(await GetAuthHeaders());
 
             if (string.IsNullOrWhiteSpace(countryCodeAlpha2))
@@ -490,9 +449,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 .Single(o => string.Equals(o.CountryCodeAlpha2, Country.Worldwide.ToDescription(), StringComparison.InvariantCultureIgnoreCase)).Id;
             query = query.SetQueryParam("country_owner_id", countryOwnerId);
 
-            //TODO: pagination does not work correctly
             if (limit.HasValue && limit.Value > default(int))
-                query = query.SetQueryParam("limit", limit - 1);
+                query = query.SetQueryParam("limit", limit);
 
             if (offset.HasValue && offset.Value >= default(int))
                 query = query.SetQueryParam("offset", offset);

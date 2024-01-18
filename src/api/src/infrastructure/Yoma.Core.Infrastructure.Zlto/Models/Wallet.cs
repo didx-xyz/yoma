@@ -21,30 +21,10 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
 
         [JsonProperty("user_password")]
         public string UserPassword { get; set; }
-    }
 
-    public class WalletRequestCreateLegacy : WalletRequestCreate
-    {
         [JsonProperty("init_zlto_amount")]
         public int Balance { get; set; }
-    }
 
-    public class WalletResponseCreateLegacy
-    {
-        [JsonProperty("legacy_response")]
-        public string LegacyResponse { get; set; }
-
-        [JsonProperty("msg")]
-        public string Msg { get; set; }
-
-        [JsonProperty("wallet_response")]
-        public WalletLegacy? Wallet { get; set; }
-    }
-
-    public class WalletLegacy
-    {
-        [JsonProperty("account_info")]
-        public WalletAccountInfo? AccountInfo { get; set; }
     }
 
     public class WalletResponseCreate

@@ -14,8 +14,6 @@ namespace Yoma.Core.Domain.Marketplace.Models
 
         public string? ImageURL { get; set; }
 
-        public int ItemCount { get; set; }
-
         public decimal Amount { get; set; }
     }
 }

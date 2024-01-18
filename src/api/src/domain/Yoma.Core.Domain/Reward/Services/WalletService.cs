@@ -169,7 +169,7 @@ namespace Yoma.Core.Domain.Reward.Services
                 case Models.Provider.WalletCreationStatus.Existing:
                     break;
 
-                case Models.Provider.WalletCreationStatus.CreatedWithBalance:
+                case Models.Provider.WalletCreationStatus.Created:
                     if (wallet.Balance != balance)
                         throw new InvalidOperationException($"Initial wallet balance mismatch detected for user with id '{userId}': Calculated '{balance.ToString("0.00")}' vs. Processed '{wallet.Balance.ToString("0.00")}'");
 
@@ -177,9 +177,6 @@ namespace Yoma.Core.Domain.Reward.Services
 
                     await _rewardService.UpdateTransactions(rewardTransactions);
                     //flag pending rewards as processed
-                    break;
-
-                case Models.Provider.WalletCreationStatus.Created:
                     break;
 
                 default:
