@@ -82,7 +82,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Search for store item categories based on the supplied filter (Anonymous)")]
         [HttpPost("store/item/category/search")]
-        [ProducesResponseType(typeof(List<StoreItemCategory>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(StoreItemCategorySearchResults), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
         public async Task<IActionResult> SearchStoreItemCategories([FromBody] StoreItemCategorySearchFilter filter)
         {
