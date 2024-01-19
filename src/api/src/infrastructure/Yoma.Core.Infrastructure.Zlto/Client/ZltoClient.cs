@@ -252,7 +252,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 Summary = o.ItemCatDetails,
                 ImageURL = string.Equals(o.ItemCatImage, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? null : o.ItemCatImage,
                 //o.StoreItemCount: internal count the does not reflect the available item count correctly
-                CountAvailable = ListStoreItems(storeId, o.ItemCategoryId, null, null).Result.Count(),
+                Count = ListStoreItems(storeId, o.ItemCategoryId.ToString(), null, null).Result.Count(),
                 Amount = o.ItemCatZlto
 
             }).OrderBy(o => o.Name).ToList();
@@ -333,6 +333,25 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
               .ReceiveJson<ReserveItemResponse>();
 
             return response.BankResponse.TransactionInfo.TransactionId.ToString();
+        }
+
+        public async System.Threading.Tasks.Task ItemReserveReset(string itemId, string transactionId)
+        {
+            if (string.IsNullOrWhiteSpace(itemId))
+                throw new ArgumentNullException(nameof(itemId));
+            itemId = itemId.Trim();
+
+            if (string.IsNullOrWhiteSpace(transactionId))
+                throw new ArgumentNullException(nameof(transactionId));
+            transactionId = transactionId.Trim();
+
+            await _options.Store.BaseUrl
+              .AppendPathSegment("update_item_reset")
+              .AppendPathSegment(itemId)
+              .AppendPathSegment(transactionId)
+              .WithAuthHeaders(await GetAuthHeaders())
+              .PutAsync()
+              .EnsureSuccessStatusCodeAsync();  
         }
 
         public async System.Threading.Tasks.Task ItemSold(string walletId, string username, string itemId, string transactionId)
