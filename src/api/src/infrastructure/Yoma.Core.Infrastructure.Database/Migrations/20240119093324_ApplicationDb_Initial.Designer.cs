@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240119061443_ApplicationDb_Initial")]
+    [Migration("20240119093324_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -599,6 +599,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<DateTimeOffset>("DateModified")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("ItemCategoryId")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)");
+
                     b.Property<string>("ItemId")
                         .IsRequired()
                         .HasColumnType("varchar(50)");
@@ -617,10 +621,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("StatusId");
 
-                    b.HasIndex("DateCreated", "DateModified");
-
-                    b.HasIndex("UserId", "ItemId", "StatusId")
-                        .IsUnique();
+                    b.HasIndex("UserId", "ItemCategoryId", "ItemId", "StatusId", "DateCreated", "DateModified");
 
                     b.ToTable("TransactionLog", "Marketplace");
                 });

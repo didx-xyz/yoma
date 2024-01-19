@@ -13,7 +13,9 @@ using Yoma.Core.Domain.Entity.Services.Lookups;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Services;
 using Yoma.Core.Domain.Marketplace.Interfaces;
+using Yoma.Core.Domain.Marketplace.Interfaces.Lookups;
 using Yoma.Core.Domain.Marketplace.Services;
+using Yoma.Core.Domain.Marketplace.Services.Lookups;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Services;
@@ -68,6 +70,10 @@ namespace Yoma.Core.Domain
             #endregion Lookups
 
             #region Marketplace
+            #region Lookups
+            services.AddScoped<ITransactionStatusService, TransactionStatusService>();
+            #endregion Lookups
+
             services.AddScoped<IMarketplaceService, MarketplaceService>();
             #endregion Marketplace
 

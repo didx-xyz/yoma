@@ -126,6 +126,21 @@ namespace Yoma.Core.Api.Controllers
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
+
+        [SwaggerOperation(Summary = "Buy the next available item in the specified store and item category (Authenticated User)")]
+        [HttpPost("store/{storeId}/item/category/{itemCategoryId}/buy")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [Authorize(Policy = Common.Constants.Authorization_Policy, Roles = $"{Constants.Role_User}")]
+        public async Task<IActionResult> BuyItem([FromRoute] string storeId, [FromRoute] string itemCategoryId)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(BuyItem));
+
+            await _marketplaceService.BuyItem(storeId, itemCategoryId);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(BuyItem));
+
+            return StatusCode((int)HttpStatusCode.OK);
+        }
         #endregion Authenticated User Based Actions
         #endregion
     }

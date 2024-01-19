@@ -6,6 +6,8 @@ namespace Yoma.Core.Domain.Marketplace.Models
 
         public Guid UserId { get; set; }
 
+        public string ItemCategoryId { get; set; }
+
         public string ItemId { get; set; }
 
         public Guid StatusId { get; set; }
