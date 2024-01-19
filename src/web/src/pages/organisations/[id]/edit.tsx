@@ -31,6 +31,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
+  currentOrganisationInactiveAtom,
   userProfileAtom,
 } from "~/lib/store";
 import { getUserProfile } from "~/api/services/user";
@@ -112,6 +113,9 @@ const OrganisationUpdate: NextPageWithLayout<{
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
+  const setCurrentOrganisationInactiveAtom = useSetAtom(
+    currentOrganisationInactiveAtom,
+  );
 
   const isUserAdminOfCurrentOrg =
     userProfile?.adminsOf?.find((x) => x.id == id) != null;
@@ -163,7 +167,10 @@ const OrganisationUpdate: NextPageWithLayout<{
         toast.dismiss();
 
         // update api
-        await patchOrganisation(model);
+        const updatedOrg = await patchOrganisation(model);
+
+        // update org status (limited functionality badge)
+        setCurrentOrganisationInactiveAtom(updatedOrg.status !== "Active");
 
         // refresh user profile for updated organisation to reflect on user menu
         if (isUserAdminOfCurrentOrg) {
@@ -192,7 +199,12 @@ const OrganisationUpdate: NextPageWithLayout<{
         return;
       }
     },
-    [setIsLoading, setUserProfile, isUserAdminOfCurrentOrg],
+    [
+      setIsLoading,
+      setUserProfile,
+      isUserAdminOfCurrentOrg,
+      setCurrentOrganisationInactiveAtom,
+    ],
   );
 
   // form submission handler
