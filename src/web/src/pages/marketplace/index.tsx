@@ -20,6 +20,8 @@ import { Country } from "~/api/models/lookups";
 import Select from "react-select";
 import { useRouter } from "next/router";
 
+const defaultCountry = "WW";
+
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
   // get country from query params
@@ -34,7 +36,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   });
   await queryClient.prefetchQuery({
     queryKey: ["StoreCategories"],
-    queryFn: () => listStoreCategories(countryId?.toString() ?? "WW", context),
+    queryFn: () =>
+      listStoreCategories(countryId?.toString() ?? defaultCountry, context),
   });
 
   return {
@@ -47,7 +50,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 }
 
 const MarketplaceStoreCategories: NextPageWithLayout<{
-  countryId: string;
+  countryId?: string;
 }> = ({ countryId }) => {
   const router = useRouter();
 
@@ -67,7 +70,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
     isLoading: dataIsLoading,
   } = useQuery<StoreCategory[]>({
     queryKey: ["StoreCategories"],
-    queryFn: () => listStoreCategories(countryId ?? "WW"),
+    queryFn: () => listStoreCategories(countryId ?? defaultCountry),
   });
 
   const onFilterCountry = useCallback((value: string) => {
@@ -95,9 +98,10 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
           }}
           options={countryOptions}
           onChange={(val) => onFilterCountry(val?.value!)}
-          value={countryOptions?.find((c) => c.value === countryId)}
+          value={countryOptions?.find(
+            (c) => c.value === (countryId?.toString() ?? defaultCountry),
+          )}
           placeholder="Country"
-          isClearable={true}
         />
       </div>
 
@@ -131,7 +135,9 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                   key={index}
                   name={item.name}
                   imageURLs={item.storeImageURLs}
-                  href={`/marketplace/${item.name}?categoryId=${item.id}&countryId=${countryId}`}
+                  href={`/marketplace/${item.name}?countryId=${
+                    countryId?.toString() ?? defaultCountry
+                  }&categoryId=${item.id}`}
                 />
               ))}
             </div>

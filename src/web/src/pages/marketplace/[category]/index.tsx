@@ -26,7 +26,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const queryClient = new QueryClient(config);
   const { category } = context.params as IParams;
-  const { categoryId, countryId } = context.query;
+  const { countryId, categoryId } = context.query;
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
@@ -37,8 +37,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           //TODO: PAGING NOT SUPPORTED BY ZLTO
           pageNumber: null, //page ? parseInt(page.toString()) : 1,
           pageSize: null, //PAGE_SIZE,
-          categoryId: categoryId!.toString() ?? null,
           countryCodeAlpha2: countryId!.toString(),
+          categoryId: categoryId!.toString() ?? null,
         },
         context,
       ),
@@ -51,8 +51,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           //TODO: PAGING NOT SUPPORTED BY ZLTO
           pageNumber: null, //page ? parseInt(page.toString()) : 1,
           pageSize: null, //PAGE_SIZE,
-          categoryId: categoryId!.toString() ?? null,
           countryCodeAlpha2: countryId!.toString(),
+          categoryId: categoryId!.toString() ?? null,
         },
         context,
       ),
@@ -62,18 +62,18 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      countryId: countryId ?? null,
       category: category ?? null,
       categoryId: categoryId ?? null,
-      countryId: countryId ?? null,
     },
   };
 }
 
 const MarketplaceSearchStores: NextPageWithLayout<{
+  countryId: string;
   category: string;
   categoryId: string;
-  countryId: string;
-}> = ({ category, categoryId, countryId }) => {
+}> = ({ countryId, category, categoryId }) => {
   // 👇 use prefetched queries from server
   const {
     data: data,
@@ -86,8 +86,8 @@ const MarketplaceSearchStores: NextPageWithLayout<{
         //TODO: PAGING NOT SUPPORTED BY ZLTO
         pageNumber: null, //page ? parseInt(page.toString()) : 1,
         pageSize: null, //PAGE_SIZE,
-        categoryId: categoryId,
         countryCodeAlpha2: countryId,
+        categoryId: categoryId,
       }),
   });
 
@@ -98,7 +98,7 @@ const MarketplaceSearchStores: NextPageWithLayout<{
         items={[
           {
             title: "Marketplace",
-            url: "/marketplace",
+            url: `/marketplace${countryId ? `?countryId=${countryId}` : ""}`,
             iconElement: (
               <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
             ),
@@ -153,7 +153,7 @@ const MarketplaceSearchStores: NextPageWithLayout<{
                         ? [item.imageURL]
                         : []
                     }
-                    href={`/marketplace/${category}/${item.name}?categoryId=${categoryId}&storeId=${item.id}`}
+                    href={`/marketplace/${category}/${item.name}?countryId=${countryId}&categoryId=${categoryId}&storeId=${item.id}`}
                   />
                 ))}
               </div>

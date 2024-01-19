@@ -13,7 +13,6 @@ import type { StoreItemSearchResults } from "~/api/models/marketplace";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
-import Link from "next/link";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
 import { PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -42,7 +41,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const queryClient = new QueryClient(config);
   const { category, store, itemCategory } = context.params as IParams;
-  const { categoryId, storeId, itemCategoryId, page } = context.query;
+  const { categoryId, storeId, itemCategoryId, countryId, page } =
+    context.query;
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
@@ -63,6 +63,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      countryId: countryId ?? null,
       category: category ?? null,
       categoryId: categoryId ?? null,
       store: store ?? null,
@@ -75,6 +76,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 }
 
 const MarketplaceSearchStoreItems: NextPageWithLayout<{
+  countryId: string;
   category: string;
   categoryId: string;
   store: string;
@@ -82,8 +84,8 @@ const MarketplaceSearchStoreItems: NextPageWithLayout<{
   itemCategory: string;
   itemCategoryId: string;
   page?: string;
-  error: string;
 }> = ({
+  countryId,
   category,
   categoryId,
   store,
@@ -91,7 +93,6 @@ const MarketplaceSearchStoreItems: NextPageWithLayout<{
   itemCategory,
   itemCategoryId,
   page,
-  error,
 }) => {
   const router = useRouter();
 
@@ -109,7 +110,6 @@ const MarketplaceSearchStoreItems: NextPageWithLayout<{
         storeId: storeId.toString() ?? null,
         itemCategoryId: parseInt(itemCategoryId.toString()),
       }),
-    enabled: !error,
   });
 
   // 🔔 pager change event
@@ -145,8 +145,6 @@ const MarketplaceSearchStoreItems: NextPageWithLayout<{
     alert("click: " + id);
   }, []);
 
-  if (error) return <Unauthorized />;
-
   return (
     <div className="flex w-full max-w-5xl flex-col items-start gap-4">
       {/* BREADCRUMB */}
@@ -154,18 +152,18 @@ const MarketplaceSearchStoreItems: NextPageWithLayout<{
         items={[
           {
             title: "Marketplace",
-            url: "/marketplace",
+            url: `/marketplace?countryId=${countryId}`,
             iconElement: (
               <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
             ),
           },
           {
             title: category,
-            url: `/marketplace/${category}?categoryId=${categoryId}`,
+            url: `/marketplace/${category}?countryId=${countryId}&categoryId=${categoryId}`,
           },
           {
             title: store,
-            url: `/marketplace/${category}/${store}?categoryId=${categoryId}&storeId=${storeId}`,
+            url: `/marketplace/${category}/${store}?countryId=${countryId}&categoryId=${categoryId}&storeId=${storeId}`,
           },
           {
             title: itemCategory,

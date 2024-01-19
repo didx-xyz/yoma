@@ -9,10 +9,8 @@ import { authOptions } from "~/server/auth";
 import { type ParsedUrlQuery } from "querystring";
 import { config } from "~/lib/react-query-config";
 import type { StoreItemCategory } from "~/api/models/marketplace";
-import { Unauthorized } from "~/components/Status/Unauthorized";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
-import Link from "next/link";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
 import { THEME_BLUE } from "~/lib/constants";
 import { ItemCardComponent } from "~/components/Marketplace/ItemCard";
@@ -27,18 +25,9 @@ interface IParams extends ParsedUrlQuery {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
-  // 👇 ensure authenticated
-  if (!session) {
-    return {
-      props: {
-        error: "Unauthorized",
-      },
-    };
-  }
-
   const queryClient = new QueryClient(config);
   const { category, store } = context.params as IParams;
-  const { categoryId, storeId } = context.query;
+  const { countryId, categoryId, storeId } = context.query;
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
@@ -50,6 +39,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      countryId: countryId ?? null,
       category: category ?? null,
       categoryId: categoryId ?? null,
       store: store ?? null,
@@ -59,12 +49,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 }
 
 const MarketplaceStoreItemCategories: NextPageWithLayout<{
+  countryId: string;
   category: string;
   categoryId: string;
   store: string;
   storeId: string;
-  error: string;
-}> = ({ category, categoryId, store, storeId, error }) => {
+}> = ({ category, categoryId, store, storeId, countryId }) => {
   // 👇 use prefetched queries from server
   const {
     data: data,
@@ -73,10 +63,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
   } = useQuery<StoreItemCategory[]>({
     queryKey: [`StoreCategoryItems_${category}_${store}`],
     queryFn: () => listStoreItemCategories(storeId),
-    enabled: !error,
   });
-
-  if (error) return <Unauthorized />;
 
   return (
     <div className="flex w-full max-w-5xl flex-col items-start gap-4">
@@ -85,14 +72,14 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
         items={[
           {
             title: "Marketplace",
-            url: "/marketplace",
+            url: `/marketplace?countryId=${countryId}`,
             iconElement: (
               <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
             ),
           },
           {
             title: category,
-            url: `/marketplace/${category}?categoryId=${categoryId}`,
+            url: `/marketplace/${category}?countryId=${countryId}&categoryId=${categoryId}`,
           },
           {
             title: store,
@@ -138,7 +125,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
                   imageURL={item.imageURL}
                   summary={item.summary}
                   amount={item.amount}
-                  href={`/marketplace/${category}/${store}/${item.name}?categoryId=${categoryId}&storeId=${storeId}&itemCategoryId=${item.id}`}
+                  href={`/marketplace/${category}/${store}/${item.name}?countryId=${countryId}&categoryId=${categoryId}&storeId=${storeId}&itemCategoryId=${item.id}`}
                 />
               ))}
             </div>
