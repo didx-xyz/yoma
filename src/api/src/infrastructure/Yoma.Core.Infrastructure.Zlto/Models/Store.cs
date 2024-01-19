@@ -203,7 +203,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
         [JsonConverter(typeof(IgnoreEmptyJsonObjectConverter<BankResponse>))]
         public BankResponse? BankResponse { get; set; }
 
-        [JsonProperty("message")]       
+        [JsonProperty("message")]
         public string Message { get; set; }
     }
 
