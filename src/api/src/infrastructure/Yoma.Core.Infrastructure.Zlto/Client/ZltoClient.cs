@@ -351,7 +351,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
               .AppendPathSegment(transactionId)
               .WithAuthHeaders(await GetAuthHeaders())
               .PutAsync()
-              .EnsureSuccessStatusCodeAsync();  
+              .EnsureSuccessStatusCodeAsync();
         }
 
         public async System.Threading.Tasks.Task ItemSold(string walletId, string username, string itemId, string transactionId)
