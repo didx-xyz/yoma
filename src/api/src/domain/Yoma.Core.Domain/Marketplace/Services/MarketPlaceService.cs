@@ -19,6 +19,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
         private readonly IUserService _userService;
         private readonly IMarketplaceProviderClient _marketplaceProviderClient;
         private readonly StoreSearchFilterValidator _storeSearchFilterValidator;
+        private readonly StoreItemCategorySearchFilterValidator _storeItemCategorySearchFilterValidator;
         private readonly StoreItemSearchFilterValidator _storeItemSearchFilterValidator;
         #endregion
 
@@ -28,6 +29,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
             IUserService userService,
             IMarketplaceProviderClientFactory marketplaceProviderClientFactory,
             StoreSearchFilterValidator storeSearchFilterValidator,
+            StoreItemCategorySearchFilterValidator storeItemCategorySearchFilterValidator,
             StoreItemSearchFilterValidator storeItemSearchFilterValidator)
         {
             _httpContextAccessor = httpContextAccessor;
@@ -35,6 +37,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
             _userService = userService;
             _marketplaceProviderClient = marketplaceProviderClientFactory.CreateClient();
             _storeSearchFilterValidator = storeSearchFilterValidator;
+            _storeItemCategorySearchFilterValidator = storeItemCategorySearchFilterValidator;
             _storeItemSearchFilterValidator = storeItemSearchFilterValidator;
         }
         #endregion
@@ -63,13 +66,21 @@ namespace Yoma.Core.Domain.Marketplace.Services
             return await _marketplaceProviderClient.ListStoreCategories(country.CodeAlpha2);
         }
 
-        public async Task<List<StoreItemCategory>> ListStoreItemCategories(string storeId)
+        public async Task<StoreItemCategorySearchResults> SearchStoreItemCategories(StoreItemCategorySearchFilter filter)
         {
-            if (string.IsNullOrWhiteSpace(storeId))
-                throw new ArgumentNullException(nameof(storeId));
-            storeId = storeId.Trim();
+            if (filter == null)
+                throw new ArgumentNullException(nameof(filter));
 
-            return await _marketplaceProviderClient.ListStoreItemCategories(storeId);
+            await _storeItemCategorySearchFilterValidator.ValidateAndThrowAsync(filter);
+
+            var offset = default(int?);
+            if (filter.PaginationEnabled)
+                offset = filter.PageNumber == 1 ? 0 : ((filter.PageNumber - 1) * filter.PageSize);
+
+            var result = new StoreItemCategorySearchResults
+            { Items = await _marketplaceProviderClient.ListStoreItemCategories(filter.StoreId, filter.PageSize, offset) };
+
+            return result;
         }
 
         public async Task<StoreSearchResults> SearchStores(StoreSearchFilter filter)

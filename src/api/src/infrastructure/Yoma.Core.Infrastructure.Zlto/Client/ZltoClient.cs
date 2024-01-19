@@ -228,18 +228,25 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             }).OrderBy(o => o.Name).ToList();
         }
 
-        public async Task<List<Domain.Marketplace.Models.StoreItemCategory>> ListStoreItemCategories(string storeId)
+        public async Task<List<Domain.Marketplace.Models.StoreItemCategory>> ListStoreItemCategories(string storeId, int? limit, int? offset)
         {
             if (string.IsNullOrWhiteSpace(storeId))
                 throw new ArgumentNullException(nameof(storeId));
             storeId = storeId.Trim();
 
-            var response = await _options.Store.BaseUrl
+            var query = _options.Store.BaseUrl
               .AppendPathSegment("all_item_categories_by_store_store_id")
               .SetQueryParam("store_id", storeId)
               .SetQueryParam("item_state", (int)StoreItemCategoryState.Active)
-              .WithAuthHeaders(await GetAuthHeaders())
-              .PostAsync()
+              .WithAuthHeaders(await GetAuthHeaders());
+
+            if (limit.HasValue && limit.Value > default(int))
+                query = query.SetQueryParam("limit", limit);
+
+            if (offset.HasValue && offset.Value >= default(int))
+                query = query.SetQueryParam("offset", offset);
+
+            var response = await query.PostAsync()
               .EnsureSuccessStatusCodeAsync()
               .ReceiveJson<StoreResponseItemCategories>();
 

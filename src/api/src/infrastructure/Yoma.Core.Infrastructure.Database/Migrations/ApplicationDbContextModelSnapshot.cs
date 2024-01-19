@@ -612,10 +612,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "ItemId")
-                        .IsUnique();
+                    b.HasIndex("StatusId");
 
-                    b.HasIndex("StatusId", "DateCreated", "DateModified");
+                    b.HasIndex("DateCreated", "DateModified");
+
+                    b.HasIndex("UserId", "ItemId", "StatusId")
+                        .IsUnique();
 
                     b.ToTable("TransactionLog", "Marketplace");
                 });

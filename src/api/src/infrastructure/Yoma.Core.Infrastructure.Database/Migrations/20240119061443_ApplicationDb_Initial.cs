@@ -1,4 +1,3 @@
-using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -1731,16 +1730,22 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionLog_StatusId_DateCreated_DateModified",
+                name: "IX_TransactionLog_DateCreated_DateModified",
                 schema: "Marketplace",
                 table: "TransactionLog",
-                columns: new[] { "StatusId", "DateCreated", "DateModified" });
+                columns: new[] { "DateCreated", "DateModified" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionLog_UserId_ItemId",
+                name: "IX_TransactionLog_StatusId",
                 schema: "Marketplace",
                 table: "TransactionLog",
-                columns: new[] { "UserId", "ItemId" },
+                column: "StatusId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionLog_UserId_ItemId_StatusId",
+                schema: "Marketplace",
+                table: "TransactionLog",
+                columns: new[] { "UserId", "ItemId", "StatusId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1839,6 +1844,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 table: "WalletCreationStatus",
                 column: "Name",
                 unique: true);
+
 
             ApplicationDb_Initial_Seeding.Seed(migrationBuilder);
         }
