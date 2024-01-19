@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -27,6 +28,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.EnsureSchema(
                 name: "Reward");
+
+            migrationBuilder.EnsureSchema(
+                name: "Marketplace");
 
             migrationBuilder.CreateTable(
                 name: "Blob",
@@ -319,6 +323,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "TransactionStatus",
+                schema: "Marketplace",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "varchar(30)", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransactionStatus", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TransactionStatus",
                 schema: "Reward",
                 columns: table => new
                 {
@@ -519,6 +537,39 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         principalSchema: "Entity",
                         principalTable: "User",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TransactionLog",
+                schema: "Marketplace",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ItemId = table.Column<string>(type: "varchar(50)", nullable: false),
+                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(8,2)", nullable: false),
+                    TransactionId = table.Column<string>(type: "varchar(50)", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransactionLog", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TransactionLog_TransactionStatus_StatusId",
+                        column: x => x.StatusId,
+                        principalSchema: "Marketplace",
+                        principalTable: "TransactionStatus",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TransactionLog_User_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "Entity",
+                        principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -1680,6 +1731,26 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_TransactionLog_StatusId_DateCreated_DateModified",
+                schema: "Marketplace",
+                table: "TransactionLog",
+                columns: new[] { "StatusId", "DateCreated", "DateModified" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionLog_UserId_ItemId",
+                schema: "Marketplace",
+                table: "TransactionLog",
+                columns: new[] { "UserId", "ItemId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionStatus_Name",
+                schema: "Marketplace",
+                table: "TransactionStatus",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TransactionStatus_Name",
                 schema: "Reward",
                 table: "TransactionStatus",
@@ -1832,6 +1903,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Reward");
 
             migrationBuilder.DropTable(
+                name: "TransactionLog",
+                schema: "Marketplace");
+
+            migrationBuilder.DropTable(
                 name: "UserSkillOrganizations",
                 schema: "Entity");
 
@@ -1878,6 +1953,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             migrationBuilder.DropTable(
                 name: "TransactionStatus",
                 schema: "Reward");
+
+            migrationBuilder.DropTable(
+                name: "TransactionStatus",
+                schema: "Marketplace");
 
             migrationBuilder.DropTable(
                 name: "UserSkills",

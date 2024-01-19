@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
+using Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.Opportunity.Entities;
 using Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.SSI.Entities;
@@ -53,6 +54,15 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
         public DbSet<TimeInterval> TimeInterval { get; set; }
         #endregion
+
+        #region Marketplace
+        #region Lookups
+        public DbSet<TransactionStatus> TransactionStatus { get; set; }
+        #endregion
+
+        public DbSet<Marketplace.Entities.TransactionLog> TransactionLog { get; set; }
+
+        #endregion Marketplace
 
         #region MyOpportunity
         #region Lookups

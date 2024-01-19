@@ -13,6 +13,8 @@ using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Database.Entity.Repositories;
 using Yoma.Core.Infrastructure.Database.Lookups.Repositories;
+using Yoma.Core.Infrastructure.Database.Marketplace.Repositories;
+using Yoma.Core.Infrastructure.Database.Marketplace.Repositories.Lookup;
 using Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories;
 using Yoma.Core.Infrastructure.Database.Opportunity.Repositories;
 using Yoma.Core.Infrastructure.Database.Reward.Repositories;
@@ -72,6 +74,14 @@ namespace Yoma.Core.Infrastructure.Database
             services.AddScoped<IRepositoryBatchedValueContains<Skill>, SkillRepository>();
             services.AddScoped<IRepository<TimeInterval>, TimeIntervalRepository>();
             #endregion Lookups
+
+            #region Marketplace
+            #region Lookups
+            services.AddScoped<IRepository<Domain.Marketplace.Models.Lookups.TransactionStatus>, TransactionStatusRepository>();
+            #endregion Lookups
+
+            services.AddScoped<IRepository<Domain.Marketplace.Models.TransactionLog>, TransactionLogRepository>();
+            #endregion
 
             #region My Opportunity
             #region Lookups

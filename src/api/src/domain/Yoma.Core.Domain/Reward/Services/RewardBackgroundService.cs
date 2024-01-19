@@ -131,7 +131,7 @@ namespace Yoma.Core.Domain.Reward.Services
                             var request = new RewardAwardRequest
                             {
                                 Type = sourceEntityType,
-                                UserEmail = userEmail,
+                                Username = userEmail,
                                 UserWalletId = walletId,
                                 Amount = item.Amount
                             };

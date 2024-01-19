@@ -11,7 +11,7 @@ namespace Yoma.Core.Domain.Marketplace.Validators
         {
             //pagination optional
             RuleFor(x => x.StoreId).NotEmpty().WithMessage("{PropertyName} is required");
-            RuleFor(x => x.ItemCategoryId).GreaterThan(0).WithMessage("{PropertyName} is required");
+            RuleFor(x => x.ItemCategoryId).NotEmpty().WithMessage("{PropertyName} is required");
         }
         #endregion
     }
