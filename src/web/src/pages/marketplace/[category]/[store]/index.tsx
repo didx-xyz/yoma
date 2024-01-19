@@ -4,11 +4,14 @@ import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import React, { useCallback, type ReactElement } from "react";
 import { type NextPageWithLayout } from "~/pages/_app";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { listStoreItemCategories } from "~/api/services/marketplace";
+import { searchStoreItemCategories } from "~/api/services/marketplace";
 import { authOptions } from "~/server/auth";
 import { type ParsedUrlQuery } from "querystring";
 import { config } from "~/lib/react-query-config";
-import type { StoreItemCategory } from "~/api/models/marketplace";
+import type {
+  StoreItemCategorySearchResults,
+  StoreItemSearchResults,
+} from "~/api/models/marketplace";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
@@ -34,12 +37,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
-    queryKey: [`StoreCategoryItems_${category}_${store}`],
-
-    //TODO: paging
-    // pageNumber: page ? parseInt(page.toString()) : 1,
-    // pageSize: PAGE_SIZE,
-    queryFn: () => listStoreItemCategories(storeId!.toString(), context),
+    queryKey: [`StoreCategoryItems_${category}_${store}_${page}`],
+    queryFn: () =>
+      searchStoreItemCategories(
+        {
+          pageNumber: page ? parseInt(page.toString()) : 1,
+          pageSize: PAGE_SIZE,
+          storeId: storeId?.toString() ?? "",
+        },
+        context,
+      ),
   });
 
   return {
@@ -71,12 +78,14 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
     data: data,
     error: dataError,
     isLoading: dataIsLoading,
-  } = useQuery<StoreItemCategory[]>({
-    queryKey: [`StoreCategoryItems_${category}_${store}`],
-    //TODO: paging
-    // pageNumber: page ? parseInt(page.toString()) : 1,
-    // pageSize: PAGE_SIZE,
-    queryFn: () => listStoreItemCategories(storeId),
+  } = useQuery<StoreItemCategorySearchResults>({
+    queryKey: [`StoreCategoryItems_${category}_${store}_${page}`],
+    queryFn: () =>
+      searchStoreItemCategories({
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: PAGE_SIZE,
+        storeId: storeId?.toString() ?? "",
+      }),
   });
 
   // 🔔 pager change event
@@ -95,10 +104,10 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
       // reset scroll position
       window.scrollTo(0, 0);
     },
-    [, /*query*/ category, categoryId, store, storeId, router],
+    [category, categoryId, store, storeId, router],
   );
 
-  const onClick = useCallback((id: number) => {
+  const onClick = useCallback((id: string) => {
     alert("click: " + id);
   }, []);
 
@@ -136,7 +145,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
       )}
 
       {/* NO ROWS */}
-      {data && data.length === 0 && (
+      {data?.items && data.items.length === 0 && (
         <div className="flex w-full justify-center rounded-lg bg-white p-8">
           <NoRowsMessage
             title={"No items found"}
@@ -145,38 +154,33 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
         </div>
       )}
 
-      {data && data.length > 0 && (
-        <div className="flex flex-col items-center gap-4">
-          {/* GRID */}
-          {data && data.length > 0 && (
-            <div className="flex flex-row flex-wrap gap-4">
-              {data.map((item, index) => (
-                <ItemCardComponent
-                  key={index}
-                  company={store}
-                  name={item.name}
-                  imageURL={item.imageURL}
-                  summary={item.summary}
-                  amount={item.amount}
-                  onClick={() => onClick(item.id)}
-                  //href={`/marketplace/${category}/${store}/${item.name}?countryId=${countryId}&categoryId=${categoryId}&storeId=${storeId}&itemCategoryId=${item.id}`}
-                />
-              ))}
-            </div>
-          )}
+      {/* GRID */}
+      {data?.items && data.items.length > 0 && (
+        <div className="flex flex-row flex-wrap gap-4">
+          {data.items.map((item, index) => (
+            <ItemCardComponent
+              key={index}
+              company={store}
+              name={item.name}
+              imageURL={item.imageURL}
+              summary={item.summary}
+              amount={item.amount}
+              count={item.count}
+              onClick={() => onClick(item.id)}
+            />
+          ))}
         </div>
       )}
 
       {/* PAGINATION BUTTONS */}
-      {/* <PaginationButtons
+      <PaginationButtons
         currentPage={page ? parseInt(page) : 1}
-        //TODO: no totalCount from api
-        totalItems={1000}
-        // totalItems={data?.totalCount ?? 0}
+        //NB: there is no totalCount from the api, so we set it to a high number
+        totalItems={data?.items && data?.items.length > 0 ? 999 : null}
         pageSize={PAGE_SIZE}
         onClick={handlePagerChange}
         showPages={false}
-      />  */}
+      />
     </div>
   );
 };

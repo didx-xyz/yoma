@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { type ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import MainLayout from "./Main";
 import { PageBackground } from "../PageBackground";
 import Image from "next/image";
@@ -9,6 +9,9 @@ import { toBase64, shimmer } from "~/lib/image";
 import Head from "next/head";
 import iconZltoWhite from "public/images/icon-zlto-white.svg";
 import { SignInButton } from "../NavBar/SignInButton";
+import { IoMdClose } from "react-icons/io";
+import ReactModal from "react-modal";
+import iconZlto from "public/images/icon-zlto.svg";
 
 export type TabProps = ({
   children,
@@ -17,6 +20,7 @@ export type TabProps = ({
 }) => ReactElement;
 
 const MarketplaceLayout: TabProps = ({ children }) => {
+  const [whatIsZltoDialogVisible, setWhatIsZltoDialogVisible] = useState(false);
   const [userProfile] = useAtom(userProfileAtom);
 
   return (
@@ -30,6 +34,65 @@ const MarketplaceLayout: TabProps = ({ children }) => {
           //smallHeight={true}
           height={16}
         />
+
+        {/* GO-TO OPPORTUNITY DIALOG */}
+        <ReactModal
+          isOpen={whatIsZltoDialogVisible}
+          shouldCloseOnOverlayClick={false}
+          onRequestClose={() => {
+            setWhatIsZltoDialogVisible(false);
+          }}
+          className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:rounded-3xl`}
+          portalClassName={"fixed z-40"}
+          overlayClassName="fixed inset-0 bg-overlay"
+        >
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-row p-4">
+              <h1 className="flex-grow"></h1>
+              <button
+                type="button"
+                className="btn rounded-full border-0 bg-gray p-3 text-gray-dark hover:bg-gray-light"
+                onClick={() => {
+                  setWhatIsZltoDialogVisible(false);
+                }}
+              >
+                <IoMdClose className="h-6 w-6"></IoMdClose>
+              </button>
+            </div>
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                <Image
+                  src={iconZlto}
+                  alt="Icon Zlto"
+                  width={40}
+                  height={40}
+                  sizes="100vw"
+                  priority={true}
+                  style={{ width: "40px", height: "40px" }}
+                />
+              </div>
+              <h3>What is Zlto?</h3>
+              <div className="w-[450px] rounded-lg bg-gray p-4 text-center">
+                Introducing Zlto, Yoma's fantastic reward system. Earn Zlto by
+                completing tasks and opportunities. Redeem your well-deserved
+                rewards in the marketplace and enjoy the amazing benefits that
+                await you!
+              </div>
+
+              <div className="mt-4 flex flex-grow gap-4">
+                <button
+                  type="button"
+                  className="btn rounded-full border-purple bg-white normal-case text-purple hover:bg-purple hover:text-white md:w-[300px]"
+                  onClick={() => {
+                    setWhatIsZltoDialogVisible(false);
+                  }}
+                >
+                  Got it
+                </button>
+              </div>
+            </div>
+          </div>
+        </ReactModal>
 
         <div className="container z-10 py-4">
           {!userProfile && (
@@ -65,20 +128,16 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                 </div>
               </div>
               <div className="flex flex-row gap-4">
-                {/* buttons: todo href */}
-                <Link
-                  href="/yoid/topup"
+                <button
+                  type="button"
                   className="btn rounded-full border-2 border-blue-dark brightness-110"
+                  onClick={() => {
+                    setWhatIsZltoDialogVisible(true);
+                  }}
                 >
                   What is Zlto?
-                </Link>
+                </button>
 
-                {/* <Link
-                  href="/yoid/topup"
-                  className="btn rounded-full border-2 border-blue-dark brightness-110"
-                >
-                  Sign in
-                </Link> */}
                 <SignInButton className="btn rounded-full border-2 border-blue-dark brightness-110" />
               </div>
             </div>
@@ -124,13 +183,15 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                 </div>
               </div>
               <div className="flex flex-row gap-4">
-                {/* buttons: todo href */}
-                <Link
-                  href="/yoid/topup"
+                <button
+                  type="button"
                   className="btn rounded-full border-2 border-blue-dark brightness-110"
+                  onClick={() => {
+                    setWhatIsZltoDialogVisible(true);
+                  }}
                 >
                   What is Zlto?
-                </Link>
+                </button>
 
                 <Link
                   href="/yoid/topup"

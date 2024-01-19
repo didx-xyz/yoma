@@ -24,22 +24,14 @@ export interface StoreItem {
 }
 
 export interface StoreItemCategory {
-  id: number;
+  id: string;
   storeId: string;
   name: string;
   description: string;
   summary: string;
-  imageURL: string;
+  imageURL: string | null;
   amount: number;
-}
-
-export interface StoreItemSearchFilter extends PaginationFilter {
-  storeId: string;
-  itemCategoryId: number;
-}
-
-export interface StoreItemSearchResults {
-  items: StoreItem[];
+  count: number;
 }
 
 export interface StoreSearchFilter extends PaginationFilter {
@@ -51,6 +43,23 @@ export interface StoreSearchResults {
   items: Store[];
 }
 
+export interface StoreItemCategorySearchFilter extends PaginationFilter {
+  storeId: string;
+}
+
+export interface StoreItemCategorySearchResults {
+  items: StoreItemCategory[];
+}
+
+export interface StoreItemSearchFilter extends PaginationFilter {
+  storeId: string;
+  itemCategoryId: string;
+}
+
+export interface StoreItemSearchResults {
+  items: StoreItem[];
+}
+
 export interface WalletVoucher {
   id: string;
   category: string;
@@ -58,5 +67,5 @@ export interface WalletVoucher {
   code: string;
   instructions: string;
   amount: number;
- // status: VoucherStatus;
+  // status: VoucherStatus;
 }

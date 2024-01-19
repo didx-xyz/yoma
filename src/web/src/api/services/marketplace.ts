@@ -5,7 +5,8 @@ import type {
   StoreCategory,
   StoreSearchFilter,
   StoreSearchResults,
-  StoreItemCategory,
+  StoreItemCategorySearchFilter,
+  StoreItemCategorySearchResults,
   StoreItemSearchFilter,
   StoreItemSearchResults,
 } from "../models/marketplace";
@@ -50,13 +51,14 @@ export const searchStores = async (
   return data;
 };
 
-export const listStoreItemCategories = async (
-  storeId: string,
+export const searchStoreItemCategories = async (
+  filter: StoreItemCategorySearchFilter,
   context?: GetServerSidePropsContext,
-): Promise<StoreItemCategory[]> => {
+): Promise<StoreItemCategorySearchResults> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.get<StoreItemCategory[]>(
-    `/marketplace/store/${storeId}/category/item`,
+  const { data } = await instance.post<StoreItemCategorySearchResults>(
+    `/marketplace/store/item/category/search`,
+    filter,
   );
   return data;
 };
