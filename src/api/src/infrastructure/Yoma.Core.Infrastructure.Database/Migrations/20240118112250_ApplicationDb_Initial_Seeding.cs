@@ -1231,6 +1231,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             {
                     {"262E8AD0-868A-4969-A7B7-2A04FBCCD881","Reserved",DateTimeOffset.Now}
                     ,
+                    {"262E8AD0-868A-4969-A7B7-2A04FBCCD881","Released",DateTimeOffset.Now}
+                    ,
                     {"33999712-8880-4E87-BF2F-0D94B959EF46","Sold",DateTimeOffset.Now}
             },
             schema: "Marketplace");
