@@ -8,8 +8,8 @@ using Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups;
 namespace Yoma.Core.Infrastructure.Database.Marketplace.Entities
 {
     [Table("TransactionLog", Schema = "Marketplace")]
-    [Index(nameof(UserId), nameof(ItemId), IsUnique = true)]
-    [Index(nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
+    [Index(nameof(UserId), nameof(ItemId), nameof(StatusId), IsUnique = true)]
+    [Index(nameof(DateCreated), nameof(DateModified))]
     public class TransactionLog : BaseEntity<Guid>
     {
         [ForeignKey("UserId")]

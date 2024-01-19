@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240118112250_ApplicationDb_Initial")]
+    [Migration("20240119061443_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -615,10 +615,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "ItemId")
-                        .IsUnique();
+                    b.HasIndex("StatusId");
 
-                    b.HasIndex("StatusId", "DateCreated", "DateModified");
+                    b.HasIndex("DateCreated", "DateModified");
+
+                    b.HasIndex("UserId", "ItemId", "StatusId")
+                        .IsUnique();
 
                     b.ToTable("TransactionLog", "Marketplace");
                 });

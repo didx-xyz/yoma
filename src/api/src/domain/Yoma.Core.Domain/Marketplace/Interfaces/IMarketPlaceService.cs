@@ -10,7 +10,7 @@ namespace Yoma.Core.Domain.Marketplace.Interfaces
 
         Task<StoreSearchResults> SearchStores(StoreSearchFilter filter);
 
-        Task<List<StoreItemCategory>> ListStoreItemCategories(string storeId);
+        Task<StoreItemCategorySearchResults> SearchStoreItemCategories(StoreItemCategorySearchFilter filter);
 
         Task<StoreItemSearchResults> SearchStoreItems(StoreItemSearchFilter filter);
     }

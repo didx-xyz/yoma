@@ -80,17 +80,17 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Return a list of store item categories (Anonymous)")]
-        [HttpGet("store/{storeId}/category/item")]
-        [ProducesResponseType(typeof(List<StoreItemCategory>), (int)HttpStatusCode.OK)]
+        [SwaggerOperation(Summary = "Search for store item categories based on the supplied filter (Anonymous)")]
+        [HttpPost("store/item/category/search")]
+        [ProducesResponseType(typeof(StoreItemCategorySearchResults), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
-        public async Task<IActionResult> ListStoreItemCategories([FromRoute] string storeId)
+        public async Task<IActionResult> SearchStoreItemCategories([FromBody] StoreItemCategorySearchFilter filter)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(ListStoreCategories));
+            _logger.LogInformation("Handling request {requestName}", nameof(SearchStoreItemCategories));
 
-            var result = await _marketplaceService.ListStoreItemCategories(storeId);
+            var result = await _marketplaceService.SearchStoreItemCategories(filter);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(ListStoreCategories));
+            _logger.LogInformation("Request {requestName} handled", nameof(SearchStoreItemCategories));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

@@ -228,18 +228,25 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             }).OrderBy(o => o.Name).ToList();
         }
 
-        public async Task<List<Domain.Marketplace.Models.StoreItemCategory>> ListStoreItemCategories(string storeId)
+        public async Task<List<Domain.Marketplace.Models.StoreItemCategory>> ListStoreItemCategories(string storeId, int? limit, int? offset)
         {
             if (string.IsNullOrWhiteSpace(storeId))
                 throw new ArgumentNullException(nameof(storeId));
             storeId = storeId.Trim();
 
-            var response = await _options.Store.BaseUrl
+            var query = _options.Store.BaseUrl
               .AppendPathSegment("all_item_categories_by_store_store_id")
               .SetQueryParam("store_id", storeId)
               .SetQueryParam("item_state", (int)StoreItemCategoryState.Active)
-              .WithAuthHeaders(await GetAuthHeaders())
-              .PostAsync()
+              .WithAuthHeaders(await GetAuthHeaders());
+
+            if (limit.HasValue && limit.Value > default(int))
+                query = query.SetQueryParam("limit", limit);
+
+            if (offset.HasValue && offset.Value >= default(int))
+                query = query.SetQueryParam("offset", offset);
+
+            var response = await query.PostAsync()
               .EnsureSuccessStatusCodeAsync()
               .ReceiveJson<StoreResponseItemCategories>();
 
@@ -251,7 +258,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 Description = o.ItemCatDescription,
                 Summary = o.ItemCatDetails,
                 ImageURL = string.Equals(o.ItemCatImage, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? null : o.ItemCatImage,
-                //ItemCount = o.StoreItemCount,
+                //o.StoreItemCount: internal count the does not reflect the available item count correctly
+                Count = ListStoreItems(storeId, o.ItemCategoryId.ToString(), null, null).Result.Count(),
                 Amount = o.ItemCatZlto
 
             }).OrderBy(o => o.Name).ToList();
@@ -332,6 +340,25 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
               .ReceiveJson<ReserveItemResponse>();
 
             return response.BankResponse.TransactionInfo.TransactionId.ToString();
+        }
+
+        public async System.Threading.Tasks.Task ItemReserveReset(string itemId, string transactionId)
+        {
+            if (string.IsNullOrWhiteSpace(itemId))
+                throw new ArgumentNullException(nameof(itemId));
+            itemId = itemId.Trim();
+
+            if (string.IsNullOrWhiteSpace(transactionId))
+                throw new ArgumentNullException(nameof(transactionId));
+            transactionId = transactionId.Trim();
+
+            await _options.Store.BaseUrl
+              .AppendPathSegment("update_item_reset")
+              .AppendPathSegment(itemId)
+              .AppendPathSegment(transactionId)
+              .WithAuthHeaders(await GetAuthHeaders())
+              .PutAsync()
+              .EnsureSuccessStatusCodeAsync();
         }
 
         public async System.Threading.Tasks.Task ItemSold(string walletId, string username, string itemId, string transactionId)
