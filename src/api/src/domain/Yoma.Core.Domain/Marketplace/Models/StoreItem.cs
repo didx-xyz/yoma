@@ -2,7 +2,7 @@ namespace Yoma.Core.Domain.Marketplace.Models
 {
     public class StoreItem
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
 
         public string Name { get; set; }
 

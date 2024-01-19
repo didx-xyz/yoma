@@ -14,7 +14,7 @@ namespace Yoma.Core.Domain.Reward.Models.Provider
 
         public string? Instructions { get; set; }
 
-        public string UserEmail { get; set; }
+        public string Username { get; set; }
 
         public string UserWalletId { get; set; }
 

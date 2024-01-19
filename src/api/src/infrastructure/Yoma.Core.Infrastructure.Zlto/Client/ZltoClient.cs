@@ -45,7 +45,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 throw new ArgumentNullException(nameof(request));
 
             //check if wallet already exists
-            var existing = await GetWalletByUsername(request.Email);
+            var existing = await GetWalletByUsername(request.Username);
             if (existing != null)
             {
                 return (new Domain.Reward.Models.Wallet
@@ -151,7 +151,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 TaskExternalId = request.Id.ToString(),
                 TaskProgramId = "n/a",
                 BankTransactionId = "n/a",
-                UserName = request.UserEmail,
+                UserName = request.Username,
                 TaskSkills = (request.Skills != null && request.Skills.Any()) ? string.Join(",", request.Skills.Select(o => o.Name)) : "n/a",
                 TaskCountry = (request.Countries != null && request.Countries.Any()) ? string.Join(",", request.Countries.Select(o => o.Name)) : "n/a",
                 TaskLanguage = (request.Languages != null && request.Languages.Any()) ? string.Join(",", request.Languages.Select(o => o.Name)) : "n/a",
@@ -245,7 +245,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
             var results = response.Items.Select(o => new Domain.Marketplace.Models.StoreItemCategory
             {
-                Id = o.ItemCategoryId,
+                Id = o.ItemCategoryId.ToString(),
                 StoreId = o.StoreId,
                 Name = o.ItemCatName,
                 Description = o.ItemCatDescription,
@@ -260,14 +260,15 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             return results;
         }
 
-        public async Task<List<Domain.Marketplace.Models.StoreItem>> ListStoreItems(string storeId, int itemCategoryId, int? limit, int? offset)
+        public async Task<List<Domain.Marketplace.Models.StoreItem>> ListStoreItems(string storeId, string itemCategoryId, int? limit, int? offset)
         {
             if (string.IsNullOrWhiteSpace(storeId))
                 throw new ArgumentNullException(nameof(storeId));
             storeId = storeId.Trim();
 
-            if (itemCategoryId <= default(int))
+            if (string.IsNullOrWhiteSpace(itemCategoryId))
                 throw new ArgumentNullException(nameof(itemCategoryId));
+            itemCategoryId = itemCategoryId.Trim();
 
             var query = _options.Store.BaseUrl
                 .AppendPathSegment("all_store_items_by_store_by_category")
@@ -289,7 +290,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
             return response.Items.Select(o => new Domain.Marketplace.Models.StoreItem
             {
-                Id = o.ItemId,
+                Id = o.ItemId.ToString(),
                 Name = o.ItemName,
                 Description = o.ItemDescription,
                 Summary = o.ItemDetails,
@@ -299,6 +300,74 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 Amount = o.ItemZlto
 
             }).OrderBy(o => o.Name).ToList();
+        }
+
+        public async Task<string> ItemReserve(string walletId, string username, string itemId)
+        {
+            if (string.IsNullOrWhiteSpace(walletId))
+                throw new ArgumentNullException(nameof(walletId));
+            walletId = walletId.Trim();
+
+            if (string.IsNullOrWhiteSpace(username))
+                throw new ArgumentNullException(nameof(username));
+            username = username.Trim();
+
+            if (string.IsNullOrWhiteSpace(itemId))
+                throw new ArgumentNullException(nameof(itemId));
+            itemId = itemId.Trim();
+
+            var wallet = await GetWallet(walletId);
+
+            var request = new ItemActionRequest
+            {
+                Username = username,
+                WalletOwnerId = wallet.OwnerId
+            };
+
+            var response = await _options.Store.BaseUrl
+              .AppendPathSegment("update_item_reserve_external_partner")
+              .AppendPathSegment(itemId)
+              .WithAuthHeaders(await GetAuthHeaders())
+              .PutJsonAsync(request)
+              .EnsureSuccessStatusCodeAsync()
+              .ReceiveJson<ReserveItemResponse>();
+
+            return response.BankResponse.TransactionInfo.TransactionId.ToString();
+        }
+
+        public async System.Threading.Tasks.Task ItemSold(string walletId, string username, string itemId, string transactionId)
+        {
+            if (string.IsNullOrWhiteSpace(walletId))
+                throw new ArgumentNullException(nameof(walletId));
+            walletId = walletId.Trim();
+
+            if (string.IsNullOrWhiteSpace(username))
+                throw new ArgumentNullException(nameof(username));
+            username = username.Trim();
+
+            if (string.IsNullOrWhiteSpace(itemId))
+                throw new ArgumentNullException(nameof(itemId));
+            itemId = itemId.Trim();
+
+            if (string.IsNullOrWhiteSpace(transactionId))
+                throw new ArgumentNullException(nameof(transactionId));
+            transactionId = transactionId.Trim();
+
+            var wallet = await GetWallet(walletId);
+
+            var request = new ItemActionRequest
+            {
+                Username = username,
+                WalletOwnerId = wallet.OwnerId
+            };
+
+            await _options.Store.BaseUrl
+              .AppendPathSegment("update_item_sold")
+              .AppendPathSegment(itemId)
+              .AppendPathSegment(transactionId)
+              .WithAuthHeaders(await GetAuthHeaders())
+              .PutJsonAsync(request)
+              .EnsureSuccessStatusCodeAsync();
         }
         #endregion IMarketplaceProviderClient
         #endregion
@@ -358,7 +427,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             {
                 OwnerOrigin = _accessToken.PartnerName,
                 OwnerName = request.DisplayName,
-                UserName = request.Email,
+                UserName = request.Username,
                 Balance = (int)request.Balance
                 //OwnerId: system assigned; can not be specified
                 //UserPassword: used with external wallet activation; with Yoma wallets are internal
