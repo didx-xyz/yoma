@@ -7,8 +7,13 @@ export interface WalletVoucher {
   code: string;
   instructions: string;
   amount: number;
+  status: VoucherStatus | string; //NB: string
 }
 
+export enum VoucherStatus {
+  New,
+  Viewed,
+}
 export interface WalletVoucherSearchResults {
   items: WalletVoucher[];
 }

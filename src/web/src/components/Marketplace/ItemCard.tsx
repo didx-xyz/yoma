@@ -105,11 +105,9 @@ const ItemCardComponent: React.FC<InputProps> = ({
               </div>{" "}
             </div>
           )}
-          {(count ?? 0) > 0 && (
-            <div className="badge h-6 whitespace-nowrap rounded-md bg-gray text-gray-dark">
-              <span className="ml-1 text-xs">{count} left</span>
-            </div>
-          )}
+          <div className="badge h-6 whitespace-nowrap rounded-md bg-gray text-gray-dark">
+            <span className="ml-1 text-xs">{count ?? 0} left</span>
+          </div>
         </div>
       </div>
     </Link>

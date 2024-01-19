@@ -140,25 +140,23 @@ const MarketplaceSearchStores: NextPageWithLayout<{
             {data?.items.length} item categories found
           </div>
 
-          <div className="flex w-full flex-col gap-4">
-            {/* GRID */}
-            {data && data.items?.length > 0 && (
-              <div className="flex flex-row flex-wrap gap-4">
-                {data?.items?.map((item, index) => (
-                  <CategoryCardComponent
-                    key={index}
-                    name={item.name}
-                    imageURLs={
-                      item.imageURL != null && item.imageURL != "default"
-                        ? [item.imageURL]
-                        : []
-                    }
-                    href={`/marketplace/${category}/${item.name}?countryId=${countryId}&categoryId=${categoryId}&storeId=${item.id}`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          {/* GRID */}
+          {data?.items && data.items.length > 0 && (
+            <div className="flex flex-row flex-wrap gap-4">
+              {data.items.map((item, index) => (
+                <CategoryCardComponent
+                  key={index}
+                  name={item.name}
+                  imageURLs={
+                    item.imageURL != null && item.imageURL != "default"
+                      ? [item.imageURL]
+                      : []
+                  }
+                  href={`/marketplace/${category}/${item.name}?countryId=${countryId}&categoryId=${categoryId}&storeId=${item.id}`}
+                />
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>

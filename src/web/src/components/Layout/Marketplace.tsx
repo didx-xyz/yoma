@@ -194,7 +194,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                 </button>
 
                 <Link
-                  href="/yoid/topup"
+                  href="/marketplace/transactions"
                   className="btn rounded-full border-2 border-blue-dark brightness-110"
                 >
                   My vouchers
