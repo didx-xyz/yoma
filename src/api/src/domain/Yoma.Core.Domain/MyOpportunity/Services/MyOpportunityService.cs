@@ -541,11 +541,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
                 await _emailProviderClient.Send(emailType, recipients, data);
 
-                _logger.LogInformation("Successfully send '{emailType}' email", emailType);
+                _logger.LogInformation("Successfully send email");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send '{emailType}' email", emailType);
+                _logger.LogError(ex, "Failed to send email");
             }
         }
 
