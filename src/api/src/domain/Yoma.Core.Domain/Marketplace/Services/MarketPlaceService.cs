@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -188,7 +189,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
                 {
                     //item flagged as reserved but log could not commit; log error and continue
                     _logger.LogError(ex, "Failed to log 'Reserved' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
-                        user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
+                        user.Id, item.ItemCategoryId.SanitizeLogValue(), item.ItemId.SanitizeLogValue(), item.TransactionId.SanitizeLogValue());
 
                     //continue with transaction as item was reserved
                 }
@@ -208,7 +209,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
                         case TransactionStatus.Sold:
                             //item flagged as sold but log could not commit; log error and continue
                             _logger.LogError(ex, "Failed to log 'Sold' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
-                                user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
+                                user.Id, item.ItemCategoryId.SanitizeLogValue(), item.ItemId.SanitizeLogValue(), item.TransactionId.SanitizeLogValue());
 
                             break; //buy is successful
 
@@ -229,7 +230,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
                                             //log error and continue; assume release succeeded
                                             _logger.LogError(exHttpException, "Failed 'Release' reservation for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'." +
                                                 " Reservation not found, assuming it has been expired by ZLTO.",
-                                                user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
+                                                user.Id, item.ItemCategoryId.SanitizeLogValue(), item.ItemId.SanitizeLogValue(), item.TransactionId.SanitizeLogValue());
 
                                         //release succeeded; attempt to commit 'Released' log
                                         item.Status = TransactionStatus.Released;
@@ -243,14 +244,14 @@ namespace Yoma.Core.Domain.Marketplace.Services
                                         {
                                             //log error and continue
                                             _logger.LogError(exLog, "Failed to log 'Released' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
-                                                user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
+                                                user.Id, item.ItemCategoryId.SanitizeLogValue(), item.ItemId.SanitizeLogValue(), item.TransactionId.SanitizeLogValue());
                                         }
                                         break;
 
                                     default:
                                         //log error and continue
                                         _logger.LogError(exHttpException, "Failed to 'Release' reservation for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
-                                          user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
+                                          user.Id, item.ItemCategoryId.SanitizeLogValue(), item.ItemId.SanitizeLogValue(), item.TransactionId.SanitizeLogValue());
                                         break;
                                 }
                             }

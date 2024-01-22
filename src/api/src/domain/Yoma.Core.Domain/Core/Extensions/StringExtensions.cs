@@ -3,8 +3,14 @@ using System.Text.RegularExpressions;
 
 namespace Yoma.Core.Domain.Core.Extensions
 {
-    public static class StringExtensions
+    public static partial class StringExtensions
     {
+        #region Public Members
+        public static string SanitizeLogValue(this string e)
+        {
+            return e.Replace(System.Environment.NewLine, string.Empty);
+        }
+
         /// <summary>
         ///  trim (remove leading/trailing spaces), remove double spaces
         /// </summary>
@@ -14,8 +20,7 @@ namespace Yoma.Core.Domain.Core.Extensions
         {
             var ret = e.Normalize().Trim();
             //set more than one space to one space
-            var regex = new Regex("[ ]{2,}", RegexOptions.None);
-            ret = regex.Replace(ret, " ");
+            ret = RegexDoubleSpacing().Replace(ret, " ");
             return ret;
         }
 
@@ -26,7 +31,7 @@ namespace Yoma.Core.Domain.Core.Extensions
         /// <returns></returns>
         public static string NormalizeContact(this string e)
         {
-            var rgx = new Regex("[^a-zA-Z0-9]");
+            var rgx = RegexContactNumber();
             return rgx.Replace(e.Normalize().Trim(), "");
         }
 
@@ -38,7 +43,7 @@ namespace Yoma.Core.Domain.Core.Extensions
         public static string RemoveWhiteSpaces(this string e)
         {
             return new string(e.ToCharArray()
-                .Where(c => !Char.IsWhiteSpace(c))
+                .Where(c => !char.IsWhiteSpace(c))
                 .ToArray());
         }
 
@@ -79,11 +84,23 @@ namespace Yoma.Core.Domain.Core.Extensions
         /// <returns></returns>
         public static string ToInitials(this string e)
         {
-            var initialsRegEx = new Regex(@"(\b[a-zA-Z])[a-zA-Z]*\.* ?");
+            var initialsRegEx = RegexInitials();
             return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(
                 initialsRegEx.Replace(e, "$1")
                     .NormalizeTrim()
                     .RemoveWhiteSpaces());
         }
+        #endregion
+
+        #region Private Members
+        [GeneratedRegex("[ ]{2,}", RegexOptions.None)]
+        private static partial Regex RegexDoubleSpacing();
+
+        [GeneratedRegex("[^a-zA-Z0-9]")]
+        private static partial Regex RegexContactNumber();
+
+        [GeneratedRegex("(\\b[a-zA-Z])[a-zA-Z]*\\.* ?")]
+        private static partial Regex RegexInitials();
+        #endregion
     }
 }
