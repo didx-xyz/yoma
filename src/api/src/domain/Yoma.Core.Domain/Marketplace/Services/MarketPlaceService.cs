@@ -238,7 +238,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
                                         if (exHttpException.StatusCode == System.Net.HttpStatusCode.NotFound)
                                             //log error and continue; assume release succeeded
                                             _logger.LogError(exHttpException, "Failed 'Release' reservation for user id '{user.Id}', item category id '{item.ItemCategoryId}', item id '{item.ItemId}' with reservation transaction id '{item.TransactionId}'." +
-                                                " Reservation not found, assuming it has expired by ZLTO.",
+                                                " Reservation not found, assuming it has been expired by ZLTO.",
                                                 user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
 
                                         //release succeeded; attempt to commit 'Released' log
