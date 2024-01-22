@@ -179,7 +179,24 @@ namespace Yoma.Core.Domain.Marketplace.Services
                 item.Status = TransactionStatus.Reserved;
                 item.StatusId = statusReservedId;
                 item.TransactionId = transactionId;
-                _transactionLogRepository.Create(item).Wait();
+
+                try
+                {
+                    _transactionLogRepository.Create(item).Wait();
+                }
+                catch (Exception)
+                {
+                    //item flagged as reserved but log could not commit; attempt to commit 'Reserved' log again
+                    try { _transactionLogRepository.Create(item).Wait(); }
+                    catch (Exception ex)
+                    {
+                        //log error and continue
+                        _logger.LogError(ex, "Failed to log 'Reserved' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
+                            user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
+                    }
+
+                    //continue with transaction as item was reserved
+                }
 
                 try
                 {
@@ -196,32 +213,62 @@ namespace Yoma.Core.Domain.Marketplace.Services
                         case TransactionStatus.Sold:
                             //item flagged as sold but log could not commit; attempt to commit 'Sold' log again
                             try { _transactionLogRepository.Create(item).Wait(); }
-                            catch (Exception) { throw; }
-                            break;
+                            catch (Exception ex)
+                            {
+                                //log error and continue
+                                _logger.LogError(ex, "Failed to log 'Sold' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
+                                    user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
+                            }
 
-                        case TransactionStatus.Reserved:
+                            break; //buy is successful
+
+                        case TransactionStatus.Reserved: //buy not successful
                             //attempt to release reservation and track transaction (upon failure assume zlto will expire reservation)
                             try
                             {
                                 //can be invoke multiple times without any side effects (OK); with not found, assume reservation reset
                                 _marketplaceProviderClient.ItemReserveReset(item.ItemId, item.TransactionId).Wait();
                             }
-                            catch (HttpClientException exReserveReset)
+                            catch (HttpClientException exHttpException)
                             {
-                                if (exReserveReset.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+                                switch (exHttpException.StatusCode)
+                                {
+                                    case System.Net.HttpStatusCode.OK:
+                                    case System.Net.HttpStatusCode.NotFound:
+                                        if (exHttpException.StatusCode == System.Net.HttpStatusCode.NotFound)
+                                            //log error and continue; assume release succeeded
+                                            _logger.LogError(exHttpException, "Failed 'Release' reservation for user id '{user.Id}', item category id '{item.ItemCategoryId}', item id '{item.ItemId}' with reservation transaction id '{item.TransactionId}'." +
+                                                " Reservation not found, assuming it has expired by ZLTO.",
+                                                user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
 
-                                _logger.LogError(exReserveReset, "Reservation reset failed for user with id '{userId}' and item with id '{itemId}' reserved on '{reservationDate}' with transaction id '{transactionId}' (log id '{logId}'). Assume reservation expired with '{httpStatus}'",
-                                    user.Id, item.ItemId, item.DateCreated, item.TransactionId, item.Id, System.Net.HttpStatusCode.NotFound);
+                                        //release succeeded; attempt to commit 'Released' log
+                                        item.Status = TransactionStatus.Released;
+                                        item.StatusId = statusReleasedId;
+
+                                        try
+                                        {
+                                            _transactionLogRepository.Create(item).Wait();
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            //log error and continue
+                                            _logger.LogError(ex, "Failed to log 'Released' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
+                                                user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
+                                        }
+                                        break;
+
+                                    default:
+                                        //log error and continue
+                                        _logger.LogError(exHttpException, "Failed to 'Release' reservation for user id '{user.Id}', item category id '{item.ItemCategoryId}', item id '{item.ItemId}' with reservation transaction id '{item.TransactionId}'",
+                                          user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
+                                        break;
+                                }
                             }
 
-                            item.Status = TransactionStatus.Released;
-                            item.StatusId = statusReleasedId;
-                            _transactionLogRepository.Create(item).Wait();
-
-                            break;
+                            throw; //buy not successful
 
                         default:
-                            throw;
+                            throw; //fall through; buy not successful
                     }
                 }
             }
