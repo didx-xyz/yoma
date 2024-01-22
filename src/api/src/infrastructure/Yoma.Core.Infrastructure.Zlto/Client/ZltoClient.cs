@@ -11,7 +11,6 @@ using System.Net;
 using Yoma.Core.Domain.Marketplace.Interfaces.Provider;
 using Yoma.Core.Domain.Reward.Interfaces.Provider;
 using Yoma.Core.Domain.Reward.Models.Provider;
-using Newtonsoft.Json;
 
 namespace Yoma.Core.Infrastructure.Zlto.Client
 {

@@ -184,16 +184,11 @@ namespace Yoma.Core.Domain.Marketplace.Services
                 {
                     _transactionLogRepository.Create(item).Wait();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    //item flagged as reserved but log could not commit; attempt to commit 'Reserved' log again
-                    try { _transactionLogRepository.Create(item).Wait(); }
-                    catch (Exception ex)
-                    {
-                        //log error and continue
-                        _logger.LogError(ex, "Failed to log 'Reserved' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
-                            user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
-                    }
+                    //item flagged as reserved but log could not commit; log error and continue
+                    _logger.LogError(ex, "Failed to log 'Reserved' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
+                        user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
 
                     //continue with transaction as item was reserved
                 }
@@ -206,19 +201,14 @@ namespace Yoma.Core.Domain.Marketplace.Services
                     item.StatusId = statusSoldId;
                     _transactionLogRepository.Create(item).Wait();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     switch (item.Status)
                     {
                         case TransactionStatus.Sold:
-                            //item flagged as sold but log could not commit; attempt to commit 'Sold' log again
-                            try { _transactionLogRepository.Create(item).Wait(); }
-                            catch (Exception ex)
-                            {
-                                //log error and continue
-                                _logger.LogError(ex, "Failed to log 'Sold' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
-                                    user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
-                            }
+                            //item flagged as sold but log could not commit; log error and continue
+                            _logger.LogError(ex, "Failed to log 'Sold' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
+                                user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
 
                             break; //buy is successful
 
@@ -249,10 +239,10 @@ namespace Yoma.Core.Domain.Marketplace.Services
                                         {
                                             _transactionLogRepository.Create(item).Wait();
                                         }
-                                        catch (Exception ex)
+                                        catch (Exception exLog)
                                         {
                                             //log error and continue
-                                            _logger.LogError(ex, "Failed to log 'Released' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
+                                            _logger.LogError(exLog, "Failed to log 'Released' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
                                                 user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
                                         }
                                         break;

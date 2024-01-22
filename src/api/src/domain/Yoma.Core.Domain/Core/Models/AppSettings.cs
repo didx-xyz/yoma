@@ -80,6 +80,8 @@ namespace Yoma.Core.Domain.Core.Models
         public string LaborMarketProviderAsSourceEnabledEnvironments { get; set; }
 
         public Environment LaborMarketProviderAsSourceEnabledEnvironmentsAsEnum => ParseEnvironmentInput(LaborMarketProviderAsSourceEnabledEnvironments);
+
+        public AppSettingsDatabaseRetryPolicy DatabaseRetryPolicy { get; set; }
         #endregion
 
         #region Private Members
