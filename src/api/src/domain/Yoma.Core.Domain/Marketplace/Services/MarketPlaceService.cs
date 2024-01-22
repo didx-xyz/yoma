@@ -237,7 +237,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
                                     case System.Net.HttpStatusCode.NotFound:
                                         if (exHttpException.StatusCode == System.Net.HttpStatusCode.NotFound)
                                             //log error and continue; assume release succeeded
-                                            _logger.LogError(exHttpException, "Failed 'Release' reservation for user id '{user.Id}', item category id '{item.ItemCategoryId}', item id '{item.ItemId}' with reservation transaction id '{item.TransactionId}'." +
+                                            _logger.LogError(exHttpException, "Failed 'Release' reservation for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'." +
                                                 " Reservation not found, assuming it has been expired by ZLTO.",
                                                 user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
 
@@ -259,7 +259,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
                                     default:
                                         //log error and continue
-                                        _logger.LogError(exHttpException, "Failed to 'Release' reservation for user id '{user.Id}', item category id '{item.ItemCategoryId}', item id '{item.ItemId}' with reservation transaction id '{item.TransactionId}'",
+                                        _logger.LogError(exHttpException, "Failed to 'Release' reservation for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
                                           user.Id, item.ItemCategoryId, item.ItemId, item.TransactionId);
                                         break;
                                 }
