@@ -15,6 +15,6 @@ namespace Yoma.Core.Domain.Marketplace.Interfaces
 
         Task<StoreItemSearchResults> SearchStoreItems(StoreItemSearchFilter filter);
 
-        Task BuyItem(string storeId, string itemCategoryId);
+        void BuyItem(string storeId, string itemCategoryId);
     }
 }

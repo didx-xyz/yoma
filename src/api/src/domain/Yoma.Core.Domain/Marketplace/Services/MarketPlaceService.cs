@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -29,6 +30,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
         private readonly StoreSearchFilterValidator _storeSearchFilterValidator;
         private readonly StoreItemCategorySearchFilterValidator _storeItemCategorySearchFilterValidator;
         private readonly StoreItemSearchFilterValidator _storeItemSearchFilterValidator;
+
+        private static readonly object _lock_Object = new();
         #endregion
 
         #region Constructors
@@ -133,7 +136,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
             return result;
         }
 
-        public async Task BuyItem(string storeId, string itemCategoryId)
+        public void BuyItem(string storeId, string itemCategoryId)
         {
             if (string.IsNullOrEmpty(storeId))
                 throw new ArgumentNullException(nameof(storeId));
@@ -149,67 +152,79 @@ namespace Yoma.Core.Domain.Marketplace.Services
             if (string.IsNullOrEmpty(walletId))
                 throw new ValidationException($"The wallet creation for the user with email '{user.Email}' is currently pending. Please try again later or contact technical support for assistance");
 
+            var statusReleasedId = _transactionStatusService.GetByName(TransactionStatus.Released.ToString()).Id;
             var statusReservedId = _transactionStatusService.GetByName(TransactionStatus.Reserved.ToString()).Id;
             var statusSoldId = _transactionStatusService.GetByName(TransactionStatus.Sold.ToString()).Id;
 
-            //release reservations and track transactions, if any
-            var groupedItems = _transactionLogRepository.Query()
-                .Where(o => o.UserId == user.Id && o.ItemCategoryId == itemCategoryId)
-                .GroupBy(o => o.ItemId)
-                .ToList();
-
-            var reservedItems = groupedItems
-                .Select(group => group
-                    .OrderByDescending(o => o.DateCreated)
-                    .First())
-                .Where(o => o.StatusId == statusReservedId)
-                .ToList();
-
-            foreach (var reservedItem in reservedItems)
+            //lock retrieval (ListStoreItems), reservation (ItemReserve) and update as sold (ItemSold), ensuring single thread execution.
+            //zlto allows processing of an item for multiple wallets, resulting in success (OK)
+            lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
             {
-                var statusReleasedId = _transactionStatusService.GetByName(TransactionStatus.Released.ToString()).Id;
+                //find the 1st available item for the specified store and item category
+                var storeItems = _marketplaceProviderClient.ListStoreItems(storeId, itemCategoryId, 1, 0).Result;
+                if (!storeItems.Any())
+                    throw new ValidationException($"Items for the specified store and category has been sold out");
+                var storeItem = storeItems.Single();
+
+                var item = new TransactionLog
+                {
+                    UserId = user.Id,
+                    ItemCategoryId = itemCategoryId,
+                    ItemId = storeItem.Id,
+                    Amount = storeItem.Amount
+                };
+
+                //reserve item and track transaction
+                var transactionId = _marketplaceProviderClient.ItemReserve(walletId, user.Email, storeItem.Id).Result;
+                item.Status = TransactionStatus.Reserved;
+                item.StatusId = statusReservedId;
+                item.TransactionId = transactionId;
+                _transactionLogRepository.Create(item).Wait();
 
                 try
                 {
-                    await _marketplaceProviderClient.ItemReserveReset(reservedItem.ItemId, reservedItem.TransactionId);
+                    //mark item as sold and track transaction   
+                    _marketplaceProviderClient.ItemSold(walletId, user.Email, storeItem.Id, transactionId).Wait();
+                    item.Status = TransactionStatus.Sold;
+                    item.StatusId = statusSoldId;
+                    _transactionLogRepository.Create(item).Wait();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    _logger.LogError(ex, "Reservation reset failed for user with id '{userId}' and item with id '{itemId}' reserved on '{reservationDate}' with transaction id '{transactionId}' (log id '{logId}'). Assume reservation expired",
-                        user.Id, reservedItem.ItemId, reservedItem.DateCreated, reservedItem.TransactionId, reservedItem.Id);
+                    switch (item.Status)
+                    {
+                        case TransactionStatus.Sold:
+                            //item flagged as sold but log could not commit; attempt to commit 'Sold' log again
+                            try { _transactionLogRepository.Create(item).Wait(); }
+                            catch (Exception) { throw; }
+                            break;
+
+                        case TransactionStatus.Reserved:
+                            //attempt to release reservation and track transaction (upon failure assume zlto will expire reservation)
+                            try
+                            {
+                                //can be invoke multiple times without any side effects (OK); with not found, assume reservation reset
+                                _marketplaceProviderClient.ItemReserveReset(item.ItemId, item.TransactionId).Wait();
+                            }
+                            catch (HttpClientException exReserveReset)
+                            {
+                                if (exReserveReset.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+
+                                _logger.LogError(exReserveReset, "Reservation reset failed for user with id '{userId}' and item with id '{itemId}' reserved on '{reservationDate}' with transaction id '{transactionId}' (log id '{logId}'). Assume reservation expired with '{httpStatus}'",
+                                    user.Id, item.ItemId, item.DateCreated, item.TransactionId, item.Id, System.Net.HttpStatusCode.NotFound);
+                            }
+
+                            item.Status = TransactionStatus.Released;
+                            item.StatusId = statusReleasedId;
+                            _transactionLogRepository.Create(item).Wait();
+
+                            break;
+
+                        default:
+                            throw;
+                    }
                 }
-
-                reservedItem.Status = TransactionStatus.Released;
-                reservedItem.StatusId = statusReleasedId;
-                await _transactionLogRepository.Create(reservedItem);
             }
-
-            //find the 1st available item for the specified store and item category
-            var storeItems = await _marketplaceProviderClient.ListStoreItems(storeId, itemCategoryId, 1, 0);
-            if (!storeItems.Any())
-                throw new ValidationException($"Items for the specified store and category has been sold out");
-            var storeItem = storeItems.Single();
-
-            var item = new TransactionLog
-            {
-                UserId = user.Id,
-                ItemCategoryId = itemCategoryId,
-                ItemId = storeItem.Id,
-                Amount = storeItem.Amount
-            };
-
-            //reserve item and track transaction
-            var transactionId = await _marketplaceProviderClient.ItemReserve(walletId, user.Email, storeItem.Id);
-            item.Status = TransactionStatus.Reserved;
-            item.StatusId = statusReservedId;
-            item.TransactionId = transactionId;
-            await _transactionLogRepository.Create(item);
-
-            //mark item as sold and track transaction   
-            await _marketplaceProviderClient.ItemSold(walletId, user.Email, storeItem.Id, transactionId);
-            item.Status = TransactionStatus.Sold;
-            item.StatusId = statusSoldId;
-            await _transactionLogRepository.Create(item);
         }
         #endregion
     }
