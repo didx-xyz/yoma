@@ -35,7 +35,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
           height={16}
         />
 
-        {/* GO-TO OPPORTUNITY DIALOG */}
+        {/* WHAT IS ZLTO DIALOG */}
         <ReactModal
           isOpen={whatIsZltoDialogVisible}
           shouldCloseOnOverlayClick={false}

@@ -88,3 +88,15 @@ export const searchVouchers = async (
   );
   return data;
 };
+
+export const buyItem = async (
+  storeId: string,
+  itemCategoryId: string,
+  context?: GetServerSidePropsContext,
+): Promise<void> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.post(
+    `marketplace/store/${storeId}/item/category/${itemCategoryId}/buy`,
+  );
+  return data;
+};

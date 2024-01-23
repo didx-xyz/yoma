@@ -275,7 +275,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 onRequestClose={() => {
                   setLoginDialogVisible(false);
                 }}
-                className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[600px] md:rounded-3xl`}
+                className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[300px] md:w-[450px] md:rounded-3xl`}
                 portalClassName={"fixed z-40"}
                 overlayClassName="fixed inset-0 bg-overlay"
               >
@@ -305,12 +305,12 @@ const OpportunityDetails: NextPageWithLayout<{
                       />
                     </div>
 
-                    <h4>Please login to continue</h4>
+                    <h5>Please login to continue</h5>
 
                     <div className="mt-4 flex flex-grow gap-4">
                       <button
                         type="button"
-                        className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[300px]"
+                        className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
                         onClick={() => setLoginDialogVisible(false)}
                       >
                         <Image
@@ -328,7 +328,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                       <button
                         type="button"
-                        className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light md:w-[250px]"
+                        className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light md:w-[150px]"
                         onClick={onLogin}
                       >
                         {isButtonLoading && (
