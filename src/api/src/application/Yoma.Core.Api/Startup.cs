@@ -95,7 +95,7 @@ namespace Yoma.Core.Api
             services.ConfigureServices_InfrastructureLaborMarketProvider();
             services.ConfigureServices_InfrastructureEmailProvider(_configuration);
             services.ConfigureServices_InfrastructureRewardProvider();
-            services.ConfigureServices_InfrastructureDatabase(_configuration, _appSettings);
+            services.ConfigureServices_InfrastructureDatabase(_configuration);
             #endregion Services & Infrastructure
 
             #region 3rd Party (post ConfigureServices_InfrastructureDatabase)

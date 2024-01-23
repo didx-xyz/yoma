@@ -38,19 +38,11 @@ namespace Yoma.Core.Infrastructure.Database
             return result;
         }
 
-        public static void ConfigureServices_InfrastructureDatabase(this IServiceCollection services, IConfiguration configuration, AppSettings appSettings)
+        public static void ConfigureServices_InfrastructureDatabase(this IServiceCollection services, IConfiguration configuration)
         {
             // infrastructure
             services.AddDbContext<ApplicationDbContext>(options =>
-            {
-                options.UseSqlServer(configuration.Configuration_ConnectionString(), sqlServerOptions =>
-                {
-                    sqlServerOptions.EnableRetryOnFailure(
-                    maxRetryCount: appSettings.DatabaseRetryPolicy.MaxRetryCount,
-                    maxRetryDelay: TimeSpan.FromSeconds(appSettings.DatabaseRetryPolicy.MaxRetryDelayInSeconds),
-                    null);
-                });
-            }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
+                options.UseSqlServer(configuration.Configuration_ConnectionString()), ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
             //<PackageReference Include="EntityFrameworkProfiler.Appender" Version="6.0.6040" />
             //if (environment == Domain.Core.Environment.Local)
