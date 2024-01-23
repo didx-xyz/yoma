@@ -95,7 +95,7 @@ namespace Yoma.Core.Api
             services.ConfigureServices_InfrastructureLaborMarketProvider();
             services.ConfigureServices_InfrastructureEmailProvider(_configuration);
             services.ConfigureServices_InfrastructureRewardProvider();
-            services.ConfigureServices_InfrastructureDatabase(_configuration);
+            services.ConfigureServices_InfrastructureDatabase(_configuration, _appSettings);
             #endregion Services & Infrastructure
 
             #region 3rd Party (post ConfigureServices_InfrastructureDatabase)
@@ -169,7 +169,7 @@ namespace Yoma.Core.Api
 
             #region 3rd Partry
             //migrations applied as part of ConfigureHangfire to ensure db exist prior to executing Hangfire migrations
-            _configuration.Configure_RecurringJobs(_environment);
+            _configuration.Configure_RecurringJobs(_appSettings, _environment);
             #endregion 3rd Party
         }
         #endregion

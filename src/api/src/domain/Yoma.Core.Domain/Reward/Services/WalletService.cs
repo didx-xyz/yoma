@@ -117,8 +117,6 @@ namespace Yoma.Core.Domain.Reward.Services
 
         public async Task<WalletVoucherSearchResults> SearchVouchers(WalletVoucherSearchFilter filter)
         {
-            await _rewardProviderClient.GetWallet("b6c351ff855e41fcad8bd2cb28d8d516_wlt");
-
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
 

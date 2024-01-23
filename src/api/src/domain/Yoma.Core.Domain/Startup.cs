@@ -13,7 +13,9 @@ using Yoma.Core.Domain.Entity.Services.Lookups;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Services;
 using Yoma.Core.Domain.Marketplace.Interfaces;
+using Yoma.Core.Domain.Marketplace.Interfaces.Lookups;
 using Yoma.Core.Domain.Marketplace.Services;
+using Yoma.Core.Domain.Marketplace.Services.Lookups;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Services;
@@ -68,6 +70,10 @@ namespace Yoma.Core.Domain
             #endregion Lookups
 
             #region Marketplace
+            #region Lookups
+            services.AddScoped<ITransactionStatusService, TransactionStatusService>();
+            #endregion Lookups
+
             services.AddScoped<IMarketplaceService, MarketplaceService>();
             #endregion Marketplace
 
@@ -122,9 +128,8 @@ namespace Yoma.Core.Domain
             #endregion SSI
         }
 
-        public static void Configure_RecurringJobs(this IConfiguration configuration, Core.Environment environment)
+        public static void Configure_RecurringJobs(this IConfiguration configuration, AppSettings appSettings, Core.Environment environment)
         {
-            var appSettings = configuration.GetSection(AppSettings.Section).Get<AppSettings>() ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{AppSettings.Section}'");
             var options = configuration.GetSection(ScheduleJobOptions.Section).Get<ScheduleJobOptions>() ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{ScheduleJobOptions.Section}'");
 
             var scheduledJobs = JobStorage.Current.GetMonitoringApi().ScheduledJobs(0, int.MaxValue);

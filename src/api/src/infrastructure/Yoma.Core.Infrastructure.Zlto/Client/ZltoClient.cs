@@ -51,7 +51,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 return (new Domain.Reward.Models.Wallet
                 {
                     Id = existing.WalletId,
-                    OwnerId = Guid.Parse(existing.OwnerId),
+                    OwnerId = existing.OwnerId,
                     Balance = existing.ZltoBalance,
                     DateCreated = existing.DateCreated,
                     DateModified = existing.LastUpdated
@@ -66,7 +66,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             {
                 Balance = request.Balance,
                 Id = account.WalletId,
-                OwnerId = Guid.Parse(account.OwnerId),
+                OwnerId = account.OwnerId,
                 DateCreated = account.DateCreated,
                 DateModified = account.LastUpdated
             };
@@ -91,7 +91,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             return new Domain.Reward.Models.Wallet
             {
                 Id = response.WalletId,
-                OwnerId = Guid.Parse(response.OwnerId),
+                OwnerId = response.OwnerId,
                 Balance = response.ZltoBalance,
                 DateCreated = response.DateCreated,
                 DateModified = response.LastUpdated
@@ -338,6 +338,9 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
               .PutJsonAsync(request)
               .EnsureSuccessStatusCodeAsync()
               .ReceiveJson<ReserveItemResponse>();
+
+            if (response.BankResponse == null)
+                throw new HttpClientException(HttpStatusCode.InternalServerError, $"Item reservation failed: {(string.IsNullOrWhiteSpace(response.Message) ? "no info" : response.Message)}");
 
             return response.BankResponse.TransactionInfo.TransactionId.ToString();
         }

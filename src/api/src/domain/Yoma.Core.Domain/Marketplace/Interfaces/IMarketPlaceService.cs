@@ -1,10 +1,11 @@
+using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Marketplace.Models;
 
 namespace Yoma.Core.Domain.Marketplace.Interfaces
 {
     public interface IMarketplaceService
     {
-        List<Lookups.Models.Country> ListSearchCriteriaCountries();
+        List<Country> ListSearchCriteriaCountries();
 
         Task<List<StoreCategory>> ListStoreCategories(string countryCodeAlpha2);
 
@@ -13,5 +14,7 @@ namespace Yoma.Core.Domain.Marketplace.Interfaces
         Task<StoreItemCategorySearchResults> SearchStoreItemCategories(StoreItemCategorySearchFilter filter);
 
         Task<StoreItemSearchResults> SearchStoreItems(StoreItemSearchFilter filter);
+
+        void BuyItem(string storeId, string itemCategoryId);
     }
 }

@@ -545,6 +545,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ItemCategoryId = table.Column<string>(type: "varchar(50)", nullable: false),
                     ItemId = table.Column<string>(type: "varchar(50)", nullable: false),
                     StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(8,2)", nullable: false),
@@ -1730,23 +1731,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionLog_DateCreated_DateModified",
-                schema: "Marketplace",
-                table: "TransactionLog",
-                columns: new[] { "DateCreated", "DateModified" });
-
-            migrationBuilder.CreateIndex(
                 name: "IX_TransactionLog_StatusId",
                 schema: "Marketplace",
                 table: "TransactionLog",
                 column: "StatusId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionLog_UserId_ItemId_StatusId",
+                name: "IX_TransactionLog_UserId_ItemCategoryId_ItemId_StatusId_DateCreated_DateModified",
                 schema: "Marketplace",
                 table: "TransactionLog",
-                columns: new[] { "UserId", "ItemId", "StatusId" },
-                unique: true);
+                columns: new[] { "UserId", "ItemCategoryId", "ItemId", "StatusId", "DateCreated", "DateModified" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransactionStatus_Name",
@@ -1844,7 +1838,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 table: "WalletCreationStatus",
                 column: "Name",
                 unique: true);
-
 
             ApplicationDb_Initial_Seeding.Seed(migrationBuilder);
         }

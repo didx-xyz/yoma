@@ -114,11 +114,11 @@ namespace Yoma.Core.Domain.Entity.Services
 
                             _emailProviderClient.Send(emailType, recipients, data).Wait();
 
-                            _logger.LogInformation("Successfully send '{emailType}' email", emailType);
+                            _logger.LogInformation("Successfully send email");
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "Failed to send '{emailType}' email", emailType);
+                            _logger.LogError(ex, "Failed to send email");
                         }
                     }
                 } while (true);

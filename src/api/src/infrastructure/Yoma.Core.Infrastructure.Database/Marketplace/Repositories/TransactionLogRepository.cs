@@ -19,6 +19,8 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
             {
                 Id = entity.Id,
                 UserId = entity.UserId,
+                ItemCategoryId = entity.ItemCategoryId,
+                ItemId = entity.ItemId,
                 StatusId = entity.StatusId,
                 Status = Enum.Parse<TransactionStatus>(entity.Status.Name, true),
                 Amount = entity.Amount,
@@ -35,8 +37,9 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
 
             var entity = new Entities.TransactionLog
             {
-                Id = item.Id,
                 UserId = item.UserId,
+                ItemCategoryId = item.ItemCategoryId,
+                ItemId = item.ItemId,
                 StatusId = item.StatusId,
                 TransactionId = item.TransactionId,
                 Amount = item.Amount,
@@ -51,19 +54,9 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
             return item;
         }
 
-        public async Task<TransactionLog> Update(TransactionLog item)
+        public Task<TransactionLog> Update(TransactionLog item)
         {
-            var entity = _context.RewardTransaction.Where(o => o.Id == item.Id).SingleOrDefault()
-               ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.TransactionLog)} with id '{item.Id}' does not exist");
-
-            item.DateModified = DateTimeOffset.Now;
-
-            entity.StatusId = item.StatusId;
-            entity.DateModified = item.DateModified;
-
-            await _context.SaveChangesAsync();
-
-            return item;
+            throw new NotImplementedException();
         }
 
         public Task Delete(TransactionLog item)

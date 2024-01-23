@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Reward.Models
     {
         public string Id { get; set; }
 
-        public Guid OwnerId { get; set; }
+        public string OwnerId { get; set; }
 
         public decimal Balance { get; set; }
 
