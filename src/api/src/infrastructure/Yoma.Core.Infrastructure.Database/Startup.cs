@@ -59,7 +59,7 @@ namespace Yoma.Core.Infrastructure.Database
 
             // repositories
             #region Core
-            services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();  
+            services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
             services.AddScoped<IRepository<BlobObject>, BlobObjectRepository>();
             #endregion Core
 

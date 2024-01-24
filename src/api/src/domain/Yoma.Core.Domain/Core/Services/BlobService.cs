@@ -27,7 +27,7 @@ namespace Yoma.Core.Domain.Core.Services
             _environmentProvider = environmentProvider;
             _blobProviderClientFactory = blobProviderClientFactory;
             _blobObjectRepository = blobObjectRepository;
-            _executionStrategyService = executionStrategyService;   
+            _executionStrategyService = executionStrategyService;
         }
         #endregion
 
@@ -90,7 +90,7 @@ namespace Yoma.Core.Domain.Core.Services
                 await client.Create(key, file.ContentType, file.ToBinary());
 
                 scope.Complete();
-            });   
+            });
 
             return result;
         }
