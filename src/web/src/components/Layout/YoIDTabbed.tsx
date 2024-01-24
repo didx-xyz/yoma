@@ -166,7 +166,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                           width={18}
                           height={18}
                         />
-                        {userProfile?.zltoBalance ?? 0}
+                        {userProfile?.zlto?.available ?? 0}
                       </div>
                     </div>
                   </div>
