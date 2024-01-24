@@ -53,6 +53,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         private readonly MyOpportunityRequestValidatorVerifyFinalize _myOpportunityRequestValidatorVerifyFinalize;
         private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
         private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
+        private readonly IExecutionStrategyService _executionStrategyService;
         #endregion
 
         #region Constructor
@@ -74,7 +75,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
             MyOpportunityRequestValidatorVerifyFinalize myOpportunityRequestValidatorVerifyFinalize,
             IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
-            IRepository<MyOpportunityVerification> myOpportunityVerificationRepository)
+            IRepository<MyOpportunityVerification> myOpportunityVerificationRepository,
+            IExecutionStrategyService executionStrategyService)
         {
             _logger = logger;
             _appSettings = appSettings.Value;
@@ -95,6 +97,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             _myOpportunityRequestValidatorVerifyFinalize = myOpportunityRequestValidatorVerifyFinalize;
             _myOpportunityRepository = myOpportunityRepository;
             _myOpportunityVerificationRepository = myOpportunityVerificationRepository;
+            _executionStrategyService = executionStrategyService;
         }
         #endregion
 
@@ -424,21 +427,24 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (request.Items == null)
                 throw new ArgumentNullException(nameof(request), "No items specified");
 
-            // request validated by FinalizeVerification
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-
-            foreach (var item in request.Items)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                await FinalizeVerificationManual(new MyOpportunityRequestVerifyFinalize
-                {
-                    OpportunityId = item.OpportunityId,
-                    UserId = item.UserId,
-                    Status = request.Status,
-                    Comment = request.Comment
-                });
-            }
+                // request validated by FinalizeVerification
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-            scope.Complete();
+                foreach (var item in request.Items)
+                {
+                    await FinalizeVerificationManual(new MyOpportunityRequestVerifyFinalize
+                    {
+                        OpportunityId = item.OpportunityId,
+                        UserId = item.UserId,
+                        Status = request.Status,
+                        Comment = request.Comment
+                    });
+                }
+
+                scope.Complete();
+            });
         }
 
         //supported statuses: Rejected or Completed
@@ -469,51 +475,54 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             var statusId = _myOpportunityVerificationStatusService.GetByName(request.Status.ToString()).Id;
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-
-            item.VerificationStatusId = statusId;
-            item.CommentVerification = request.Comment;
-
-            EmailType emailType;
-            switch (request.Status)
+            EmailType? emailType = null;
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                case VerificationStatus.Rejected:
-                    emailType = EmailType.Opportunity_Verification_Rejected;
-                    break;
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
-                case VerificationStatus.Completed:
-                    var dateCompleted = DateTimeOffset.Now;
+                item.VerificationStatusId = statusId;
+                item.CommentVerification = request.Comment;
 
-                    if (item.DateEnd.HasValue && item.DateEnd.Value > dateCompleted)
-                        throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd}')");
+                switch (request.Status)
+                {
+                    case VerificationStatus.Rejected:
+                        emailType = EmailType.Opportunity_Verification_Rejected;
+                        break;
 
-                    var (zltoReward, yomaReward) = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, true);
-                    item.ZltoReward = zltoReward;
-                    item.YomaReward = yomaReward;
-                    item.DateCompleted = DateTimeOffset.Now;
+                    case VerificationStatus.Completed:
+                        var dateCompleted = DateTimeOffset.Now;
 
-                    await _userService.AssignSkills(user, opportunity);
+                        if (item.DateEnd.HasValue && item.DateEnd.Value > dateCompleted)
+                            throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd}')");
 
-                    if (item.OpportunityCredentialIssuanceEnabled)
-                    {
-                        if (string.IsNullOrEmpty(item.OpportunitySSISchemaName))
-                            throw new InvalidOperationException($"Credential Issuance Enabled: Schema name expected for opportunity with id '{item.Id}'");
-                        await _ssiCredentialService.ScheduleIssuance(item.OpportunitySSISchemaName, item.Id);
-                    }
+                        var (zltoReward, yomaReward) = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, true);
+                        item.ZltoReward = zltoReward;
+                        item.YomaReward = yomaReward;
+                        item.DateCompleted = DateTimeOffset.Now;
 
-                    if (zltoReward.HasValue)
-                        await _rewardService.ScheduleRewardTransaction(user.Id, Reward.RewardTransactionEntityType.MyOpportunity, item.Id, zltoReward.Value);
+                        await _userService.AssignSkills(user, opportunity);
 
-                    emailType = EmailType.Opportunity_Verification_Completed;
-                    break;
+                        if (item.OpportunityCredentialIssuanceEnabled)
+                        {
+                            if (string.IsNullOrEmpty(item.OpportunitySSISchemaName))
+                                throw new InvalidOperationException($"Credential Issuance Enabled: Schema name expected for opportunity with id '{item.Id}'");
+                            await _ssiCredentialService.ScheduleIssuance(item.OpportunitySSISchemaName, item.Id);
+                        }
 
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(request), $"{nameof(request.Status)} of '{request.Status}' not supported");
-            }
+                        if (zltoReward.HasValue)
+                            await _rewardService.ScheduleRewardTransaction(user.Id, Reward.RewardTransactionEntityType.MyOpportunity, item.Id, zltoReward.Value);
 
-            item = await _myOpportunityRepository.Update(item);
+                        emailType = EmailType.Opportunity_Verification_Completed;
+                        break;
 
-            scope.Complete();
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(request), $"{nameof(request.Status)} of '{request.Status}' not supported");
+                }
+
+                item = await _myOpportunityRepository.Update(item);
+
+                scope.Complete();
+            });
 
             try
             {
@@ -539,7 +548,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     }
                 };
 
-                await _emailProviderClient.Send(emailType, recipients, data);
+                if (!emailType.HasValue)
+                    throw new InvalidOperationException($"Email type expected");
+
+                await _emailProviderClient.Send(emailType.Value, recipients, data);
 
                 _logger.LogInformation("Successfully send email");
             }
@@ -679,99 +691,102 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var itemsNewBlobs = new List<BlobObject>();
             try
             {
-                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-
-                if (isNew)
-                    myOpportunity = await _myOpportunityRepository.Create(myOpportunity);
-                else
+                await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
                 {
-                    //track existing (to be deleted)
-                    var items = myOpportunity.Verifications?.Where(o => o.FileId.HasValue).ToList();
-                    if (items != null)
+                    using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+                    if (isNew)
+                        myOpportunity = await _myOpportunityRepository.Create(myOpportunity);
+                    else
                     {
-                        itemsExisting.AddRange(items);
-                        foreach (var item in itemsExisting)
+                        //track existing (to be deleted)
+                        var items = myOpportunity.Verifications?.Where(o => o.FileId.HasValue).ToList();
+                        if (items != null)
                         {
-                            if (!item.FileId.HasValue)
-                                throw new InvalidOperationException("File id expected");
-                            item.File = await _blobService.Download(item.FileId.Value);
+                            itemsExisting.AddRange(items);
+                            foreach (var item in itemsExisting)
+                            {
+                                if (!item.FileId.HasValue)
+                                    throw new InvalidOperationException("File id expected");
+                                item.File = await _blobService.Download(item.FileId.Value);
+                            }
                         }
+
+                        myOpportunity = await _myOpportunityRepository.Update(myOpportunity);
                     }
 
-                    myOpportunity = await _myOpportunityRepository.Update(myOpportunity);
-                }
+                    //new items
+                    if (opportunity.VerificationTypes != null)
+                        foreach (var verificationType in opportunity.VerificationTypes)
+                        {
+                            var itemType = new MyOpportunityVerification
+                            {
+                                MyOpportunityId = myOpportunity.Id,
+                                VerificationTypeId = verificationType.Id
+                            };
 
-                //new items
-                if (opportunity.VerificationTypes != null)
-                    foreach (var verificationType in opportunity.VerificationTypes)
+                            //upload new item to blob storage
+                            BlobObject? blobObject = null;
+                            switch (verificationType.Type)
+                            {
+                                case VerificationType.FileUpload:
+                                    if (request.Certificate == null)
+                                        throw new ValidationException($"Verification type '{verificationType.Type}': Certificate required");
+
+                                    blobObject = await _blobService.Create(request.Certificate, FileType.Certificates);
+                                    break;
+
+                                case VerificationType.Picture:
+                                    if (request.Picture == null)
+                                        throw new ValidationException($"Verification type '{verificationType.Type}': Picture required");
+
+                                    blobObject = await _blobService.Create(request.Picture, FileType.Photos);
+                                    break;
+
+                                case VerificationType.VoiceNote:
+                                    if (request.VoiceNote == null)
+                                        throw new ValidationException($"Verification type '{verificationType.Type}': Voice note required");
+
+                                    blobObject = await _blobService.Create(request.VoiceNote, FileType.VoiceNotes);
+                                    break;
+
+                                case VerificationType.Location:
+                                    if (request.Geometry == null)
+                                        throw new ValidationException($"Verification type '{verificationType.Type}': Geometry required");
+
+                                    if (request.Geometry.Type != SpatialType.Point)
+                                        throw new ValidationException($"Verification type '{verificationType.Type}': Spatial type '{SpatialType.Point}' required");
+
+                                    itemType.GeometryProperties = JsonConvert.SerializeObject(request.Geometry);
+                                    break;
+
+                                default:
+                                    throw new InvalidOperationException($"Unknown / unsupported '{nameof(VerificationType)}' of '{verificationType.Type}'");
+                            }
+
+                            //create new item in db
+                            if (blobObject != null)
+                            {
+                                itemType.FileId = blobObject.Id;
+                                itemsNewBlobs.Add(blobObject);
+                            }
+
+                            await _myOpportunityVerificationRepository.Create(itemType);
+                        }
+
+                    //delete existing items in blob storage and db
+                    foreach (var item in itemsExisting)
                     {
-                        var itemType = new MyOpportunityVerification
-                        {
-                            MyOpportunityId = myOpportunity.Id,
-                            VerificationTypeId = verificationType.Id
-                        };
+                        if (!item.FileId.HasValue)
+                            throw new InvalidOperationException("File expected");
 
-                        //upload new item to blob storage
-                        BlobObject? blobObject = null;
-                        switch (verificationType.Type)
-                        {
-                            case VerificationType.FileUpload:
-                                if (request.Certificate == null)
-                                    throw new ValidationException($"Verification type '{verificationType.Type}': Certificate required");
-
-                                blobObject = await _blobService.Create(request.Certificate, FileType.Certificates);
-                                break;
-
-                            case VerificationType.Picture:
-                                if (request.Picture == null)
-                                    throw new ValidationException($"Verification type '{verificationType.Type}': Picture required");
-
-                                blobObject = await _blobService.Create(request.Picture, FileType.Photos);
-                                break;
-
-                            case VerificationType.VoiceNote:
-                                if (request.VoiceNote == null)
-                                    throw new ValidationException($"Verification type '{verificationType.Type}': Voice note required");
-
-                                blobObject = await _blobService.Create(request.VoiceNote, FileType.VoiceNotes);
-                                break;
-
-                            case VerificationType.Location:
-                                if (request.Geometry == null)
-                                    throw new ValidationException($"Verification type '{verificationType.Type}': Geometry required");
-
-                                if (request.Geometry.Type != SpatialType.Point)
-                                    throw new ValidationException($"Verification type '{verificationType.Type}': Spatial type '{SpatialType.Point}' required");
-
-                                itemType.GeometryProperties = JsonConvert.SerializeObject(request.Geometry);
-                                break;
-
-                            default:
-                                throw new InvalidOperationException($"Unknown / unsupported '{nameof(VerificationType)}' of '{verificationType.Type}'");
-                        }
-
-                        //create new item in db
-                        if (blobObject != null)
-                        {
-                            itemType.FileId = blobObject.Id;
-                            itemsNewBlobs.Add(blobObject);
-                        }
-
-                        await _myOpportunityVerificationRepository.Create(itemType);
+                        await _myOpportunityVerificationRepository.Delete(item);
+                        await _blobService.Delete(item.FileId.Value);
+                        itemsExistingDeleted.Add(item);
                     }
 
-                //delete existing items in blob storage and db
-                foreach (var item in itemsExisting)
-                {
-                    if (!item.FileId.HasValue)
-                        throw new InvalidOperationException("File expected");
-
-                    await _myOpportunityVerificationRepository.Delete(item);
-                    await _blobService.Delete(item.FileId.Value);
-                    itemsExistingDeleted.Add(item);
-                }
-
-                scope.Complete();
+                    scope.Complete();
+                });
             }
             catch //roll back
             {

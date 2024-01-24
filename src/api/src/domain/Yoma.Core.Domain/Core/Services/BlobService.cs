@@ -17,14 +17,17 @@ namespace Yoma.Core.Domain.Core.Services
         private readonly IEnvironmentProvider _environmentProvider;
         private readonly IBlobProviderClientFactory _blobProviderClientFactory;
         private readonly IRepository<BlobObject> _blobObjectRepository;
+        private readonly IExecutionStrategyService _executionStrategyService;
         #endregion
 
         #region Constructor
-        public BlobService(IEnvironmentProvider environmentProvider, IBlobProviderClientFactory blobProviderClientFactory, IRepository<BlobObject> blobObjectRepository)
+        public BlobService(IEnvironmentProvider environmentProvider, IBlobProviderClientFactory blobProviderClientFactory, IRepository<BlobObject> blobObjectRepository,
+            IExecutionStrategyService executionStrategyService)
         {
             _environmentProvider = environmentProvider;
             _blobProviderClientFactory = blobProviderClientFactory;
             _blobObjectRepository = blobObjectRepository;
+            _executionStrategyService = executionStrategyService;
         }
         #endregion
 
@@ -79,12 +82,15 @@ namespace Yoma.Core.Domain.Core.Services
 
             var client = _blobProviderClientFactory.CreateClient(storageType);
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
-            result = await _blobObjectRepository.Create(result);
-            await client.Create(key, file.ContentType, file.ToBinary());
+                result = await _blobObjectRepository.Create(result);
+                await client.Create(key, file.ContentType, file.ToBinary());
 
-            scope.Complete();
+                scope.Complete();
+            });
 
             return result;
         }
@@ -115,12 +121,15 @@ namespace Yoma.Core.Domain.Core.Services
 
             var client = _blobProviderClientFactory.CreateClient(item.StorageType);
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
-            await _blobObjectRepository.Delete(item);
-            await client.Delete(item.Key);
+                await _blobObjectRepository.Delete(item);
+                await client.Delete(item.Key);
 
-            scope.Complete();
+                scope.Complete();
+            });
         }
 
         // Delete the blob object only; used for rollbacks

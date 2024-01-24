@@ -29,6 +29,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IWalletService _rewardWalletService;
         private readonly UserProfileRequestValidator _userProfileRequestValidator;
         private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
+        private readonly IExecutionStrategyService _executionStrategyService;
         #endregion
 
         #region Constructor
@@ -41,7 +42,8 @@ namespace Yoma.Core.Domain.Entity.Services
             IMyOpportunityService myOpportunityService,
             IWalletService rewardWalletService,
             UserProfileRequestValidator userProfileRequestValidator,
-            IRepositoryValueContainsWithNavigation<User> userRepository)
+            IRepositoryValueContainsWithNavigation<User> userRepository,
+            IExecutionStrategyService executionStrategyService)
         {
             _identityProviderClient = identityProviderClientFactory.CreateClient();
             _httpContextAccessor = httpContextAccessor;
@@ -53,6 +55,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _rewardWalletService = rewardWalletService;
             _userProfileRequestValidator = userProfileRequestValidator;
             _userRepository = userRepository;
+            _executionStrategyService = executionStrategyService;
         }
         #endregion
 
@@ -110,8 +113,9 @@ namespace Yoma.Core.Domain.Entity.Services
             user.GenderId = request.GenderId;
             user.DateOfBirth = request.DateOfBirth;
 
-            using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
                 user = await _userRepository.Update(user);
 
                 var userIdentityProvider = new IdentityProvider.Models.User
@@ -132,7 +136,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 await _identityProviderClient.UpdateUser(userIdentityProvider, request.ResetPassword);
 
                 scope.Complete();
-            }
+            });
 
             return await ToProfile(user);
         }

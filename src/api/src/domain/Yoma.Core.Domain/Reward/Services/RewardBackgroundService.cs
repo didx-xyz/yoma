@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
+using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Extensions;
@@ -23,6 +24,7 @@ namespace Yoma.Core.Domain.Reward.Services
         private readonly IMyOpportunityService _myOpportunityService;
         private readonly IOpportunityService _opportunityService;
         private readonly IRewardProviderClient _rewardProviderClient;
+        private readonly IExecutionStrategyService _executionStrategyService;
 
         private static readonly object _lock_Object = new();
         #endregion
@@ -34,7 +36,8 @@ namespace Yoma.Core.Domain.Reward.Services
             IRewardService rewardService,
             IMyOpportunityService myOpportunityService,
             IOpportunityService opportunityService,
-            IRewardProviderClientFactory rewardProviderClientFactory)
+            IRewardProviderClientFactory rewardProviderClientFactory,
+            IExecutionStrategyService executionStrategyService)
         {
             _logger = logger;
             _scheduleJobOptions = scheduleJobOptions.Value;
@@ -43,6 +46,7 @@ namespace Yoma.Core.Domain.Reward.Services
             _myOpportunityService = myOpportunityService;
             _opportunityService = opportunityService;
             _rewardProviderClient = rewardProviderClientFactory.CreateClient();
+            _executionStrategyService = executionStrategyService;
         }
         #endregion
 
@@ -67,16 +71,19 @@ namespace Yoma.Core.Domain.Reward.Services
                         {
                             _logger.LogInformation("Processing reward wallet creation for item with id '{id}'", item.Id);
 
-                            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                            _executionStrategyService.ExecuteInExecutionStrategy(() =>
+                            {
+                                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-                            var wallet = _walletService.CreateWallet(item.UserId).Result;
+                                var wallet = _walletService.CreateWallet(item.UserId).Result;
 
-                            item.WalletId = wallet.Id;
-                            item.Balance = wallet.Balance; //track initial balance upon creation, if any
-                            item.Status = WalletCreationStatus.Created;
-                            _walletService.UpdateScheduleCreation(item).Wait();
+                                item.WalletId = wallet.Id;
+                                item.Balance = wallet.Balance; //track initial balance upon creation, if any
+                                item.Status = WalletCreationStatus.Created;
+                                _walletService.UpdateScheduleCreation(item).Wait();
 
-                            scope.Complete();
+                                scope.Complete();
+                            });
 
                             _logger.LogInformation("Processed reward wallet creation for item with id '{id}'", item.Id);
                         }
