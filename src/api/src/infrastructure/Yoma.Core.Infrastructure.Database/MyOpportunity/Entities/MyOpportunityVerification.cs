@@ -20,7 +20,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
         public Guid VerificationTypeId { get; set; }
         public Opportunity.Entities.Lookups.OpportunityVerificationType VerificationType { get; set; }
 
-        [Column(TypeName = "nvarchar(max)")]
+        [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
         public string? GeometryProperties { get; set; }
 
         [ForeignKey("FileId")]

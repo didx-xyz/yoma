@@ -140,6 +140,11 @@ namespace Yoma.Core.Infrastructure.Database.Context
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder.Entity<Opportunity.Entities.Opportunity>()
+                .HasIndex(o => new { o.Description })
+                .HasMethod("GIN")
+                .IsTsVectorExpressionIndex("english");
+
+            builder.Entity<Opportunity.Entities.Opportunity>()
                 .HasOne(o => o.CreatedByUser)
                 .WithMany()
                 .HasForeignKey(o => o.CreatedByUserId)

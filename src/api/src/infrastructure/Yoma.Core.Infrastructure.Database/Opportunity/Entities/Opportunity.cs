@@ -16,12 +16,12 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     {
         //support specials characters like emojis  
         [Required]
-        [Column(TypeName = "nvarchar(255)")]
+        [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)
         public string Title { get; set; }
 
         //support specials characters like emojis  
         [Required]
-        [Column(TypeName = "nvarchar(MAX)")]
+        [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
         public string Description { get; set; }
 
         [Required]
@@ -35,11 +35,11 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
         public Organization Organization { get; set; }
 
         //support specials characters like emojis  
-        [Column(TypeName = "nvarchar(500)")]
+        [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(500)
         public string? Summary { get; set; }
 
         //support specials characters like emojis  
-        [Column(TypeName = "nvarchar(MAX)")]
+        [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
         public string? Instructions { get; set; }
 
         [Column(TypeName = "varchar(2048)")]

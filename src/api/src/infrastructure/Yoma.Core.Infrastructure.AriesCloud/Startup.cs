@@ -32,16 +32,15 @@ namespace Yoma.Core.Infrastructure.AriesCloud
 
             services.AddDbContext<AriesCloudDbContext>(options =>
             {
-                options.UseSqlServer(connectionString, sqlServerOptions =>
+                options.UseNpgsql(connectionString, options =>
                 {
-                    sqlServerOptions.EnableRetryOnFailure(
-                    maxRetryCount: appSettings.DatabaseRetryPolicy.MaxRetryCount,
-                    maxRetryDelay: TimeSpan.FromSeconds(appSettings.DatabaseRetryPolicy.MaxRetryDelayInSeconds),
-                    null);
+                    options.EnableRetryOnFailure(
+                        maxRetryCount: appSettings.DatabaseRetryPolicy.MaxRetryCount,
+                        maxRetryDelay: TimeSpan.FromSeconds(appSettings.DatabaseRetryPolicy.MaxRetryDelayInSeconds),
+                        errorCodesToAdd: null);
                 });
-            }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
-            services.AddDbContext<AriesCloudDbContext>(options => options.UseSqlServer(connectionString));
+            }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
             // repositories
             services.AddScoped<IRepository<CredentialSchema>, CredentialSchemaRepository>();

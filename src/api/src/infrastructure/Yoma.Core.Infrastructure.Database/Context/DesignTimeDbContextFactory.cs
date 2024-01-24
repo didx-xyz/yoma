@@ -15,7 +15,7 @@ namespace Wadappt.Portal.Infrastructure.Database.Context
                 .Build();
             var builder = new DbContextOptionsBuilder<ApplicationDbContext>();
             var connectionString = configuration.GetConnectionString("SQLConnection");
-            builder.UseSqlServer(connectionString);
+            builder.UseNpgsql(connectionString);
             return new ApplicationDbContext(builder.Options);
         }
     }

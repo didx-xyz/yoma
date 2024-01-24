@@ -36,7 +36,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities
         [Column(TypeName = "varchar(50)")]
         public string? TransactionId { get; set; }
 
-        [Column(TypeName = "varchar(MAX)")]
+        [Column(TypeName = "text")] //MS SQL: varchar(MAX)
         public string? ErrorReason { get; set; }
 
         public byte? RetryCount { get; set; }

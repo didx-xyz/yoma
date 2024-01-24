@@ -111,12 +111,14 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 
         public Expression<Func<Domain.Opportunity.Models.Opportunity, bool>> Contains(Expression<Func<Domain.Opportunity.Models.Opportunity, bool>> predicate, string value)
         {
-            return predicate.Or(o => o.Title.Contains(value) || (!string.IsNullOrEmpty(o.KeywordsFlatten) && o.KeywordsFlatten.Contains(value)) || EF.Functions.FreeText(o.Description, value));
+            return predicate.Or(o => o.Title.Contains(value) || (!string.IsNullOrEmpty(o.KeywordsFlatten) && o.KeywordsFlatten.Contains(value))
+                || EF.Functions.ToTsVector("english", o.Description).Matches(value));   
         }
 
         public IQueryable<Domain.Opportunity.Models.Opportunity> Contains(IQueryable<Domain.Opportunity.Models.Opportunity> query, string value)
         {
-            return query.Where(o => o.Title.Contains(value) || (!string.IsNullOrEmpty(o.KeywordsFlatten) && o.KeywordsFlatten.Contains(value)) || EF.Functions.FreeText(o.Description, value));
+            return query.Where(o => o.Title.Contains(value) || (!string.IsNullOrEmpty(o.KeywordsFlatten) && o.KeywordsFlatten.Contains(value))
+                || EF.Functions.ToTsVector("english", o.Description).Matches(value));
         }
 
         public async Task<Domain.Opportunity.Models.Opportunity> Create(Domain.Opportunity.Models.Opportunity item)

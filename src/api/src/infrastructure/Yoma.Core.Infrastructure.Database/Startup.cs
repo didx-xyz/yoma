@@ -44,13 +44,14 @@ namespace Yoma.Core.Infrastructure.Database
             // infrastructure
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseSqlServer(configuration.Configuration_ConnectionString(), sqlServerOptions =>
+                options.UseNpgsql(configuration.Configuration_ConnectionString(), options =>
                 {
-                    sqlServerOptions.EnableRetryOnFailure(
-                    maxRetryCount: appSettings.DatabaseRetryPolicy.MaxRetryCount,
-                    maxRetryDelay: TimeSpan.FromSeconds(appSettings.DatabaseRetryPolicy.MaxRetryDelayInSeconds),
-                    null);
+                    options.EnableRetryOnFailure(
+                        maxRetryCount: appSettings.DatabaseRetryPolicy.MaxRetryCount,
+                        maxRetryDelay: TimeSpan.FromSeconds(appSettings.DatabaseRetryPolicy.MaxRetryDelayInSeconds),
+                        errorCodesToAdd: null);
                 });
+
             }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
             //<PackageReference Include="EntityFrameworkProfiler.Appender" Version="6.0.6040" />

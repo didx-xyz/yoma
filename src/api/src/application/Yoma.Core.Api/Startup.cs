@@ -14,9 +14,9 @@ using Microsoft.AspNetCore.Authorization;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.Emsi;
 using Hangfire;
-using Hangfire.SqlServer;
 using Hangfire.Dashboard;
 using Hangfire.Dashboard.BasicAuthorization;
+using Hangfire.PostgreSql;
 using Yoma.Core.Infrastructure.SendGrid;
 using Yoma.Core.Infrastructure.AmazonS3;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
@@ -224,15 +224,10 @@ namespace Yoma.Core.Api
                .UseActivator(new HangfireActivator(scopeFactory))
                .UseSimpleAssemblyNameTypeSerializer()
                .UseRecommendedSerializerSettings()
-               .UseSqlServerStorage(configuration.Configuration_ConnectionString(), new SqlServerStorageOptions
+               .UsePostgreSqlStorage((configure) =>
                {
-                   PrepareSchemaIfNecessary = true,
-                   CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
-                   SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
-                   QueuePollInterval = TimeSpan.Zero,
-                   UseRecommendedIsolationLevel = true,
-                   DisableGlobalLocks = false
-               });
+                   configure.UseNpgsqlConnection(configuration.Configuration_ConnectionString());
+               }, new PostgreSqlStorageOptions { SchemaName = "HangFire" });
             });
 
             services.AddHangfireServer();

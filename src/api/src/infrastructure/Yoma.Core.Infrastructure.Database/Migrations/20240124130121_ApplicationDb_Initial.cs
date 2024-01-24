@@ -36,14 +36,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Object",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     StorageType = table.Column<string>(type: "varchar(25)", nullable: false),
                     FileType = table.Column<string>(type: "varchar(25)", nullable: false),
                     Key = table.Column<string>(type: "varchar(125)", nullable: false),
                     ContentType = table.Column<string>(type: "varchar(127)", nullable: false),
                     OriginalFileName = table.Column<string>(type: "varchar(255)", nullable: false),
-                    ParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    ParentId = table.Column<Guid>(type: "uuid", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -61,12 +61,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Lookup",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(125)", nullable: false),
                     CodeAlpha2 = table.Column<string>(type: "varchar(2)", nullable: false),
                     CodeAlpha3 = table.Column<string>(type: "varchar(3)", nullable: false),
                     CodeNumeric = table.Column<string>(type: "varchar(3)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -78,9 +78,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(20)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -92,9 +92,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Lookup",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(20)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -106,10 +106,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Lookup",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(125)", nullable: false),
                     CodeAlpha2 = table.Column<string>(type: "varchar(2)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -121,9 +121,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(125)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -135,9 +135,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(125)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -149,10 +149,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(125)", nullable: false),
                     ImageURL = table.Column<string>(type: "varchar(2048)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -164,9 +164,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(20)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -178,9 +178,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(20)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -192,9 +192,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(20)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -206,11 +206,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(125)", nullable: false),
                     DisplayName = table.Column<string>(type: "varchar(125)", nullable: false),
                     Description = table.Column<string>(type: "varchar(255)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -222,9 +222,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Entity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(255)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -236,9 +236,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Entity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(255)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -250,9 +250,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TypeName = table.Column<string>(type: "varchar(255)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -264,11 +264,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(125)", nullable: false),
                     Description = table.Column<string>(type: "varchar(255)", nullable: false),
-                    SupportMultiple = table.Column<bool>(type: "bit", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    SupportMultiple = table.Column<bool>(type: "boolean", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -280,12 +280,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Lookup",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(255)", nullable: false),
                     InfoURL = table.Column<string>(type: "varchar(2048)", nullable: true),
                     ExternalId = table.Column<string>(type: "varchar(100)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -297,9 +297,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(20)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -311,9 +311,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Lookup",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(20)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -325,9 +325,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Marketplace",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(30)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -339,9 +339,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Reward",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(30)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -353,9 +353,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Reward",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(20)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -367,24 +367,24 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Entity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Email = table.Column<string>(type: "varchar(320)", nullable: false),
-                    EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    EmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
                     FirstName = table.Column<string>(type: "varchar(125)", nullable: false),
                     Surname = table.Column<string>(type: "varchar(125)", nullable: false),
                     DisplayName = table.Column<string>(type: "varchar(255)", nullable: false),
                     PhoneNumber = table.Column<string>(type: "varchar(50)", nullable: true),
-                    CountryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CountryOfResidenceId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    PhotoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    GenderId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    DateOfBirth = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DateLastLogin = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    ExternalId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    YoIDOnboarded = table.Column<bool>(type: "bit", nullable: true),
-                    DateYoIDOnboarded = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    CountryId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CountryOfResidenceId = table.Column<Guid>(type: "uuid", nullable: true),
+                    PhotoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    GenderId = table.Column<Guid>(type: "uuid", nullable: true),
+                    DateOfBirth = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DateLastLogin = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ExternalId = table.Column<Guid>(type: "uuid", nullable: true),
+                    YoIDOnboarded = table.Column<bool>(type: "boolean", nullable: true),
+                    DateYoIDOnboarded = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -420,15 +420,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SSISchemaEntityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    SSISchemaEntityId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "varchar(50)", nullable: false),
                     NameDisplay = table.Column<string>(type: "varchar(50)", nullable: false),
                     Description = table.Column<string>(type: "varchar(125)", nullable: false),
-                    Required = table.Column<bool>(type: "bit", nullable: false),
+                    Required = table.Column<bool>(type: "boolean", nullable: false),
                     SystemType = table.Column<string>(type: "varchar(50)", nullable: true),
                     Format = table.Column<string>(type: "varchar(125)", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -447,10 +447,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SSISchemaEntityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SSISchemaTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    SSISchemaEntityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SSISchemaTypeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -476,9 +476,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Entity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(255)", nullable: false),
-                    NameHashValue = table.Column<string>(type: "nvarchar(128)", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "varchar(255)", nullable: false),
+                    NameHashValue = table.Column<string>(type: "varchar(128)", nullable: false),
                     WebsiteURL = table.Column<string>(type: "varchar(2048)", nullable: true),
                     PrimaryContactName = table.Column<string>(type: "varchar(255)", nullable: true),
                     PrimaryContactEmail = table.Column<string>(type: "varchar(320)", nullable: true),
@@ -487,20 +487,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     TaxNumber = table.Column<string>(type: "varchar(255)", nullable: true),
                     RegistrationNumber = table.Column<string>(type: "varchar(255)", nullable: true),
                     City = table.Column<string>(type: "varchar(50)", nullable: true),
-                    CountryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CountryId = table.Column<Guid>(type: "uuid", nullable: true),
                     StreetAddress = table.Column<string>(type: "varchar(500)", nullable: true),
                     Province = table.Column<string>(type: "varchar(255)", nullable: true),
                     PostalCode = table.Column<string>(type: "varchar(10)", nullable: true),
-                    Tagline = table.Column<string>(type: "nvarchar(MAX)", nullable: true),
-                    Biography = table.Column<string>(type: "nvarchar(MAX)", nullable: true),
-                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Tagline = table.Column<string>(type: "text", nullable: true),
+                    Biography = table.Column<string>(type: "text", nullable: true),
+                    StatusId = table.Column<Guid>(type: "uuid", nullable: false),
                     CommentApproval = table.Column<string>(type: "varchar(500)", nullable: true),
-                    DateStatusModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    LogoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    DateStatusModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LogoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -543,15 +543,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Marketplace",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     ItemCategoryId = table.Column<string>(type: "varchar(50)", nullable: false),
                     ItemId = table.Column<string>(type: "varchar(50)", nullable: false),
-                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Amount = table.Column<decimal>(type: "decimal(8,2)", nullable: false),
+                    StatusId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric(8,2)", nullable: false),
                     TransactionId = table.Column<string>(type: "varchar(50)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -577,10 +577,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Entity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SkillId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SkillId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -606,15 +606,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Reward",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    StatusId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     WalletId = table.Column<string>(type: "varchar(50)", nullable: true),
-                    Balance = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
-                    ErrorReason = table.Column<string>(type: "varchar(MAX)", nullable: true),
-                    RetryCount = table.Column<byte>(type: "tinyint", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Balance = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
+                    ErrorReason = table.Column<string>(type: "text", nullable: true),
+                    RetryCount = table.Column<byte>(type: "smallint", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -640,37 +640,37 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(255)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(MAX)", nullable: false),
-                    TypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Summary = table.Column<string>(type: "nvarchar(500)", nullable: true),
-                    Instructions = table.Column<string>(type: "nvarchar(MAX)", nullable: true),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "varchar(255)", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    TypeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OrganizationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Summary = table.Column<string>(type: "varchar(500)", nullable: true),
+                    Instructions = table.Column<string>(type: "text", nullable: true),
                     URL = table.Column<string>(type: "varchar(2048)", nullable: true),
-                    ZltoReward = table.Column<decimal>(type: "decimal(8,2)", nullable: true),
-                    ZltoRewardPool = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
-                    ZltoRewardCumulative = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
-                    YomaReward = table.Column<decimal>(type: "decimal(8,2)", nullable: true),
-                    YomaRewardPool = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
-                    YomaRewardCumulative = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
-                    VerificationEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    ZltoReward = table.Column<decimal>(type: "numeric(8,2)", nullable: true),
+                    ZltoRewardPool = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
+                    ZltoRewardCumulative = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
+                    YomaReward = table.Column<decimal>(type: "numeric(8,2)", nullable: true),
+                    YomaRewardPool = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
+                    YomaRewardCumulative = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
+                    VerificationEnabled = table.Column<bool>(type: "boolean", nullable: false),
                     VerificationMethod = table.Column<string>(type: "varchar(20)", nullable: true),
-                    DifficultyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CommitmentIntervalId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DifficultyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CommitmentIntervalId = table.Column<Guid>(type: "uuid", nullable: false),
                     CommitmentIntervalCount = table.Column<short>(type: "smallint", nullable: false),
-                    ParticipantLimit = table.Column<int>(type: "int", nullable: true),
-                    ParticipantCount = table.Column<int>(type: "int", nullable: true),
-                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ParticipantLimit = table.Column<int>(type: "integer", nullable: true),
+                    ParticipantCount = table.Column<int>(type: "integer", nullable: true),
+                    StatusId = table.Column<Guid>(type: "uuid", nullable: false),
                     Keywords = table.Column<string>(type: "varchar(500)", nullable: true),
-                    DateStart = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    CredentialIssuanceEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    DateStart = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    DateEnd = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    CredentialIssuanceEnabled = table.Column<bool>(type: "boolean", nullable: false),
                     SSISchemaName = table.Column<string>(type: "varchar(255)", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -729,11 +729,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Entity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FileId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    OrganizationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FileId = table.Column<Guid>(type: "uuid", nullable: false),
                     Type = table.Column<string>(type: "varchar(50)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -759,16 +759,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Entity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ProviderTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    OrganizationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProviderTypeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_OrganizationProviderTypes", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_OrganizationProviderTypes_OrganizationProviderType_ProviderTypeId",
+                        name: "FK_OrganizationProviderTypes_OrganizationProviderType_Provider~",
                         column: x => x.ProviderTypeId,
                         principalSchema: "Entity",
                         principalTable: "OrganizationProviderType",
@@ -788,10 +788,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Entity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    OrganizationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -817,16 +817,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     EntityType = table.Column<string>(type: "varchar(25)", nullable: false),
-                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    StatusId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    OrganizationId = table.Column<Guid>(type: "uuid", nullable: true),
                     TenantId = table.Column<string>(type: "varchar(50)", nullable: true),
-                    ErrorReason = table.Column<string>(type: "varchar(MAX)", nullable: true),
-                    RetryCount = table.Column<byte>(type: "tinyint", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    ErrorReason = table.Column<string>(type: "text", nullable: true),
+                    RetryCount = table.Column<byte>(type: "smallint", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -857,10 +857,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Entity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserSkillId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserSkillId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OrganizationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -886,19 +886,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ActionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    VerificationStatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OpportunityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ActionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    VerificationStatusId = table.Column<Guid>(type: "uuid", nullable: true),
                     CommentVerification = table.Column<string>(type: "varchar(500)", nullable: true),
-                    DateStart = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DateEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DateCompleted = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    ZltoReward = table.Column<decimal>(type: "decimal(8,2)", nullable: true),
-                    YomaReward = table.Column<decimal>(type: "decimal(8,2)", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateStart = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DateEnd = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DateCompleted = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ZltoReward = table.Column<decimal>(type: "numeric(8,2)", nullable: true),
+                    YomaReward = table.Column<decimal>(type: "numeric(8,2)", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -911,7 +911,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_MyOpportunity_MyOpportunityVerificationStatus_VerificationStatusId",
+                        name: "FK_MyOpportunity_MyOpportunityVerificationStatus_VerificationS~",
                         column: x => x.VerificationStatusId,
                         principalSchema: "Opportunity",
                         principalTable: "MyOpportunityVerificationStatus",
@@ -937,10 +937,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CategoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    OpportunityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CategoryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -966,10 +966,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CountryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    OpportunityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CountryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -995,10 +995,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    LanguageId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    OpportunityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LanguageId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1024,10 +1024,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SkillId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    OpportunityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SkillId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1053,18 +1053,18 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    VerificationTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    OpportunityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    VerificationTypeId = table.Column<Guid>(type: "uuid", nullable: false),
                     Description = table.Column<string>(type: "varchar(255)", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_OpportunityVerificationTypes", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_OpportunityVerificationTypes_OpportunityVerificationType_VerificationTypeId",
+                        name: "FK_OpportunityVerificationTypes_OpportunityVerificationType_Ve~",
                         column: x => x.VerificationTypeId,
                         principalSchema: "Opportunity",
                         principalTable: "OpportunityVerificationType",
@@ -1084,20 +1084,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "SSI",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SchemaTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    SchemaTypeId = table.Column<Guid>(type: "uuid", nullable: false),
                     ArtifactType = table.Column<string>(type: "varchar(25)", nullable: false),
                     SchemaName = table.Column<string>(type: "varchar(125)", nullable: false),
                     SchemaVersion = table.Column<string>(type: "varchar(20)", nullable: false),
-                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    MyOpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    StatusId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    OrganizationId = table.Column<Guid>(type: "uuid", nullable: true),
+                    MyOpportunityId = table.Column<Guid>(type: "uuid", nullable: true),
                     CredentialId = table.Column<string>(type: "varchar(50)", nullable: true),
-                    ErrorReason = table.Column<string>(type: "varchar(MAX)", nullable: true),
-                    RetryCount = table.Column<byte>(type: "tinyint", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    ErrorReason = table.Column<string>(type: "text", nullable: true),
+                    RetryCount = table.Column<byte>(type: "smallint", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1141,12 +1141,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    MyOpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    VerificationTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    GeometryProperties = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    FileId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    MyOpportunityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    VerificationTypeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    GeometryProperties = table.Column<string>(type: "text", nullable: true),
+                    FileId = table.Column<Guid>(type: "uuid", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1165,7 +1165,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_MyOpportunityVerifications_OpportunityVerificationType_VerificationTypeId",
+                        name: "FK_MyOpportunityVerifications_OpportunityVerificationType_Veri~",
                         column: x => x.VerificationTypeId,
                         principalSchema: "Opportunity",
                         principalTable: "OpportunityVerificationType",
@@ -1178,17 +1178,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Reward",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    StatusId = table.Column<Guid>(type: "uuid", nullable: false),
                     SourceEntityType = table.Column<string>(type: "varchar(25)", nullable: false),
-                    MyOpportunityId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Amount = table.Column<decimal>(type: "decimal(8,2)", nullable: false),
+                    MyOpportunityId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Amount = table.Column<decimal>(type: "numeric(8,2)", nullable: false),
                     TransactionId = table.Column<string>(type: "varchar(50)", nullable: true),
-                    ErrorReason = table.Column<string>(type: "varchar(MAX)", nullable: true),
-                    RetryCount = table.Column<byte>(type: "tinyint", nullable: true),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    ErrorReason = table.Column<string>(type: "text", nullable: true),
+                    RetryCount = table.Column<byte>(type: "smallint", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1275,14 +1275,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 column: "OrganizationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CredentialIssuance_SchemaName_UserId_OrganizationId_MyOpportunityId",
+                name: "IX_CredentialIssuance_SchemaName_UserId_OrganizationId_MyOppor~",
                 schema: "SSI",
                 table: "CredentialIssuance",
                 columns: new[] { "SchemaName", "UserId", "OrganizationId", "MyOpportunityId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_CredentialIssuance_SchemaTypeId_ArtifactType_SchemaName_StatusId_DateCreated_DateModified",
+                name: "IX_CredentialIssuance_SchemaTypeId_ArtifactType_SchemaName_Sta~",
                 schema: "SSI",
                 table: "CredentialIssuance",
                 columns: new[] { "SchemaTypeId", "ArtifactType", "SchemaName", "StatusId", "DateCreated", "DateModified" });
@@ -1347,7 +1347,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_MyOpportunity_VerificationStatusId_DateCompleted_ZltoReward_YomaReward_DateCreated_DateModified",
+                name: "IX_MyOpportunity_VerificationStatusId_DateCompleted_ZltoReward~",
                 schema: "Opportunity",
                 table: "MyOpportunity",
                 columns: new[] { "VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified" });
@@ -1366,7 +1366,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 column: "FileId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MyOpportunityVerifications_MyOpportunityId_VerificationTypeId",
+                name: "IX_MyOpportunityVerifications_MyOpportunityId_VerificationType~",
                 schema: "Opportunity",
                 table: "MyOpportunityVerifications",
                 columns: new[] { "MyOpportunityId", "VerificationTypeId" },
@@ -1396,6 +1396,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 schema: "Opportunity",
                 table: "Opportunity",
                 column: "CreatedByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Opportunity_Description",
+                schema: "Opportunity",
+                table: "Opportunity",
+                column: "Description")
+                .Annotation("Npgsql:IndexMethod", "GIN")
+                .Annotation("Npgsql:TsVectorConfig", "english");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Opportunity_DifficultyId",
@@ -1429,7 +1437,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Opportunity_TypeId_OrganizationId_ZltoReward_DifficultyId_CommitmentIntervalId_CommitmentIntervalCount_StatusId_Keywords_Dat~",
+                name: "IX_Opportunity_TypeId_OrganizationId_ZltoReward_DifficultyId_C~",
                 schema: "Opportunity",
                 table: "Opportunity",
                 columns: new[] { "TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId" });
@@ -1522,7 +1530,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_OpportunityVerificationTypes_OpportunityId_VerificationTypeId",
+                name: "IX_OpportunityVerificationTypes_OpportunityId_VerificationType~",
                 schema: "Opportunity",
                 table: "OpportunityVerificationTypes",
                 columns: new[] { "OpportunityId", "VerificationTypeId" },
@@ -1566,7 +1574,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Organization_StatusId_DateStatusModified_DateCreated_CreatedByUserId_DateModified_ModifiedByUserId",
+                name: "IX_Organization_StatusId_DateStatusModified_DateCreated_Create~",
                 schema: "Entity",
                 table: "Organization",
                 columns: new[] { "StatusId", "DateStatusModified", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId" });
@@ -1737,7 +1745,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 column: "StatusId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionLog_UserId_ItemCategoryId_ItemId_StatusId_DateCreated_DateModified",
+                name: "IX_TransactionLog_UserId_ItemCategoryId_ItemId_StatusId_DateCr~",
                 schema: "Marketplace",
                 table: "TransactionLog",
                 columns: new[] { "UserId", "ItemCategoryId", "ItemId", "StatusId", "DateCreated", "DateModified" });
@@ -1750,7 +1758,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionStatus_Name",
+                name: "IX_TransactionStatus_Name1",
                 schema: "Reward",
                 table: "TransactionStatus",
                 column: "Name",
@@ -1776,7 +1784,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_ExternalId_YoIDOnboarded_DateYoIDOnboarded_DateCreated_DateModified",
+                name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_ExternalI~",
                 schema: "Entity",
                 table: "User",
                 columns: new[] { "FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified" });

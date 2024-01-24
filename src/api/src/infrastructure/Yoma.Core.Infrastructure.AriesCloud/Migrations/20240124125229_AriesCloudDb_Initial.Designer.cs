@@ -2,9 +2,9 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Yoma.Core.Infrastructure.AriesCloud.Context;
 
 #nullable disable
@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.AriesCloud.Context;
 namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
 {
     [DbContext(typeof(AriesCloudDbContext))]
-    [Migration("20230929070257_AriesCloudDb_Initial")]
+    [Migration("20240124125229_AriesCloudDb_Initial")]
     partial class AriesCloudDb_Initial
     {
         /// <inheritdoc />
@@ -20,19 +20,19 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.11")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("ProductVersion", "7.0.13")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.AriesCloud.Entities.Connection", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("DateCreated")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Protocol")
                         .IsRequired()
@@ -65,7 +65,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
             modelBuilder.Entity("Yoma.Core.Infrastructure.AriesCloud.Entities.CredentialSchema", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("varchar(125)");
 
                     b.Property<string>("ArtifactType")
                         .IsRequired()
@@ -73,10 +73,10 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
 
                     b.Property<string>("AttributeNames")
                         .IsRequired()
-                        .HasColumnType("nvarchar(MAX)");
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("DateCreated")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()

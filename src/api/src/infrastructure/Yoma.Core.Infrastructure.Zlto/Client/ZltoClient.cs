@@ -259,7 +259,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 Summary = o.ItemCatDetails,
                 ImageURL = string.Equals(o.ItemCatImage, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? null : o.ItemCatImage,
                 //o.StoreItemCount: internal count the does not reflect the available item count correctly
-                Count = ListStoreItems(storeId, o.ItemCategoryId.ToString(), null, null).Result.Count(),
+                Count = ListStoreItems(storeId, o.ItemCategoryId.ToString(), null, null).Result.Count,
                 Amount = o.ItemCatZlto
 
             }).OrderBy(o => o.Name).ToList();

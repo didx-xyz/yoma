@@ -14,7 +14,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Context
                 .Build();
             var builder = new DbContextOptionsBuilder<AriesCloudDbContext>();
             var connectionString = configuration.GetConnectionString("SQLConnection");
-            builder.UseSqlServer(connectionString);
+            builder.UseNpgsql(connectionString);
             return new AriesCloudDbContext(builder.Options);
         }
     }

@@ -12,11 +12,11 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     public class Organization : BaseEntity<Guid>
     {
         [Required]
-        [Column(TypeName = "nvarchar(255)")]
+        [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)
         public string Name { get; set; }
 
         [Required]
-        [Column(TypeName = "nvarchar(128)")]
+        [Column(TypeName = "varchar(128)")] //MS SQL: nvarchar(128)
         public string NameHashValue { get; set; }
 
         [Column(TypeName = "varchar(2048)")]
@@ -56,10 +56,10 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
         [Column(TypeName = "varchar(10)")]
         public string? PostalCode { get; set; }
 
-        [Column(TypeName = "nvarchar(MAX)")]
+        [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
         public string? Tagline { get; set; }
 
-        [Column(TypeName = "nvarchar(MAX)")]
+        [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
         public string? Biography { get; set; }
 
         [Required]

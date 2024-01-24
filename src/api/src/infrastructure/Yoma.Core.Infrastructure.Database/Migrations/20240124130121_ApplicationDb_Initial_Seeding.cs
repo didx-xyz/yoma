@@ -7,14 +7,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     {
         internal static void Seed(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(
-                sql: "CREATE FULLTEXT CATALOG ftCatalog AS DEFAULT;",
-                suppressTransaction: true);
-
-            migrationBuilder.Sql(
-                sql: "CREATE FULLTEXT INDEX ON opportunity.Opportunity(Description) KEY INDEX PK_Opportunity;",
-                suppressTransaction: true);
-
             #region Entity
             migrationBuilder.InsertData(
             table: "OrganizationStatus",

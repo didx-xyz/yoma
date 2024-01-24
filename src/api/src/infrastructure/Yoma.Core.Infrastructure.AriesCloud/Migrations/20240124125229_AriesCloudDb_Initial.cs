@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -18,13 +18,13 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
                 schema: "AriesCloud",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     SourceTenantId = table.Column<string>(type: "varchar(50)", nullable: false),
                     TargetTenantId = table.Column<string>(type: "varchar(50)", nullable: false),
                     SourceConnectionId = table.Column<string>(type: "varchar(50)", nullable: false),
                     TargetConnectionId = table.Column<string>(type: "varchar(50)", nullable: false),
                     Protocol = table.Column<string>(type: "varchar(25)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -39,9 +39,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
                     Id = table.Column<string>(type: "varchar(125)", nullable: false),
                     Name = table.Column<string>(type: "varchar(125)", nullable: false),
                     Version = table.Column<string>(type: "varchar(20)", nullable: false),
-                    AttributeNames = table.Column<string>(type: "nvarchar(MAX)", nullable: false),
+                    AttributeNames = table.Column<string>(type: "text", nullable: false),
                     ArtifactType = table.Column<string>(type: "varchar(20)", nullable: false),
-                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {

@@ -20,7 +20,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Entities
         public string Version { get; set; }
 
         [Required]
-        [Column(TypeName = "nvarchar(MAX)")]
+        [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
         public string AttributeNames { get; set; }
 
         [Required]
