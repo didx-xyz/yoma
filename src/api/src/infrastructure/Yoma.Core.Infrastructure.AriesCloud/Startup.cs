@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Infrastructure.AriesCloud.Client;
 using Yoma.Core.Infrastructure.AriesCloud.Context;
@@ -20,7 +21,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud
             applicationBuilder.ApplicationServices.UseAriesCloudAPI();
         }
 
-        public static void ConfigureServices_InfrastructureSSIProvider(this IServiceCollection services, IConfiguration configuration, string nameOrConnectionString)
+        public static void ConfigureServices_InfrastructureSSIProvider(this IServiceCollection services, IConfiguration configuration, string nameOrConnectionString, AppSettings appSettings)
         {
             if (string.IsNullOrWhiteSpace(nameOrConnectionString))
                 throw new ArgumentNullException(nameof(nameOrConnectionString));
@@ -28,6 +29,17 @@ namespace Yoma.Core.Infrastructure.AriesCloud
 
             var connectionString = configuration.GetConnectionString(nameOrConnectionString);
             if (string.IsNullOrEmpty(connectionString)) connectionString = nameOrConnectionString;
+
+            services.AddDbContext<AriesCloudDbContext>(options =>
+            {
+                options.UseSqlServer(connectionString, sqlServerOptions =>
+                {
+                    sqlServerOptions.EnableRetryOnFailure(
+                    maxRetryCount: appSettings.DatabaseRetryPolicy.MaxRetryCount,
+                    maxRetryDelay: TimeSpan.FromSeconds(appSettings.DatabaseRetryPolicy.MaxRetryDelayInSeconds),
+                    null);
+                });
+            }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
             services.AddDbContext<AriesCloudDbContext>(options => options.UseSqlServer(connectionString));
 
@@ -40,6 +52,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud
             services.AddScoped<ISSIProviderClientFactory, AriesCloudClientFactory>();
 
             //service
+            services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
             services.AddScoped<ISSEListenerService, SSEListenerService>();
         }
 

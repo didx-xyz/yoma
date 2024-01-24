@@ -45,6 +45,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IRepository<OrganizationUser> _organizationUserRepository;
         private readonly IRepository<Models.OrganizationProviderType> _organizationProviderTypeRepository;
         private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
+        private readonly IExecutionStrategyService _executionStrategyService;
 
         private static readonly OrganizationStatus[] Statuses_Updatable = { OrganizationStatus.Active, OrganizationStatus.Inactive, OrganizationStatus.Declined };
         private static readonly OrganizationStatus[] Statuses_Activatable = { OrganizationStatus.Inactive };
@@ -71,7 +72,8 @@ namespace Yoma.Core.Domain.Entity.Services
             IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
             IRepository<OrganizationUser> organizationUserRepository,
             IRepository<Models.OrganizationProviderType> organizationProviderTypeRepository,
-            IRepository<OrganizationDocument> organizationDocumentRepository)
+            IRepository<OrganizationDocument> organizationDocumentRepository,
+            IExecutionStrategyService executionStrategyService)
         {
             _logger = logger;
             _appSettings = appSettings.Value;
@@ -91,6 +93,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _organizationUserRepository = organizationUserRepository;
             _organizationProviderTypeRepository = organizationProviderTypeRepository;
             _organizationDocumentRepository = organizationDocumentRepository;
+            _executionStrategyService = executionStrategyService;
         }
         #endregion
 
@@ -264,54 +267,57 @@ namespace Yoma.Core.Domain.Entity.Services
 
             try
             {
-                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-                //create org
-                result = await _organizationRepository.Create(result);
-
-                //assign provider types
-                result = await AssignProviderTypes(result, request.ProviderTypes, OrganizationReapprovalAction.None);
-
-                //insert logo
-                var resultLogo = await UpdateLogo(result, request.Logo, OrganizationReapprovalAction.None);
-                result = resultLogo.Organization;
-                blobObjects.Add(resultLogo.ItemAdded);
-
-                //assign admins
-                var admins = request.AdminEmails ??= new List<string>();
-                if (request.AddCurrentUserAsAdmin)
-                    admins.Add(user.Email);
-                else if (HttpContextAccessorHelper.IsUserRoleOnly(_httpContextAccessor))
-                    throw new ValidationException($"The registering user must be added as an organization admin by default ('{nameof(request.AddCurrentUserAsAdmin)}' must be true).");
-                result = await AssignAdmins(result, admins, OrganizationReapprovalAction.None);
-
-                //upload documents
-                var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocuments, OrganizationReapprovalAction.None);
-                result = resultDocuments.Organization;
-                blobObjects.AddRange(resultDocuments.ItemsAdded);
-
-                var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
-                if (isProviderTypeEducation && (request.EducationProviderDocuments == null || !request.EducationProviderDocuments.Any()))
-                    throw new ValidationException($"Education provider type documents are required");
-
-                if (request.EducationProviderDocuments != null && request.EducationProviderDocuments.Any())
+                await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
                 {
-                    resultDocuments = await AddDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocuments, OrganizationReapprovalAction.None);
+                    using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                    //create org
+                    result = await _organizationRepository.Create(result);
+
+                    //assign provider types
+                    result = await AssignProviderTypes(result, request.ProviderTypes, OrganizationReapprovalAction.None);
+
+                    //insert logo
+                    var resultLogo = await UpdateLogo(result, request.Logo, OrganizationReapprovalAction.None);
+                    result = resultLogo.Organization;
+                    blobObjects.Add(resultLogo.ItemAdded);
+
+                    //assign admins
+                    var admins = request.AdminEmails ??= new List<string>();
+                    if (request.AddCurrentUserAsAdmin)
+                        admins.Add(user.Email);
+                    else if (HttpContextAccessorHelper.IsUserRoleOnly(_httpContextAccessor))
+                        throw new ValidationException($"The registering user must be added as an organization admin by default ('{nameof(request.AddCurrentUserAsAdmin)}' must be true).");
+                    result = await AssignAdmins(result, admins, OrganizationReapprovalAction.None);
+
+                    //upload documents
+                    var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocuments, OrganizationReapprovalAction.None);
                     result = resultDocuments.Organization;
                     blobObjects.AddRange(resultDocuments.ItemsAdded);
-                }
 
-                var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
-                if (isProviderTypeMarketplace && (request.BusinessDocuments == null || !request.BusinessDocuments.Any()))
-                    throw new ValidationException($"Business documents are required");
+                    var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+                    if (isProviderTypeEducation && (request.EducationProviderDocuments == null || !request.EducationProviderDocuments.Any()))
+                        throw new ValidationException($"Education provider type documents are required");
 
-                if (request.BusinessDocuments != null && request.BusinessDocuments.Any())
-                {
-                    resultDocuments = await AddDocuments(result, OrganizationDocumentType.Business, request.BusinessDocuments, OrganizationReapprovalAction.None);
-                    result = resultDocuments.Organization;
-                    blobObjects.AddRange(resultDocuments.ItemsAdded);
-                }
+                    if (request.EducationProviderDocuments != null && request.EducationProviderDocuments.Any())
+                    {
+                        resultDocuments = await AddDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocuments, OrganizationReapprovalAction.None);
+                        result = resultDocuments.Organization;
+                        blobObjects.AddRange(resultDocuments.ItemsAdded);
+                    }
 
-                scope.Complete();
+                    var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+                    if (isProviderTypeMarketplace && (request.BusinessDocuments == null || !request.BusinessDocuments.Any()))
+                        throw new ValidationException($"Business documents are required");
+
+                    if (request.BusinessDocuments != null && request.BusinessDocuments.Any())
+                    {
+                        resultDocuments = await AddDocuments(result, OrganizationDocumentType.Business, request.BusinessDocuments, OrganizationReapprovalAction.None);
+                        result = resultDocuments.Organization;
+                        blobObjects.AddRange(resultDocuments.ItemsAdded);
+                    }
+
+                    scope.Complete();
+                });
             }
             catch
             {
@@ -367,87 +373,90 @@ namespace Yoma.Core.Domain.Entity.Services
             var itemsDeleted = new List<(Guid FileId, IFormFile File)>();
             try
             {
-                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-
-                //update org
-                result = await _organizationRepository.Update(result);
-
-                //provider types
-                result = await AssignProviderTypes(result, request.ProviderTypes, OrganizationReapprovalAction.Reapproval);
-                result = await RemoveProviderTypes(result, result.ProviderTypes?.Where(o => !request.ProviderTypes.Contains(o.Id)).Select(o => o.Id).ToList(), OrganizationReapprovalAction.None);
-
-                //logo
-                if (request.Logo != null)
+                await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
                 {
-                    var resultLogo = await UpdateLogo(result, request.Logo, OrganizationReapprovalAction.None);
-                    result = resultLogo.Organization;
-                    itemsAdded.Add(resultLogo.ItemAdded);
-                }
+                    using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-                //admins
-                var admins = request.AdminEmails ??= new List<string>();
-                if (request.AddCurrentUserAsAdmin)
-                    admins.Add(user.Email);
-                result = await RemoveAdmins(result, result.Administrators?.Where(o => !admins.Contains(o.Email)).Select(o => o.Email).ToList(), OrganizationReapprovalAction.None);
-                result = await AssignAdmins(result, admins, OrganizationReapprovalAction.None);
+                    //update org
+                    result = await _organizationRepository.Update(result);
 
-                //documents
-                if (request.RegistrationDocuments != null && request.RegistrationDocuments.Any())
-                {
-                    var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocuments, OrganizationReapprovalAction.None);
-                    result = resultDocuments.Organization;
-                    itemsAdded.AddRange(resultDocuments.ItemsAdded);
-                }
+                    //provider types
+                    result = await AssignProviderTypes(result, request.ProviderTypes, OrganizationReapprovalAction.Reapproval);
+                    result = await RemoveProviderTypes(result, result.ProviderTypes?.Where(o => !request.ProviderTypes.Contains(o.Id)).Select(o => o.Id).ToList(), OrganizationReapprovalAction.None);
 
-                if (request.RegistrationDocumentsDelete != null && request.RegistrationDocumentsDelete.Any())
-                {
-                    if (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Registration).All(o => request.RegistrationDocumentsDelete.Contains(o.FileId)))
-                        throw new ValidationException("Registration documents are required. Update will result in no associated documents");
+                    //logo
+                    if (request.Logo != null)
+                    {
+                        var resultLogo = await UpdateLogo(result, request.Logo, OrganizationReapprovalAction.None);
+                        result = resultLogo.Organization;
+                        itemsAdded.Add(resultLogo.ItemAdded);
+                    }
 
-                    var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocumentsDelete, OrganizationReapprovalAction.None);
-                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File)));
-                    result = resultDelete.Organization;
-                }
+                    //admins
+                    var admins = request.AdminEmails ??= new List<string>();
+                    if (request.AddCurrentUserAsAdmin)
+                        admins.Add(user.Email);
+                    result = await RemoveAdmins(result, result.Administrators?.Where(o => !admins.Contains(o.Email)).Select(o => o.Email).ToList(), OrganizationReapprovalAction.None);
+                    result = await AssignAdmins(result, admins, OrganizationReapprovalAction.None);
 
-                if (request.EducationProviderDocuments != null && request.EducationProviderDocuments.Any())
-                {
-                    var resultDocuments = await AddDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocuments, OrganizationReapprovalAction.None);
-                    result = resultDocuments.Organization;
-                    itemsAdded.AddRange(resultDocuments.ItemsAdded);
-                }
+                    //documents
+                    if (request.RegistrationDocuments != null && request.RegistrationDocuments.Any())
+                    {
+                        var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocuments, OrganizationReapprovalAction.None);
+                        result = resultDocuments.Organization;
+                        itemsAdded.AddRange(resultDocuments.ItemsAdded);
+                    }
 
-                if (request.EducationProviderDocumentsDelete != null && request.EducationProviderDocumentsDelete.Any())
-                {
-                    var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
-                    if (isProviderTypeEducation && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.EducationProvider).All(o => request.EducationProviderDocumentsDelete.Contains(o.FileId))))
-                        throw new ValidationException("Education provider type documents are required. Update will result in no associated documents");
+                    if (request.RegistrationDocumentsDelete != null && request.RegistrationDocumentsDelete.Any())
+                    {
+                        if (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Registration).All(o => request.RegistrationDocumentsDelete.Contains(o.FileId)))
+                            throw new ValidationException("Registration documents are required. Update will result in no associated documents");
 
-                    var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocumentsDelete, OrganizationReapprovalAction.None);
-                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File)));
-                    result = resultDelete.Organization;
-                }
+                        var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.Registration, request.RegistrationDocumentsDelete, OrganizationReapprovalAction.None);
+                        resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File)));
+                        result = resultDelete.Organization;
+                    }
 
-                if (request.BusinessDocuments != null && request.BusinessDocuments.Any())
-                {
-                    var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Business, request.BusinessDocuments, OrganizationReapprovalAction.None);
-                    result = resultDocuments.Organization;
-                    itemsAdded.AddRange(resultDocuments.ItemsAdded);
-                }
+                    if (request.EducationProviderDocuments != null && request.EducationProviderDocuments.Any())
+                    {
+                        var resultDocuments = await AddDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocuments, OrganizationReapprovalAction.None);
+                        result = resultDocuments.Organization;
+                        itemsAdded.AddRange(resultDocuments.ItemsAdded);
+                    }
 
-                if (request.BusinessDocumentsDelete != null && request.BusinessDocumentsDelete.Any())
-                {
-                    var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
-                    if (isProviderTypeMarketplace && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Business).All(o => request.BusinessDocumentsDelete.Contains(o.FileId))))
-                        throw new ValidationException($"Business documents are required. Update will result in no associated documents");
+                    if (request.EducationProviderDocumentsDelete != null && request.EducationProviderDocumentsDelete.Any())
+                    {
+                        var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+                        if (isProviderTypeEducation && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.EducationProvider).All(o => request.EducationProviderDocumentsDelete.Contains(o.FileId))))
+                            throw new ValidationException("Education provider type documents are required. Update will result in no associated documents");
 
-                    var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.Business, request.BusinessDocumentsDelete, OrganizationReapprovalAction.None);
-                    resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File)));
-                    result = resultDelete.Organization;
-                }
+                        var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.EducationProvider, request.EducationProviderDocumentsDelete, OrganizationReapprovalAction.None);
+                        resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File)));
+                        result = resultDelete.Organization;
+                    }
 
-                result = await SendForReapproval(result, OrganizationReapprovalAction.Reapproval, OrganizationStatus.Declined);
+                    if (request.BusinessDocuments != null && request.BusinessDocuments.Any())
+                    {
+                        var resultDocuments = await AddDocuments(result, OrganizationDocumentType.Business, request.BusinessDocuments, OrganizationReapprovalAction.None);
+                        result = resultDocuments.Organization;
+                        itemsAdded.AddRange(resultDocuments.ItemsAdded);
+                    }
 
-                scope.Complete();
+                    if (request.BusinessDocumentsDelete != null && request.BusinessDocumentsDelete.Any())
+                    {
+                        var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+                        if (isProviderTypeMarketplace && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Business).All(o => request.BusinessDocumentsDelete.Contains(o.FileId))))
+                            throw new ValidationException($"Business documents are required. Update will result in no associated documents");
+
+                        var resultDelete = await DeleteDocuments(result, OrganizationDocumentType.Business, request.BusinessDocumentsDelete, OrganizationReapprovalAction.None);
+                        resultDelete.ItemsDeleted?.ForEach(o => itemsDeleted.Add(new(o.FileId, o.File)));
+                        result = resultDelete.Organization;
+                    }
+
+                    result = await SendForReapproval(result, OrganizationReapprovalAction.Reapproval, OrganizationStatus.Declined);
+
+                    scope.Complete();
+                });
             }
             catch
             {
@@ -480,71 +489,74 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-
-            switch (request.Status)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                case OrganizationStatus.Active:
-                    if (result.Status == OrganizationStatus.Active) return result;
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-                    if (!Statuses_Activatable.Contains(result.Status))
-                        throw new ValidationException($"{nameof(Organization)} can not be activated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
+                switch (request.Status)
+                {
+                    case OrganizationStatus.Active:
+                        if (result.Status == OrganizationStatus.Active) return;
 
-                    if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
+                        if (!Statuses_Activatable.Contains(result.Status))
+                            throw new ValidationException($"{nameof(Organization)} can not be activated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
 
-                    result.CommentApproval = request.Comment;
+                        if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
-                    await _ssiTenantService.ScheduleCreation(EntityType.Organization, result.Id);
+                        result.CommentApproval = request.Comment;
 
-                    await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Approved);
+                        await _ssiTenantService.ScheduleCreation(EntityType.Organization, result.Id);
 
-                    break;
+                        await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Approved);
 
-                case OrganizationStatus.Inactive:
-                    if (result.Status == OrganizationStatus.Inactive) return result;
+                        break;
 
-                    if (!Statuses_DeActivatable.Contains(result.Status))
-                        throw new ValidationException($"{nameof(Organization)} can not be deactivated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
+                    case OrganizationStatus.Inactive:
+                        if (result.Status == OrganizationStatus.Inactive) return;
 
-                    if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
+                        if (!Statuses_DeActivatable.Contains(result.Status))
+                            throw new ValidationException($"{nameof(Organization)} can not be deactivated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
 
-                    await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Requested);
-                    break;
+                        if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
-                case OrganizationStatus.Declined:
-                    if (result.Status == OrganizationStatus.Declined) return result;
+                        await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Requested);
+                        break;
 
-                    if (!Statuses_Declinable.Contains(result.Status))
-                        throw new ValidationException($"{nameof(Organization)} can not be declined (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Declinable)}'");
+                    case OrganizationStatus.Declined:
+                        if (result.Status == OrganizationStatus.Declined) return;
 
-                    if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
+                        if (!Statuses_Declinable.Contains(result.Status))
+                            throw new ValidationException($"{nameof(Organization)} can not be declined (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Declinable)}'");
 
-                    result.CommentApproval = request.Comment;
+                        if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
-                    await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Declined);
+                        result.CommentApproval = request.Comment;
 
-                    break;
+                        await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Declined);
 
-                case OrganizationStatus.Deleted:
-                    if (result.Status == OrganizationStatus.Deleted) return result;
+                        break;
 
-                    if (!Statuses_CanDelete.Contains(result.Status))
-                        throw new ValidationException($"{nameof(Organization)} can not be deleted (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
-                    break;
+                    case OrganizationStatus.Deleted:
+                        if (result.Status == OrganizationStatus.Deleted) return;
 
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(request), $"{nameof(Status)} of '{request.Status}' not supported");
-            }
+                        if (!Statuses_CanDelete.Contains(result.Status))
+                            throw new ValidationException($"{nameof(Organization)} can not be deleted (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
+                        break;
 
-            var statusId = _organizationStatusService.GetByName(request.Status.ToString()).Id;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(request), $"{nameof(Status)} of '{request.Status}' not supported");
+                }
 
-            result.StatusId = statusId;
-            result.Status = request.Status;
-            result.ModifiedByUserId = user.Id;
+                var statusId = _organizationStatusService.GetByName(request.Status.ToString()).Id;
 
-            result = await _organizationRepository.Update(result);
+                result.StatusId = statusId;
+                result.Status = request.Status;
+                result.ModifiedByUserId = user.Id;
 
-            scope.Complete();
+                result = await _organizationRepository.Update(result);
+
+                scope.Complete();
+            });
 
             return result;
         }
@@ -565,11 +577,14 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await AssignProviderTypes(result, providerTypeIds, OrganizationReapprovalAction.ReapprovalWithEmail);
-            result.ModifiedByUserId = user.Id;
-            result = await _organizationRepository.Update(result);
-            scope.Complete();
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await AssignProviderTypes(result, providerTypeIds, OrganizationReapprovalAction.ReapprovalWithEmail);
+                result.ModifiedByUserId = user.Id;
+                result = await _organizationRepository.Update(result);
+                scope.Complete();
+            });
 
             return result;
         }
@@ -588,11 +603,14 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await RemoveProviderTypes(result, providerTypeIds, OrganizationReapprovalAction.ReapprovalWithEmail);
-            result.ModifiedByUserId = user.Id;
-            result = await _organizationRepository.Update(result);
-            scope.Complete();
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await RemoveProviderTypes(result, providerTypeIds, OrganizationReapprovalAction.ReapprovalWithEmail);
+                result.ModifiedByUserId = user.Id;
+                result = await _organizationRepository.Update(result);
+                scope.Complete();
+            });
 
             return result;
         }
@@ -605,11 +623,18 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            var resultLogo = await UpdateLogo(result, file, OrganizationReapprovalAction.ReapprovalWithEmail);
-            result.ModifiedByUserId = user.Id;
-            result = await _organizationRepository.Update(result);
-            scope.Complete();
+            (Organization? Organization, BlobObject? ItemAdded) resultLogo = (null, null);
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                resultLogo = await UpdateLogo(result, file, OrganizationReapprovalAction.ReapprovalWithEmail);
+                result.ModifiedByUserId = user.Id;
+                result = await _organizationRepository.Update(result);
+                scope.Complete();
+            });
+
+            if (resultLogo.Organization == null)
+                throw new InvalidOperationException("Organization expected");
 
             return resultLogo.Organization;
         }
@@ -622,11 +647,18 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            var resultDocuments = await AddDocuments(result, type, documents, OrganizationReapprovalAction.ReapprovalWithEmail);
-            result.ModifiedByUserId = user.Id;
-            result = await _organizationRepository.Update(result);
-            scope.Complete();
+            (Organization? Organization, List<BlobObject>? ItemsAdded) resultDocuments = (null, null);
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                resultDocuments = await AddDocuments(result, type, documents, OrganizationReapprovalAction.ReapprovalWithEmail);
+                result.ModifiedByUserId = user.Id;
+                result = await _organizationRepository.Update(result);
+                scope.Complete();
+            });
+
+            if (resultDocuments.Organization == null)
+                throw new InvalidOperationException("Organization expected");
 
             return resultDocuments.Organization;
         }
@@ -650,11 +682,18 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            var resultDelete = await DeleteDocuments(result, type, documentFileIds, OrganizationReapprovalAction.ReapprovalWithEmail);
-            result.ModifiedByUserId = user.Id;
-            result = await _organizationRepository.Update(result);
-            scope.Complete();
+            (Organization? Organization, List<OrganizationDocument>? ItemsDeleted) resultDelete = (null, null);
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                resultDelete = await DeleteDocuments(result, type, documentFileIds, OrganizationReapprovalAction.ReapprovalWithEmail);
+                result.ModifiedByUserId = user.Id;
+                result = await _organizationRepository.Update(result);
+                scope.Complete();
+            });
+
+            if (resultDelete.Organization == null)
+                throw new InvalidOperationException("Organization expected");
 
             return resultDelete.Organization;
         }
@@ -667,11 +706,14 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await AssignAdmins(result, emails, OrganizationReapprovalAction.ReapprovalWithEmail);
-            result.ModifiedByUserId = user.Id;
-            result = await _organizationRepository.Update(result);
-            scope.Complete();
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await AssignAdmins(result, emails, OrganizationReapprovalAction.ReapprovalWithEmail);
+                result.ModifiedByUserId = user.Id;
+                result = await _organizationRepository.Update(result);
+                scope.Complete();
+            });
 
             return result;
         }
@@ -687,11 +729,14 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await RemoveAdmins(result, emails, OrganizationReapprovalAction.ReapprovalWithEmail);
-            result.ModifiedByUserId = user.Id;
-            result = await _organizationRepository.Update(result);
-            scope.Complete();
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await RemoveAdmins(result, emails, OrganizationReapprovalAction.ReapprovalWithEmail);
+                result.ModifiedByUserId = user.Id;
+                result = await _organizationRepository.Update(result);
+                scope.Complete();
+            });
 
             return result;
         }
@@ -753,32 +798,35 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new ArgumentNullException(nameof(providerTypeIds));
 
             var updated = false;
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var typeId in providerTypeIds)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var type = _providerTypeService.GetById(typeId);
-
-                var itemExisting = organization.ProviderTypes?.SingleOrDefault(o => o.Id == type.Id);
-                if (itemExisting != null) continue;
-
-                var item = new Models.OrganizationProviderType
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                foreach (var typeId in providerTypeIds)
                 {
-                    OrganizationId = organization.Id,
-                    ProviderTypeId = type.Id
-                };
+                    var type = _providerTypeService.GetById(typeId);
 
-                await _organizationProviderTypeRepository.Create(item);
+                    var itemExisting = organization.ProviderTypes?.SingleOrDefault(o => o.Id == type.Id);
+                    if (itemExisting != null) continue;
 
-                organization.ProviderTypes ??= new List<Models.Lookups.OrganizationProviderType>();
-                organization.ProviderTypes.Add(new Models.Lookups.OrganizationProviderType { Id = type.Id, Name = type.Name });
+                    var item = new Models.OrganizationProviderType
+                    {
+                        OrganizationId = organization.Id,
+                        ProviderTypeId = type.Id
+                    };
 
-                updated = true;
-            }
+                    await _organizationProviderTypeRepository.Create(item);
 
-            //send for reapproval irrespective of status with type additions
-            if (updated) await SendForReapproval(organization, reapprovalAction, null);
+                    organization.ProviderTypes ??= new List<Models.Lookups.OrganizationProviderType>();
+                    organization.ProviderTypes.Add(new Models.Lookups.OrganizationProviderType { Id = type.Id, Name = type.Name });
 
-            scope.Complete();
+                    updated = true;
+                }
+
+                //send for reapproval irrespective of status with type additions
+                if (updated) await SendForReapproval(organization, reapprovalAction, null);
+
+                scope.Complete();
+            });
 
             return organization;
         }
@@ -789,25 +837,28 @@ namespace Yoma.Core.Domain.Entity.Services
 
             providerTypeIds = providerTypeIds.Distinct().ToList();
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            var updated = false;
-            foreach (var typeId in providerTypeIds)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var type = _providerTypeService.GetById(typeId);
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                var updated = false;
+                foreach (var typeId in providerTypeIds)
+                {
+                    var type = _providerTypeService.GetById(typeId);
 
-                var item = _organizationProviderTypeRepository.Query().SingleOrDefault(o => o.OrganizationId == organization.Id && o.ProviderTypeId == type.Id);
-                if (item == null) continue;
+                    var item = _organizationProviderTypeRepository.Query().SingleOrDefault(o => o.OrganizationId == organization.Id && o.ProviderTypeId == type.Id);
+                    if (item == null) continue;
 
-                await _organizationProviderTypeRepository.Delete(item);
+                    await _organizationProviderTypeRepository.Delete(item);
 
-                organization.ProviderTypes?.Remove(organization.ProviderTypes.Single(o => o.Id == type.Id));
+                    organization.ProviderTypes?.Remove(organization.ProviderTypes.Single(o => o.Id == type.Id));
 
-                updated = true;
-            }
+                    updated = true;
+                }
 
-            if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
+                if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
 
-            scope.Complete();
+                scope.Complete();
+            });
 
             return organization;
         }
@@ -823,25 +874,30 @@ namespace Yoma.Core.Domain.Entity.Services
             BlobObject? blobObject = null;
             try
             {
-                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-                blobObject = await _blobService.Create(file, FileType.Photos);
-                organization.LogoId = blobObject.Id;
-                organization = await _organizationRepository.Update(organization);
+                await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+                {
+                    using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                    blobObject = await _blobService.Create(file, FileType.Photos);
+                    organization.LogoId = blobObject.Id;
+                    organization = await _organizationRepository.Update(organization);
 
-                if (currentLogoId.HasValue)
-                    await _blobService.Archive(currentLogoId.Value, blobObject); //preserve / archive previous logo as they might be referenced in credentials
+                    if (currentLogoId.HasValue)
+                        await _blobService.Archive(currentLogoId.Value, blobObject); //preserve / archive previous logo as they might be referenced in credentials
 
-                organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
+                    organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
 
-                scope.Complete();
+                    scope.Complete();
+                });
             }
             catch
             {
                 if (blobObject != null)
                     await _blobService.Delete(blobObject);
-
                 throw;
             }
+
+            if (blobObject == null)
+                throw new InvalidOperationException("Blob object expected");
 
             organization.LogoURL = GetBlobObjectURL(organization.LogoId);
 
@@ -853,39 +909,42 @@ namespace Yoma.Core.Domain.Entity.Services
             if (emails == null || !emails.Any())
                 throw new ArgumentNullException(nameof(emails));
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            var updated = false;
-            foreach (var email in emails)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var user = _userService.GetByEmail(email, false, false);
-                if (!user.ExternalId.HasValue)
-                    throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
-
-                var item = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == organization.Id && o.UserId == user.Id);
-                if (item == null)
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                var updated = false;
+                foreach (var email in emails)
                 {
+                    var user = _userService.GetByEmail(email, false, false);
+                    if (!user.ExternalId.HasValue)
+                        throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
-                    item = new OrganizationUser
+                    var item = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == organization.Id && o.UserId == user.Id);
+                    if (item == null)
                     {
-                        OrganizationId = organization.Id,
-                        UserId = user.Id
-                    };
 
-                    await _organizationUserRepository.Create(item);
+                        item = new OrganizationUser
+                        {
+                            OrganizationId = organization.Id,
+                            UserId = user.Id
+                        };
 
-                    organization.Administrators ??= new List<UserInfo>();
-                    organization.Administrators.Add(user.ToInfo());
+                        await _organizationUserRepository.Create(item);
 
-                    updated = true;
+                        organization.Administrators ??= new List<UserInfo>();
+                        organization.Administrators.Add(user.ToInfo());
+
+                        updated = true;
+                    }
+
+                    //ensure organization admin role
+                    await _identityProviderClient.EnsureRoles(user.ExternalId.Value, new List<string> { Constants.Role_OrganizationAdmin });
                 }
 
-                //ensure organization admin role
-                await _identityProviderClient.EnsureRoles(user.ExternalId.Value, new List<string> { Constants.Role_OrganizationAdmin });
-            }
+                if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
 
-            if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
-
-            scope.Complete();
+                scope.Complete();
+            });
 
             return organization;
         }
@@ -896,34 +955,37 @@ namespace Yoma.Core.Domain.Entity.Services
 
             emails = emails.Distinct().ToList();
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            var updated = false;
-            foreach (var email in emails)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var user = _userService.GetByEmail(email, false, false);
-                if (!user.ExternalId.HasValue)
-                    throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
-
-                var items = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).ToList();
-
-                var item = items.SingleOrDefault(o => o.OrganizationId == organization.Id);
-                if (item != null)
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                var updated = false;
+                foreach (var email in emails)
                 {
-                    await _organizationUserRepository.Delete(item);
-                    items.Remove(item);
+                    var user = _userService.GetByEmail(email, false, false);
+                    if (!user.ExternalId.HasValue)
+                        throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
-                    organization.Administrators?.Remove(organization.Administrators.Single(o => o.Id == user.Id));
+                    var items = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).ToList();
 
-                    updated = true;
+                    var item = items.SingleOrDefault(o => o.OrganizationId == organization.Id);
+                    if (item != null)
+                    {
+                        await _organizationUserRepository.Delete(item);
+                        items.Remove(item);
+
+                        organization.Administrators?.Remove(organization.Administrators.Single(o => o.Id == user.Id));
+
+                        updated = true;
+                    }
+
+                    if (!items.Any()) //no longer an admin of any organization, remove organization admin role
+                        await _identityProviderClient.RemoveRoles(user.ExternalId.Value, new List<string> { Constants.Role_OrganizationAdmin });
                 }
 
-                if (!items.Any()) //no longer an admin of any organization, remove organization admin role
-                    await _identityProviderClient.RemoveRoles(user.ExternalId.Value, new List<string> { Constants.Role_OrganizationAdmin });
-            }
+                if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
 
-            if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
-
-            scope.Complete();
+                scope.Complete();
+            });
 
             return organization;
         }
@@ -967,33 +1029,36 @@ namespace Yoma.Core.Domain.Entity.Services
             var itemsNewBlobs = new List<BlobObject>();
             try
             {
-                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-
-                //new items
-                foreach (var file in documents)
+                await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
                 {
-                    //upload new item to blob storage
-                    var blobObject = await _blobService.Create(file, FileType.Documents);
-                    itemsNewBlobs.Add(blobObject);
+                    using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
-                    var item = new OrganizationDocument
+                    //new items
+                    foreach (var file in documents)
                     {
-                        OrganizationId = organization.Id,
-                        FileId = blobObject.Id,
-                        Type = type,
-                        ContentType = file.ContentType,
-                        OriginalFileName = file.FileName,
-                        DateCreated = DateTimeOffset.Now
-                    };
+                        //upload new item to blob storage
+                        var blobObject = await _blobService.Create(file, FileType.Documents);
+                        itemsNewBlobs.Add(blobObject);
 
-                    //create new item in db
-                    item = await _organizationDocumentRepository.Create(item);
-                    itemsNew.Add(item);
-                }
+                        var item = new OrganizationDocument
+                        {
+                            OrganizationId = organization.Id,
+                            FileId = blobObject.Id,
+                            Type = type,
+                            ContentType = file.ContentType,
+                            OriginalFileName = file.FileName,
+                            DateCreated = DateTimeOffset.Now
+                        };
 
-                organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
+                        //create new item in db
+                        item = await _organizationDocumentRepository.Create(item);
+                        itemsNew.Add(item);
+                    }
 
-                scope.Complete();
+                    organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
+
+                    scope.Complete();
+                });
             }
             catch //roll back
             {
@@ -1024,20 +1089,23 @@ namespace Yoma.Core.Domain.Entity.Services
 
             try
             {
-                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-
-                //download and delete existing items in blob storage and db
-                foreach (var item in itemsExisting)
+                await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
                 {
-                    item.File = await _blobService.Download(item.FileId);
-                    await _organizationDocumentRepository.Delete(item);
-                    await _blobService.Delete(item.FileId);
-                    itemsExistingDeleted.Add(item);
-                }
+                    using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
-                organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
+                    //download and delete existing items in blob storage and db
+                    foreach (var item in itemsExisting)
+                    {
+                        item.File = await _blobService.Download(item.FileId);
+                        await _organizationDocumentRepository.Delete(item);
+                        await _blobService.Delete(item.FileId);
+                        itemsExistingDeleted.Add(item);
+                    }
 
-                scope.Complete();
+                    organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
+
+                    scope.Complete();
+                });
             }
             catch //roll back
             {

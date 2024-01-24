@@ -89,13 +89,13 @@ namespace Yoma.Core.Api
 
             #region Services & Infrastructure
             services.ConfigureServices_DomainServices();
-            services.ConfigureServices_InfrastructureSSIProvider(_configuration, _configuration.Configuration_ConnectionString());
+            services.ConfigureServices_InfrastructureSSIProvider(_configuration, _configuration.Configuration_ConnectionString(), _appSettings);
             services.ConfigureServices_InfrastructureBlobProvider();
             services.ConfigureServices_InfrastructureIdentityProvider();
             services.ConfigureServices_InfrastructureLaborMarketProvider();
             services.ConfigureServices_InfrastructureEmailProvider(_configuration);
             services.ConfigureServices_InfrastructureRewardProvider();
-            services.ConfigureServices_InfrastructureDatabase(_configuration);
+            services.ConfigureServices_InfrastructureDatabase(_configuration, _appSettings);
             #endregion Services & Infrastructure
 
             #region 3rd Party (post ConfigureServices_InfrastructureDatabase)

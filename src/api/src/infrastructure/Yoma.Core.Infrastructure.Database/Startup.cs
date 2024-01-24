@@ -11,6 +11,7 @@ using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Database.Core.Services;
 using Yoma.Core.Infrastructure.Database.Entity.Repositories;
 using Yoma.Core.Infrastructure.Database.Lookups.Repositories;
 using Yoma.Core.Infrastructure.Database.Marketplace.Repositories;
@@ -38,11 +39,19 @@ namespace Yoma.Core.Infrastructure.Database
             return result;
         }
 
-        public static void ConfigureServices_InfrastructureDatabase(this IServiceCollection services, IConfiguration configuration)
+        public static void ConfigureServices_InfrastructureDatabase(this IServiceCollection services, IConfiguration configuration, AppSettings appSettings)
         {
             // infrastructure
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(configuration.Configuration_ConnectionString()), ServiceLifetime.Scoped, ServiceLifetime.Scoped);
+            {
+                options.UseSqlServer(configuration.Configuration_ConnectionString(), sqlServerOptions =>
+                {
+                    sqlServerOptions.EnableRetryOnFailure(
+                    maxRetryCount: appSettings.DatabaseRetryPolicy.MaxRetryCount,
+                    maxRetryDelay: TimeSpan.FromSeconds(appSettings.DatabaseRetryPolicy.MaxRetryDelayInSeconds),
+                    null);
+                });
+            }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
             //<PackageReference Include="EntityFrameworkProfiler.Appender" Version="6.0.6040" />
             //if (environment == Domain.Core.Environment.Local)
@@ -50,6 +59,7 @@ namespace Yoma.Core.Infrastructure.Database
 
             // repositories
             #region Core
+            services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();  
             services.AddScoped<IRepository<BlobObject>, BlobObjectRepository>();
             #endregion Core
 

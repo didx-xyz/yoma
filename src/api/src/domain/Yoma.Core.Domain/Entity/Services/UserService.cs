@@ -33,6 +33,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
         private readonly IRepository<UserSkill> _userSkillRepository;
         private readonly IRepository<UserSkillOrganization> _userSkillOrganizationRepository;
+        private readonly IExecutionStrategyService _executionStrategyService;
         #endregion
 
         #region Constructor
@@ -49,7 +50,8 @@ namespace Yoma.Core.Domain.Entity.Services
             UserSearchFilterValidator userSearchFilterValidator,
             IRepositoryValueContainsWithNavigation<User> userRepository,
             IRepository<UserSkill> userSkillRepository,
-            IRepository<UserSkillOrganization> userSkillOrganizationRepository)
+            IRepository<UserSkillOrganization> userSkillOrganizationRepository,
+            IExecutionStrategyService executionStrategyService)
         {
             _appSettings = appSettings.Value;
             _identityProviderClient = identityProviderClientFactory.CreateClient();
@@ -64,6 +66,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _userRepository = userRepository;
             _userSkillRepository = userSkillRepository;
             _userSkillOrganizationRepository = userSkillOrganizationRepository;
+            _executionStrategyService = executionStrategyService;
         }
         #endregion
 
@@ -223,15 +226,18 @@ namespace Yoma.Core.Domain.Entity.Services
             BlobObject? blobObject = null;
             try
             {
-                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-                blobObject = await _blobService.Create(file, FileType.Photos);
-                result.PhotoId = blobObject.Id;
-                result = await _userRepository.Update(result);
+                await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+                {
+                    using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                    blobObject = await _blobService.Create(file, FileType.Photos);
+                    result.PhotoId = blobObject.Id;
+                    result = await _userRepository.Update(result);
 
-                if (currentPhotoId.HasValue)
-                    await _blobService.Archive(currentPhotoId.Value, blobObject); //preserve / archive previous photo as they might be referenced in credentials
+                    if (currentPhotoId.HasValue)
+                        await _blobService.Archive(currentPhotoId.Value, blobObject); //preserve / archive previous photo as they might be referenced in credentials
 
-                scope.Complete();
+                    scope.Complete();
+                });
             }
             catch
             {
@@ -241,7 +247,6 @@ namespace Yoma.Core.Domain.Entity.Services
 
                 throw;
             }
-
 
             result.PhotoURL = GetBlobObjectURL(result.PhotoId);
 
@@ -259,29 +264,32 @@ namespace Yoma.Core.Domain.Entity.Services
             var skillIds = opportunity.Skills?.Select(o => o.Id).ToList();
             if (skillIds == null || !skillIds.Any()) return;
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var skillId in skillIds)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var skill = _skillService.GetById(skillId);
-
-                var item = _userSkillRepository.Query().SingleOrDefault(o => o.UserId == user.Id && o.SkillId == skill.Id);
-                var itemOrganization = item != null ?
-                    _userSkillOrganizationRepository.Query().SingleOrDefault(o => o.UserSkillId == item.Id && o.OrganizationId == opportunity.OrganizationId) : null;
-
-                if (item == null)
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                foreach (var skillId in skillIds)
                 {
-                    item = new UserSkill { UserId = user.Id, SkillId = skill.Id };
-                    await _userSkillRepository.Create(item);
+                    var skill = _skillService.GetById(skillId);
+
+                    var item = _userSkillRepository.Query().SingleOrDefault(o => o.UserId == user.Id && o.SkillId == skill.Id);
+                    var itemOrganization = item != null ?
+                        _userSkillOrganizationRepository.Query().SingleOrDefault(o => o.UserSkillId == item.Id && o.OrganizationId == opportunity.OrganizationId) : null;
+
+                    if (item == null)
+                    {
+                        item = new UserSkill { UserId = user.Id, SkillId = skill.Id };
+                        await _userSkillRepository.Create(item);
+                    }
+
+                    if (itemOrganization == null)
+                    {
+                        itemOrganization = new UserSkillOrganization { UserSkillId = item.Id, OrganizationId = opportunity.OrganizationId };
+                        await _userSkillOrganizationRepository.Create(itemOrganization);
+                    }
                 }
 
-                if (itemOrganization == null)
-                {
-                    itemOrganization = new UserSkillOrganization { UserSkillId = item.Id, OrganizationId = opportunity.OrganizationId };
-                    await _userSkillOrganizationRepository.Create(itemOrganization);
-                }
-            }
-
-            scope.Complete();
+                scope.Complete();
+            });
         }
 
         public async Task<User> YoIDOnboard(string? email)
@@ -291,15 +299,18 @@ namespace Yoma.Core.Domain.Entity.Services
             if (result.YoIDOnboarded.HasValue && result.YoIDOnboarded.Value)
                 throw new ValidationException($"User with email '{email}' has already completed YoID onboarding");
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-            result.YoIDOnboarded = true;
-            result = await _userRepository.Update(result);
+                result.YoIDOnboarded = true;
+                result = await _userRepository.Update(result);
 
-            await _ssiTenantService.ScheduleCreation(EntityType.User, result.Id);
-            await _ssiCredentialService.ScheduleIssuance(_appSettings.SSISchemaFullNameYoID, result.Id);
+                await _ssiTenantService.ScheduleCreation(EntityType.User, result.Id);
+                await _ssiCredentialService.ScheduleIssuance(_appSettings.SSISchemaFullNameYoID, result.Id);
 
-            scope.Complete();
+                scope.Complete();
+            });
 
             return result;
         }

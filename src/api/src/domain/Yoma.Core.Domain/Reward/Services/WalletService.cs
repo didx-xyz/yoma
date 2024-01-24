@@ -32,6 +32,7 @@ namespace Yoma.Core.Domain.Reward.Services
         private readonly IRewardService _rewardService;
         private readonly IRepository<WalletCreation> _walletCreationRepository;
         private readonly WalletVoucherSearchFilterValidator _walletVoucherSearchFilterValidator;
+        private readonly IExecutionStrategyService _executionStrategyService;
         #endregion
 
         #region Constructor
@@ -43,7 +44,8 @@ namespace Yoma.Core.Domain.Reward.Services
             IRewardService rewardService,
             IWalletCreationStatusService walletCreationStatusService,
             IRepository<WalletCreation> walletCreationRepository,
-            WalletVoucherSearchFilterValidator walletVoucherSearchFilterValidator)
+            WalletVoucherSearchFilterValidator walletVoucherSearchFilterValidator,
+            IExecutionStrategyService executionStrategyService)
         {
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
@@ -54,6 +56,7 @@ namespace Yoma.Core.Domain.Reward.Services
             _walletCreationStatusService = walletCreationStatusService;
             _walletCreationRepository = walletCreationRepository;
             _walletVoucherSearchFilterValidator = walletVoucherSearchFilterValidator;
+            _executionStrategyService = executionStrategyService;
         }
         #endregion
 
@@ -198,26 +201,29 @@ namespace Yoma.Core.Domain.Reward.Services
                 return;
             }
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-
-            var item = new WalletCreation { UserId = userId.Value };
-            try
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var wallet = await CreateWallet(userId.Value);
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-                item.WalletId = wallet.Id;
-                item.Balance = wallet.Balance; //track initial balance upon creation, if any
-                item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Created.ToString()).Id; //TODO: Distinguish between existing and newly created wallet
-            }
-            catch (Exception)
-            {
-                //schedule creation for delayed execution
-                item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
-            }
+                var item = new WalletCreation { UserId = userId.Value };
+                try
+                {
+                    var wallet = await CreateWallet(userId.Value);
 
-            await _walletCreationRepository.Create(item);
+                    item.WalletId = wallet.Id;
+                    item.Balance = wallet.Balance; //track initial balance upon creation, if any
+                    item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Created.ToString()).Id; //TODO: Distinguish between existing and newly created wallet
+                }
+                catch (Exception)
+                {
+                    //schedule creation for delayed execution
+                    item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
+                }
 
-            scope.Complete();
+                await _walletCreationRepository.Create(item);
+
+                scope.Complete();
+            });
         }
 
         public List<WalletCreation> ListPendingCreationSchedule(int batchSize, List<Guid> idsToSkip)

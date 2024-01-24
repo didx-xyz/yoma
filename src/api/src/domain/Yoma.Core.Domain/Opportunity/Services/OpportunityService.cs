@@ -48,6 +48,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly IRepository<OpportunitySkill> _opportunitySkillRepository;
         private readonly IRepository<OpportunityVerificationType> _opportunityVerificationTypeRepository;
 
+        private readonly IExecutionStrategyService _executionStrategyService;
+
         public const string Keywords_Separator = ",";
         public const int Keywords_CombinedMaxLength = 500;
         private static readonly Status[] Statuses_Updatable = { Status.Active, Status.Inactive };
@@ -79,7 +81,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             IRepository<OpportunityCountry> opportunityCountryRepository,
             IRepository<OpportunityLanguage> opportunityLanguageRepository,
             IRepository<OpportunitySkill> opportunitySkillRepository,
-            IRepository<OpportunityVerificationType> opportunityVerificationTypeRepository)
+            IRepository<OpportunityVerificationType> opportunityVerificationTypeRepository,
+            IExecutionStrategyService executionStrategyService)
         {
             _httpContextAccessor = httpContextAccessor;
 
@@ -107,6 +110,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             _opportunityLanguageRepository = opportunityLanguageRepository;
             _opportunitySkillRepository = opportunitySkillRepository;
             _opportunityVerificationTypeRepository = opportunityVerificationTypeRepository;
+            _executionStrategyService = executionStrategyService;
         }
         #endregion
 
@@ -556,25 +560,28 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 ModifiedByUserId = user.Id
             };
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await _opportunityRepository.Create(result);
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await _opportunityRepository.Create(result);
 
-            // categories
-            result = await AssignCategories(result, request.Categories);
+                // categories
+                result = await AssignCategories(result, request.Categories);
 
-            // countries
-            result = await AssignCountries(result, request.Countries);
+                // countries
+                result = await AssignCountries(result, request.Countries);
 
-            // languages
-            result = await AssignLanguages(result, request.Languages);
+                // languages
+                result = await AssignLanguages(result, request.Languages);
 
-            // skills (optional)
-            result = await AssignSkills(result, request.Skills);
+                // skills (optional)
+                result = await AssignSkills(result, request.Skills);
 
-            // verification types (optional)
-            result = await AssignVerificationTypes(result, request.VerificationTypes);
+                // verification types (optional)
+                result = await AssignVerificationTypes(result, request.VerificationTypes);
 
-            scope.Complete();
+                scope.Complete();
+            });
 
             result.SetPublished();
             return result;
@@ -634,30 +641,33 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.SSISchemaName = request.SSISchemaName;
             result.ModifiedByUserId = user.Id;
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await _opportunityRepository.Update(result);
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await _opportunityRepository.Update(result);
 
-            // categories
-            result = await RemoveCategories(result, result.Categories?.Where(o => !request.Categories.Contains(o.Id)).Select(o => o.Id).ToList());
-            result = await AssignCategories(result, request.Categories);
+                // categories
+                result = await RemoveCategories(result, result.Categories?.Where(o => !request.Categories.Contains(o.Id)).Select(o => o.Id).ToList());
+                result = await AssignCategories(result, request.Categories);
 
-            // countries
-            result = await RemoveCountries(result, result.Countries?.Where(o => !request.Countries.Contains(o.Id)).Select(o => o.Id).ToList());
-            result = await AssignCountries(result, request.Countries);
+                // countries
+                result = await RemoveCountries(result, result.Countries?.Where(o => !request.Countries.Contains(o.Id)).Select(o => o.Id).ToList());
+                result = await AssignCountries(result, request.Countries);
 
-            // languages
-            result = await RemoveLanguages(result, result.Languages?.Where(o => !request.Languages.Contains(o.Id)).Select(o => o.Id).ToList());
-            result = await AssignLanguages(result, request.Languages);
+                // languages
+                result = await RemoveLanguages(result, result.Languages?.Where(o => !request.Languages.Contains(o.Id)).Select(o => o.Id).ToList());
+                result = await AssignLanguages(result, request.Languages);
 
-            // skills (optional)
-            result = await RemoveSkills(result, result.Skills?.Where(o => !request.Skills.Contains(o.Id)).Select(o => o.Id).ToList());
-            result = await AssignSkills(result, request.Skills);
+                // skills (optional)
+                result = await RemoveSkills(result, result.Skills?.Where(o => !request.Skills.Contains(o.Id)).Select(o => o.Id).ToList());
+                result = await AssignSkills(result, request.Skills);
 
-            // verification types (optional)
-            result = await RemoveVerificationTypes(result, result.VerificationTypes?.Select(o => o.Type).Except(request.VerificationTypes?.Select(o => o.Type) ?? Enumerable.Empty<VerificationType>()).ToList());
-            result = await AssignVerificationTypes(result, request.VerificationTypes);
+                // verification types (optional)
+                result = await RemoveVerificationTypes(result, result.VerificationTypes?.Select(o => o.Type).Except(request.VerificationTypes?.Select(o => o.Type) ?? Enumerable.Empty<VerificationType>()).ToList());
+                result = await AssignVerificationTypes(result, request.VerificationTypes);
 
-            scope.Complete();
+                scope.Complete();
+            });
 
             result.SetPublished();
             return result;
@@ -763,11 +773,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await AssignCategories(result, categoryIds);
-            result.ModifiedByUserId = user.Id;
-            result = await _opportunityRepository.Update(result);
-            scope.Complete();
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await AssignCategories(result, categoryIds);
+                result.ModifiedByUserId = user.Id;
+                result = await _opportunityRepository.Update(result);
+                scope.Complete();
+            });
 
             return result;
         }
@@ -783,11 +796,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await RemoveCategories(result, categoryIds);
-            result.ModifiedByUserId = user.Id;
-            result = await _opportunityRepository.Update(result);
-            scope.Complete();
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await RemoveCategories(result, categoryIds);
+                result.ModifiedByUserId = user.Id;
+                result = await _opportunityRepository.Update(result);
+                scope.Complete();
+            });
 
             return result;
         }
@@ -800,11 +816,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await AssignCountries(result, countryIds);
-            result.ModifiedByUserId = user.Id;
-            result = await _opportunityRepository.Update(result);
-            scope.Complete();
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await AssignCountries(result, countryIds);
+                result.ModifiedByUserId = user.Id;
+                result = await _opportunityRepository.Update(result);
+                scope.Complete();
+            });
 
             return result;
         }
@@ -831,11 +850,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await AssignLanguages(result, languageIds);
-            result.ModifiedByUserId = user.Id;
-            result = await _opportunityRepository.Update(result);
-            scope.Complete();
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await AssignLanguages(result, languageIds);
+                result.ModifiedByUserId = user.Id;
+                result = await _opportunityRepository.Update(result);
+                scope.Complete();
+            });
 
             return result;
         }
@@ -851,11 +873,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await RemoveLanguages(result, languageIds);
-            result.ModifiedByUserId = user.Id;
-            result = await _opportunityRepository.Update(result);
-            scope.Complete();
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await RemoveLanguages(result, languageIds);
+                result.ModifiedByUserId = user.Id;
+                result = await _opportunityRepository.Update(result);
+                scope.Complete();
+            });
 
             return result;
         }
@@ -871,11 +896,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await AssignSkills(result, skillIds);
-            result.ModifiedByUserId = user.Id;
-            result = await _opportunityRepository.Update(result);
-            scope.Complete();
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await AssignSkills(result, skillIds);
+                result.ModifiedByUserId = user.Id;
+                result = await _opportunityRepository.Update(result);
+                scope.Complete();
+            });
 
             return result;
         }
@@ -891,11 +919,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await RemoveSkills(result, skillIds);
-            result.ModifiedByUserId = user.Id;
-            result = await _opportunityRepository.Update(result);
-            scope.Complete();
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await RemoveSkills(result, skillIds);
+                result.ModifiedByUserId = user.Id;
+                result = await _opportunityRepository.Update(result);
+                scope.Complete();
+            });
 
             return result;
         }
@@ -911,11 +942,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await AssignVerificationTypes(result, verificationTypes);
-            result.ModifiedByUserId = user.Id;
-            result = await _opportunityRepository.Update(result);
-            scope.Complete();
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await AssignVerificationTypes(result, verificationTypes);
+                result.ModifiedByUserId = user.Id;
+                result = await _opportunityRepository.Update(result);
+                scope.Complete();
+            });
 
             return result;
         }
@@ -934,11 +968,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            result = await RemoveVerificationTypes(result, verificationTypes);
-            result.ModifiedByUserId = user.Id;
-            result = await _opportunityRepository.Update(result);
-            scope.Complete();
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+            {
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                result = await RemoveVerificationTypes(result, verificationTypes);
+                result.ModifiedByUserId = user.Id;
+                result = await _opportunityRepository.Update(result);
+                scope.Complete();
+            });
 
             return result;
         }
@@ -996,28 +1033,31 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var results = new List<Domain.Lookups.Models.Country>();
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var countryId in countryIds)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var country = _countryService.GetById(countryId);
-                results.Add(country);
-
-                var item = _opportunityCountryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CountryId == country.Id);
-
-                if (item != null) continue;
-                item = new OpportunityCountry
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                foreach (var countryId in countryIds)
                 {
-                    OpportunityId = opportunity.Id,
-                    CountryId = country.Id
-                };
+                    var country = _countryService.GetById(countryId);
+                    results.Add(country);
 
-                await _opportunityCountryRepository.Create(item);
+                    var item = _opportunityCountryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CountryId == country.Id);
 
-                opportunity.Countries ??= new List<Domain.Lookups.Models.Country>();
-                opportunity.Countries.Add(new Domain.Lookups.Models.Country { Id = country.Id, Name = country.Name, CodeAlpha2 = country.CodeAlpha2, CodeAlpha3 = country.CodeAlpha3, CodeNumeric = country.CodeNumeric });
-            }
+                    if (item != null) continue;
+                    item = new OpportunityCountry
+                    {
+                        OpportunityId = opportunity.Id,
+                        CountryId = country.Id
+                    };
 
-            scope.Complete();
+                    await _opportunityCountryRepository.Create(item);
+
+                    opportunity.Countries ??= new List<Domain.Lookups.Models.Country>();
+                    opportunity.Countries.Add(new Domain.Lookups.Models.Country { Id = country.Id, Name = country.Name, CodeAlpha2 = country.CodeAlpha2, CodeAlpha3 = country.CodeAlpha3, CodeNumeric = country.CodeNumeric });
+                }
+
+                scope.Complete();
+            });
 
             return opportunity;
         }
@@ -1028,20 +1068,23 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             countryIds = countryIds.Distinct().ToList();
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var countryId in countryIds)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var country = _countryService.GetById(countryId);
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                foreach (var countryId in countryIds)
+                {
+                    var country = _countryService.GetById(countryId);
 
-                var item = _opportunityCountryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CountryId == country.Id);
-                if (item == null) continue;
+                    var item = _opportunityCountryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CountryId == country.Id);
+                    if (item == null) continue;
 
-                await _opportunityCountryRepository.Delete(item);
+                    await _opportunityCountryRepository.Delete(item);
 
-                opportunity.Countries?.Remove(opportunity.Countries.Single(o => o.Id == country.Id));
-            }
+                    opportunity.Countries?.Remove(opportunity.Countries.Single(o => o.Id == country.Id));
+                }
 
-            scope.Complete();
+                scope.Complete();
+            });
 
             return opportunity;
         }
@@ -1053,27 +1096,30 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             categoryIds = categoryIds.Distinct().ToList();
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var categoryId in categoryIds)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var category = _opportunityCategoryService.GetById(categoryId);
-
-                var item = _opportunityCategoryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CategoryId == category.Id);
-                if (item != null) continue;
-
-                item = new OpportunityCategory
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                foreach (var categoryId in categoryIds)
                 {
-                    OpportunityId = opportunity.Id,
-                    CategoryId = category.Id
-                };
+                    var category = _opportunityCategoryService.GetById(categoryId);
 
-                await _opportunityCategoryRepository.Create(item);
+                    var item = _opportunityCategoryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CategoryId == category.Id);
+                    if (item != null) continue;
 
-                opportunity.Categories ??= new List<Models.Lookups.OpportunityCategory>();
-                opportunity.Categories.Add(new Models.Lookups.OpportunityCategory { Id = category.Id, Name = category.Name, ImageURL = category.ImageURL });
-            }
+                    item = new OpportunityCategory
+                    {
+                        OpportunityId = opportunity.Id,
+                        CategoryId = category.Id
+                    };
 
-            scope.Complete();
+                    await _opportunityCategoryRepository.Create(item);
+
+                    opportunity.Categories ??= new List<Models.Lookups.OpportunityCategory>();
+                    opportunity.Categories.Add(new Models.Lookups.OpportunityCategory { Id = category.Id, Name = category.Name, ImageURL = category.ImageURL });
+                }
+
+                scope.Complete();
+            });
 
             return opportunity;
         }
@@ -1084,20 +1130,23 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             categoryIds = categoryIds.Distinct().ToList();
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var categoryId in categoryIds)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var category = _opportunityCategoryService.GetById(categoryId);
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                foreach (var categoryId in categoryIds)
+                {
+                    var category = _opportunityCategoryService.GetById(categoryId);
 
-                var item = _opportunityCategoryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CategoryId == category.Id);
-                if (item == null) continue;
+                    var item = _opportunityCategoryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CategoryId == category.Id);
+                    if (item == null) continue;
 
-                await _opportunityCategoryRepository.Delete(item);
+                    await _opportunityCategoryRepository.Delete(item);
 
-                opportunity.Categories?.Remove(opportunity.Categories.Single(o => o.Id == category.Id));
-            }
+                    opportunity.Categories?.Remove(opportunity.Categories.Single(o => o.Id == category.Id));
+                }
 
-            scope.Complete();
+                scope.Complete();
+            });
 
             return opportunity;
         }
@@ -1111,28 +1160,31 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var results = new List<Domain.Lookups.Models.Language>();
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var languageId in languageIds)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var language = _languageService.GetById(languageId);
-                results.Add(language);
-
-                var item = _opportunityLanguageRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.LanguageId == language.Id);
-                if (item != null) continue;
-
-                item = new OpportunityLanguage
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                foreach (var languageId in languageIds)
                 {
-                    OpportunityId = opportunity.Id,
-                    LanguageId = language.Id
-                };
+                    var language = _languageService.GetById(languageId);
+                    results.Add(language);
 
-                await _opportunityLanguageRepository.Create(item);
+                    var item = _opportunityLanguageRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.LanguageId == language.Id);
+                    if (item != null) continue;
 
-                opportunity.Languages ??= new List<Domain.Lookups.Models.Language>();
-                opportunity.Languages.Add(new Domain.Lookups.Models.Language { Id = language.Id, Name = language.Name, CodeAlpha2 = language.CodeAlpha2 });
-            }
+                    item = new OpportunityLanguage
+                    {
+                        OpportunityId = opportunity.Id,
+                        LanguageId = language.Id
+                    };
 
-            scope.Complete();
+                    await _opportunityLanguageRepository.Create(item);
+
+                    opportunity.Languages ??= new List<Domain.Lookups.Models.Language>();
+                    opportunity.Languages.Add(new Domain.Lookups.Models.Language { Id = language.Id, Name = language.Name, CodeAlpha2 = language.CodeAlpha2 });
+                }
+
+                scope.Complete();
+            });
 
             return opportunity;
         }
@@ -1143,20 +1195,23 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             languageIds = languageIds.Distinct().ToList();
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var languageId in languageIds)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var language = _languageService.GetById(languageId);
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                foreach (var languageId in languageIds)
+                {
+                    var language = _languageService.GetById(languageId);
 
-                var item = _opportunityLanguageRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.LanguageId == language.Id);
-                if (item == null) continue;
+                    var item = _opportunityLanguageRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.LanguageId == language.Id);
+                    if (item == null) continue;
 
-                await _opportunityLanguageRepository.Delete(item);
+                    await _opportunityLanguageRepository.Delete(item);
 
-                opportunity.Languages?.Remove(opportunity.Languages.Single(o => o.Id == language.Id));
-            }
+                    opportunity.Languages?.Remove(opportunity.Languages.Single(o => o.Id == language.Id));
+                }
 
-            scope.Complete();
+                scope.Complete();
+            });
 
             return opportunity;
         }
@@ -1167,27 +1222,30 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             skillIds = skillIds.Distinct().ToList();
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var skillId in skillIds)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var skill = _skillService.GetById(skillId);
-
-                var item = _opportunitySkillRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.SkillId == skill.Id);
-                if (item != null) continue;
-
-                item = new OpportunitySkill
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                foreach (var skillId in skillIds)
                 {
-                    OpportunityId = opportunity.Id,
-                    SkillId = skill.Id
-                };
+                    var skill = _skillService.GetById(skillId);
 
-                await _opportunitySkillRepository.Create(item);
+                    var item = _opportunitySkillRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.SkillId == skill.Id);
+                    if (item != null) continue;
 
-                opportunity.Skills ??= new List<Domain.Lookups.Models.Skill>();
-                opportunity.Skills.Add(new Domain.Lookups.Models.Skill { Id = skill.Id, Name = skill.Name, InfoURL = skill.InfoURL });
-            }
+                    item = new OpportunitySkill
+                    {
+                        OpportunityId = opportunity.Id,
+                        SkillId = skill.Id
+                    };
 
-            scope.Complete();
+                    await _opportunitySkillRepository.Create(item);
+
+                    opportunity.Skills ??= new List<Domain.Lookups.Models.Skill>();
+                    opportunity.Skills.Add(new Domain.Lookups.Models.Skill { Id = skill.Id, Name = skill.Name, InfoURL = skill.InfoURL });
+                }
+
+                scope.Complete();
+            });
 
             return opportunity;
         }
@@ -1201,20 +1259,23 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (!Statuses_Updatable.Contains(opportunity.Status))
                 throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var skillId in skillIds)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var skill = _skillService.GetById(skillId);
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                foreach (var skillId in skillIds)
+                {
+                    var skill = _skillService.GetById(skillId);
 
-                var item = _opportunitySkillRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.SkillId == skill.Id);
-                if (item == null) continue;
+                    var item = _opportunitySkillRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.SkillId == skill.Id);
+                    if (item == null) continue;
 
-                await _opportunitySkillRepository.Delete(item);
+                    await _opportunitySkillRepository.Delete(item);
 
-                opportunity.Skills?.Remove(opportunity.Skills.Single(o => o.Id == skill.Id));
-            }
+                    opportunity.Skills?.Remove(opportunity.Skills.Single(o => o.Id == skill.Id));
+                }
 
-            scope.Complete();
+                scope.Complete();
+            });
 
             return opportunity;
         }
@@ -1228,45 +1289,48 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var results = new List<Models.Lookups.OpportunityVerificationType>();
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var type in verificationTypes)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var verificationType = _opportunityVerificationTypeService.GetByType(type.Type);
-                results.Add(verificationType);
-
-                var desc = type.Description?.Trim();
-                if (string.IsNullOrEmpty(desc)) desc = null;
-
-                var item = _opportunityVerificationTypeRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.VerificationTypeId == verificationType.Id);
-                if (item != null)
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                foreach (var type in verificationTypes)
                 {
-                    //update (custom specified) or remove (defaults to lookup description)
-                    item.Description = desc;
-                    await _opportunityVerificationTypeRepository.Update(item);
+                    var verificationType = _opportunityVerificationTypeService.GetByType(type.Type);
+                    results.Add(verificationType);
 
-                    continue;
+                    var desc = type.Description?.Trim();
+                    if (string.IsNullOrEmpty(desc)) desc = null;
+
+                    var item = _opportunityVerificationTypeRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.VerificationTypeId == verificationType.Id);
+                    if (item != null)
+                    {
+                        //update (custom specified) or remove (defaults to lookup description)
+                        item.Description = desc;
+                        await _opportunityVerificationTypeRepository.Update(item);
+
+                        continue;
+                    }
+
+                    item = new OpportunityVerificationType
+                    {
+                        OpportunityId = opportunity.Id,
+                        VerificationTypeId = verificationType.Id,
+                        Description = desc
+                    };
+
+                    await _opportunityVerificationTypeRepository.Create(item);
+
+                    opportunity.VerificationTypes ??= new List<Models.Lookups.OpportunityVerificationType>();
+                    opportunity.VerificationTypes.Add(new Models.Lookups.OpportunityVerificationType
+                    {
+                        Id = verificationType.Id,
+                        Type = verificationType.Type,
+                        DisplayName = verificationType.DisplayName,
+                        Description = item.Description ?? verificationType.Description
+                    });
                 }
 
-                item = new OpportunityVerificationType
-                {
-                    OpportunityId = opportunity.Id,
-                    VerificationTypeId = verificationType.Id,
-                    Description = desc
-                };
-
-                await _opportunityVerificationTypeRepository.Create(item);
-
-                opportunity.VerificationTypes ??= new List<Models.Lookups.OpportunityVerificationType>();
-                opportunity.VerificationTypes.Add(new Models.Lookups.OpportunityVerificationType
-                {
-                    Id = verificationType.Id,
-                    Type = verificationType.Type,
-                    DisplayName = verificationType.DisplayName,
-                    Description = item.Description ?? verificationType.Description
-                });
-            }
-
-            scope.Complete();
+                scope.Complete();
+            });
 
             return opportunity;
         }
@@ -1275,20 +1339,23 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
             if (verificationTypes == null || !verificationTypes.Any()) return opportunity;
 
-            using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-            foreach (var type in verificationTypes)
+            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-                var verificationType = _opportunityVerificationTypeService.GetByType(type);
+                using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+                foreach (var type in verificationTypes)
+                {
+                    var verificationType = _opportunityVerificationTypeService.GetByType(type);
 
-                var item = _opportunityVerificationTypeRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.VerificationTypeId == verificationType.Id);
-                if (item == null) continue;
+                    var item = _opportunityVerificationTypeRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.VerificationTypeId == verificationType.Id);
+                    if (item == null) continue;
 
-                await _opportunityVerificationTypeRepository.Delete(item);
+                    await _opportunityVerificationTypeRepository.Delete(item);
 
-                opportunity.VerificationTypes?.Remove(opportunity.VerificationTypes.Single(o => o.Id == verificationType.Id));
-            }
+                    opportunity.VerificationTypes?.Remove(opportunity.VerificationTypes.Single(o => o.Id == verificationType.Id));
+                }
 
-            scope.Complete();
+                scope.Complete();
+            });
 
             return opportunity;
         }
