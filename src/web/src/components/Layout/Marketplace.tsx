@@ -73,8 +73,8 @@ const MarketplaceLayout: TabProps = ({ children }) => {
               </div>
               <h3>What is Zlto?</h3>
               <div className="w-[450px] rounded-lg bg-gray p-4 text-center">
-                Introducing Zlto, Yoma's fantastic reward system. Earn Zlto by
-                completing tasks and opportunities. Redeem your well-deserved
+                Introducing Zlto, Yoma&apos;s fantastic reward system. Earn Zlto
+                by completing tasks and opportunities. Redeem your well-deserved
                 rewards in the marketplace and enjoy the amazing benefits that
                 await you!
               </div>
@@ -172,10 +172,10 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                     }}
                   />
                 </div>
-                <div className="flex flex-grow flex-col">
+                <div className="flex flex-grow flex-col whitespace-nowrap">
                   <h1>
-                    {userProfile?.zltoBalance
-                      ? userProfile.zltoBalance
+                    {userProfile?.zlto.available
+                      ? userProfile.zlto.available
                           .toLocaleString("en-US")
                           .replace(/,/g, " ")
                       : 0}
@@ -202,7 +202,6 @@ const MarketplaceLayout: TabProps = ({ children }) => {
               </div>
             </div>
           )}
-
           {/* MAIN CONTENT */}
           <div className="flex flex-grow items-center justify-center p-4">
             {children}

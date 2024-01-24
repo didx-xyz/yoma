@@ -16,7 +16,7 @@ import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
 import { THEME_BLUE } from "~/lib/constants";
 import { CategoryCardComponent } from "~/components/Marketplace/CategoryCard";
-import { Country } from "~/api/models/lookups";
+import type { Country } from "~/api/models/lookups";
 import Select from "react-select";
 import { useRouter } from "next/router";
 
@@ -55,11 +55,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   const router = useRouter();
 
   // 👇 use prefetched queries from server
-  const {
-    data: dataCountry,
-    error: errorCountry,
-    isLoading: isLoadingCountry,
-  } = useQuery<Country[]>({
+  const { data: dataCountry } = useQuery<Country[]>({
     queryKey: ["StoreCountries"],
     queryFn: () => listSearchCriteriaCountries(),
   });
@@ -73,10 +69,13 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
     queryFn: () => listStoreCategories(countryId ?? defaultCountry),
   });
 
-  const onFilterCountry = useCallback((value: string) => {
-    if (value) router.push(`/marketplace?countryId=${value}`);
-    else router.push(`/marketplace`);
-  }, []);
+  const onFilterCountry = useCallback(
+    (value: string) => {
+      if (value) router.push(`/marketplace?countryId=${value}`);
+      else router.push(`/marketplace`);
+    },
+    [router],
+  );
 
   // memo for countries
   const countryOptions = React.useMemo(() => {
@@ -97,7 +96,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             control: () => "input input-xs w-[200px]",
           }}
           options={countryOptions}
-          onChange={(val) => onFilterCountry(val?.value!)}
+          onChange={(val) => onFilterCountry(val?.value ?? "")}
           value={countryOptions?.find(
             (c) => c.value === (countryId?.toString() ?? defaultCountry),
           )}

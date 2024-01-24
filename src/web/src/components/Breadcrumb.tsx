@@ -1,8 +1,6 @@
 import React from "react";
-import iconImage from "public/images/icon-rocket.svg";
 import Image from "next/image";
 import type { TabItem } from "~/api/models/common";
-import { IoMdArrowRoundBack } from "react-icons/io";
 import Link from "next/link";
 import { toBase64, shimmer } from "~/lib/image";
 

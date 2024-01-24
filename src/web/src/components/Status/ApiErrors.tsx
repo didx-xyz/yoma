@@ -18,7 +18,7 @@ export const ApiErrors: Props = ({ error }) => {
               return (
                 <>
                   <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                    <IoMdAlert className="text-yellow-400 mr-2 text-xl" />{" "}
+                    <IoMdAlert className="text-yellow-400 mr-2 h-10 w-10 text-xl" />
                     Access Denied
                   </div>
                   <p className="text-sm">
@@ -30,7 +30,7 @@ export const ApiErrors: Props = ({ error }) => {
               return (
                 <>
                   <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                    <IoMdAlert className="text-yellow-400 mr-2 text-xl" />{" "}
+                    <IoMdAlert className="text-yellow-400 mr-2 h-10 w-10 text-xl" />
                     Access Denied
                   </div>
                   <p className="text-sm">
@@ -43,8 +43,8 @@ export const ApiErrors: Props = ({ error }) => {
               return (
                 <>
                   <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                    <IoMdAlert className="mr-2 text-xl text-red-400" /> Access
-                    Denied
+                    <IoMdAlert className="mr-2 h-10 w-10 text-xl text-red-400" />{" "}
+                    Access Denied
                   </div>
                   <p className="text-sm">
                     An unknown error has occurred. Please contact us or try
@@ -57,7 +57,8 @@ export const ApiErrors: Props = ({ error }) => {
                 return (
                   <>
                     <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                      <IoMdAlert className="mr-2 text-xl text-red-400" /> Error
+                      <IoMdAlert className="mr-2 h-10 w-10 text-xl text-red-400" />{" "}
+                      Error
                     </div>
                     <p className="text-sm">
                       An unknown error has occurred. Please contact us or try
@@ -69,7 +70,7 @@ export const ApiErrors: Props = ({ error }) => {
               if (customErrors?.length === 1) {
                 return (
                   <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                    <IoMdAlert className="mr-2 text-xl text-red-400" />
+                    <IoMdAlert className="mr-2 h-10 w-10 text-xl text-red-400" />
                     {customErrors[0]?.message}
                   </div>
                 );
@@ -78,8 +79,8 @@ export const ApiErrors: Props = ({ error }) => {
                 return (
                   <>
                     <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                      <IoMdAlert className="mr-2 text-xl text-red-400" /> The
-                      following errors occurred:
+                      <IoMdAlert className="mr-2 h-10 w-10 text-xl text-red-400" />{" "}
+                      The following errors occurred:
                     </div>
                     <ul className="list-disc">
                       {customErrors?.map((error) => (

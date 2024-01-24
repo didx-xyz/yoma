@@ -14,7 +14,7 @@ import type {
   WalletVoucherSearchFilter,
   WalletVoucherSearchResults,
 } from "../models/reward";
-import { Country } from "../models/lookups";
+import type { Country } from "../models/lookups";
 
 export const listSearchCriteriaCountries = async (
   context?: GetServerSidePropsContext,
@@ -95,8 +95,7 @@ export const buyItem = async (
   context?: GetServerSidePropsContext,
 ): Promise<void> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.post(
+  await instance.post(
     `marketplace/store/${storeId}/item/category/${itemCategoryId}/buy`,
   );
-  return data;
 };

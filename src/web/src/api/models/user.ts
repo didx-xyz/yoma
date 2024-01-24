@@ -34,7 +34,6 @@ export interface UserProfileRequest {
   dateOfBirth: string | null;
   resetPassword: boolean;
 }
-
 export interface UserProfile {
   id: string;
   email: string;
@@ -54,11 +53,25 @@ export interface UserProfile {
   dateYoIDOnboarded: string | null;
   skills: UserSkillInfo[] | null;
   adminsOf: OrganizationInfo[];
-  zltoBalance: number;
+  zlto: UserProfileZlto;
   opportunityCountSaved: number;
   opportunityCountPending: number;
   opportunityCountCompleted: number;
   opportunityCountRejected: number;
+}
+
+export interface UserProfileZlto {
+  walletCreationStatus: WalletCreationStatus;
+  available: number;
+  pending: number;
+  total: number;
+}
+
+export enum WalletCreationStatus {
+  Unscheduled,
+  Pending,
+  Created,
+  Error,
 }
 
 export interface UserSkillInfo extends Skill {

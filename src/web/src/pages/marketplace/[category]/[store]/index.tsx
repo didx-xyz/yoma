@@ -11,7 +11,6 @@ import { config } from "~/lib/react-query-config";
 import type {
   StoreItemCategory,
   StoreItemCategorySearchResults,
-  StoreItemSearchResults,
 } from "~/api/models/marketplace";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
@@ -27,7 +26,7 @@ import Image from "next/image";
 import { signIn, useSession } from "next-auth/react";
 import iconBell from "public/images/icon-bell.svg";
 import { fetchClientEnv } from "~/lib/utils";
-import { ErrorResponseItem } from "~/api/models/common";
+import type { ErrorResponseItem } from "~/api/models/common";
 
 interface IParams extends ParsedUrlQuery {
   category: string;
@@ -153,8 +152,8 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
   const onBuyConfirm = useCallback(
     (item: StoreItemCategory) => {
       setBuyDialogVisible(false);
-      buyItem(storeId, categoryId)
-        .then((res) => {
+      buyItem(storeId, item.id)
+        .then(() => {
           setBuyDialogConfirmationVisible(true);
         })
         .catch((err) => {
@@ -162,11 +161,10 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
           setBuyDialogErrorMessages(customErrors);
           setBuyDialogErrorVisible(true);
         });
+      //TODO: update zlto balance
     },
     [
       storeId,
-      categoryId,
-      setCurrentItem,
       setBuyDialogVisible,
       setBuyDialogConfirmationVisible,
       setBuyDialogErrorVisible,
@@ -268,10 +266,10 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
               </button>
             </div>
             <div className="flex flex-col items-center justify-center gap-4">
-              {currentItem && currentItem.imageURL && (
+              {currentItem?.imageURL && (
                 <div className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
                   <Image
-                    src={currentItem!.imageURL!}
+                    src={currentItem?.imageURL ?? ""}
                     alt="Icon Zlto"
                     width={40}
                     height={40}
@@ -284,13 +282,13 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
 
               <h3>You are about to purchase:</h3>
               <div className="w-[450px] rounded-lg p-2 text-center">
-                <strong>{currentItem!.name}</strong> voucher for{" "}
-                <strong>{currentItem!.amount} Zlto</strong>.
-                <br />
+                <strong>{currentItem.name}</strong> voucher for{" "}
+                <strong>{currentItem.amount} Zlto</strong>.
+                <br /> <br />
                 Would you like to proceed?
               </div>
 
-              <div className="mt-4 flex flex-grow gap-4">
+              <div className="-mt-2 flex flex-grow gap-4">
                 <button
                   type="button"
                   className="btn rounded-full border-purple bg-white normal-case text-purple hover:bg-purple hover:text-white md:w-[150px]"
@@ -304,7 +302,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
                   type="button"
                   className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
                   onClick={() => {
-                    onBuyConfirm(currentItem!);
+                    onBuyConfirm(currentItem);
                   }}
                 >
                   Yes
@@ -322,7 +320,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
         onRequestClose={() => {
           setBuyDialogConfirmationVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[350px] md:w-[550px] md:rounded-3xl`}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[550px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
@@ -344,10 +342,10 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
             <h3 className="text-center">Thank you for your purchase</h3>
 
             <div className="flex flex-col items-center justify-center gap-4">
-              {currentItem && currentItem.imageURL && (
-                <div className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+              {currentItem?.imageURL && (
+                <div className="flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
                   <Image
-                    src={currentItem!.imageURL!}
+                    src={currentItem?.imageURL ?? ""}
                     alt="Icon Zlto"
                     width={40}
                     height={40}
@@ -358,21 +356,16 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
                 </div>
               )}
 
-              {/* <h3>You are about to purchase:</h3>
-              <div className="w-[450px] rounded-lg p-4 text-center">
-                <strong>{currentItem!.name}</strong> voucher for{" "}
-                <strong>{currentItem!.amount} Zlto</strong>.
-                <br />
-                Would you like to proceed?
-              </div> */}
-              <div className="w-[450px] rounded-lg p-4 text-center">
-                {currentItem.description}
-              </div>
-              <div className="w-[450px] rounded-lg p-4 text-center">
-                {currentItem.summary}
+              <div className="h-[180px] overflow-y-scroll text-ellipsis">
+                <div className=" rounded-lg p-4 text-center">
+                  {currentItem.description}
+                </div>
+                <div className="  rounded-lg p-4 text-center">
+                  {currentItem.summary}
+                </div>
               </div>
 
-              <div className="mt-4 flex flex-grow gap-4">
+              <div className="flex flex-grow gap-4">
                 <button
                   type="button"
                   className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
@@ -420,10 +413,9 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
               Your purchase was unsuccessful. Please try again later.
               <br />
               <br />
-              {buyDialogErrorMessages &&
-                buyDialogErrorMessages.map((error, index) => (
-                  <div key={`error_${index}`}>{error.message}</div>
-                ))}
+              {buyDialogErrorMessages?.map((error, index) => (
+                <div key={`error_${index}`}>{error.message}</div>
+              ))}
             </div>
 
             <div className="mt-4 flex flex-grow gap-4">
