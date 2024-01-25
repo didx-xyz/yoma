@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { parseCookies, setCookie } from "nookies";
 import { IoMdGlobe } from "react-icons/io";
-import { useSetAtom } from "jotai";
 
 // The following cookie name is important because it's Google-predefined for the translation engine purpose
 const COOKIE_NAME = "googtrans";
