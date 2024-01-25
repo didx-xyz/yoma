@@ -27,8 +27,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 
         public async Task<OpportunityVerificationType> Create(OpportunityVerificationType item)
         {
-            item.DateCreated = DateTimeOffset.Now;
-            item.DateModified = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             var entity = new Entities.OpportunityVerificationType
             {
@@ -51,7 +51,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
             var entity = _context.OpportunityVerificationTypes.Where(o => o.Id == item.Id).SingleOrDefault()
                ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.OpportunityVerificationType)} with id '{item.Id}' does not exist");
 
-            item.DateModified = DateTimeOffset.Now;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             entity.Description = item.Description;
             entity.DateModified = item.DateModified;

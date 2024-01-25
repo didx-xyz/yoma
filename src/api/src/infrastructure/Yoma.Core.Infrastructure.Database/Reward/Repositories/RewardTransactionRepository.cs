@@ -34,8 +34,8 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
 
         public async Task<RewardTransaction> Create(RewardTransaction item)
         {
-            item.DateCreated = DateTimeOffset.Now;
-            item.DateModified = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             var entity = new Entities.RewardTransaction
             {
@@ -76,8 +76,8 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
                    Amount = item.Amount,
                    ErrorReason = item.ErrorReason,
                    RetryCount = item.RetryCount,
-                   DateCreated = DateTimeOffset.Now,
-                   DateModified = DateTimeOffset.Now
+                   DateCreated = DateTimeOffset.UtcNow,
+                   DateModified = DateTimeOffset.UtcNow
                });
 
             _context.RewardTransaction.AddRange(entities);
@@ -99,7 +99,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
             var entity = _context.RewardTransaction.Where(o => o.Id == item.Id).SingleOrDefault()
                ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.RewardTransaction)} with id '{item.Id}' does not exist");
 
-            item.DateModified = DateTimeOffset.Now;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             entity.TransactionId = item.TransactionId;
             entity.StatusId = item.StatusId;
@@ -124,7 +124,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
             {
                 var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(RewardTransaction)} with id '{item.Id}' does not exist");
 
-                item.DateModified = DateTimeOffset.Now;
+                item.DateModified = DateTimeOffset.UtcNow;
 
                 entity.TransactionId = item.TransactionId;
                 entity.StatusId = item.StatusId;

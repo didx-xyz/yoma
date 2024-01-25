@@ -27,7 +27,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
 
         public async Task<CredentialSchema> Create(CredentialSchema item)
         {
-            item.DateCreated = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
 
             var entity = new Entities.CredentialSchema
             {

@@ -24,8 +24,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E7BFE753-E55E-411C-8C02-9D1AEBBABE60}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
-		src\scripts\index_fragmentation.sql = src\scripts\index_fragmentation.sql
-		src\scripts\index_rebuild_reorganize.sql = src\scripts\index_rebuild_reorganize.sql
+		src\scripts\index_fragmentation_ms.sql = src\scripts\index_fragmentation_ms.sql
+		src\scripts\index_fragmentation_postgre.sql = src\scripts\index_fragmentation_postgre.sql
+		src\scripts\index_rebuild_reorganize_ms.sql = src\scripts\index_rebuild_reorganize_ms.sql
+		src\scripts\index_rebuild_reorganize_postgre.sql = src\scripts\index_rebuild_reorganize_postgre.sql
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.Keycloak", "src\infrastructure\Yoma.Core.Infrastructure.Keycloak\Yoma.Core.Infrastructure.Keycloak.csproj", "{CDD4E64E-0B96-4AB6-A6D6-4BC4FB29D169}"
@@ -38,7 +40,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.Am
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.Zlto", "src\infrastructure\Yoma.Core.Infrastructure.Zlto\Yoma.Core.Infrastructure.Zlto.csproj", "{17BCA099-6C01-49D5-BBC7-FFA77F42DCCD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.AriesCloud", "src\infrastructure\Yoma.Core.Infrastructure.AriesCloud\Yoma.Core.Infrastructure.AriesCloud.csproj", "{86015AFD-8D18-437C-92E4-87ECCA82C574}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.AriesCloud", "src\infrastructure\Yoma.Core.Infrastructure.AriesCloud\Yoma.Core.Infrastructure.AriesCloud.csproj", "{86015AFD-8D18-437C-92E4-87ECCA82C574}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.Shared", "src\infrastructure\Yoma.Core.Infrastructure.Shared\Yoma.Core.Infrastructure.Shared.csproj", "{4244D97D-502A-4B37-9C1A-EFD7D2DBEFDD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -86,6 +90,10 @@ Global
 		{86015AFD-8D18-437C-92E4-87ECCA82C574}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86015AFD-8D18-437C-92E4-87ECCA82C574}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{86015AFD-8D18-437C-92E4-87ECCA82C574}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4244D97D-502A-4B37-9C1A-EFD7D2DBEFDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4244D97D-502A-4B37-9C1A-EFD7D2DBEFDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4244D97D-502A-4B37-9C1A-EFD7D2DBEFDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4244D97D-502A-4B37-9C1A-EFD7D2DBEFDD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -105,6 +113,7 @@ Global
 		{5CE5D944-3FBF-4AA6-BFFD-D9D55B211AD4} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{17BCA099-6C01-49D5-BBC7-FFA77F42DCCD} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{86015AFD-8D18-437C-92E4-87ECCA82C574} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
+		{4244D97D-502A-4B37-9C1A-EFD7D2DBEFDD} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D658A68F-8A10-4EF2-B8C9-F1350399BF58}

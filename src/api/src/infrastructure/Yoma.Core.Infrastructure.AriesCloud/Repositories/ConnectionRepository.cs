@@ -26,7 +26,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
 
         public async Task<Models.Connection> Create(Models.Connection item)
         {
-            item.DateCreated = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
 
             var entity = new Entities.Connection
             {

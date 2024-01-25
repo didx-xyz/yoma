@@ -25,7 +25,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 
         public async Task<Domain.Entity.Models.OrganizationProviderType> Create(Domain.Entity.Models.OrganizationProviderType item)
         {
-            item.DateCreated = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
 
             var entity = new OrganizationProviderType
             {

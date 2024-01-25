@@ -8,7 +8,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
 
         public string PartnerId { get; set; }
 
-        public DateTimeOffset Date { get; } = DateTimeOffset.Now;
+        public DateTimeOffset Date { get; } = DateTimeOffset.UtcNow;
 
         public DateTimeOffset DateExpire { get; set; }
     }

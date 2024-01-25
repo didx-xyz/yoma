@@ -29,7 +29,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
 
         public async Task<Domain.MyOpportunity.Models.MyOpportunityVerification> Create(Domain.MyOpportunity.Models.MyOpportunityVerification item)
         {
-            item.DateCreated = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
 
             var entity = new MyOpportunityVerification
             {

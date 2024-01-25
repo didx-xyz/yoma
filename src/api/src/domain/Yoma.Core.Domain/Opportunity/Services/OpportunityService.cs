@@ -512,7 +512,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' already exists");
 
             var status = request.PostAsActive ? Status.Active : Status.Inactive;
-            if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.Now)
+            if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
             {
                 if (request.PostAsActive)
                     throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' has already ended and can not be posted as active");
@@ -678,7 +678,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             var opportunity = GetById(id, false, true, ensureOrganizationAuthorization);
 
             //can complete, provided published (and started) or expired (action prior to expiration)
-            var canComplete = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
+            var canComplete = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
             if (!canComplete) canComplete = opportunity.Status == Status.Expired;
 
             if (!canComplete)
@@ -732,7 +732,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                         throw new ValidationException($"{nameof(Models.Opportunity)} can not be activated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
 
                     //ensure DateEnd was updated for re-activation of previously expired opportunities
-                    if (result.DateEnd.HasValue && result.DateEnd <= DateTimeOffset.Now)
+                    if (result.DateEnd.HasValue && result.DateEnd <= DateTimeOffset.UtcNow)
                         throw new ValidationException($"The {nameof(Models.Opportunity)} '{result.Title}' cannot be activated because its end date ('{result.DateEnd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation.");
 
                     break;

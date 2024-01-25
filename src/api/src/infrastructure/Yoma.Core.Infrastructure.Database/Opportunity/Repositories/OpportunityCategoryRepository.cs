@@ -27,7 +27,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 
         public async Task<OpportunityCategory> Create(OpportunityCategory item)
         {
-            item.DateCreated = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
 
             var entity = new Entities.OpportunityCategory
             {

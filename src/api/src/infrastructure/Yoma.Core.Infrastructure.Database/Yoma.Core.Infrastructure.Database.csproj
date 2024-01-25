@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\domain\Yoma.Core.Domain\Yoma.Core.Domain.csproj" />
+    <ProjectReference Include="..\Yoma.Core.Infrastructure.Shared\Yoma.Core.Infrastructure.Shared.csproj" />
   </ItemGroup>
 
 </Project>

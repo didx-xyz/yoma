@@ -38,8 +38,8 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
 
         public async Task<SSICredentialIssuance> Create(SSICredentialIssuance item)
         {
-            item.DateCreated = DateTimeOffset.Now;
-            item.DateModified = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             var entity = new Entities.SSICredentialIssuance
             {
@@ -71,7 +71,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
             var entity = _context.SSICredentialIssuance.Where(o => o.Id == item.Id).SingleOrDefault()
                ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.SSICredentialIssuance)} with id '{item.Id}' does not exist");
 
-            item.DateModified = DateTimeOffset.Now;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             entity.CredentialId = item.CredentialId;
             entity.StatusId = item.StatusId;

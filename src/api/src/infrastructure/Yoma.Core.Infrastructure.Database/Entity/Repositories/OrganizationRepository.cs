@@ -90,9 +90,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 
         public async Task<Domain.Entity.Models.Organization> Create(Domain.Entity.Models.Organization item)
         {
-            item.DateStatusModified = DateTimeOffset.Now;
-            item.DateCreated = DateTimeOffset.Now;
-            item.DateModified = DateTimeOffset.Now;
+            item.DateStatusModified = DateTimeOffset.UtcNow;
+            item.DateCreated = DateTimeOffset.UtcNow;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             var entity = new Organization
             {
@@ -157,11 +157,11 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                    Biography = item.Biography,
                    StatusId = item.StatusId,
                    CommentApproval = item.CommentApproval,
-                   DateStatusModified = DateTimeOffset.Now,
+                   DateStatusModified = DateTimeOffset.UtcNow,
                    LogoId = item.LogoId,
-                   DateCreated = DateTimeOffset.Now,
+                   DateCreated = DateTimeOffset.UtcNow,
                    CreatedByUserId = item.CreatedByUserId,
-                   DateModified = DateTimeOffset.Now,
+                   DateModified = DateTimeOffset.UtcNow,
                    ModifiedByUserId = item.ModifiedByUserId
                });
 
@@ -184,8 +184,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         {
             var entity = _context.Organization.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Organization)} with id '{item.Id}' does not exist");
 
-            if (item.StatusId != entity.StatusId) item.DateStatusModified = DateTimeOffset.Now;
-            item.DateModified = DateTimeOffset.Now;
+            if (item.StatusId != entity.StatusId) item.DateStatusModified = DateTimeOffset.UtcNow;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             entity.Name = item.Name;
             entity.WebsiteURL = item.WebsiteURL;
@@ -226,8 +226,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             {
                 var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Organization)} with id '{item.Id}' does not exist");
 
-                if (item.StatusId != entity.StatusId) item.DateStatusModified = DateTimeOffset.Now;
-                item.DateModified = DateTimeOffset.Now;
+                if (item.StatusId != entity.StatusId) item.DateStatusModified = DateTimeOffset.UtcNow;
+                item.DateModified = DateTimeOffset.UtcNow;
 
                 entity.Name = item.Name;
                 entity.WebsiteURL = item.WebsiteURL;

@@ -35,7 +35,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
 
         public async Task<Domain.Core.Models.BlobObject> Create(Domain.Core.Models.BlobObject item)
         {
-            item.DateCreated = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
 
             var entity = new BlobObject
             {

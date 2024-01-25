@@ -420,7 +420,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
         private async Task<KeyValuePair<string, string>> GetAuthHeaderToken()
         {
-            if (_accessToken != null && _accessToken.DateExpire > DateTimeOffset.Now)
+            if (_accessToken != null && _accessToken.DateExpire > DateTimeOffset.UtcNow)
                 return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {_accessToken.AccessToken}");
 
             var request = new PartnerRequestLogin
@@ -444,7 +444,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                 AccessToken = response.AccessToken,
                 PartnerId = response.AccountInfo.PartnerId,
                 PartnerName = response.AccountInfo.PartnerName.ToLower(),
-                DateExpire = DateTimeOffset.Now.AddHours(_options.PartnerTokenExpirationIntervalInHours)
+                DateExpire = DateTimeOffset.UtcNow.AddHours(_options.PartnerTokenExpirationIntervalInHours)
             };
 
             return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {response.AccessToken}");

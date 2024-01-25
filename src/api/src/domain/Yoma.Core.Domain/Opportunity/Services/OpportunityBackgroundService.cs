@@ -64,7 +64,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 do
                 {
                     var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-                        o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.Now).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
+                        o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.UtcNow).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
                     if (!items.Any()) break;
 
                     var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
@@ -119,7 +119,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 do
                 {
                     var items = _opportunityRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
-                        o.DateModified <= DateTimeOffset.Now.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
+                        o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
                         .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
                     if (!items.Any()) break;
 

@@ -44,8 +44,8 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
 
-            item.DateCreated = DateTimeOffset.Now;
-            item.DateModified = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             var entity = new Skill
             {
@@ -76,8 +76,8 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
                 Name = item.Name,
                 ExternalId = item.ExternalId,
                 InfoURL = item.InfoURL,
-                DateCreated = DateTimeOffset.Now,
-                DateModified = DateTimeOffset.Now
+                DateCreated = DateTimeOffset.UtcNow,
+                DateModified = DateTimeOffset.UtcNow
             });
 
             _context.Skill.AddRange(entities);
@@ -98,7 +98,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
         {
             var entity = _context.Skill.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Skill)} with id '{item.Id}' does not exist");
 
-            item.DateModified = DateTimeOffset.Now;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             entity.Name = item.Name;
             entity.InfoURL = item.InfoURL;
@@ -124,7 +124,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
                 if (!updated) updated = !string.Equals(entity.InfoURL, item.InfoURL, StringComparison.CurrentCultureIgnoreCase);
                 if (!updated) continue;
 
-                item.DateModified = DateTimeOffset.Now;
+                item.DateModified = DateTimeOffset.UtcNow;
 
                 entity.Name = item.Name;
                 entity.InfoURL = item.InfoURL;

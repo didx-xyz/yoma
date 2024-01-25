@@ -32,8 +32,8 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
 
         public async Task<TransactionLog> Create(TransactionLog item)
         {
-            item.DateCreated = DateTimeOffset.Now;
-            item.DateModified = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             var entity = new Entities.TransactionLog
             {

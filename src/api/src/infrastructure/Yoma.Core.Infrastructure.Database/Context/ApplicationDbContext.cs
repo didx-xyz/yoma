@@ -7,6 +7,8 @@ using Yoma.Core.Infrastructure.Database.Opportunity.Entities;
 using Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.SSI.Entities;
 using Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups;
+using Yoma.Core.Infrastructure.Shared.Converters;
+using Yoma.Core.Infrastructure.Shared.Interceptors;
 
 namespace Yoma.Core.Infrastructure.Database.Context
 {
@@ -139,6 +141,19 @@ namespace Yoma.Core.Infrastructure.Database.Context
         #region Protected Members
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            foreach (var entityType in builder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTimeOffset))
+                    {
+                        var entityTypeBuilder = builder.Entity(entityType.ClrType);
+                        var propertyBuilder = entityTypeBuilder.Property(property.ClrType, property.Name);
+                        propertyBuilder.HasConversion(new UtcDateTimeOffsetConverter());
+                    }
+                }
+            }
+
             builder.Entity<Opportunity.Entities.Opportunity>()
                 .HasIndex(o => new { o.Description })
                 .HasMethod("GIN")
@@ -182,6 +197,11 @@ namespace Yoma.Core.Infrastructure.Database.Context
               .HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId })
               .IsUnique()
               .HasFilter(null);
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.AddInterceptors(new UtcSaveChangesInterceptor());
         }
         #endregion
     }

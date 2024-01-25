@@ -78,7 +78,7 @@ namespace Yoma.Core.Infrastructure.Emsi.Client
         #region Private Members
         private async Task<KeyValuePair<string, string>> GetAuthHeader(AuthScope scope)
         {
-            if (_accessToken != null && _accessToken.DateExpire > DateTimeOffset.Now)
+            if (_accessToken != null && _accessToken.DateExpire > DateTimeOffset.UtcNow)
                 return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {_accessToken.Access_token}");
 
             var data = new Dictionary<string, string>

@@ -77,9 +77,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
 
-            item.DateYoIDOnboarded = !item.YoIDOnboarded.HasValue || !item.YoIDOnboarded.Value ? null : DateTimeOffset.Now;
-            item.DateCreated = DateTimeOffset.Now;
-            item.DateModified = DateTimeOffset.Now;
+            item.DateYoIDOnboarded = !item.YoIDOnboarded.HasValue || !item.YoIDOnboarded.Value ? null : DateTimeOffset.UtcNow;
+            item.DateCreated = DateTimeOffset.UtcNow;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             var entity = new User
             {
@@ -115,8 +115,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 
             item.DateYoIDOnboarded = !item.YoIDOnboarded.HasValue || !item.YoIDOnboarded.Value
                 ? null
-                : item.YoIDOnboarded.Value && !entity.DateYoIDOnboarded.HasValue ? DateTimeOffset.Now : entity.DateYoIDOnboarded;
-            item.DateModified = DateTimeOffset.Now;
+                : item.YoIDOnboarded.Value && !entity.DateYoIDOnboarded.HasValue ? DateTimeOffset.UtcNow : entity.DateYoIDOnboarded;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             entity.Email = item.Email;
             entity.EmailConfirmed = item.EmailConfirmed;

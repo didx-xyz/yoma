@@ -27,7 +27,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 
         public async Task<OpportunityLanguage> Create(OpportunityLanguage item)
         {
-            item.DateCreated = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
 
             var entity = new Entities.OpportunityLanguage
             {

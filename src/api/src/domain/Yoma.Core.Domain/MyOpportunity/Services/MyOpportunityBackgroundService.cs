@@ -76,7 +76,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 do
                 {
                     var items = _myOpportunityRepository.Query().Where(o => o.VerificationStatusId.HasValue && statusRejectableIds.Contains(o.VerificationStatusId.Value) &&
-                      o.DateModified <= DateTimeOffset.Now.AddDays(-_scheduleJobOptions.MyOpportunityRejectionIntervalInDays))
+                      o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.MyOpportunityRejectionIntervalInDays))
                       .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
                     if (!items.Any()) break;
 

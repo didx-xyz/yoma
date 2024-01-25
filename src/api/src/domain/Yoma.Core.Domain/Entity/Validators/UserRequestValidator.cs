@@ -23,7 +23,7 @@ namespace Yoma.Core.Domain.Entity.Validators
         private bool NotInFuture(DateTimeOffset? date)
         {
             if (!date.HasValue) return true;
-            return date <= DateTimeOffset.Now;
+            return date <= DateTimeOffset.UtcNow;
         }
         #endregion
     }

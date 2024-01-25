@@ -123,8 +123,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 
         public async Task<Domain.Opportunity.Models.Opportunity> Create(Domain.Opportunity.Models.Opportunity item)
         {
-            item.DateCreated = DateTimeOffset.Now;
-            item.DateModified = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             var entity = new Entities.Opportunity
             {
@@ -199,9 +199,9 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                   DateEnd = item.DateEnd,
                   CredentialIssuanceEnabled = item.CredentialIssuanceEnabled,
                   SSISchemaName = item.SSISchemaName,
-                  DateCreated = DateTimeOffset.Now,
+                  DateCreated = DateTimeOffset.UtcNow,
                   CreatedByUserId = item.CreatedByUserId,
-                  DateModified = DateTimeOffset.Now,
+                  DateModified = DateTimeOffset.UtcNow,
                   ModifiedByUserId = item.ModifiedByUserId
               });
 
@@ -224,7 +224,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
             var entity = _context.Opportunity.Where(o => o.Id == item.Id).SingleOrDefault()
                 ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.Opportunity)} with id '{item.Id}' does not exist");
 
-            item.DateModified = DateTimeOffset.Now;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             entity.Title = item.Title;
             entity.Description = item.Description;
@@ -270,7 +270,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
             {
                 var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Entities.Opportunity)} with id '{item.Id}' does not exist");
 
-                item.DateModified = DateTimeOffset.Now;
+                item.DateModified = DateTimeOffset.UtcNow;
 
                 entity.Title = item.Title;
                 entity.Description = item.Description;

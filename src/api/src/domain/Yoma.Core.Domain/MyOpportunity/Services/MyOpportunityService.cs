@@ -288,7 +288,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         {
                             //items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
                             VerificationStatus.Pending =>
-                                predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.Now) ||
+                                predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.UtcNow) ||
                                 o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId),
 
                             //all, irrespective of related opportunity and organization status
@@ -460,7 +460,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             //can complete, provided opportunity is published (and started) or expired (actioned prior to expiration)
             var opportunity = _opportunityService.GetById(request.OpportunityId, true, true, false);
             var canFinalize = opportunity.Status == Status.Expired;
-            if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
+            if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
             if (!canFinalize)
                 throw new ValidationException($"Verification for opportunity '{opportunity.Title}' can no longer be finalized (published '{opportunity.Published}' | status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 
@@ -490,7 +490,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         break;
 
                     case VerificationStatus.Completed:
-                        var dateCompleted = DateTimeOffset.Now;
+                        var dateCompleted = DateTimeOffset.UtcNow;
 
                         if (item.DateEnd.HasValue && item.DateEnd.Value > dateCompleted)
                             throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd}')");
@@ -498,7 +498,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         var (zltoReward, yomaReward) = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, true);
                         item.ZltoReward = zltoReward;
                         item.YomaReward = yomaReward;
-                        item.DateCompleted = DateTimeOffset.Now;
+                        item.DateCompleted = DateTimeOffset.UtcNow;
 
                         await _userService.AssignSkills(user, opportunity);
 
@@ -623,7 +623,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             //provided opportunity is published (and started) or expired
             var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
             var canSendForVerification = opportunity.Status == Status.Expired;
-            if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.Now;
+            if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
             if (!canSendForVerification)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can no longer be send for verification (published '{opportunity.Published}' status | '{opportunity.Status}' | start date '{opportunity.DateStart}')");
 

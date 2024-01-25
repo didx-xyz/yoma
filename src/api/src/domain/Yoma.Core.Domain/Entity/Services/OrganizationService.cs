@@ -1047,7 +1047,7 @@ namespace Yoma.Core.Domain.Entity.Services
                             Type = type,
                             ContentType = file.ContentType,
                             OriginalFileName = file.FileName,
-                            DateCreated = DateTimeOffset.Now
+                            DateCreated = DateTimeOffset.UtcNow
                         };
 
                         //create new item in db

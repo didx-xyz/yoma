@@ -32,8 +32,8 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
 
         public async Task<WalletCreation> Create(WalletCreation item)
         {
-            item.DateCreated = DateTimeOffset.Now;
-            item.DateModified = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             var entity = new Entities.WalletCreation
             {
@@ -60,7 +60,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
             var entity = _context.WalletCreation.Where(o => o.Id == item.Id).SingleOrDefault()
            ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.WalletCreation)} with id '{item.Id}' does not exist");
 
-            item.DateModified = DateTimeOffset.Now;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             entity.WalletId = item.WalletId;
             entity.Balance = item.Balance;

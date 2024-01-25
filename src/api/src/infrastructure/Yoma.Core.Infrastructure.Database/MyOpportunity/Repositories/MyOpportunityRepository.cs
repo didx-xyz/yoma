@@ -84,8 +84,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
 
         public async Task<Domain.MyOpportunity.Models.MyOpportunity> Create(Domain.MyOpportunity.Models.MyOpportunity item)
         {
-            item.DateCreated = DateTimeOffset.Now;
-            item.DateModified = DateTimeOffset.Now;
+            item.DateCreated = DateTimeOffset.UtcNow;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             var entity = new Entities.MyOpportunity
             {
@@ -130,8 +130,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                   DateCompleted = item.DateCompleted,
                   ZltoReward = item.ZltoReward,
                   YomaReward = item.YomaReward,
-                  DateCreated = DateTimeOffset.Now,
-                  DateModified = DateTimeOffset.Now,
+                  DateCreated = DateTimeOffset.UtcNow,
+                  DateModified = DateTimeOffset.UtcNow,
               });
 
             _context.MyOpportunity.AddRange(entities);
@@ -153,7 +153,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
             var entity = _context.MyOpportunity.Where(o => o.Id == item.Id).SingleOrDefault()
                 ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.MyOpportunity)} with id '{item.Id}' does not exist");
 
-            item.DateModified = DateTimeOffset.Now;
+            item.DateModified = DateTimeOffset.UtcNow;
 
             entity.ActionId = item.ActionId;
             entity.VerificationStatusId = item.VerificationStatusId;
@@ -182,7 +182,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
             {
                 var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Entities.MyOpportunity)} with id '{item.Id}' does not exist");
 
-                item.DateModified = DateTimeOffset.Now;
+                item.DateModified = DateTimeOffset.UtcNow;
 
                 entity.ActionId = item.ActionId;
                 entity.VerificationStatusId = item.VerificationStatusId;

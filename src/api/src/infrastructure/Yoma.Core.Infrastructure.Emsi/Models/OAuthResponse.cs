@@ -14,7 +14,7 @@ namespace Yoma.Core.Infrastructure.Emsi.Models
         public string Token_type { get; set; }
 
         [JsonIgnore]
-        public DateTimeOffset Date { get; } = DateTimeOffset.Now;
+        public DateTimeOffset Date { get; } = DateTimeOffset.UtcNow;
 
         [JsonIgnore]
         public DateTimeOffset DateExpire
