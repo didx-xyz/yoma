@@ -94,7 +94,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
           </div>
         </ReactModal>
 
-        <div className="container z-10 py-4">
+        <div className="container z-10 mt-20 py-4">
           {!userProfile && (
             <div className="mb-8 flex h-36 flex-col items-center justify-center gap-4 text-white">
               <div className="flex flex-row items-center justify-center">

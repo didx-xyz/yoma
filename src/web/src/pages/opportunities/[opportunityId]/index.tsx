@@ -388,7 +388,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       <strong>earn your ZLTO</strong>.
                     </div>
                     <div>Don’t show me this message again</div>
-                    <div>
+                    <div className="w-[450px] text-center">
                       Be mindful of external sites&apos; privacy policy and keep
                       your data private.
                     </div>
@@ -679,7 +679,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                     !verificationStatusIsLoading && (
                                       <button
                                         type="button"
-                                        className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm hover:bg-green-dark hover:text-white md:h-10 md:w-[300px]"
+                                        className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm hover:bg-green-dark hover:text-white md:h-10"
                                         onClick={() =>
                                           user
                                             ? setCompleteOpportunityDialogVisible(
@@ -767,7 +767,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           <div className="flex gap-4 md:justify-end lg:justify-end">
                             <button
                               type="button"
-                              className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10 md:w-[100px]"
+                              className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10"
                               onClick={onSaveOpportunity}
                             >
                               <Image
@@ -785,7 +785,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                             <button
                               type="button"
-                              className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10 md:w-[100px]"
+                              className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10"
                             >
                               <Image
                                 src={iconShare}

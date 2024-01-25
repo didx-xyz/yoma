@@ -220,7 +220,7 @@ const Settings: NextPageWithLayout<{
       <PageBackground />
       {isLoading && <Loading />}
 
-      <div className="container z-10 max-w-2xl px-2 py-4">
+      <div className="container z-10 mt-20 max-w-2xl px-2 py-4">
         <h2 className="font-boldx pb-8 text-white">User Settings</h2>
         <div className="flex flex-col items-center justify-start">
           <div className="flex w-full max-w-2xl flex-col rounded-lg bg-white p-8">

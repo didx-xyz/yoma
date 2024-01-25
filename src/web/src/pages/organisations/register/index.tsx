@@ -187,7 +187,7 @@ const OrganisationCreate: NextPageWithLayout<{
   );
 
   const handleCancel = () => {
-    router.back();
+    router.push("/");
   };
 
   // scroll to top on step change
@@ -203,7 +203,7 @@ const OrganisationCreate: NextPageWithLayout<{
 
       {/* CONTENT */}
       <div className="flex items-center justify-center">
-        <div className="flex w-full max-w-lg flex-col rounded-lg bg-white p-12">
+        <div className="mt-20 flex w-full max-w-lg flex-col rounded-lg bg-white p-12">
           {step == 1 && (
             <>
               <ul className="steps steps-horizontal mx-auto w-72">

@@ -612,7 +612,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         </div>
       </ReactModal>
 
-      <div className="container z-10 max-w-5xl px-2 py-8">
+      <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
         <h3 className="flex flex-grow items-center py-4 text-white">
           Verifications <LimitedFunctionalityBadge />
         </h3>

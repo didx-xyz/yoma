@@ -89,7 +89,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
 
         <PageBackground />
 
-        <div className="container z-10 py-4">
+        <div className="container z-10 mt-20 py-4">
           {/* USER CARD */}
           <div className="flex items-center justify-center">
             <div className="relative h-[215px] w-[410px]">

@@ -50,7 +50,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null, // (required for 'withAuth' HOC component)
+      user: session?.user ?? null,
       page: page ?? "1",
     },
   };

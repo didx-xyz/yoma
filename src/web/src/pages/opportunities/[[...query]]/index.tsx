@@ -612,7 +612,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         />
       </ReactModal>
 
-      <div className="container z-10 max-w-7xl px-2 py-1 md:py-4">
+      <div className="container z-10 mt-20 max-w-7xl px-2 py-1 md:py-4">
         <div className="flex flex-col gap-2 pb-2 pt-8 text-white">
           <h3 className="-mb-1 flex flex-grow flex-wrap items-center justify-center text-xl font-semibold">
             Find <span className="mx-2 text-orange">opportunities</span> to

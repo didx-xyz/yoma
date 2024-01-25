@@ -13,6 +13,7 @@ import {
   currentOrganisationIdAtom,
 } from "~/lib/store";
 import type { TabItem } from "~/api/models/common";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 const navBarLinksUser: TabItem[] = [
   {
@@ -144,7 +145,7 @@ export const Navbar: React.FC = () => {
   return (
     <div className="fixed left-0 right-0 top-0 z-40">
       <div className={`bg-theme navbar z-40`}>
-        <div className="navbar-start w-full">
+        <div className="navbar-startx flex-start w-full">
           <button
             type="button"
             aria-label="Navigation Menu"
@@ -197,11 +198,11 @@ export const Navbar: React.FC = () => {
             ))}
           </ul>
         </div>
-        <div className="navbar-end w-[150px] justify-center">
-          <div>
-            {!session && <SignInButton></SignInButton>}
-            {session && <UserMenu />}
-          </div>
+        <div className="navbar-endx justify-end">
+          <LanguageSwitcher />
+
+          {!session && <SignInButton></SignInButton>}
+          {session && <UserMenu />}
         </div>
       </div>
     </div>

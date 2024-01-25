@@ -18,7 +18,7 @@ export const Unauthenticated: React.FC = () => {
       <Head>
         <title>Yoma | Unauthenticated</title>
       </Head>
-      <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
+      <div className="container mt-10 flex flex-col items-center justify-center gap-12 px-4 py-16">
         <div className="flex w-full max-w-md flex-col place-items-center justify-center rounded-xl bg-white p-4">
           <h4>401 - Unauthenticated</h4>
 

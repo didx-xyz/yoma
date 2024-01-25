@@ -40,7 +40,7 @@ const Home: NextPageWithLayout<{
   return (
     <>
       <div className="absolute left-0 top-0 z-0 flex w-full justify-center bg-purple bg-[url('/images/world-map.svg')] bg-fixed bg-bottom bg-no-repeat md:h-full">
-        <div className="card my-auto flex min-h-[45%] min-w-[38%] flex-col items-center justify-center gap-4 bg-white p-10">
+        <div className="card my-auto mt-40 flex min-h-[45%] min-w-[38%] flex-col items-center justify-center gap-4 bg-white p-10">
           <Image
             src={iconRocket}
             alt="Icon Rocket"
@@ -56,7 +56,7 @@ const Home: NextPageWithLayout<{
           />
           <h2 className="-mt-6 font-semibold">Design Pending</h2>
           <p className="mb-12 text-[#545859]">Coming soon ;&#41;</p>
-          <div className="card flex h-44 w-full justify-center bg-slate-100 text-center">
+          <div className="card flex h-44 w-full justify-center bg-slate-100 p-4 text-center">
             <p className="font-bold">
               We want to enable organisations to sign up easily.
             </p>

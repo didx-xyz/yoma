@@ -664,7 +664,7 @@ const OpportunityDetails: NextPageWithLayout<{
       {isLoading && <Loading />}
       <PageBackground />
 
-      <div className="container z-10 max-w-5xl px-2 py-4">
+      <div className="container z-10 mt-20 max-w-5xl px-2 py-4">
         {/* BREADCRUMB */}
         <div className="breadcrumbs flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
           <ul>

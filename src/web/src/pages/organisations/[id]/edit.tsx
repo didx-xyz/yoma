@@ -234,7 +234,7 @@ const OrganisationUpdate: NextPageWithLayout<{
 
       <PageBackground />
 
-      <div className="container z-10 max-w-5xl px-2 py-8">
+      <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
         {isLoading && <Loading />}
 
         {/* BREADCRUMB */}
