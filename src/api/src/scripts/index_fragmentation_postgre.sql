@@ -1,12 +1,10 @@
-USE [yoma-dev];
-GO
-
-SELECT 
-	SCHEMA_NAME(t.schema_id) AS SchemaName,
-    t.name AS TableName,
-    ix.name AS IndexName,
-    ps.avg_fragmentation_in_percent
-FROM sys.dm_db_index_physical_stats(DB_ID(), NULL, NULL, NULL, NULL) AS ps
-INNER JOIN sys.tables AS t ON ps.object_id = t.object_id
-INNER JOIN sys.indexes AS ix ON ps.object_id = ix.object_id AND ps.index_id = ix.index_id
-WHERE ps.avg_fragmentation_in_percent > 10; -- You can adjust the fragmentation threshold as needed
+SELECT
+    schemaname AS SchemaName,
+    relname AS TableName,
+    indexrelname AS IndexName,
+    pg_stat_get_blocks_fetched(indexrelid) AS BlocksFetched,
+    pg_stat_get_blocks_hit(indexrelid) AS BlocksHit,
+    pg_stat_get_blocks_hit(indexrelid) / (pg_stat_get_blocks_fetched(indexrelid) + 1) AS HitRate
+FROM pg_stat_all_indexes
+WHERE pg_stat_get_blocks_fetched(indexrelid) > 0
+ORDER BY HitRate ASC;
