@@ -9,42 +9,42 @@ Recommended tools:
     * [Cursor](https://www.cursor.so/)
     * [Zed](https://zed.dev/)
 * [Docker](https://www.docker.com/)
-* [`rtx`](https://rtx.pub/) to install
+* [`mise`](https://mise.jdx.dev/) to install
   * [Dotnet](https://dotnet.microsoft.com/)
   * [Tilt](https://tilt.dev/)
   * [Node](https://nodejs.org/en/)
     * [Yarn](https://yarnpkg.com/)
 
 ### Recommended method to install tooling
-This project uses [rtx](https://rtx.pub/) to manage various toolsets (Node, Dotnet, Tilt, etc)
-* `rtx` is an [`asdf`](https://asdf-vm.com/) compatible Runtime Executor written in [Rust](https://www.rust-lang.org/)
+This project uses [mise](https://mise.jdx.dev/) to manage various toolsets (Node, Dotnet, Tilt, etc)
+* `mise` is an [`asdf`](https://asdf-vm.com/) compatible Runtime Executor written in [Rust](https://www.rust-lang.org/)
 * It's 20-200x faster than `asdf`
 
-To install `rtx`, follow the instructions at [jdxcode/rtx-cli](https://github.com/jdxcode/rtx#installation).
+To install `mise`, follow the instructions at [jdxcode/mise](https://mise.jdx.dev/getting-started.html).
 
-Here's a few of the ways to install `rtx`
+Here's a few of the ways to install `mise`
 ```sh
 # Build from source
-cargo install rtx-cli
+cargo install mise
 # Download pre-compiled binary
-curl https://rtx.pub/install.sh | sh
+curl https://mise.jdx.dev/install.sh | sh
 # Cargo Binstall
 cargo install cargo-binstall
-cargo binstall rtx-cli
+cargo binstall mise
 # MacOS or you're using Homebrew
-brew install jdxcode/tap/rtx
+brew install mise
 # MacPorts
-sudo port install rtx
+sudo port install mise
 ```
-*`rtx` is **not** compatible with Windows - use WSL2.*
+*`mise` is **not** compatible with Windows - use WSL2.*
 
-Once you've got `rtx` installed, you can install the required tooling by running `rtx install` in the project root.
+Once you've got `mise` installed, you can install the required tooling by running `mise install` in the project root.
 
-To pull in the config (e.g: environment variables) set in `.rtx.toml` file, you'll need to run `rtx trust`
+To pull in the config (e.g: environment variables) set in `.mise.toml` file, you'll need to run `mise trust`
 
 ### Installing Git Hooks
 This project uses [husky](https://typicode.github.io/husky/#/) to manage git hooks.
 
-Once you've got `rtx` and `yarn` installed (`npm install -g yarn`) run `yarn install --frozen-lockfile` in the root of the project.
+Once you've got `mise` and `yarn` installed (`npm install -g yarn`) run `yarn install --frozen-lockfile` in the root of the project.
 
 This will bootstrap `husky` and install the configured git hooks.
