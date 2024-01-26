@@ -160,14 +160,17 @@ DECLARE
     V_RandomLengthName INT := ABS(FLOOR(RANDOM() * 5) + 5);
     V_RandomLengthOther INT := ABS(FLOOR(RANDOM() * 101) + 100);
     V_DateCreated TIMESTAMP := CURRENT_TIMESTAMP - INTERVAL '1 month';
-    V_DateStart TIMESTAMP := CURRENT_TIMESTAMP - INTERVAL '2 months';
+    V_DateStart TIMESTAMP := CURRENT_TIMESTAMP - INTERVAL '1 hour';
     V_TotalSecondsIn2Months BIGINT := 2 * 30.44 * 24 * 60 * 60;
     V_Iterations INT := 5000;
     V_SecondsPerIteration BIGINT := V_TotalSecondsIn2Months / V_Iterations;
     V_RowCount INT := 0;
+    V_VerificationEnabled BOOLEAN := false;
 BEGIN
     -- Opportunities
 	WHILE V_RowCount < V_Iterations LOOP
+      V_VerificationEnabled := CAST(RANDOM() < 0.5 AS BOOLEAN);
+
 	    -- Insert into the Opportunity table
 	    INSERT INTO "Opportunity"."Opportunity"(
 	        "Id", "Title", "Description", "TypeId", "OrganizationId", "Summary", "Instructions", "URL", "ZltoReward", "ZltoRewardPool",
@@ -223,8 +226,8 @@ BEGIN
 	        (SELECT ROUND((100 + (350 - 100) * RANDOM())::numeric, 2)),
 	        (SELECT ROUND((1000 + (3500 - 1000) * RANDOM())::numeric, 2)),
 	        NULL,
-	        CAST(RANDOM() < 0.5 AS BOOLEAN),
-	        CASE WHEN RANDOM() < 0.5 THEN 'Manual' ELSE NULL END,
+	        V_VerificationEnabled,
+	        CASE WHEN V_VerificationEnabled = true THEN 'Manual' ELSE NULL END,
 	        (
 	            SELECT "Id" FROM "Opportunity"."OpportunityDifficulty" ORDER BY RANDOM() LIMIT 1
 	        ),
@@ -268,14 +271,15 @@ END $$ LANGUAGE plpgsql;
 
 -- SSI schema definitions
 WITH CTE AS (
-    SELECT O."SSISchemaName"
-    FROM "Opportunity"."Opportunity" AS O
-    WHERE O."CredentialIssuanceEnabled" = true
+    SELECT "SSISchemaName", "Id"
+    FROM "Opportunity"."Opportunity"
+    WHERE "CredentialIssuanceEnabled" = true
 )
+-- Update statement
 UPDATE "Opportunity"."Opportunity" AS O
 SET "SSISchemaName" = 'Opportunity|Default'
 FROM CTE
-WHERE O."SSISchemaName" IN (SELECT "SSISchemaName" FROM CTE);
+WHERE O."Id" = CTE."Id";
 
 -- Check for unsupported SSISchemaName
 DO $$
@@ -362,3 +366,190 @@ CROSS JOIN (
 ) AS R
 WHERE O."VerificationEnabled" = TRUE;
 
+/****myOpportunities****/
+-- Viewed
+INSERT INTO "Opportunity"."MyOpportunity"("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
+           "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified")
+SELECT
+	gen_random_uuid(),
+	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
+	O."Id",
+	(SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Viewed'),
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	CURRENT_TIMESTAMP,
+	CURRENT_TIMESTAMP
+FROM "Opportunity"."Opportunity" O
+WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active')
+ORDER BY "DateCreated"
+OFFSET 0 ROWS
+FETCH NEXT 30 ROWS ONLY;
+
+-- Saved
+INSERT INTO "Opportunity"."MyOpportunity"("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
+           "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified")
+SELECT
+	gen_random_uuid(),
+	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
+	O."Id",
+	(SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Saved'),
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	CURRENT_TIMESTAMP,
+	CURRENT_TIMESTAMP
+FROM "Opportunity"."Opportunity" O
+WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active')
+ORDER BY "DateCreated"
+OFFSET 30 ROWS
+FETCH NEXT 30 ROWS ONLY;
+
+-- Verification (Pending)
+INSERT INTO "Opportunity"."MyOpportunity"("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
+           "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified")
+SELECT
+	gen_random_uuid(),
+	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
+	O."Id",
+	(SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification'),
+	(SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Pending'),
+	NULL,
+	(CURRENT_DATE + INTERVAL '1 day')::DATE,
+	(CURRENT_DATE + INTERVAL '2 days')::DATE,
+	NULL,
+	NULL,
+	NULL,
+	CURRENT_TIMESTAMP,
+	CURRENT_TIMESTAMP
+FROM "Opportunity"."Opportunity" O
+WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active') AND O."DateStart" <= CURRENT_TIMESTAMP AND O."DateEnd" > CURRENT_TIMESTAMP
+ORDER BY "DateCreated"
+OFFSET 60 ROWS
+FETCH NEXT 30 ROWS ONLY;
+
+-- Verification (Rejected)
+INSERT INTO "Opportunity"."MyOpportunity"("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
+           "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified")
+SELECT
+	gen_random_uuid(),
+	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
+	O."Id",
+	(SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification'),
+	(SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Rejected'),
+	'Rejection Comment',
+	(CURRENT_DATE + INTERVAL '1 day')::DATE,
+	(CURRENT_DATE + INTERVAL '2 days')::DATE,
+	NULL,
+	NULL,
+	NULL,
+	CURRENT_TIMESTAMP,
+	CURRENT_TIMESTAMP
+FROM "Opportunity"."Opportunity" O
+WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active') AND O."DateStart" <= CURRENT_TIMESTAMP AND O."DateEnd" > CURRENT_TIMESTAMP
+ORDER BY "DateCreated"
+OFFSET 90 ROWS
+FETCH NEXT 30 ROWS ONLY;
+
+-- Verification (Completed)
+INSERT INTO "Opportunity"."MyOpportunity"("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
+           "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified")
+SELECT
+	gen_random_uuid(),
+	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
+	O."Id",
+	(SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification'),
+	(SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed'),
+	'Approved Comment',
+	(CURRENT_DATE + INTERVAL '1 day')::DATE,
+	(CURRENT_DATE + INTERVAL '2 days')::DATE,
+	CURRENT_TIMESTAMP,
+	O."ZltoReward",
+	O."YomaReward",
+	CURRENT_TIMESTAMP,
+	CURRENT_TIMESTAMP
+FROM "Opportunity"."Opportunity" O
+WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active') AND O."DateStart" <= CURRENT_TIMESTAMP AND O."DateEnd" > CURRENT_TIMESTAMP
+ORDER BY "DateCreated"
+OFFSET 120 ROWS
+FETCH NEXT 30 ROWS ONLY;
+
+-- SSI Credential Issuance (Pending) for Verification (Completed) mapped to opportunities with CredentialIssuanceEnabled
+INSERT INTO "SSI"."CredentialIssuance"("Id", "SchemaTypeId", "ArtifactType", "SchemaName", "SchemaVersion", "StatusId", "UserId", "OrganizationId",
+           "MyOpportunityId", "CredentialId", "ErrorReason", "RetryCount", "DateCreated", "DateModified")
+SELECT gen_random_uuid(), (SELECT "Id" FROM "SSI"."SchemaType" WHERE "Name" = 'Opportunity'), 'Indy', O."SSISchemaName", '1.5', (SELECT "Id" FROM "SSI"."CredentialIssuanceStatus" WHERE "Name" = 'Pending'), --TODO: Ld_proof
+	NULL, NULL, MO."Id", NULL, NULL, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM "Opportunity"."MyOpportunity" MO
+INNER JOIN "Opportunity"."Opportunity" O ON MO."OpportunityId" = O."Id"
+WHERE MO."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
+		AND MO."VerificationStatusId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
+		AND O."CredentialIssuanceEnabled" = true;
+
+-- Reward Transaction (Pending) for Verification (Completed) for 'testuser@gmail.com'
+INSERT INTO "Reward"."Transaction"("Id", "UserId", "StatusId", "SourceEntityType", "MyOpportunityId", "Amount", "TransactionId", "ErrorReason", "RetryCount", "DateCreated", "DateModified")
+SELECT gen_random_uuid(), MO."UserId", (SELECT "Id" FROM "Reward"."TransactionStatus" WHERE "Name" = 'Pending'), 'MyOpportunity', MO."Id", MO."ZltoReward", NULL, NULL, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM "Opportunity"."MyOpportunity" MO
+WHERE MO."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
+		AND MO."VerificationStatusId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
+		AND MO."ZltoReward" > 0;
+
+-- Verification (Completed): Assign User Skills
+INSERT INTO "Entity"."UserSkills"("Id", "UserId", "SkillId", "DateCreated")
+SELECT gen_random_uuid(),
+    (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
+    "Skills"."SkillId",
+    CURRENT_TIMESTAMP
+FROM (
+    SELECT DISTINCT OS."SkillId"
+    FROM "Opportunity"."MyOpportunity" MO
+    INNER JOIN "Opportunity"."OpportunitySkills" OS ON MO."OpportunityId" = OS."OpportunityId"
+    WHERE MO."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
+        AND MO."VerificationStatusId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
+) AS "Skills";
+
+-- Verification (Completed): Assign User Skill Organizations
+INSERT INTO "Entity"."UserSkillOrganizations"("Id", "UserSkillId", "OrganizationId", "DateCreated")
+SELECT
+    gen_random_uuid() AS "Id",
+    "UserSkills"."Id" AS "UserSkillId",
+    OP."OrganizationId" AS "OrganizationId",
+    CURRENT_TIMESTAMP AS "DateCreated"
+FROM
+    "Entity"."UserSkills" AS "UserSkills"
+INNER JOIN "Opportunity"."OpportunitySkills" OS ON "UserSkills"."SkillId" = OS."SkillId"
+INNER JOIN "Opportunity"."Opportunity" OP ON OP."Id" = OS."OpportunityId"
+INNER JOIN "Opportunity"."MyOpportunity" MO ON MO."OpportunityId" = OS."OpportunityId"
+    AND MO."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
+    AND MO."VerificationStatusId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
+GROUP BY
+    "UserSkills"."Id",
+    OP."OrganizationId";
+
+-- Opportunity: Update Running Totals
+WITH AggregatedData AS (
+    SELECT
+        O."Id" AS "OpportunityId",
+        COUNT(MO."Id") AS "Count",
+        SUM(MO."ZltoReward") AS "ZltoRewardTotal",
+        SUM(MO."YomaReward") AS "YomaRewardTotal"
+    FROM "Opportunity"."Opportunity" O
+    LEFT JOIN "Opportunity"."MyOpportunity" MO ON O."Id" = MO."OpportunityId"
+    WHERE MO."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
+        AND MO."VerificationStatusId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
+    GROUP BY O."Id"
+)
+UPDATE "Opportunity"."Opportunity" O
+SET
+    "ParticipantCount" = A."Count",
+    "ZltoRewardCumulative" = A."ZltoRewardTotal",
+    "YomaRewardCumulative" = A."YomaRewardTotal"
+FROM AggregatedData A
+WHERE O."Id" = A."OpportunityId";
