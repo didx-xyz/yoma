@@ -173,14 +173,15 @@ namespace Yoma.Core.Domain
             //seeding of test data
             if (!appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(environment)) return;
 
-            //organization
-            BackgroundJob.Schedule<IOrganizationBackgroundService>(s => s.SeedLogoAndDocuments(), TimeSpan.FromMinutes(appSettings.TestDataSeedingDelayInMinutes));
-
             //user
             BackgroundJob.Schedule<IUserBackgroundService>(s => s.SeedPhotos(), TimeSpan.FromMinutes(appSettings.TestDataSeedingDelayInMinutes));
 
+            //organization
+            BackgroundJob.Schedule<IOrganizationBackgroundService>(s => s.SeedLogoAndDocuments(), TimeSpan.FromMinutes(appSettings.TestDataSeedingDelayInMinutes + 1));
+
+
             //my opportunity verifications
-            BackgroundJob.Schedule<IMyOpportunityBackgroundService>(s => s.SeedPendingVerifications(), TimeSpan.FromMinutes(appSettings.TestDataSeedingDelayInMinutes));
+            BackgroundJob.Schedule<IMyOpportunityBackgroundService>(s => s.SeedPendingVerifications(), TimeSpan.FromMinutes(appSettings.TestDataSeedingDelayInMinutes + 2));
         }
         #endregion
     }
