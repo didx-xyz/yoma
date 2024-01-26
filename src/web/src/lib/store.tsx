@@ -22,6 +22,9 @@ const currentOrganisationLogoAtom = atom<string | null>(null);
 // and show "limited functionality" message on organisation pages
 const currentOrganisationInactiveAtom = atom(false);
 
+// atom for the current language
+const currentLanguageAtom = atom<string>("en");
+
 export {
   userProfileAtom,
   smallDisplayAtom,
@@ -29,4 +32,5 @@ export {
   currentOrganisationIdAtom,
   currentOrganisationLogoAtom,
   currentOrganisationInactiveAtom,
+  currentLanguageAtom,
 };

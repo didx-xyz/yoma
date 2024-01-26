@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { parseCookies, setCookie } from "nookies";
 import { IoMdGlobe } from "react-icons/io";
+import { useSetAtom } from "jotai";
+import { currentLanguageAtom } from "~/lib/store";
 
 // The following cookie name is important because it's Google-predefined for the translation engine purpose
 const COOKIE_NAME = "googtrans";
@@ -27,6 +29,8 @@ const LanguageSwitcher = () => {
   const [currentLanguage, setCurrentLanguage] = useState<string>();
   const [languageConfig, setLanguageConfig] = useState<any>();
 
+  const setCurrentLanguageAtom = useSetAtom(currentLanguageAtom);
+
   // When the component has initialized, we must activate the translation engine the following way.
   useEffect(() => {
     // 1. Read the cookie
@@ -48,6 +52,8 @@ const LanguageSwitcher = () => {
     if (languageValue) {
       // 4. Set the current language if we have a related decision.
       setCurrentLanguage(languageValue);
+      // 4.1. Set the current language atom (so other components can get the current langauge)
+      setCurrentLanguageAtom(languageValue);
     }
     // 5. Set the language config.
     if (global.__GOOGLE_TRANSLATION_CONFIG__) {
