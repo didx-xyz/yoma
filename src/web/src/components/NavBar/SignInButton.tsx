@@ -9,8 +9,7 @@ export const SignInButton: React.FC<{ className?: string }> = ({
   className = "hover:brightness-50x btn gap-2 border-0 border-none bg-transparent px-2 disabled:brightness-50",
 }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
-
-  const userProfile = useAtomValue(currentLanguageAtom);
+  const currentLanguage = useAtomValue(currentLanguageAtom);
 
   const handleLogin = useCallback(async () => {
     setIsButtonLoading(true);
@@ -21,9 +20,9 @@ export const SignInButton: React.FC<{ className?: string }> = ({
       ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
         "") as string,
       undefined,
-      { ui_locales: userProfile }, // pass the current language to the keycloak provider
+      { ui_locales: currentLanguage }, // pass the current language to the keycloak provider
     );
-  }, [userProfile]);
+  }, [currentLanguage]);
 
   return (
     <button

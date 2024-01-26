@@ -59,7 +59,7 @@ const LanguageSwitcher = () => {
     if (global.__GOOGLE_TRANSLATION_CONFIG__) {
       setLanguageConfig(global.__GOOGLE_TRANSLATION_CONFIG__);
     }
-  }, []);
+  }, [setCurrentLanguageAtom]);
 
   // Don't display anything if current language information is unavailable.
   if (!currentLanguage || !languageConfig) {
