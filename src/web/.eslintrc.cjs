@@ -11,6 +11,7 @@ const config = {
     "plugin:@typescript-eslint/recommended-type-checked",
     "plugin:@typescript-eslint/stylistic-type-checked",
   ],
+  ignorePatterns: ["/public/**/*"],
   rules: {
     "@typescript-eslint/consistent-type-imports": [
       "warn",
