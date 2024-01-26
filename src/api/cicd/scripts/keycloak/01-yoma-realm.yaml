@@ -1653,6 +1653,7 @@ internationalizationEnabled: true
 supportedLocales:
   - en
   - fr
+  - es
 defaultLocale: en
 authenticationFlows:
   - id: 8000e246-e3ce-4540-ba9f-30a79acc2985
