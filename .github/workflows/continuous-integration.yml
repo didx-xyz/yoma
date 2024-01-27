@@ -70,7 +70,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           base: master
@@ -134,7 +134,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v2 # https://github.com/actions/runner/pull/2477
+      - uses: dorny/paths-filter@v3 # https://github.com/actions/runner/pull/2477
         id: filter
         with:
           base: master
@@ -218,7 +218,7 @@ jobs:
           echo "Zlto__Password=${{ secrets.ZLTO_PASSWORD }}" >> src/api/env.secrets
           echo "AppSettings__SSIIssuerNameYomaOrganization=${{ secrets.APPSETTINGS_SSIISSUERNAMEYOMAORGANIZATION }}" >> src/api/env.secrets
           echo "AppSettings__SSISchemaFullNameYoID=${{ secrets.APPSETTINGS_SSISCHEMAFULLNAMEYOID }}" >> src/api/env.secrets
-      - uses: dorny/paths-filter@v2 # https://github.com/actions/runner/pull/2477
+      - uses: dorny/paths-filter@v3 # https://github.com/actions/runner/pull/2477
         id: filter
         with:
           base: master
@@ -309,7 +309,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v2 # https://github.com/actions/runner/pull/2477
+      - uses: dorny/paths-filter@v3 # https://github.com/actions/runner/pull/2477
         id: filter
         with:
           base: master
