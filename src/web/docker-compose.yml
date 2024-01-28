@@ -2,7 +2,7 @@ version: "3"
 name: yoma-v3
 services:
   yoma-web:
-    platform: linux/amd64 # Until we get multi-arch docker images
+    # platform: linux/amd64 # Until we get multi-arch docker images
     image: ${REGISTRY:-local}/yoma-web:${YOUTH_TAG:-latest}
     container_name: yoma-web
     build:
