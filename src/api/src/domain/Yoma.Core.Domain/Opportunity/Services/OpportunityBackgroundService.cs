@@ -92,7 +92,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             {
                 _logger.LogInformation("Processing opportunity expiration notifications");
 
-                var datetimeFrom = new DateTimeOffset(DateTime.Today);
+                var datetimeFrom = new DateTimeOffset(DateTime.Today).ToUniversalTime();
                 var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.OpportunityExpirationNotificationIntervalInDays);
                 var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
 
