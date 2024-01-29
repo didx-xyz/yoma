@@ -198,7 +198,7 @@ export const Navbar: React.FC = () => {
             ))}
           </ul>
         </div>
-        <div className="navbar-endx justify-end">
+        <div className="justify-end">
           <LanguageSwitcher />
 
           {!session && <SignInButton></SignInButton>}

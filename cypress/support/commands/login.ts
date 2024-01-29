@@ -28,8 +28,8 @@ export const login = (username: string, password: string) => {
   //     cy.log(c);
   //   });
   // });
-  cy.get("div.navbar-end button").should("exist").click();
-  cy.wait(3000);
+  cy.get("button#btnSignIn").should("exist").click();
+  cy.wait(1000);
   cy.origin("http://keycloak:8080", { args: { username, password } }, ({ username, password }) => {
     cy.reload(); // Reload the page to get cookies to load
     // cy.getAllCookies().then((cookies) => {

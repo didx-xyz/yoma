@@ -30,6 +30,7 @@ export const SignInButton: React.FC<{ className?: string }> = ({
       className={className}
       onClick={handleLogin}
       disabled={isButtonLoading}
+      id="btnSignIn" // e2e
     >
       {isButtonLoading && (
         <span className="loading loading-spinner loading-md mr-2 text-warning"></span>
