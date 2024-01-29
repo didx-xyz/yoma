@@ -32,7 +32,7 @@ describe(`Opportunities`, function () {
           cy.stub(win.console, "error").as("consoleError");
         },
       });
-      cy.wait(4000);
+      cy.wait(10000);
 
       //* click on the first organisation link on the user menu
       cy.get(`button[id="btnUserMenu"]`).should("exist").click();
