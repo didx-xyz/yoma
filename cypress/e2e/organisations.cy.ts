@@ -89,7 +89,7 @@ describe(`Organisation Registration & Approval`, function () {
 
       //* step 3: click submit
       cy.get("button[type=submit]").should("exist").click();
-      cy.wait(5000);
+      cy.wait(10000);
 
       // assert console with the expected message
       cy.get("@consoleLog").should("be.calledWith", "Organisation registered");

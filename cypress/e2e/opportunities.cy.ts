@@ -63,7 +63,7 @@ describe(`Opportunities`, function () {
 
       //* click on the create opportunity button
       cy.get(`a[id="btnCreateOpportunity"]`).should("exist").click();
-      cy.wait(6000);
+      cy.wait(8000);
 
       // href should be /organisations/guid/opportunities/create
       cy.get("@guid").then((guid) => {

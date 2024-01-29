@@ -53,7 +53,7 @@ import { IoMdOptions } from "react-icons/io";
 // This function gets called at build time on server-side.
 // It may be called again, on a serverless function, if
 // revalidation is enabled and a new request comes in
-export const getStaticProps: GetStaticProps = async (context) => {
+export const getStaticProps: GetStaticProps = async () => {
   const opportunities_trending = await searchOpportunities({
     pageNumber: 1,
     pageSize: 4,
