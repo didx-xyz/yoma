@@ -1,27 +1,8 @@
 version: "3"
 name: yoma-v3
 services:
-  # sqlserver: # Local MSSQL server
-  #   platform: linux/amd64
-  #   image: ghcr.io/didx-xyz/mssql-server:2022-latest
-  #   container_name: sqlserver
-  #   restart: always
-  #   environment:
-  #     ACCEPT_EULA: Y
-  #     SA_PASSWORD: "Password1"
-  #   ports:
-  #     - "0.0.0.0:1433:1433"
-  #   volumes:
-  #     - sqlserver:/var/opt/mssql
-  #   healthcheck:
-  #     test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-U", "SA", "-P", "Password1", "-Q", "SELECT 1"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 9
-  #     start_period: 30s
-
   postgres:
-    image: postgres
+    image: postgres:16.1
     container_name: yoma-postgres
     # ports:
     #   - 5432:5432
@@ -30,12 +11,20 @@ services:
     environment:
       - POSTGRES_PASSWORD=P@ssword1
       - POSTGRES_USER=postgres
-      - POSTGRES_DB=yoma_dev
+      - POSTGRES_DB=postgres
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
       timeout: 5s
       retries: 3
+
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@admin.com
+  #     PGADMIN_DEFAULT_PASSWORD: root
+  #   ports:
+  #     - "80:80"
 
   postgres-init: # Initialise the local postgresql server by populating a test user and organisation(s) for local dev
     image: postgres
@@ -50,33 +39,10 @@ services:
       PGHOST: postgres
       POSTGRES_PASSWORD: P@ssword1
       POSTGRES_USER: postgres
-      POSTGRES_DB: yoma_dev
+      POSTGRES_DB: yoma-dev
       PGPORT: 5432
     command: >
       bash -c "PGPASSWORD=$$POSTGRES_PASSWORD psql -h $$PGHOST -U $$POSTGRES_USER -d $$POSTGRES_DB -f /post.sql"
-
-
-  # sqlserver-init: # Initialise the local MSSQL server by populating a test user and organisation(s) for local dev
-  #   platform: linux/amd64
-  #   image: ghcr.io/didx-xyz/mssql-server:2022-latest
-  #   container_name: sqlserver-init
-  #   entrypoint: /bin/bash
-  #   command:
-  #     - /post.sh
-  #     - sqlserver
-  #     - sa
-  #     - ./post.sql
-  #   restart: "no"
-  #   environment:
-  #     ACCEPT_EULA: Y
-  #     SA_PASSWORD: "Password1"
-  #     SQLCMDPASSWORD: "Password1"
-  #   volumes:
-  #     - ./cicd/scripts/sqlserver-init/post.sh:/post.sh
-  #     - ./cicd/scripts/sqlserver-init/post.sql:/post.sql
-  #   depends_on:
-  #     yoma-api-health:
-  #       condition: service_completed_successfully
 
   keycloak-init: # Initialise the local Keycloak server by adding the bcrypt & webhook provider
     image: curlimages/curl
@@ -259,14 +225,21 @@ services:
       postgres:
         condition: service_healthy
 
-  yoma-api-health: # Wait for Yoma API Core to be ready. Dependency for sqlserver-init.
+  yoma-api-health:
     image: curlimages/curl
     container_name: yoma-api-health
     restart: "no"
-    command: /bin/sh -c "until curl -fsS http://yoma-api:5000/index.html; do sleep 5; done"
+    command: >
+      /bin/sh -c "
+      until curl -fsS 'http://yoma-api:5000/api/v3/lookup/skill?PageNumber=1&PageSize=10' | grep '\"totalCount\":\s*[1-9][0-9]*' > /dev/null; do
+        echo 'API data not populated yet.';
+        sleep 5;
+      done;
+      echo 'API data populated. Health check passed.'"
     depends_on:
       yoma-api:
         condition: service_started
+
 
   test-harness-health: # Wait for sqlserver-init to be finished.
     image: curlimages/curl
