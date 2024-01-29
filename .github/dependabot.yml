@@ -22,3 +22,12 @@ updates:
       - javascript
       - dependencies
       - web
+  # Maintain NuGet dependencies for `api`
+  - package-ecosystem: nuget
+    directory: /src/api
+    schedule:
+        interval: weekly
+    labels:
+      - .NET
+      - dependencies
+      - api
