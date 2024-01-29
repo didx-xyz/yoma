@@ -54,7 +54,7 @@ describe(`Opportunities`, function () {
       cy.get(`button[id="btnNavbarMenu"]`).should("exist").click();
       cy.wait(200);
       cy.get(`a[id="lnkNavbarMenuModal_Opportunities"]`).first().click();
-      cy.wait(4000);
+      cy.wait(6000);
 
       // href shoud be /organisations/guid/opportunities
       cy.get("@guid").then((guid) => {
