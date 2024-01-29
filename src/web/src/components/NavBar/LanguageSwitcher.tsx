@@ -67,7 +67,7 @@ const LanguageSwitcher = () => {
   }
 
   // The following function switches the current language
-  const switchLanguage = (lang: string) => () => {
+  const switchLanguage = (lang: string) => {
     // We just need to set the related cookie and reload the page
     // "/auto/" prefix is Google's definition as far as a cookie name
     setCookie(null, COOKIE_NAME, "/auto/" + lang);
@@ -79,7 +79,7 @@ const LanguageSwitcher = () => {
       <IoMdGlobe className="h-6 w-6 text-white" />
       <select
         value={currentLanguage}
-        onChange={(e) => switchLanguage(e.target.value)()}
+        onChange={(e) => switchLanguage(e.target.value)}
         className="mx-3 cursor-pointer bg-transparent text-white hover:underline"
       >
         {languageConfig.languages.map((ld: LanguageDescriptor) => (
