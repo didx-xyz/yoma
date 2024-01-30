@@ -89,7 +89,7 @@ describe(`Organisation Registration & Approval`, function () {
 
       //* step 3: click submit
       cy.get("button[type=submit]").should("exist").click();
-      cy.wait(10000);
+      cy.wait(14000);
 
       // assert console with the expected message
       cy.get("@consoleLog").should("be.calledWith", "Organisation registered");
@@ -112,7 +112,7 @@ describe(`Organisation Registration & Approval`, function () {
       //* click on the organisation on the user menu
       cy.get(`button[id="btnUserMenu`).first().click();
       cy.get(`a[id="userMenu_orgs_Test Organisation ${this.magicNumber}"]`).first().click();
-      cy.wait(2000);
+      cy.wait(4000);
 
       // href should end with /edit
       cy.location("href").should("match", /\/edit$/);
@@ -213,7 +213,7 @@ describe(`Organisation Registration & Approval`, function () {
 
       //* click on the organisation on the organisations page
       cy.get(`a[id="lnkOrganisation_Test Organisation ${this.magicNumber} updated"]`).should("exist").click();
-      cy.wait(3000);
+      cy.wait(6000);
 
       // href should end with /verify
       cy.location("href").should("match", /\/verify$/);

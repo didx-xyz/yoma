@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { parseCookies, setCookie } from "nookies";
+import { destroyCookie, parseCookies, setCookie } from "nookies";
 import { IoMdGlobe } from "react-icons/io";
 import { useSetAtom } from "jotai";
 import { currentLanguageAtom } from "~/lib/store";
@@ -68,6 +68,11 @@ const LanguageSwitcher = () => {
 
   // The following function switches the current language
   const switchLanguage = (lang: string) => {
+    destroyCookie(null, COOKIE_NAME);
+    destroyCookie(null, COOKIE_NAME, {
+      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
+    });
+
     // We just need to set the related cookie and reload the page
     // "/auto/" prefix is Google's definition as far as a cookie name
     setCookie(null, COOKIE_NAME, "/auto/" + lang);
