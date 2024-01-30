@@ -32,31 +32,31 @@ releases:
     chart: ingress-nginx/ingress-nginx
     version: "4.8.3"
 {{ end }}
-  - name: mssql
-    labels:
-      app: mssql
-    namespace: {{ .Values.namespace }}
-    chart: simcube/mssqlserver-2022
-    version: "1.2.3"
-    set:
-      - name: edition.value
-        value: Developer
-      - name: acceptEula.value
-        value: "Y"
-      - name: sapassword
-        value: "Password1"
-      - name: image.repository
-        value: ghcr.io/didx-xyz/mssql-server
-      - name: image.tag
-        value: 2022-latest
-    values:
-      - service:
-          type: LoadBalancer
-          annotations:
-            service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-            service.beta.kubernetes.io/aws-load-balancer-internal: "true"
-    secrets:
-      - ./helm/mssql/conf/{{ .Environment.Name }}/secrets.yaml
+  # - name: mssql
+  #   labels:
+  #     app: mssql
+  #   namespace: {{ .Values.namespace }}
+  #   chart: simcube/mssqlserver-2022
+  #   version: "1.2.3"
+  #   set:
+  #     - name: edition.value
+  #       value: Developer
+  #     - name: acceptEula.value
+  #       value: "Y"
+  #     - name: sapassword
+  #       value: "Password1"
+  #     - name: image.repository
+  #       value: ghcr.io/didx-xyz/mssql-server
+  #     - name: image.tag
+  #       value: 2022-latest
+  #   values:
+  #     - service:
+  #         type: LoadBalancer
+  #         annotations:
+  #           service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+  #           service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+  #   secrets:
+  #     - ./helm/mssql/conf/{{ .Environment.Name }}/secrets.yaml
 
   - name: keycloak
     labels:
@@ -83,6 +83,22 @@ releases:
         value: keycloak
     secrets:
       - ./helm/postgresql-keycloak/conf/{{ .Environment.Name }}/secrets.yaml
+
+  - name: postgresql
+    labels:
+      app: postgresql
+    namespace: {{ .Values.namespace }}
+    chart: oci://registry-1.docker.io/bitnamicharts/postgresql
+    version: "13.2.2"
+    set:
+      - name: fullnameOverride
+        value: postgres-yoma
+      - name: auth.username
+        value: yoma
+      - name: auth.database
+        value: yoma-dev
+    secrets:
+      - ./helm/postgresql-yoma/conf/{{ .Environment.Name }}/secrets.yaml
 
   - name: yoma-api
     labels:

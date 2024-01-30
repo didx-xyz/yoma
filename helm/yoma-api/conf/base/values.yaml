@@ -2,7 +2,7 @@ image:
   repository: ghcr.io/didx-xyz/yoma-api
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "pr-257"
+  tag: "pr-442"
 
 ingress:
   internal:
@@ -15,7 +15,7 @@ ingress:
 env:
   ASPNETCORE_ENVIRONMENT: "Local"
   ASPNETCORE_URLS: "http://+:5000"
-  ConnectionStrings__SQLConnection: "Data Source=mssql-mssqlserver-2022,1433;Initial Catalog=yoma-dev;MultipleActiveResultSets=true;User ID=sa;Password=Password1;TrustServerCertificate=True;Encrypt=True"
+  # ConnectionStrings__SQLConnection: "Data Source=mssql-mssqlserver-2022,1433;Initial Catalog=yoma-dev;MultipleActiveResultSets=true;User ID=sa;Password=Password1;TrustServerCertificate=True;Encrypt=True"
 
 livenessProbe:
   enabled: false

@@ -14,7 +14,7 @@ ingress:
 
 env:
   ASPNETCORE_ENVIRONMENT: "Development"
-  ConnectionStrings__SQLConnection: "Data Source=mssql-mssqlserver-2022,1433;Initial Catalog=yoma-dev;MultipleActiveResultSets=true;User ID=sa;Password=Password1;TrustServerCertificate=True;Encrypt=True"
+  # ConnectionStrings__SQLConnection: "Host=postgres-yoma;Port=5432;Database=yoma-dev;Username=postgres;Password=P@ssword1;SslMode=Prefer;Trust Server Certificate=True;Include Error Detail=true;"
 
 appSettings:
   fileName: appsettings.Development.json
@@ -32,20 +32,20 @@ volumeMounts:
 postInstallHook:
   enabled: true
   image:
-    repository: ghcr.io/didx-xyz/mssql-server
+    repository: postgres
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
-    tag: 2022-latest
+    tag: "16"
   command:
     - /bin/bash
-    - /init/post.sh
-    - mssql-mssqlserver-2022
-    - sa
-    - /init/post.sql
+    - -c
+    - "PGPASSWORD=$$POSTGRES_PASSWORD psql -h $$PGHOST -U $$POSTGRES_USER -d $$POSTGRES_DB -f /init/post.sql"
   env:
-    ACCEPT_EULA: "Y"
-    SA_PASSWORD: "Password1"
-    SQLCMDPASSWORD: "Password1"
+    PGHOST: postgres-yoma
+    POSTGRES_PASSWORD: P@ssword1
+    POSTGRES_USER: yoma
+    POSTGRES_DB: yoma-dev
+    PGPORT: "5432"
   nodeSelector:
     kubernetes.io/arch: amd64
 
@@ -71,7 +71,7 @@ postInstallHook:
             --header="Authorization: token ${GITHUB_PAT}"\
             --header="Accept:application/vnd.github.v3.raw" \
             https://api.github.com/repos/didx-xyz/yoma/tarball/master | tar xz
-          cp -v ./didx-xyz-yoma-*/src/api/cicd/scripts/sqlserver-init/* /init/
+          cp -v ./didx-xyz-yoma-*/src/api/cicd/scripts/postgressql-init/* /init/
           rm -rf ./didx-xyz-yoma-*
       env:
         - name: GITHUB_PAT
