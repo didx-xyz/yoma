@@ -37,7 +37,7 @@ export const login = (username: string, password: string) => {
     //     cy.log(c);
     //   });
     // });
-    cy.wait(500);
+    //cy.wait(500);
     cy.get("#username").type(username);
     cy.get("#password").type(password);
     cy.get("#kc-login").click();
