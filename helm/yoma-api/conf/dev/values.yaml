@@ -70,7 +70,7 @@ postInstallHook:
           wget -O - \
             --header="Authorization: token ${GITHUB_PAT}"\
             --header="Accept:application/vnd.github.v3.raw" \
-            https://api.github.com/repos/didx-xyz/yoma/tarball/master | tar xz
+            https://api.github.com/repos/didx-xyz/yoma/tarball/postgresql-helm | tar xz
           cp -v ./didx-xyz-yoma-*/src/api/cicd/scripts/postgressql-init/* /init/
           rm -rf ./didx-xyz-yoma-*
       env:
@@ -82,6 +82,19 @@ postInstallHook:
       volumeMounts:
         - name: init
           mountPath: /init
+    - name: check-postgres
+      image: postgres:latest
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+      args:
+        - -c
+        - |-
+          until pg_isready -h postgres-yoma -p 5432; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          echo "PostgreSQL is up and running."
 
 readinessProbe:
   enabled: true
