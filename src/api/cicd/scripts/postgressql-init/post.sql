@@ -1,4 +1,11 @@
 -- This script is designed to be applied to an empty database
+
+-- Initialisation flag logic
+CREATE TABLE IF NOT EXISTS script_execution (
+    script_name VARCHAR PRIMARY KEY,
+    executed BOOLEAN NOT NULL DEFAULT FALSE
+);
+
 DO $$
 DECLARE
     script_already_run BOOLEAN;

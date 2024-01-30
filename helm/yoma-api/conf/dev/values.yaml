@@ -29,6 +29,21 @@ volumeMounts:
     mountPath: /api/appsettings.Development.json
     subPath: appsettings.Development.json
 
+initContainers:
+  - name: check-postgres
+    image: postgres:latest
+    imagePullPolicy: IfNotPresent
+    command:
+      - sh
+    args:
+      - -c
+      - |-
+        until pg_isready -h postgres-yoma -p 5432; do
+          echo "Waiting for PostgreSQL..."
+          sleep 2
+        done
+        echo "PostgreSQL is up and running."
+
 postInstallHook:
   enabled: true
   image:
@@ -38,8 +53,15 @@ postInstallHook:
     tag: "16"
   command:
     - /bin/bash
-    - -c
-    - "PGPASSWORD=$$POSTGRES_PASSWORD psql -h $$PGHOST -U $$POSTGRES_USER -d $$POSTGRES_DB -f /init/post.sql"
+    - /init/post.sh
+    - $PGHOST
+    - $POSTGRES_USER
+    - $POSTGRES_DB
+    - /init/post-stage.sql
+  # command:
+  #   - /bin/bash
+  #   - -c
+  #   - "PGPASSWORD=$$POSTGRES_PASSWORD psql -h $$PGHOST -U $$POSTGRES_USER -d $$POSTGRES_DB -f /init/post.sql"
   env:
     PGHOST: postgres-yoma
     POSTGRES_PASSWORD: P@ssword1
@@ -82,19 +104,6 @@ postInstallHook:
       volumeMounts:
         - name: init
           mountPath: /init
-    - name: check-postgres
-      image: postgres:latest
-      imagePullPolicy: IfNotPresent
-      command:
-        - sh
-      args:
-        - -c
-        - |-
-          until pg_isready -h postgres-yoma -p 5432; do
-            echo "Waiting for PostgreSQL..."
-            sleep 2
-          done
-          echo "PostgreSQL is up and running."
 
 readinessProbe:
   enabled: true
