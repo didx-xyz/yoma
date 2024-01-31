@@ -9,6 +9,8 @@ environments:
       - lifecycle: spot
       - tag: {{ env "TAG" | default "master" }}
       - ddInjectEnabled: false
+      - databaseName: yoma-dev
+      - databaseHost: postgres-yoma
   stage:
     values:
       - namespace: yoma-v3-stage
@@ -16,6 +18,8 @@ environments:
       - lifecycle: on-demand
       - tag: {{ env "TAG" | default "master" }}
       - ddInjectEnabled: false
+      - databaseName: yoma-stage
+      - databaseHost: postgres-yoma
 ---
 repositories:
 {{ if eq .Environment.Name "local" }}
@@ -115,6 +119,14 @@ releases:
       - nodeSelector:
           kubernetes.io/arch: {{ .Values.arch }}
           node.kubernetes.io/lifecycle: {{ .Values.lifecycle }}
+      - initContainers[0].env[+]:
+          - name: PGHOST
+            value: {{ .Environment.Values.databaseHost }}
+      # - postInstallHook:
+      #     env:
+      #       - name: PGHOST
+      #         value: {{ .Environment.Values.databaseHost }}
+      #       - name: PGPASSWORD
     secrets:
       - ./helm/yoma-api/conf/base/secrets.yaml
       - ./helm/yoma-api/conf/{{ .Environment.Name }}/secrets.yaml

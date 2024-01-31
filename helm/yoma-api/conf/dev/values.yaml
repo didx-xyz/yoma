@@ -38,11 +38,12 @@ initContainers:
     args:
       - -c
       - |-
-        until pg_isready -h postgres-yoma -p 5432; do
+        until pg_isready; do
           echo "Waiting for PostgreSQL..."
           sleep 2
         done
         echo "PostgreSQL is up and running."
+    env: []
 
 postInstallHook:
   enabled: true
@@ -60,7 +61,6 @@ postInstallHook:
     PGPASSWORD: P@ssword1
     PGUSER: yoma
     PGDATABASE: yoma-dev
-    PGPORT: "5432"
   nodeSelector:
     kubernetes.io/arch: amd64
 
