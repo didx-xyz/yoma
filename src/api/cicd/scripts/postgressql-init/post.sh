@@ -2,7 +2,7 @@
 
 set -e
 
-# Test data initialization script(s) as input parameter(s)
+# Postgres script(s) as input parameter(s)
 sql_files=($@)
 
 echo "Test login to PostgreSQL" >> /dev/stdout

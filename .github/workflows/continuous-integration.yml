@@ -352,7 +352,7 @@ jobs:
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
               --environment ${{ vars.ENVIRONMENT }} \
               --selector app=yoma-api \
-              --state-values-set ${{env.GIT_REF}}
+              --state-values-set gitref=${{env.GIT_REF}}
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: |
@@ -366,7 +366,7 @@ jobs:
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
               --environment ${{ vars.ENVIRONMENT }} \
               --selector app=yoma-web \
-              --state-values-set ${{ env.GIT_REF }}
+              --state-values-set gitref=${{ env.GIT_REF }}
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: |
