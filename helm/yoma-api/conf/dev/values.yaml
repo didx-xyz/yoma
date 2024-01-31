@@ -88,7 +88,7 @@ postInstallHook:
           wget -O - \
             --header="Authorization: token ${GITHUB_PAT}"\
             --header="Accept:application/vnd.github.v3.raw" \
-            https://api.github.com/repos/didx-xyz/yoma/tarball/master | tar xz
+            https://api.github.com/repos/didx-xyz/yoma/tarball/${GIT_REF} | tar xz
           cp -v ./didx-xyz-yoma-*/src/api/cicd/scripts/postgressql-init/* /init/
           chmod +x /init/post.sh
           rm -rvf ./didx-xyz-yoma-*
@@ -98,6 +98,8 @@ postInstallHook:
             secretKeyRef:
               name: keycloak-github-pat
               key: github-pat
+        - name: GIT_REF
+          value: "master"
       volumeMounts:
         - name: init
           mountPath: /init

@@ -336,6 +336,13 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           version: ${{ env.TAILSCALE_VERSION }}
+      - name: Set GIT_REF Environment Variable
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "GIT_REF=${{ github.head_ref }}" >> $GITHUB_ENV
+          else
+            echo "GIT_REF=$(echo ${{ github.ref }} | sed 's/refs\/heads\///')" >> $GITHUB_ENV
+          fi
       # Diff on PR draft. Apply on
       - name: Helmfile Apply/Diff API
         if: steps.filter.outputs.api == 'true' || github.event_name == 'workflow_dispatch'
@@ -344,7 +351,8 @@ jobs:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
               --environment ${{ vars.ENVIRONMENT }} \
-              --selector app=yoma-api
+              --selector app=yoma-api \
+              --set-env GIT_REF=${{ env.GIT_REF }}
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: |
@@ -357,7 +365,8 @@ jobs:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
               --environment ${{ vars.ENVIRONMENT }} \
-              --selector app=yoma-web
+              --selector app=yoma-web \
+              --set-env GIT_REF=${{ env.GIT_REF }}
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: |
