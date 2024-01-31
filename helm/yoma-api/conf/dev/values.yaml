@@ -55,10 +55,6 @@ postInstallHook:
     - /bin/bash
     - -c
     - "/init/post.sh /init/post.sql"
-  # command:
-  #   - /bin/bash
-  #   - -c
-  #   - "PGPASSWORD=$$POSTGRES_PASSWORD psql -h $$PGHOST -U $$POSTGRES_USER -d $$POSTGRES_DB -f /init/post.sql"
   env:
     PGHOST: postgres-yoma
     PGPASSWORD: P@ssword1
