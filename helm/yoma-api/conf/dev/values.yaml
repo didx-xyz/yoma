@@ -43,7 +43,9 @@ initContainers:
           sleep 2
         done
         echo "PostgreSQL is up and running."
-    env: []
+    env:
+      - name: PGHOST
+        value: &databaseName postgres-yoma
 
 postInstallHook:
   enabled: true
@@ -57,10 +59,11 @@ postInstallHook:
     - -c
     - "/init/post.sh /init/post.sql"
   env:
-    PGHOST: postgres-yoma
+    PGHOST: *databaseName
     PGPASSWORD: P@ssword1
     PGUSER: yoma
     PGDATABASE: yoma-dev
+    PGPORT: "5432"
   nodeSelector:
     kubernetes.io/arch: amd64
 
@@ -85,7 +88,7 @@ postInstallHook:
           wget -O - \
             --header="Authorization: token ${GITHUB_PAT}"\
             --header="Accept:application/vnd.github.v3.raw" \
-            https://api.github.com/repos/didx-xyz/yoma/tarball/postgresql-helm | tar xz
+            https://api.github.com/repos/didx-xyz/yoma/tarball/master | tar xz
           cp -v ./didx-xyz-yoma-*/src/api/cicd/scripts/postgressql-init/* /init/
           chmod +x /init/post.sh
           rm -rvf ./didx-xyz-yoma-*
