@@ -53,20 +53,17 @@ postInstallHook:
     tag: "16"
   command:
     - /bin/bash
-    - /init/post.sh
-    - $PGHOST
-    - $POSTGRES_USER
-    - $POSTGRES_DB
-    - /init/post-stage.sql
+    - -c
+    - "/init/post.sh /init/post.sql"
   # command:
   #   - /bin/bash
   #   - -c
   #   - "PGPASSWORD=$$POSTGRES_PASSWORD psql -h $$PGHOST -U $$POSTGRES_USER -d $$POSTGRES_DB -f /init/post.sql"
   env:
     PGHOST: postgres-yoma
-    POSTGRES_PASSWORD: P@ssword1
-    POSTGRES_USER: yoma
-    POSTGRES_DB: yoma-dev
+    PGPASSWORD: P@ssword1
+    PGUSER: yoma
+    PGDATABASE: yoma-dev
     PGPORT: "5432"
   nodeSelector:
     kubernetes.io/arch: amd64
@@ -94,7 +91,7 @@ postInstallHook:
             --header="Accept:application/vnd.github.v3.raw" \
             https://api.github.com/repos/didx-xyz/yoma/tarball/postgresql-helm | tar xz
           cp -v ./didx-xyz-yoma-*/src/api/cicd/scripts/postgressql-init/* /init/
-          rm -rf ./didx-xyz-yoma-*
+          rm -rvf ./didx-xyz-yoma-*
       env:
         - name: GITHUB_PAT
           valueFrom:
