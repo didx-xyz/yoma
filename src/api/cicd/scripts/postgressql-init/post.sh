@@ -2,7 +2,7 @@
 
 set -e
 
-# For test data initialization script
+# Test data initialization script(s) as input parameter(s)
 sql_files=($@)
 
 echo "Test login to PostgreSQL" >> /dev/stdout
@@ -10,14 +10,14 @@ echo "Test login to PostgreSQL" >> /dev/stdout
 psql -c "SELECT version();" >> /dev/stdout
 
 # Check if the initialization_flag table exists and the flag value is 'executed'
-result=$(psql -t -c "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'script_execution' AND table_schema = 'public' AND script_name = 'post.sql');")
+result=$(psql -t -c "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'script_execution' AND table_schema = 'public');")
 table_exists=$(echo "$result" | tr -d ' ')
 
 if [ "$table_exists" != "f" ]; then
   for file in "${sql_files[@]}"; do
     echo "########## running $file ##########" >> /dev/stdout
     # Execute the SQL file using 'psql'
-    psql -h $HOST -U $USER -d "your_database_name" -a -f "$file" >> /dev/stdout
+    psql -a -f "$file" >> /dev/stdout
   done
   # Create the initialization_flag table if it does not exist
   psql -c "CREATE TABLE IF NOT EXISTS script_execution (script_name VARCHAR PRIMARY KEY, executed BOOLEAN NOT NULL DEFAULT FALSE);" >> /dev/stdout

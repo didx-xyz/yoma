@@ -1,22 +1,5 @@
 -- This script is designed to be applied to an empty database
 
--- Initialisation flag logic
-CREATE TABLE IF NOT EXISTS script_execution (
-    script_name VARCHAR PRIMARY KEY,
-    executed BOOLEAN NOT NULL DEFAULT FALSE
-);
-
-DO $$
-DECLARE
-    script_already_run BOOLEAN;
-BEGIN
-    SELECT executed INTO script_already_run FROM script_execution WHERE script_name = 'post.sql';
-    IF script_already_run THEN
-        RAISE NOTICE 'Script has already been run. Exiting.';
-        RETURN;
-    END IF;
-END $$;
-
 -- Enable pgcrypto extension
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -570,7 +553,3 @@ SET
     "YomaRewardCumulative" = A."YomaRewardTotal"
 FROM AggregatedData A
 WHERE O."Id" = A."OpportunityId";
-
-INSERT INTO script_execution (script_name, executed)
-VALUES ('post.sql', TRUE)
-ON CONFLICT (script_name) DO UPDATE SET executed = TRUE;
