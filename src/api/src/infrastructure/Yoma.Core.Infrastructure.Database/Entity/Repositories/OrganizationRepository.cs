@@ -80,12 +80,14 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 
         public Expression<Func<Domain.Entity.Models.Organization, bool>> Contains(Expression<Func<Domain.Entity.Models.Organization, bool>> predicate, string value)
         {
-            return predicate.Or(o => o.Name.Contains(value));
+            //MS SQL: Contains
+            return predicate.Or(o => EF.Functions.ILike(o.Name, $"%{value}%"));
         }
 
         public IQueryable<Domain.Entity.Models.Organization> Contains(IQueryable<Domain.Entity.Models.Organization> query, string value)
         {
-            return query.Where(o => o.Name.Contains(value));
+            //MS SQL: Contains
+            return query.Where(o => EF.Functions.ILike(o.Name, $"%{value}%"));
         }
 
         public async Task<Domain.Entity.Models.Organization> Create(Domain.Entity.Models.Organization item)
