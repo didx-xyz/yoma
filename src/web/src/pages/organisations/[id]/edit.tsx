@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import { type ParsedUrlQuery } from "querystring";
-import { useCallback, useState, type ReactElement } from "react";
+import { useCallback, useState, type ReactElement, useMemo } from "react";
 import { type FieldValues } from "react-hook-form";
 import { toast } from "react-toastify";
 import {
@@ -84,7 +84,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     }),
     await queryClient.prefetchQuery({
       queryKey: ["countries"],
-      queryFn: async () => await getCountries(),
+      queryFn: async () => await getCountries(context),
     }),
     await queryClient.prefetchQuery({
       queryKey: ["organisation", id],
@@ -123,6 +123,7 @@ const OrganisationUpdate: NextPageWithLayout<{
   // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
+    queryFn: () => getOrganisationById(id),
     enabled: !error,
   });
 

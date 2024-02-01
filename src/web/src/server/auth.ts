@@ -81,14 +81,6 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
-    // async redirect({ url, baseUrl }) {
-    //   console.warn(`redirect: ${url} ${baseUrl}`);
-    //   // Allows relative callback URLs
-    //   if (url.startsWith("/")) return `${baseUrl}${url}`;
-    //   // Allows callback URLs on the same origin
-    //   else if (new URL(url).origin === baseUrl) return url;
-    //   return baseUrl;
-    // },
     async jwt({ token, user, account, trigger, session }) {
       // called when the user profile is updated (update function from settings.tsx)
       // also used to force a refresh of token (/organisation/register/index.tsx)
@@ -154,6 +146,10 @@ export const authOptions: NextAuthOptions = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
+  // session: {
+  //   strategy: "jwt",
+  //   maxAge: 30 * 24 * 60 * 60, // 30 days
+  // },
 };
 
 // eslint-disable-next-line

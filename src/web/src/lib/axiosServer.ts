@@ -1,5 +1,8 @@
 import axios from "axios";
-import { GetStaticPropsContext, type GetServerSidePropsContext } from "next";
+import {
+  type GetStaticPropsContext,
+  type GetServerSidePropsContext,
+} from "next";
 import { getServerSession, type Session } from "next-auth";
 import { env } from "~/env.mjs";
 import { authOptions } from "~/server/auth";
@@ -7,27 +10,13 @@ import { authOptions } from "~/server/auth";
 function isGetServerSidePropsContext(
   obj: any,
 ): obj is GetServerSidePropsContext {
-  return (
-    "req" in obj &&
-    "res" in obj &&
-    "query" in obj &&
-    "params" in obj &&
-    "preview" in obj &&
-    "previewData" in obj
-  );
-}
-function isGetStaticPropsContext(obj: any): obj is GetStaticPropsContext {
-  return (
-    "params" in obj &&
-    "preview" in obj &&
-    "previewData" in obj &&
-    "locale" in obj &&
-    "locales" in obj &&
-    "defaultLocale" in obj
-  );
+  return "req" in obj && "res" in obj;
 }
 
 // Axios instance for server-side requests
+// This is used in getServerSideProps and getStaticProps to make requests to the API
+// When getServerSideProps is used, the instance will be created with the auth token from the session (as this is called server-side for server-rendered pages)
+// When getStaticProps is used, the instance will be created with no auth token (as this is called build-time for static pages)
 const ApiServer = (
   context: GetServerSidePropsContext | GetStaticPropsContext,
 ) => {
@@ -39,27 +28,17 @@ const ApiServer = (
 
   instance.interceptors.request.use(
     async (request) => {
+      // for server-side requests, get the session from the request
       if (isGetServerSidePropsContext(context)) {
         if (
           lastSession == null ||
           Date.now() > Date.parse(lastSession.expires)
         ) {
-          // get server session from ServerSidePropsContext
-          if (isGetServerSidePropsContext(context)) {
-            const session = await getServerSession(
-              context.req,
-              context.res,
-              authOptions,
-            );
-            lastSession = session;
-          }
-
-          // get server session from StaticPropsContext
-          if (isGetStaticPropsContext(context)) {
-            const session = await getServerSession(authOptions);
-
-            lastSession = session;
-          }
+          lastSession = await getServerSession(
+            context.req,
+            context.res,
+            authOptions,
+          );
         }
       }
 
