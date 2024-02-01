@@ -64,12 +64,14 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 
         public Expression<Func<Domain.Entity.Models.User, bool>> Contains(Expression<Func<Domain.Entity.Models.User, bool>> predicate, string value)
         {
-            return predicate.Or(o => o.FirstName.Contains(value) || o.Surname.Contains(value) || o.Email.Contains(value) || o.DisplayName.Contains(value));
+            //MS SQL: Contains
+            return predicate.Or(o => EF.Functions.ILike(o.FirstName, $"%{value}%") || EF.Functions.ILike(o.Surname, $"%{value}%") || EF.Functions.ILike(o.Email, $"%{value}%") || EF.Functions.ILike(o.DisplayName, $"%{value}%"));
         }
 
         public IQueryable<Domain.Entity.Models.User> Contains(IQueryable<Domain.Entity.Models.User> query, string value)
         {
-            return query.Where(o => o.FirstName.Contains(value) || o.Surname.Contains(value) || o.Email.Contains(value) || o.DisplayName.Contains(value));
+            //MS SQL: Contains
+            return query.Where(o => EF.Functions.ILike(o.FirstName, $"%{value}%") || EF.Functions.ILike(o.Surname, $"%{value}%") || EF.Functions.ILike(o.Email, $"%{value}%") || EF.Functions.ILike(o.DisplayName, $"%{value}%"));
         }
 
         public async Task<Domain.Entity.Models.User> Create(Domain.Entity.Models.User item)

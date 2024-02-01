@@ -4,6 +4,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 using Yoma.Core.Domain.Core.Extensions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 {
@@ -31,12 +32,14 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 
         public Expression<Func<Domain.Lookups.Models.Skill, bool>> Contains(Expression<Func<Domain.Lookups.Models.Skill, bool>> predicate, string value)
         {
-            return predicate.Or(o => o.Name.Contains(value));
+            //MS SQL: Contains
+            return predicate.Or(o => EF.Functions.ILike(o.Name, $"%{value}%"));
         }
 
         public IQueryable<Domain.Lookups.Models.Skill> Contains(IQueryable<Domain.Lookups.Models.Skill> query, string value)
         {
-            return query.Where(o => o.Name.Contains(value));
+            //MS SQL: Contains
+            return query.Where(o => EF.Functions.ILike(o.Name, $"%{value}%"));
         }
 
         public async Task<Domain.Lookups.Models.Skill> Create(Domain.Lookups.Models.Skill item)
