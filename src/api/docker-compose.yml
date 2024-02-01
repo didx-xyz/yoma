@@ -132,9 +132,7 @@ services:
       # SPRING_CONFIG_IMPORT: /secrets/.decrypted~secret.yaml
       # Templating variables
       CLIENT_YOMA_API_URL: "http://localhost:5000"
-      CLIENT_YOMA_YOUTH_URL: "http://localhost:3000"
-      CLIENT_YOMA_OP_URL: "http://localhost:3001"
-      CLIENT_YOMA_ADMIN_URL: "http://localhost:3001"
+      CLIENT_YOMA_WEB_URL: "http://localhost:3000"
       CLIENT_ATINGI_URL: "https://sandbox.atingi.org"
       CLIENT_ATINGI_URL_REDIRECT: "https://keycloak-uat.enovationaws.com/realms/master/broker/yoma-prod/endpoint"
       CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT: "https://keycloak-uat.enovationaws.com/realms/master/broker/yoma-prod/endpoint"
@@ -239,7 +237,6 @@ services:
     depends_on:
       yoma-api:
         condition: service_started
-
 
   test-harness-health: # Wait for sqlserver-init to be finished.
     image: curlimages/curl

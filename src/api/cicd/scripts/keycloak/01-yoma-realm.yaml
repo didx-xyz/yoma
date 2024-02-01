@@ -262,7 +262,6 @@ roles:
         containerId: 1ff2bd58-7283-4243-9b74-cd387fdc4ebd
         attributes: {}
     security-admin-console: []
-    yoma-web-op: []
     admin-cli: []
     yoma-api: []
     account-console: []
@@ -339,7 +338,7 @@ roles:
         clientRole: true
         containerId: a8b2652a-f4ad-4402-89e5-7a145ab04d44
         attributes: {}
-    yoma-web-youth: []
+    yoma-web: []
 groups: []
 defaultRole:
   id: 25be88e1-2f97-4ea3-b936-a19a94e45a65
@@ -782,61 +781,13 @@ clients:
       - address
       - phone
       - microprofile-jwt
-  - id: 4f86ab43-560e-4638-8b39-b7f36f1ba1f1
-    clientId: yoma-web-op
-    name: yoma-web-op
-    description: Yoma Opportunity Partner Portal (public client)
-    rootUrl: $(env:CLIENT_YOMA_OP_URL)
-    adminUrl: $(env:CLIENT_YOMA_OP_URL)
-    baseUrl: $(env:CLIENT_YOMA_OP_URL)
-    surrogateAuthRequired: false
-    enabled: true
-    alwaysDisplayInConsole: false
-    clientAuthenticatorType: client-secret
-    redirectUris:
-      - "/*"
-    webOrigins:
-      - $(env:CLIENT_YOMA_OP_URL)
-    notBefore: 0
-    bearerOnly: false
-    consentRequired: false
-    standardFlowEnabled: true
-    implicitFlowEnabled: false
-    directAccessGrantsEnabled: false
-    serviceAccountsEnabled: false
-    publicClient: true
-    frontchannelLogout: true
-    protocol: openid-connect
-    attributes:
-      oidc.ciba.grant.enabled: "false"
-      backchannel.logout.session.required: "true"
-      post.logout.redirect.uris: $(env:CLIENT_YOMA_OP_URL)/*
-      display.on.consent.screen: "false"
-      oauth2.device.authorization.grant.enabled: "false"
-      backchannel.logout.revoke.offline.tokens: "false"
-    authenticationFlowBindingOverrides: {}
-    fullScopeAllowed: true
-    nodeReRegistrationTimeout: -1
-    defaultClientScopes:
-      - web-origins
-      - acr
-      - offline_access
-      - profile
-      - roles
-      - yoma-api
-      - email
-      - audience_scope
-    optionalClientScopes:
-      - address
-      - phone
-      - microprofile-jwt
   - id: e394e8ee-3dcd-47d7-a34a-10e5d9e83fe9
-    clientId: yoma-web-youth
-    name: yoma-web-youth
-    description: Yoma Youth Portal (public client)
-    rootUrl: $(env:CLIENT_YOMA_YOUTH_URL)
+    clientId: yoma-web
+    name: yoma-web
+    description: Yoma Web Portal (public client)
+    rootUrl: $(env:CLIENT_YOMA_WEB_URL)
     adminUrl: ""
-    baseUrl: $(env:CLIENT_YOMA_YOUTH_URL)
+    baseUrl: $(env:CLIENT_YOMA_WEB_URL)
     surrogateAuthRequired: false
     enabled: true
     alwaysDisplayInConsole: false
@@ -844,7 +795,7 @@ clients:
     redirectUris:
       - "/*"
     webOrigins:
-      - $(env:CLIENT_YOMA_YOUTH_URL)
+      - $(env:CLIENT_YOMA_WEB_URL)
     notBefore: 0
     bearerOnly: false
     consentRequired: false
@@ -857,7 +808,7 @@ clients:
     protocol: openid-connect
     attributes:
       client.secret.creation.time: "1683780708"
-      post.logout.redirect.uris: $(env:CLIENT_YOMA_YOUTH_URL)/*
+      post.logout.redirect.uris: $(env:CLIENT_YOMA_WEB_URL)/*
       oauth2.device.authorization.grant.enabled: "false"
       access.token.signed.response.alg: RS256
       backchannel.logout.revoke.offline.tokens: "false"
@@ -911,54 +862,6 @@ clients:
           access.token.claim: "true"
           claim.name: clientAddress
           jsonType.label: String
-    defaultClientScopes:
-      - web-origins
-      - acr
-      - offline_access
-      - profile
-      - roles
-      - yoma-api
-      - email
-      - audience_scope
-    optionalClientScopes:
-      - address
-      - phone
-      - microprofile-jwt
-  - id: 9D68AFBD-B27A-49CD-9F9C-FFE08B11FABD
-    clientId: yoma-web-admin
-    name: yoma-web-admin
-    description: Yoma Opportunity Admin Portal (public client)
-    rootUrl: $(env:CLIENT_YOMA_ADMIN_URL)
-    adminUrl: $(env:CLIENT_YOMA_ADMIN_URL)
-    baseUrl: $(env:CLIENT_YOMA_ADMIN_URL)
-    surrogateAuthRequired: false
-    enabled: true
-    alwaysDisplayInConsole: false
-    clientAuthenticatorType: client-secret
-    redirectUris:
-      - "/*"
-    webOrigins:
-      - $(env:CLIENT_YOMA_ADMIN_URL)
-    notBefore: 0
-    bearerOnly: false
-    consentRequired: false
-    standardFlowEnabled: true
-    implicitFlowEnabled: false
-    directAccessGrantsEnabled: false
-    serviceAccountsEnabled: false
-    publicClient: true
-    frontchannelLogout: true
-    protocol: openid-connect
-    attributes:
-      oidc.ciba.grant.enabled: "false"
-      backchannel.logout.session.required: "true"
-      post.logout.redirect.uris: $(env:CLIENT_YOMA_ADMIN_URL)/*
-      display.on.consent.screen: "false"
-      oauth2.device.authorization.grant.enabled: "false"
-      backchannel.logout.revoke.offline.tokens: "false"
-    authenticationFlowBindingOverrides: {}
-    fullScopeAllowed: true
-    nodeReRegistrationTimeout: -1
     defaultClientScopes:
       - web-origins
       - acr
