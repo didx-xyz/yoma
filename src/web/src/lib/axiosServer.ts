@@ -1,11 +1,36 @@
 import axios from "axios";
-import { type GetServerSidePropsContext } from "next";
+import { GetStaticPropsContext, type GetServerSidePropsContext } from "next";
 import { getServerSession, type Session } from "next-auth";
 import { env } from "~/env.mjs";
 import { authOptions } from "~/server/auth";
 
+function isGetServerSidePropsContext(
+  obj: any,
+): obj is GetServerSidePropsContext {
+  return (
+    "req" in obj &&
+    "res" in obj &&
+    "query" in obj &&
+    "params" in obj &&
+    "preview" in obj &&
+    "previewData" in obj
+  );
+}
+function isGetStaticPropsContext(obj: any): obj is GetStaticPropsContext {
+  return (
+    "params" in obj &&
+    "preview" in obj &&
+    "previewData" in obj &&
+    "locale" in obj &&
+    "locales" in obj &&
+    "defaultLocale" in obj
+  );
+}
+
 // Axios instance for server-side requests
-const ApiServer = (context: GetServerSidePropsContext) => {
+const ApiServer = (
+  context: GetServerSidePropsContext | GetStaticPropsContext,
+) => {
   const instance = axios.create({
     baseURL: env.API_BASE_URL,
   });
@@ -14,13 +39,28 @@ const ApiServer = (context: GetServerSidePropsContext) => {
 
   instance.interceptors.request.use(
     async (request) => {
-      if (lastSession == null || Date.now() > Date.parse(lastSession.expires)) {
-        const session = await getServerSession(
-          context.req,
-          context.res,
-          authOptions,
-        );
-        lastSession = session;
+      if (isGetServerSidePropsContext(context)) {
+        if (
+          lastSession == null ||
+          Date.now() > Date.parse(lastSession.expires)
+        ) {
+          // get server session from ServerSidePropsContext
+          if (isGetServerSidePropsContext(context)) {
+            const session = await getServerSession(
+              context.req,
+              context.res,
+              authOptions,
+            );
+            lastSession = session;
+          }
+
+          // get server session from StaticPropsContext
+          if (isGetStaticPropsContext(context)) {
+            const session = await getServerSession(authOptions);
+
+            lastSession = session;
+          }
+        }
       }
 
       if (lastSession) {

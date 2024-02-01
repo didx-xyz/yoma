@@ -1,4 +1,4 @@
-import { type GetServerSidePropsContext } from "next";
+import { GetStaticPropsContext, type GetServerSidePropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type {
@@ -22,7 +22,7 @@ import type { OrganizationInfo } from "../models/organisation";
 
 export const getOpportunitiesAdmin = async (
   filter: OpportunitySearchFilterAdmin,
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunitySearchResults> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -35,7 +35,7 @@ export const getOpportunitiesAdmin = async (
 };
 
 export const getCategories = async (
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityCategory[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<OpportunityCategory[]>(
@@ -45,7 +45,7 @@ export const getCategories = async (
 };
 
 export const getDifficulties = async (
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityDifficulty[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<OpportunityDifficulty[]>(
@@ -55,7 +55,7 @@ export const getDifficulties = async (
 };
 
 export const getTypes = async (
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityType[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<OpportunityType[]>("/opportunity/type");
@@ -63,7 +63,7 @@ export const getTypes = async (
 };
 
 export const getVerificationTypes = async (
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityVerificationType[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<OpportunityVerificationType[]>(
@@ -91,7 +91,7 @@ export const updateOpportunity = async (
 
 export const getOpportunityById = async (
   id: string,
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Opportunity> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -101,7 +101,7 @@ export const getOpportunityById = async (
 
 export const getOpportunityInfoByIdAdmin = async (
   id: string,
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -114,7 +114,7 @@ export const getOpportunityInfoByIdAdmin = async (
 export const getOpportunityInfoById = async (
   id: string,
   includeExpired?: boolean,
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -126,7 +126,7 @@ export const getOpportunityInfoById = async (
 
 export const searchOpportunities = async (
   filter: OpportunitySearchFilter,
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunitySearchResultsInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -138,7 +138,7 @@ export const searchOpportunities = async (
 };
 
 export const getOpportunityCategories = async (
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityCategory[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -149,7 +149,7 @@ export const getOpportunityCategories = async (
 };
 
 export const getOpportunityCountries = async (
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Country[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -160,7 +160,7 @@ export const getOpportunityCountries = async (
 };
 
 export const getOpportunityLanguages = async (
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Language[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -171,7 +171,7 @@ export const getOpportunityLanguages = async (
 };
 
 export const getOpportunityOrganizations = async (
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OrganizationInfo[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -182,7 +182,7 @@ export const getOpportunityOrganizations = async (
 };
 
 export const getOpportunityTypes = async (
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityType[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -191,7 +191,7 @@ export const getOpportunityTypes = async (
 };
 
 export const getCommitmentIntervals = async (
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunitySearchCriteriaCommitmentInterval[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -202,7 +202,7 @@ export const getCommitmentIntervals = async (
 };
 
 export const getZltoRewardRanges = async (
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunitySearchCriteriaZltoReward[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -215,7 +215,7 @@ export const getZltoRewardRanges = async (
 export const updateOpportunityStatus = async (
   opportunityId: string,
   status: Status,
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Opportunity> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -228,7 +228,7 @@ export const updateOpportunityStatus = async (
 // export const updateOpportunityStatus = async (
 //   opportunityId: string,
 //   status: Status,
-//   context?: GetServerSidePropsContext,
+//   context?: GetServerSidePropsContext | GetStaticPropsContext,
 // ): Promise<Opportunity> => {
 //   const instance = context ? ApiServer(context) : await ApiClient;
 

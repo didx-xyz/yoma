@@ -53,70 +53,82 @@ import { IoMdOptions } from "react-icons/io";
 // This function gets called at build time on server-side.
 // It may be called again, on a serverless function, if
 // revalidation is enabled and a new request comes in
-export const getStaticProps: GetStaticProps = async () => {
-  const opportunities_trending = await searchOpportunities({
-    pageNumber: 1,
-    pageSize: 4,
-    categories: null,
-    includeExpired: false,
-    countries: null,
-    languages: null,
-    types: null,
-    valueContains: null,
-    commitmentIntervals: null,
-    mostViewed: true,
-    organizations: null,
-    zltoRewardRanges: null,
-  });
-  const opportunities_learning = await searchOpportunities({
-    pageNumber: 1,
-    pageSize: 4,
-    categories: null,
-    includeExpired: false,
-    countries: null,
-    languages: null,
-    types: OPPORTUNITY_TYPES_LEARNING,
-    valueContains: null,
-    commitmentIntervals: null,
-    mostViewed: null,
-    organizations: null,
-    zltoRewardRanges: null,
-  });
-  const opportunities_tasks = await searchOpportunities({
-    pageNumber: 1,
-    pageSize: 4,
-    categories: null,
-    includeExpired: false,
-    countries: null,
-    languages: null,
-    types: OPPORTUNITY_TYPES_TASK,
-    valueContains: null,
-    commitmentIntervals: null,
-    mostViewed: null,
-    organizations: null,
-    zltoRewardRanges: null,
-  });
-  const opportunities_allOpportunities = await searchOpportunities({
-    pageNumber: 1,
-    pageSize: 8,
-    categories: null,
-    includeExpired: false,
-    countries: null,
-    languages: null,
-    types: null,
-    valueContains: null,
-    commitmentIntervals: null,
-    mostViewed: null,
-    organizations: null,
-    zltoRewardRanges: null,
-  });
-  const lookups_categories = await getOpportunityCategories();
-  const lookups_countries = await getOpportunityCountries();
-  const lookups_languages = await getOpportunityLanguages();
-  const lookups_organisations = await getOpportunityOrganizations();
-  const lookups_types = await getOpportunityTypes();
-  const lookups_commitmentIntervals = await getCommitmentIntervals();
-  const lookups_zltoRewardRanges = await getZltoRewardRanges();
+export const getStaticProps: GetStaticProps = async (context) => {
+  const opportunities_trending = await searchOpportunities(
+    {
+      pageNumber: 1,
+      pageSize: 4,
+      categories: null,
+      includeExpired: false,
+      countries: null,
+      languages: null,
+      types: null,
+      valueContains: null,
+      commitmentIntervals: null,
+      mostViewed: true,
+      organizations: null,
+      zltoRewardRanges: null,
+    },
+    context,
+  );
+  const opportunities_learning = await searchOpportunities(
+    {
+      pageNumber: 1,
+      pageSize: 4,
+      categories: null,
+      includeExpired: false,
+      countries: null,
+      languages: null,
+      types: OPPORTUNITY_TYPES_LEARNING,
+      valueContains: null,
+      commitmentIntervals: null,
+      mostViewed: null,
+      organizations: null,
+      zltoRewardRanges: null,
+    },
+    context,
+  );
+  const opportunities_tasks = await searchOpportunities(
+    {
+      pageNumber: 1,
+      pageSize: 4,
+      categories: null,
+      includeExpired: false,
+      countries: null,
+      languages: null,
+      types: OPPORTUNITY_TYPES_TASK,
+      valueContains: null,
+      commitmentIntervals: null,
+      mostViewed: null,
+      organizations: null,
+      zltoRewardRanges: null,
+    },
+    context,
+  );
+  const opportunities_allOpportunities = await searchOpportunities(
+    {
+      pageNumber: 1,
+      pageSize: 8,
+      categories: null,
+      includeExpired: false,
+      countries: null,
+      languages: null,
+      types: null,
+      valueContains: null,
+      commitmentIntervals: null,
+      mostViewed: null,
+      organizations: null,
+      zltoRewardRanges: null,
+    },
+    context,
+  );
+  const lookups_categories = await getOpportunityCategories(context);
+  const lookups_countries = await getOpportunityCountries(context);
+  const lookups_languages = await getOpportunityLanguages(context);
+  const lookups_organisations = await getOpportunityOrganizations(context);
+  const lookups_types = await getOpportunityTypes(context);
+  const lookups_commitmentIntervals = await getCommitmentIntervals(context);
+  const lookups_zltoRewardRanges = await getZltoRewardRanges(context);
 
   return {
     props: {

@@ -145,7 +145,7 @@ export const Navbar: React.FC = () => {
   return (
     <div className="fixed left-0 right-0 top-0 z-40">
       <div className={`bg-theme navbar z-40`}>
-        <div className="navbar-startx flex-start w-full">
+        <div className="flex-start w-full">
           <button
             type="button"
             aria-label="Navigation Menu"
@@ -179,6 +179,7 @@ export const Navbar: React.FC = () => {
               ))}
             </div>
           </ReactModal>
+
           <div className="ml-8">
             <LogoImage />
           </div>
@@ -198,6 +199,7 @@ export const Navbar: React.FC = () => {
             ))}
           </ul>
         </div>
+
         <div className="justify-end">
           <LanguageSwitcher />
 

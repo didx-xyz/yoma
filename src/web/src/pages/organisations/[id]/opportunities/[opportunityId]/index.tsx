@@ -700,7 +700,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
         <div className="flex flex-col gap-2 md:flex-row">
           {/* LEFT VERTICAL MENU */}
-          <ul className="menu hidden max-h-[320px] w-64 flex-none gap-2 rounded-lg bg-white p-2 font-semibold md:flex">
+          <ul className="menu hidden max-h-[340px] w-64 flex-none gap-2 rounded-lg bg-white p-2 font-semibold md:flex">
             <li onClick={() => setStep(1)}>
               <a
                 className={`${
