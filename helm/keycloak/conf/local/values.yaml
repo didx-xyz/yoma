@@ -131,9 +131,7 @@ config-cli:
     #REALM_YOMA_ADMIN_CLI_SECRET: "xxx"
     #SMTP_PASSWORD: "SG.xxx"
     CLIENT_YOMA_API_URL: "https://api.dev.yoma.world"
-    CLIENT_YOMA_YOUTH_URL: "https://app.dev.yoma.world"
-    CLIENT_YOMA_OP_URL: "https://partner.dev.yoma.world"
-    CLIENT_YOMA_ADMIN_URL: "http://localhost:3002"
+    CLIENT_YOMA_WEB_URL: "https://app.dev.yoma.world"
     CLIENT_ATINGI_URL: https://sandbox.atingi.org
     CLIENT_ATINGI_URL_REDIRECT: https://keycloak-uat.enovationaws.com/realms/master/broker/yoma-prod/endpoint
     CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT: https://keycloak-uat.enovationaws.com/realms/master/broker/yoma-prod/endpoint
