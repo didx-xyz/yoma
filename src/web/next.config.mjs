@@ -84,7 +84,7 @@ const config = {
 //     silent: true,
 
 //     org: "yoma-sp",
-//     project: "yoma-web-youth-v3",
+//     project: "yoma-web-v3",
 //   },
 //   {
 //     // For all available options, see:

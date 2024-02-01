@@ -18,7 +18,7 @@ services:
       # SERVER VARIABLES
       # KEYCLOAK_CLIENT_SECRET is a placeholder for future functionality, but is required by the app to run.
       NEXTAUTH_SECRET: VerySecretAndSecureNextAuthSecret # openssl rand -base64 32
-      KEYCLOAK_CLIENT_ID: yoma-web-youth
+      KEYCLOAK_CLIENT_ID: yoma-web
       KEYCLOAK_CLIENT_SECRET: VerySecretAndSecureKeycloakClientSecret
       NEXTAUTH_URL: http://localhost:3000
       API_BASE_URL: http://yoma-api:5000/api/v3
