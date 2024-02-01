@@ -53,7 +53,7 @@ postInstallHook:
     repository: postgres
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "16"
+    tag: "16.1"
   command:
     - /bin/bash
     - -c

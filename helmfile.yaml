@@ -48,7 +48,7 @@ releases:
       app: postgresql-keycloak
     namespace: {{ .Values.namespace }}
     chart: oci://registry-1.docker.io/bitnamicharts/postgresql
-    version: "13.2.2"
+    version: "13.4.3"
     set:
       - name: fullnameOverride
         value: postgresql-keycloak
@@ -64,7 +64,7 @@ releases:
       app: postgresql
     namespace: {{ .Values.namespace }}
     chart: oci://registry-1.docker.io/bitnamicharts/postgresql
-    version: "13.2.2"
+    version: "13.4.3"
     set:
       - name: fullnameOverride
         value: postgres-yoma
@@ -72,6 +72,10 @@ releases:
         value: yoma
       - name: auth.database
         value: yoma-dev
+      # - name: primary.extendedConfiguration
+      #   value: |
+      #     log_statement = 'all'
+      #     log_min_duration_statement = 0
     secrets:
       - ./helm/postgresql-yoma/conf/{{ .Environment.Name }}/secrets.yaml
 
