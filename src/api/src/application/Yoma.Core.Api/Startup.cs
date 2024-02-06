@@ -313,7 +313,7 @@ namespace Yoma.Core.Api
                     {
                         new OpenApiSecurityScheme
                         {
-                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = Constants.au }
+                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = Constants.AuthenticationScheme_ClientCredentials }
                         },
                         new[] { string.Join(_oAuth_Scope_Separator, scopesClientCredentials) }
                     }
