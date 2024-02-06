@@ -22,6 +22,7 @@ using Yoma.Core.Infrastructure.AmazonS3;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Infrastructure.Zlto;
 using Yoma.Core.Infrastructure.AriesCloud;
+using Yoma.Core.Api.Common;
 
 namespace Yoma.Core.Api
 {
@@ -277,7 +278,7 @@ namespace Yoma.Core.Api
                     }
                 });
 
-                c.AddSecurityDefinition("ClientCredentials", new OpenApiSecurityScheme
+                c.AddSecurityDefinition(Constants.AuthenticationScheme_ClientCredentials, new OpenApiSecurityScheme
                 {
                     Description = "Client Credentials flow using the client_id and client_secret",
                     Type = SecuritySchemeType.OAuth2,
@@ -312,7 +313,7 @@ namespace Yoma.Core.Api
                     {
                         new OpenApiSecurityScheme
                         {
-                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "ClientCredentials" }
+                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = Constants.au }
                         },
                         new[] { string.Join(_oAuth_Scope_Separator, scopesClientCredentials) }
                     }
