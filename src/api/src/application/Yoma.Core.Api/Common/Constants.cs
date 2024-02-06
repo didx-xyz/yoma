@@ -1,10 +1,11 @@
 namespace Yoma.Core.Api.Common
 {
-    public class Constants
+    internal class Constants
     {
-        public const string RequestHeader_ApiKey = "X-ApiKey";
-        public const string Authorization_Policy = "yoma_core_api";
-        public const string ClaimType_Scope = "scope";
-        public const string HttpContextItemsKey_Authenticated_OrganizationId = "Authenticated_OrganizationId";
+        internal const string RequestHeader_ApiKey = "X-ApiKey";
+        internal const string Authorization_Policy = "yoma_core_api";
+        internal const string Authorization_Policy_External_Partner = "yoma_core_api_external_partner";
+        internal const string ClaimType_Scope = "scope";
+        internal const string HttpContextItemsKey_Authenticated_OrganizationId = "Authenticated_OrganizationId";
     }
 }

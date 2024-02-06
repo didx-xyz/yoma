@@ -11,9 +11,13 @@ namespace Yoma.Core.Domain.Core.Models
 
         public AppSettingsCredentials Hangfire { get; set; }
 
+        public string AuthorizationPolicyAudience { get; set; }
+
         public string AuthorizationPolicyScope { get; set; }
 
-        public string SwaggerScopes { get; set; }
+        public string SwaggerScopesAuthorizationCode { get; set; }
+
+        public string SwaggerScopesClientCredentials { get; set; }
 
         public int CacheSlidingExpirationInHours { get; set; }
 

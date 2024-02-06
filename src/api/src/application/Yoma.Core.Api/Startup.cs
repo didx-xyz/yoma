@@ -198,18 +198,32 @@ namespace Yoma.Core.Api
             });
         }
 
-        private static void ConfigureAuthorization(IServiceCollection services, IConfiguration configuration)
+        private void ConfigureAuthorization(IServiceCollection services, IConfiguration configuration)
         {
             services.AddAuthorization(options =>
             {
+                // Authorization policy for Authorization Code flow
                 options.AddPolicy(Common.Constants.Authorization_Policy, policy =>
                 {
                     policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
                     policy.RequireAuthenticatedUser();
-                    policy.Requirements.Add(new RequireClaimAuthorizationRequirement());
+                    policy.Requirements.Add(new RequireAudienceClaimRequirement(_appSettings.AuthorizationPolicyAudience));
+                    policy.Requirements.Add(new RequireScopeAuthorizationRequirement(_appSettings.AuthorizationPolicyScope));
+                });
+
+                // Authorization policy for Client Credentials flow
+                options.AddPolicy(Common.Constants.Authorization_Policy_External_Partner, policy =>
+                {
+                    policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+                    policy.RequireAuthenticatedUser();
+                    policy.Requirements.Add(new RequireAudienceClaimRequirement(_appSettings.AuthorizationPolicyAudience));
+                    policy.Requirements.Add(new RequireClientIdClaimRequirement());
+                    policy.Requirements.Add(new RequireScopeAuthorizationRequirement(_appSettings.AuthorizationPolicyScope));
                 });
             });
-            services.AddSingleton<IAuthorizationHandler, RequiredClaimAuthorizationHandler>();
+            services.AddSingleton<IAuthorizationHandler, RequireAudienceClaimHandler>();
+            services.AddSingleton<IAuthorizationHandler, RequireClientIdClaimHandler>();
+            services.AddSingleton<IAuthorizationHandler, RequireScopeAuthorizationHandler>();
             services.ConfigureServices_AuthorizationIdentityProvider(configuration);
         }
 
@@ -235,9 +249,13 @@ namespace Yoma.Core.Api
 
         private void ConfigureSwagger(IServiceCollection services)
         {
-            var scopes = _appSettings.SwaggerScopes.Split(_oAuth_Scope_Separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToArray();
-            if (!scopes.Any())
-                throw new InvalidOperationException($"Configuration section '{AppSettings.Section}' contains no configured swagger scopes");
+            var scopesAuthorizationCode = _appSettings.SwaggerScopesAuthorizationCode.Split(_oAuth_Scope_Separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToArray();
+            if (!scopesAuthorizationCode.Any())
+                throw new InvalidOperationException($"Configuration section '{AppSettings.Section}' contains no configured swagger 'Authorization Code' scopes");
+
+            var scopesClientCredentials = _appSettings.SwaggerScopesClientCredentials.Split(_oAuth_Scope_Separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToArray();
+            if (!scopesClientCredentials.Any())
+                throw new InvalidOperationException($"Configuration section '{AppSettings.Section}' contains no configured swagger 'Client Credentials' scopes");
 
             services.AddSwaggerGen(c =>
             {
@@ -252,20 +270,35 @@ namespace Yoma.Core.Api
                     {
                         AuthorizationCode = new OpenApiOAuthFlow()
                         {
-                            Scopes = scopes.ToDictionary(item => item, item => item),
+                            Scopes = scopesAuthorizationCode.ToDictionary(item => item, item => item),
                             TokenUrl = _identityProviderAuthOptions.TokenUrl,
                             AuthorizationUrl = _identityProviderAuthOptions.AuthorizationUrl
                         }
                     }
                 });
 
-                c.AddSecurityDefinition(Common.Constants.RequestHeader_ApiKey, new OpenApiSecurityScheme
+                c.AddSecurityDefinition("ClientCredentials", new OpenApiSecurityScheme
                 {
-                    Description = $"Api key authorization by {Common.Constants.RequestHeader_ApiKey} header. Example: \"{Common.Constants.RequestHeader_ApiKey} MyOrganizationApiKey\"",
-                    Name = Common.Constants.RequestHeader_ApiKey,
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.ApiKey,
+                    Description = "Client Credentials flow using the client_id and client_secret",
+                    Type = SecuritySchemeType.OAuth2,
+                    Flows = new OpenApiOAuthFlows
+                    {
+                        ClientCredentials = new OpenApiOAuthFlow
+                        {
+                            Scopes = scopesClientCredentials.ToDictionary(item => item, item => item),
+                            TokenUrl = _identityProviderAuthOptions.TokenUrl
+                        }
+                    }
                 });
+
+                //custom api key authentication
+                //c.AddSecurityDefinition(Common.Constants.RequestHeader_ApiKey, new OpenApiSecurityScheme
+                //{
+                //    Description = $"Api key authorization by {Common.Constants.RequestHeader_ApiKey} header. Example: \"{Common.Constants.RequestHeader_ApiKey} MyOrganizationApiKey\"",
+                //    Name = Common.Constants.RequestHeader_ApiKey,
+                //    In = ParameterLocation.Header,
+                //    Type = SecuritySchemeType.ApiKey,
+                //});
 
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
@@ -274,44 +307,35 @@ namespace Yoma.Core.Api
                         {
                             Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = JwtBearerDefaults.AuthenticationScheme }
                         },
-                        new[] { string.Join(_oAuth_Scope_Separator, scopes) }
-                    }
-                });
-
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
-                {
+                        new[] { string.Join(_oAuth_Scope_Separator, scopesAuthorizationCode) }
+                    },
                     {
                         new OpenApiSecurityScheme
                         {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = Common.Constants.RequestHeader_ApiKey
-                            },
-                            Name = Common.Constants.RequestHeader_ApiKey,
-                            In = ParameterLocation.Header,
+                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "ClientCredentials" }
                         },
-                        new List<string>()
+                        new[] { string.Join(_oAuth_Scope_Separator, scopesClientCredentials) }
                     }
                 });
 
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
-                {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = Common.Constants.RequestHeader_ApiKey
-                            },
-                            Type = SecuritySchemeType.ApiKey,
-                            Name = Common.Constants.RequestHeader_ApiKey,
-                            In = ParameterLocation.Header
-                        },
-                        new List<string>()
-                    }
-                });
+                //custom api key authentication
+                //c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                //{
+                //    {
+                //        new OpenApiSecurityScheme
+                //        {
+                //            Reference = new OpenApiReference
+                //            {
+                //                Type = ReferenceType.SecurityScheme,
+                //                Id = Common.Constants.RequestHeader_ApiKey
+                //            },
+                //            Type = SecuritySchemeType.ApiKey,
+                //            Name = Common.Constants.RequestHeader_ApiKey,
+                //            In = ParameterLocation.Header
+                //        },
+                //        new List<string>()
+                //    }
+                //});
             });
             services.AddSwaggerGenNewtonsoftSupport();
         }
