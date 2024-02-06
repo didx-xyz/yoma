@@ -15,7 +15,7 @@ namespace Yoma.Core.Domain.Opportunity
         /// </summary>
         Manual,
         /// <summary>
-        /// Verification by the provider directly / automatically via SSI integration
+        /// Verification by the provider directly / automatically via integration
         /// </summary>
         Automatic
     }
