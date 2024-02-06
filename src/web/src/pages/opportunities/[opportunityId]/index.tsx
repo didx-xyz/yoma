@@ -243,11 +243,10 @@ const OpportunityDetails: NextPageWithLayout<{
           {/* MAIN CONTENT */}
           {!serverError && (
             <>
-              <div className="flex flex-col gap-2 py-4 sm:flex-row">
-                {/* BREADCRUMB */}
-                <div className="breadcrumbs flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+              <div className="flex flex-col gap-2 py-6 sm:flex-row">
+                <div className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
                   <ul>
-                    <li>
+                    <li className='inline'>
                       <Link
                         className="text-white hover:text-gray"
                         href={`/opportunities`}
@@ -256,11 +255,11 @@ const OpportunityDetails: NextPageWithLayout<{
                         Opportunities
                       </Link>
                     </li>
-                    <li>
-                      <p className="-mx-4 font-semibold text-white">|</p>
+                    <li className='inline'>
+                      <p className="font-semibold text-white inline mx-2">|</p>
                     </li>
-                    <li>
-                      <div className="max-w-[600px] text-white">
+                    <li className='inline'>
+                      <div className="max-w-[600px] text-white inline">
                         {opportunity?.title}
                       </div>
                     </li>
@@ -683,8 +682,8 @@ const OpportunityDetails: NextPageWithLayout<{
                                         onClick={() =>
                                           user
                                             ? setCompleteOpportunityDialogVisible(
-                                                true,
-                                              )
+                                              true,
+                                            )
                                             : setLoginDialogVisible(true)
                                         }
                                       >
@@ -720,7 +719,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             )} */}
                                   {verificationStatus &&
                                     verificationStatus.status ==
-                                      "Completed" && (
+                                    "Completed" && (
                                       <div className="md:text-md flex items-center justify-center rounded-full border border-purple bg-white px-4 text-center text-xs font-bold text-purple">
                                         Completed
                                         <IoMdCheckmark
@@ -873,7 +872,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           {/* <div className="my-2 text-sm">{`This task should not take you more than ${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}`}</div> */}
                           <div className="my-2 text-sm">{`This task should not take you more than ${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
                             opportunity?.commitmentIntervalCount > 1 ? "s" : ""
-                          }`}</div>
+                            }`}</div>
                         </div>
                         <div className="divider mt-2" />
                         <div>
