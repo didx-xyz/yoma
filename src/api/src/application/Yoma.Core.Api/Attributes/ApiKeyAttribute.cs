@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using Yoma.Core.Api.Common;
-using Yoma.Core.Domain.Entity.Interfaces;
 
 namespace Yoma.Core.Api.Attributes
 {
@@ -10,14 +9,10 @@ namespace Yoma.Core.Api.Attributes
     public class ApiKeyAttribute : Attribute, IAsyncActionFilter
     {
         #region Class Variables
-        private readonly IOrganizationService _organizationService;
         #endregion
 
         #region Constructor
-        public ApiKeyAttribute(IOrganizationService organizationService)
-        {
-            _organizationService = organizationService;
-        }
+        public ApiKeyAttribute() { }
         #endregion
 
         #region Public Members
@@ -33,19 +28,9 @@ namespace Yoma.Core.Api.Attributes
                 return;
             }
 
-            var organization = _organizationService.GetByApiKeyOrNull(extractedApiKey.ToString());
-            if (organization == null)
-            {
-                context.Result = new ContentResult()
-                {
-                    StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Content = HttpStatusCode.Unauthorized.ToString()
-                };
-                return;
-            }
-
-            //store the authenticated organization id in HttpContext.Items for subsequent use (HttpContext.Items.TryGetValue(Constants.HttpContextItemsKey_Authenticated_OrganizationId, out var organizationIdObj) && organizationIdObj is Guid organizationId)
-            context.HttpContext.Items[Constants.HttpContextItemsKey_Authenticated_OrganizationId] = organization.Id;
+            //validate key against configuration / storage
+            //StatusCode = (int)HttpStatusCode.Unauthorized,
+            //Content = HttpStatusCode.Unauthorized.ToString()
 
             await next();
         }

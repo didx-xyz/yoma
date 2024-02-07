@@ -11,6 +11,13 @@ ingress:
       nginx.ingress.kubernetes.io/cors-allow-origin: "https://v3app.dev.yoma.world"
     rules:
       - host: v3api.dev.yoma.world
+  external:
+    enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/cors-allow-origin: "https://v3app.dev.yoma.world"
+    rules:
+      - host: v3api.dev.yoma.world
 
 env:
   ASPNETCORE_ENVIRONMENT: "Development"

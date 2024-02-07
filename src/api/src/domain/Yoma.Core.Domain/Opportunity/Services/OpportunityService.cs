@@ -523,6 +523,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
+            if (organization.Status != OrganizationStatus.Active)
+                throw new ValidationException($"An opportunity cannot be created as the associated organization '{organization.Name}' is not currently active (pending approval)");
+
             var result = new Models.Opportunity
             {
                 Title = request.Title,
@@ -608,6 +611,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
             var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
+
+            if (organization.Status != OrganizationStatus.Active)
+                throw new ValidationException($"The opportunity cannot be updated as the associated organization '{organization.Name}' is not currently active (pending approval)");
 
             //status remains unchanged (status updated via UpdateStatus)
             result.Title = request.Title;

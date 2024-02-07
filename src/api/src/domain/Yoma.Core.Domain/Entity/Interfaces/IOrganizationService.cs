@@ -13,10 +13,6 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
         Organization? GetByNameOrNull(string name, bool includeChildItems, bool includeComputed);
 
-        Organization GetByApiKey(string apiKey);
-
-        Organization GetByApiKeyOrNull(string apiKey);
-
         List<Organization> Contains(string value, bool includeComputed);
 
         OrganizationSearchResults Search(OrganizationSearchFilter filter, bool ensureOrganizationAuthorization);

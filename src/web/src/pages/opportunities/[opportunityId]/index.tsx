@@ -243,11 +243,10 @@ const OpportunityDetails: NextPageWithLayout<{
           {/* MAIN CONTENT */}
           {!serverError && (
             <>
-              <div className="flex flex-col gap-2 py-4 sm:flex-row">
-                {/* BREADCRUMB */}
-                <div className="breadcrumbs flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+              <div className="flex flex-col gap-2 py-6 sm:flex-row">
+                <div className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
                   <ul>
-                    <li>
+                    <li className="inline">
                       <Link
                         className="text-white hover:text-gray"
                         href={`/opportunities`}
@@ -256,11 +255,11 @@ const OpportunityDetails: NextPageWithLayout<{
                         Opportunities
                       </Link>
                     </li>
-                    <li>
-                      <p className="-mx-4 font-semibold text-white">|</p>
+                    <li className="inline">
+                      <p className="mx-2 inline font-semibold text-white">|</p>
                     </li>
-                    <li>
-                      <div className="max-w-[600px] text-white">
+                    <li className="inline">
+                      <div className="inline max-w-[600px] text-white">
                         {opportunity?.title}
                       </div>
                     </li>
