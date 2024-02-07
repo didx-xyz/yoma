@@ -1,5 +1,5 @@
 import Head from "next/head";
-import iconImage from "public/images/icon-rocket.svg";
+import iconImage from "public/images/icon-rocket.webp";
 import Image from "next/image";
 
 export const UnderConstruction = () => (

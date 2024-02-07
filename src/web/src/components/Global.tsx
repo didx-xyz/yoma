@@ -16,7 +16,7 @@ import {
 } from "~/lib/store";
 import ReactModal from "react-modal";
 import { IoMdThumbsUp } from "react-icons/io";
-import iconBell from "public/images/icon-bell.svg";
+import iconBell from "public/images/icon-bell.webp";
 import Image from "next/image";
 import { toast } from "react-toastify";
 import { ApiErrors } from "./Status/ApiErrors";

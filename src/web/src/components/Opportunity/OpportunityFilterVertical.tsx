@@ -13,7 +13,7 @@ import type {
 import type { Country, Language } from "~/api/models/lookups";
 import Image from "next/image";
 import { shimmer, toBase64 } from "src/lib/image";
-import iconRocket from "public/images/icon-rocket.svg";
+import iconRocket from "public/images/icon-rocket.webp";
 import Select from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import { useSession } from "next-auth/react";

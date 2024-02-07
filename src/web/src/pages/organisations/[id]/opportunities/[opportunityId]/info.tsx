@@ -35,7 +35,7 @@ import iconLanguage from "public/images/icon-language.svg";
 import iconTopics from "public/images/icon-topics.svg";
 import iconSkills from "public/images/icon-skills.svg";
 import iconUser from "public/images/icon-user.svg";
-import iconSuccess from "public/images/icon-success.svg";
+import iconSuccess from "public/images/icon-success.webp";
 import { toast } from "react-toastify";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { type AxiosError } from "axios";

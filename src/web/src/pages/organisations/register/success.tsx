@@ -2,7 +2,7 @@ import Image from "next/image";
 import { type ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
 import { type NextPageWithLayout } from "~/pages/_app";
-import iconRocket from "public/images/icon-rocket.svg";
+import iconRocket from "public/images/icon-rocket.webp";
 import Link from "next/link";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";

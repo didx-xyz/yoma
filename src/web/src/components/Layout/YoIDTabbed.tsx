@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useEffect, type ReactElement, useState } from "react";
 import MainLayout from "./Main";
 import { PageBackground } from "../PageBackground";
-import iconCards from "public/images/cards.png";
+import iconCards from "public/images/cards.webp";
 import Image from "next/image";
 import { userProfileAtom } from "~/lib/store";
 import { useAtom } from "jotai";

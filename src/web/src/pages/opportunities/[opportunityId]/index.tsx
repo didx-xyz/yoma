@@ -32,9 +32,9 @@ import iconDifficulty from "public/images/icon-difficulty.svg";
 import iconLanguage from "public/images/icon-language.svg";
 import iconTopics from "public/images/icon-topics.svg";
 import iconSkills from "public/images/icon-skills.svg";
-import iconBell from "public/images/icon-bell.svg";
-import iconSmiley from "public/images/icon-smiley.svg";
-import iconSuccess from "public/images/icon-success.svg";
+import iconBell from "public/images/icon-bell.webp";
+import iconSmiley from "public/images/icon-smiley.webp";
+import iconSuccess from "public/images/icon-success.webp";
 import Image from "next/image";
 import {
   getVerificationStatus,

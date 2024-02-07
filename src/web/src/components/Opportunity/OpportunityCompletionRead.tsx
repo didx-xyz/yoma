@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import React, { useMemo, useState } from "react";
 import { IoMdPin } from "react-icons/io";
-import iconSuccess from "public/images/icon-success.svg";
+import iconSuccess from "public/images/icon-success.webp";
 import iconCertificate from "public/images/icon-certificate.svg";
 import iconPicture from "public/images/icon-picture.svg";
 import iconVideo from "public/images/icon-video.svg";

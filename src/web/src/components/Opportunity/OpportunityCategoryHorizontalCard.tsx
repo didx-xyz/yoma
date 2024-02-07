@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { useCallback } from "react";
 import type { OpportunityCategory } from "~/api/models/opportunity";
-import iconRocket from "public/images/icon-rocket.svg";
+import iconRocket from "public/images/icon-rocket.webp";
 
 interface InputProps {
   data: OpportunityCategory;

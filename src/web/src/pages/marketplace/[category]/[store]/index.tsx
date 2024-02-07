@@ -24,7 +24,7 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import ReactModal from "react-modal";
 import Image from "next/image";
 import { signIn, useSession } from "next-auth/react";
-import iconBell from "public/images/icon-bell.svg";
+import iconBell from "public/images/icon-bell.webp";
 import { fetchClientEnv } from "~/lib/utils";
 import type { ErrorResponseItem } from "~/api/models/common";
 

@@ -5,7 +5,7 @@ export const PageBackground: React.FC<{ height?: number }> = ({
   return (
     <div
       style={{ height: `${height}rem` }}
-      className="bg-theme absolute left-0 top-0 z-0 h-32 w-full bg-[url('/images/world-map.svg')] bg-fixed bg-top bg-no-repeat"
+      className="bg-theme absolute left-0 top-0 z-0 h-32 w-full bg-[url('/images/world-map.png')] bg-fixed bg-top bg-no-repeat"
     />
   );
 };

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import logoPicDark from "public/images/logo-dark.svg";
-import logoPicLight from "public/images/logo-light.svg";
+import logoPicDark from "public/images/logo-dark.webp";
+import logoPicLight from "public/images/logo-light.webp";
 import React from "react";
 
 export interface InputProps {

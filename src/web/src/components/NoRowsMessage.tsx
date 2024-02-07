@@ -1,5 +1,5 @@
 import React from "react";
-import iconImage from "public/images/icon-rocket.svg";
+import iconImage from "public/images/icon-rocket.webp";
 import Image from "next/image";
 
 const NoRowsMessage: React.FC<{

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { shimmer, toBase64 } from "src/lib/image";
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
-import iconRocket from "public/images/icon-rocket.svg";
+import iconRocket from "public/images/icon-rocket.webp";
 import Moment from "react-moment";
 import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
 import { useCallback } from "react";

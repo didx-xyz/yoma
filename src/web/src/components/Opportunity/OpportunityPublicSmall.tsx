@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { shimmer, toBase64 } from "src/lib/image";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import iconRocket from "public/images/icon-rocket.svg";
+import iconRocket from "public/images/icon-rocket.webp";
 import iconClock from "public/images/icon-clock.svg";
 import iconUser from "public/images/icon-user.svg";
 import iconZlto from "public/images/icon-zlto.svg";
