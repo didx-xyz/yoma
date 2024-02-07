@@ -15,7 +15,12 @@ import type {
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
-import { PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
+import {
+  GA_ACTION_MARKETPLACE_ITEM_BUY as GA_ACTION_MARKETPLACE_ITEM_PURCHASE,
+  GA_CATEGORY_OPPORTUNITY,
+  PAGE_SIZE,
+  THEME_BLUE,
+} from "~/lib/constants";
 import { ItemCardComponent } from "~/components/Marketplace/ItemCard";
 import { IoMdArrowRoundBack, IoMdClose, IoMdFingerPrint } from "react-icons/io";
 import Breadcrumb from "~/components/Breadcrumb";
@@ -27,6 +32,7 @@ import { signIn, useSession } from "next-auth/react";
 import iconBell from "public/images/icon-bell.webp";
 import { fetchClientEnv } from "~/lib/utils";
 import type { ErrorResponseItem } from "~/api/models/common";
+import { trackGAEvent } from "~/lib/google-analytics";
 
 interface IParams extends ParsedUrlQuery {
   category: string;
@@ -152,8 +158,18 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
   const onBuyConfirm = useCallback(
     (item: StoreItemCategory) => {
       setBuyDialogVisible(false);
+
+      // update api
       buyItem(storeId, item.id)
         .then(() => {
+          // 📊 GOOGLE ANALYTICS: track event
+          trackGAEvent(
+            GA_CATEGORY_OPPORTUNITY,
+            GA_ACTION_MARKETPLACE_ITEM_PURCHASE,
+            `Marketplace Item Purchased. Store: ${store}, Item: ${item.name}`,
+          );
+
+          // show confirmation dialog
           setBuyDialogConfirmationVisible(true);
         })
         .catch((err) => {
@@ -161,6 +177,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
           setBuyDialogErrorMessages(customErrors);
           setBuyDialogErrorVisible(true);
         });
+
       //TODO: update zlto balance
     },
     [

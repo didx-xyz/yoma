@@ -47,9 +47,14 @@ import {
 } from "~/api/models/credential";
 import { SchemaAttributesEdit } from "~/components/Schema/SchemaAttributesEdit";
 import type { SelectOption } from "~/api/models/lookups";
-import { THEME_BLUE } from "~/lib/constants";
+import {
+  GA_ACTION_ADMIN_SCHEMA_CREATE,
+  GA_CATEGORY_SCHEMA,
+  THEME_BLUE,
+} from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
+import { trackGAEvent } from "~/lib/google-analytics";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -147,6 +152,13 @@ const SchemaCreateEdit: NextPageWithLayout<{
         // update api
         if (id === "create") await createSchema(data);
         else await updateSchema(data);
+
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_SCHEMA,
+          GA_ACTION_ADMIN_SCHEMA_CREATE,
+          `Schema '${data.name}' ${id == "create" ? "created" : "updated"}.`,
+        );
 
         toast(`Schema ${id == "create" ? "created" : "updated"}.`, {
           type: "success",

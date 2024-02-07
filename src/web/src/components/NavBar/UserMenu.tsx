@@ -1,8 +1,8 @@
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   IoMdAdd,
   IoMdCard,
@@ -15,7 +15,12 @@ import {
 } from "react-icons/io";
 import ReactModal from "react-modal";
 import { type OrganizationInfo } from "~/api/models/user";
-import { ROLE_ADMIN } from "~/lib/constants";
+import {
+  GA_ACTION_USER_LOGOUT,
+  GA_CATEGORY_USER,
+  ROLE_ADMIN,
+} from "~/lib/constants";
+import { trackGAEvent } from "~/lib/google-analytics";
 import { shimmer, toBase64 } from "~/lib/image";
 import {
   RoleView,
@@ -27,18 +32,26 @@ import {
 export const UserMenu: React.FC = () => {
   const [userMenuVisible, setUserMenuVisible] = useState(false);
   const userProfile = useAtomValue(userProfileAtom);
+  const setUserProfile = useSetAtom(userProfileAtom);
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationLogo = useAtomValue(currentOrganisationLogoAtom);
   const { data: session } = useSession();
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     setUserMenuVisible(false);
 
+    // update atom
+    setUserProfile(null);
+
+    // 📊 GOOGLE ANALYTICS: track event
+    trackGAEvent(GA_CATEGORY_USER, GA_ACTION_USER_LOGOUT, "User logged out");
+
+    // signout from keycloak
     signOut({
       callbackUrl: `${window.location.origin}/`,
     }); // eslint-disable-line @typescript-eslint/no-floating-promises
-  };
+  }, [userProfile, setUserProfile]);
 
   const renderOrganisationMenuItem = (organisation: OrganizationInfo) => {
     return (

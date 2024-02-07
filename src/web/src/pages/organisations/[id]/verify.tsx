@@ -40,6 +40,8 @@ import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
+  GA_ACTION_ORGANISATION_VERIFY,
+  GA_CATEGORY_ORGANISATION,
   ROLE_ADMIN,
   ROLE_ORG_ADMIN,
   THEME_BLUE,
@@ -47,6 +49,7 @@ import {
 } from "~/lib/constants";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
+import { trackGAEvent } from "~/lib/google-analytics";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -144,6 +147,13 @@ const OrganisationDetails: NextPageWithLayout<{
         toastId: "verifyOrganisation",
       });
       console.log(message);
+
+      // 📊 GOOGLE ANALYTICS: track event
+      trackGAEvent(
+        GA_CATEGORY_ORGANISATION,
+        GA_ACTION_ORGANISATION_VERIFY,
+        message,
+      );
 
       // invalidate queries
       await queryClient.invalidateQueries({ queryKey: ["organisations"] });
