@@ -25,6 +25,9 @@ import {
 import NoRowsMessage from "~/components/NoRowsMessage";
 import {
   DATETIME_FORMAT_HUMAN,
+  GA_ACTION_ORGANISATION_UPATE,
+  GA_ACTION_ORGANISATION_VERIFY,
+  GA_CATEGORY_ORGANISATION,
   PAGE_SIZE,
   ROLE_ADMIN,
   THEME_BLUE,
@@ -58,6 +61,7 @@ import Moment from "react-moment";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
+import { trackGAEvent } from "~/lib/google-analytics";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -264,6 +268,13 @@ const OpportunityVerifications: NextPageWithLayout<{
         // update api
         await performActionVerifyManual(model);
 
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_ORGANISATION,
+          GA_ACTION_ORGANISATION_VERIFY,
+          `Organisation ${approved ? "approved" : "rejected"}`,
+        );
+
         // invalidate query
         await queryClient.invalidateQueries({
           queryKey: ["opportunityParticipants", id],
@@ -357,6 +368,15 @@ const OpportunityVerifications: NextPageWithLayout<{
 
         // update api
         await performActionVerifyBulk(model);
+
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_ORGANISATION,
+          GA_ACTION_ORGANISATION_VERIFY,
+          `${selectedRows?.length ?? 0} Organisations ${
+            approved ? "approved" : "rejected"
+          }`,
+        );
 
         // invalidate query
         await queryClient.invalidateQueries({

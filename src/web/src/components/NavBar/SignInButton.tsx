@@ -2,6 +2,8 @@ import { useAtomValue } from "jotai";
 import { signIn } from "next-auth/react";
 import React, { useCallback, useState } from "react";
 import { IoMdFingerPrint } from "react-icons/io";
+import { GA_ACTION_USER_LOGIN_BEFORE, GA_CATEGORY_USER } from "~/lib/constants";
+import { trackGAEvent } from "~/lib/google-analytics";
 import { currentLanguageAtom } from "~/lib/store";
 import { fetchClientEnv } from "~/lib/utils";
 
@@ -13,6 +15,13 @@ export const SignInButton: React.FC<{ className?: string }> = ({
 
   const handleLogin = useCallback(async () => {
     setIsButtonLoading(true);
+
+    // 📊 GOOGLE ANALYTICS: track event
+    trackGAEvent(
+      GA_CATEGORY_USER,
+      GA_ACTION_USER_LOGIN_BEFORE,
+      "User Logging In. Redirected to External Authentication Provider",
+    );
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     signIn(

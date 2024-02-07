@@ -69,9 +69,13 @@ import {
   THEME_PURPLE,
   REGEX_URL_VALIDATION,
   MAXINT32,
+  GA_CATEGORY_OPPORTUNITY,
+  GA_ACTION_OPPORTUNITY_CREATE,
+  GA_ACTION_OPPORTUNITY_UPDATE,
 } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
+import { trackGAEvent } from "~/lib/google-analytics";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -395,11 +399,26 @@ const OpportunityDetails: NextPageWithLayout<{
         if (step === 8) {
           // submit on last page when creating new opportunity
           await onSubmit(model);
+
+          // 📊 GOOGLE ANALYTICS: track event
+          trackGAEvent(
+            GA_CATEGORY_OPPORTUNITY,
+            GA_ACTION_OPPORTUNITY_CREATE,
+            `Created Opportunity: ${model.title}`,
+          );
+
           return;
         }
       } else {
         // submit on each page when updating opportunity
         await onSubmit(model);
+
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_OPPORTUNITY,
+          GA_ACTION_OPPORTUNITY_UPDATE,
+          `Updated Opportunity: ${model.title}`,
+        );
         return;
       }
       setStep(step);

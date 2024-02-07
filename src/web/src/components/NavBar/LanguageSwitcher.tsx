@@ -3,6 +3,11 @@ import { destroyCookie, parseCookies, setCookie } from "nookies";
 import { IoMdGlobe } from "react-icons/io";
 import { useSetAtom } from "jotai";
 import { currentLanguageAtom } from "~/lib/store";
+import {
+  GA_ACTION_USER_LANGUAGE_CHANGE,
+  GA_CATEGORY_USER,
+} from "~/lib/constants";
+import { trackGAEvent } from "~/lib/google-analytics";
 
 // The following cookie name is important because it's Google-predefined for the translation engine purpose
 const COOKIE_NAME = "googtrans";
@@ -79,6 +84,9 @@ const LanguageSwitcher = () => {
     setCookie(null, COOKIE_NAME, "/auto/" + lang, {
       domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
     });
+
+    // 📊 GOOGLE ANALYTICS: track event
+    trackGAEvent(GA_CATEGORY_USER, GA_ACTION_USER_LANGUAGE_CHANGE, lang);
 
     window.location.reload();
   };

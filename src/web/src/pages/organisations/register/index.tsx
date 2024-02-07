@@ -30,10 +30,13 @@ import {
   ROLE_ORG_ADMIN,
   THEME_GREEN,
   THEME_PURPLE,
+  GA_CATEGORY_ORGANISATION,
+  GA_ACTION_ORGANISATION_REGISTER,
 } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getCountries } from "~/api/services/lookups";
 import { useSession } from "next-auth/react";
+import { trackGAEvent } from "~/lib/google-analytics";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -177,11 +180,21 @@ const OrganisationCreate: NextPageWithLayout<{
 
       setOrganizationRequestBase(model);
 
-      if (step === 4) {
+      if (step < 4)
+        // next step
+        setStep(step);
+      else {
+        // last step
         await onSubmit(model);
+
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_ORGANISATION,
+          GA_ACTION_ORGANISATION_REGISTER,
+          `Organisation registered: ${model.name}`,
+        );
         return;
       }
-      setStep(step);
     },
     [setStep, OrganizationRequestBase, onSubmit],
   );
