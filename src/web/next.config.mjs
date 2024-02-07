@@ -6,6 +6,12 @@ const pwa = withPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
+  // disable prefetching of all assets
+  // this prevents downloading all the precached resources when the site is visited for the first time
+  runtimeCaching: [],
+  publicExcludes: ["!**/*"], // like this
+  buildExcludes: [() => true],
+  cacheStartUrl: false,
 });
 
 /** bundleAnalyzer config */
