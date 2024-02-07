@@ -18,7 +18,7 @@ namespace Yoma.Core.Api.Attributes
         #region Public Members
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            if (!context.HttpContext.Request.Headers.TryGetValue(Constants.RequestHeader_ApiKey, out var extractedApiKey))
+            if (!context.HttpContext.Request.Headers.TryGetValue(Constants.RequestHeader_ApiKey, out var _))
             {
                 context.Result = new ContentResult()
                 {
@@ -28,7 +28,7 @@ namespace Yoma.Core.Api.Attributes
                 return;
             }
 
-            //validate key against configuration / storage
+            //validate extractedApiKey key against configuration / storage
             //StatusCode = (int)HttpStatusCode.Unauthorized,
             //Content = HttpStatusCode.Unauthorized.ToString()
 

@@ -13,13 +13,11 @@ namespace Yoma.Core.Api.Controllers
     public class ExternalPartnerController : Controller
     {
         #region Class Variables
-        private readonly ILogger<OpportunityController> _logger;
         #endregion
 
         #region Constructor
-        public ExternalPartnerController(ILogger<OpportunityController> logger)
+        public ExternalPartnerController()
         {
-            _logger = logger;
         }
         #endregion
 

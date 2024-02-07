@@ -34,8 +34,8 @@ namespace Yoma.Core.Domain.Entity.Validators
             RuleFor(x => x.StreetAddress).Length(1, 500).When(x => !string.IsNullOrEmpty(x.StreetAddress));
             RuleFor(x => x.Province).Length(1, 255).When(x => !string.IsNullOrEmpty(x.Province));
             RuleFor(x => x.PostalCode).Length(1, 10).When(x => !string.IsNullOrEmpty(x.PostalCode));
-            RuleFor(x => x.Tagline).Length(1, 160).When(x => !string.IsNullOrEmpty(x.PostalCode));
-            RuleFor(x => x.Biography).Length(1, 480).When(x => !string.IsNullOrEmpty(x.PostalCode));
+            RuleFor(x => x.Tagline).Length(1, 160).When(x => !string.IsNullOrEmpty(x.Tagline));
+            RuleFor(x => x.Biography).Length(1, 480).When(x => !string.IsNullOrEmpty(x.Biography));
             RuleFor(x => x.Logo).Must(file => file == null || file.Length > 0).WithMessage("Logo is optional, but if specified, can not be empty.");
             RuleFor(x => x.ProviderTypes).Must(providerTypes => providerTypes != null && providerTypes.Any() && providerTypes.All(id => id != Guid.Empty && ProviderTypeExist(id)))
                 .WithMessage("Provider types are required and must exist.");

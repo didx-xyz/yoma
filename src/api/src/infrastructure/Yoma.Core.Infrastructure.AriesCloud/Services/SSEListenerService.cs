@@ -1,5 +1,5 @@
-using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
-using AriesCloudAPI.DotnetSDK.AspCore.Clients;
+using Aries.CloudAPI.DotnetSDK.AspCore.Clients.Models;
+using Aries.CloudAPI.DotnetSDK.AspCore.Clients;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Yoma.Core.Infrastructure.AriesCloud.Interfaces;
@@ -70,29 +70,27 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Services
         #region Private Members
         private async Task<WebhookEvent<T>?> CreateClient<T>(string tenantId, Topic topic, string desiredState, string? fieldName, string? fieldValue) where T : class
         {
-            using (var stream = await _clientFactory.CreateCustomerSSEClientSingleEvent(tenantId, topic, desiredState, fieldName, fieldValue))
+            using var stream = await _clientFactory.CreateTenantAdminSSEClientSingleEvent(tenantId, topic, desiredState, fieldName, fieldValue);
+            WebhookEvent<T>? result = null;
+            using (var reader = new StreamReader(stream))
             {
-                WebhookEvent<T>? result = null;
-                using (var reader = new StreamReader(stream))
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var msg = await reader.ReadLineAsync();
+                    if (string.IsNullOrEmpty(msg) || msg.StartsWith(": ping")) continue;
+
+                    if (!msg.StartsWith("data: "))
                     {
-                        var msg = await reader.ReadLineAsync();
-                        if (string.IsNullOrEmpty(msg) || msg.StartsWith(": ping")) continue;
-
-                        if (!msg.StartsWith("data: "))
-                        {
-                            _logger.LogError($"Unexpected SSE message: {msg}");
-                            continue;
-                        }
-                        msg = msg.Substring(6);
-
-                        return JsonConvert.DeserializeObject<WebhookEvent<T>>(msg);
+                        _logger.LogError("Unexpected SSE message: {msg}", msg);
+                        continue;
                     }
-                }
+                    msg = msg[6..];
 
-                return result;
+                    return JsonConvert.DeserializeObject<WebhookEvent<T>>(msg);
+                }
             }
+
+            return result;
         }
         #endregion
     }
