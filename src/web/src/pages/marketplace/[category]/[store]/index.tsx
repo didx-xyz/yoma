@@ -181,6 +181,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
       //TODO: update zlto balance
     },
     [
+      store,
       storeId,
       setBuyDialogVisible,
       setBuyDialogConfirmationVisible,
