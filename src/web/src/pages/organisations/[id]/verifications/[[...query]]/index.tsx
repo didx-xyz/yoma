@@ -25,7 +25,6 @@ import {
 import NoRowsMessage from "~/components/NoRowsMessage";
 import {
   DATETIME_FORMAT_HUMAN,
-  GA_ACTION_ORGANISATION_UPATE,
   GA_ACTION_ORGANISATION_VERIFY,
   GA_CATEGORY_ORGANISATION,
   PAGE_SIZE,

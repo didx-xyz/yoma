@@ -51,7 +51,7 @@ export const UserMenu: React.FC = () => {
     signOut({
       callbackUrl: `${window.location.origin}/`,
     }); // eslint-disable-line @typescript-eslint/no-floating-promises
-  }, [userProfile, setUserProfile]);
+  }, [setUserProfile]);
 
   const renderOrganisationMenuItem = (organisation: OrganizationInfo) => {
     return (
