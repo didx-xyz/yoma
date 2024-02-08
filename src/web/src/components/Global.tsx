@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 import { getOrganisationById } from "~/api/services/organisations";
 import { getUserProfile, patchYoIDOnboarding } from "~/api/services/user";
 import {
-  GA_ACTION_USER_LOGIN_AFTER,
   GA_ACTION_USER_YOIDONBOARDINGCONFIRMED,
   GA_CATEGORY_USER,
   ROLE_ADMIN,
