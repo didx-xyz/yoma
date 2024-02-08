@@ -1,6 +1,6 @@
-using AriesCloudAPI.DotnetSDK.AspCore.Clients;
-using AriesCloudAPI.DotnetSDK.AspCore.Clients.Interfaces;
-using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
+using Aries.CloudAPI.DotnetSDK.AspCore.Clients;
+using Aries.CloudAPI.DotnetSDK.AspCore.Clients.Interfaces;
+using Aries.CloudAPI.DotnetSDK.AspCore.Clients.Models;
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -111,7 +111,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
             var client = _clientFactory.CreateTenantClient(tenantId); //will result in a HttpClientException(StatusCode=NotFound)
 
-            var result = await client.GetIndyCredentialAsync(id);
+            var result = await client.GetIndyCredentialByIdAsync(id);
 
             return result.ToCredential();
         }
@@ -209,7 +209,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             if (!string.IsNullOrEmpty(request.ImageUrl) && !Uri.TryCreate(request.ImageUrl, UriKind.Absolute, out imageUri))
                 throw new ArgumentException($"'{nameof(request.ImageUrl)}' is required / invalid", nameof(request));
 
-            var client = _clientFactory.CreateCustomerClient();
+            var client = _clientFactory.CreateTenantAdminClient();
 
             var tenant = await GetTenantByWalletNameOrNull(request.Referent, client);
             if (tenant == null)
@@ -277,16 +277,16 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             if (undefinedAttributes.Any())
                 throw new ArgumentException($"'{nameof(request.Attributes)}' contains attribute(s) not defined on the associated schema ('{request.SchemaName}'): '{string.Join(",", undefinedAttributes)}'");
 
-            var clientCustomer = _clientFactory.CreateCustomerClient();
+            var clientTenantAdmin = _clientFactory.CreateTenantAdminClient();
 
-            var tenantHolder = await clientCustomer.GetTenantAsync(wallet_id: request.TenantIdHolder);
+            var tenantHolder = await clientTenantAdmin.GetTenantByIdAsync(wallet_id: request.TenantIdHolder);
             var clientHolder = _clientFactory.CreateTenantClient(tenantHolder.Wallet_id);
 
             //check if credential was issued based on clientReferent
             var result = await GetCredentialReferentByClientReferentOrNull(clientHolder, request.ArtifactType, request.ClientReferent, false);
             if (!string.IsNullOrEmpty(result)) return result;
 
-            var tenantIssuer = await clientCustomer.GetTenantAsync(wallet_id: request.TenantIdIssuer);
+            var tenantIssuer = await clientTenantAdmin.GetTenantByIdAsync(wallet_id: request.TenantIdIssuer);
             var clientIssuer = _clientFactory.CreateTenantClient(tenantIssuer.Wallet_id);
 
             var connection = await EnsureConnectionCI(tenantIssuer, clientIssuer, tenantHolder, clientHolder);
@@ -310,7 +310,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                     break;
 
                 case ArtifactType.Ld_proof:
-                    var dids = await clientIssuer.GetDidsAsync();
+                    var dids = await clientIssuer.GetDIDsAsync();
                     var did = dids.SingleOrDefault(o => o.Key_type == DIDKey_type.Ed25519 && o.Posture == DIDPosture.Posted)
                         ?? throw new InvalidOperationException($"Failed to retrieve the issuer DID of type '{DIDKey_type.Ed25519}' and posture '{DIDPosture.Posted}'");
                     var credentialSubject = new Dictionary<string, string> { { "type", request.SchemaType } };
@@ -322,7 +322,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                         Connection_id = connection.SourceConnectionId,
                         Ld_credential_detail = new LDProofVCDetail
                         {
-                            Credential = new AriesCloudAPI.DotnetSDK.AspCore.Clients.Models.Credential
+                            Credential = new Aries.CloudAPI.DotnetSDK.AspCore.Clients.Models.Credential
                             {
                                 Context = new List<string> { "https://www.w3.org/2018/credentials/v1" },
                                 Type = new List<string> { "VerifiableCredential", request.SchemaType },
@@ -390,7 +390,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 throw new InvalidOperationException($"Failed to receive SSE event for topic '{Topic.Credentials}' and desired state '{CredentialExchangeState.OfferReceived}'");
 
             // request the credential by holder (aries cloud auto completes and store the credential in the holders wallet)
-            var credentialExchange = await clientHolder.RequestCredentialAsync(sseEvent.payload.Credential_id);
+            var credentialExchange = await clientHolder.RequestCredentialByIdAsync(sseEvent.Payload.Credential_id);
 
             await Task.Run(async () =>
             {
@@ -408,7 +408,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         #endregion
 
         #region Private Members
-        private static async Task<Tenant?> GetTenantByWalletNameOrNull(string walletName, ICustomerClient client)
+        private static async Task<Tenant?> GetTenantByWalletNameOrNull(string walletName, ITenantAdminClient client)
         {
             var tenants = await client.GetTenantsAsync(wallet_name: walletName);
 
@@ -420,14 +420,14 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
         private async Task<Tenant> GetTenantById(string id)
         {
-            var clientCustomer = _clientFactory.CreateCustomerClient();
+            var clientTenantAdmin = _clientFactory.CreateTenantAdminClient();
 
             Tenant? tenant = null;
             try
             {
-                tenant = await clientCustomer.GetTenantAsync(wallet_id: id);
+                tenant = await clientTenantAdmin.GetTenantByIdAsync(wallet_id: id);
             }
-            catch (AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+            catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
             {
                 if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
             }
@@ -443,7 +443,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             {
                 actors = await clientPublic.GetTrustRegistryActorsAsync(null, id, null);
             }
-            catch (AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+            catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
             {
                 if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
             }
@@ -495,14 +495,14 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 try
                 {
                     //ensure connected (active)
-                    connectionAries = await clientIssuer.GetConnectionAsync(result.SourceConnectionId);
+                    connectionAries = await clientIssuer.GetConnectionByIdAsync(result.SourceConnectionId);
 
                     if (connectionAries != null
                         && string.Equals(connectionAries.State, Models.ConnectionState.Completed.ToString(), StringComparison.InvariantCultureIgnoreCase)) return result;
 
                     await _connectionRepository.Delete(result);
                 }
-                catch (AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+                catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
                 {
                     if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
                 }
@@ -522,7 +522,6 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             var acceptInvitationRequest = new AcceptInvitation
             {
                 Alias = $"'{tenantIssuer.Wallet_label}' >> '{tenantHolder.Wallet_label}'",
-                Use_existing_connection = true,
                 Invitation = new ReceiveInvitationRequest
                 {
                     Did = invitation.Invitation.Did,
@@ -587,7 +586,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                     {
                         credsW3C = await clientHolder.GetW3CCredentialsAsync(null, null, wqlQueryString);
                     }
-                    catch (AriesCloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+                    catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
                     {
                         if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
                     }

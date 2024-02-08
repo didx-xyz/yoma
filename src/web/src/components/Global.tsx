@@ -75,7 +75,7 @@ export const Global: React.FC = () => {
         })
         .catch((e) => console.error(e));
     }
-  }, [session, userProfile, setUserProfile, setOnboardingDialogVisible]);
+  }, [/*session,*/ userProfile, setUserProfile, setOnboardingDialogVisible]);
 
   // 🔔 SMALL DISPLAY
   // track the screen size for responsive elements

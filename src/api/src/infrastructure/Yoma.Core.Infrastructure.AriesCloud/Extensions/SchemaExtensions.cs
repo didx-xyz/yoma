@@ -1,4 +1,4 @@
-using AriesCloudAPI.DotnetSDK.AspCore.Clients.Models;
+using Aries.CloudAPI.DotnetSDK.AspCore.Clients.Models;
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.SSI.Models;
