@@ -52,27 +52,30 @@ export const Global: React.FC = () => {
 
   // 🔔 USER PROFILE
   useEffect(() => {
+    //TODO: disabled for now. need to fix issue with GA login event beging tracked twice
     // skip if not logged in or userProfile atom already set (atomWithStorage)
-    if (!session || userProfile) return;
+    //if (!session || userProfile) return;
 
-    getUserProfile()
-      .then((res) => {
-        // update atom
-        setUserProfile(res);
+    if (!userProfile) {
+      getUserProfile()
+        .then((res) => {
+          // update atom
+          setUserProfile(res);
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_USER,
-          GA_ACTION_USER_LOGIN_AFTER,
-          "User logged in",
-        );
+          // 📊 GOOGLE ANALYTICS: track event
+          // trackGAEvent(
+          //   GA_CATEGORY_USER,
+          //   GA_ACTION_USER_LOGIN_AFTER,
+          //   "User logged in",
+          // );
 
-        // show onboarding dialog if not onboarded
-        if (!res.yoIDOnboarded) {
-          setOnboardingDialogVisible(true);
-        }
-      })
-      .catch((e) => console.error(e));
+          // show onboarding dialog if not onboarded
+          if (!res.yoIDOnboarded) {
+            setOnboardingDialogVisible(true);
+          }
+        })
+        .catch((e) => console.error(e));
+    }
   }, [session, userProfile, setUserProfile, setOnboardingDialogVisible]);
 
   // 🔔 SMALL DISPLAY
