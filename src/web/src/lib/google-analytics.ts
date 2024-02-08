@@ -1,12 +1,12 @@
 import ReactGA from "react-ga4";
-import { env } from "~/env.mjs";
+import { fetchClientEnv } from "~/lib/utils";
 
 const initializeGA = (): void => {
-  if (env.NEXT_PUBLIC_GA_MEASUREMENT_ID)
-    ReactGA.initialize(env.NEXT_PUBLIC_GA_MEASUREMENT_ID);
-  // TODO:on't forget to remove the console.log() statements
-  // when you are done
-  console.log("GA INITIALIZED");
+  fetchClientEnv().then((env) => {
+    if (env.NEXT_PUBLIC_GA_MEASUREMENT_ID) {
+      ReactGA.initialize(env.NEXT_PUBLIC_GA_MEASUREMENT_ID);
+    }
+  });
 };
 
 const trackGAEvent = (
@@ -14,8 +14,6 @@ const trackGAEvent = (
   action: string,
   label: string,
 ): void => {
-  console.log("GA event:", category, ":", action, ":", label);
-  // Send GA4 Event
   ReactGA.event({
     category: category,
     action: action,
