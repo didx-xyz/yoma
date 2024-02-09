@@ -64,6 +64,7 @@ import {
 import Moment from "react-moment";
 import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
+import { RoundedImage } from "~/components/RoundedImage";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -833,21 +834,14 @@ const OpportunityDetails: NextPageWithLayout<{
                         </div>
                       </div>
                     </div>
-                    {/* company logo */}
-                    <div className="absolute right-6 top-4 h-16 w-16 items-center justify-center rounded-full border-green-dark bg-white p-3 shadow-lg">
-                      <Image
-                        src={opportunity?.organizationLogoURL ?? iconSuccess}
-                        alt="Icon Success"
-                        width={40}
-                        height={40}
-                        sizes="100vw"
-                        priority={true}
-                        style={{
-                          width: "40px",
-                          height: "40px",
-                        }}
-                      />
-                    </div>
+
+                    {/* COMPANY LOGO */}
+                    <RoundedImage
+                      icon={opportunity?.organizationLogoURL ?? iconSuccess}
+                      alt="Company Logo"
+                      imageWidth={60}
+                      imageHeight={60}
+                    />
                   </div>
 
                   <div className="flex flex-col gap-4 md:flex-row">

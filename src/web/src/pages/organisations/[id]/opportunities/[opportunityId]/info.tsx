@@ -54,6 +54,7 @@ import { useAtomValue } from "jotai";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { trackGAEvent } from "~/lib/google-analytics";
+import { RoundedImage } from "~/components/RoundedImage";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -362,20 +363,12 @@ const OpportunityDetails: NextPageWithLayout<{
               </div>
             </div>
             {/* company logo */}
-            <div className="flex h-24 w-28 items-center justify-center rounded-full border-green-dark bg-white p-4 shadow-lg">
-              <Image
-                src={opportunity?.organizationLogoURL ?? iconSuccess}
-                alt="Icon Success"
-                width={80}
-                height={80}
-                sizes="100vw"
-                priority={true}
-                style={{
-                  width: "80px",
-                  height: "80px",
-                }}
-              />
-            </div>
+            <RoundedImage
+              icon={opportunity?.organizationLogoURL ?? iconSuccess}
+              alt="Company Logo"
+              imageWidth={60}
+              imageHeight={60}
+            />
           </div>
 
           <div className="flex flex-col gap-2 md:flex-row">

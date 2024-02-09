@@ -1,6 +1,6 @@
 import Head from "next/head";
 import iconImage from "public/images/icon-rocket.webp";
-import Image from "next/image";
+import { RoundedImage } from "../RoundedImage";
 
 export const UnderConstruction = () => (
   <>
@@ -8,21 +8,16 @@ export const UnderConstruction = () => (
       <title>Yoma | Coming soon!</title>
     </Head>
 
-    <div className="container mt-8 flex flex-col items-center justify-center gap-12 px-4">
+    <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
       <div className="flex w-full max-w-md flex-col place-items-center justify-center rounded-xl bg-white p-4">
-        {/* eslint-disable */}
-        <Image
-          src={iconImage}
-          alt="Logo"
-          priority={true}
-          width={0}
-          height={0}
-          sizes="100vw"
-          style={{ width: "100%", height: "auto", maxWidth: "100px" }}
+        <RoundedImage
+          icon={iconImage}
+          alt="Icon Rocket"
+          imageWidth={28}
+          imageHeight={28}
         />
-        {/* eslint-enable */}
 
-        <h2 className="text-gray-900 mb-2 text-lg font-medium">
+        <h2 className="text-gray-900 my-2 text-lg font-medium">
           Under development
         </h2>
         <p className="text-gray-500 text-center">Coming soon ;)</p>

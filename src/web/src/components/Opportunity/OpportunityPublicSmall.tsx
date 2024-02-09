@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { shimmer, toBase64 } from "src/lib/image";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import iconRocket from "public/images/icon-rocket.webp";
 import iconClock from "public/images/icon-clock.svg";
@@ -9,17 +8,16 @@ import iconZlto from "public/images/icon-zlto.svg";
 import iconAction from "public/images/icon-action.svg";
 import Moment from "react-moment";
 import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
+import { RoundedImage } from "../RoundedImage";
 
 interface InputProps {
   data: OpportunityInfo;
-  showGreenTopBorder?: boolean;
   //onClick?: (certificate: OpportunityInfo) => void;
   [key: string]: any;
 }
 
 const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   data,
-  showGreenTopBorder,
   //onClick,
 }) => {
   // // 🔔 click handler: use callback parameter
@@ -46,50 +44,14 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
             </h2>
           </div>
           <div className="absolute right-1 top-1">
-            {!data.organizationLogoURL && (
-              <Image
-                src={iconRocket}
-                alt="Icon Rocket"
-                width={80}
-                height={80}
-                sizes="100vw"
-                priority={true}
-                placeholder="blur"
-                blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                  shimmer(288, 182),
-                )}`}
-                style={{
-                  borderTopLeftRadius:
-                    showGreenTopBorder === true ? "none" : "8px",
-                  borderTopRightRadius:
-                    showGreenTopBorder === true ? "none" : "8px",
-                  width: "80px",
-                  height: "80px",
-                }}
-              />
-            )}
-            {data.organizationLogoURL && (
-              <Image
-                src={data.organizationLogoURL}
-                alt="Organization Logo"
-                width={60}
-                height={60}
-                sizes="100vw"
-                priority={true}
-                placeholder="blur"
-                blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                  shimmer(288, 182),
-                )}`}
-                style={{
-                  borderTopLeftRadius:
-                    showGreenTopBorder === true ? "none" : "8px",
-                  borderTopRightRadius:
-                    showGreenTopBorder === true ? "none" : "8px",
-                  width: "60px",
-                  height: "60px",
-                }}
-              />
-            )}
+            <RoundedImage
+              icon={data?.organizationLogoURL ?? iconRocket}
+              alt="Company Logo"
+              imageWidth={40}
+              imageHeight={40}
+              containerWidth={50}
+              containerHeight={50}
+            />
           </div>
         </div>
       </div>

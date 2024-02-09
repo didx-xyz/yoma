@@ -8,7 +8,7 @@ import iconPicture from "public/images/icon-picture.svg";
 import iconVideo from "public/images/icon-video.svg";
 import iconLocation from "public/images/icon-location.svg";
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
-import { GoogleMap, MarkerF, useLoadScript } from "@react-google-maps/api";
+import { GoogleMap, MarkerF } from "@react-google-maps/api";
 import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
 import Moment from "react-moment";
 import { Loader } from "@googlemaps/js-api-loader";

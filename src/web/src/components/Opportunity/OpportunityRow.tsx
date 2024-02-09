@@ -15,41 +15,6 @@ export const OpportunityRow: React.FC<InputProps> = ({
   data,
   viewAllUrl,
 }) => {
-  // 🧮 analytics
-  // useEffect(() => {
-  //   ga.view_item_list({
-  //     item_list_id: id,
-  //     item_list_name: title,
-  //     items: opportunities.items.map((item) => ({
-  //       item_id: item.id,
-  //       item_name: item.name,
-  //       item_category: "Opportunity",
-  //       price: item.priceInUSD,
-  //       quantity: 1,
-  //     })),
-  //   });
-  // }, [id, title, opportunities]);
-
-  // 🔔 click handler:
-  // const handleClick = useCallback(
-  //   (item: OpportunityInfo) => {
-  //     // ga.select_item({
-  //     //   item_list_id: id,
-  //     //   item_list_name: title,
-  //     //   items: [
-  //     //     {
-  //     //       item_id: item.id,
-  //     //       item_name: item.name,
-  //     //       item_category: "Opportunity",
-  //     //       price: item.priceInUSD,
-  //     //       quantity: 1,
-  //     //     },
-  //     //   ],
-  //     // });
-  //   },
-  //   [id, title],
-  // );
-
   return (
     <div key={`OpportunityCarousel_${id}`}>
       {(data?.items?.length ?? 0) > 0 && (

@@ -71,3 +71,31 @@ export function toISOStringForTimezone(date: Date | null) {
     .toISOString()
     .slice(0, -1);
 }
+
+export function toUTCDate(date: Date | null) {
+  if (!date) return "";
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      0,
+      0,
+      0,
+    ),
+  ).toISOString();
+}
+
+export function toUTCDateTime(date: Date | null) {
+  if (!date) return "";
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      date.getUTCHours(),
+      date.getUTCMinutes(),
+      date.getUTCSeconds(),
+    ),
+  ).toISOString();
+}
