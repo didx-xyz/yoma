@@ -2,7 +2,6 @@ import React, { useEffect, useState, type ReactElement } from "react";
 import { GoogleMap, MarkerF } from "@react-google-maps/api";
 import { IoMdPin } from "react-icons/io";
 import { toast } from "react-toastify";
-import { env } from "~/env.mjs";
 import { fetchClientEnv } from "~/lib/utils";
 import { Loader } from "@googlemaps/js-api-loader";
 
