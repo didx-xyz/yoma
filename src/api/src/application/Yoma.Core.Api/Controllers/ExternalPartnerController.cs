@@ -5,7 +5,7 @@ using System.Net;
 
 namespace Yoma.Core.Api.Controllers
 {
-    [ApiExplorerSettings(IgnoreApi = true)]
+    //[ApiExplorerSettings(IgnoreApi = true)]
     [Route("api/v3/externalpartner")]
     [ApiController]
     [Authorize(Policy = Common.Constants.Authorization_Policy_External_Partner)]
