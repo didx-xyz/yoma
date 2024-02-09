@@ -1,8 +1,22 @@
-import React, { type ReactElement } from "react";
-import { GoogleMap, MarkerF, useLoadScript } from "@react-google-maps/api";
+import React, { useEffect, useState, type ReactElement } from "react";
+import {
+  GoogleMap,
+  MarkerF,
+  useLoadScript,
+  useJsApiLoader,
+} from "@react-google-maps/api";
 import { IoMdPin } from "react-icons/io";
 import { toast } from "react-toastify";
 import { env } from "~/env.mjs";
+import { fetchClientEnv } from "~/lib/utils";
+import { Loader } from "@googlemaps/js-api-loader";
+// import { Loader } from '@googlemaps/js-api-loader';
+
+// const loader = new Loader({
+//   apiKey: "",
+//   version: "weekly",
+//   libraries: ["places"]
+// });
 
 export interface InputProps {
   [id: string]: any;
@@ -25,11 +39,36 @@ const LocationPicker: React.FC<InputProps> = ({
   onSelect,
 }) => {
   //* Google Maps
-  const { isLoaded, loadError } = useLoadScript({
-    id: "google-map-script",
-    googleMapsApiKey: env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-    libraries,
-  });
+  // load the google map script async as the api key needs to be fetched async
+  const [googleInstance, setGoogleInstance] = useState<Loader | null>(null);
+  const [googleInstanceLoading, setGoogleInstanceLoading] = useState(false);
+  const [googleInstanceError, setGoogleInstanceError] = useState(false);
+  useEffect(() => {
+    const loadGoogleInstance = async () => {
+      try {
+        // get api key
+        const env = await fetchClientEnv();
+
+        // load script
+        const google = new Loader({
+          apiKey: env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+          libraries: libraries,
+        });
+        await google.importLibrary(libraries[0]);
+
+        setGoogleInstance(google);
+      } catch (error) {
+        console.log("Google Maps API failed to load", error);
+        alert("Google Maps API failed to load");
+
+        setGoogleInstanceError(true);
+      } finally {
+        setGoogleInstanceLoading(false);
+      }
+    };
+    setGoogleInstanceLoading(true);
+    loadGoogleInstance();
+  }, [setGoogleInstance, setGoogleInstanceLoading, setGoogleInstanceError]);
 
   const [markerPosition, setMarkerPosition] = React.useState<Location>({
     lat: 51.505,
@@ -62,10 +101,10 @@ const LocationPicker: React.FC<InputProps> = ({
 
   const iconPath =
     "M 12 2 C 8.1 2 5 5.1 5 9 c 0 5.3 7 13 7 13 s 7 -7.8 7 -13 c 0 -3.9 -3.1 -7 -7 -7 z M 7 9 c 0 -2.8 2.2 -5 5 -5 s 5 2.2 5 5 c 0 2.9 -2.9 7.2 -5 9.9 C 9.9 16.2 7 11.8 7 9 z M 10 9 C 10 8 11 7 12 7 C 13 7 14 8 14 9 C 14 10 13 11 12 11 C 11 11 10 10 10 9 M 12 7";
-  //* Google Maps
 
-  if (loadError) return "Error loading maps";
-  if (!isLoaded) return "Loading Maps";
+  //* Google Maps
+  if (googleInstanceError || !googleInstance) return "Error loading maps";
+  if (googleInstanceLoading) return "Loading Maps";
 
   const onClick_UseCurrentLocation = () => {
     if (navigator.geolocation) {

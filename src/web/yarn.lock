@@ -1098,7 +1098,7 @@
   resolved "https://registry.yarnpkg.com/@fontsource/open-sans/-/open-sans-5.0.17.tgz#eeac8add319f07d868c21d45fc729919fc05579a"
   integrity sha512-4mIAJ/1B9pltG7NhxqReeu46L1+j/eAgwWmvjXh+FhsgcgsboQDrfn9wtUP2PWB7/JrMA4Hd9N/4qAN6kJSdyg==
 
-"@googlemaps/js-api-loader@1.16.2":
+"@googlemaps/js-api-loader@1.16.2", "@googlemaps/js-api-loader@^1.16.2":
   version "1.16.2"
   resolved "https://registry.yarnpkg.com/@googlemaps/js-api-loader/-/js-api-loader-1.16.2.tgz#3fe748e21243f8e8322c677a5525c569ae9cdbe9"
   integrity sha512-psGw5u0QM6humao48Hn4lrChOM2/rA43ZCm3tKK9qQsEj1/VzqkCqnvGfEOshDbBQflydfaRovbKwZMF4AyqbA==
@@ -1613,6 +1613,11 @@
   version "3.53.5"
   resolved "https://registry.yarnpkg.com/@types/google.maps/-/google.maps-3.53.5.tgz#0f3010ab4eabe46721f3604462196975b640aab9"
   integrity sha512-HoRq4Te8J6krH7hj+TfdYepqegoKZCj3kkaK5gf+ySFSHLvyqYkDvkrtbcVJXQ6QBphQ0h1TF7p4J6sOh4r/zg==
+
+"@types/google.maps@^3.55.2":
+  version "3.55.2"
+  resolved "https://registry.yarnpkg.com/@types/google.maps/-/google.maps-3.55.2.tgz#6e5a1c257aeda3861a919a56fb9f369468e79e15"
+  integrity sha512-JcTwzkxskR8DN/nnX96Pie3gGN3WHiPpuxzuQ9z3516o1bB243d8w8DHUJ8BohuzoT1o3HUFta2ns/mkZC8KRw==
 
 "@types/hoist-non-react-statics@^3.3.4":
   version "3.3.5"
