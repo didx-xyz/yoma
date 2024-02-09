@@ -37,6 +37,8 @@ import {
 import { getUserProfile } from "~/api/services/user";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
+  GA_ACTION_ORGANISATION_UPATE,
+  GA_CATEGORY_ORGANISATION,
   ROLE_ADMIN,
   THEME_BLUE,
   THEME_GREEN,
@@ -45,6 +47,7 @@ import {
 import { config } from "~/lib/react-query-config";
 import { getCountries } from "~/api/services/lookups";
 import { IoMdWarning } from "react-icons/io";
+import { trackGAEvent } from "~/lib/google-analytics";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -178,6 +181,13 @@ const OrganisationUpdate: NextPageWithLayout<{
           const userProfile = await getUserProfile();
           setUserProfile(userProfile);
         }
+
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_ORGANISATION,
+          GA_ACTION_ORGANISATION_UPATE,
+          `Organisation updated: ${model.name}`,
+        );
 
         toast("Your organisation has been updated", {
           type: "success",

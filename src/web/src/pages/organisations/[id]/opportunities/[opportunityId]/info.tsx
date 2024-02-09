@@ -42,6 +42,8 @@ import { type AxiosError } from "axios";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
+  GA_ACTION_OPPORTUNITY_UPDATE,
+  GA_CATEGORY_OPPORTUNITY,
   ROLE_ADMIN,
   THEME_BLUE,
   THEME_GREEN,
@@ -51,6 +53,7 @@ import { config } from "~/lib/react-query-config";
 import { useAtomValue } from "jotai";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
+import { trackGAEvent } from "~/lib/google-analytics";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -130,6 +133,13 @@ const OpportunityDetails: NextPageWithLayout<{
       try {
         // call api
         await updateOpportunityStatus(opportunityId, status);
+
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_OPPORTUNITY,
+          GA_ACTION_OPPORTUNITY_UPDATE,
+          `Opportunity Status Changed to ${status} for Opportunity ID: ${opportunityId}`,
+        );
 
         // invalidate cache
         await queryClient.invalidateQueries({

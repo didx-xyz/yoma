@@ -17,7 +17,11 @@ import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { authOptions, type User } from "~/server/auth";
 import { FileUploader } from "~/components/Organisation/Upsert/FileUpload";
-import { ACCEPTED_IMAGE_TYPES } from "~/lib/constants";
+import {
+  ACCEPTED_IMAGE_TYPES,
+  GA_ACTION_USER_PROFILE_UPDATE,
+  GA_CATEGORY_USER,
+} from "~/lib/constants";
 import Image from "next/image";
 import { useSetAtom } from "jotai";
 import { userProfileAtom } from "~/lib/store";
@@ -25,6 +29,7 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import type { NextPageWithLayout } from "~/pages/_app";
 import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
 import { config } from "~/lib/react-query-config";
+import { trackGAEvent } from "~/lib/google-analytics";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -183,8 +188,16 @@ const Settings: NextPageWithLayout<{
         });
         // eslint-enable
 
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(GA_CATEGORY_USER, GA_ACTION_USER_PROFILE_UPDATE, "");
+
         // update userProfile Atom (used by NavBar/UserMenu.tsx, refresh profile picture)
         setUserProfileAtom(userProfile);
+
+        toast("Your profile has been updated", {
+          type: "success",
+          toastId: "patchUserProfile",
+        });
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
@@ -199,10 +212,6 @@ const Settings: NextPageWithLayout<{
         return;
       }
 
-      toast("Your profile has been updated", {
-        type: "success",
-        toastId: "patchUserProfile",
-      });
       setIsLoading(false);
     },
     [update, user, logoFiles, session, setIsLoading, setUserProfileAtom],

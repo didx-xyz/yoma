@@ -346,7 +346,7 @@ jobs:
       # Diff on PR draft. Apply on
       - name: Helmfile Apply/Diff API
         if: steps.filter.outputs.api == 'true' || github.event_name == 'workflow_dispatch'
-        uses: helmfile/helmfile-action@v1.6.3
+        uses: helmfile/helmfile-action@v1.7.0
         with:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
@@ -360,7 +360,7 @@ jobs:
             https://github.com/jkroepke/helm-secrets
       - name: Helmfile Apply/Diff Web
         if: steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch'
-        uses: helmfile/helmfile-action@v1.6.3
+        uses: helmfile/helmfile-action@v1.7.0
         with:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \

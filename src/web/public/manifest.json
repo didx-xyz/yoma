@@ -9,22 +9,22 @@
   "description": "The Yoma platform enables you to build and transform your future by unlocking your hidden potential. Make a difference, earn rewards and build your CV by taking part in our impact challenges.",
   "icons": [
     {
-      "src": "/icon-192x192.png",
+      "src": "yoma-icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon-256x256.png",
+      "src": "yoma-icon-256.png",
       "sizes": "256x256",
       "type": "image/png"
     },
     {
-      "src": "/icon-384x384.png",
+      "src": "yoma-icon-384.png",
       "sizes": "384x384",
       "type": "image/png"
     },
     {
-      "src": "/icon-512x512.png",
+      "src": "yoma-icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

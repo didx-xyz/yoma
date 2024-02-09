@@ -25,6 +25,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
+//NB: this is a placeholder page (not used in the site yet)
 const UserProfile: NextPageWithLayout<{
   error: string;
 }> = ({ error }) => {
