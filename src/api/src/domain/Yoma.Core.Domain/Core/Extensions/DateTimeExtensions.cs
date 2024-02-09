@@ -7,7 +7,7 @@ namespace Yoma.Core.Domain.Core.Extensions
             return new DateTimeOffset(new DateTime(e.Year, e.Month, e.Day, 0, 0, 0, DateTimeKind.Utc), TimeSpan.Zero);
         }
 
-        public static DateTimeOffset? RemoveTime(this DateTimeOffset? e)            
+        public static DateTimeOffset? RemoveTime(this DateTimeOffset? e)
         {
             if (!e.HasValue) return null;
             return new DateTimeOffset(new DateTime(e.Value.Year, e.Value.Month, e.Value.Day, 0, 0, 0, DateTimeKind.Utc), TimeSpan.Zero);
