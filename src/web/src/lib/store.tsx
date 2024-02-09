@@ -3,6 +3,10 @@ import type { UserProfile } from "~/api/models/user";
 
 // user profile atom
 const userProfileAtom = atom<UserProfile | null>(null);
+// const userProfileAtom = atomWithStorage<UserProfile | null>(
+//   "userProfile",
+//   null,
+// );
 
 // small display state used by search results (show/hide filter)
 const smallDisplayAtom = atom(true);

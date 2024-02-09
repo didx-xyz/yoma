@@ -53,9 +53,17 @@ import type { AxiosError } from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import axios from "axios";
 import { LoadingInline } from "~/components/Status/LoadingInline";
-import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
+import {
+  DATETIME_FORMAT_HUMAN,
+  GA_ACTION_OPPORTUNITY_COMPLETED,
+  GA_ACTION_OPPORTUNITY_FOLLOWEXTERNAL,
+  GA_ACTION_USER_LOGIN_BEFORE,
+  GA_CATEGORY_OPPORTUNITY,
+  GA_CATEGORY_USER,
+} from "~/lib/constants";
 import Moment from "react-moment";
 import { config } from "~/lib/react-query-config";
+import { trackGAEvent } from "~/lib/google-analytics";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -176,6 +184,7 @@ const OpportunityDetails: NextPageWithLayout<{
     return Math.max(participantLimit - participantCountTotal, 0);
   }, [opportunity]);
 
+  // CLICK HANDLERS
   const onSaveOpportunity = useCallback(() => {
     if (!user) {
       toast.warning("You need to be logged in to save an opportunity");
@@ -196,12 +205,29 @@ const OpportunityDetails: NextPageWithLayout<{
   }, [opportunityId, user]);
 
   const onGoToOpportunity = useCallback(() => {
-    if (opportunity?.url) window.open(opportunity?.url, "_blank");
+    if (!opportunity?.url) return;
+
+    window.open(opportunity?.url, "_blank");
+
+    // 📊 GOOGLE ANALYTICS: track event
+    trackGAEvent(
+      GA_CATEGORY_OPPORTUNITY,
+      GA_ACTION_OPPORTUNITY_FOLLOWEXTERNAL,
+      opportunity?.url,
+    );
   }, [opportunity?.url]);
 
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const onLogin = useCallback(async () => {
     setIsButtonLoading(true);
+
+    // 📊 GOOGLE ANALYTICS: track event
+    trackGAEvent(
+      GA_CATEGORY_USER,
+      GA_ACTION_USER_LOGIN_BEFORE,
+      "User Logging In. Redirected to External Authentication Provider",
+    );
+
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     signIn(
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -213,6 +239,11 @@ const OpportunityDetails: NextPageWithLayout<{
   const onOpportunityCompleted = useCallback(async () => {
     setCompleteOpportunityDialogVisible(false);
     setCompleteOpportunitySuccessDialogVisible(true);
+
+    // 📊 GOOGLE ANALYTICS: track event
+    trackGAEvent(GA_CATEGORY_OPPORTUNITY, GA_ACTION_OPPORTUNITY_COMPLETED, "");
+
+    // invalidate queries
     await queryClient.invalidateQueries({
       queryKey: ["verificationStatus", opportunityId],
     });

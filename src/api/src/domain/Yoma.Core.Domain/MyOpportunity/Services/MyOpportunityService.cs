@@ -490,7 +490,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         break;
 
                     case VerificationStatus.Completed:
-                        var dateCompleted = DateTimeOffset.UtcNow;
+                        var dateCompleted = DateTimeOffset.UtcNow.ToEndOfDay();
 
                         if (item.DateEnd.HasValue && item.DateEnd.Value > dateCompleted)
                             throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd}')");

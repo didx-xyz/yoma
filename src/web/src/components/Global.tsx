@@ -4,7 +4,12 @@ import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { getOrganisationById } from "~/api/services/organisations";
 import { getUserProfile, patchYoIDOnboarding } from "~/api/services/user";
-import { ROLE_ADMIN, ROLE_ORG_ADMIN } from "~/lib/constants";
+import {
+  GA_ACTION_USER_YOIDONBOARDINGCONFIRMED,
+  GA_CATEGORY_USER,
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+} from "~/lib/constants";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
@@ -20,6 +25,7 @@ import iconBell from "public/images/icon-bell.webp";
 import Image from "next/image";
 import { toast } from "react-toastify";
 import { ApiErrors } from "./Status/ApiErrors";
+import { trackGAEvent } from "~/lib/google-analytics";
 
 // * GLOBAL APP CONCERNS
 // * needs to be done here as jotai atoms are not available in _app.tsx
@@ -45,10 +51,22 @@ export const Global: React.FC = () => {
 
   // 🔔 USER PROFILE
   useEffect(() => {
+    //TODO: disabled for now. need to fix issue with GA login event beging tracked twice
+    // skip if not logged in or userProfile atom already set (atomWithStorage)
+    //if (!session || userProfile) return;
+
     if (!userProfile) {
       getUserProfile()
         .then((res) => {
+          // update atom
           setUserProfile(res);
+
+          // 📊 GOOGLE ANALYTICS: track event
+          // trackGAEvent(
+          //   GA_CATEGORY_USER,
+          //   GA_ACTION_USER_LOGIN_AFTER,
+          //   "User logged in",
+          // );
 
           // show onboarding dialog if not onboarded
           if (!res.yoIDOnboarded) {
@@ -57,13 +75,7 @@ export const Global: React.FC = () => {
         })
         .catch((e) => console.error(e));
     }
-  }, [
-    router,
-    session,
-    userProfile,
-    setUserProfile,
-    setOnboardingDialogVisible,
-  ]);
+  }, [/*session,*/ userProfile, setUserProfile, setOnboardingDialogVisible]);
 
   // 🔔 SMALL DISPLAY
   // track the screen size for responsive elements
@@ -151,13 +163,25 @@ export const Global: React.FC = () => {
     currentOrganisationIdValue,
   ]);
 
-  const onClickOk = useCallback(async () => {
+  // 🔔 CLICK HANDLER: ONBOARDING DIALOG CONFIRMATION
+  const onClickYoIDOnboardingConfirm = useCallback(async () => {
     try {
       toast.dismiss();
 
+      // update API
       const userProfile = await patchYoIDOnboarding();
+
+      // 📊 GOOGLE ANALYTICS: track event
+      trackGAEvent(
+        GA_CATEGORY_USER,
+        GA_ACTION_USER_YOIDONBOARDINGCONFIRMED,
+        `User confirmed YoID onboarding message at ${new Date().toISOString()}`,
+      );
+
+      // update ATOM
       setUserProfile(userProfile);
 
+      // hide popup
       setOnboardingDialogVisible(false);
     } catch (error) {
       console.error(error);
@@ -205,7 +229,7 @@ export const Global: React.FC = () => {
                 type="button"
                 className="btn rounded-full bg-green normal-case text-white hover:bg-green-dark md:w-[250px]"
                 //className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[300px]"
-                onClick={onClickOk}
+                onClick={onClickYoIDOnboardingConfirm}
               >
                 <IoMdThumbsUp className="h-5 w-5 text-white" />
 

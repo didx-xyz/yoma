@@ -23,6 +23,7 @@ import { config } from "~/lib/react-query-config";
 import "~/styles/globals.scss";
 import "~/styles/FileUpload.css";
 import { THEME_PURPLE } from "~/lib/constants";
+import { GoogleAnalytics } from "~/components/GoogleAnalytics";
 
 // configure font for tailwindcss
 // see https://nextjs.org/docs/pages/building-your-application/optimizing/fonts
@@ -91,6 +92,7 @@ const MyApp = ({
                     toastClassName={"test2"}
                     className="mt-16 w-full md:mt-10 md:w-[340px]"
                   />
+                  <GoogleAnalytics />
                 </ConfirmationModalContextProvider>
               </div>
             </HydrationBoundary>
