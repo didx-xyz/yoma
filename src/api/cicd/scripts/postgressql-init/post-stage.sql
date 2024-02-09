@@ -7,23 +7,23 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "CountryId", "CountryOfResidenceId",
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
 VALUES(gen_random_uuid(), '{test_user}', true, 'Sam', 'Henderson', 'Sam Henderson', null, (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'), (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'),
-        NULL, (SELECT "Id" FROM "Lookup"."Gender" WHERE "Name" = 'Male'), NULL, NULL, NULL, true, NOW(), NOW(), NOW());
+        NULL, (SELECT "Id" FROM "Lookup"."Gender" WHERE "Name" = 'Male'), NULL, NULL, NULL, true, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
 
 INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "CountryId", "CountryOfResidenceId",
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
 VALUES(gen_random_uuid(), '{org_admin_user}', true, 'Sam', 'Henderson', 'Sam Henderson', null, (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'), (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'),
-        NULL, (SELECT "Id" FROM "Lookup"."Gender" WHERE "Name" = 'Male'), NULL, NULL, NULL, true, NOW(), NOW(), NOW());
+        NULL, (SELECT "Id" FROM "Lookup"."Gender" WHERE "Name" = 'Male'), NULL, NULL, NULL, true, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
 
 INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "CountryId", "CountryOfResidenceId",
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
 VALUES(gen_random_uuid(), '{admin_user}', true, 'Sam', 'Henderson', 'Sam Henderson', null, (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'), (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'),
-        NULL, (SELECT "Id" FROM "Lookup"."Gender" WHERE "Name" = 'Male'), NULL, NULL, NULL, true, NOW(), NOW(), NOW());
+        NULL, (SELECT "Id" FROM "Lookup"."Gender" WHERE "Name" = 'Male'), NULL, NULL, NULL, true, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
 
 -- ssi credential issuance (pending) for YOID onboarded users
 INSERT INTO "SSI"."CredentialIssuance"("Id", "SchemaTypeId", "ArtifactType", "SchemaName", "SchemaVersion", "StatusId", "UserId", "OrganizationId",
            "MyOpportunityId", "CredentialId", "ErrorReason", "RetryCount", "DateCreated", "DateModified")
 SELECT gen_random_uuid(), (SELECT "Id" FROM "SSI"."SchemaType" WHERE "Name" = 'YoID'), 'Indy', 'YoID|Default', '1.0', (SELECT "Id" FROM "SSI"."CredentialIssuanceStatus" WHERE "Name" = 'Pending'),
-    U."Id", NULL, NULL, NULL, NULL, NULL, NOW(), NOW()
+    U."Id", NULL, NULL, NULL, NULL, NULL, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Entity"."User" U
 WHERE U."YoIDOnboarded" = true;
 
@@ -36,27 +36,27 @@ BEGIN
                "City", "CountryId", "StreetAddress", "Province", "PostalCode", "Tagline", "Biography", "StatusId", "CommentApproval", "DateStatusModified", "LogoId", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId")
     VALUES(gen_random_uuid(), Name, ENCODE(DIGEST(Name, 'sha256'), 'hex'), 'https://www.yoma.world/', 'Primary Contact', 'primarycontact@gmail.com', '+27125555555', 'GB123456789', '0123456789', '12345/28/14',
             'My City', (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'), 'My Street Address 1000', 'My Province', '12345-1234', 'Unlock your future', 'The yoma platform enables you to build and transform your future by unlocking your hidden potential.',
-            (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active'), 'Approved', NOW(), NULL,
-            NOW(),
+            (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active'), 'Approved', (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), NULL,
+            (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
             (SELECT "Id" FROM "Entity"."User" WHERE "Email" = '{org_admin_user}'),
-            NOW(),
+            (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
             (SELECT "Id" FROM "Entity"."User" WHERE "Email" = '{org_admin_user}'));
 END $$;
 
 -- organization admins
 INSERT INTO "Entity"."OrganizationUsers"("Id", "OrganizationId", "UserId", "DateCreated")
-SELECT gen_random_uuid(), "Id", (SELECT "Id" FROM "Entity"."User" WHERE "Email" = '{org_admin_user}'), NOW()
+SELECT gen_random_uuid(), "Id", (SELECT "Id" FROM "Entity"."User" WHERE "Email" = '{org_admin_user}'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Entity"."Organization";
 
 -- ssi tenant creation (pending) for active organizations
 INSERT INTO "SSI"."TenantCreation"("Id", "EntityType", "StatusId", "UserId", "OrganizationId", "TenantId", "ErrorReason", "RetryCount", "DateCreated", "DateModified")
-SELECT gen_random_uuid(), 'Organization', (SELECT "Id" FROM "SSI"."TenantCreationStatus" WHERE "Name" = 'Pending'), NULL, "Id", NULL, NULL, NULL, NOW(), NOW()
+SELECT gen_random_uuid(), 'Organization', (SELECT "Id" FROM "SSI"."TenantCreationStatus" WHERE "Name" = 'Pending'), NULL, "Id", NULL, NULL, NULL, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Entity"."Organization"
 WHERE "StatusId" = (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active');
 
 -- organization provider types
 INSERT INTO "Entity"."OrganizationProviderTypes"("Id", "OrganizationId", "ProviderTypeId", "DateCreated")
-SELECT gen_random_uuid(), O."Id" AS "OrganizationId", PT."Id" AS "ProviderTypeId", NOW() FROM "Entity"."Organization" O CROSS JOIN "Entity"."OrganizationProviderType" PT;
+SELECT gen_random_uuid(), O."Id" AS "OrganizationId", PT."Id" AS "ProviderTypeId", (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') FROM "Entity"."Organization" O CROSS JOIN "Entity"."OrganizationProviderType" PT;
 
 -- opportunity
 INSERT INTO "Opportunity"."Opportunity"("Id",
@@ -117,20 +117,20 @@ VALUES(gen_random_uuid(),
     '2023-12-31',
     true,
     'Opportunity|Default',
-    NOW(),
+    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
     (SELECT "Id" FROM "Entity"."User" WHERE "Email" = '{org_admin_user}'),
-    NOW(),
+    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
     (SELECT "Id" FROM "Entity"."User" WHERE "Email" = '{org_admin_user}'));
 
 -- categories
 INSERT INTO "Opportunity"."OpportunityCategories"("Id","OpportunityId","CategoryId","DateCreated")
-SELECT gen_random_uuid(), O."Id" AS "OpportunityId", OC."Id" AS "CategoryId", NOW()
+SELECT gen_random_uuid(), O."Id" AS "OpportunityId", OC."Id" AS "CategoryId", (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
 CROSS JOIN "Opportunity"."OpportunityCategory" OC;
 
 -- countries
 INSERT INTO "Opportunity"."OpportunityCountries"("Id", "OpportunityId", "CountryId", "DateCreated")
-SELECT gen_random_uuid(), O."Id" AS "OpportunityId", R."CountryId", NOW()
+SELECT gen_random_uuid(), O."Id" AS "OpportunityId", R."CountryId", (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
 CROSS JOIN (
     SELECT "Id" AS "CountryId"
@@ -141,7 +141,7 @@ CROSS JOIN (
 
 -- languages
 INSERT INTO "Opportunity"."OpportunityLanguages"("Id","OpportunityId","LanguageId","DateCreated")
-SELECT gen_random_uuid(), O."Id" AS "OpportunityId", R."LanguageId", NOW()
+SELECT gen_random_uuid(), O."Id" AS "OpportunityId", R."LanguageId", (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
 CROSS JOIN (
     SELECT "Id" AS "LanguageId"
@@ -152,7 +152,7 @@ CROSS JOIN (
 
 -- skills
 INSERT INTO "Opportunity"."OpportunitySkills"("Id","OpportunityId","SkillId","DateCreated")
-SELECT gen_random_uuid(), O."Id" AS "OpportunityId", R."SkillId", NOW()
+SELECT gen_random_uuid(), O."Id" AS "OpportunityId", R."SkillId", (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
 CROSS JOIN (
     SELECT "Id" AS "SkillId"
@@ -163,7 +163,7 @@ CROSS JOIN (
 
 -- verification types
 INSERT INTO "Opportunity"."OpportunityVerificationTypes"("Id","OpportunityId","VerificationTypeId","Description","DateCreated","DateModified")
-SELECT gen_random_uuid(), O."Id" AS "OpportunityId", R."VerificationTypeId", NULL, NOW(), NOW()
+SELECT gen_random_uuid(), O."Id" AS "OpportunityId", R."VerificationTypeId", NULL, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
 CROSS JOIN (
     SELECT "Id" AS "VerificationTypeId"
