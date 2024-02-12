@@ -74,6 +74,7 @@ const LanguageSwitcher = () => {
   // The following function switches the current language
   const switchLanguage = (lang: string) => {
     destroyCookie(null, COOKIE_NAME);
+    // FIX: try and destroy the second cookie created on DEV environent
     destroyCookie(null, COOKIE_NAME, {
       domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
     });
@@ -81,9 +82,9 @@ const LanguageSwitcher = () => {
     // We just need to set the related cookie and reload the page
     // "/auto/" prefix is Google's definition as far as a cookie name
     setCookie(null, COOKIE_NAME, "/auto/" + lang);
-    setCookie(null, COOKIE_NAME, "/auto/" + lang, {
-      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
-    });
+    // setCookie(null, COOKIE_NAME, "/auto/" + lang, {
+    //   domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
+    // });
 
     // 📊 GOOGLE ANALYTICS: track event
     trackGAEvent(GA_CATEGORY_USER, GA_ACTION_USER_LANGUAGE_CHANGE, lang);
