@@ -7,30 +7,19 @@ import iconUser from "public/images/icon-user.svg";
 import iconZlto from "public/images/icon-zlto.svg";
 import iconAction from "public/images/icon-action.svg";
 import Moment from "react-moment";
-import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
+import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { RoundedImage } from "../RoundedImage";
 
 interface InputProps {
   data: OpportunityInfo;
-  //onClick?: (certificate: OpportunityInfo) => void;
   [key: string]: any;
 }
 
-const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
-  data,
-  //onClick,
-}) => {
-  // // 🔔 click handler: use callback parameter
-  // const handleClick = useCallback(() => {
-  //   if (!onClick) return;
-  //   onClick(data);
-  // }, [data, onClick]);
-
+const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
   return (
     <Link
       href={`/opportunities/${data.id}`}
       target="_blank"
-      //onClick={handleClick}
       className="relative flex aspect-square min-w-[300px] transform-gpu flex-col gap-1 rounded-lg bg-white p-5 transition-transform hover:scale-105"
     >
       <div className="flex flex-row">
@@ -55,7 +44,6 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
           </div>
         </div>
       </div>
-
       <div className="flex max-w-[280px] flex-grow flex-row">
         <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-sm font-light">
           {data.description}
@@ -70,7 +58,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
               <>
                 <span className="mr-2 font-bold">Starts:</span>
                 <span className="text-xs tracking-widest text-black">
-                  <Moment format={DATETIME_FORMAT_HUMAN}>
+                  <Moment format={DATE_FORMAT_HUMAN}>
                     {new Date(data.dateStart)}
                   </Moment>
                 </span>
@@ -82,7 +70,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
               <>
                 <span className="mr-2 font-bold">Ends:</span>
                 <span className="text-xs tracking-widest text-black">
-                  <Moment format={DATETIME_FORMAT_HUMAN}>
+                  <Moment format={DATE_FORMAT_HUMAN}>
                     {new Date(data.dateEnd)}
                   </Moment>
                 </span>
@@ -91,7 +79,6 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
           </div>
         </div>
       )}
-
       {/* BADGES */}
       <div className="absolutex bottom-5x flex flex-row gap-1 whitespace-nowrap pt-2 text-xs font-normal text-green-dark">
         <div className="badge rounded-md bg-green-light text-xs font-semibold text-green">

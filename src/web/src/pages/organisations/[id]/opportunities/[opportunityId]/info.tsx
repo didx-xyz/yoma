@@ -42,6 +42,7 @@ import { type AxiosError } from "axios";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
+  DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_UPDATE,
   GA_CATEGORY_OPPORTUNITY,
   ROLE_ADMIN,
@@ -55,6 +56,7 @@ import { currentOrganisationInactiveAtom } from "~/lib/store";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { RoundedImage } from "~/components/RoundedImage";
+import Moment from "react-moment";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -329,7 +331,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </span>
                 </div>
 
-                {/* Status Badges */}
+                {/* STATUS BADGES */}
                 {opportunity?.status == "Active" && (
                   <div className="badge h-6 rounded-md bg-green-light text-green">
                     Ongoing / Active
@@ -361,8 +363,37 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
                 )}
               </div>
+
+              {/* DATES */}
+              <div className="flex flex-col text-sm text-gray-dark">
+                <div>
+                  {opportunity?.dateStart && (
+                    <>
+                      <span className="mr-2 font-bold">Starts:</span>
+                      <span className="text-xs tracking-widest text-black">
+                        <Moment format={DATE_FORMAT_HUMAN}>
+                          {new Date(opportunity.dateStart)}
+                        </Moment>
+                      </span>
+                    </>
+                  )}
+                </div>
+                <div>
+                  {opportunity?.dateEnd && (
+                    <>
+                      <span className="mr-2 font-bold">Ends:</span>
+                      <span className="text-xs tracking-widest text-black">
+                        <Moment format={DATE_FORMAT_HUMAN}>
+                          {new Date(opportunity.dateEnd)}
+                        </Moment>
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
-            {/* company logo */}
+
+            {/* COMPANY LOGO */}
             <RoundedImage
               icon={opportunity?.organizationLogoURL ?? iconSuccess}
               alt="Company Logo"

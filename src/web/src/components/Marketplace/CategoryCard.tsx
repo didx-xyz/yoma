@@ -4,21 +4,21 @@ import iconZlto from "public/images/icon-zlto.svg";
 import Link from "next/link";
 
 interface InputProps {
-  [key: string]: any;
+  id: string;
   imageURLs: string[];
   name: string;
   href: string;
 }
 
 const CategoryCardComponent: React.FC<InputProps> = ({
-  key,
+  id,
   imageURLs,
   name,
   href,
 }) => {
   return (
     <Link
-      key={key}
+      key={id}
       className="relativex flex aspect-square h-32 w-full transform-gpu flex-col items-center gap-2 rounded-lg bg-white p-4 shadow-lg transition-transform hover:scale-105 md:w-56"
       href={href}
     >
@@ -28,7 +28,7 @@ const CategoryCardComponent: React.FC<InputProps> = ({
             imageURLs.length > 0 &&
             imageURLs.map((url, index) => (
               <Image
-                key={`${key}_${index}`}
+                key={`${id}_${index}`}
                 src={url}
                 alt={`Store Category ${index}`}
                 width={64}

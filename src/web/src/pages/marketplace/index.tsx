@@ -129,7 +129,8 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         <div className="flex flex-row flex-wrap gap-4">
           {data.map((item, index) => (
             <CategoryCardComponent
-              key={index}
+              key={`card_${index}`}
+              id={`card_${index}`}
               name={item.name}
               imageURLs={item.storeImageURLs}
               href={`/marketplace/${item.name}?countryId=${

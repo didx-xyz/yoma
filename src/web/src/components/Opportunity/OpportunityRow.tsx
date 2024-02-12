@@ -41,7 +41,6 @@ export const OpportunityRow: React.FC<InputProps> = ({
                 <OpportunityPublicSmallComponent
                   key={`${id}_${item.id}`}
                   data={item}
-                  //onClick={handleClick}
                 />
               ))}
             </div>

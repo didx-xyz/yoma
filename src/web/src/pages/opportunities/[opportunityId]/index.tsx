@@ -54,7 +54,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import axios from "axios";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import {
-  DATETIME_FORMAT_HUMAN,
+  DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_COMPLETED,
   GA_ACTION_OPPORTUNITY_FOLLOWEXTERNAL,
   GA_ACTION_USER_LOGIN_BEFORE,
@@ -298,7 +298,6 @@ const OpportunityDetails: NextPageWithLayout<{
                   </ul>
                 </div>
               </div>
-
               {/* LOGIN DIALOG */}
               <ReactModal
                 isOpen={loginDialogVisible}
@@ -374,7 +373,6 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
                 </div>
               </ReactModal>
-
               {/* GO-TO OPPORTUNITY DIALOG */}
               <ReactModal
                 isOpen={gotoOpportunityDialogVisible}
@@ -463,7 +461,6 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
                 </div>
               </ReactModal>
-
               {/* UPLOAD/COMPLETE OPPORTUNITY DIALOG */}
               <ReactModal
                 isOpen={completeOpportunityDialogVisible}
@@ -484,7 +481,6 @@ const OpportunityDetails: NextPageWithLayout<{
                   onSave={onOpportunityCompleted}
                 />
               </ReactModal>
-
               {/* COMPLETE SUCCESS DIALOG */}
               <ReactModal
                 isOpen={completeOpportunitySuccessDialogVisible}
@@ -654,7 +650,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                     Starts:
                                   </span>
                                   <span className="text-xs tracking-widest text-black">
-                                    <Moment format={DATETIME_FORMAT_HUMAN}>
+                                    <Moment format={DATE_FORMAT_HUMAN}>
                                       {new Date(opportunity.dateStart)}
                                     </Moment>
                                   </span>
@@ -666,7 +662,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                 <>
                                   <span className="mr-2 font-bold">Ends:</span>
                                   <span className="text-xs tracking-widest text-black">
-                                    <Moment format={DATETIME_FORMAT_HUMAN}>
+                                    <Moment format={DATE_FORMAT_HUMAN}>
                                       {new Date(opportunity.dateEnd)}
                                     </Moment>
                                   </span>

@@ -29,8 +29,6 @@ declare module "next-auth" {
 export interface User extends DefaultUser {
   roles: string[];
   adminsOf: string[];
-  //adminsOf: OrganizationInfo[];
-  //photoURL: string | null;
 }
 declare module "next-auth/jwt" {
   /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */

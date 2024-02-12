@@ -498,7 +498,8 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
           <div className="flex flex-row flex-wrap gap-4">
             {data.items.map((item, index) => (
               <ItemCardComponent
-                key={index}
+                key={`card_${index}`}
+                id={`card_${index}`}
                 company={store}
                 name={item.name}
                 imageURL={item.imageURL}

@@ -145,7 +145,8 @@ const MarketplaceSearchStores: NextPageWithLayout<{
             <div className="flex flex-row flex-wrap gap-4">
               {data.items.map((item, index) => (
                 <CategoryCardComponent
-                  key={index}
+                  key={`card_${index}`}
+                  id={`card_${index}`}
                   name={item.name}
                   imageURLs={
                     item.imageURL != null && item.imageURL != "default"

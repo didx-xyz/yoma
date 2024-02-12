@@ -26,7 +26,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import LocationPicker from "./LocationPicker";
 import { SpatialType } from "~/api/models/common";
-import { toISOStringForTimezone, toUTCDate } from "~/lib/utils";
+import { toISOStringForTimezone } from "~/lib/utils";
 import { Loading } from "../Status/Loading";
 import { performActionSendForVerificationManual } from "~/api/services/myOpportunities";
 import { ApiErrors } from "../Status/ApiErrors";
@@ -54,8 +54,8 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       picture: z.any().optional(),
       voiceNote: z.any().optional(),
       geometry: z.any().optional(),
-      dateStart: z.union([z.null(), z.string() /*, z.date()*/]).optional(),
-      dateEnd: z.union([z.string(), /*z.date(),*/ z.null()]).optional(),
+      dateStart: z.union([z.null(), z.string()]).optional(),
+      dateEnd: z.union([z.string(), z.null()]).optional(),
     })
     .superRefine((values, ctx) => {
       if (
