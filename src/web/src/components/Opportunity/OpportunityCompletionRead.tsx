@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { IoMdPin } from "react-icons/io";
 import iconSuccess from "public/images/icon-success.webp";
 import iconCertificate from "public/images/icon-certificate.svg";
@@ -10,8 +10,9 @@ import iconLocation from "public/images/icon-location.svg";
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
 import { GoogleMap, MarkerF, useLoadScript } from "@react-google-maps/api";
 import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
-import { env } from "~/env.mjs";
 import Moment from "react-moment";
+import { Loader } from "@googlemaps/js-api-loader";
+import { fetchClientEnv } from "~/lib/utils";
 
 interface InputProps {
   [id: string]: any;
@@ -54,12 +55,38 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
       </Link>
     );
   }
+
   //* Google Maps
-  const { isLoaded, loadError } = useLoadScript({
-    id: "google-map-script",
-    googleMapsApiKey: env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-    libraries,
-  });
+  // load the google map script async as the api key needs to be fetched async
+  const [googleInstance, setGoogleInstance] = useState<Loader | null>(null);
+  const [googleInstanceLoading, setGoogleInstanceLoading] = useState(false);
+  const [googleInstanceError, setGoogleInstanceError] = useState(false);
+  useEffect(() => {
+    const loadGoogleInstance = async () => {
+      try {
+        // get api key
+        const env = await fetchClientEnv();
+
+        // load script
+        const google = new Loader({
+          apiKey: env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+          libraries: libraries,
+        });
+        await google.importLibrary(libraries[0]);
+
+        setGoogleInstance(google);
+      } catch (error) {
+        console.log("Google Maps API failed to load", error);
+        alert("Google Maps API failed to load");
+
+        setGoogleInstanceError(true);
+      } finally {
+        setGoogleInstanceLoading(false);
+      }
+    };
+    setGoogleInstanceLoading(true);
+    loadGoogleInstance();
+  }, [setGoogleInstance, setGoogleInstanceLoading, setGoogleInstanceError]);
 
   // memo for geo location based on currentRow
   const markerPosition = useMemo(() => {
@@ -158,9 +185,11 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
 
               {showLocation && (
                 <div className="mt-2">
-                  {!isLoaded && <div>Loading...</div>}
-                  {loadError && <div>Error loading maps</div>}
-                  {isLoaded && markerPosition != null && (
+                  {googleInstanceLoading && <div>Loading...</div>}
+                  {(googleInstanceError || !googleInstance) && (
+                    <div>Error loading maps</div>
+                  )}
+                  {googleInstance && markerPosition != null && (
                     <>
                       <div className="flex flex-row gap-2 text-gray-dark">
                         <div>Pin location: </div>
