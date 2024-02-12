@@ -159,11 +159,9 @@ DECLARE
     V_Words VARCHAR(500) := 'The,A,An,Awesome,Incredible,Fantastic,Amazing,Wonderful,Exciting,Unbelievable,Great,Marvelous,Stunning,Impressive,Captivating,Extraordinary,Superb,Epic,Spectacular,Magnificent,Phenomenal,Outstanding,Brilliant,Enthralling,Enchanting,Mesmerizing,Riveting,Spellbinding,Unforgettable,Sublime';
     V_RandomLengthName INT := ABS(FLOOR(RANDOM() * 5) + 5);
     V_RandomLengthOther INT := ABS(FLOOR(RANDOM() * 101) + 100);
-    V_DateCreated TIMESTAMP := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1 month';
-    V_DateStart TIMESTAMP := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1 hour';
-    V_TotalSecondsIn2Months BIGINT := 2 * 30.44 * 24 * 60 * 60;
-    V_Iterations INT := 5000;
-    V_SecondsPerIteration BIGINT := V_TotalSecondsIn2Months / V_Iterations;
+    V_DateCreated TIMESTAMP := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC');
+    V_DateStart TIMESTAMP := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '2 day';
+    V_Iterations INT := 50000;
     V_RowCount INT := 0;
     V_VerificationEnabled BOOLEAN := false;
 BEGIN
@@ -248,8 +246,8 @@ BEGIN
 	                LIMIT ABS(FLOOR(RANDOM() * 101) + 100)
 	            ) AS RandomKeywordsWords
 	        ),
-	        V_DateStart,
-	        CAST(V_DateStart + INTERVAL '7 days' AS TIMESTAMP),
+	        (date_trunc('day', V_DateStart::timestamp AT TIME ZONE 'UTC')),
+	        (date_trunc('day', V_DateStart::timestamp AT TIME ZONE 'UTC') + INTERVAL '1 DAY' - INTERVAL '1 millisecond'),
 	        CAST(CASE WHEN RANDOM() < 0.5 THEN 1 ELSE 0 END AS BOOLEAN),
 	        NULL,
 	        V_DateCreated,
@@ -265,7 +263,7 @@ BEGIN
 
 	    V_RowCount := V_RowCount + 1;
 	    V_DateCreated := V_DateCreated + INTERVAL '1 second';
-	    V_DateStart := V_DateStart + INTERVAL '1 second';
+	    V_DateStart := V_DateStart + INTERVAL '8.64 second';
 	END LOOP;
 END $$ LANGUAGE plpgsql;
 
@@ -423,8 +421,8 @@ SELECT
 	(SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification'),
 	(SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Pending'),
 	NULL,
-	(CURRENT_DATE + INTERVAL '1 day')::DATE,
-	(CURRENT_DATE + INTERVAL '2 days')::DATE,
+	O."DateStart",
+	O."DateEnd",
 	NULL,
 	NULL,
 	NULL,
@@ -446,8 +444,8 @@ SELECT
 	(SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification'),
 	(SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Rejected'),
 	'Rejection Comment',
-	(CURRENT_DATE + INTERVAL '1 day')::DATE,
-	(CURRENT_DATE + INTERVAL '2 days')::DATE,
+	O."DateStart",
+	O."DateEnd",
 	NULL,
 	NULL,
 	NULL,
@@ -469,8 +467,8 @@ SELECT
 	(SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification'),
 	(SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed'),
 	'Approved Comment',
-	(CURRENT_DATE + INTERVAL '1 day')::DATE,
-	(CURRENT_DATE + INTERVAL '2 days')::DATE,
+	O."DateStart",
+	O."DateEnd",
 	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
 	O."ZltoReward",
 	O."YomaReward",
