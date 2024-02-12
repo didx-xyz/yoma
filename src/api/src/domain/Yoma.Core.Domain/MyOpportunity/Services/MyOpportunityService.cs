@@ -556,9 +556,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         break;
 
                     case VerificationStatus.Completed:
-                        var dateCompleted = DateTimeOffset.UtcNow.ToEndOfDay();
-
-                        if (item.DateEnd.HasValue && item.DateEnd.Value > dateCompleted)
+                        if (item.DateEnd.HasValue && item.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())
                             throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd}')");
 
                         var (zltoReward, yomaReward) = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, true);
@@ -686,6 +684,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             await _myOpportunityRequestValidatorVerify.ValidateAndThrowAsync(request);
 
+            if (request.DateStart.HasValue) request.DateStart = request.DateStart.RemoveTime();
+            if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.ToEndOfDay();
+
             //provided opportunity is published (and started) or expired
             var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
             var canSendForVerification = opportunity.Status == Status.Expired;
@@ -744,8 +745,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             }
 
             myOpportunity.VerificationStatusId = verificationStatusPendingId;
-            myOpportunity.DateStart = request.DateStart.RemoveTime();
-            myOpportunity.DateEnd = request.DateEnd.ToEndOfDay();
+            myOpportunity.DateStart = request.DateStart;
+            myOpportunity.DateEnd = request.DateEnd;
 
             await PerformActionSendForVerificationManual(request, opportunity, myOpportunity, isNew);
         }
