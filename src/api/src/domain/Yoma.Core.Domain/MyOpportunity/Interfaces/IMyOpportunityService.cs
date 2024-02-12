@@ -25,6 +25,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
         Task PerformActionSendForVerificationManual(Guid userId, Guid opportunityId, MyOpportunityRequestVerify request, bool overridePending);
 
+        Task PerformActionSendForVerificationManualDelete(Guid opportunityId);
+
         Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalizeBatch request);
 
         Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalize request);
