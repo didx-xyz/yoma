@@ -419,6 +419,72 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             await PerformActionSendForVerificationManual(user, opportunityId, request, false);
         }
 
+        public async Task PerformActionSendForVerificationManualDelete(Guid opportunityId)
+        {
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            //opportunity can be updated whilst active, and can result in disabling support for verification; allow deletion provided verification is pending even if no longer supported
+            //similar logic provided sent for verification prior to update that resulted in disabling support for verification i.e. enabled, method, types, 'published' status etc.
+            var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
+
+            var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+            var myOpportunity = _myOpportunityRepository.Query(true).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
+                ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Email}'");
+
+            if (myOpportunity.VerificationStatus != VerificationStatus.Pending)
+                throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
+
+            var itemsExisting = new List<MyOpportunityVerification>();
+            var itemsExistingDeleted = new List<MyOpportunityVerification>();
+            try
+            {
+                await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+                {
+                    using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+                    var items = myOpportunity.Verifications?.Where(o => o.FileId.HasValue).ToList();
+                    if (items != null)
+                    {
+                        itemsExisting.AddRange(items);
+                        foreach (var item in itemsExisting)
+                        {
+                            if (!item.FileId.HasValue)
+                                throw new InvalidOperationException("File id expected");
+                            item.File = await _blobService.Download(item.FileId.Value);
+                        }
+                    }
+
+                    //delete existing items in blob storage and db
+                    foreach (var item in itemsExisting)
+                    {
+                        if (!item.FileId.HasValue)
+                            throw new InvalidOperationException("File expected");
+
+                        await _myOpportunityVerificationRepository.Delete(item);
+                        await _blobService.Delete(item.FileId.Value);
+                        itemsExistingDeleted.Add(item);
+                    }
+
+                    await _myOpportunityRepository.Delete(myOpportunity);
+
+                    scope.Complete();
+                });
+            }
+            catch //roll back
+            {
+                //re-upload existing items to blob storage
+                foreach (var item in itemsExistingDeleted)
+                {
+                    if (!item.FileId.HasValue || item.File == null)
+                        throw new InvalidOperationException("File expected");
+
+                    await _blobService.Create(item.FileId.Value, item.File);
+                }
+
+                throw;
+            }
+        }
+
         public async Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalizeBatch request)
         {
             if (request == null)
@@ -645,7 +711,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
             var verificationStatusPendingId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
 
-            var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
+            var myOpportunity = _myOpportunityRepository.Query(true).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
             var isNew = myOpportunity == null;
 
             if (myOpportunity == null)
