@@ -237,7 +237,6 @@ const OrganisationDetails: NextPageWithLayout<{
           </div>
           <h4 className="mb-2 font-bold">Application approved!</h4>
           <p>{organisation?.name} has been added to your organisations.</p>
-          <p>Send them a welcome message below.</p>
         </div>
 
         <div className=" mb-4 flex flex-row place-items-center justify-center px-6 py-4 pt-2">
