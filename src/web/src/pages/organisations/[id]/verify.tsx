@@ -19,6 +19,7 @@ import {
   IoMdThumbsDown,
   IoMdThumbsUp,
   IoMdWarning,
+  IoIosArrowBack,
 } from "react-icons/io";
 import ReactModal from "react-modal";
 import { toast } from "react-toastify";
@@ -32,7 +33,7 @@ import {
   patchOrganisationStatus,
 } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
-import { Overview } from "~/components/Organisation/Detail/Overview";
+import { VerifyOverview } from "~/components/Organisation/Detail/VerifyOverview";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
@@ -50,6 +51,7 @@ import {
 import type { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
+import { IoIosCheckmark } from "react-icons/io";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -121,6 +123,8 @@ const OrganisationDetails: NextPageWithLayout<{
     useState(false);
   const [verifyComments, setVerifyComments] = useState("");
   const [verifyActionApprove, setVerifyActionApprove] = useState(false);
+  const [approved, setApproved] = useState(false);
+  const [rejected, setRejected] = useState(false);
 
   // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
@@ -142,10 +146,16 @@ const OrganisationDetails: NextPageWithLayout<{
       const message = `Organisation ${
         verifyActionApprove ? "approved" : "declined"
       }`;
-      toast(message, {
-        type: "success",
-        toastId: "verifyOrganisation",
-      });
+      // toast(message, {
+      //   type: "success",
+      //   toastId: "verifyOrganisation",
+      // });
+      if (verifyActionApprove) {
+        setApproved(true);
+      } else {
+        setRejected(true);
+      }
+      setModalVerifySingleVisible(false);
       console.log(message);
 
       // 📊 GOOGLE ANALYTICS: track event
@@ -173,8 +183,6 @@ const OrganisationDetails: NextPageWithLayout<{
     }
 
     setIsLoading(false);
-
-    void router.push("/organisations");
   }, [
     setIsLoading,
     router,
@@ -183,6 +191,88 @@ const OrganisationDetails: NextPageWithLayout<{
     verifyActionApprove,
     verifyComments,
   ]);
+
+  let content = <></>;
+
+  if (!approved && !rejected) {
+    content = (
+      <div>
+        <VerifyOverview organisation={organisation}></VerifyOverview>
+        {/* BUTTONS */}
+        <div className="my-4 flex justify-center gap-4 md:justify-end">
+          <button
+            type="button"
+            className="btn btn-warning flex-grow md:w-1/4 md:flex-grow-0"
+            onClick={() => {
+              setVerifyActionApprove(false);
+              setModalVerifySingleVisible(true);
+            }}
+            id="btnReject"
+          >
+            <IoMdThumbsDown className="h-6 w-6" />
+            Reject
+          </button>
+          <button
+            className="btn btn-success flex-grow md:w-1/4 md:flex-grow-0"
+            onClick={() => {
+              setVerifyActionApprove(true);
+              setModalVerifySingleVisible(true);
+            }}
+            id="btnApprove"
+          >
+            <IoMdThumbsUp className="h-6 w-6" />
+            Approve
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (approved) {
+    content = (
+      <div className="py-8">
+        <div className="flex h-full w-full flex-col place-items-center justify-center rounded-lg bg-white py-8">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-green-dark bg-green-light">
+            <IoIosCheckmark className="h-16 w-16 text-green" />
+          </div>
+          <h4 className="mb-2 font-bold">Application approved!</h4>
+          <p>{organisation?.name} has been added to your organisations.</p>
+        </div>
+
+        <div className=" mb-4 flex flex-row place-items-center justify-center px-6 py-4 pt-2">
+          <button
+            className="btn btn-outline btn-sm flex-nowrap rounded-full px-10 py-5 text-green hover:border-green hover:bg-green hover:text-white"
+            onClick={() => router.push("/organisations")}
+          >
+            View all organisations
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (rejected) {
+    content = (
+      <div className="py-8">
+        <div className="flex h-full w-full flex-col place-items-center justify-center rounded-lg bg-white py-8">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-green-dark bg-green-light">
+            <IoIosCheckmark className="h-16 w-16 text-green" />
+          </div>
+          <h4 className="mb-2 font-bold">Application rejected!</h4>
+          <p>{organisation?.name} has been rejected.</p>
+        </div>
+
+        <div className=" mb-4 flex flex-row place-items-center justify-center px-6 py-4 pt-2">
+          <button
+            className="btn btn-outline btn-sm flex-nowrap rounded-full px-10 py-5 text-green hover:border-green hover:bg-green hover:text-white"
+            onClick={() => router.push("/organisations")}
+          >
+            View all organisations
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (error) return <Unauthorized />;
 
@@ -194,125 +284,104 @@ const OrganisationDetails: NextPageWithLayout<{
 
       <PageBackground />
 
-      <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
-        {isLoading && <Loading />}
-        {/* BREADCRUMB */}
-        <div className="flex flex-row text-xs text-gray">
-          <Link
-            className="font-bold text-white hover:text-gray"
-            href={"/organisations"}
-          >
-            Organisations
-          </Link>
-          <div className="mx-2">/</div>
-          <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
-            {organisation?.name}
+      {/* MODAL DIALOG FOR VERIFY (SINGLE) */}
+      <ReactModal
+        isOpen={modalVerifySingleVisible}
+        shouldCloseOnOverlayClick={true}
+        onRequestClose={() => {
+          setModalVerifySingleVisible(false);
+        }}
+        className={`text-gray-700 fixed inset-0 m-auto h-[230px] w-[380px] rounded-lg bg-white p-4 font-openSans duration-100 animate-in fade-in zoom-in`}
+        overlayClassName="fixed inset-0 bg-black modal-overlay"
+        portalClassName={"fixed z-20"}
+      >
+        <div className="flex h-full flex-col space-y-2">
+          <div className="flex flex-row space-x-2">
+            <IoMdWarning className="gl-icon-yellow h-6 w-6" />
+            <p className="text-lg">Confirm</p>
           </div>
-        </div>
 
-        {/* LOGO/TITLE */}
-        <LogoTitle logoUrl={organisation?.logoURL} title={organisation?.name} />
+          <p className="text-sm leading-6">
+            Are you sure you want to{" "}
+            <strong>{verifyActionApprove ? "approve" : "reject"}</strong> this
+            organisation?
+          </p>
 
-        {/* CONTENT */}
-        <div className="flex flex-col items-center pt-4">
-          <div className="flex w-full flex-col gap-2 rounded-lg bg-white p-8 shadow-lg lg:w-[600px]">
-            <Overview organisation={organisation}></Overview>
+          <div className="form-control">
+            <label className="label">
+              <span className="text-gray-700 label-text">
+                Enter comments below:
+              </span>
+            </label>
+            <textarea
+              className="input input-bordered w-full"
+              onChange={(e) => setVerifyComments(e.target.value)}
+              id="txtVerifyComments"
+            />
+          </div>
 
-            {/* BUTTONS */}
-            <div className="my-4 flex items-center justify-center gap-2">
+          {/* BUTTONS */}
+          <div className="mt-10 flex h-full flex-row place-items-center justify-center space-x-2">
+            <button
+              className="btn-default btn btn-sm flex-nowrap"
+              onClick={() => setModalVerifySingleVisible(false)}
+            >
+              <IoMdClose className="h-6 w-6" />
+              Cancel
+            </button>
+            {verifyActionApprove && (
               <button
-                type="button"
-                className="btn btn-warning btn-sm flex-grow"
-                onClick={() => {
-                  setVerifyActionApprove(false);
-                  setModalVerifySingleVisible(true);
-                }}
-                id="btnReject"
-              >
-                <IoMdThumbsDown className="h-6 w-6" />
-                Reject
-              </button>
-              <button
-                className="btn btn-success btn-sm flex-grow"
-                onClick={() => {
-                  setVerifyActionApprove(true);
-                  setModalVerifySingleVisible(true);
-                }}
-                id="btnApprove"
+                className="btn btn-success btn-sm flex-nowrap"
+                onClick={() => onSubmit()}
+                id="btnApproveModal"
               >
                 <IoMdThumbsUp className="h-6 w-6" />
                 Approve
               </button>
-            </div>
+            )}
+            {!verifyActionApprove && (
+              <button
+                className="btn btn-warning btn-sm flex-nowrap"
+                onClick={() => onSubmit()}
+                id="btnRejectModal"
+              >
+                <IoMdThumbsDown className="h-6 w-6" />
+                Reject
+              </button>
+            )}
+          </div>
+        </div>
+      </ReactModal>
 
-            {/* MODAL DIALOG FOR VERIFY (SINGLE) */}
-            <ReactModal
-              isOpen={modalVerifySingleVisible}
-              shouldCloseOnOverlayClick={true}
-              onRequestClose={() => {
-                setModalVerifySingleVisible(false);
-              }}
-              className={`text-gray-700 fixed inset-0 m-auto h-[230px] w-[380px] rounded-lg bg-white p-4 font-openSans duration-100 animate-in fade-in zoom-in`}
-              overlayClassName="fixed inset-0 bg-black modal-overlay"
-              portalClassName={"fixed z-20"}
-            >
-              <div className="flex h-full flex-col space-y-2">
-                <div className="flex flex-row space-x-2">
-                  <IoMdWarning className="gl-icon-yellow h-6 w-6" />
-                  <p className="text-lg">Confirm</p>
-                </div>
+      <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
+        {isLoading && <Loading />}
+        {/* BREADCRUMB */}
+        <span className="flex flex-row items-center text-xs text-gray">
+          <span>Organisations</span>
+          <span className="mx-2 font-bold">|</span>
+          <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
+            {organisation?.name}
+          </span>
+        </span>
 
-                <p className="text-sm leading-6">
-                  Are you sure you want to{" "}
-                  <strong>{verifyActionApprove ? "approve" : "reject"}</strong>{" "}
-                  this organisation?
-                </p>
+        {/* LOGO/TITLE */}
+        <div className="-mt-2 flex flex-row">
+          <Link
+            className="flex flex-row items-center text-white hover:text-gray"
+            href={"/organisations"}
+          >
+            <IoIosArrowBack className="inline-block h-6 w-6 rounded-full bg-blue-shade pr-[2px]" />
+          </Link>
+          <LogoTitle
+            logoUrl={organisation?.logoURL}
+            title={organisation?.name}
+          />
+        </div>
 
-                <div className="form-control">
-                  <label className="label">
-                    <span className="text-gray-700 label-text">
-                      Enter comments below:
-                    </span>
-                  </label>
-                  <textarea
-                    className="input input-bordered w-full"
-                    onChange={(e) => setVerifyComments(e.target.value)}
-                    id="txtVerifyComments"
-                  />
-                </div>
-
-                {/* BUTTONS */}
-                <div className="mt-10 flex h-full flex-row place-items-center justify-center space-x-2">
-                  <button
-                    className="btn-default btn btn-sm flex-nowrap"
-                    onClick={() => setModalVerifySingleVisible(false)}
-                  >
-                    <IoMdClose className="h-6 w-6" />
-                    Cancel
-                  </button>
-                  {verifyActionApprove && (
-                    <button
-                      className="btn btn-success btn-sm flex-nowrap"
-                      onClick={() => onSubmit()}
-                      id="btnApproveModal"
-                    >
-                      <IoMdThumbsUp className="h-6 w-6" />
-                      Approve
-                    </button>
-                  )}
-                  {!verifyActionApprove && (
-                    <button
-                      className="btn btn-warning btn-sm flex-nowrap"
-                      onClick={() => onSubmit()}
-                      id="btnRejectModal"
-                    >
-                      <IoMdThumbsDown className="h-6 w-6" />
-                      Reject
-                    </button>
-                  )}
-                </div>
-              </div>
-            </ReactModal>
+        {/* CONTENT */}
+        <div className="flex flex-col items-center pt-4">
+          <div className="flex w-full flex-col gap-2 rounded-lg bg-white p-8 shadow-lg lg:w-[600px]">
+            {content}
           </div>
         </div>
       </div>

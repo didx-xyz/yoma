@@ -114,21 +114,21 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
   return (
     <div
       key={`OpportunityCompletionRead_${id}`}
-      className="flex flex-col gap-4 rounded-lg bg-white p-4"
+      className="my-4 flex flex-col gap-4 rounded-lg bg-white p-4"
     >
       <div className="flex flex-row">
-        <div className="flex flex-grow flex-col gap-1">
-          <p className="text-lg font-bold text-black">
+        <div className="flex flex-grow flex-col">
+          <p className="h-6 text-lg font-bold text-black">
             {data?.userDisplayName}
           </p>
-          <p className="text--dark text-sm">{data?.userEmail}</p>
-          <p className="flex flex-row items-center text-sm text-gray-dark">
+          <p className="text-sm text-gray-dark">{data?.userEmail}</p>
+          <p className="mt-2 flex flex-row items-center text-sm text-gray-dark">
             <IoMdPin className="mr-2 h-4 w-4 text-gray-dark" />
             {data?.userCountryOfResidence}
           </p>
         </div>
         <div className="flex flex-col items-center justify-center gap-4">
-          <div className="-mt-8 flex h-24 w-24 items-center justify-center rounded-full border-green-dark bg-white p-4 shadow-lg">
+          <div className="-mt-14 flex h-24 w-24 items-center justify-center rounded-full border-green-dark bg-white p-4 shadow-lg">
             <Image
               src={data?.userPhotoURL ?? iconSuccess}
               alt="Icon User"
@@ -144,7 +144,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           </div>
         </div>
       </div>
-      <div className="divider m-0" />
+      <div className="divider m-0 h-[1px] bg-gray-light" />
       {data?.verifications?.map((item) => (
         <div key={item.fileId}>
           {item.verificationType == "FileUpload" &&
@@ -228,7 +228,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
         </div>
       ))}
       {data?.dateStart && (
-        <div className="flex flex-row gap-2 text-gray-dark">
+        <div className="flex flex-row gap-2 text-sm text-gray-dark md:h-3">
           <div>Started opportunity at: </div>
           <div className="font-bold">
             <Moment format={DATETIME_FORMAT_HUMAN} utc={true}>
@@ -238,7 +238,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
         </div>
       )}
       {data?.dateEnd && (
-        <div className="flex flex-row gap-2 text-gray-dark">
+        <div className="flex flex-row gap-2 text-sm text-gray-dark">
           <div>Finished opportunity at: </div>
           <div className="font-bold">
             <Moment format={DATETIME_FORMAT_HUMAN} utc={true}>
