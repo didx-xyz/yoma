@@ -388,6 +388,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
                   opportunityCountry => filter.Countries.Contains(opportunityCountry.CountryId) && opportunityCountry.OpportunityId == opportunity.Id));
             }
 
+            if (filter.Started.HasValue && filter.Started.Value)
+                query = query.Where(o => o.DateStart >= DateTimeOffset.UtcNow);
+
             //statuses
             if (filter.IncludeExpired && !filter.Published)
                 throw new InvalidOperationException($"'{nameof(filter.IncludeExpired)}' requires '{nameof(filter.Published)}'");
@@ -621,7 +624,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (organization.Status != OrganizationStatus.Active)
                 throw new ValidationException($"The opportunity cannot be updated as the associated organization '{organization.Name}' is not currently active (pending approval)");
 
-            //status remains unchanged (status updated via UpdateStatus)
+            //by default, status remains unchanged, except for immediate expiration based on DateEnd (status updated via UpdateStatus)
+            if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
+            {
+                result.Status = Status.Expired;
+                result.StatusId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+            }
+
             result.Title = request.Title;
             result.Description = request.Description;
             result.TypeId = request.TypeId;

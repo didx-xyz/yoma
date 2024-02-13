@@ -57,9 +57,22 @@ DECLARE
     V_Words VARCHAR(500) := 'The,A,An,Awesome,Incredible,Fantastic,Amazing,Wonderful,Exciting,Unbelievable,Great,Marvelous,Stunning,Impressive,Captivating,Extraordinary,Superb,Epic,Spectacular,Magnificent,Phenomenal,Outstanding,Brilliant,Enthralling,Enchanting,Mesmerizing,Riveting,Spellbinding,Unforgettable,Sublime';
     V_RandomLengthName INT := ABS(FLOOR(RANDOM() * 5) + 5);
     V_RandomLengthOther INT := ABS(FLOOR(RANDOM() * 101) + 100);
+    V_RandomNumber VARCHAR(10) := CAST(ABS(FLOOR(RANDOM() * 2147483647)) AS VARCHAR(10));
+    V_OrgName VARCHAR(100);
 BEGIN
     -- Organizations
     FOR RowCount IN 1..10 LOOP
+        -- Generate the organization name
+        SELECT INTO V_OrgName LEFT(V_RandomNumber || ' ' || (
+            SELECT STRING_AGG(Word, ' ')
+            FROM (
+                SELECT word
+                FROM regexp_split_to_table(V_Words, ',') AS RandomWords(word)
+                ORDER BY RANDOM()
+                LIMIT V_RandomLengthName
+            ) AS RandomNameWords
+        ), 100);
+
         -- Insert into the Organization table
         INSERT INTO "Entity"."Organization"(
             "Id", "Name", "NameHashValue", "WebsiteURL", "PrimaryContactName", "PrimaryContactEmail", "PrimaryContactPhone",
@@ -69,26 +82,8 @@ BEGIN
         )
         SELECT
             gen_random_uuid(),
-            (
-                SELECT STRING_AGG(Word, ' ')
-                FROM (
-                    SELECT word
-                    FROM regexp_split_to_table(V_Words, ',') AS RandomWords(word)
-                    ORDER BY RANDOM()
-                    LIMIT V_RandomLengthName
-                ) AS RandomNameWords
-            ) || ' ' || CAST(ABS(FLOOR(RANDOM() * 2147483647)) AS VARCHAR(10)),
-            MD5(
-                (
-                    SELECT STRING_AGG(Word, ' ')
-                    FROM (
-                        SELECT word
-                        FROM regexp_split_to_table(V_Words, ',') AS RandomWords(word)
-                        ORDER BY RANDOM()
-                        LIMIT V_RandomLengthName
-                    ) AS RandomNameWords
-                ) || CAST(ABS(FLOOR(RANDOM() * 2147483647)) AS VARCHAR(10))
-            ),
+            V_OrgName,
+            MD5(V_OrgName),
             'https://www.google.com/',
             'Primary Contact',
             'primarycontact@gmail.com',

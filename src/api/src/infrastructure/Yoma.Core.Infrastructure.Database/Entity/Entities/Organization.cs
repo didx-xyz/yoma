@@ -8,6 +8,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 {
     [Table("Organization", Schema = "Entity")]
     [Index(nameof(Name), IsUnique = true)]
+    [Index(nameof(NameHashValue), IsUnique = true)]
     [Index(nameof(StatusId), nameof(DateStatusModified), nameof(DateCreated), nameof(CreatedByUserId), nameof(DateModified), nameof(ModifiedByUserId))]
     public class Organization : BaseEntity<Guid>
     {
