@@ -30,7 +30,7 @@ export const LogoTitle: React.FC<InputProps> = ({ logoUrl, title }) => {
       </div>
 
       {/* TITLE */}
-      <h3 className="overflow-hidden text-ellipsis whitespace-nowrap text-white">
+      <h3 className="overflow-hidden text-ellipsis whitespace-nowrap font-bold text-white">
         {title}
       </h3>
     </div>
