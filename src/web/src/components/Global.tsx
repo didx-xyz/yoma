@@ -55,7 +55,7 @@ export const Global: React.FC = () => {
     // skip if not logged in or userProfile atom already set (atomWithStorage)
     //if (!session || userProfile) return;
 
-    if (!userProfile) {
+    if (session && !userProfile) {
       getUserProfile()
         .then((res) => {
           // update atom
@@ -75,7 +75,7 @@ export const Global: React.FC = () => {
         })
         .catch((e) => console.error(e));
     }
-  }, [/*session,*/ userProfile, setUserProfile, setOnboardingDialogVisible]);
+  }, [session, userProfile, setUserProfile, setOnboardingDialogVisible]);
 
   // 🔔 SMALL DISPLAY
   // track the screen size for responsive elements
