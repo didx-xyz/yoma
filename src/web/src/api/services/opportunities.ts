@@ -229,16 +229,3 @@ export const updateOpportunityStatus = async (
   );
   return data;
 };
-
-// export const updateOpportunityStatus = async (
-//   opportunityId: string,
-//   status: Status,
-//   context?: GetServerSidePropsContext | GetStaticPropsContext,
-// ): Promise<Opportunity> => {
-//   const instance = context ? ApiServer(context) : await ApiClient;
-
-//   const { data } = await instance.patch<Opportunity>(
-//     `/opportunity/${opportunityId}/${status}`,
-//   );
-//   return data;
-// };

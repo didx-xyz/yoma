@@ -120,3 +120,11 @@ export const getOpportunitiesForVerification = async (
   );
   return data;
 };
+
+export const performActionCancel = async (
+  opportunityId: string,
+  context?: GetServerSidePropsContext,
+): Promise<any> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  await instance.delete(`/myopportunity/action/${opportunityId}/verify/delete`);
+};

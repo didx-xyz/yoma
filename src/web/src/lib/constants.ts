@@ -57,6 +57,7 @@ export const GA_ACTION_OPPORTUNITY_DELETE = "Deleted Opportunity";
 export const GA_ACTION_OPPORTUNITY_FOLLOWEXTERNAL =
   "External Opportunity Link Followed";
 export const GA_ACTION_OPPORTUNITY_COMPLETED = "Opportunity Completed";
+export const GA_ACTION_OPPORTUNITY_CANCELED = "Opportunity Cancled";
 
 export const GA_ACTION_MARKETPLACE_ITEM_BUY = "Marketplace Item Purchased";
 

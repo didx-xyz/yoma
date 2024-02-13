@@ -39,6 +39,7 @@ import Image from "next/image";
 import {
   getVerificationStatus,
   performActionViewed,
+  performActionCancel,
   saveMyOpportunity,
 } from "~/api/services/myOpportunities";
 import { toast } from "react-toastify";
@@ -55,6 +56,7 @@ import axios from "axios";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import {
   DATE_FORMAT_HUMAN,
+  GA_ACTION_OPPORTUNITY_CANCELED,
   GA_ACTION_OPPORTUNITY_COMPLETED,
   GA_ACTION_OPPORTUNITY_FOLLOWEXTERNAL,
   GA_ACTION_USER_LOGIN_BEFORE,
@@ -250,6 +252,24 @@ const OpportunityDetails: NextPageWithLayout<{
     await queryClient.invalidateQueries({
       queryKey: ["verificationStatus", opportunityId],
     });
+  }, [opportunityId, queryClient]);
+
+  const onOpportunityCancel = useCallback(async () => {
+    // call api
+    await performActionCancel(opportunityId);
+
+    // 📊 GOOGLE ANALYTICS: track event
+    trackGAEvent(GA_CATEGORY_OPPORTUNITY, GA_ACTION_OPPORTUNITY_CANCELED, "");
+
+    // invalidate queries
+    await queryClient.invalidateQueries({
+      queryKey: ["verificationStatus", opportunityId],
+    });
+
+    // toast
+    toast.success("Your application has been canceled");
+
+    setCancelOpportunityDialogVisible(false);
   }, [opportunityId, queryClient]);
 
   return (
@@ -544,14 +564,14 @@ const OpportunityDetails: NextPageWithLayout<{
                 </div>
               </ReactModal>
 
-              {/* CANCEL DIALOG */}
+              {/* CANCEL OPPORTUNITY COMPLETION DIALOG */}
               <ReactModal
                 isOpen={cancelOpportunityDialogVisible}
                 shouldCloseOnOverlayClick={false}
                 onRequestClose={() => {
                   setCancelOpportunityDialogVisible(false);
                 }}
-                className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[300px] md:w-[450px] md:rounded-3xl`}
+                className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:overflow-y-clip md:rounded-3xl`}
                 portalClassName={"fixed z-40"}
                 overlayClassName="fixed inset-0 bg-overlay"
               >
@@ -580,40 +600,21 @@ const OpportunityDetails: NextPageWithLayout<{
                         style={{ width: "28px", height: "28px" }}
                       />
                     </div>
-
-                    <h5>Cancel</h5>
-
+                    <h3>Your application is pending verification.</h3>
+                    <div className="w-[450px] rounded-lg p-4 text-center">
+                      <strong>{opportunity?.organizationName}</strong> is busy
+                      reviewing your submission. Once approved, the opportunity
+                      will be automatically added to your CV. If you would like
+                      to cancel your application and delete all uploaded files,
+                      click the button below.
+                    </div>
                     <div className="mt-4 flex flex-grow gap-4">
                       <button
                         type="button"
-                        className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
-                        onClick={() => setCancelOpportunityDialogVisible(false)}
+                        className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[200px]"
+                        onClick={onOpportunityCancel}
                       >
-                        <Image
-                          src={iconBookmark}
-                          alt="Icon Bookmark"
-                          width={20}
-                          height={20}
-                          sizes="100vw"
-                          priority={true}
-                          style={{ width: "20px", height: "20px" }}
-                        />
-
-                        <span className="ml-1">Cancel</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light md:w-[150px]"
-                        onClick={onLogin}
-                      >
-                        {isButtonLoading && (
-                          <span className="loading loading-spinner loading-md mr-2 text-warning"></span>
-                        )}
-                        {!isButtonLoading && (
-                          <IoMdFingerPrint className="h-5 w-5 text-white" />
-                        )}
-                        <p className="text-white">Login</p>
+                        Cancel submission & Delete all files
                       </button>
                     </div>
                   </div>
@@ -825,22 +826,23 @@ const OpportunityDetails: NextPageWithLayout<{
                                     )}
                                   {verificationStatus &&
                                     verificationStatus.status == "Pending" && (
-                                      // <button
-                                      //   type="button"
-                                      //   className="btn btn-xs rounded-full border-0 bg-gray-light normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10"
-                                      //   onClick={() =>
-                                      //     setCancelOpportunityDialogVisible(
-                                      //       true,
-                                      //     )
-                                      //   }
-                                      // >
-                                      //   Pending verification
-                                      // </button>
-
-                                      <div className="md:text-md flex items-center justify-center whitespace-nowrap rounded-full bg-gray-light px-8 text-center text-xs font-bold text-gray-dark">
+                                      <button
+                                        type="button"
+                                        className="btn btn-xs rounded-full border-0 bg-gray-light normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10"
+                                        onClick={() =>
+                                          setCancelOpportunityDialogVisible(
+                                            true,
+                                          )
+                                        }
+                                      >
                                         Pending verification
                                         <IoMdClose className="ml-1 h-4 w-4 text-gray-dark" />
-                                      </div>
+                                      </button>
+
+                                      // <div className="md:text-md flex items-center justify-center whitespace-nowrap rounded-full bg-gray-light px-8 text-center text-xs font-bold text-gray-dark">
+                                      //   Pending verification
+                                      //   <IoMdClose className="ml-1 h-4 w-4 text-gray-dark" />
+                                      // </div>
                                     )}
                                   {/* {verificationStatus != null &&
                             verificationStatus == "Rejected" && (
