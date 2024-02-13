@@ -183,14 +183,7 @@ const OrganisationDetails: NextPageWithLayout<{
     }
 
     setIsLoading(false);
-  }, [
-    setIsLoading,
-    router,
-    id,
-    queryClient,
-    verifyActionApprove,
-    verifyComments,
-  ]);
+  }, [setIsLoading, id, queryClient, verifyActionApprove, verifyComments]);
 
   let content = <></>;
 
