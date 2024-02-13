@@ -133,7 +133,7 @@ namespace Yoma.Core.Domain.SSI.Services
                                     request = new TenantRequest
                                     {
                                         //requiring uniqueness for both the name (wallet label) and its corresponding referent (wallet name) as issuers and verifiers are published to the trust registry
-                                        Referent = org.Id.ToString(),
+                                        Referent = org.NameHashValue, //use hash value of name instead if id as dev and stage can be reset with deployments
                                         Name = org.Name,
                                         ImageUrl = org.LogoURL,
                                         Roles = new List<Role> { Role.Holder, Role.Issuer, Role.Verifier }
