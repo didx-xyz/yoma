@@ -39,7 +39,7 @@ namespace Yoma.Core.Domain.Lookups.Services
                 throw new ArgumentNullException(nameof(name));
             name = name.Trim();
 
-            return List().SingleOrDefault(o => o.Name == name);
+            return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public Language GetById(Guid id)
@@ -60,7 +60,7 @@ namespace Yoma.Core.Domain.Lookups.Services
                 throw new ArgumentNullException(nameof(code));
             code = code.Trim();
 
-            return List().SingleOrDefault(o => o.Name == code);
+            return List().SingleOrDefault(o => string.Equals(o.CodeAlpha2, code, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public Language? GetByIdOrNull(Guid id)

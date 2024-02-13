@@ -38,7 +38,7 @@ namespace Yoma.Core.Domain.Reward.Services.Lookups
                 throw new ArgumentNullException(nameof(name));
             name = name.Trim();
 
-            return List().SingleOrDefault(o => o.Name == name);
+            return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public Models.Lookups.WalletCreationStatus GetById(Guid id)

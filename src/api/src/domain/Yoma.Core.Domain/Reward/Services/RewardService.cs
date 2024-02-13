@@ -51,7 +51,7 @@ namespace Yoma.Core.Domain.Reward.Services
             switch (entityType)
             {
                 case RewardTransactionEntityType.MyOpportunity:
-                    existingItem = _rewardTransactionRepository.Query().SingleOrDefault(o => o.SourceEntityType == entityType.ToString() && o.MyOpportunityId == entityId);
+                    existingItem = _rewardTransactionRepository.Query().SingleOrDefault(o => o.SourceEntityType.ToLower() == entityType.ToString().ToLower() && o.MyOpportunityId == entityId);
                     item.MyOpportunityId = entityId;
                     break;
 

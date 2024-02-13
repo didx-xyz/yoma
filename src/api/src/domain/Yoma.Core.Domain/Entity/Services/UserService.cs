@@ -88,7 +88,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new ArgumentNullException(nameof(email));
             email = email.Trim();
 
-            var result = _userRepository.Query(includeChildItems).SingleOrDefault(o => o.Email == email);
+            var result = _userRepository.Query(includeChildItems).SingleOrDefault(o => o.Email.ToLower() == email.ToLower());
             if (result == null) return null;
 
             if (includeComputed)

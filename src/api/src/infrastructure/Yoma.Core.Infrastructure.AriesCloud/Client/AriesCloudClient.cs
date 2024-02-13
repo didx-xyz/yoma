@@ -487,7 +487,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         {
             //try and find an existing connection
             var result = _connectionRepository.Query().SingleOrDefault(o =>
-                o.SourceTenantId == tenantIssuer.Wallet_id && o.TargetTenantId == tenantHolder.Wallet_id && o.Protocol == Connection_protocol.Connections_1_0.ToString());
+                o.SourceTenantId == tenantIssuer.Wallet_id && o.TargetTenantId == tenantHolder.Wallet_id && o.Protocol.ToLower() == Connection_protocol.Connections_1_0.ToString().ToLower());
 
             Connection? connectionAries = null;
             if (result != null)

@@ -38,7 +38,7 @@ namespace Yoma.Core.Domain.Marketplace.Services.Lookups
                 throw new ArgumentNullException(nameof(name));
             name = name.Trim();
 
-            return List().SingleOrDefault(o => o.Name == name);
+            return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public Models.Lookups.TransactionStatus GetById(Guid id)

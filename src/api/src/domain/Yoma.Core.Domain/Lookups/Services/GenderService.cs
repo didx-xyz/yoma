@@ -39,7 +39,7 @@ namespace Yoma.Core.Domain.Lookups.Services
                 throw new ArgumentNullException(nameof(name));
             name = name.Trim();
 
-            return List().SingleOrDefault(o => o.Name == name);
+            return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public Gender GetById(Guid id)

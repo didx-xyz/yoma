@@ -51,7 +51,7 @@ namespace Yoma.Core.Domain.Lookups.Services
                 throw new ArgumentNullException(nameof(name));
             name = name.Trim();
 
-            return _skillRepository.Query().SingleOrDefault(o => o.Name == name);
+            return _skillRepository.Query().SingleOrDefault(o => o.Name.ToLower() == name.ToLower());
         }
 
         public Skill GetById(Guid id)

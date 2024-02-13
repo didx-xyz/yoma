@@ -152,7 +152,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(title));
             title = title.Trim();
 
-            var result = _opportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.Title == title);
+            var result = _opportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.Title.ToLower() == title.ToLower());
             if (result == null) return null;
 
             if (includeComputed)
@@ -389,7 +389,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             }
 
             if (filter.Started.HasValue && filter.Started.Value)
-                query = query.Where(o => o.DateStart >= DateTimeOffset.UtcNow);
+                query = query.Where(o => o.DateStart <= DateTimeOffset.UtcNow);
 
             //statuses
             if (filter.IncludeExpired && !filter.Published)

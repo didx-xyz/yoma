@@ -201,6 +201,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
+                    b.HasIndex("NameHashValue")
+                        .IsUnique();
+
                     b.HasIndex("StatusId", "DateStatusModified", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId");
 
                     b.ToTable("Organization", "Entity");
