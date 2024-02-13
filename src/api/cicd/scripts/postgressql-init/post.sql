@@ -3,6 +3,8 @@
 -- Enable pgcrypto extension
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+SET TIMEZONE='UTC';
+
 -- Users & Organizations
 
 -- testuser@gmail.com (KeyCloak password: P@ssword1)

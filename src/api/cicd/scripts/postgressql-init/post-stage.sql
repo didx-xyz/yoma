@@ -3,6 +3,8 @@
 -- Enable pgcrypto extension
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+SET TIMEZONE='UTC';
+
 -- user & organization
 INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "CountryId", "CountryOfResidenceId",
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")

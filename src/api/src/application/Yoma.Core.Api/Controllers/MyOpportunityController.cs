@@ -197,13 +197,29 @@ namespace Yoma.Core.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_User}")]
-        public async Task<IActionResult> PerformActionSendForVerification([FromRoute] Guid opportunityId, [FromForm] MyOpportunityRequestVerify request)
+        public async Task<IActionResult> PerformActionSendForVerificationManual([FromRoute] Guid opportunityId, [FromForm] MyOpportunityRequestVerify request)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSendForVerification));
+            _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSendForVerificationManual));
 
             await _myOpportunityService.PerformActionSendForVerificationManual(opportunityId, request);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSendForVerification));
+            _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSendForVerificationManual));
+
+            return StatusCode((int)HttpStatusCode.OK);
+        }
+
+        [SwaggerOperation(Summary = "Delete a pending verification request for an opportunity (Authenticated User)")]
+        [HttpDelete("action/{opportunityId}/verify/delete")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [Authorize(Roles = $"{Constants.Role_User}")]
+        public async Task<IActionResult> PerformActionSendForVerificationManualDelete([FromRoute] Guid opportunityId)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSendForVerificationManualDelete));
+
+            await _myOpportunityService.PerformActionSendForVerificationManualDelete(opportunityId);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSendForVerificationManualDelete));
 
             return StatusCode((int)HttpStatusCode.OK);
         }

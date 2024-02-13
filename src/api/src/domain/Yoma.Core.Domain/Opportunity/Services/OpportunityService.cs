@@ -504,6 +504,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             await _opportunityRequestValidatorCreate.ValidateAndThrowAsync(request);
 
+            request.DateStart = request.DateStart.RemoveTime();
+            if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.Value.ToEndOfDay();
+
             if (ensureOrganizationAuthorization)
                 _organizationService.IsAdmin(request.OrganizationId, true);
 
@@ -553,8 +556,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 ParticipantLimit = request.ParticipantLimit,
                 KeywordsFlatten = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords),
                 Keywords = request.Keywords,
-                DateStart = request.DateStart.RemoveTime(),
-                DateEnd = !request.DateEnd.HasValue ? null : request.DateEnd.Value.ToEndOfDay(),
+                DateStart = request.DateStart,
+                DateEnd = !request.DateEnd.HasValue ? null : request.DateEnd.Value,
                 CredentialIssuanceEnabled = request.CredentialIssuanceEnabled,
                 SSISchemaName = request.SSISchemaName,
                 StatusId = _opportunityStatusService.GetByName(status.ToString()).Id,
@@ -596,6 +599,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(request));
 
             await _opportunityRequestValidatorUpdate.ValidateAndThrowAsync(request);
+
+            request.DateStart = request.DateStart.RemoveTime();
+            if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.Value.ToEndOfDay();
 
             if (ensureOrganizationAuthorization)
                 _organizationService.IsAdmin(request.OrganizationId, true);
@@ -641,8 +647,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.ParticipantLimit = request.ParticipantLimit;
             result.KeywordsFlatten = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords);
             result.Keywords = request.Keywords;
-            result.DateStart = request.DateStart.RemoveTime();
-            result.DateEnd = !request.DateEnd.HasValue ? null : request.DateEnd.Value.ToEndOfDay();
+            result.DateStart = request.DateStart;
+            result.DateEnd = !request.DateEnd.HasValue ? null : request.DateEnd.Value;
             result.CredentialIssuanceEnabled = request.CredentialIssuanceEnabled;
             result.SSISchemaName = request.SSISchemaName;
             result.ModifiedByUserId = user.Id;
