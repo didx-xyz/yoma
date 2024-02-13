@@ -152,6 +152,8 @@ const OpportunityDetails: NextPageWithLayout<{
     completeOpportunitySuccessDialogVisible,
     setCompleteOpportunitySuccessDialogVisible,
   ] = useState(false);
+  const [cancelOpportunityDialogVisible, setCancelOpportunityDialogVisible] =
+    useState(false);
 
   const {
     data: opportunity,
@@ -298,6 +300,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </ul>
                 </div>
               </div>
+
               {/* LOGIN DIALOG */}
               <ReactModal
                 isOpen={loginDialogVisible}
@@ -373,6 +376,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
                 </div>
               </ReactModal>
+
               {/* GO-TO OPPORTUNITY DIALOG */}
               <ReactModal
                 isOpen={gotoOpportunityDialogVisible}
@@ -461,6 +465,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
                 </div>
               </ReactModal>
+
               {/* UPLOAD/COMPLETE OPPORTUNITY DIALOG */}
               <ReactModal
                 isOpen={completeOpportunityDialogVisible}
@@ -481,6 +486,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   onSave={onOpportunityCompleted}
                 />
               </ReactModal>
+
               {/* COMPLETE SUCCESS DIALOG */}
               <ReactModal
                 isOpen={completeOpportunitySuccessDialogVisible}
@@ -538,6 +544,82 @@ const OpportunityDetails: NextPageWithLayout<{
                 </div>
               </ReactModal>
 
+              {/* CANCEL DIALOG */}
+              <ReactModal
+                isOpen={cancelOpportunityDialogVisible}
+                shouldCloseOnOverlayClick={false}
+                onRequestClose={() => {
+                  setCancelOpportunityDialogVisible(false);
+                }}
+                className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[300px] md:w-[450px] md:rounded-3xl`}
+                portalClassName={"fixed z-40"}
+                overlayClassName="fixed inset-0 bg-overlay"
+              >
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-row bg-green p-4 shadow-lg">
+                    <h1 className="flex-grow"></h1>
+                    <button
+                      type="button"
+                      className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+                      onClick={() => {
+                        setCancelOpportunityDialogVisible(false);
+                      }}
+                    >
+                      <IoMdClose className="h-6 w-6"></IoMdClose>
+                    </button>
+                  </div>
+                  <div className="flex flex-col items-center justify-center gap-4">
+                    <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                      <Image
+                        src={iconBell}
+                        alt="Icon Bell"
+                        width={28}
+                        height={28}
+                        sizes="100vw"
+                        priority={true}
+                        style={{ width: "28px", height: "28px" }}
+                      />
+                    </div>
+
+                    <h5>Cancel</h5>
+
+                    <div className="mt-4 flex flex-grow gap-4">
+                      <button
+                        type="button"
+                        className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
+                        onClick={() => setCancelOpportunityDialogVisible(false)}
+                      >
+                        <Image
+                          src={iconBookmark}
+                          alt="Icon Bookmark"
+                          width={20}
+                          height={20}
+                          sizes="100vw"
+                          priority={true}
+                          style={{ width: "20px", height: "20px" }}
+                        />
+
+                        <span className="ml-1">Cancel</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light md:w-[150px]"
+                        onClick={onLogin}
+                      >
+                        {isButtonLoading && (
+                          <span className="loading loading-spinner loading-md mr-2 text-warning"></span>
+                        )}
+                        {!isButtonLoading && (
+                          <IoMdFingerPrint className="h-5 w-5 text-white" />
+                        )}
+                        <p className="text-white">Login</p>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </ReactModal>
+
               {opportunity && (
                 <div className="flex flex-col gap-4">
                   <div className="relative flex flex-grow flex-row gap-1 rounded-lg bg-white p-6 shadow-lg">
@@ -546,9 +628,11 @@ const OpportunityDetails: NextPageWithLayout<{
                         <h4 className="text-2xl font-semibold text-black">
                           {opportunity.title}
                         </h4>
+
                         <h6 className="text-sm text-gray-dark">
                           By {opportunity.organizationName}
                         </h6>
+
                         {/* BADGES */}
                         <div className="my-2 flex flex-row gap-1 text-xs font-bold text-green-dark">
                           <div className="badge h-6 whitespace-nowrap rounded-md bg-green-light text-green">
@@ -677,6 +761,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             </div>
                           </div>
                         )}
+
                         {/* BUTTONS */}
                         <div className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-2">
                           <div className="flex flex-grow gap-4">
@@ -740,8 +825,21 @@ const OpportunityDetails: NextPageWithLayout<{
                                     )}
                                   {verificationStatus &&
                                     verificationStatus.status == "Pending" && (
+                                      // <button
+                                      //   type="button"
+                                      //   className="btn btn-xs rounded-full border-0 bg-gray-light normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10"
+                                      //   onClick={() =>
+                                      //     setCancelOpportunityDialogVisible(
+                                      //       true,
+                                      //     )
+                                      //   }
+                                      // >
+                                      //   Pending verification
+                                      // </button>
+
                                       <div className="md:text-md flex items-center justify-center whitespace-nowrap rounded-full bg-gray-light px-8 text-center text-xs font-bold text-gray-dark">
                                         Pending verification
+                                        <IoMdClose className="ml-1 h-4 w-4 text-gray-dark" />
                                       </div>
                                     )}
                                   {/* {verificationStatus != null &&

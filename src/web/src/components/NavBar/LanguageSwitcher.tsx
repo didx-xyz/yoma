@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { destroyCookie, parseCookies, setCookie } from "nookies";
+import { parseCookies, setCookie } from "nookies";
 import { IoMdGlobe } from "react-icons/io";
 import { useSetAtom } from "jotai";
 import { currentLanguageAtom } from "~/lib/store";

@@ -72,10 +72,14 @@ import {
   GA_CATEGORY_OPPORTUNITY,
   GA_ACTION_OPPORTUNITY_CREATE,
   GA_ACTION_OPPORTUNITY_UPDATE,
+  DATE_FORMAT_HUMAN,
+  DATE_FORMAT_SYSTEM,
 } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
+import Moment from "react-moment";
+import moment from "moment";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -340,6 +344,11 @@ const OpportunityDetails: NextPageWithLayout<{
 
       try {
         let message = "";
+
+        //  convert dates to string in format "YYYY-MM-DD"
+        data.dateStart = moment(data.dateStart).format(DATE_FORMAT_SYSTEM);
+        data.dateEnd = moment(data.dateEnd).format(DATE_FORMAT_SYSTEM);
+
         // update api
         if (opportunity) {
           await updateOpportunity(data);
@@ -393,11 +402,12 @@ const OpportunityDetails: NextPageWithLayout<{
         ...formData,
         ...(data as OpportunityRequestBase),
       };
+
       setFormData(model);
 
       if (opportunityId === "create") {
+        // submit on last page when creating new opportunity
         if (step === 8) {
-          // submit on last page when creating new opportunity
           await onSubmit(model);
 
           // 📊 GOOGLE ANALYTICS: track event
@@ -1244,7 +1254,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       <div className="form-control">
                         <label className="label">
                           <span className="label-text">
-                            Opportunity start date
+                            Opportunity start date:
                           </span>
                         </label>
                         <Controller
@@ -1272,7 +1282,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       <div className="form-control">
                         <label className="label">
                           <span className="label-text">
-                            Opportunity end date
+                            Opportunity end date:
                           </span>
                         </label>
 
@@ -2305,7 +2315,9 @@ const OpportunityDetails: NextPageWithLayout<{
                         <span className="label-text font-bold">Start date</span>
                       </label>
                       <label className="label-text text-sm">
-                        {formData.dateStart?.toString()}
+                        <Moment format={DATE_FORMAT_HUMAN}>
+                          {formData.dateStart!}
+                        </Moment>
                       </label>
                       {errorsStep2.dateStart && (
                         <label className="label">
@@ -2321,7 +2333,9 @@ const OpportunityDetails: NextPageWithLayout<{
                         <span className="label-text font-bold">End date</span>
                       </label>
                       <label className="label-text text-sm">
-                        {formData.dateEnd?.toString()}
+                        <Moment format={DATE_FORMAT_HUMAN}>
+                          {formData.dateEnd!}
+                        </Moment>
                       </label>
                       {errorsStep2.dateEnd && (
                         <label className="label">

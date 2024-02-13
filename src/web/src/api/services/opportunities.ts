@@ -96,6 +96,11 @@ export const getOpportunityById = async (
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.get<Opportunity>(`/opportunity/${id}/admin`);
+
+  // remove time and timezone from date
+  data.dateStart = data.dateStart?.split("T")[0] ?? "";
+  data.dateEnd = data.dateEnd?.split("T")[0] ?? "";
+
   return data;
 };
 
