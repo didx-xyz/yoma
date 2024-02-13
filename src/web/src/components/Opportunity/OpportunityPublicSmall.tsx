@@ -58,8 +58,8 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
               <>
                 <span className="mr-2 font-bold">Starts:</span>
                 <span className="text-xs tracking-widest text-black">
-                  <Moment format={DATE_FORMAT_HUMAN}>
-                    {new Date(data.dateStart)}
+                  <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                    {data.dateStart}
                   </Moment>
                 </span>
               </>
@@ -70,8 +70,8 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
               <>
                 <span className="mr-2 font-bold">Ends:</span>
                 <span className="text-xs tracking-widest text-black">
-                  <Moment format={DATE_FORMAT_HUMAN}>
-                    {new Date(data.dateEnd)}
+                  <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                    {data.dateEnd}
                   </Moment>
                 </span>
               </>

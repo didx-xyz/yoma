@@ -14,9 +14,7 @@ import Select, { components, type ValueContainerProps } from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizontalCard";
 import { useSession } from "next-auth/react";
-// import iconNextArrow from "public/images/icon-next-arrow.svg";
-// import { toBase64, shimmer } from "~/lib/image";
-// import Image from "next/image";
+// import React, { useId } from "react";
 
 export interface InputProps {
   htmlRef: HTMLDivElement;
@@ -203,6 +201,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               defaultValue={opportunitySearchFilter?.types}
               render={({ field: { onChange, value } }) => (
                 <Select
+                  instanceId="types"
                   classNames={{
                     control: () => "input input-xs",
                   }}
@@ -246,6 +245,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               defaultValue={opportunitySearchFilter?.countries}
               render={({ field: { onChange, value } }) => (
                 <Select
+                  instanceId="countries"
                   classNames={{
                     control: () => "input input-xs",
                   }}
@@ -288,6 +288,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               defaultValue={opportunitySearchFilter?.languages}
               render={({ field: { onChange, value } }) => (
                 <Select
+                  instanceId="languages"
                   classNames={{
                     control: () => "input input-xs",
                   }}
@@ -331,6 +332,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               defaultValue={opportunitySearchFilter?.organizations}
               render={({ field: { onChange, value } }) => (
                 <Select
+                  instanceId="organizations"
                   classNames={{
                     control: () => "input input-xs",
                   }}
@@ -375,6 +377,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               defaultValue={opportunitySearchFilter?.commitmentIntervals}
               render={({ field: { onChange, value } }) => (
                 <Select
+                  instanceId="commitmentIntervals"
                   classNames={{
                     control: () => "input input-xs",
                   }}
@@ -418,6 +421,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               defaultValue={opportunitySearchFilter?.zltoRewardRanges}
               render={({ field: { onChange, value } }) => (
                 <Select
+                  instanceId="zltoRewardRanges"
                   classNames={{
                     control: () => "input input-xs",
                   }}

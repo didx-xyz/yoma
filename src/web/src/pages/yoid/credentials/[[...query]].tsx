@@ -218,8 +218,11 @@ const MyCredentials: NextPageWithLayout<{
                           </p>
                           {activeCredential?.dateIssued && (
                             <p className="text-gray-900 text-end">
-                              <Moment format={DATETIME_FORMAT_SYSTEM}>
-                                {new Date(activeCredential?.dateIssued)}
+                              <Moment
+                                format={DATETIME_FORMAT_SYSTEM}
+                                utc={true}
+                              >
+                                {activeCredential?.dateIssued}
                               </Moment>
                             </p>
                           )}
@@ -340,8 +343,8 @@ const MyCredentials: NextPageWithLayout<{
                     </div>
                     <div className="flex flex-row items-center justify-center">
                       <div className="flex flex-grow text-xs tracking-widest">
-                        <Moment format={DATETIME_FORMAT_SYSTEM}>
-                          {new Date(item.dateIssued!)}
+                        <Moment format={DATETIME_FORMAT_SYSTEM} utc={true}>
+                          {item.dateIssued!}
                         </Moment>
                       </div>
                       <div className="badge h-6 rounded-md bg-green-light text-xs font-bold text-green">

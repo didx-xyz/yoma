@@ -371,8 +371,8 @@ const OpportunityDetails: NextPageWithLayout<{
                     <>
                       <span className="mr-2 font-bold">Starts:</span>
                       <span className="text-xs tracking-widest text-black">
-                        <Moment format={DATE_FORMAT_HUMAN}>
-                          {new Date(opportunity.dateStart)}
+                        <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                          {opportunity.dateStart}
                         </Moment>
                       </span>
                     </>
@@ -383,8 +383,8 @@ const OpportunityDetails: NextPageWithLayout<{
                     <>
                       <span className="mr-2 font-bold">Ends:</span>
                       <span className="text-xs tracking-widest text-black">
-                        <Moment format={DATE_FORMAT_HUMAN}>
-                          {new Date(opportunity.dateEnd)}
+                        <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                          {opportunity.dateEnd}
                         </Moment>
                       </span>
                     </>
