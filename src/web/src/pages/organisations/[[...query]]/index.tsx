@@ -117,7 +117,7 @@ export const OrganisationCardComponent: React.FC<{
 
   return (
     <div
-      key={props.key}
+      key={`$orgCard_{props.key}`}
       className="flex h-[100px] flex-col rounded-lg bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:bg-neutral-700 md:max-w-xl md:flex-row"
     >
       <div className="flex items-center justify-center p-4">
@@ -137,12 +137,12 @@ export const OrganisationCardComponent: React.FC<{
       </div>
 
       <div className="flex w-[300px] flex-col justify-start p-1">
-        <h5 className="mb-2 truncate overflow-ellipsis whitespace-nowrap text-xl  font-medium text-neutral-800 dark:text-neutral-50">
+        <h5 className="mb-2 truncate overflow-ellipsis whitespace-nowrap font-medium text-neutral-800 dark:text-neutral-50">
           <Link href={link} id={`lnkOrganisation2_${props.item.name}`}>
             {props.item.name}
           </Link>
         </h5>
-        <p className="mb-4 truncate overflow-ellipsis whitespace-nowrap  text-base text-neutral-600 dark:text-neutral-200">
+        <p className="mb-4 truncate overflow-ellipsis whitespace-nowrap text-sm text-neutral-600 dark:text-neutral-200">
           {props.item.tagline}
         </p>
         <p className="text-xs text-neutral-500 dark:text-neutral-300">

@@ -92,7 +92,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         context,
       );
 
-    Promise.all([
+    await Promise.all([
       queryClient.prefetchQuery({
         queryKey: ["opportunityInfo", opportunityId],
         queryFn: () => dataOpportunityInfo,
