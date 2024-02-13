@@ -755,7 +755,6 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
                     }
                   />
                 ))}
-
               {/* GRID */}
               {searchResults && searchResults.items.length > 0 && (
                 <OpportunityRow

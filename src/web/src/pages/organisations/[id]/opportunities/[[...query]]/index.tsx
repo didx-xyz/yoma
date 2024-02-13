@@ -253,8 +253,8 @@ const Opportunities: NextPageWithLayout<{
                           {opportunity.title}
                         </Link>
                       </td>
-                      <td>
-                        <>
+                      <td className="w-28">
+                        <div className="flex flex-col">
                           {opportunity.zltoReward && (
                             <span className="text-xs">
                               {opportunity.zltoReward} Zlto
@@ -265,7 +265,7 @@ const Opportunities: NextPageWithLayout<{
                               {opportunity.yomaReward} Yoma
                             </span>
                           )}
-                        </>
+                        </div>
                       </td>
                       <td>{opportunity.url}</td>
                       <td>{opportunity.participantCountTotal}</td>
@@ -284,6 +284,7 @@ const Opportunities: NextPageWithLayout<{
               pageSize={PAGE_SIZE}
               onClick={handlePagerChange}
               showPages={false}
+              showInfo={true}
             />
           </div>
         </div>
