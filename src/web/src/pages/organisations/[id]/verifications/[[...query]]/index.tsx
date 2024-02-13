@@ -60,6 +60,7 @@ import Moment from "react-moment";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
+import { IoIosCheckmark } from "react-icons/io";
 import { trackGAEvent } from "~/lib/google-analytics";
 
 interface IParams extends ParsedUrlQuery {
@@ -248,6 +249,10 @@ const OpportunityVerifications: NextPageWithLayout<{
   const [currentRow, setCurrentRow] = useState<MyOpportunityInfo>();
   const [selectedRows, setSelectedRows] = useState<MyOpportunityInfo[]>();
   const [bulkActionApprove, setBulkActionApprove] = useState(false);
+  const [modalSingleSuccessVisible, setModalSingleSuccessVisible] =
+    useState(false);
+  const [modalBulkSuccessVisible, setModalBulkSuccessVisible] = useState(false);
+  const [approved, setApproved] = useState(false);
 
   //#region Click Handlers
   const onVerifySingle = useCallback(
@@ -309,6 +314,10 @@ const OpportunityVerifications: NextPageWithLayout<{
       );
       setIsLoading(false);
       setModalVerifySingleVisible(false);
+      if (approved) {
+        setApproved(true);
+      }
+      setModalSingleSuccessVisible(true);
     },
     [
       id,
@@ -412,6 +421,10 @@ const OpportunityVerifications: NextPageWithLayout<{
       );
       setIsLoading(false);
       setModalVerifyBulkVisible(false);
+      if (approved) {
+        setApproved(true);
+      }
+      setModalBulkSuccessVisible(true);
     },
     [
       id,
@@ -454,6 +467,17 @@ const OpportunityVerifications: NextPageWithLayout<{
     },
     [data, setSelectedRows],
   );
+
+  const handleCloseSingleSuccessModal = () => {
+    setModalSingleSuccessVisible(false);
+    setApproved(false);
+  };
+
+  const handleCloseBulkSuccessModal = () => {
+    setModalBulkSuccessVisible(false);
+    setApproved(false);
+  };
+
   if (error) return <Unauthorized />;
 
   return (
@@ -472,40 +496,38 @@ const OpportunityVerifications: NextPageWithLayout<{
         onRequestClose={() => {
           setModalVerifySingleVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[600px] md:rounded-3xl`}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[600px] md:rounded-lg`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
         <div className="flex h-full flex-col space-y-2">
-          <div className="flex flex-row items-center bg-white p-4">
-            <h3 className="flex-grow">Participant</h3>
+          <div className="flex flex-row items-center bg-white px-4 pt-2">
+            <h4 className="flex-grow pl-2 font-semibold">Participant</h4>
             <button
               type="button"
-              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+              className="btn scale-[0.55] rounded-full border-green-dark bg-green-dark p-[7px] text-white hover:text-green"
               onClick={() => setModalVerifySingleVisible(false)}
             >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
+              <IoMdClose className="h-8 w-8"></IoMdClose>
             </button>
           </div>
           <div className="flex flex-grow flex-col overflow-x-hidden overflow-y-scroll bg-gray">
-            <div className="flex flex-grow flex-col gap-4  bg-gray p-4 ">
+            <div className="flex flex-grow flex-col gap-4 bg-gray-light p-6 pt-8">
               <OpportunityCompletionRead
                 data={currentRow!}
                 key={currentRow?.id}
               />
             </div>
 
-            <div className="divider m-0" />
-
-            <div className="flex flex-col gap-4 bg-white p-4">
-              <div className="form-control">
+            <div className="flex flex-col gap-4 bg-gray-light px-6 pb-10">
+              <div className="form-control rounded-lg bg-white px-4 py-2">
                 <label className="label">
-                  <span className="text-lg font-bold text-gray-dark">
+                  <span className="font-semibold text-gray-dark">
                     Enter comments below:
                   </span>
                 </label>
                 <textarea
-                  className="input input-bordered h-[100px] w-full"
+                  className="input input-bordered my-2 h-[100px] border-gray-light p-2"
                   onChange={(e) => setVerifyComments(e.target.value)}
                 />
               </div>
@@ -513,19 +535,19 @@ const OpportunityVerifications: NextPageWithLayout<{
           </div>
 
           {/* BUTTONS */}
-          <div className=" flex flex-row place-items-center justify-center p-2">
+          <div className=" flex flex-row place-items-center justify-center px-6 py-4 pt-2">
             <div className="flex flex-grow">
               <button
-                className="btn-default btn btn-sm flex-nowrap rounded-full py-2"
+                className="btn-default btn btn-sm flex-nowrap rounded-full py-5"
                 onClick={() => setModalVerifySingleVisible(false)}
               >
                 <IoMdClose className="h-6 w-6" />
                 Close
               </button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-4">
               <button
-                className="btn btn-sm flex-nowrap rounded-full border-red-500 bg-white py-2 text-red-500"
+                className="btn btn-sm flex-nowrap rounded-full border-red-500 bg-white py-5 text-red-500"
                 onClick={() => onVerifySingle(currentRow!, false)}
               >
                 <IoMdThumbsDown className="h-6 w-6" />
@@ -533,7 +555,7 @@ const OpportunityVerifications: NextPageWithLayout<{
               </button>
 
               <button
-                className="btn btn-sm flex-nowrap rounded-full bg-green py-2 text-white"
+                className="btn btn-sm flex-nowrap rounded-full bg-green py-5 text-white hover:text-green"
                 onClick={() => onVerifySingle(currentRow!, true)}
               >
                 <IoMdThumbsUp className="h-6 w-6" />
@@ -556,39 +578,37 @@ const OpportunityVerifications: NextPageWithLayout<{
         overlayClassName="fixed inset-0 bg-overlay"
       >
         <div className="flex h-full flex-col space-y-2">
-          <div className="flex flex-row items-center bg-white p-4">
-            <h3 className="flex-grow">
+          <div className="flex flex-row items-center bg-white px-4 pt-2">
+            <h4 className="flex-grow pl-2 font-semibold">
               {selectedRows?.length} Participant
               {(selectedRows?.length ?? 0) > 1 ? "s" : ""}
-            </h3>
+            </h4>
             <button
               type="button"
-              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+              className="btn scale-[0.55] rounded-full border-green-dark bg-green-dark p-[7px] text-white hover:text-green"
               onClick={() => setModalVerifyBulkVisible(false)}
             >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
+              <IoMdClose className="h-8 w-8"></IoMdClose>
             </button>
           </div>
 
           <div className="flex flex-grow flex-col overflow-x-hidden overflow-y-scroll bg-gray">
-            <div className="flex flex-grow flex-col gap-4 bg-gray p-4 ">
+            <div className="flex flex-grow flex-col gap-4 bg-gray-light p-6 pt-8">
               {/* <div className="flex flex-col gap-4 rounded-lg bg-white p-4"> */}
               {selectedRows?.map((row) => (
                 <OpportunityCompletionRead data={row} key={row?.id} />
               ))}
             </div>
 
-            <div className="divider m-0" />
-
-            <div className="flex flex-col gap-4 bg-white p-4">
-              <div className="form-control">
+            <div className="flex flex-col gap-4 bg-gray-light px-6 pb-10">
+              <div className="form-control rounded-lg bg-white px-4 py-2">
                 <label className="label">
-                  <span className="text-lg font-bold text-gray-dark">
+                  <span className="font-semibold text-gray-dark">
                     Enter comments below:
                   </span>
                 </label>
                 <textarea
-                  className="input input-bordered h-[100px] w-full"
+                  className="input input-bordered my-2 h-[100px] border-gray-light p-2"
                   onChange={(e) => setVerifyComments(e.target.value)}
                 />
               </div>
@@ -596,20 +616,20 @@ const OpportunityVerifications: NextPageWithLayout<{
           </div>
 
           {/* BUTTONS */}
-          <div className=" flex flex-row place-items-center justify-center p-2">
+          <div className=" flex flex-row place-items-center justify-center px-6 py-4 pt-2">
             <div className="flex flex-grow">
               <button
-                className="btn-default btn btn-sm flex-nowrap rounded-full py-2"
+                className="btn-default btn btn-sm flex-nowrap rounded-full py-5"
                 onClick={() => setModalVerifyBulkVisible(false)}
               >
                 <IoMdClose className="h-6 w-6" />
                 Close
               </button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-4">
               {!bulkActionApprove && (
                 <button
-                  className="btn btn-sm flex-nowrap rounded-full border-red-500 bg-white py-2 text-red-500"
+                  className="btn btn-sm flex-nowrap rounded-full border-red-500 bg-white py-5 text-red-500"
                   onClick={() => onVerifyBulk(false)}
                 >
                   <IoMdThumbsDown className="h-6 w-6" />
@@ -619,7 +639,7 @@ const OpportunityVerifications: NextPageWithLayout<{
 
               {bulkActionApprove && (
                 <button
-                  className="btn btn-sm flex-nowrap rounded-full bg-green py-2 text-white"
+                  className="btn btn-sm flex-nowrap rounded-full bg-green py-5 text-white hover:text-green"
                   onClick={() => onVerifyBulk(true)}
                 >
                   <IoMdThumbsUp className="h-6 w-6" />
@@ -631,25 +651,150 @@ const OpportunityVerifications: NextPageWithLayout<{
         </div>
       </ReactModal>
 
+      {/* MODAL DIALOG FOR VERIFICATION SUCCESS(Single) */}
+      <ReactModal
+        isOpen={modalSingleSuccessVisible}
+        shouldCloseOnOverlayClick={true}
+        onRequestClose={() => {
+          handleCloseSingleSuccessModal();
+        }}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:rounded-lg`}
+        portalClassName={"fixed z-40"}
+        overlayClassName="fixed inset-0 bg-overlay"
+      >
+        <div className="flex h-full flex-col space-y-2">
+          <div className="flex flex-row items-center bg-white px-4 pt-2">
+            <h4 className="flex-grow pl-2 font-semibold">Participant</h4>
+            <button
+              type="button"
+              className="btn scale-[0.55] rounded-full border-green-dark bg-green-dark p-[7px] text-white hover:text-green"
+              onClick={() => handleCloseSingleSuccessModal()}
+            >
+              <IoMdClose className="h-8 w-8"></IoMdClose>
+            </button>
+          </div>
+          <div className="flex flex-grow flex-col overflow-x-hidden overflow-y-scroll bg-gray">
+            <div className="flex flex-grow flex-col place-items-center justify-center bg-gray-light px-6 py-8">
+              <div className="flex h-full w-full flex-col place-items-center justify-center rounded-lg bg-white py-8">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-green-dark bg-green-light">
+                  <IoIosCheckmark className="h-16 w-16 text-green" />
+                </div>
+                {approved ? (
+                  <>
+                    {currentRow && (
+                      <h4 className="font-bold">
+                        {currentRow.userDisplayName}&apos;s credential has been
+                        approved.
+                      </h4>
+                    )}
+                    <p>We&apos;ve sent them an email to share the good news.</p>
+                  </>
+                ) : (
+                  <>
+                    {currentRow && (
+                      <h4 className="font-bold">
+                        {currentRow.userDisplayName}&apos;s credential has been
+                        rejected.
+                      </h4>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* BUTTON */}
+          <div className=" flex flex-row place-items-center justify-end px-6 py-4 pt-2">
+            <button
+              className="btn btn-outline btn-sm flex-nowrap rounded-full px-10 py-5 text-green hover:border-green hover:bg-green hover:text-white"
+              onClick={() => handleCloseSingleSuccessModal()}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </ReactModal>
+
+      {/* MODAL DIALOG FOR VERIFICATION APPROVED SUCCESS(Bulk) */}
+      <ReactModal
+        isOpen={modalBulkSuccessVisible}
+        shouldCloseOnOverlayClick={true}
+        onRequestClose={() => {
+          handleCloseBulkSuccessModal();
+        }}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:rounded-lg`}
+        portalClassName={"fixed z-40"}
+        overlayClassName="fixed inset-0 bg-overlay"
+      >
+        <div className="flex h-full flex-col space-y-2">
+          <div className="flex flex-row items-center bg-white px-4 pt-2">
+            <h4 className="flex-grow pl-2 font-semibold">Participant</h4>
+            <button
+              type="button"
+              className="btn scale-[0.55] rounded-full border-green-dark bg-green-dark p-[7px] text-white hover:text-green"
+              onClick={() => handleCloseBulkSuccessModal()}
+            >
+              <IoMdClose className="h-8 w-8"></IoMdClose>
+            </button>
+          </div>
+          <div className="flex flex-grow flex-col overflow-x-hidden overflow-y-scroll bg-gray">
+            <div className="flex flex-grow flex-col place-items-center justify-center bg-gray-light px-6 py-8">
+              <div className="flex h-full w-full flex-col place-items-center justify-center rounded-lg bg-white py-8">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-green-dark bg-green-light">
+                  <IoIosCheckmark className="h-16 w-16 text-green" />
+                </div>
+                {approved ? (
+                  <>
+                    <h4 className="font-bold">
+                      Bulk credentials has been approved.
+                    </h4>
+                    <p>We&apos;ve sent them an email to share the good news.</p>
+                  </>
+                ) : (
+                  <>
+                    <h4 className="font-bold">
+                      Bulk credentials has been rejected.
+                    </h4>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* BUTTON */}
+          <div className=" flex flex-row place-items-center justify-end px-6 py-4 pt-2">
+            <button
+              className="btn btn-outline btn-sm flex-nowrap rounded-full px-10 py-5 text-green hover:border-green hover:bg-green hover:text-white"
+              onClick={() => handleCloseBulkSuccessModal()}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </ReactModal>
+
+      {/* PAGE */}
+
       <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
-        <h3 className="flex flex-grow items-center py-4 text-white">
+        <h3 className="flex flex-grow items-center py-4 font-bold text-white">
           Verifications <LimitedFunctionalityBadge />
         </h3>
 
-        <div className="rounded-lg bg-white p-4">
-          <div className="flex flex-row">
+        <div className="rounded-lg bg-gray-light p-4">
+          <div className="mb-4 flex flex-row">
             <div className="flex flex-grow gap-2">
               {/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */}
               <Select
                 classNames={{
-                  control: () => "input input-xs w-[200px]",
+                  control: () =>
+                    "input input-xs md:w-[330px] !border-0 !rounded-lg",
                 }}
                 options={dataOpportunitiesForVerification}
                 onChange={(val) => onFilterOpportunity(val?.value!)}
                 value={dataOpportunitiesForVerification?.find(
                   (c) => c.value === opportunity,
                 )}
-                placeholder="Opportunity"
+                placeholder="Opportunities"
                 isClearable={true}
               />
               {/* eslint-enable @typescript-eslint/no-non-null-asserted-optional-chain */}
@@ -658,7 +803,8 @@ const OpportunityVerifications: NextPageWithLayout<{
               {/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */}
               <Select
                 classNames={{
-                  control: () => "input input-xs w-[200px]",
+                  control: () =>
+                    "input input-xs md:w-[160px] !border-0 !rounded-lg",
                 }}
                 options={dataBulkActions}
                 onChange={(val) => {
@@ -669,7 +815,11 @@ const OpportunityVerifications: NextPageWithLayout<{
               />
               {/* eslint-enable @typescript-eslint/no-non-null-asserted-optional-chain */}
 
-              <SearchInput defaultValue={query} onSearch={onSearch} />
+              <SearchInput
+                defaultValue={query}
+                onSearch={onSearch}
+                heightOverride="!h-[38px]"
+              />
             </div>
           </div>
           {/* NO ROWS */}
@@ -690,38 +840,42 @@ const OpportunityVerifications: NextPageWithLayout<{
 
           {/* GRID */}
           {data && data.items?.length > 0 && (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-lg border border-gray shadow-lg">
               <table className="table">
-                <thead>
+                <thead className="text-sm">
                   <tr className="border-gray text-gray-dark">
-                    <th>
+                    <th className="w-[35px] pr-4 pt-4">
                       <input
                         type="checkbox"
-                        className="checkbox-primary checkbox"
+                        className="checkbox-primary checkbox checkbox-sm rounded border-gray bg-white"
                         checked={selectedRows?.length === data.items?.length}
                         onChange={handleAllSelect}
                       />
                     </th>
-                    <th>Student</th>
+                    <th className="pl-0">Student</th>
                     <th>Opportunity</th>
                     <th>Date connected</th>
-                    <th>Verified</th>
+                    <th className="pr-0">Verified</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.items.map((item) => (
-                    <tr key={item.id} className="border-gray text-gray-dark">
-                      <td>
+                    <tr
+                      key={item.id}
+                      className="!h-[70px] border-gray bg-white text-gray-dark"
+                    >
+                      <td className="w-[35px] pt-4">
                         <input
                           type="checkbox"
-                          className="checkbox-primary checkbox"
+                          className="checkbox-primary checkbox checkbox-sm rounded border-gray bg-white"
                           checked={selectedRows?.some((x) => x.id == item.id)}
                           onChange={(e) => handleRowSelect(e, item)}
                         />
                       </td>
-                      <td>{item.userDisplayName}</td>
-                      <td>
+                      <td className="w-[200px] pl-0">{item.userDisplayName}</td>
+                      <td className="w-[400px]">
                         <Link
+                          className="line-clamp-2"
                           href={`/organisations/${id}/opportunities/${item.opportunityId}/info`}
                         >
                           {item.opportunityTitle}
@@ -734,7 +888,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                           </Moment>
                         )}
                       </td>
-                      <td>
+                      <td className="pr-0">
                         <div className="flex justify-center">
                           {item.verificationStatus &&
                             item.verificationStatus == "Pending" && (

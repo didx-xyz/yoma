@@ -176,19 +176,20 @@ const OpportunityDetails: NextPageWithLayout<{
       <div className="container z-10 mt-20 max-w-5xl px-2 py-4">
         <div className="flex flex-col gap-2 py-4 sm:flex-row">
           {/* BREADCRUMB */}
-          <div className="breadcrumbs flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
-            <ul>
-              <li>
+          <div className="inline flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+            <ul className="inline">
+              <li className="inline">
                 <Link
-                  className="font-bold text-white hover:text-gray"
+                  className="inline font-bold text-white hover:text-gray"
                   href={`/organisations/${id}/opportunities`}
                 >
                   <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
                   Opportunities
                 </Link>
               </li>
-              <li>
-                <div className="max-w-[500px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
+              <li className="mx-2 inline font-semibold text-white"> | </li>
+              <li className="inline">
+                <div className="inline max-w-[500px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
                   {opportunity?.title}
                 </div>
                 <LimitedFunctionalityBadge />
