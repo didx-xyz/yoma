@@ -67,7 +67,6 @@ import Moment from "react-moment";
 import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { RoundedImage } from "~/components/RoundedImage";
-import moment from "moment";
 
 interface IParams extends ParsedUrlQuery {
   id: string;

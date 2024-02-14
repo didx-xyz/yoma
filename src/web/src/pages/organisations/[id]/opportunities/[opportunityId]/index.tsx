@@ -20,7 +20,7 @@ import Link from "next/link";
 import { IoIosSettings, IoMdArrowRoundBack, IoMdPerson } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
-import { FaClipboard, FaClock, FaPencilAlt, FaTrash } from "react-icons/fa";
+import { FaClock, FaPencilAlt, FaTrash } from "react-icons/fa";
 import Image from "next/image";
 import iconClock from "public/images/icon-clock.svg";
 import iconDifficulty from "public/images/icon-difficulty.svg";
