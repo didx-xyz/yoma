@@ -790,10 +790,15 @@ const OpportunityDetails: NextPageWithLayout<{
                             {opportunity.verificationEnabled &&
                               opportunity.verificationMethod == "Manual" && (
                                 <>
-                                  {(verificationStatus == null ||
-                                    verificationStatus == undefined ||
-                                    verificationStatus.status == "None" ||
-                                    verificationStatus.status == "Rejected") &&
+                                  {/* only show completion button if start date has been reached,
+                                   not yet completed or rejected */}
+                                  {new Date(opportunity.dateStart) <
+                                    new Date() &&
+                                    (verificationStatus == null ||
+                                      verificationStatus == undefined ||
+                                      verificationStatus.status == "None" ||
+                                      verificationStatus.status ==
+                                        "Rejected") &&
                                     !verificationStatusIsLoading && (
                                       <button
                                         type="button"
@@ -838,18 +843,8 @@ const OpportunityDetails: NextPageWithLayout<{
                                         Pending verification
                                         <IoMdClose className="ml-1 h-4 w-4 text-gray-dark" />
                                       </button>
-
-                                      // <div className="md:text-md flex items-center justify-center whitespace-nowrap rounded-full bg-gray-light px-8 text-center text-xs font-bold text-gray-dark">
-                                      //   Pending verification
-                                      //   <IoMdClose className="ml-1 h-4 w-4 text-gray-dark" />
-                                      // </div>
                                     )}
-                                  {/* {verificationStatus != null &&
-                            verificationStatus == "Rejected" && (
-                              <div className="flex items-center justify-center rounded-full bg-yellow-light px-8 text-center text-sm font-bold text-warning">
-                                Rejected
-                              </div>
-                            )} */}
+
                                   {verificationStatus &&
                                     verificationStatus.status ==
                                       "Completed" && (
@@ -865,36 +860,6 @@ const OpportunityDetails: NextPageWithLayout<{
                                     )}
                                 </>
                               )}
-
-                            {/* TODO: */}
-                            {/* {opportunity.verificationEnabled &&
-                              opportunity.verificationMethod == "Automatic" && (
-                                <button
-                                  type="button"
-                                  className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm lg:btn-md hover:bg-green-dark hover:text-white md:w-[300px]"
-                                  onClick={() =>
-                                    user
-                                      ? setCompleteOpportunityDialogVisible(
-                                          true,
-                                        )
-                                      : setLoginDialogVisible(true)
-                                  }
-                                >
-                                  <Image
-                                    src={iconUpload}
-                                    alt="Icon Upload"
-                                    width={20}
-                                    height={20}
-                                    sizes="100vw"
-                                    priority={true}
-                                    style={{ width: "20px", height: "20px" }}
-                                  />
-
-                                  <span className="ml-1">
-                                    Mark as completed
-                                  </span>
-                                </button>
-                              )} */}
                           </div>
                           <div className="flex gap-4 md:justify-end lg:justify-end">
                             <button
