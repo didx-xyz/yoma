@@ -68,6 +68,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       mostViewed: true,
       organizations: null,
       zltoRewardRanges: null,
+      started: null,
     },
     context,
   );
@@ -85,6 +86,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       mostViewed: null,
       organizations: null,
       zltoRewardRanges: null,
+      started: null,
     },
     context,
   );
@@ -102,6 +104,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       mostViewed: null,
       organizations: null,
       zltoRewardRanges: null,
+      started: null,
     },
     context,
   );
@@ -119,6 +122,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       mostViewed: null,
       organizations: null,
       zltoRewardRanges: null,
+      started: null,
     },
     context,
   );
@@ -201,6 +205,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     zltoRewardRanges,
     mostViewed,
     expired,
+    started,
   } = router.query;
 
   const [opportunitySearchFilter, setOpportunitySearchFilter] =
@@ -209,6 +214,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       pageSize: PAGE_SIZE,
       categories: null,
       includeExpired: expired ? Boolean(expired) : null,
+      started: started ? Boolean(started) : null,
       countries: null,
       languages: null,
       types: null,
@@ -231,7 +237,8 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       organizations != undefined ||
       zltoRewardRanges != undefined ||
       mostViewed != undefined ||
-      expired != undefined
+      expired != undefined ||
+      started != undefined
     );
   }, [
     query,
@@ -244,6 +251,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     zltoRewardRanges,
     mostViewed,
     expired,
+    started,
   ]);
 
   const getSearchFilterAsQueryString = useCallback(
@@ -317,7 +325,13 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         opportunitySearchFilter?.includeExpired !== null &&
         opportunitySearchFilter?.includeExpired === true
       )
-        params.append("expired", "true");
+        params.append("includeExpired", "true");
+      if (
+        opportunitySearchFilter?.started !== undefined &&
+        opportunitySearchFilter?.started !== null &&
+        opportunitySearchFilter?.started === true
+      )
+        params.append("started", "true");
       if (
         opportunitySearchFilter.pageNumber !== null &&
         opportunitySearchFilter.pageNumber !== undefined &&
@@ -335,7 +349,6 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
   // the filter values from the querystring are mapped to it's corresponding id
   const { data: searchResults, isLoading } =
     useQuery<OpportunitySearchResultsInfo>({
-      // queryKey: [`OpportunitiesSearch_${query?.toString()}_${page?.toString()}_${categories}`],
       queryKey: [
         "OpportunitiesSearch",
         query,
@@ -349,6 +362,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         zltoRewardRanges,
         mostViewed,
         expired,
+        started,
       ],
       queryFn: async () =>
         await searchOpportunities({
@@ -357,6 +371,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
           valueContains: query?.toString() ?? null,
           includeExpired: expired ? Boolean(expired) : null,
           mostViewed: mostViewed ? Boolean(mostViewed) : null,
+          started: started ? Boolean(started) : null,
           types:
             types != undefined
               ? types
@@ -434,6 +449,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         valueContains: query?.toString() ?? null,
         includeExpired: expired ? Boolean(expired) : null,
         mostViewed: mostViewed ? Boolean(mostViewed) : null,
+        started: started ? Boolean(started) : null,
         types: types != undefined ? types?.toString().split(",") : null,
         categories:
           categories != undefined ? categories?.toString().split(",") : null,
@@ -470,6 +486,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     zltoRewardRanges,
     mostViewed,
     expired,
+    started,
   ]);
 
   // memo for results info based on filter parameters
@@ -487,6 +504,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         `'${opportunitySearchFilter.valueContains}'`,
       opportunitySearchFilter.mostViewed && `'Trending'`,
       opportunitySearchFilter.includeExpired && `'Expired'`,
+      opportunitySearchFilter.started && `'Started'`,
       opportunitySearchFilter.categories?.map((c) => `'${c}'`)?.join(", "),
       opportunitySearchFilter.countries?.map((c) => `'${c}'`)?.join(", "),
       opportunitySearchFilter.languages?.map((c) => `'${c}'`).join(", "),
@@ -545,13 +563,13 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
 
   const onSubmitFilter = useCallback(
     (val: OpportunitySearchFilter) => {
-      setFilterFullWindowVisible(false);
-      setOpportunitySearchFilter(val);
+      //setFilterFullWindowVisible(false);
+      //setOpportunitySearchFilter(val);
       redirectWithSearchFilterParams(val);
     },
     [
-      setFilterFullWindowVisible,
-      setOpportunitySearchFilter,
+      //setFilterFullWindowVisible,
+      //setOpportunitySearchFilter,
       redirectWithSearchFilterParams,
     ],
   );
@@ -755,6 +773,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
                     }
                   />
                 ))}
+
               {/* GRID */}
               {searchResults && searchResults.items.length > 0 && (
                 <OpportunityRow
