@@ -20,7 +20,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
                 TimeInterval.Day => opportunity.CommitmentIntervalCount * 24,
                 TimeInterval.Week => opportunity.CommitmentIntervalCount * 24 * 7,
                 TimeInterval.Month => opportunity.CommitmentIntervalCount * 24 * 30,
-                _ => throw new ArgumentOutOfRangeException(nameof(interval), $"{nameof(TimeInterval)} of '{interval}' not supported"),
+                _ => throw new InvalidOperationException($"{nameof(TimeInterval)} of '{interval}' not supported"),
             };
 
             return hours;

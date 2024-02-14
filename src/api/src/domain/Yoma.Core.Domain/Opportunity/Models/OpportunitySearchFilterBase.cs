@@ -31,6 +31,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public string? ValueContains { get; set; }
 
         /// <summary>
+        /// Only includes started opportunities
+        /// </summary>
+        public bool? Started { get; set; }
+
+        /// <summary>
         /// Includes published (active opportunities relating to active organizations, irrespective of started)
         /// </summary>
         [JsonIgnore]

@@ -53,9 +53,9 @@ namespace Yoma.Core.Domain.SSI.Services
             result = entityType switch
             {
                 EntityType.User =>
-                    _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType == entityType.ToString() && o.UserId == entityId && o.StatusId == statusCreatedId),
+                    _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType.ToLower() == entityType.ToString().ToLower() && o.UserId == entityId && o.StatusId == statusCreatedId),
                 EntityType.Organization =>
-                    _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType == entityType.ToString() && o.OrganizationId == entityId && o.StatusId == statusCreatedId),
+                    _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType.ToLower() == entityType.ToString().ToLower() && o.OrganizationId == entityId && o.StatusId == statusCreatedId),
                 _ => throw new InvalidOperationException($"Entity type of '{entityType}' not supported"),
             };
 
@@ -78,11 +78,11 @@ namespace Yoma.Core.Domain.SSI.Services
             switch (entityType)
             {
                 case EntityType.User:
-                    existingItem = _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType == entityType.ToString() && o.UserId == entityId);
+                    existingItem = _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType.ToLower() == entityType.ToString().ToLower() && o.UserId == entityId);
                     item.UserId = entityId;
                     break;
                 case EntityType.Organization:
-                    existingItem = _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType == entityType.ToString() && o.OrganizationId == entityId);
+                    existingItem = _ssiTenantCreationRepository.Query().SingleOrDefault(o => o.EntityType.ToLower() == entityType.ToString().ToLower() && o.OrganizationId == entityId);
                     item.OrganizationId = entityId;
                     break;
 

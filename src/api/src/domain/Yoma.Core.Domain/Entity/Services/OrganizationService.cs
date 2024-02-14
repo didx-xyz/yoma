@@ -142,7 +142,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new ArgumentNullException(nameof(name));
             name = name.Trim();
 
-            var result = _organizationRepository.Query(includeChildItems).SingleOrDefault(o => o.Name == name);
+            var result = _organizationRepository.Query(includeChildItems).SingleOrDefault(o => o.Name.ToLower() == name.ToLower());
             if (result == null) return null;
 
             if (includeComputed)
@@ -225,14 +225,20 @@ namespace Yoma.Core.Domain.Entity.Services
 
             var existingByName = GetByNameOrNull(request.Name, false, false);
             if (existingByName != null)
-                throw new ValidationException($"{nameof(Organization)} with the specified name '{request.Name}' already exists");
+                throw new ValidationException($"{nameof(Organization)} with the specified name '{request.Name}' already exists. Please choose a different name");
+
+            //ssi limitation with issuers and verifiers, that requires the wallet label (name) to be unique
+            var nameHashValue = HashHelper.ComputeSHA256Hash(request.Name);
+            var existingByNameHashValue = _organizationRepository.Query().SingleOrDefault(o => o.NameHashValue == nameHashValue);
+            if (existingByNameHashValue != null)
+                throw new ValidationException($"{nameof(Organization)} with the specified name '{request.Name}' was previously used.  Please choose a different name");
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
             var result = new Organization
             {
                 Name = request.Name,
-                NameHashValue = HashHelper.ComputeSHA256Hash(request.Name),
+                NameHashValue = nameHashValue,
                 WebsiteURL = request.WebsiteURL,
                 PrimaryContactName = request.PrimaryContactName,
                 PrimaryContactEmail = request.PrimaryContactEmail,
@@ -337,6 +343,12 @@ namespace Yoma.Core.Domain.Entity.Services
             var existingByName = GetByNameOrNull(request.Name, false, false);
             if (existingByName != null && result.Id != existingByName.Id)
                 throw new ValidationException($"{nameof(Organization)} with the specified name '{request.Name}' already exists");
+
+            //ssi limitation with issuers and verifiers, that requires the wallet label (name) to be unique
+            var nameHashValue = HashHelper.ComputeSHA256Hash(request.Name);
+            var existingByNameHashValue = _organizationRepository.Query().SingleOrDefault(o => o.NameHashValue == nameHashValue);
+            if (existingByNameHashValue != null && result.Id != existingByNameHashValue.Id)
+                throw new ValidationException($"{nameof(Organization)} with the specified name '{request.Name}' was previously used. Please choose a different name");
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 

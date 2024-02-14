@@ -1574,6 +1574,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Organization_NameHashValue",
+                schema: "Entity",
+                table: "Organization",
+                column: "NameHashValue",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Organization_StatusId_DateStatusModified_DateCreated_Create~",
                 schema: "Entity",
                 table: "Organization",
