@@ -1733,8 +1733,9 @@ const OpportunityDetails: NextPageWithLayout<{
                         name="verificationEnabled"
                         render={({ field: { onChange, value } }) => (
                           <>
-                            {/* automatic */}
-                            <label
+                            {/* AUTOMATIC */}
+                            {/* NB: automatic verification has been disabled temporarily */}
+                            {/* <label
                               htmlFor="verificationEnabledAutomatic"
                               className="label cursor-pointer justify-normal"
                             >
@@ -1760,8 +1761,9 @@ const OpportunityDetails: NextPageWithLayout<{
                               <span className="label-text ml-4">
                                 Youth verification happens automatically
                               </span>
-                            </label>
-                            {/* manual */}
+                            </label> */}
+
+                            {/* MANUAL */}
                             <label
                               htmlFor="verificationEnabledManual"
                               className="label cursor-pointer justify-normal"
@@ -1789,7 +1791,8 @@ const OpportunityDetails: NextPageWithLayout<{
                                 Youth should upload proof of completion
                               </span>
                             </label>
-                            {/* not required */}
+
+                            {/* NOT REQUIRED */}
                             <label
                               htmlFor="verificationEnabledNo"
                               className="label cursor-pointer justify-normal"
