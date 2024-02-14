@@ -343,7 +343,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             //published opportunities (irrespective of started)
             var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
             if (!opportunity.Published)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' | status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+                throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -369,7 +369,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             //published opportunities (irrespective of started)
             var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
             if (!opportunity.Published)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' | status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+                throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -395,7 +395,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             //published opportunities (irrespective of started)
             var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
             if (!opportunity.Published)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can not be actioned (published '{opportunity.Published}' | status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+                throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
 
             var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -528,7 +528,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var canFinalize = opportunity.Status == Status.Expired;
             if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
             if (!canFinalize)
-                throw new ValidationException($"Verification for opportunity '{opportunity.Title}' can no longer be finalized (published '{opportunity.Published}' | status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+                throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "verification cannot be finalized"));
 
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
             var item = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
@@ -557,7 +557,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
                     case VerificationStatus.Completed:
                         if (item.DateEnd.HasValue && item.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())
-                            throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd}')");
+                            throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd:yyyy-MM-dd}')");
 
                         var (zltoReward, yomaReward) = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, true);
                         item.ZltoReward = zltoReward;
@@ -677,6 +677,24 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             return _blobService.GetURL(id.Value);
         }
 
+        private string PerformActionNotPossibleValidationMessage(Opportunity.Models.Opportunity opportunity, string description)
+        {
+            var reasons = new List<string>();
+
+            if (!opportunity.Published)
+                reasons.Add("it has not been published");
+
+            if (opportunity.Status != Status.Active)
+                reasons.Add($"its status is '{opportunity.Status}'");
+
+            if (opportunity.DateStart > DateTimeOffset.UtcNow)
+                reasons.Add($"it has not yet started (start date: {opportunity.DateStart:yyyy-MM-dd})");
+
+            var reasonText = string.Join(", ", reasons);
+
+            return $"Oportunity '{opportunity.Title}' {description}, because {reasonText}. Please check these conditions and try again";
+        }
+
         private async Task PerformActionSendForVerificationManual(User user, Guid opportunityId, MyOpportunityRequestVerify request, bool overridePending)
         {
             if (request == null)
@@ -692,7 +710,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var canSendForVerification = opportunity.Status == Status.Expired;
             if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
             if (!canSendForVerification)
-                throw new ValidationException($"Opportunity '{opportunity.Title}' can no longer be send for verification (published '{opportunity.Published}' status | '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+                throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be sent for verification"));
 
             if (!opportunity.VerificationEnabled)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / verification is not enabled");
@@ -704,10 +722,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 throw new DataInconsistencyException("Manual verification enabled but opportunity has no mapped verification types");
 
             if (request.DateStart.HasValue && request.DateStart.Value < opportunity.DateStart)
-                throw new ValidationException($"Start date can not be earlier than the opportunity start date of '{opportunity.DateStart}'");
+                throw new ValidationException($"Start date can not be earlier than the opportunity start date of '{opportunity.DateStart:yyyy-MM-dd}'");
 
-            if (request.DateEnd.HasValue && opportunity.DateEnd.HasValue && request.DateEnd.Value > opportunity.DateEnd.Value)
-                throw new ValidationException($"End date can not be later than the opportunity end date of '{opportunity.DateEnd}'");
+            if (request.DateEnd.HasValue)
+            {
+                if (opportunity.DateEnd.HasValue && request.DateEnd.Value > opportunity.DateEnd.Value)
+                    throw new ValidationException($"End date cannot be later than the opportunity end date of '{opportunity.DateEnd.Value:yyyy-MM-dd}'");
+
+                if (request.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())
+                    throw new ValidationException($"End date cannot be in the future. Please select today's date or earlier");
+            }
 
             var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
             var verificationStatusPendingId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;

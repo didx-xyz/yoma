@@ -703,7 +703,22 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (!canComplete) canComplete = opportunity.Status == Status.Expired;
 
             if (!canComplete)
-                throw new ValidationException($"{nameof(Models.Opportunity)} rewards can no longer be allocated (published '{opportunity.Published}' | status '{opportunity.Status}' | start date '{opportunity.DateStart}')");
+            {
+                var reasons = new List<string>();
+
+                if (!opportunity.Published)
+                    reasons.Add("it has not been published");
+
+                if (opportunity.Status != Status.Active)
+                    reasons.Add($"its status is '{opportunity.Status}'");
+
+                if (opportunity.DateStart > DateTimeOffset.UtcNow)
+                    reasons.Add($"it has not yet started (start date: {opportunity.DateStart:yyyy-MM-dd})");
+
+                var reasonText = string.Join(", ", reasons);
+
+                throw new ValidationException($"Oportunity '{opportunity.Title}' rewards can no longer be allocated, because {reasonText}. Please check these conditions and try again");
+            }
 
             var count = (opportunity.ParticipantCount ?? 0) + 1;
             if (opportunity.ParticipantLimit.HasValue && count > opportunity.ParticipantLimit.Value)
@@ -754,7 +769,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
                     //ensure DateEnd was updated for re-activation of previously expired opportunities
                     if (result.DateEnd.HasValue && result.DateEnd <= DateTimeOffset.UtcNow)
-                        throw new ValidationException($"The {nameof(Models.Opportunity)} '{result.Title}' cannot be activated because its end date ('{result.DateEnd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation.");
+                        throw new ValidationException($"The {nameof(Models.Opportunity)} '{result.Title}' cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation.");
 
                     break;
 
