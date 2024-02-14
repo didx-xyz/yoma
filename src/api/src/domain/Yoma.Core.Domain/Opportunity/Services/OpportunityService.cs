@@ -1292,9 +1292,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             skillIds = skillIds.Distinct().ToList();
 
-            if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
-
             await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
                 using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
@@ -1319,9 +1316,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private async Task<Models.Opportunity> AssignVerificationTypes(Models.Opportunity opportunity, List<OpportunityRequestVerificationType>? verificationTypes)
         {
             if (verificationTypes == null || !verificationTypes.Any()) return opportunity; //verification types is optional
-
-            if (!Statuses_Updatable.Contains(opportunity.Status))
-                throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
 
             var results = new List<Models.Lookups.OpportunityVerificationType>();
 
