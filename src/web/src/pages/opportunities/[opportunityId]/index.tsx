@@ -67,6 +67,7 @@ import Moment from "react-moment";
 import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { RoundedImage } from "~/components/RoundedImage";
+import moment from "moment";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -647,9 +648,12 @@ const OpportunityDetails: NextPageWithLayout<{
                               style={{ width: "20px", height: "20px" }}
                             />
 
-                            <span className="ml-1 text-xs">{`${opportunity.commitmentIntervalCount} ${opportunity.commitmentInterval}`}</span>
+                            <span className="ml-1 text-xs">{`${
+                              opportunity.commitmentIntervalCount
+                            } ${opportunity.commitmentInterval}${
+                              opportunity.commitmentIntervalCount > 1 ? "s" : ""
+                            }`}</span>
                           </div>
-
                           {spotsLeft > 0 && (
                             <div className="badge h-6 whitespace-nowrap rounded-md bg-green-light text-green">
                               <Image
@@ -667,7 +671,6 @@ const OpportunityDetails: NextPageWithLayout<{
                               </span>
                             </div>
                           )}
-
                           {opportunity?.type && (
                             <div className="badge h-6 rounded-md bg-[#E7E8F5] text-[#5F65B9]">
                               <Image
@@ -684,7 +687,6 @@ const OpportunityDetails: NextPageWithLayout<{
                               </span>
                             </div>
                           )}
-
                           {(opportunity.zltoReward ?? 0) > 0 && (
                             <div className="badge h-6 whitespace-nowrap rounded-md bg-yellow-light text-yellow">
                               <Image
@@ -697,12 +699,10 @@ const OpportunityDetails: NextPageWithLayout<{
                                 style={{ width: "18px", height: "18px" }}
                               />
                               <span className="ml-1 text-xs">
-                                {" "}
                                 {opportunity.zltoReward}
                               </span>
                             </div>
                           )}
-
                           {/* Status Badges */}
                           {opportunity?.status == "Active" && (
                             <div className="badge h-6 rounded-md bg-purple-light text-purple">
@@ -715,12 +715,18 @@ const OpportunityDetails: NextPageWithLayout<{
                                 priority={true}
                                 style={{ width: "18px", height: "18px" }}
                               />
-                              <span className="ml-1 text-xs">Ongoing</span>
+                              <span className="ml-1 text-xs">Active</span>
                             </div>
                           )}
                           {opportunity?.status == "Expired" && (
                             <div className="badge h-6 rounded-md bg-green-light text-xs text-yellow">
                               Expired
+                            </div>
+                          )}
+
+                          {new Date(opportunity.dateStart) > new Date() && (
+                            <div className="badge h-6 rounded-md bg-white text-xs text-yellow">
+                              Not started
                             </div>
                           )}
                         </div>

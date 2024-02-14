@@ -876,7 +876,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                       <td className="w-[400px]">
                         <Link
                           className="line-clamp-2"
-                          href={`/organisations/${id}/opportunities/${item.opportunityId}/info`}
+                          href={`/organisations/${id}/opportunities/${item.opportunityId}`}
                         >
                           {item.opportunityTitle}
                         </Link>
