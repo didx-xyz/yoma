@@ -535,9 +535,9 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
   }, [opportunitySearchFilter, searchResults]);
 
   const redirectWithSearchFilterParams = useCallback(
-    (item: OpportunitySearchFilter) => {
+    (filter: OpportunitySearchFilter) => {
       let url = "/opportunities";
-      const params = getSearchFilterAsQueryString(item);
+      const params = getSearchFilterAsQueryString(filter);
       if (params != null && params.size > 0)
         url = `/opportunities?${params.toString()}`;
 

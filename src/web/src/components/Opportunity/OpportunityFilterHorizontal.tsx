@@ -75,9 +75,8 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
     organizations: zod.array(zod.string()).optional().nullable(),
     commitmentIntervals: zod.array(zod.string()).optional().nullable(),
     zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
-    //includeExpired: zod.boolean().optional().nullable(),
-    //started: zod.boolean().optional().nullable(),
     publishedStates: zod.array(zod.string()).optional().nullable(),
+    valueContains: zod.string().optional().nullable(),
   });
 
   const form = useForm({
@@ -194,7 +193,15 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
           <div className="mr-4 flex items-center text-sm font-bold text-gray-dark">
             Filter by:
           </div>
-          <div className="">
+          {/* valueContains: hidden input */}
+          <input
+            type="hidden"
+            {...form.register("valueContains")}
+            value={opportunitySearchFilter?.valueContains ?? ""}
+          />
+
+          {/* types */}
+          <div>
             <Controller
               name="types"
               control={form.control}
@@ -238,7 +245,9 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               </label>
             )}
           </div>
-          <div className="">
+
+          {/* countries */}
+          <div>
             <Controller
               name="countries"
               control={form.control}
@@ -281,7 +290,9 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               </label>
             )}
           </div>
-          <div className="">
+
+          {/* languages */}
+          <div>
             <Controller
               name="languages"
               control={form.control}
@@ -325,7 +336,9 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               </label>
             )}
           </div>
-          <div className="">
+
+          {/* organizations */}
+          <div>
             <Controller
               name="organizations"
               control={form.control}
@@ -370,7 +383,8 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
             )}
           </div>
 
-          <div className="">
+          {/* commitmentIntervals */}
+          <div>
             <Controller
               name="commitmentIntervals"
               control={form.control}
@@ -414,7 +428,8 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
             )}
           </div>
 
-          <div className="">
+          {/* zltoRewardRanges */}
+          <div>
             <Controller
               name="zltoRewardRanges"
               control={form.control}
@@ -459,7 +474,8 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
             )}
           </div>
 
-          <div className="">
+          {/* publishedStates */}
+          <div>
             <Controller
               name="publishedStates"
               control={form.control}
@@ -499,72 +515,6 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               </label>
             )}
           </div>
-
-          {/* {session && (
-            <div className="">
-              <label className="label cursor-pointer font-bold">
-                <span className="label-text mr-2 text-xs">Include expired</span>
-
-                <Controller
-                  name="includeExpired"
-                  control={form.control}
-                  render={({ field }) => (
-                    <input
-                      type="checkbox"
-                      className="checkbox-secondary checkbox"
-                      {...field}
-                      onChange={(e) => {
-                        field.onChange(e); // default handler
-                        void handleSubmit(onSubmitHandler)();
-                      }}
-                      checked={field.value ?? false}
-                      value={field.value ?? false}
-                    />
-                  )}
-                />
-              </label>
-
-              {formState.errors.includeExpired && (
-                <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {`${formState.errors.includeExpired.message}`}
-                  </span>
-                </label>
-              )}
-            </div>
-          )}
-
-          <div className="">
-            <label className="label cursor-pointer font-bold">
-              <span className="label-text mr-2 text-xs">Include started</span>
-
-              <Controller
-                name="started"
-                control={form.control}
-                render={({ field }) => (
-                  <input
-                    type="checkbox"
-                    className="checkbox-secondary checkbox"
-                    {...field}
-                    onChange={(e) => {
-                      field.onChange(e); // default handler
-                      void handleSubmit(onSubmitHandler)();
-                    }}
-                    checked={field.value ?? false}
-                    value={field.value ?? false}
-                  />
-                )}
-              />
-            </label>
-
-            {formState.errors.started && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.started.message}`}
-                </span>
-              </label>
-            )}
-          </div> */}
 
           <div className="flex w-24 items-center justify-center rounded-md border-2 border-green text-xs font-semibold text-green">
             <button type="button" onClick={onClear}>

@@ -345,9 +345,16 @@ const OpportunityDetails: NextPageWithLayout<{
       try {
         let message = "";
 
+        // dismiss all toasts
+        toast.dismiss();
+
         //  convert dates to string in format "YYYY-MM-DD"
-        data.dateStart = moment(data.dateStart).format(DATE_FORMAT_SYSTEM);
-        data.dateEnd = moment(data.dateEnd).format(DATE_FORMAT_SYSTEM);
+        data.dateStart = data.dateStart
+          ? moment(data.dateStart).format(DATE_FORMAT_SYSTEM)
+          : null;
+        data.dateEnd = data.dateEnd
+          ? moment(data.dateEnd).format(DATE_FORMAT_SYSTEM)
+          : null;
 
         // update api
         if (opportunity) {

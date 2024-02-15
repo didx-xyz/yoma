@@ -59,6 +59,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
     commitmentIntervals: zod.array(zod.string()).optional().nullable(),
     zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
     publishedStates: zod.array(zod.string()).optional().nullable(),
+    valueContains: zod.string().optional().nullable(),
   });
   const form = useForm({
     mode: "all",
@@ -198,6 +199,15 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
+
+            {/* valueContains: hidden input */}
+            <input
+              type="hidden"
+              {...form.register("valueContains")}
+              value={opportunitySearchFilter?.valueContains ?? ""}
+            />
+
+            {/* types */}
             <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-2" />
               <div className="collapse-title text-xl font-medium">
@@ -240,6 +250,8 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
+
+            {/* countries */}
             <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-3" />
               <div className="collapse-title text-xl font-medium">Location</div>
@@ -281,6 +293,8 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
+
+            {/* languages */}
             <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-4" />
               <div className="collapse-title text-xl font-medium">Language</div>
@@ -321,6 +335,8 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
+
+            {/* organizations */}
             <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-5" />
               <div className="collapse-title text-xl font-medium">
@@ -364,6 +380,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
               </div>
             </div>
 
+            {/* commitmentIntervals */}
             <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-6" />
               <div className="collapse-title text-xl font-medium">Effort</div>
@@ -405,6 +422,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
               </div>
             </div>
 
+            {/* zltoRewardRanges */}
             <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-7" />
               <div className="collapse-title text-xl font-medium">Reward</div>
@@ -446,6 +464,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
               </div>
             </div>
 
+            {/* publishedStates */}
             <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-7" />
               <div className="collapse-title text-xl font-medium">Status</div>
@@ -488,75 +507,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
-
-            {/* {session && (
-              <div className="collapse join-item collapse-arrow">
-                <input type="radio" name="my-accordion-7" />
-                <div className="collapse-title text-xl font-medium">
-                  Expired
-                </div>
-                <div className="collapse-content">
-                  <label className="label cursor-pointer font-bold">
-                    <span className="label-text">
-                      Include opportunities that have expired
-                    </span>
-
-                    <Controller
-                      name="includeExpired"
-                      control={form.control}
-                      render={({ field }) => (
-                        <input
-                          type="checkbox"
-                          className="checkbox-secondary checkbox"
-                          {...field}
-                          checked={field.value ?? false}
-                        />
-                      )}
-                    />
-                  </label>
-
-                  {formState.errors.includeExpired && (
-                    <label className="label font-bold">
-                      <span className="label-text-alt italic text-red-500">
-                        {`${formState.errors.includeExpired.message}`}
-                      </span>
-                    </label>
-                  )}
-                </div>
-              </div>
-            )}
-            <div className="collapse join-item collapse-arrow">
-              <input type="radio" name="my-accordion-7" />
-              <div className="collapse-title text-xl font-medium">Started</div>
-              <div className="collapse-content">
-                <label className="label cursor-pointer font-bold">
-                  <span className="label-text">
-                    Include opportunities that have started
-                  </span>
-
-                  <Controller
-                    name="started"
-                    control={form.control}
-                    render={({ field }) => (
-                      <input
-                        type="checkbox"
-                        className="checkbox-secondary checkbox"
-                        {...field}
-                        checked={field.value ?? false}
-                      />
-                    )}
-                  />
-                </label>
-
-                {formState.errors.started && (
-                  <label className="label font-bold">
-                    <span className="label-text-alt italic text-red-500">
-                      {`${formState.errors.started.message}`}
-                    </span>
-                  </label>
-                )}
-              </div>
-            </div> */}
           </div>
         </div>
 
