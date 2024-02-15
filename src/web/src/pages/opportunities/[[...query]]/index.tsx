@@ -11,7 +11,7 @@ import React, {
   useMemo,
 } from "react";
 import ReactModal from "react-modal";
-import type { Country, Language } from "~/api/models/lookups";
+import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
   OpportunitySearchCriteriaCommitmentInterval,
@@ -192,6 +192,12 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
   const myRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  const lookups_publishedStates: SelectOption[] = [
+    { value: "0", label: "Not started" },
+    { value: "1", label: "Active" },
+    { value: "2", label: "Expired" },
+  ];
+
   // get filter parameters from route
   const {
     query,
@@ -204,8 +210,9 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     organizations,
     zltoRewardRanges,
     mostViewed,
-    expired,
-    started,
+    // expired,
+    // started,
+    states,
   } = router.query;
 
   const [opportunitySearchFilter, setOpportunitySearchFilter] =
@@ -213,8 +220,8 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       pageNumber: page ? parseInt(page.toString()) : 1,
       pageSize: PAGE_SIZE,
       categories: null,
-      includeExpired: expired ? Boolean(expired) : null,
-      started: started ? Boolean(started) : null,
+      //includeExpired: expired ? Boolean(expired) : null,
+      //started: started ? Boolean(started) : null,
       countries: null,
       languages: null,
       types: null,
@@ -223,6 +230,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       mostViewed: null,
       organizations: null,
       zltoRewardRanges: null,
+      publishedStates: null,
     });
 
   // memo for isSearchExecuted based on filter parameters
@@ -237,8 +245,9 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       organizations != undefined ||
       zltoRewardRanges != undefined ||
       mostViewed != undefined ||
-      expired != undefined ||
-      started != undefined
+      //expired != undefined ||
+      //started != undefined
+      publishedStates != undefined
     );
   }, [
     query,
@@ -320,18 +329,20 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
           "mostViewed",
           opportunitySearchFilter?.mostViewed ? "true" : "false",
         );
-      if (
-        opportunitySearchFilter?.includeExpired !== undefined &&
-        opportunitySearchFilter?.includeExpired !== null &&
-        opportunitySearchFilter?.includeExpired === true
-      )
-        params.append("expired", "true");
-      if (
-        opportunitySearchFilter?.started !== undefined &&
-        opportunitySearchFilter?.started !== null &&
-        opportunitySearchFilter?.started === true
-      )
-        params.append("started", "true");
+      //TODO: check publishedStates
+
+      // if (
+      //   opportunitySearchFilter?.includeExpired !== undefined &&
+      //   opportunitySearchFilter?.includeExpired !== null &&
+      //   opportunitySearchFilter?.includeExpired === true
+      // )
+      //   params.append("expired", "true");
+      // if (
+      //   opportunitySearchFilter?.started !== undefined &&
+      //   opportunitySearchFilter?.started !== null &&
+      //   opportunitySearchFilter?.started === true
+      // )
+      //   params.append("started", "true");
       if (
         opportunitySearchFilter.pageNumber !== null &&
         opportunitySearchFilter.pageNumber !== undefined &&
@@ -635,6 +646,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
           lookups_organisations={lookups_organisations}
           lookups_commitmentIntervals={lookups_commitmentIntervals}
           lookups_zltoRewardRanges={lookups_zltoRewardRanges}
+          lookups_publishedStates={lookups_publishedStates}
           cancelButtonText="Close"
           submitButtonText="Done"
           onCancel={onCloseFilter}
@@ -684,6 +696,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
             lookups_organisations={lookups_organisations}
             lookups_commitmentIntervals={lookups_commitmentIntervals}
             lookups_zltoRewardRanges={lookups_zltoRewardRanges}
+            lookups_publishedStates={lookups_publishedStates}
             clearButtonText="Clear"
             onClear={onClearFilter}
             onSubmit={onSubmitFilter}

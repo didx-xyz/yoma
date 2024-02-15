@@ -102,6 +102,7 @@ export interface OpportunityInfo {
 }
 
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
+  //???
   includeExpired: boolean | null;
   mostViewed: boolean | null;
 }

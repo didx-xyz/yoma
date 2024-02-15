@@ -234,9 +234,10 @@ const OpportunityDetails: NextPageWithLayout<{
                 Duplicate
               </Link> */}
 
-              {/* if active, then org admins can make it inactive
+              {/* if active or expired, then org admins can make it inactive
                   if deleted, admins can make it inactive */}
               {(opportunity?.status == "Active" ||
+                opportunity?.status == "Expired" ||
                 (user?.roles.some((x) => x === "Admin") &&
                   opportunity?.status == "Deleted")) && (
                 <button

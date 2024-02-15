@@ -25,6 +25,7 @@ export interface InputProps {
   lookups_organisations: OrganizationInfo[];
   lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
   lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
+  lookups_publishedStates: SelectOption[];
   onSubmit?: (fieldValues: OpportunitySearchFilter) => void;
   onClear?: () => void;
   onOpenFilterFullWindow?: () => void;
@@ -61,6 +62,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
   lookups_organisations,
   lookups_commitmentIntervals,
   lookups_zltoRewardRanges,
+  lookups_publishedStates,
   onSubmit,
   onClear,
   clearButtonText = "Clear",
@@ -76,8 +78,9 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
     organizations: zod.array(zod.string()).optional().nullable(),
     commitmentIntervals: zod.array(zod.string()).optional().nullable(),
     zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
-    includeExpired: zod.boolean().optional().nullable(),
-    started: zod.boolean().optional().nullable(),
+    //includeExpired: zod.boolean().optional().nullable(),
+    //started: zod.boolean().optional().nullable(),
+    publishedStates: zod.array(zod.string()).optional().nullable(),
   });
 
   const form = useForm({
@@ -459,7 +462,50 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
             )}
           </div>
 
-          {session && (
+          <div className="">
+            <Controller
+              name="publishedStates"
+              control={form.control}
+              //TODO:
+              //defaultValue={opportunitySearchFilter?.publishedStates}
+              render={({ field: { onChange, value } }) => (
+                <Select
+                  instanceId="publishedStates"
+                  classNames={{
+                    control: () => "input input-xs",
+                  }}
+                  isMulti={true}
+                  options={lookups_publishedStates}
+                  // fix menu z-index issue
+                  menuPortalTarget={htmlRef}
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                  }}
+                  onChange={(val) => {
+                    onChange(val.map((c) => c.value));
+                    void handleSubmit(onSubmitHandler)();
+                  }}
+                  value={lookups_publishedStates.filter(
+                    (c) => value?.includes(c.value),
+                  )}
+                  placeholder="Status"
+                  components={{
+                    ValueContainer,
+                  }}
+                />
+              )}
+            />
+
+            {formState.errors.publishedStates && (
+              <label className="label font-bold">
+                <span className="label-text-alt italic text-red-500">
+                  {`${formState.errors.publishedStates.message}`}
+                </span>
+              </label>
+            )}
+          </div>
+
+          {/* {session && (
             <div className="">
               <label className="label cursor-pointer font-bold">
                 <span className="label-text mr-2 text-xs">Include expired</span>
@@ -523,7 +569,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                 </span>
               </label>
             )}
-          </div>
+          </div> */}
 
           <div className="flex w-24 items-center justify-center rounded-md border-2 border-green text-xs font-semibold text-green">
             <button type="button" onClick={onClear}>

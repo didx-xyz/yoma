@@ -10,7 +10,7 @@ import type {
   OpportunitySearchCriteriaZltoReward,
   OpportunityType,
 } from "~/api/models/opportunity";
-import type { Country, Language } from "~/api/models/lookups";
+import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import Image from "next/image";
 import { shimmer, toBase64 } from "src/lib/image";
 import iconRocket from "public/images/icon-rocket.webp";
@@ -28,6 +28,7 @@ export interface InputProps {
   lookups_organisations: OrganizationInfo[];
   lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
   lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
+  lookups_publishedStates: SelectOption[];
   onSubmit?: (fieldValues: OpportunitySearchFilter) => void;
   onCancel?: () => void;
   cancelButtonText?: string;
@@ -44,6 +45,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
   lookups_organisations,
   lookups_commitmentIntervals,
   lookups_zltoRewardRanges,
+  lookups_publishedStates,
   onSubmit,
   onCancel,
   cancelButtonText = "Cancel",
@@ -59,8 +61,9 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
     organizations: zod.array(zod.string()).optional().nullable(),
     commitmentIntervals: zod.array(zod.string()).optional().nullable(),
     zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
-    includeExpired: zod.boolean().optional().nullable(),
-    started: zod.boolean().optional().nullable(),
+    //includeExpired: zod.boolean().optional().nullable(),
+    //started: zod.boolean().optional().nullable(),
+    publishedStates: zod.array(zod.string()).optional().nullable(),
   });
   const form = useForm({
     mode: "all",
@@ -365,6 +368,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
+
             <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-6" />
               <div className="collapse-title text-xl font-medium">Effort</div>
@@ -405,6 +409,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
+
             <div className="collapse join-item collapse-arrow">
               <input type="radio" name="my-accordion-7" />
               <div className="collapse-title text-xl font-medium">Reward</div>
@@ -446,7 +451,54 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
               </div>
             </div>
 
-            {session && (
+            <div className="collapse join-item collapse-arrow">
+              <input type="radio" name="my-accordion-7" />
+              <div className="collapse-title text-xl font-medium">Status</div>
+              <div className="collapse-content">
+                <Controller
+                  name="publishedStates"
+                  control={form.control}
+                  //TODO:
+                  //defaultValue={opportunitySearchFilter?.publishedStates}
+                  render={({ field: { onChange, value } }) => (
+                    <Select
+                      instanceId="publishedStates"
+                      classNames={{
+                        control: () => "input input-xs",
+                      }}
+                      isMulti={true}
+                      options={lookups_publishedStates}
+                      // fix menu z-index issue
+                      menuPortalTarget={htmlRef}
+                      styles={{
+                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                      }}
+                      onChange={(val) => {
+                        onChange(val.map((c) => c.value));
+                        void handleSubmit(onSubmitHandler)();
+                      }}
+                      value={lookups_publishedStates.filter(
+                        (c) => value?.includes(c.value),
+                      )}
+                      placeholder="Status"
+                      // components={{
+                      //   ValueContainer,
+                      // }}
+                    />
+                  )}
+                />
+
+                {formState.errors.publishedStates && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${formState.errors.publishedStates.message}`}
+                    </span>
+                  </label>
+                )}
+              </div>
+            </div>
+
+            {/* {session && (
               <div className="collapse join-item collapse-arrow">
                 <input type="radio" name="my-accordion-7" />
                 <div className="collapse-title text-xl font-medium">
@@ -513,7 +565,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                   </label>
                 )}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 

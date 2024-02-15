@@ -116,6 +116,9 @@ export const getOpportunityInfoByIdAdmin = async (
   return data;
 };
 
+//TODO: publishedStates
+//default: not started & active
+//dropdowns: all 3
 export const getOpportunityInfoById = async (
   id: string,
   includeExpired?: boolean,
