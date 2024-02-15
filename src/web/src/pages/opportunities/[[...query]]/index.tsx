@@ -325,7 +325,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         opportunitySearchFilter?.includeExpired !== null &&
         opportunitySearchFilter?.includeExpired === true
       )
-        params.append("includeExpired", "true");
+        params.append("expired", "true");
       if (
         opportunitySearchFilter?.started !== undefined &&
         opportunitySearchFilter?.started !== null &&
