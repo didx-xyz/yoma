@@ -445,6 +445,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
+
             {session && (
               <div className="collapse join-item collapse-arrow">
                 <input type="radio" name="my-accordion-7" />
