@@ -16,7 +16,6 @@ import { shimmer, toBase64 } from "src/lib/image";
 import iconRocket from "public/images/icon-rocket.webp";
 import Select from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
-import { useSession } from "next-auth/react";
 
 export interface InputProps {
   htmlRef: HTMLDivElement;
@@ -51,8 +50,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
   cancelButtonText = "Cancel",
   submitButtonText = "Submit",
 }) => {
-  const { data: session } = useSession();
-
   const schema = zod.object({
     types: zod.array(zod.string()).optional().nullable(),
     categories: zod.array(zod.string()).optional().nullable(),
@@ -61,8 +58,6 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
     organizations: zod.array(zod.string()).optional().nullable(),
     commitmentIntervals: zod.array(zod.string()).optional().nullable(),
     zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
-    //includeExpired: zod.boolean().optional().nullable(),
-    //started: zod.boolean().optional().nullable(),
     publishedStates: zod.array(zod.string()).optional().nullable(),
   });
   const form = useForm({
@@ -458,8 +453,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 <Controller
                   name="publishedStates"
                   control={form.control}
-                  //TODO:
-                  //defaultValue={opportunitySearchFilter?.publishedStates}
+                  defaultValue={opportunitySearchFilter?.publishedStates}
                   render={({ field: { onChange, value } }) => (
                     <Select
                       instanceId="publishedStates"
@@ -474,16 +468,13 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                         menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                       }}
                       onChange={(val) => {
-                        onChange(val.map((c) => c.value));
+                        onChange(val.map((c) => c.label));
                         void handleSubmit(onSubmitHandler)();
                       }}
                       value={lookups_publishedStates.filter(
-                        (c) => value?.includes(c.value),
+                        (c) => value?.includes(c.label),
                       )}
                       placeholder="Status"
-                      // components={{
-                      //   ValueContainer,
-                      // }}
                     />
                   )}
                 />

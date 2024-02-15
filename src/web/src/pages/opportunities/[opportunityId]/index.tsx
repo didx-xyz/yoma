@@ -701,7 +701,7 @@ const OpportunityDetails: NextPageWithLayout<{
                               </span>
                             </div>
                           )}
-                          {/* Status Badges */}
+                          {/* STATUS BADGES */}
                           {opportunity?.status == "Active" && (
                             <>
                               <div className="badge h-6 rounded-md bg-purple-light text-purple">

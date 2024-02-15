@@ -116,9 +116,6 @@ export const getOpportunityInfoByIdAdmin = async (
   return data;
 };
 
-//TODO: publishedStates
-//default: not started & active
-//dropdowns: all 3
 export const getOpportunityInfoById = async (
   id: string,
   includeExpired?: boolean,
@@ -137,6 +134,11 @@ export const searchOpportunities = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunitySearchResultsInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+
+  // default published state to active & not started
+  if (!filter.publishedStates) {
+    filter.publishedStates = ["Active", "NotStarted"];
+  }
 
   const { data } = await instance.post<OpportunitySearchResultsInfo>(
     `/opportunity/search`,

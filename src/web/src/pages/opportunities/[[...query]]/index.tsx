@@ -12,13 +12,14 @@ import React, {
 } from "react";
 import ReactModal from "react-modal";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
-import type {
-  OpportunityCategory,
-  OpportunitySearchCriteriaCommitmentInterval,
-  OpportunitySearchCriteriaZltoReward,
-  OpportunitySearchFilter,
-  OpportunitySearchResultsInfo,
-  OpportunityType,
+import {
+  PublishedState,
+  type OpportunityCategory,
+  type OpportunitySearchCriteriaCommitmentInterval,
+  type OpportunitySearchCriteriaZltoReward,
+  type OpportunitySearchFilter,
+  type OpportunitySearchResultsInfo,
+  type OpportunityType,
 } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import {
@@ -49,6 +50,7 @@ import { OpportunityFilterHorizontal } from "~/components/Opportunity/Opportunit
 import { Loading } from "~/components/Status/Loading";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { IoMdOptions } from "react-icons/io";
+import { useSession } from "next-auth/react";
 
 // This function gets called at build time on server-side.
 // It may be called again, on a serverless function, if
@@ -59,7 +61,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
       pageNumber: 1,
       pageSize: 4,
       categories: null,
-      includeExpired: false,
       countries: null,
       languages: null,
       types: null,
@@ -68,7 +69,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       mostViewed: true,
       organizations: null,
       zltoRewardRanges: null,
-      started: null,
+      publishedStates: [PublishedState.Active, PublishedState.NotStarted],
     },
     context,
   );
@@ -77,7 +78,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
       pageNumber: 1,
       pageSize: 4,
       categories: null,
-      includeExpired: false,
       countries: null,
       languages: null,
       types: OPPORTUNITY_TYPES_LEARNING,
@@ -86,7 +86,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       mostViewed: null,
       organizations: null,
       zltoRewardRanges: null,
-      started: null,
+      publishedStates: [PublishedState.Active, PublishedState.NotStarted],
     },
     context,
   );
@@ -95,7 +95,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
       pageNumber: 1,
       pageSize: 4,
       categories: null,
-      includeExpired: false,
       countries: null,
       languages: null,
       types: OPPORTUNITY_TYPES_TASK,
@@ -104,7 +103,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       mostViewed: null,
       organizations: null,
       zltoRewardRanges: null,
-      started: null,
+      publishedStates: [PublishedState.Active, PublishedState.NotStarted],
     },
     context,
   );
@@ -113,7 +112,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
       pageNumber: 1,
       pageSize: 8,
       categories: null,
-      includeExpired: false,
       countries: null,
       languages: null,
       types: null,
@@ -122,7 +120,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       mostViewed: null,
       organizations: null,
       zltoRewardRanges: null,
-      started: null,
+      publishedStates: [PublishedState.Active, PublishedState.NotStarted],
     },
     context,
   );
@@ -189,13 +187,14 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
   lookups_commitmentIntervals,
   lookups_zltoRewardRanges,
 }) => {
+  const { data: session } = useSession();
   const myRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   const lookups_publishedStates: SelectOption[] = [
     { value: "0", label: "Not started" },
     { value: "1", label: "Active" },
-    { value: "2", label: "Expired" },
+    ...(session ? [{ value: "2", label: "Expired" }] : []), // logged in users can see expired
   ];
 
   // get filter parameters from route
@@ -210,9 +209,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     organizations,
     zltoRewardRanges,
     mostViewed,
-    // expired,
-    // started,
-    states,
+    publishedStates,
   } = router.query;
 
   const [opportunitySearchFilter, setOpportunitySearchFilter] =
@@ -220,8 +217,6 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       pageNumber: page ? parseInt(page.toString()) : 1,
       pageSize: PAGE_SIZE,
       categories: null,
-      //includeExpired: expired ? Boolean(expired) : null,
-      //started: started ? Boolean(started) : null,
       countries: null,
       languages: null,
       types: null,
@@ -245,8 +240,6 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       organizations != undefined ||
       zltoRewardRanges != undefined ||
       mostViewed != undefined ||
-      //expired != undefined ||
-      //started != undefined
       publishedStates != undefined
     );
   }, [
@@ -259,8 +252,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     organizations,
     zltoRewardRanges,
     mostViewed,
-    expired,
-    started,
+    publishedStates,
   ]);
 
   const getSearchFilterAsQueryString = useCallback(
@@ -329,20 +321,16 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
           "mostViewed",
           opportunitySearchFilter?.mostViewed ? "true" : "false",
         );
-      //TODO: check publishedStates
 
-      // if (
-      //   opportunitySearchFilter?.includeExpired !== undefined &&
-      //   opportunitySearchFilter?.includeExpired !== null &&
-      //   opportunitySearchFilter?.includeExpired === true
-      // )
-      //   params.append("expired", "true");
-      // if (
-      //   opportunitySearchFilter?.started !== undefined &&
-      //   opportunitySearchFilter?.started !== null &&
-      //   opportunitySearchFilter?.started === true
-      // )
-      //   params.append("started", "true");
+      if (
+        opportunitySearchFilter?.publishedStates !== undefined &&
+        opportunitySearchFilter?.publishedStates !== null
+      )
+        params.append(
+          "publishedStates",
+          opportunitySearchFilter?.publishedStates.join(","),
+        );
+
       if (
         opportunitySearchFilter.pageNumber !== null &&
         opportunitySearchFilter.pageNumber !== undefined &&
@@ -372,17 +360,31 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         organizations,
         zltoRewardRanges,
         mostViewed,
-        expired,
-        started,
+        publishedStates,
       ],
       queryFn: async () =>
         await searchOpportunities({
           pageNumber: page ? parseInt(page.toString()) : 1,
           pageSize: PAGE_SIZE,
           valueContains: query?.toString() ?? null,
-          includeExpired: expired ? Boolean(expired) : null,
           mostViewed: mostViewed ? Boolean(mostViewed) : null,
-          started: started ? Boolean(started) : null,
+          // publishedStates:
+          //   publishedStates != undefined
+          //     ? publishedStates?.toString().split(",")
+          //     : null,
+          publishedStates:
+            publishedStates != undefined
+              ? publishedStates
+                  ?.toString()
+                  .split(",")
+                  .map((x) => {
+                    const item = lookups_publishedStates.find(
+                      (y) => y.label === x,
+                    );
+                    return item ? item?.value : "";
+                  })
+                  .filter((x) => x != "")
+              : null,
           types:
             types != undefined
               ? types
@@ -458,9 +460,11 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
         valueContains: query?.toString() ?? null,
-        includeExpired: expired ? Boolean(expired) : null,
         mostViewed: mostViewed ? Boolean(mostViewed) : null,
-        started: started ? Boolean(started) : null,
+        publishedStates:
+          publishedStates != undefined
+            ? publishedStates?.toString().split(",")
+            : null,
         types: types != undefined ? types?.toString().split(",") : null,
         categories:
           categories != undefined ? categories?.toString().split(",") : null,
@@ -496,8 +500,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     organizations,
     zltoRewardRanges,
     mostViewed,
-    expired,
-    started,
+    publishedStates,
   ]);
 
   // memo for results info based on filter parameters
@@ -514,13 +517,12 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       opportunitySearchFilter.valueContains &&
         `'${opportunitySearchFilter.valueContains}'`,
       opportunitySearchFilter.mostViewed && `'Trending'`,
-      opportunitySearchFilter.includeExpired && `'Expired'`,
-      opportunitySearchFilter.started && `'Started'`,
       opportunitySearchFilter.categories?.map((c) => `'${c}'`)?.join(", "),
       opportunitySearchFilter.countries?.map((c) => `'${c}'`)?.join(", "),
       opportunitySearchFilter.languages?.map((c) => `'${c}'`).join(", "),
       opportunitySearchFilter.types?.map((c) => `'${c}'`).join(", "),
       opportunitySearchFilter.organizations?.map((c) => `'${c}'`).join(", "),
+      opportunitySearchFilter.publishedStates?.map((c) => `'${c}'`).join(", "),
       // opportunitySearchFilter.commitmentIntervals
       //   ?.map((c) => `'${c}'`)
       //   .join(", "),

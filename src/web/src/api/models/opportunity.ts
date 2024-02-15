@@ -102,8 +102,7 @@ export interface OpportunityInfo {
 }
 
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
-  //???
-  includeExpired: boolean | null;
+  publishedStates: PublishedState[] | null | string[]; //NB
   mostViewed: boolean | null;
 }
 
@@ -123,7 +122,6 @@ export interface OpportunitySearchFilterBase extends PaginationFilter {
   commitmentIntervals: string[] | null;
   zltoRewardRanges: string[] | null;
   valueContains: string | null;
-  started: boolean | null;
 }
 
 export interface OpportunitySearchResultsInfo
@@ -169,6 +167,12 @@ export enum OrganizationDocumentType {
 export enum OrganizationProviderType {
   Education,
   Marketplace,
+}
+
+export enum PublishedState {
+  NotStarted,
+  Active,
+  Expired,
 }
 
 export interface OpportunityVerificationType {

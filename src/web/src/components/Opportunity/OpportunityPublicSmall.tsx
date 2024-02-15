@@ -131,19 +131,28 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
           </div>
         )}
 
-        {data.status == "Active" && (
-          <div className="badge rounded-md bg-purple-light text-purple">
-            <Image
-              src={iconAction}
-              alt="Icon Action"
-              width={18}
-              height={18}
-              sizes="100vw"
-              priority={true}
-              style={{ width: "18px", height: "18px" }}
-            />
-            <span className="ml-1 text-xs font-semibold">Active</span>
-          </div>
+        {data?.status == "Active" && (
+          <>
+            {new Date(data.dateStart) > new Date() && (
+              <div className="badge rounded-md bg-white text-xs text-yellow">
+                Not started
+              </div>
+            )}
+            {new Date(data.dateStart) < new Date() && (
+              <div className="badge rounded-md bg-purple-light text-purple">
+                <Image
+                  src={iconAction}
+                  alt="Icon Action"
+                  width={18}
+                  height={18}
+                  sizes="100vw"
+                  priority={true}
+                  style={{ width: "18px", height: "18px" }}
+                />
+                <span className="ml-1 text-xs">Active</span>
+              </div>
+            )}
+          </>
         )}
         {data.status == "Expired" && (
           <div className="badge rounded-md bg-green-light text-xs font-semibold text-yellow">
