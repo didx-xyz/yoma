@@ -248,7 +248,7 @@ const Opportunities: NextPageWithLayout<{
                     <tr key={opportunity.id} className="border-gray">
                       <td>
                         <Link
-                          href={`/organisations/${id}/opportunities/${opportunity.id}`}
+                          href={`/organisations/${id}/opportunities/${opportunity.id}/info`}
                         >
                           {opportunity.title}
                         </Link>
