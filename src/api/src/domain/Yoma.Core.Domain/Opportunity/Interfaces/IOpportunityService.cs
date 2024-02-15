@@ -13,17 +13,17 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
         List<Models.Opportunity> Contains(string value, bool includeComputed);
 
-        List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategories(bool? includeExpired);
+        List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategories(List<PublishedState>? publishedStates);
 
-        List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountries(bool? includeExpired);
+        List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountries(List<PublishedState>? publishedStates);
 
-        List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(bool? includeExpired);
+        List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(List<PublishedState>? publishedStates);
 
-        List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizations(bool? includeExpired);
+        List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizations(List<PublishedState>? publishedStates);
 
-        List<OpportunitySearchCriteriaCommitmentInterval> ListOpportunitySearchCriteriaCommitmentInterval(bool? includeExpired);
+        List<OpportunitySearchCriteriaCommitmentInterval> ListOpportunitySearchCriteriaCommitmentInterval(List<PublishedState>? publishedStates);
 
-        List<OpportunitySearchCriteriaZltoReward> ListOpportunitySearchCriteriaZltoReward(bool? includeExpired);
+        List<OpportunitySearchCriteriaZltoReward> ListOpportunitySearchCriteriaZltoReward(List<PublishedState>? publishedStates);
 
         OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 

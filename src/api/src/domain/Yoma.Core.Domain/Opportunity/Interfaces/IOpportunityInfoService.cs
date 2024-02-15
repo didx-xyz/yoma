@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
     {
         OpportunityInfo? GetById(Guid id, bool ensureOrganizationAuthorization);
 
-        OpportunityInfo? GetActiveExpiredById(Guid id, bool? includeExpired);
+        OpportunityInfo? GetPublishedOrExpiredById(Guid id);
 
         OpportunitySearchResultsInfo Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 

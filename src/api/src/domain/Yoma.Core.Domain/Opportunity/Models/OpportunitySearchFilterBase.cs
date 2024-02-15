@@ -31,21 +31,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
         public string? ValueContains { get; set; }
 
         /// <summary>
-        /// Only includes started opportunities
-        /// </summary>
-        public bool? Started { get; set; }
-
-        /// <summary>
-        /// Includes published (active opportunities relating to active organizations, irrespective of started)
+        /// Optionally defines the published states to filter opportunities. Results are always associated with an active organization. By default published opportunities are included,
+        /// thus active opportunities, irrespective of whether they started (includes both NotStarted and Active states). This default behavior is overridable
         /// </summary>
         [JsonIgnore]
-        internal bool Published { get; set; }
-
-        /// <summary>
-        /// Includes expired opportunities (expired relating to active organizations)
-        /// </summary>
-        [JsonIgnore]
-        internal bool IncludeExpired { get; set; }
+        internal List<PublishedState>? PublishedStates { get; set; }
 
         /// <summary>
         /// Filter based on the supplied list of opportunities. Explicit internal filter; if specified and empty no results will be returned

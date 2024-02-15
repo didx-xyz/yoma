@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public Guid OpportunityStatusId { get; set; }
 
+        public DateTimeOffset OpportunityDateStart { get; set; }
+
         public Guid OrganizationStatusId { get; set; }
 
         public Guid CategoryId { get; set; }

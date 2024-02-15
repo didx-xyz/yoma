@@ -33,7 +33,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return result;
         }
 
-        public OpportunityInfo GetActiveExpiredById(Guid id, bool? includeExpired)
+        public OpportunityInfo GetPublishedOrExpiredById(Guid id)
         {
             var opportunity = _opportunityService.GetById(id, true, true, false);
 
@@ -42,8 +42,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new EntityNotFoundException($"Opportunity with id '{id}' belongs to an inactive organization");
 
             //status criteria not met
-            var statuses = new List<Status>() { Status.Active };
-            if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
+            var statuses = new List<Status>() { Status.Active, Status.Expired }; //ignore DateStart, includes both not started and started
             if (!statuses.Contains(opportunity.Status))
                 throw new EntityNotFoundException($"Opportunity with id '{id}' has an invalid status. Expected status(es): '{string.Join(", ", statuses)}'");
 
@@ -72,11 +71,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 throw new ArgumentNullException(nameof(filter));
 
             //filter validated by OpportunityService.Search
-
             var filterInternal = new OpportunitySearchFilterAdmin
             {
-                Published = true, // by default published only (active relating to active organizations, irrespective of started)
-                IncludeExpired = filter.IncludeExpired.HasValue && filter.IncludeExpired.Value, // also includes expired (expired relating to active organizations)
+                PublishedStates = filter.PublishedStates == null || !filter.PublishedStates.Any() ?
+                    new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : filter.PublishedStates,
                 Types = filter.Types,
                 Categories = filter.Categories,
                 Languages = filter.Languages,
@@ -85,7 +83,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 CommitmentIntervals = filter.CommitmentIntervals,
                 ZltoRewardRanges = filter.ZltoRewardRanges,
                 ValueContains = filter.ValueContains,
-                Started = filter.Started,
                 PageNumber = filter.PageNumber,
                 PageSize = filter.PageSize
             };
@@ -94,7 +91,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             Dictionary<Guid, int>? aggregatedByViewed = null;
             if (mostViewed)
             {
-                aggregatedByViewed = _myOpportunityService.ListAggregatedOpportunityByViewed(filter, filterInternal.IncludeExpired);
+                aggregatedByViewed = _myOpportunityService.ListAggregatedOpportunityByViewed(filter, filterInternal.PublishedStates.Contains(PublishedState.Expired));
                 filterInternal.Opportunities = aggregatedByViewed?.Keys.ToList() ?? new List<Guid>();
             }
 

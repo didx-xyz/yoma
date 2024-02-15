@@ -182,16 +182,40 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results;
         }
 
-        public List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategories(bool? includeExpired)
+        public List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategories(List<PublishedState>? publishedStates)
         {
-            var statuses = new List<Status> { Status.Active };
-            if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
+            publishedStates = publishedStates == null || !publishedStates.Any() ?
+                  new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : publishedStates;
 
-            var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
             var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+            var query = _opportunityCategoryRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
 
-            var categoryIds = _opportunityCategoryRepository.Query().Where(
-                o => statusIds.Contains(o.OpportunityStatusId) && o.OrganizationStatusId == organizationStatusActiveId).Select(o => o.CategoryId).Distinct().ToList();
+            var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+            var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+
+            var predicate = PredicateBuilder.False<OpportunityCategory>();
+            foreach (var state in publishedStates)
+            {
+                switch (state)
+                {
+                    case PublishedState.NotStarted:
+                        predicate = predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow);
+
+                        break;
+
+                    case PublishedState.Active:
+                        predicate = predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow);
+                        break;
+
+                    case PublishedState.Expired:
+                        predicate = predicate.Or(o => o.OpportunityStatusId == statusExpiredId);
+                        break;
+                }
+            }
+
+            query = query.Where(predicate);
+
+            var categoryIds = query.Select(o => o.CategoryId).Distinct().ToList();
 
             var results = _opportunityCategoryService.List().Where(o => categoryIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
 
@@ -200,8 +224,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 var filter = new OpportunitySearchFilterAdmin
                 {
                     Categories = new List<Guid> { item.Id },
-                    Published = true,
-                    IncludeExpired = includeExpired.HasValue && includeExpired.Value,
+                    PublishedStates = publishedStates,
                     TotalCountOnly = true
                 };
 
@@ -211,44 +234,116 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results;
         }
 
-        public List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountries(bool? includeExpired)
+        public List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountries(List<PublishedState>? publishedStates)
         {
-            var statuses = new List<Status> { Status.Active };
-            if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
+            publishedStates = publishedStates == null || !publishedStates.Any() ?
+                    new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : publishedStates;
 
-            var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
             var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+            var query = _opportunityCountryRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
 
-            var countryIds = _opportunityCountryRepository.Query().Where(
-                o => statusIds.Contains(o.OpportunityStatusId) && o.OrganizationStatusId == organizationStatusActiveId).Select(o => o.CountryId).Distinct().ToList();
+            var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+            var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+
+            var predicate = PredicateBuilder.False<OpportunityCountry>();
+            foreach (var state in publishedStates)
+            {
+                switch (state)
+                {
+                    case PublishedState.NotStarted:
+                        predicate = predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow);
+
+                        break;
+
+                    case PublishedState.Active:
+                        predicate = predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow);
+                        break;
+
+                    case PublishedState.Expired:
+                        predicate = predicate.Or(o => o.OpportunityStatusId == statusExpiredId);
+                        break;
+                }
+            }
+
+            query = query.Where(predicate);
+
+            var countryIds = query.Select(o => o.CountryId).Distinct().ToList();
 
             return _countryService.List().Where(o => countryIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
         }
 
-        public List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(bool? includeExpired)
+        public List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(List<PublishedState>? publishedStates)
         {
-            var statuses = new List<Status> { Status.Active };
-            if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
+            publishedStates = publishedStates == null || !publishedStates.Any() ?
+                   new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : publishedStates;
 
-            var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
             var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+            var query = _opportunityLanguageRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
 
-            var languageIds = _opportunityLanguageRepository.Query().Where(
-                o => statusIds.Contains(o.OpportunityStatusId) && o.OrganizationStatusId == organizationStatusActiveId).Select(o => o.LanguageId).Distinct().ToList();
+            var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+            var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+
+            var predicate = PredicateBuilder.False<OpportunityLanguage>();
+            foreach (var state in publishedStates)
+            {
+                switch (state)
+                {
+                    case PublishedState.NotStarted:
+                        predicate = predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow);
+
+                        break;
+
+                    case PublishedState.Active:
+                        predicate = predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow);
+                        break;
+
+                    case PublishedState.Expired:
+                        predicate = predicate.Or(o => o.OpportunityStatusId == statusExpiredId);
+                        break;
+                }
+            }
+
+            query = query.Where(predicate);
+
+            var languageIds = query.Select(o => o.LanguageId).Distinct().ToList();
 
             return _languageService.List().Where(o => languageIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
         }
 
-        public List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizations(bool? includeExpired)
+        public List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizations(List<PublishedState>? publishedStates)
         {
-            var statuses = new List<Status> { Status.Active };
-            if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
+            publishedStates = publishedStates == null || !publishedStates.Any() ?
+                new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : publishedStates;
 
-            var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
-            //active organizations filtered below
+            var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+            var query = _opportunityRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
 
-            var organizationIds = _opportunityRepository.Query().Where(
-                o => statusIds.Contains(o.StatusId)).Select(o => o.OrganizationId).Distinct().ToList();
+            var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+            var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+
+            var predicate = PredicateBuilder.False<Models.Opportunity>();
+            foreach (var state in publishedStates)
+            {
+                switch (state)
+                {
+                    case PublishedState.NotStarted:
+                        predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow);
+
+                        break;
+
+                    case PublishedState.Active:
+                        predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow);
+                        break;
+
+                    case PublishedState.Expired:
+                        predicate = predicate.Or(o => o.StatusId == statusExpiredId);
+                        break;
+                }
+            }
+
+            query = query.Where(predicate);
+
+            var organizationIds = query.Select(o => o.OrganizationId).Distinct().ToList();
 
             var filter = new OrganizationSearchFilter
             {
@@ -260,16 +355,40 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return _organizationService.Search(filter, false).Items;
         }
 
-        public List<OpportunitySearchCriteriaCommitmentInterval> ListOpportunitySearchCriteriaCommitmentInterval(bool? includeExpired)
+        public List<OpportunitySearchCriteriaCommitmentInterval> ListOpportunitySearchCriteriaCommitmentInterval(List<PublishedState>? publishedStates)
         {
-            var statuses = new List<Status> { Status.Active };
-            if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
+            publishedStates = publishedStates == null || !publishedStates.Any() ?
+               new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : publishedStates;
 
-            var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
             var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+            var query = _opportunityRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
 
-            var results = _opportunityRepository.Query().Where(
-                o => statusIds.Contains(o.StatusId) && o.OrganizationStatusId == organizationStatusActiveId)
+            var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+            var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+
+            var predicate = PredicateBuilder.False<Models.Opportunity>();
+            foreach (var state in publishedStates)
+            {
+                switch (state)
+                {
+                    case PublishedState.NotStarted:
+                        predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow);
+
+                        break;
+
+                    case PublishedState.Active:
+                        predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow);
+                        break;
+
+                    case PublishedState.Expired:
+                        predicate = predicate.Or(o => o.StatusId == statusExpiredId);
+                        break;
+                }
+            }
+
+            query = query.Where(predicate);
+
+            var results = query
                     .Select(item => new OpportunitySearchCriteriaCommitmentInterval
                     {
                         Id = $"{item.CommitmentIntervalCount}|{item.CommitmentIntervalId}",
@@ -281,16 +400,38 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results.OrderBy(o => o.Name).ToList();
         }
 
-        public List<OpportunitySearchCriteriaZltoReward> ListOpportunitySearchCriteriaZltoReward(bool? includeExpired)
+        public List<OpportunitySearchCriteriaZltoReward> ListOpportunitySearchCriteriaZltoReward(List<PublishedState>? publishedStates)
         {
-            var statuses = new List<Status> { Status.Active };
-            if (includeExpired.HasValue && includeExpired.Value) statuses.Add(Status.Expired);
+            publishedStates = publishedStates == null || !publishedStates.Any() ?
+                new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : publishedStates;
 
-            var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
             var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+            var query = _opportunityRepository.Query().Where(o => o.ZltoReward.HasValue && o.OrganizationStatusId == organizationStatusActiveId);
 
-            var query = _opportunityRepository.Query().Where(
-                o => o.ZltoReward.HasValue && statusIds.Contains(o.StatusId) && o.OrganizationStatusId == organizationStatusActiveId);
+            var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+            var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+
+            var predicate = PredicateBuilder.False<Models.Opportunity>();
+            foreach (var state in publishedStates)
+            {
+                switch (state)
+                {
+                    case PublishedState.NotStarted:
+                        predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow);
+
+                        break;
+
+                    case PublishedState.Active:
+                        predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow);
+                        break;
+
+                    case PublishedState.Expired:
+                        predicate = predicate.Or(o => o.StatusId == statusExpiredId);
+                        break;
+                }
+            }
+
+            query = query.Where(predicate);
 
             var minValue = query.Min(o => o.ZltoReward);
             var maxValue = query.Max(o => o.ZltoReward);
@@ -388,23 +529,38 @@ namespace Yoma.Core.Domain.Opportunity.Services
                   opportunityCountry => filter.Countries.Contains(opportunityCountry.CountryId) && opportunityCountry.OpportunityId == opportunity.Id));
             }
 
-            if (filter.Started.HasValue && filter.Started.Value)
-                query = query.Where(o => o.DateStart <= DateTimeOffset.UtcNow);
-
-            //statuses
-            if (filter.IncludeExpired && !filter.Published)
-                throw new InvalidOperationException($"'{nameof(filter.IncludeExpired)}' requires '{nameof(filter.Published)}'");
-
-            if (filter.Published || filter.IncludeExpired)
+            if (filter.PublishedStates != null)
             {
-                filter.Statuses = new List<Status> { Status.Active };
-
                 var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
                 query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
 
-                if (filter.IncludeExpired) filter.Statuses.Add(Status.Expired);
+                var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+                var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+
+                var predicate = PredicateBuilder.False<Models.Opportunity>();
+                foreach (var state in filter.PublishedStates)
+                {
+                    switch (state)
+                    {
+                        case PublishedState.NotStarted:
+                            predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow);
+
+                            break;
+
+                        case PublishedState.Active:
+                            predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow);
+                            break;
+
+                        case PublishedState.Expired:
+                            predicate = predicate.Or(o => o.StatusId == statusExpiredId);
+                            break;
+                    }
+                }
+
+                query = query.Where(predicate);
             }
 
+            //statuses
             if (filter.Statuses != null && filter.Statuses.Any())
             {
                 filter.Statuses = filter.Statuses.Distinct().ToList();

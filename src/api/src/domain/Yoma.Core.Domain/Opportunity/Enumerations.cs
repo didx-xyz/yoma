@@ -33,4 +33,11 @@ namespace Yoma.Core.Domain.Opportunity
         Task,
         Learning
     }
+
+    public enum PublishedState
+    {
+        NotStarted,
+        Active,
+        Expired
+    }
 }
