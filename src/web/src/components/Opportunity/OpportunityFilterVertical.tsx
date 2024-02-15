@@ -60,6 +60,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
     commitmentIntervals: zod.array(zod.string()).optional().nullable(),
     zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
     includeExpired: zod.boolean().optional().nullable(),
+    started: zod.boolean().optional().nullable(),
   });
   const form = useForm({
     mode: "all",
@@ -444,6 +445,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 )}
               </div>
             </div>
+
             {session && (
               <div className="collapse join-item collapse-arrow">
                 <input type="radio" name="my-accordion-7" />
@@ -480,6 +482,38 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 </div>
               </div>
             )}
+            <div className="collapse join-item collapse-arrow">
+              <input type="radio" name="my-accordion-7" />
+              <div className="collapse-title text-xl font-medium">Started</div>
+              <div className="collapse-content">
+                <label className="label cursor-pointer font-bold">
+                  <span className="label-text">
+                    Include opportunities that have started
+                  </span>
+
+                  <Controller
+                    name="started"
+                    control={form.control}
+                    render={({ field }) => (
+                      <input
+                        type="checkbox"
+                        className="checkbox-secondary checkbox"
+                        {...field}
+                        checked={field.value ?? false}
+                      />
+                    )}
+                  />
+                </label>
+
+                {formState.errors.started && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${formState.errors.started.message}`}
+                    </span>
+                  </label>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

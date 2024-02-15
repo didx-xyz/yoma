@@ -122,6 +122,7 @@ export interface OpportunitySearchFilterBase extends PaginationFilter {
   commitmentIntervals: string[] | null;
   zltoRewardRanges: string[] | null;
   valueContains: string | null;
+  started: boolean | null;
 }
 
 export interface OpportunitySearchResultsInfo

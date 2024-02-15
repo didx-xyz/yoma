@@ -89,6 +89,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           valueContains: query?.toString() ?? null,
           commitmentIntervals: null,
           zltoRewardRanges: null,
+          started: null,
         },
         context,
       ),
@@ -143,6 +144,7 @@ const Opportunities: NextPageWithLayout<{
         valueContains: query?.toString() ?? null,
         commitmentIntervals: null,
         zltoRewardRanges: null,
+        started: null,
       }),
     enabled: !error,
   });
@@ -248,7 +250,7 @@ const Opportunities: NextPageWithLayout<{
                     <tr key={opportunity.id} className="border-gray">
                       <td>
                         <Link
-                          href={`/organisations/${id}/opportunities/${opportunity.id}/info`}
+                          href={`/organisations/${id}/opportunities/${opportunity.id}`}
                         >
                           {opportunity.title}
                         </Link>

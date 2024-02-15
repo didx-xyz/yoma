@@ -14,7 +14,6 @@ import Select, { components, type ValueContainerProps } from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizontalCard";
 import { useSession } from "next-auth/react";
-// import React, { useId } from "react";
 
 export interface InputProps {
   htmlRef: HTMLDivElement;
@@ -64,7 +63,6 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
   lookups_zltoRewardRanges,
   onSubmit,
   onClear,
-  //onOpenFilterFullWindow,
   clearButtonText = "Clear",
   isSearchExecuted,
 }) => {
@@ -79,6 +77,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
     commitmentIntervals: zod.array(zod.string()).optional().nullable(),
     zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
     includeExpired: zod.boolean().optional().nullable(),
+    started: zod.boolean().optional().nullable(),
   });
 
   const form = useForm({
@@ -144,6 +143,7 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
                 />
               ))}
             </div>
+
             {/* VIEW ALL: OPEN FILTERS */}
             {/* <button
               type="button"
@@ -492,6 +492,38 @@ export const OpportunityFilterHorizontal: React.FC<InputProps> = ({
               )}
             </div>
           )}
+
+          <div className="">
+            <label className="label cursor-pointer font-bold">
+              <span className="label-text mr-2 text-xs">Include started</span>
+
+              <Controller
+                name="started"
+                control={form.control}
+                render={({ field }) => (
+                  <input
+                    type="checkbox"
+                    className="checkbox-secondary checkbox"
+                    {...field}
+                    onChange={(e) => {
+                      field.onChange(e); // default handler
+                      void handleSubmit(onSubmitHandler)();
+                    }}
+                    checked={field.value ?? false}
+                    value={field.value ?? false}
+                  />
+                )}
+              />
+            </label>
+
+            {formState.errors.started && (
+              <label className="label font-bold">
+                <span className="label-text-alt italic text-red-500">
+                  {`${formState.errors.started.message}`}
+                </span>
+              </label>
+            )}
+          </div>
 
           <div className="flex w-24 items-center justify-center rounded-md border-2 border-green text-xs font-semibold text-green">
             <button type="button" onClick={onClear}>

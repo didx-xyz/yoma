@@ -25,10 +25,10 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
       <div className="flex flex-row">
         <div className="flex flex-row">
           <div className="flex w-3/5 flex-grow flex-col">
-            <h1 className="max-w-[220px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark">
+            <h1 className="h-[32px] max-w-[220px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark">
               {data.organizationName}
             </h1>
-            <h2 className="line-clamp-3 max-h-[80px] max-w-[220px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight">
+            <h2 className="line-clamp-3 h-[70px] max-w-[220px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight">
               {data.title}
             </h2>
           </div>
@@ -79,8 +79,9 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
           </div>
         </div>
       )}
+
       {/* BADGES */}
-      <div className="absolutex bottom-5x flex flex-row gap-1 whitespace-nowrap pt-2 text-xs font-normal text-green-dark">
+      <div className="bottom-5x flex flex-row gap-1 whitespace-nowrap pt-2 text-xs font-normal text-green-dark">
         <div className="badge rounded-md bg-green-light text-xs font-semibold text-green">
           <Image
             src={iconClock}
@@ -92,7 +93,9 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
             style={{ width: "17px", height: "17px" }}
             className="mr-1"
           />
-          {`${data?.commitmentIntervalCount} ${data?.commitmentInterval}`}
+          <span className="ml-1 text-xs">{`${data.commitmentIntervalCount} ${
+            data.commitmentInterval
+          }${data.commitmentIntervalCount > 1 ? "s" : ""}`}</span>
         </div>
 
         {(data?.participantCountTotal ?? 0) > 0 && (
@@ -139,7 +142,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
               priority={true}
               style={{ width: "18px", height: "18px" }}
             />
-            <span className="ml-1 text-xs font-semibold">Ongoing</span>
+            <span className="ml-1 text-xs font-semibold">Active</span>
           </div>
         )}
         {data.status == "Expired" && (
