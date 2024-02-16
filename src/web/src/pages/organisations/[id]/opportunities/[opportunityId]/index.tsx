@@ -601,9 +601,9 @@ const OpportunityDetails: NextPageWithLayout<{
     setValue: setValueStep1,
     formState: { errors: errorsStep1, isValid: isValidStep1 },
     control: controlStep1,
+    reset: resetStep1,
   } = useForm({
     resolver: zodResolver(schemaStep1),
-    defaultValues: formData,
   });
 
   const {
@@ -612,9 +612,9 @@ const OpportunityDetails: NextPageWithLayout<{
     formState: { errors: errorsStep2, isValid: isValidStep2 },
     control: controlStep2,
     getValues: getValuesStep2,
+    reset: resetStep2,
   } = useForm({
     resolver: zodResolver(schemaStep2),
-    defaultValues: formData,
   });
 
   const {
@@ -624,18 +624,18 @@ const OpportunityDetails: NextPageWithLayout<{
     control: controlStep3,
     getValues: getValuesStep3,
     setValue: setValueStep3,
+    reset: resetStep3,
   } = useForm({
     resolver: zodResolver(schemaStep3),
-    defaultValues: formData,
   });
 
   const {
     handleSubmit: handleSubmitStep4,
     formState: { errors: errorsStep4, isValid: isValidStep4 },
     control: controlStep4,
+    reset: resetStep4,
   } = useForm({
     resolver: zodResolver(schemaStep4),
-    defaultValues: formData,
   });
 
   const {
@@ -645,9 +645,9 @@ const OpportunityDetails: NextPageWithLayout<{
     formState: { errors: errorsStep5, isValid: isValidStep5 },
     control: controlStep5,
     watch: watchStep5,
+    reset: resetStep5,
   } = useForm({
     resolver: zodResolver(schemaStep5),
-    defaultValues: formData,
   });
   const watchVerificationEnabled = watchStep5("verificationEnabled");
   const watchVerificationMethod = watchStep5("verificationMethod");
@@ -663,9 +663,9 @@ const OpportunityDetails: NextPageWithLayout<{
     formState: { errors: errorsStep6, isValid: isValidStep6 },
     control: controlStep6,
     watch: watchStep6,
+    reset: resetStep6,
   } = useForm({
     resolver: zodResolver(schemaStep6),
-    defaultValues: formData,
   });
   const watchCredentialIssuanceEnabled = watchStep6(
     "credentialIssuanceEnabled",
@@ -676,9 +676,9 @@ const OpportunityDetails: NextPageWithLayout<{
     register: registerStep7,
     handleSubmit: handleSubmitStep7,
     formState: { errors: errorsStep7, isValid: isValidStep7 },
+    reset: resetStep7,
   } = useForm({
     resolver: zodResolver(schemaStep7),
-    defaultValues: formData,
   });
 
   // scroll to top on step change
@@ -692,6 +692,45 @@ const OpportunityDetails: NextPageWithLayout<{
       return schemas?.find((x) => x.name === watcSSISchemaName)?.entities ?? [];
     }
   }, [schemas, watcSSISchemaName]);
+
+  // set default values
+  // FIX (safari/brave issue): give the form (country dropdowns) time to load before setting default values
+  useEffect(() => {
+    // reset form
+    // setTimeout is needed to prevent the form from being reset before the default values are set
+    setTimeout(() => {
+      resetStep1({
+        ...formData,
+      });
+      resetStep2({
+        ...formData,
+      });
+      resetStep3({
+        ...formData,
+      });
+      resetStep4({
+        ...formData,
+      });
+      resetStep5({
+        ...formData,
+      });
+      resetStep6({
+        ...formData,
+      });
+      resetStep7({
+        ...formData,
+      });
+    }, 500);
+  }, [
+    resetStep1,
+    resetStep2,
+    resetStep3,
+    resetStep4,
+    resetStep5,
+    resetStep6,
+    resetStep7,
+    formData,
+  ]);
 
   if (error) return <Unauthorized />;
 
