@@ -78,7 +78,7 @@ export const SearchInputLarge: React.FC<InputProps> = ({
         <input
           type="search"
           placeholder={placeholder ?? "Search..."}
-          className="input-md join-item w-[300px] bg-[#653A72] py-5 text-sm text-white placeholder-white focus:outline-0  md:w-[600px]"
+          className="join-item input-md w-[300px] bg-[#653A72] py-5 text-sm text-white placeholder-white focus:outline-0  md:w-[600px]"
           value={searchInputValue ?? ""}
           onChange={(e) => setSearchInputValue(e.target.value)}
           onFocus={(e) => (e.target.placeholder = "")}
