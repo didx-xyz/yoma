@@ -6,19 +6,19 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 SET TIMEZONE='UTC';
 
 -- user & organization
-INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "CountryId", "CountryOfResidenceId",
+INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "CountryId", "EducationId",
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
-VALUES(gen_random_uuid(), '{test_user}', true, 'Sam', 'Henderson', 'Sam Henderson', null, (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'), (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'),
+VALUES(gen_random_uuid(), '{test_user}', true, 'Sam', 'Henderson', 'Sam Henderson', null, (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'), (SELECT "Id" FROM "Lookup"."Education" WHERE "Name" = 'Tertiary'),
         NULL, (SELECT "Id" FROM "Lookup"."Gender" WHERE "Name" = 'Male'), NULL, NULL, NULL, true, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
 
-INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "CountryId", "CountryOfResidenceId",
+INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "CountryId", "EducationId",
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
-VALUES(gen_random_uuid(), '{org_admin_user}', true, 'Sam', 'Henderson', 'Sam Henderson', null, (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'), (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'),
+VALUES(gen_random_uuid(), '{org_admin_user}', true, 'Sam', 'Henderson', 'Sam Henderson', null, (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'), (SELECT "Id" FROM "Lookup"."Education" WHERE "Name" = 'Tertiary'),
         NULL, (SELECT "Id" FROM "Lookup"."Gender" WHERE "Name" = 'Male'), NULL, NULL, NULL, true, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
 
-INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "CountryId", "CountryOfResidenceId",
+INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "CountryId", "EducationId",
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
-VALUES(gen_random_uuid(), '{admin_user}', true, 'Sam', 'Henderson', 'Sam Henderson', null, (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'), (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'),
+VALUES(gen_random_uuid(), '{admin_user}', true, 'Sam', 'Henderson', 'Sam Henderson', null, (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'), (SELECT "Id" FROM "Lookup"."Education" WHERE "Name" = 'Tertiary'),
         NULL, (SELECT "Id" FROM "Lookup"."Gender" WHERE "Name" = 'Male'), NULL, NULL, NULL, true, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
 
 -- ssi credential issuance (pending) for YOID onboarded users

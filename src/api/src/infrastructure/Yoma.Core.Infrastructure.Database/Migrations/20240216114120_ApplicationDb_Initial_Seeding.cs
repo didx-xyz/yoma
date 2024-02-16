@@ -559,6 +559,22 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             schema: "Lookup");
 
             migrationBuilder.InsertData(
+            table: "Education",
+            columns: new[] { "Id", "Name", "DateCreated" },
+            values: new object[,]
+            {
+                    {"BEEBEA3B-381E-4BD8-91D8-319089AB14DA","Primary",DateTimeOffset.UtcNow}
+                    ,
+                    {"5642E521-34B9-4DC8-BFFA-B975F5C95D99","Secondary",DateTimeOffset.UtcNow}
+                    ,
+                    {"2C0F0175-7007-40BF-9BF9-6D15B793BC09","Tertiary",DateTimeOffset.UtcNow}
+                    ,
+                    {"D306BEA3-04AA-4778-969F-4F92DA45559E","No formal education",DateTimeOffset.UtcNow}
+            },
+            schema: "Lookup");
+
+
+            migrationBuilder.InsertData(
             table: "Gender",
             columns: new[] { "Id", "Name", "DateCreated" },
             values: new object[,]
@@ -566,10 +582,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     {"6DBD31E9-5196-49CA-8D3B-8354A9BFF996","Male",DateTimeOffset.UtcNow}
                     ,
                     {"6342C98A-0572-4E6A-A4FB-A1AEAFD3C053","Female",DateTimeOffset.UtcNow}
-                    ,
-                    {"1BDCBFAD-67AA-4556-A326-5D263761F920","Non-Binary",DateTimeOffset.UtcNow}
-                    ,
-                    {"0BE24DF8-D4C5-453C-AADF-EEDF673E1FE3","Other",DateTimeOffset.UtcNow}
                     ,
                     {"26BA24A5-9209-48B2-A885-95C43EF142B5","Prefer not to say",DateTimeOffset.UtcNow}
             },
@@ -1126,7 +1138,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     ,
                     {"B14C9C34-4C89-4DAE-88AB-9D667BE2EF7F","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","Country","Country","Country",false,null,null,DateTimeOffset.UtcNow}
                     ,
-                    {"B88A8825-FC5A-4000-93FE-9406A7898C58","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","CountryOfResidence","Country of Residence","Country of Residence",false,null,null,DateTimeOffset.UtcNow}
+                    {"B88A8825-FC5A-4000-93FE-9406A7898C58","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","Education","Education","Education",false,null,null,DateTimeOffset.UtcNow}
                     ,
                     {"C26D9276-5F94-4BB3-94BA-67C435025708","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","Gender","Gender","Gender",false,null,null,DateTimeOffset.UtcNow}
                     ,

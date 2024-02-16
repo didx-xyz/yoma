@@ -200,7 +200,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 result.SetDisplayName();
                 result.PhoneNumber = request.PhoneNumber;
                 result.CountryId = request.CountryId;
-                result.CountryOfResidenceId = request.CountryOfResidenceId;
+                result.EducationId = request.EducationId;
                 result.GenderId = request.GenderId;
                 result.DateOfBirth = request.DateOfBirth.RemoveTime();
             }

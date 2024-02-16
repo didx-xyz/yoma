@@ -105,20 +105,20 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
                 EmailVerified = user.EmailVerified
             };
 
-            if (!string.IsNullOrEmpty(user.PhoneNumber))
-                request.Attributes.Add(CustomAttributes.PhoneNumber.ToDescription(), new List<string> { { user.PhoneNumber } });
+            if (!string.IsNullOrEmpty(user.Country))
+                request.Attributes.Add(CustomAttributes.Country.ToDescription(), new List<string> { { user.Country } });
+
+            if (!string.IsNullOrEmpty(user.Education))
+                request.Attributes.Add(CustomAttributes.Education.ToDescription(), new List<string> { { user.Education } });
+
+            if (!string.IsNullOrEmpty(user.DateOfBirth))
+                request.Attributes.Add(CustomAttributes.DateOfBirth.ToDescription(), new List<string> { { user.DateOfBirth } });
 
             if (!string.IsNullOrEmpty(user.Gender))
                 request.Attributes.Add(CustomAttributes.Gender.ToDescription(), new List<string> { { user.Gender } });
 
-            if (!string.IsNullOrEmpty(user.CountryOfOrigin))
-                request.Attributes.Add(CustomAttributes.CountryOfOrigin.ToDescription(), new List<string> { { user.CountryOfOrigin } });
-
-            if (!string.IsNullOrEmpty(user.CountryOfResidence))
-                request.Attributes.Add(CustomAttributes.CountryOfResidence.ToDescription(), new List<string> { { user.CountryOfResidence } });
-
-            if (!string.IsNullOrEmpty(user.DateOfBirth))
-                request.Attributes.Add(CustomAttributes.DateOfBirth.ToDescription(), new List<string> { { user.DateOfBirth } });
+            if (!string.IsNullOrEmpty(user.PhoneNumber))
+                request.Attributes.Add(CustomAttributes.PhoneNumber.ToDescription(), new List<string> { { user.PhoneNumber } });
 
             try
             {

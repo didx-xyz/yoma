@@ -10,8 +10,8 @@ namespace Yoma.Core.Domain.Entity.Validators
         #endregion
 
         #region Constructor
-        public UserRequestValidator(ICountryService countryService,
-            IGenderService genderService) : base(countryService, genderService)
+        public UserRequestValidator(ICountryService countryService, IEducationService educationService,
+            IGenderService genderService) : base(countryService, educationService, genderService)
         {
             RuleFor(x => x.Id).NotEmpty().When(x => x.Id.HasValue);
             RuleFor(x => x.DateLastLogin).Must(NotInFuture).WithMessage("'{PropertyName}' is in the future.");

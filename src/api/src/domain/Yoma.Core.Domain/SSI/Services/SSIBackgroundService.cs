@@ -78,7 +78,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
                 SeedSchema(ArtifactType.Indy,
                     _appSettings.SSISchemaFullNameYoID,
-                    new List<string> { "Organization_Name", "Organization_LogoURL", "User_DisplayName", "User_FirstName", "User_Surname", "User_DateOfBirth", "User_Email", "User_Gender", "User_Country" }).Wait();
+                    new List<string> { "Organization_Name", "Organization_LogoURL", "User_DisplayName", "User_FirstName", "User_Surname", "User_DateOfBirth", "User_Email", "User_Gender", "User_Education", "User_Country" }).Wait();
 
                 _logger.LogInformation("Processed SSI default schema seeding");
             }

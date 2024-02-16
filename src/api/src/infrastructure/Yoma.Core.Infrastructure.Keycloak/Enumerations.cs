@@ -8,10 +8,10 @@ namespace Yoma.Core.Infrastructure.Keycloak
         PhoneNumber,
         [Description("gender")]
         Gender,
-        [Description("countryOfOrigin")]
-        CountryOfOrigin,
-        [Description("countryOfResidence")]
-        CountryOfResidence,
+        [Description("country")]
+        Country,
+        [Description("education")]
+        Education,
         [Description("dateOfBirth")]
         DateOfBirth,
         [Description("terms_and_conditions")]

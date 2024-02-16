@@ -33,8 +33,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 PhoneNumber = entity.PhoneNumber,
                 CountryId = entity.CountryId,
                 Country = entity.Country == null ? null : entity.Country.Name,
-                CountryOfResidenceId = entity.CountryOfResidenceId,
-                CountryOfResidence = entity.CountryOfResidence == null ? null : entity.CountryOfResidence.Name,
+                EducationId = entity.EducationId,
+                Education = entity.Education == null ? null : entity.Education.Name,
                 PhotoId = entity.PhotoId,
                 GenderId = entity.GenderId,
                 Gender = entity.Gender == null ? null : entity.Gender.Name,
@@ -93,7 +93,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 DisplayName = item.DisplayName,
                 PhoneNumber = item.PhoneNumber,
                 CountryId = item.CountryId,
-                CountryOfResidenceId = item.CountryOfResidenceId,
+                EducationId = item.EducationId,
                 PhotoId = item.PhotoId,
                 GenderId = item.GenderId,
                 DateOfBirth = item.DateOfBirth,
@@ -127,7 +127,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
             entity.DisplayName = item.DisplayName;
             entity.PhoneNumber = item.PhoneNumber;
             entity.CountryId = item.CountryId;
-            entity.CountryOfResidenceId = item.CountryOfResidenceId;
+            entity.EducationId = item.EducationId;
             entity.PhotoId = item.PhotoId;
             entity.GenderId = item.GenderId;
             entity.DateOfBirth = item.DateOfBirth;

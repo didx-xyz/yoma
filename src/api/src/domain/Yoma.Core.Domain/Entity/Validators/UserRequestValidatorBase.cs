@@ -10,14 +10,17 @@ namespace Yoma.Core.Domain.Entity.Validators
     {
         #region Class Variables
         private readonly ICountryService _countryService;
+        private readonly IEducationService _educationService;
         private readonly IGenderService _genderService;
         #endregion
 
         #region Constructor
         public UserRequestValidatorBase(ICountryService countryService,
+            IEducationService educationService,
             IGenderService genderService)
         {
             _countryService = countryService;
+            _educationService = educationService;
             _genderService = genderService;
 
             RuleFor(x => x.Email).NotEmpty().EmailAddress();
@@ -25,7 +28,7 @@ namespace Yoma.Core.Domain.Entity.Validators
             RuleFor(x => x.Surname).NotEmpty().Length(1, 320);
             RuleFor(x => x.PhoneNumber).Length(1, 50).Matches(RegExValidators.PhoneNumber()).WithMessage("'{PropertyName}' is invalid.").When(x => !string.IsNullOrEmpty(x.PhoneNumber));
             RuleFor(x => x.CountryId).Must(CountryExists).WithMessage($"Specified country is invalid / does not exist.");
-            RuleFor(x => x.CountryOfResidenceId).Must(CountryExists).WithMessage($"Specified country of residence is invalid / does not exist.");
+            RuleFor(x => x.EducationId).Must(EducationExists).WithMessage($"Specified education is invalid / does not exist.");
             RuleFor(x => x.GenderId).Must(GenderExists).WithMessage($"Specified gender is invalid / does not exist.");
             RuleFor(x => x.DateOfBirth).Must(NotInFuture).WithMessage("'{PropertyName}' is in the future.");
         }
@@ -42,6 +45,12 @@ namespace Yoma.Core.Domain.Entity.Validators
         {
             if (!countryId.HasValue) return true;
             return _countryService.GetByIdOrNull(countryId.Value) != null;
+        }
+
+        private bool EducationExists(Guid? educationId)
+        {
+            if (!educationId.HasValue) return true;
+            return _educationService.GetByIdOrNull(educationId.Value) != null;
         }
 
         private bool GenderExists(Guid? genderId)

@@ -16,6 +16,7 @@ namespace Yoma.Core.Api.Controllers
         #region Class Variables
         private readonly ILogger<UserController> _logger;
         private readonly ICountryService _countryService;
+        private readonly IEducationService _educationService;
         private readonly IGenderService _genderService;
         private readonly ILanguageService _languageService;
         private readonly ISkillService _skillService;
@@ -26,6 +27,7 @@ namespace Yoma.Core.Api.Controllers
         public LookupController(
             ILogger<UserController> logger,
             ICountryService countryService,
+            IEducationService educationService,
             IGenderService genderService,
             ILanguageService languageService,
             ISkillService skillService,
@@ -34,6 +36,7 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger = logger;
             _countryService = countryService;
+            _educationService = educationService;
             _genderService = genderService;
             _languageService = languageService;
             _skillService = skillService;
@@ -53,6 +56,20 @@ namespace Yoma.Core.Api.Controllers
             var result = _countryService.List();
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListCountries));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Return a list of edcuations")]
+        [HttpGet("education")]
+        [ProducesResponseType(typeof(List<Country>), (int)HttpStatusCode.OK)]
+        public IActionResult ListEducations()
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListEducations));
+
+            var result = _educationService.List();
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListEducations));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

@@ -48,6 +48,8 @@ namespace Yoma.Core.Infrastructure.Database.Context
         #region Lookups
         public DbSet<Country> Country { get; set; }
 
+        public DbSet<Education> Education { get; set; }
+
         public DbSet<Gender> Gender { get; set; }
 
         public DbSet<Language> Language { get; set; }

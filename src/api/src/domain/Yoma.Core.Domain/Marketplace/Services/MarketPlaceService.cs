@@ -65,14 +65,14 @@ namespace Yoma.Core.Domain.Marketplace.Services
         #region Public Members
         public List<Country> ListSearchCriteriaCountries()
         {
-            Country? countryOfResidence = null;
+            Country? country = null;
             if (HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
             {
                 var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-                countryOfResidence = user.CountryOfResidenceId.HasValue ? _countryService.GetByIdOrNull(user.CountryOfResidenceId.Value) : null;
+                country = user.CountryId.HasValue ? _countryService.GetByIdOrNull(user.CountryId.Value) : null;
             }
 
-            var countryCodesAlpha2Available = _marketplaceProviderClient.ListSupportedCountryCodesAlpha2(countryOfResidence?.CodeAlpha2);
+            var countryCodesAlpha2Available = _marketplaceProviderClient.ListSupportedCountryCodesAlpha2(country?.CodeAlpha2);
 
             var results = _countryService.List().Where(o => countryCodesAlpha2Available.Contains(o.CodeAlpha2, StringComparer.InvariantCultureIgnoreCase)).OrderBy(o => o.Name).ToList();
 

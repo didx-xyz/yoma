@@ -37,9 +37,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
         public Guid? CountryId { get; set; }
         public Country? Country { get; set; }
 
-        [ForeignKey("CountryOfResidenceId")]
-        public Guid? CountryOfResidenceId { get; set; }
-        public Country? CountryOfResidence { get; set; }
+        [ForeignKey("EducationId")]
+        public Guid? EducationId { get; set; }
+        public Education? Education { get; set; }
 
         [ForeignKey(nameof(PhotoId))]
         public Guid? PhotoId { get; set; }

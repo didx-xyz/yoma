@@ -24,6 +24,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IUserService _userService;
         private readonly IGenderService _genderService;
         private readonly ICountryService _countryService;
+        private readonly IEducationService _educationService;
         private readonly IOrganizationService _organizationService;
         private readonly IMyOpportunityService _myOpportunityService;
         private readonly IWalletService _rewardWalletService;
@@ -38,6 +39,7 @@ namespace Yoma.Core.Domain.Entity.Services
             IUserService userService,
             IGenderService genderService,
             ICountryService countryService,
+            IEducationService educationService,
             IOrganizationService organizationService,
             IMyOpportunityService myOpportunityService,
             IWalletService rewardWalletService,
@@ -50,6 +52,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _userService = userService;
             _genderService = genderService;
             _countryService = countryService;
+            _educationService = educationService;
             _organizationService = organizationService;
             _myOpportunityService = myOpportunityService;
             _rewardWalletService = rewardWalletService;
@@ -109,7 +112,7 @@ namespace Yoma.Core.Domain.Entity.Services
             user.SetDisplayName();
             user.PhoneNumber = request.PhoneNumber;
             user.CountryId = request.CountryId;
-            user.CountryOfResidenceId = request.CountryOfResidenceId;
+            user.EducationId = request.EducationId;
             user.GenderId = request.GenderId;
             user.DateOfBirth = request.DateOfBirth;
 
@@ -128,8 +131,8 @@ namespace Yoma.Core.Domain.Entity.Services
                     EmailVerified = user.EmailConfirmed,
                     PhoneNumber = user.PhoneNumber,
                     Gender = user.GenderId.HasValue ? _genderService.GetById(user.GenderId.Value).Name : null,
-                    CountryOfOrigin = user.CountryId.HasValue ? _countryService.GetById(user.CountryId.Value).Name : null,
-                    CountryOfResidence = user.CountryOfResidenceId.HasValue ? _countryService.GetById(user.CountryOfResidenceId.Value).Name : null,
+                    Country = user.CountryId.HasValue ? _countryService.GetById(user.CountryId.Value).Name : null,
+                    Education = user.EducationId.HasValue ? _educationService.GetById(user.EducationId.Value).Name : null,
                     DateOfBirth = user.DateOfBirth.HasValue ? user.DateOfBirth.Value.ToString("yyyy/MM/dd") : null
                 };
 

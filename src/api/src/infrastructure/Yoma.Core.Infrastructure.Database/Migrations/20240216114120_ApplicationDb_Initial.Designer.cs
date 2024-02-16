@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240213125857_ApplicationDb_Initial")]
+    [Migration("20240216114120_ApplicationDb_Initial")]
     partial class ApplicationDb_Initial
     {
         /// <inheritdoc />
@@ -300,9 +300,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<Guid?>("CountryId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("CountryOfResidenceId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTimeOffset>("DateCreated")
                         .HasColumnType("timestamp with time zone");
 
@@ -321,6 +318,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
+
+                    b.Property<Guid?>("EducationId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -356,7 +356,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("CountryId");
 
-                    b.HasIndex("CountryOfResidenceId");
+                    b.HasIndex("EducationId");
 
                     b.HasIndex("Email")
                         .IsUnique();
@@ -460,6 +460,27 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsUnique();
 
                     b.ToTable("Country", "Lookup");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Lookups.Entities.Education", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Education", "Lookup");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Lookups.Entities.Gender", b =>
@@ -1647,9 +1668,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .WithMany()
                         .HasForeignKey("CountryId");
 
-                    b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "CountryOfResidence")
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Education", "Education")
                         .WithMany()
-                        .HasForeignKey("CountryOfResidenceId");
+                        .HasForeignKey("EducationId");
 
                     b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Gender", "Gender")
                         .WithMany()
@@ -1661,7 +1682,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Navigation("Country");
 
-                    b.Navigation("CountryOfResidence");
+                    b.Navigation("Education");
 
                     b.Navigation("Gender");
 

@@ -16,9 +16,9 @@ namespace Yoma.Core.Domain.IdentityProvider.Models
 
         public string? Gender { get; set; }
 
-        public string? CountryOfOrigin { get; set; }
+        public string? Country { get; set; }
 
-        public string? CountryOfResidence { get; set; }
+        public string? Education { get; set; }
 
         public string? DateOfBirth { get; set; }
 

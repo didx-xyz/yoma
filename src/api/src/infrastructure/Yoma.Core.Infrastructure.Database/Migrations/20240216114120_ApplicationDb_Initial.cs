@@ -88,6 +88,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Education",
+                schema: "Lookup",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "varchar(20)", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Education", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Gender",
                 schema: "Lookup",
                 columns: table => new
@@ -375,7 +389,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     DisplayName = table.Column<string>(type: "varchar(255)", nullable: false),
                     PhoneNumber = table.Column<string>(type: "varchar(50)", nullable: true),
                     CountryId = table.Column<Guid>(type: "uuid", nullable: true),
-                    CountryOfResidenceId = table.Column<Guid>(type: "uuid", nullable: true),
+                    EducationId = table.Column<Guid>(type: "uuid", nullable: true),
                     PhotoId = table.Column<Guid>(type: "uuid", nullable: true),
                     GenderId = table.Column<Guid>(type: "uuid", nullable: true),
                     DateOfBirth = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -402,10 +416,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         principalTable: "Country",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_User_Country_CountryOfResidenceId",
-                        column: x => x.CountryOfResidenceId,
+                        name: "FK_User_Education_EducationId",
+                        column: x => x.EducationId,
                         principalSchema: "Lookup",
-                        principalTable: "Country",
+                        principalTable: "Education",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_User_Gender_GenderId",
@@ -1307,6 +1321,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Education_Name",
+                schema: "Lookup",
+                table: "Education",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Gender_Name",
                 schema: "Lookup",
                 table: "Gender",
@@ -1778,10 +1799,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                 column: "CountryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_User_CountryOfResidenceId",
+                name: "IX_User_EducationId",
                 schema: "Entity",
                 table: "User",
-                column: "CountryOfResidenceId");
+                column: "EducationId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_User_Email",
@@ -2030,6 +2051,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             migrationBuilder.DropTable(
                 name: "Country",
+                schema: "Lookup");
+
+            migrationBuilder.DropTable(
+                name: "Education",
                 schema: "Lookup");
 
             migrationBuilder.DropTable(

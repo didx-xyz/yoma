@@ -24,6 +24,7 @@ namespace Yoma.Core.Api.Controllers
         private readonly IUserService _userService;
         private readonly IGenderService _genderService;
         private readonly ICountryService _countryService;
+        private readonly IEducationService _educationService;
         private readonly IWalletService _walletService;
         #endregion
 
@@ -33,6 +34,7 @@ namespace Yoma.Core.Api.Controllers
           IUserService userService,
           IGenderService genderService,
           ICountryService countryService,
+          IEducationService educationService,
           IWalletService walletService)
         {
             _logger = logger;
@@ -40,6 +42,7 @@ namespace Yoma.Core.Api.Controllers
             _userService = userService;
             _genderService = genderService;
             _countryService = countryService;
+            _educationService = educationService;
             _walletService = walletService;
         }
         #endregion
@@ -143,6 +146,29 @@ namespace Yoma.Core.Api.Controllers
                     userRequest.EmailConfirmed = kcUser.EmailVerified;
                     userRequest.PhoneNumber = kcUser.PhoneNumber;
 
+                    if (!string.IsNullOrEmpty(kcUser.Country))
+                    {
+                        var country = _countryService.GetByNameOrNull(kcUser.Country);
+
+                        _logger.LogInformation($"KCUSER: {kcUser.Country}");
+                        _logger.LogInformation($"YOMA: {(country == null ? "NOT FOUND" : country.Name)}");
+
+                        if (country == null)
+                            _logger.LogError("Failed to parse Keycloak '{customAttribute}' with value '{country}'", CustomAttributes.Country, kcUser.Country);
+                        else
+                            userRequest.CountryId = country.Id;
+                    }
+
+                    if (!string.IsNullOrEmpty(kcUser.Education))
+                    {
+                        var country = _educationService.GetByNameOrNull(kcUser.Education);
+
+                        if (country == null)
+                            _logger.LogError("Failed to parse Keycloak '{customAttributes}' with value '{education}'", CustomAttributes.Education, kcUser.Education);
+                        else
+                            userRequest.EducationId = country.Id;
+                    }
+
                     if (!string.IsNullOrEmpty(kcUser.Gender))
                     {
                         var gender = _genderService.GetByNameOrNull(kcUser.Gender);
@@ -153,25 +179,6 @@ namespace Yoma.Core.Api.Controllers
                             userRequest.GenderId = gender.Id;
                     }
 
-                    if (!string.IsNullOrEmpty(kcUser.CountryOfOrigin))
-                    {
-                        var country = _countryService.GetByNameOrNull(kcUser.CountryOfOrigin);
-
-                        if (country == null)
-                            _logger.LogError("Failed to parse Keycloak '{customAttribute}' with value '{countryOfOrigin}'", CustomAttributes.CountryOfOrigin, kcUser.CountryOfOrigin);
-                        else
-                            userRequest.CountryId = country.Id;
-                    }
-
-                    if (!string.IsNullOrEmpty(kcUser.CountryOfResidence))
-                    {
-                        var country = _countryService.GetByNameOrNull(kcUser.CountryOfResidence);
-
-                        if (country == null)
-                            _logger.LogError("Failed to parse Keycloak '{customAttributes}' with value '{countryOfResidence}'", CustomAttributes.CountryOfResidence, kcUser.CountryOfResidence);
-                        else
-                            userRequest.CountryOfResidenceId = country.Id;
-                    }
 
                     if (!string.IsNullOrEmpty(kcUser.DateOfBirth))
                     {
