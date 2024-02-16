@@ -218,18 +218,27 @@ const Opportunities: NextPageWithLayout<{
         <div className="rounded-lg bg-white p-4">
           {/* NO ROWS */}
           {opportunities && opportunities.items?.length === 0 && !query && (
-            <NoRowsMessage
-              title={"You will find your active opportunities here"}
-              description={
-                "This is where you will find all the awesome opportunities you have shared"
-              }
-            />
+            <div className="flex flex-col place-items-center py-52">
+              <NoRowsMessage
+                title={"You will find your active opportunities here"}
+                description={
+                  "This is where you will find all the awesome opportunities you have shared"
+                }
+              />
+              <Link href={`/organisations/${id}/opportunities/create`}>
+                <button className="btn btn-primary btn-sm mt-10 rounded-3xl px-16">
+                  Add opportunity
+                </button>
+              </Link>
+            </div>
           )}
           {opportunities && opportunities.items?.length === 0 && query && (
-            <NoRowsMessage
-              title={"No opportunities found"}
-              description={"Please try refining your search query."}
-            />
+            <div className="flex flex-col place-items-center py-52">
+              <NoRowsMessage
+                title={"No opportunities found"}
+                description={"Please try refining your search query."}
+              />
+            </div>
           )}
           {/* GRID */}
           {opportunities && opportunities.items?.length > 0 && (

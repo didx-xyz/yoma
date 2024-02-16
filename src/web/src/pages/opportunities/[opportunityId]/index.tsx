@@ -332,7 +332,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 portalClassName={"fixed z-40"}
                 overlayClassName="fixed inset-0 bg-overlay"
               >
-                <div className="flex flex-col gap-2">
+                <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
                   <div className="flex flex-row bg-green p-4 shadow-lg">
                     <h1 className="flex-grow"></h1>
                     <button
@@ -404,11 +404,11 @@ const OpportunityDetails: NextPageWithLayout<{
                 onRequestClose={() => {
                   setGotoOpportunityDialogVisible(false);
                 }}
-                className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:rounded-3xl`}
+                className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[480px] md:w-[600px] md:rounded-3xl`}
                 portalClassName={"fixed z-40"}
                 overlayClassName="fixed inset-0 bg-overlay"
               >
-                <div className="flex flex-col gap-2">
+                <div className="flex h-full flex-col gap-2 overflow-y-auto pb-10">
                   <div className="flex flex-row bg-green p-4 shadow-lg">
                     <h1 className="flex-grow"></h1>
                     <button
@@ -421,7 +421,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       <IoMdClose className="h-6 w-6"></IoMdClose>
                     </button>
                   </div>
-                  <div className="flex flex-col items-center justify-center gap-4">
+                  <div className="flex flex-col items-center justify-center gap-4 p-2 md:p-0">
                     <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
                       <Image
                         src={iconBell}
@@ -434,21 +434,21 @@ const OpportunityDetails: NextPageWithLayout<{
                       />
                     </div>
                     <h3>You are now leaving Yoma</h3>
-                    <div className="w-[450px] rounded-lg bg-gray p-4 text-center">
+                    <div className="rounded-lg bg-gray p-4 text-center md:w-[450px]">
                       Remember to{" "}
                       <strong>upload your completion certificate</strong> on
                       this page upon finishing to{" "}
                       <strong>earn your ZLTO</strong>.
                     </div>
                     <div>Don’t show me this message again</div>
-                    <div className="w-[450px] text-center">
+                    <div className="text-center md:w-[450px]">
                       Be mindful of external sites&apos; privacy policy and keep
                       your data private.
                     </div>
-                    <div className="mt-4 flex flex-grow gap-4">
+                    <div className="mt-4 flex flex-grow justify-center gap-4">
                       <button
                         type="button"
-                        className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[300px]"
+                        className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[250px]"
                         onClick={onSaveOpportunity}
                       >
                         <Image
@@ -493,7 +493,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 onRequestClose={() => {
                   setCompleteOpportunityDialogVisible(false);
                 }}
-                className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[600px] md:overflow-y-clip md:rounded-3xl`}
+                className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[650px] md:w-[600px] md:rounded-3xl`}
                 portalClassName={"fixed z-40"}
                 overlayClassName="fixed inset-0 bg-overlay"
               >

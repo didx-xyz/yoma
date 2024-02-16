@@ -662,7 +662,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
-        <div className="flex h-full flex-col space-y-2">
+        <div className="flex h-full flex-col space-y-2 overflow-y-auto">
           <div className="flex flex-row items-center bg-white px-4 pt-2">
             <h4 className="flex-grow pl-2 font-semibold">Participant</h4>
             <button
@@ -726,7 +726,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
-        <div className="flex h-full flex-col space-y-2">
+        <div className="flex h-full flex-col space-y-2 overflow-y-auto">
           <div className="flex flex-row items-center bg-white px-4 pt-2">
             <h4 className="flex-grow pl-2 font-semibold">Participant</h4>
             <button
@@ -854,7 +854,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                     </th>
                     <th className="pl-0">Student</th>
                     <th>Opportunity</th>
-                    <th>Date connected</th>
+                    <th className="w-[195px]">Date connected</th>
                     <th className="pr-0">Verified</th>
                   </tr>
                 </thead>
@@ -881,7 +881,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                           {item.opportunityTitle}
                         </Link>
                       </td>
-                      <td>
+                      <td className="w-[185px]">
                         {item.dateStart && (
                           <Moment format={DATETIME_FORMAT_HUMAN} utc={true}>
                             {item.dateStart}

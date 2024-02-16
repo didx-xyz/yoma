@@ -42,11 +42,11 @@ const MarketplaceLayout: TabProps = ({ children }) => {
           onRequestClose={() => {
             setWhatIsZltoDialogVisible(false);
           }}
-          className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:rounded-3xl`}
+          className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:max-w-[600px] md:rounded-3xl`}
           portalClassName={"fixed z-40"}
           overlayClassName="fixed inset-0 bg-overlay"
         >
-          <div className="flex flex-col gap-2">
+          <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
             <div className="flex flex-row p-4">
               <h1 className="flex-grow"></h1>
               <button
@@ -59,7 +59,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                 <IoMdClose className="h-6 w-6"></IoMdClose>
               </button>
             </div>
-            <div className="flex flex-col items-center justify-center gap-4">
+            <div className="flex flex-col items-center justify-center gap-4 p-4 md:p-0">
               <div className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
                 <Image
                   src={iconZlto}
@@ -72,17 +72,17 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                 />
               </div>
               <h3>What is Zlto?</h3>
-              <div className="w-[450px] rounded-lg bg-gray p-4 text-center">
+              <p className="rounded-lg bg-gray p-4 text-center md:w-[450px]">
                 Introducing Zlto, Yoma&apos;s fantastic reward system. Earn Zlto
                 by completing tasks and opportunities. Redeem your well-deserved
                 rewards in the marketplace and enjoy the amazing benefits that
                 await you!
-              </div>
+              </p>
 
-              <div className="mt-4 flex flex-grow gap-4">
+              <div className="mt-4 flex w-full flex-grow justify-center gap-4">
                 <button
                   type="button"
-                  className="btn rounded-full border-purple bg-white normal-case text-purple hover:bg-purple hover:text-white md:w-[300px]"
+                  className="btn w-3/4 max-w-[300px] rounded-full border-purple bg-white normal-case text-purple hover:bg-purple hover:text-white"
                   onClick={() => {
                     setWhatIsZltoDialogVisible(false);
                   }}

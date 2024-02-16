@@ -50,9 +50,12 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
       postalCode: zod.string().min(1, "Postal code is required."),
       websiteURL: zod
         .string()
-        .regex(REGEX_URL_VALIDATION, "Please enter a valid URL.")
+        .regex(
+          REGEX_URL_VALIDATION,
+          "Please enter a valid URL - www.example.com | example.com",
+        )
         .optional()
-        .or(zod.literal("")),
+        .transform((value) => (value ? `https://${value}` : "")),
       logo: zod.any().optional(),
       logoExisting: zod.any().optional(),
       tagline: zod
@@ -103,6 +106,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
       reset({
         ...formData,
         logoExisting: organisation?.logoURL,
+        websiteURL: formData?.websiteURL?.replace(/^https?:\/\//, ""), // remove https:// or http://
       });
     }, 100);
   }, [reset]);
@@ -255,7 +259,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         <input
           type="text"
           className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-          placeholder="https://website.com"
+          placeholder="www.website.com"
           {...register("websiteURL")}
           data-autocomplete="url"
         />
