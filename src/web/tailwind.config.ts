@@ -19,6 +19,7 @@ export default {
         pink: "#FE4D57",
         orange: "#F9AB3E",
         green: "#387F6A",
+        "green-tint": "#4C8C79",
         "green-light": "#E6F5F3",
         "green-dark": "#4CA78C",
         // yellow: "#AE9C3E",
