@@ -81,8 +81,8 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
       )}
 
       {/* BADGES */}
-      <div className="bottom-5x flex flex-row gap-1 whitespace-nowrap pt-2 text-xs font-normal text-green-dark">
-        <div className="badge rounded-md bg-green-light text-xs font-semibold text-green">
+      <div className="bottom-5x flex flex-row gap-1 whitespace-nowrap pt-2 font-semibold text-green-dark">
+        <div className="badge h-6 rounded-md bg-green-light text-xs text-green">
           <Image
             src={iconClock}
             alt="Icon Clock"
@@ -93,13 +93,13 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
             style={{ width: "17px", height: "17px" }}
             className="mr-1"
           />
-          <span className="ml-1 text-xs">{`${data.commitmentIntervalCount} ${
+          <span className="ml-1">{`${data.commitmentIntervalCount} ${
             data.commitmentInterval
           }${data.commitmentIntervalCount > 1 ? "s" : ""}`}</span>
         </div>
 
         {(data?.participantCountTotal ?? 0) > 0 && (
-          <div className="badge rounded-md bg-green-light text-xs font-semibold text-green">
+          <div className="badge h-6 rounded-md bg-green-light text-xs text-green">
             <Image
               src={iconUser}
               alt="Icon User"
@@ -115,7 +115,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
         )}
 
         {data.zltoReward && (
-          <div className="badge rounded-md bg-[#FEF4D9] font-semibold text-[#F6B700]">
+          <div className="badge h-6 rounded-md bg-[#FEF4D9] text-xs text-[#F6B700]">
             <Image
               src={iconZlto}
               alt="Icon Zlto"
@@ -125,37 +125,35 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
               priority={true}
               style={{ width: "16px", height: "16px" }}
             />
-            <span className="ml-1 text-xs font-semibold">
-              {Math.ceil(data?.zltoReward)}
-            </span>
+            <span className="ml-1">{Math.ceil(data?.zltoReward)}</span>
           </div>
         )}
 
         {data?.status == "Active" && (
           <>
             {new Date(data.dateStart) > new Date() && (
-              <div className="badge rounded-md bg-white text-xs text-yellow">
+              <div className="badge h-6 rounded-md bg-white text-xs text-yellow">
                 Not started
               </div>
             )}
             {new Date(data.dateStart) < new Date() && (
-              <div className="badge rounded-md bg-purple-light text-purple">
+              <div className="badge h-6 rounded-md bg-purple-light text-xs text-purple">
                 <Image
                   src={iconAction}
                   alt="Icon Action"
-                  width={18}
-                  height={18}
+                  width={14}
+                  height={14}
                   sizes="100vw"
                   priority={true}
-                  style={{ width: "18px", height: "18px" }}
+                  style={{ width: "14px", height: "14px" }}
                 />
-                <span className="ml-1 text-xs">Active</span>
+                <span className="ml-1">Started</span>
               </div>
             )}
           </>
         )}
         {data.status == "Expired" && (
-          <div className="badge rounded-md bg-green-light text-xs font-semibold text-yellow">
+          <div className="badge h-6 rounded-md bg-green-light text-xs font-semibold text-yellow">
             Expired
           </div>
         )}

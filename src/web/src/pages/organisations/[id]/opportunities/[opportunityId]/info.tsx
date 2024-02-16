@@ -29,6 +29,8 @@ import iconTopics from "public/images/icon-topics.svg";
 import iconSkills from "public/images/icon-skills.svg";
 import iconUser from "public/images/icon-user.svg";
 import iconSuccess from "public/images/icon-success.webp";
+import iconAction from "public/images/icon-action.svg";
+import iconZlto from "public/images/icon-zlto.svg";
 import { toast } from "react-toastify";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { type AxiosError } from "axios";
@@ -303,8 +305,8 @@ const OpportunityDetails: NextPageWithLayout<{
                 <h6 className="text-sm text-gray-dark">
                   By {opportunity.organizationName}
                 </h6>
-                <div className="flex flex-row gap-1 text-xs font-bold text-green-dark">
-                  <div className="badge h-6 rounded-md bg-green-light text-green">
+                <div className="flex flex-row gap-1 font-bold text-green-dark">
+                  <div className="badge h-6 rounded-md bg-green-light text-xs text-green">
                     <Image
                       src={iconClock}
                       alt="Icon Clock"
@@ -322,7 +324,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     }`}</span>
                   </div>
 
-                  <div className="badge h-6 rounded-md bg-green-light text-green">
+                  <div className="badge h-6 rounded-md bg-green-light text-xs text-green">
                     <Image
                       src={iconUser}
                       alt="Icon User"
@@ -339,24 +341,78 @@ const OpportunityDetails: NextPageWithLayout<{
                     </span>
                   </div>
 
-                  {/* STATUS BADGES */}
-                  {opportunity?.status == "Active" && (
-                    <div className="badge h-6 rounded-md bg-green-light text-blue">
-                      Active
+                  {opportunity?.type && (
+                    <div className="badge h-6 rounded-md bg-[#E7E8F5] text-[#5F65B9]">
+                      <Image
+                        src={iconTopics}
+                        alt="Icon Type"
+                        width={18}
+                        height={18}
+                        sizes="100vw"
+                        priority={true}
+                        style={{ width: "18px", height: "18px" }}
+                      />
+                      <span className="ml-1 text-xs">{opportunity.type}</span>
                     </div>
                   )}
+
+                  {(opportunity.zltoReward ?? 0) > 0 && (
+                    <div className="badge h-6 whitespace-nowrap rounded-md bg-yellow-light text-yellow">
+                      <Image
+                        src={iconZlto}
+                        alt="Icon Zlto"
+                        width={18}
+                        height={18}
+                        sizes="100vw"
+                        priority={true}
+                        style={{ width: "18px", height: "18px" }}
+                      />
+                      <span className="ml-1 text-xs">
+                        {opportunity.zltoReward}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* STATUS BADGES */}
+                  {opportunity?.status == "Active" && (
+                    <>
+                      <div className="badge h-6 rounded-md bg-green-light text-xs text-blue">
+                        Active
+                      </div>
+
+                      {new Date(opportunity.dateStart) > new Date() && (
+                        <div className="badge h-6 rounded-md bg-white text-xs text-yellow">
+                          Not started
+                        </div>
+                      )}
+                      {new Date(opportunity.dateStart) < new Date() && (
+                        <div className="badge h-6 rounded-md bg-purple-light text-xs text-purple">
+                          <Image
+                            src={iconAction}
+                            alt="Icon Action"
+                            width={16}
+                            height={16}
+                            sizes="100vw"
+                            priority={true}
+                            style={{ width: "16px", height: "16px" }}
+                          />
+                          <span className="ml-1 text-xs">Started</span>
+                        </div>
+                      )}
+                    </>
+                  )}
                   {opportunity?.status == "Expired" && (
-                    <div className="badge h-6 rounded-md bg-green-light text-yellow">
+                    <div className="badge h-6 rounded-md bg-green-light text-xs text-yellow">
                       Expired
                     </div>
                   )}
                   {opportunity?.status == "Inactive" && (
-                    <div className="badge h-6 rounded-md bg-green-light text-red-400">
+                    <div className="badge h-6 rounded-md bg-green-light text-xs text-red-400">
                       Inactive
                     </div>
                   )}
                   {opportunity?.status == "Deleted" && (
-                    <div className="badge h-6 rounded-md bg-green-light text-red-400">
+                    <div className="badge h-6 rounded-md bg-green-light text-xs text-red-400">
                       Deleted
                     </div>
                   )}

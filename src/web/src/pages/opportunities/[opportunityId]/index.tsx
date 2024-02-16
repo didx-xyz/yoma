@@ -704,33 +704,29 @@ const OpportunityDetails: NextPageWithLayout<{
                           {/* STATUS BADGES */}
                           {opportunity?.status == "Active" && (
                             <>
-                              <div className="badge h-6 rounded-md bg-purple-light text-purple">
-                                <Image
-                                  src={iconAction}
-                                  alt="Icon Action"
-                                  width={18}
-                                  height={18}
-                                  sizes="100vw"
-                                  priority={true}
-                                  style={{ width: "18px", height: "18px" }}
-                                />
-                                <span className="ml-1 text-xs">Active</span>
-                              </div>
-
                               {new Date(opportunity.dateStart) > new Date() && (
                                 <div className="badge h-6 rounded-md bg-white text-xs text-yellow">
                                   Not started
                                 </div>
                               )}
                               {new Date(opportunity.dateStart) < new Date() && (
-                                <div className="badge h-6 rounded-md bg-white text-xs text-yellow">
-                                  Started
+                                <div className="badge h-6 rounded-md bg-purple-light text-xs text-purple">
+                                  <Image
+                                    src={iconAction}
+                                    alt="Icon Action"
+                                    width={16}
+                                    height={16}
+                                    sizes="100vw"
+                                    priority={true}
+                                    style={{ width: "16px", height: "16px" }}
+                                  />
+                                  <span className="ml-1 text-xs">Started</span>
                                 </div>
                               )}
                             </>
                           )}
                           {opportunity?.status == "Expired" && (
-                            <div className="badge h-6 rounded-md bg-green-light text-xs text-yellow">
+                            <div className="badge h-6 rounded-md bg-green-light text-xs text-xs text-yellow">
                               Expired
                             </div>
                           )}
