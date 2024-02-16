@@ -220,7 +220,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       countries: null,
       languages: null,
       types: null,
-      valueContains: query?.toString() ?? null,
+      valueContains: null,
       commitmentIntervals: null,
       mostViewed: null,
       organizations: null,
@@ -263,7 +263,8 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       const params = new URLSearchParams();
       if (
         opportunitySearchFilter.valueContains !== undefined &&
-        opportunitySearchFilter.valueContains !== null
+        opportunitySearchFilter.valueContains !== null &&
+        opportunitySearchFilter.valueContains.length > 0
       )
         params.append("query", opportunitySearchFilter.valueContains);
       if (
@@ -367,7 +368,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         await searchOpportunities({
           pageNumber: page ? parseInt(page.toString()) : 1,
           pageSize: PAGE_SIZE,
-          valueContains: query?.toString() ?? null,
+          valueContains: query ? decodeURIComponent(query.toString()) : null,
           mostViewed: mostViewed ? Boolean(mostViewed) : null,
           // publishedStates:
           //   publishedStates != undefined
@@ -460,7 +461,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       setOpportunitySearchFilter({
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
-        valueContains: query?.toString() ?? null,
+        valueContains: query ? decodeURIComponent(query.toString()) : null,
         mostViewed: mostViewed ? Boolean(mostViewed) : null,
         publishedStates:
           publishedStates != undefined
@@ -554,12 +555,12 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         // uri encode the search value
         const searchValueEncoded = encodeURIComponent(query);
         query = searchValueEncoded;
+      }
 
-        opportunitySearchFilter.valueContains = query;
-        redirectWithSearchFilterParams(opportunitySearchFilter);
-      } else void router.push("/opportunities", undefined, { scroll: false });
+      opportunitySearchFilter.valueContains = query;
+      redirectWithSearchFilterParams(opportunitySearchFilter);
     },
-    [router, opportunitySearchFilter, redirectWithSearchFilterParams],
+    [opportunitySearchFilter, redirectWithSearchFilterParams],
   );
 
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
@@ -611,11 +612,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
     if (searchResults && !isLoading) {
       setTimeout(() => {
         const element = document.getElementById("results");
-        //element?.scrollTo({ behavior: "smooth" });
-        // element?.scrollIntoView({
-        //   behavior: "smooth",
-        //   block: "start",
-        // });
+
         if (element) {
           window.scrollTo({
             top: element.offsetTop - 55,
@@ -682,7 +679,9 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
               <SearchInputLarge
                 onSearch={onSearchInputSubmit}
                 placeholder="What are you looking for today?"
-                defaultValue={query as string}
+                defaultValue={
+                  query ? decodeURIComponent(query.toString()) : null
+                }
               />
               <button
                 type="button"
