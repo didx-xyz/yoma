@@ -324,7 +324,8 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
 
       if (
         opportunitySearchFilter?.publishedStates !== undefined &&
-        opportunitySearchFilter?.publishedStates !== null
+        opportunitySearchFilter?.publishedStates !== null &&
+        opportunitySearchFilter?.publishedStates.length > 0
       )
         params.append(
           "publishedStates",
@@ -607,13 +608,23 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
 
   // scroll to results when search is executed
   useEffect(() => {
-    if (isSearchExecuted) {
+    if (searchResults && !isLoading) {
       setTimeout(() => {
         const element = document.getElementById("results");
-        element?.scrollIntoView({ behavior: "smooth" });
+        //element?.scrollTo({ behavior: "smooth" });
+        // element?.scrollIntoView({
+        //   behavior: "smooth",
+        //   block: "start",
+        // });
+        if (element) {
+          window.scrollTo({
+            top: element.offsetTop - 55,
+            behavior: "smooth",
+          });
+        }
       }, 500);
     }
-  }, [isSearchExecuted]);
+  }, [searchResults, isLoading]);
 
   return (
     <>
@@ -770,6 +781,13 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         </div> */}
           </div>
         )}
+
+        <div
+          id="scrollToResults"
+          //className="mt-10"
+          //className="flexx hidden flex-col items-center rounded-lg p-4"
+          //style={{ display: "none" }}
+        ></div>
 
         {/* SEARCH EXECUTED, SHOW RESULTS */}
         {isSearchExecuted && (

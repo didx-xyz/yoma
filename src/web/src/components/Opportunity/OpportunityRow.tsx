@@ -16,7 +16,7 @@ export const OpportunityRow: React.FC<InputProps> = ({
   viewAllUrl,
 }) => {
   return (
-    <div key={`OpportunityCarousel_${id}`}>
+    <div key={`OpportunityRow_${id}`}>
       {(data?.items?.length ?? 0) > 0 && (
         <div className="flex flex-col gap-6">
           <div className="flex flex-row">
