@@ -150,9 +150,6 @@ namespace Yoma.Core.Api.Controllers
                     {
                         var country = _countryService.GetByNameOrNull(kcUser.Country);
 
-                        _logger.LogInformation($"KCUSER: {kcUser.Country}");
-                        _logger.LogInformation($"YOMA: {(country == null ? "NOT FOUND" : country.Name)}");
-
                         if (country == null)
                             _logger.LogError("Failed to parse Keycloak '{customAttribute}' with value '{country}'", CustomAttributes.Country, kcUser.Country);
                         else
