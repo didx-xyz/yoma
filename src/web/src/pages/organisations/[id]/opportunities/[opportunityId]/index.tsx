@@ -457,7 +457,10 @@ const OpportunityDetails: NextPageWithLayout<{
       .string()
       .min(1, "Opportunity URL is required.")
       .max(2048, "Opportunity URL cannot exceed 2048 characters.")
-      .regex(REGEX_URL_VALIDATION, "Please enter a valid URL - example.com | www.example.com")
+      .regex(
+        REGEX_URL_VALIDATION,
+        "Please enter a valid URL - example.com | www.example.com",
+      )
       .transform((value) => `https://${value}`), // Transform function to prepend "https://"
   });
 
