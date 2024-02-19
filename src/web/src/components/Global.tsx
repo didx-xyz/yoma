@@ -1,10 +1,11 @@
 import { useAtomValue, useSetAtom } from "jotai";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import { getOrganisationById } from "~/api/services/organisations";
 import { getUserProfile, patchYoIDOnboarding } from "~/api/services/user";
 import {
+  GA_ACTION_USER_LOGIN_BEFORE,
   GA_ACTION_USER_YOIDONBOARDINGCONFIRMED,
   GA_CATEGORY_USER,
   ROLE_ADMIN,
@@ -20,12 +21,13 @@ import {
   userProfileAtom,
 } from "~/lib/store";
 import ReactModal from "react-modal";
-import { IoMdThumbsUp } from "react-icons/io";
+import { IoMdClose, IoMdFingerPrint, IoMdThumbsUp } from "react-icons/io";
 import iconBell from "public/images/icon-bell.webp";
 import Image from "next/image";
 import { toast } from "react-toastify";
 import { ApiErrors } from "./Status/ApiErrors";
 import { trackGAEvent } from "~/lib/google-analytics";
+import { fetchClientEnv } from "~/lib/utils";
 
 // * GLOBAL APP CONCERNS
 // * needs to be done here as jotai atoms are not available in _app.tsx
@@ -48,6 +50,25 @@ export const Global: React.FC = () => {
   const setSmallDisplay = useSetAtom(smallDisplayAtom);
 
   const [onboardingDialogVisible, setOnboardingDialogVisible] = useState(false);
+  const [loginDialogVisible, setLoginDialogVisible] = useState(false);
+  const [isButtonLoading, setIsButtonLoading] = useState(false);
+  const [loginMessage, setLoginMessage] = useState("");
+
+  // SESSION
+  useEffect(() => {
+    if (session?.error) {
+      // show dialog to login again
+      if (session?.error === "RefreshAccessTokenError") {
+        setLoginMessage("Your session has expired. Please sign in again.");
+        setLoginDialogVisible(true);
+      } else {
+        setLoginMessage("There was an error signing in. Please sign in again.");
+        setLoginDialogVisible(true);
+      }
+
+      console.error("session error: ", session?.error);
+    }
+  }, [session?.error, setLoginDialogVisible, setLoginMessage]);
 
   // 🔔 USER PROFILE
   useEffect(() => {
@@ -55,9 +76,10 @@ export const Global: React.FC = () => {
     // skip if not logged in or userProfile atom already set (atomWithStorage)
     //if (!session || userProfile) return;
 
-    if (session && !userProfile) {
+    if (session && !session?.error && !userProfile) {
       getUserProfile()
         .then((res) => {
+          console.log("user profile");
           // update atom
           setUserProfile(res);
 
@@ -73,7 +95,15 @@ export const Global: React.FC = () => {
             setOnboardingDialogVisible(true);
           }
         })
-        .catch((e) => console.error(e));
+        .catch((e) => {
+          if (e.response?.status === 401) {
+            // show dialog to login again
+            setLoginMessage("Your session has expired. Please sign in again.");
+            setLoginDialogVisible(true);
+          }
+
+          console.error(e);
+        });
     }
   }, [session, userProfile, setUserProfile, setOnboardingDialogVisible]);
 
@@ -193,6 +223,24 @@ export const Global: React.FC = () => {
     }
   }, [setUserProfile, setOnboardingDialogVisible]);
 
+  const onLogin = useCallback(async () => {
+    setIsButtonLoading(true);
+
+    // 📊 GOOGLE ANALYTICS: track event
+    trackGAEvent(
+      GA_CATEGORY_USER,
+      GA_ACTION_USER_LOGIN_BEFORE,
+      "User Logging In. Redirected to External Authentication Provider",
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    signIn(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
+        "") as string,
+    );
+  }, [setIsButtonLoading]);
+
   return (
     <>
       {/* ONBOARDING DIALOG */}
@@ -234,6 +282,53 @@ export const Global: React.FC = () => {
                 <IoMdThumbsUp className="h-5 w-5 text-white" />
 
                 <p className="text-white">I understand</p>
+              </button>
+            </div>
+          </div>
+        </div>
+      </ReactModal>
+
+      {/* LOGIN AGAIN DIALOG */}
+      <ReactModal
+        isOpen={loginDialogVisible}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setLoginDialogVisible(false);
+        }}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white outline-1 animate-in fade-in hover:outline-1 md:m-auto md:max-h-[280px] md:w-[450px] md:rounded-3xl`}
+        portalClassName={"fixed z-40"}
+        overlayClassName="fixed inset-0 bg-overlay"
+      >
+        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
+          <div className="bg-theme flex h-16 flex-row p-4 shadow-lg"></div>
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-purple-dark bg-white shadow-lg">
+              <Image
+                src={iconBell}
+                alt="Icon Bell"
+                width={28}
+                height={28}
+                sizes="100vw"
+                priority={true}
+                style={{ width: "28px", height: "28px" }}
+              />
+            </div>
+
+            <h5>{loginMessage}</h5>
+
+            <div className="mt-8 flex flex-grow gap-4">
+              <button
+                type="button"
+                className="bg-theme btn rounded-full normal-case text-white hover:brightness-95 md:w-[150px]"
+                onClick={onLogin}
+              >
+                {isButtonLoading && (
+                  <span className="loading loading-spinner loading-md mr-2 text-warning"></span>
+                )}
+                {!isButtonLoading && (
+                  <IoMdFingerPrint className="h-5 w-5 text-white" />
+                )}
+                <p className="text-white">Login</p>
               </button>
             </div>
           </div>

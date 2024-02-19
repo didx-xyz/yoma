@@ -21,7 +21,7 @@ export const UnderConstruction = () => (
           Under development
         </h2>
         <p className="text-gray-500 text-center">Coming soon ;)</p>
-      </div>{" "}
+      </div>
     </div>
   </>
 );
