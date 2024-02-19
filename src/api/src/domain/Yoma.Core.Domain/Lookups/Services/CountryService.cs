@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
@@ -74,13 +75,13 @@ namespace Yoma.Core.Domain.Lookups.Services
         public List<Country> List()
         {
             if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-                return _countryRepository.Query().OrderBy(o => o.Name).ToList();
+                return _countryRepository.Query().OrderBy(o => o.CodeAlpha2 != Core.Country.Worldwide.ToDescription()).ThenBy(o => o.Name).ToList(); //esnure Worldwide appears first
 
             var result = _memoryCache.GetOrCreate(nameof(Country), entry =>
             {
                 entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-                return _countryRepository.Query().OrderBy(o => o.Name).ToList();
+                return _countryRepository.Query().OrderBy(o => o.CodeAlpha2 != Core.Country.Worldwide.ToDescription()).ThenBy(o => o.Name).ToList(); //esnure Worldwide appears first
             }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of 'Countries'");
             return result;
         }
