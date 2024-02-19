@@ -151,7 +151,7 @@ const MarketplaceTransactions: NextPageWithLayout<{
         overlayClassName="fixed inset-0 bg-overlay"
       >
         {currentItem && (
-          <div className="flex flex-col gap-2">
+          <div className="flex h-full flex-col gap-2 overflow-y-auto pb-2">
             <div className="flex flex-row p-4">
               <h1 className="flex-grow"></h1>
               <button
@@ -164,7 +164,7 @@ const MarketplaceTransactions: NextPageWithLayout<{
                 <IoMdClose className="h-6 w-6"></IoMdClose>
               </button>
             </div>
-            <div className="flex flex-col items-center justify-center gap-4 p-8">
+            <div className="flex flex-col items-center justify-center gap-4 p-2 md:p-8">
               {/* {currentItem && currentItem.imageURL && (
                 <div className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
                   <Image
@@ -183,7 +183,7 @@ const MarketplaceTransactions: NextPageWithLayout<{
                 You purchased <strong>{currentItem.name}</strong>
               </h5>
 
-              <div className="flex w-full flex-col justify-center gap-2">
+              <div className="flex w-full flex-col justify-center gap-4">
                 {/* TODO: no image from api */}
                 {/* {currentItem && currentItem.imageURL && (
     <div className="flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
@@ -226,14 +226,14 @@ const MarketplaceTransactions: NextPageWithLayout<{
                   </div>
                 </div> */}
 
-                <div className="flex w-full flex-row">
+                <div className="flex w-full flex-col md:flex-row">
                   <div className="w-full text-xs text-gray-dark">Paid with</div>
                   <div className=" whitespace-nowrap text-sm font-semibold">
                     {currentItem.amount} ZLTO
                   </div>
                 </div>
 
-                <div className="flex w-full flex-row">
+                <div className="flex w-full flex-col md:flex-row">
                   <div className="w-full text-xs text-gray-dark">
                     Transaction number
                   </div>
@@ -244,13 +244,13 @@ const MarketplaceTransactions: NextPageWithLayout<{
                   <div className="w-full text-xs text-gray-dark">
                     Instructions
                   </div>
-                  <div className="h-[100px] overflow-y-scroll text-sm font-semibold">
+                  <div className="text-sm font-semibold">
                     {currentItem.instructions}
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-grow gap-4">
+              <div className="mt-2 flex flex-grow gap-4">
                 <button
                   type="button"
                   className="btn w-[150px] rounded-full bg-purple normal-case text-white hover:bg-purple-light hover:text-white"

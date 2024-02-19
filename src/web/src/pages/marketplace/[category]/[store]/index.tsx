@@ -203,7 +203,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
-        <div className="flex flex-col gap-2">
+        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
           <div className="flex flex-row bg-blue p-4 shadow-lg">
             <h1 className="flex-grow"></h1>
             <button
@@ -265,12 +265,12 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
         onRequestClose={() => {
           setBuyDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[350px] md:w-[550px] md:rounded-3xl`}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[550px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
         {currentItem && (
-          <div className="flex flex-col gap-2">
+          <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
             <div className="flex flex-row p-4">
               <h1 className="flex-grow"></h1>
               <button
@@ -299,7 +299,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
               )}
 
               <h3>You are about to purchase:</h3>
-              <div className="w-[450px] rounded-lg p-2 text-center">
+              <div className="rounded-lg p-2 text-center md:w-[450px]">
                 <strong>{currentItem.name}</strong> voucher for{" "}
                 <strong>{currentItem.amount} Zlto</strong>.
                 <br /> <br />
@@ -343,7 +343,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
         overlayClassName="fixed inset-0 bg-overlay"
       >
         {currentItem && (
-          <div className="flex flex-col gap-2">
+          <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
             <div className="flex flex-row p-4">
               <h1 className="flex-grow"></h1>
               <button
@@ -410,7 +410,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
-        <div className="flex flex-col gap-2">
+        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
           <div className="flex flex-row p-4">
             <h1 className="flex-grow"></h1>
             <button
@@ -427,7 +427,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
           <h3 className="text-center">Purchase unsuccessful</h3>
 
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="w-[450px] rounded-lg p-2 text-center">
+            <div className="rounded-lg p-2 text-center md:w-[450px]">
               Your purchase was unsuccessful. Please try again later.
               <br />
               <br />

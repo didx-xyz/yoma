@@ -457,7 +457,11 @@ const OpportunityDetails: NextPageWithLayout<{
       .string()
       .min(1, "Opportunity URL is required.")
       .max(2048, "Opportunity URL cannot exceed 2048 characters.")
-      .regex(REGEX_URL_VALIDATION, "Please enter a valid URL."),
+      .regex(
+        REGEX_URL_VALIDATION,
+        "Please enter a valid URL - example.com | www.example.com",
+      )
+      .transform((value) => `https://${value}`), // Transform function to prepend "https://"
   });
 
   const schemaStep2 = z.object({
@@ -601,9 +605,9 @@ const OpportunityDetails: NextPageWithLayout<{
     setValue: setValueStep1,
     formState: { errors: errorsStep1, isValid: isValidStep1 },
     control: controlStep1,
+    reset: resetStep1,
   } = useForm({
     resolver: zodResolver(schemaStep1),
-    defaultValues: formData,
   });
 
   const {
@@ -612,9 +616,9 @@ const OpportunityDetails: NextPageWithLayout<{
     formState: { errors: errorsStep2, isValid: isValidStep2 },
     control: controlStep2,
     getValues: getValuesStep2,
+    reset: resetStep2,
   } = useForm({
     resolver: zodResolver(schemaStep2),
-    defaultValues: formData,
   });
 
   const {
@@ -624,18 +628,18 @@ const OpportunityDetails: NextPageWithLayout<{
     control: controlStep3,
     getValues: getValuesStep3,
     setValue: setValueStep3,
+    reset: resetStep3,
   } = useForm({
     resolver: zodResolver(schemaStep3),
-    defaultValues: formData,
   });
 
   const {
     handleSubmit: handleSubmitStep4,
     formState: { errors: errorsStep4, isValid: isValidStep4 },
     control: controlStep4,
+    reset: resetStep4,
   } = useForm({
     resolver: zodResolver(schemaStep4),
-    defaultValues: formData,
   });
 
   const {
@@ -645,9 +649,9 @@ const OpportunityDetails: NextPageWithLayout<{
     formState: { errors: errorsStep5, isValid: isValidStep5 },
     control: controlStep5,
     watch: watchStep5,
+    reset: resetStep5,
   } = useForm({
     resolver: zodResolver(schemaStep5),
-    defaultValues: formData,
   });
   const watchVerificationEnabled = watchStep5("verificationEnabled");
   const watchVerificationMethod = watchStep5("verificationMethod");
@@ -663,9 +667,9 @@ const OpportunityDetails: NextPageWithLayout<{
     formState: { errors: errorsStep6, isValid: isValidStep6 },
     control: controlStep6,
     watch: watchStep6,
+    reset: resetStep6,
   } = useForm({
     resolver: zodResolver(schemaStep6),
-    defaultValues: formData,
   });
   const watchCredentialIssuanceEnabled = watchStep6(
     "credentialIssuanceEnabled",
@@ -676,9 +680,9 @@ const OpportunityDetails: NextPageWithLayout<{
     register: registerStep7,
     handleSubmit: handleSubmitStep7,
     formState: { errors: errorsStep7, isValid: isValidStep7 },
+    reset: resetStep7,
   } = useForm({
     resolver: zodResolver(schemaStep7),
-    defaultValues: formData,
   });
 
   // scroll to top on step change
@@ -693,6 +697,45 @@ const OpportunityDetails: NextPageWithLayout<{
     }
   }, [schemas, watcSSISchemaName]);
 
+  // set default values
+  // FIX (safari/brave issue): give the form (country dropdowns) time to load before setting default values
+  useEffect(() => {
+    // reset form
+    // setTimeout is needed to prevent the form from being reset before the default values are set
+    setTimeout(() => {
+      resetStep1({
+        ...formData,
+      });
+      resetStep2({
+        ...formData,
+      });
+      resetStep3({
+        ...formData,
+      });
+      resetStep4({
+        ...formData,
+      });
+      resetStep5({
+        ...formData,
+      });
+      resetStep6({
+        ...formData,
+      });
+      resetStep7({
+        ...formData,
+      });
+    }, 500);
+  }, [
+    resetStep1,
+    resetStep2,
+    resetStep3,
+    resetStep4,
+    resetStep5,
+    resetStep6,
+    resetStep7,
+    formData,
+  ]);
+
   if (error) return <Unauthorized />;
 
   return (
@@ -702,24 +745,25 @@ const OpportunityDetails: NextPageWithLayout<{
 
       <div className="container z-10 mt-20 max-w-5xl px-2 py-4">
         {/* BREADCRUMB */}
-        <div className="breadcrumbs flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
-          <ul>
-            <li>
+        <div className="inline flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+          <ul className="inline">
+            <li className="inline">
               <Link
-                className="font-bold text-white hover:text-gray"
+                className="inline text-white hover:text-gray"
                 href={`/organisations/${id}/opportunities`}
               >
-                <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
+                <IoMdArrowRoundBack className="mr-2 inline-block h-6 w-6 rounded-full bg-green-tint p-1" />
                 Opportunities
               </Link>
             </li>
-            <li>
-              <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
+            <li className="mx-2 inline font-bold text-white">|</li>
+            <li className="inline">
+              <div className="inline max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
                 {opportunityId == "create" ? (
                   "Create"
                 ) : (
                   <Link
-                    className="text-white hover:text-gray"
+                    className="inline text-white hover:text-gray"
                     href={`/organisations/${id}/opportunities/${opportunityId}/info`}
                   >
                     {opportunity?.title}
@@ -730,20 +774,20 @@ const OpportunityDetails: NextPageWithLayout<{
           </ul>
         </div>
 
-        <h4 className="pb-2 pl-5 text-white">
+        <h3 className="mb-6 mt-2 pl-8 font-bold text-white">
           {opportunityId == "create" ? "New opportunity" : opportunity?.title}
-        </h4>
+        </h3>
 
-        <div className="flex flex-col gap-2 md:flex-row">
+        <div className="flex flex-col gap-4 md:flex-row">
           {/* LEFT VERTICAL MENU */}
-          <ul className="menu hidden max-h-[340px] w-64 flex-none gap-2 rounded-lg bg-white p-2 font-semibold md:flex">
+          <ul className="menu hidden h-[420px] flex-none gap-3 rounded-lg bg-white p-4 font-semibold shadow-xl md:flex md:justify-center">
             <li onClick={() => setStep(1)}>
               <a
                 className={`${
                   step === 1
                     ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark hover:bg-gray"
-                }`}
+                    : "bg-gray-light text-gray-dark hover:bg-gray"
+                } py-3`}
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
@@ -760,8 +804,8 @@ const OpportunityDetails: NextPageWithLayout<{
                 className={`${
                   step === 2
                     ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark hover:bg-gray"
-                }`}
+                    : "bg-gray-light text-gray-dark hover:bg-gray"
+                } py-3`}
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
@@ -778,8 +822,8 @@ const OpportunityDetails: NextPageWithLayout<{
                 className={`${
                   step === 3
                     ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark hover:bg-gray"
-                }`}
+                    : "bg-gray-light text-gray-dark hover:bg-gray"
+                } py-3`}
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
@@ -796,8 +840,8 @@ const OpportunityDetails: NextPageWithLayout<{
                 className={`${
                   step === 4
                     ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark hover:bg-gray"
-                }`}
+                    : "bg-gray-light text-gray-dark hover:bg-gray"
+                } py-3`}
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
@@ -814,8 +858,8 @@ const OpportunityDetails: NextPageWithLayout<{
                 className={`${
                   step === 5
                     ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark hover:bg-gray"
-                }`}
+                    : "bg-gray-light text-gray-dark hover:bg-gray"
+                } py-3`}
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
@@ -832,8 +876,8 @@ const OpportunityDetails: NextPageWithLayout<{
                 className={`${
                   step === 6
                     ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray text-gray-dark hover:bg-gray"
-                }`}
+                    : "bg-gray-light text-gray-dark hover:bg-gray"
+                } py-3`}
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
@@ -852,8 +896,8 @@ const OpportunityDetails: NextPageWithLayout<{
                   className={`${
                     step === 7
                       ? "bg-green-light text-green hover:bg-green-light"
-                      : "bg-gray text-gray-dark hover:bg-gray"
-                  }`}
+                      : "bg-gray-light text-gray-dark hover:bg-gray"
+                  } py-3`}
                 >
                   <span
                     className={`mr-2 rounded-full bg-gray-dark px-1.5 py-0.5 text-xs font-medium text-white ${
@@ -918,12 +962,12 @@ const OpportunityDetails: NextPageWithLayout<{
           </select>
 
           {/* FORMS */}
-          <div className="flex flex-grow flex-col items-center rounded-lg bg-white">
-            <div className="flex w-full max-w-xl flex-col p-4">
+          <div className="flex flex-grow flex-col items-center rounded-lg bg-white shadow-xl">
+            <div className="flex w-full max-w-2xl flex-col p-8">
               {step === 1 && (
                 <>
-                  <div className="flex flex-col">
-                    <h6 className="font-bold">Opportunity information</h6>
+                  <div className="mb-4 flex flex-col">
+                    <h5 className="font-bold">Opportunity information</h5>
                     <p className="my-2 text-sm">
                       Information about the opportunity that young people can
                       explore
@@ -931,14 +975,16 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
 
                   <form
-                    className="flex flex-col gap-2"
+                    className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep1((data) =>
                       onSubmitStep(2, data),
                     )} // eslint-disable-line @typescript-eslint/no-misused-promises
                   >
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text">Opportunity title</span>
+                        <span className="label-text font-bold">
+                          Opportunity title
+                        </span>
                       </label>
                       <input
                         type="text"
@@ -948,7 +994,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         contentEditable
                       />
                       {errorsStep1.title && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep1.title.message}`}
                           </span>
@@ -958,7 +1004,9 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text">Opportunity type</span>
+                        <span className="label-text font-bold">
+                          Opportunity type
+                        </span>
                       </label>
                       <Controller
                         control={controlStep1}
@@ -966,20 +1014,26 @@ const OpportunityDetails: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input h-full",
+                              control: () => "input !border-gray",
                             }}
                             options={opportunityTypes}
                             onChange={(val) => onChange(val?.value)}
                             value={opportunityTypes?.find(
                               (c) => c.value === value,
                             )}
+                            styles={{
+                              placeholder: (base) => ({
+                                ...base,
+                                color: "#A3A6AF",
+                              }),
+                            }}
                             inputId="input_typeid" // e2e
                           />
                         )}
                       />
 
                       {errorsStep1.typeId && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep1.typeId.message}`}
                           </span>
@@ -989,7 +1043,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text">
+                        <span className="label-text font-bold">
                           Under which categories does your opportunity belong
                         </span>
                       </label>
@@ -999,7 +1053,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input h-full",
+                              control: () => "input !border-gray",
                             }}
                             isMulti={true}
                             options={categories}
@@ -1009,13 +1063,19 @@ const OpportunityDetails: NextPageWithLayout<{
                             value={categories?.filter(
                               (c) => value?.includes(c.value),
                             )}
+                            styles={{
+                              placeholder: (base) => ({
+                                ...base,
+                                color: "#A3A6AF",
+                              }),
+                            }}
                             inputId="input_categories" // e2e
                           />
                         )}
                       />
 
                       {errorsStep1.categories && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep1.categories.message}`}
                           </span>
@@ -1025,7 +1085,9 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text">Opportunity link</span>
+                        <span className="label-text font-bold">
+                          Opportunity link
+                        </span>
                       </label>
 
                       <input
@@ -1036,7 +1098,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         contentEditable
                       />
                       {errorsStep1.uRL && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep1.uRL.message}`}
                           </span>
@@ -1046,11 +1108,13 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text">Description</span>
+                        <span className="label-text font-bold">
+                          Description
+                        </span>
                       </label>
                       <textarea
-                        className="input textarea textarea-bordered h-24 rounded-md border-gray focus:border-gray focus:outline-none"
-                        placeholder="Description"
+                        className="input textarea textarea-bordered h-32 rounded-md border-gray focus:border-gray focus:outline-none"
+                        // placeholder="Description"
                         {...registerStep1("description")}
                         onChange={(e) =>
                           setValueStep1("description", e.target.value)
@@ -1066,11 +1130,11 @@ const OpportunityDetails: NextPageWithLayout<{
                     </div>
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-2">
+                    <div className="my-4 flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
                       {opportunityId === "create" && (
                         <button
                           type="button"
-                          className="btn btn-warning btn-sm flex-grow"
+                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                           onClick={handleCancel}
                         >
                           Cancel
@@ -1078,7 +1142,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
                       <button
                         type="submit"
-                        className="btn btn-success btn-sm flex-grow"
+                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
                         {opportunityId === "create" ? "Next" : "Submit"}
                       </button>
@@ -1088,21 +1152,21 @@ const OpportunityDetails: NextPageWithLayout<{
               )}
               {step === 2 && (
                 <>
-                  <div className="flex flex-col">
-                    <h6 className="font-bold">Opportunity detail</h6>
+                  <div className="mb-4 flex flex-col">
+                    <h5 className="font-bold">Opportunity detail</h5>
                     <p className="my-2 text-sm">
                       Detailed particulars about the opportunity
                     </p>
                   </div>
 
                   <form
-                    className="flex flex-col gap-2"
+                    className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep2((data) =>
                       onSubmitStep(3, data),
                     )}
                   >
                     <div className="form-control">
-                      <label className="label">
+                      <label className="label font-bold">
                         <span className="label-text">Opportunity language</span>
                       </label>
                       <Controller
@@ -1111,7 +1175,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input h-full",
+                              control: () => "input !border-gray",
                             }}
                             isMulti={true}
                             options={languages}
@@ -1121,13 +1185,19 @@ const OpportunityDetails: NextPageWithLayout<{
                             value={languages?.filter(
                               (c) => value?.includes(c.value),
                             )}
+                            styles={{
+                              placeholder: (base) => ({
+                                ...base,
+                                color: "#A3A6AF",
+                              }),
+                            }}
                             inputId="input_languages" // e2e
                           />
                         )}
                       />
 
                       {errorsStep2.languages && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep2.languages.message}`}
                           </span>
@@ -1136,7 +1206,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     </div>
 
                     <div className="form-control">
-                      <label className="label">
+                      <label className="label font-bold">
                         <span className="label-text">
                           Country or region of opportunity
                         </span>
@@ -1147,7 +1217,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input h-full",
+                              control: () => "input !border-gray",
                             }}
                             isMulti={true}
                             options={countries}
@@ -1157,13 +1227,19 @@ const OpportunityDetails: NextPageWithLayout<{
                             value={countries?.filter(
                               (c) => value?.includes(c.value),
                             )}
+                            styles={{
+                              placeholder: (base) => ({
+                                ...base,
+                                color: "#A3A6AF",
+                              }),
+                            }}
                             inputId="input_countries" // e2e
                           />
                         )}
                       />
 
                       {errorsStep2.countries && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep2.countries.message}`}
                           </span>
@@ -1172,7 +1248,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     </div>
 
                     <div className="form-control">
-                      <label className="label">
+                      <label className="label font-bold">
                         <span className="label-text">
                           Opportunity difficulty level
                         </span>
@@ -1183,19 +1259,25 @@ const OpportunityDetails: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input h-full",
+                              control: () => "input !border-gray",
                             }}
                             isMulti={false}
                             options={difficulties}
                             onChange={(val) => onChange(val?.value)}
                             value={difficulties?.find((c) => c.value === value)}
+                            styles={{
+                              placeholder: (base) => ({
+                                ...base,
+                                color: "#A3A6AF",
+                              }),
+                            }}
                             inputId="input_difficultyId" // e2e
                           />
                         )}
                       />
 
                       {errorsStep2.difficultyId && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep2.difficultyId.message}`}
                           </span>
@@ -1203,9 +1285,9 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid gap-4 md:grid-cols-2">
                       <div className="form-control">
-                        <label className="label">
+                        <label className="label font-bold">
                           <span className="label-text">Number of</span>
                         </label>
                         <input
@@ -1217,7 +1299,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           })}
                         />
                         {errorsStep2.commitmentIntervalCount && (
-                          <label className="label">
+                          <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
                               {`${errorsStep2.commitmentIntervalCount.message}`}
                             </span>
@@ -1226,7 +1308,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       </div>
 
                       <div className="form-control">
-                        <label className="label">
+                        <label className="label font-bold">
                           <span className="label-text">Select time frame</span>
                         </label>
                         <Controller
@@ -1235,20 +1317,26 @@ const OpportunityDetails: NextPageWithLayout<{
                           render={({ field: { onChange, value } }) => (
                             <Select
                               classNames={{
-                                control: () => "input h-full",
+                                control: () => "input !border-gray",
                               }}
                               options={timeIntervals}
                               onChange={(val) => onChange(val?.value)}
                               value={timeIntervals?.find(
                                 (c) => c.value === value,
                               )}
+                              styles={{
+                                placeholder: (base) => ({
+                                  ...base,
+                                  color: "#A3A6AF",
+                                }),
+                              }}
                               inputId="input_commitmentIntervalId" // e2e
                             />
                           )}
                         />
 
                         {errorsStep2.commitmentIntervalId && (
-                          <label className="label">
+                          <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
                               {`${errorsStep2.commitmentIntervalId.message}`}
                             </span>
@@ -1257,9 +1345,9 @@ const OpportunityDetails: NextPageWithLayout<{
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid gap-4 md:grid-cols-2">
                       <div className="form-control">
-                        <label className="label">
+                        <label className="label font-bold">
                           <span className="label-text">
                             Opportunity start date:
                           </span>
@@ -1269,7 +1357,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           name="dateStart"
                           render={({ field: { onChange, value } }) => (
                             <DatePicker
-                              className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+                              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                               onChange={(date) => onChange(date)}
                               selected={value ? new Date(value) : null}
                               placeholderText="Start Date"
@@ -1278,7 +1366,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           )}
                         />
                         {errorsStep2.dateStart && (
-                          <label className="label">
+                          <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
                               {`${errorsStep2.dateStart.message}`}
                             </span>
@@ -1287,7 +1375,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       </div>
 
                       <div className="form-control">
-                        <label className="label">
+                        <label className="label font-bold">
                           <span className="label-text">
                             Opportunity end date:
                           </span>
@@ -1298,7 +1386,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           name="dateEnd"
                           render={({ field: { onChange, value } }) => (
                             <DatePicker
-                              className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+                              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                               onChange={(date) => onChange(date)}
                               selected={value ? new Date(value) : null}
                               placeholderText="Select End Date"
@@ -1308,7 +1396,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         />
 
                         {errorsStep2.dateEnd && (
-                          <label className="label">
+                          <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
                               {`${errorsStep2.dateEnd.message}`}
                             </span>
@@ -1318,16 +1406,16 @@ const OpportunityDetails: NextPageWithLayout<{
                     </div>
 
                     <div className="form-control">
-                      <label className="label">
+                      <label className="label font-bold">
                         <span className="label-text">
                           Opportunity participant limit
                         </span>
                       </label>
 
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="gap-2">
                         <input
                           type="number"
-                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+                          className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                           placeholder="Count of participants"
                           {...registerStep2("participantLimit", {
                             valueAsNumber: true,
@@ -1364,7 +1452,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         />
                       </div>
                       {errorsStep2.participantLimit && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep2.participantLimit.message}`}
                           </span>
@@ -1373,11 +1461,11 @@ const OpportunityDetails: NextPageWithLayout<{
                     </div>
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-2">
+                    <div className="my-4 flex items-center justify-center gap-2 md:justify-end md:gap-4">
                       {opportunityId === "create" && (
                         <button
                           type="button"
-                          className="btn btn-warning btn-sm flex-grow"
+                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                           onClick={() => {
                             setStep(1);
                           }}
@@ -1387,7 +1475,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
                       <button
                         type="submit"
-                        className="btn btn-success btn-sm flex-grow"
+                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
                         {opportunityId === "create" ? "Next" : "Submit"}
                       </button>
@@ -1397,8 +1485,8 @@ const OpportunityDetails: NextPageWithLayout<{
               )}
               {step === 3 && (
                 <>
-                  <div className="flex flex-col">
-                    <h6 className="font-bold">Rewards</h6>
+                  <div className="mb-4 flex flex-col">
+                    <h5 className="font-bold">Rewards</h5>
                     <p className="my-2 text-sm">
                       Choose the reward that young participants will earn after
                       successfully completing the opportunity
@@ -1406,7 +1494,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
 
                   <form
-                    className="flex flex-col gap-2"
+                    className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep3((data) =>
                       onSubmitStep(4, data),
                     )}
@@ -1496,10 +1584,12 @@ const OpportunityDetails: NextPageWithLayout<{
                         )}
                       </div>
                     </div> */}
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="form-control">
                         <label className="label">
-                          <span className="label-text">ZLTO Reward</span>
+                          <span className="label-text font-bold">
+                            ZLTO Reward
+                          </span>
                         </label>
                         <input
                           type="number"
@@ -1526,7 +1616,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           }}
                         />
                         {errorsStep3.zltoReward && (
-                          <label className="label">
+                          <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
                               {`${errorsStep3.zltoReward.message}`}
                             </span>
@@ -1535,7 +1625,9 @@ const OpportunityDetails: NextPageWithLayout<{
                       </div>
                       <div className="form-control">
                         <label className="label">
-                          <span className="label-text">ZLTO Reward Pool</span>
+                          <span className="label-text font-bold">
+                            ZLTO Reward Pool
+                          </span>
                           <span className="font-gray-light label-text text-xs">
                             (default limit * reward)
                           </span>
@@ -1572,7 +1664,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           }}
                         />
                         {errorsStep3.zltoRewardPool && (
-                          <label className="label">
+                          <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
                               {`${errorsStep3.zltoRewardPool.message}`}
                             </span>
@@ -1582,7 +1674,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     </div>
                     <h6 className="font-bold">Skills</h6>
                     <div className="form-control">
-                      <label className="label">
+                      <label className="label font-bold">
                         <span className="label-text">
                           Which skills will the Youth be awarded with upon
                           completion?
@@ -1596,7 +1688,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             {/* eslint-disable  */}
                             <Select
                               classNames={{
-                                control: () => "input h-full",
+                                control: () => "input !border-gray h-fit py-1",
                               }}
                               isMulti={true}
                               options={skills}
@@ -1606,6 +1698,12 @@ const OpportunityDetails: NextPageWithLayout<{
                               value={skills?.filter(
                                 (c) => value?.includes(c.value),
                               )}
+                              styles={{
+                                placeholder: (base) => ({
+                                  ...base,
+                                  color: "#A3A6AF",
+                                }),
+                              }}
                               inputId="input_skills" // e2e
                             />
                             {/* eslint-enable  */}
@@ -1613,7 +1711,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         )}
                       />
                       {errorsStep3.skills && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep3.skills.message}`}
                           </span>
@@ -1621,11 +1719,11 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
                     </div>
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-2">
+                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       {opportunityId === "create" && (
                         <button
                           type="button"
-                          className="btn btn-warning btn-sm flex-grow"
+                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                           onClick={() => {
                             setStep(2);
                           }}
@@ -1635,7 +1733,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
                       <button
                         type="submit"
-                        className="btn btn-success btn-sm flex-grow"
+                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
                         {opportunityId === "create" ? "Next" : "Submit"}
                       </button>
@@ -1645,8 +1743,8 @@ const OpportunityDetails: NextPageWithLayout<{
               )}
               {step === 4 && (
                 <>
-                  <div className="flex flex-col">
-                    <h6 className="font-bold">Keywords</h6>
+                  <div className="mb-4 flex flex-col">
+                    <h5 className="font-bold">Keywords</h5>
                     <p className="my-2 text-sm">
                       Boost your chances of being found in searches by adding
                       keywords to your opportunity
@@ -1654,13 +1752,13 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
 
                   <form
-                    className="flex h-full flex-col gap-2"
+                    className="flex h-full flex-col gap-4"
                     onSubmit={handleSubmitStep4((data) =>
                       onSubmitStep(5, data),
                     )}
                   >
                     <div className="form-control">
-                      <label className="label">
+                      <label className="label font-bold">
                         <span className="label-text">Opportunity keywords</span>
                       </label>
                       <Controller
@@ -1671,7 +1769,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             {/* eslint-disable */}
                             <CreatableSelect
                               classNames={{
-                                control: () => "input h-full",
+                                control: () => "input !border-gray h-fit py-1",
                               }}
                               isMulti={true}
                               onChange={(val) =>
@@ -1681,6 +1779,12 @@ const OpportunityDetails: NextPageWithLayout<{
                                 value: c,
                                 label: c,
                               }))}
+                              styles={{
+                                placeholder: (base) => ({
+                                  ...base,
+                                  color: "#A3A6AF",
+                                }),
+                              }}
                               inputId="input_keywords" // e2e
                             />
                             {/* eslint-enable  */}
@@ -1697,11 +1801,11 @@ const OpportunityDetails: NextPageWithLayout<{
                     </div>
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-2">
+                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       {opportunityId === "create" && (
                         <button
                           type="button"
-                          className="btn btn-warning btn-sm flex-grow"
+                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                           onClick={() => {
                             setStep(3);
                           }}
@@ -1711,7 +1815,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
                       <button
                         type="submit"
-                        className="btn btn-success btn-sm flex-grow"
+                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
                         {opportunityId === "create" ? "Next" : "Submit"}
                       </button>
@@ -1721,15 +1825,15 @@ const OpportunityDetails: NextPageWithLayout<{
               )}
               {step === 5 && (
                 <>
-                  <div className="flex flex-col">
-                    <h6 className="font-bold">Verification</h6>
+                  <div className="mb-4 flex flex-col">
+                    <h5 className="font-bold">Verification</h5>
                     <p className="my-2 text-sm">
                       How can young participants confirm their involvement?
                     </p>
                   </div>
 
                   <form
-                    className="flex flex-col gap-2"
+                    className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep5((data) =>
                       onSubmitStep(6, data),
                     )}
@@ -1822,14 +1926,14 @@ const OpportunityDetails: NextPageWithLayout<{
                         )}
                       />
                       {errorsStep5.verificationEnabled && (
-                        <label className="label font-bold">
+                        <label className="label -mb-5 font-bold">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep5.verificationEnabled.message}`}
                           </span>
                         </label>
                       )}
                       {errorsStep5.verificationMethod && (
-                        <label className="label font-bold">
+                        <label className="label -mb-5 font-bold">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep5.verificationMethod.message}`}
                           </span>
@@ -1840,14 +1944,14 @@ const OpportunityDetails: NextPageWithLayout<{
                     {watchVerificationEnabled &&
                       watchVerificationMethod === VerificationMethod.Manual && (
                         <div className="form-control">
-                          <label className="label">
+                          <label className="label font-bold">
                             <span className="label-text">
                               Select the types of proof that participants need
                               to upload as part of completing the opportuntity.
                             </span>
                           </label>
 
-                          <div className="flex flex-col gap-2">
+                          <div className="flex flex-col gap-1">
                             {verificationTypes?.map((item) => (
                               <div className="flex flex-col" key={item.id}>
                                 {/* verification type: checkbox label */}
@@ -1932,7 +2036,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             ))}
                           </div>
                           {errorsStep5.verificationTypes && (
-                            <label className="label font-bold">
+                            <label className="label -mb-5 font-bold">
                               <span className="label-text-alt italic text-red-500">
                                 {`${errorsStep5.verificationTypes.message}`}
                               </span>
@@ -1942,11 +2046,11 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-2">
+                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       {opportunityId === "create" && (
                         <button
                           type="button"
-                          className="btn btn-warning btn-sm flex-grow"
+                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                           onClick={() => {
                             setStep(4);
                           }}
@@ -1956,7 +2060,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
                       <button
                         type="submit"
-                        className="btn btn-success btn-sm flex-grow"
+                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
                         {opportunityId === "create" ? "Next" : "Submit"}
                       </button>
@@ -1966,8 +2070,8 @@ const OpportunityDetails: NextPageWithLayout<{
               )}
               {step === 6 && (
                 <>
-                  <div className="flex flex-col">
-                    <h6 className="font-bold">Credential</h6>
+                  <div className="mb-4 flex flex-col">
+                    <h5 className="font-bold">Credential</h5>
                     <p className="my-2 text-sm">
                       Information about the credential that Youth will receive
                       upon completion of this opportunity
@@ -1975,7 +2079,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
 
                   <form
-                    className="flex flex-col gap-2"
+                    className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep6((data) =>
                       onSubmitStep(7, data),
                     )}
@@ -2005,7 +2109,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         </div>
                       )}
                       {errorsStep6.credentialIssuanceEnabled && (
-                        <label className="label font-bold">
+                        <label className="label -mb-5 font-bold">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep6.credentialIssuanceEnabled.message}`}
                           </span>
@@ -2017,7 +2121,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       <>
                         <div className="form-control">
                           <label className="label">
-                            <span className="label-text">Schema</span>
+                            <span className="label-text">Select schema</span>
                           </label>
 
                           <Controller
@@ -2026,19 +2130,26 @@ const OpportunityDetails: NextPageWithLayout<{
                             render={({ field: { onChange, value } }) => (
                               <Select
                                 classNames={{
-                                  control: () => "input h-full",
+                                  control: () =>
+                                    "input !border-gray h-fit py-1",
                                 }}
                                 options={schemasOptions}
                                 onChange={(val) => onChange(val?.value)}
                                 value={schemasOptions?.find(
                                   (c) => c.value === value,
                                 )}
+                                styles={{
+                                  placeholder: (base) => ({
+                                    ...base,
+                                    color: "#A3A6AF",
+                                  }),
+                                }}
                                 inputId="input_ssiSchemaName" // e2e
                               />
                             )}
                           />
                           {errorsStep6.ssiSchemaName && (
-                            <label className="label">
+                            <label className="label -mb-5">
                               <span className="label-text-alt italic text-red-500">
                                 {`${errorsStep6.ssiSchemaName.message}`}
                               </span>
@@ -2082,11 +2193,11 @@ const OpportunityDetails: NextPageWithLayout<{
                     )}
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-2">
+                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       {opportunityId === "create" && (
                         <button
                           type="button"
-                          className="btn btn-warning btn-sm flex-grow"
+                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                           onClick={() => {
                             setStep(5);
                           }}
@@ -2096,7 +2207,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
                       <button
                         type="submit"
-                        className="btn btn-success btn-sm flex-grow"
+                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
                         {opportunityId === "create" ? "Next" : "Submit"}
                       </button>
@@ -2108,30 +2219,30 @@ const OpportunityDetails: NextPageWithLayout<{
               {/* only show preview when creating new opportunity */}
               {step === 7 && opportunityId === "create" && (
                 <>
-                  <div className="flex flex-col">
-                    <h6 className="font-bold">Opportunity preview</h6>
+                  <div className="mb-4 flex flex-col">
+                    <h5 className="font-bold">Opportunity preview</h5>
                     <p className="my-2 text-sm">
                       Detailed particulars about the opportunity
                     </p>
                   </div>
 
                   <form
-                    className="flex flex-col gap-2"
+                    className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep7((data) =>
                       onSubmitStep(8, data),
                     )}
                   >
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">
+                        <span className="label-text font-semibold">
                           Opportunity title
                         </span>
                       </label>
-                      <label className="label-text text-sm">
+                      <label className="label label-text pt-0 text-sm">
                         {formData.title}
                       </label>
                       {errorsStep1.title && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep1.title.message}`}
                           </span>
@@ -2140,15 +2251,15 @@ const OpportunityDetails: NextPageWithLayout<{
                     </div>
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">
+                        <span className="label-text font-semibold">
                           Opportunity description
                         </span>
                       </label>
-                      <label className="label-text text-sm">
+                      <label className="label label-text pt-0 text-sm ">
                         {formData.description}
                       </label>
                       {errorsStep1.description && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep1.description.message}`}
                           </span>
@@ -2158,11 +2269,11 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">
+                        <span className="label-text font-semibold">
                           Opportunity type
                         </span>
                       </label>
-                      <label className="label-text text-sm">
+                      <label className="label label-text pt-0 text-sm ">
                         {
                           opportunityTypes?.find(
                             (x) => x.value == formData.typeId,
@@ -2170,7 +2281,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         }
                       </label>
                       {errorsStep1.typeId && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep1.typeId.message}`}
                           </span>
@@ -2180,15 +2291,15 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">
+                        <span className="label-text font-semibold">
                           Opportunity keywords
                         </span>
                       </label>
-                      <label className="label-text text-sm">
+                      <label className="label label-text pt-0 text-sm ">
                         {formData.keywords?.join(", ")}
                       </label>
                       {errorsStep1.keywords && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep1.keywords.message}`}
                           </span>
@@ -2198,11 +2309,11 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">
+                        <span className="label-text font-semibold">
                           Opportunity link
                         </span>
                       </label>
-                      <label className="label-text text-sm">
+                      <label className="label label-text pt-0 text-sm ">
                         <Link
                           className="link link-primary"
                           href={formData.uRL ?? "#"}
@@ -2212,7 +2323,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         </Link>
                       </label>
                       {errorsStep1.uRL && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep1.uRL.message}`}
                           </span>
@@ -2222,11 +2333,31 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">
-                          Opportunity languages
+                        <span className="label-text font-semibold">
+                          Opportunity difficulty
                         </span>
                       </label>
-                      <label className="label-text text-sm">
+                      <label className="label label-text pt-0 text-sm ">
+                        {
+                          difficulties?.find(
+                            (x) => x.value == formData.difficultyId,
+                          )?.label
+                        }
+                      </label>
+                      {errorsStep2.difficultyId && (
+                        <label className="label -mb-5">
+                          <span className="label-text-alt italic text-red-500">
+                            {`${errorsStep2.difficultyId.message}`}
+                          </span>
+                        </label>
+                      )}
+                    </div>
+
+                    <div className="form-control">
+                      <label className="label">
+                        <h5 className="font-bold">Opportunity languages</h5>
+                      </label>
+                      <label className="label label-text pt-0 text-sm ">
                         {formData.languages
                           ?.map(
                             (x) => languages?.find((y) => y.value == x)?.label,
@@ -2234,7 +2365,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           .join(", ")}
                       </label>
                       {errorsStep2.languages && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep2.languages.message}`}
                           </span>
@@ -2244,11 +2375,9 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">
-                          Opportunity countries
-                        </span>
+                        <h5 className="font-bold">Opportunity countries</h5>
                       </label>
-                      <label className="label-text text-sm">
+                      <label className="label label-text pt-0 text-sm ">
                         {formData.countries
                           ?.map(
                             (x) => countries?.find((y) => y.value == x)?.label,
@@ -2256,7 +2385,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           .join(", ")}
                       </label>
                       {errorsStep2.countries && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep2.countries.message}`}
                           </span>
@@ -2264,103 +2393,84 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
                     </div>
 
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">
-                          Opportunity difficulty
-                        </span>
-                      </label>
-                      <label className="label-text text-sm">
-                        {
-                          difficulties?.find(
-                            (x) => x.value == formData.difficultyId,
-                          )?.label
-                        }
-                      </label>
-                      {errorsStep2.difficultyId && (
+                    <div className="flex flex-col">
+                      <div className="form-control">
                         <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.difficultyId.message}`}
-                          </span>
+                          <h5 className="font-bold">Opportunity duration</h5>
                         </label>
-                      )}
-                    </div>
+                        <label className="label label-text pt-0 text-sm ">
+                          {formData.commitmentIntervalCount}{" "}
+                          {
+                            timeIntervals?.find(
+                              (x) => x.value == formData.commitmentIntervalId,
+                            )?.label
+                          }
+                        </label>
+                        {errorsStep2.commitmentIntervalCount && (
+                          <label className="label -mb-5">
+                            <span className="label-text-alt italic text-red-500">
+                              {`${errorsStep2.commitmentIntervalCount.message}`}
+                            </span>
+                          </label>
+                        )}
+                        {errorsStep2.commitmentIntervalId && (
+                          <label className="label -mb-5">
+                            <span className="label-text-alt italic text-red-500">
+                              {`${errorsStep2.commitmentIntervalId.message}`}
+                            </span>
+                          </label>
+                        )}
+                      </div>
 
-                    <h6>Opporunity duration</h6>
-
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">
-                          Opportunity duration
-                        </span>
-                      </label>
-                      <label className="label-text text-sm">
-                        {formData.commitmentIntervalCount}{" "}
-                        {
-                          timeIntervals?.find(
-                            (x) => x.value == formData.commitmentIntervalId,
-                          )?.label
-                        }
-                      </label>
-                      {errorsStep2.commitmentIntervalCount && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.commitmentIntervalCount.message}`}
-                          </span>
-                        </label>
-                      )}
-                      {errorsStep2.commitmentIntervalId && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.commitmentIntervalId.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">Start date</span>
-                      </label>
-                      <label className="label-text text-sm">
-                        <Moment format={DATE_FORMAT_HUMAN}>
-                          {formData.dateStart!}
-                        </Moment>
-                      </label>
-                      {errorsStep2.dateStart && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.dateStart.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">End date</span>
-                      </label>
-                      <label className="label-text text-sm">
-                        <Moment format={DATE_FORMAT_HUMAN}>
-                          {formData.dateEnd!}
-                        </Moment>
-                      </label>
-                      {errorsStep2.dateEnd && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.dateEnd.message}`}
-                          </span>
-                        </label>
-                      )}
+                      <div className="flex flex-row gap-4">
+                        <div className="form-control flex flex-row">
+                          <label className="label">
+                            <span className="label-text font-semibold">
+                              Start date&#58;
+                            </span>
+                          </label>
+                          <label className="label label-text text-sm">
+                            <Moment format={DATE_FORMAT_HUMAN}>
+                              {formData.dateStart!}
+                            </Moment>
+                          </label>
+                          {errorsStep2.dateStart && (
+                            <label className="label -mb-5">
+                              <span className="label-text-alt italic text-red-500">
+                                {`${errorsStep2.dateStart.message}`}
+                              </span>
+                            </label>
+                          )}
+                        </div>
+                        <div className="form-control flex flex-row">
+                          <label className="label">
+                            <span className="label-text font-semibold">
+                              End date&#58;
+                            </span>
+                          </label>
+                          <label className="label label-text text-sm">
+                            <Moment format={DATE_FORMAT_HUMAN}>
+                              {formData.dateEnd!}
+                            </Moment>
+                          </label>
+                          {errorsStep2.dateEnd && (
+                            <label className="label -mb-5">
+                              <span className="label-text-alt italic text-red-500">
+                                {`${errorsStep2.dateEnd.message}`}
+                              </span>
+                            </label>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     {/* NB: yoma rewards has been disabled temporarily */}
                     {/* <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">
+                        <span className="label-text font-semibold">
                           Yoma Reward
                         </span>
                       </label>
-                      <label className="label-text text-sm">
+                      <label className="label label-text text-sm pt-0 ">
                         {formData.yomaReward}
                       </label>
                       {errorsStep2.yomaReward && (
@@ -2374,11 +2484,11 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">
+                        <span className="label-text font-semibold">
                           Yoma Reward Pool
                         </span>
                       </label>
-                      <label className="label-text text-sm">
+                      <label className="label label-text text-sm pt-0 ">
                         {formData.yomaRewardPool}
                       </label>
                       {errorsStep2.yomaRewardPool && (
@@ -2392,51 +2502,13 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">
-                          Zlto Reward
-                        </span>
+                        <h5 className="font-bold">Participants</h5>
                       </label>
-                      <label className="label-text text-sm">
-                        {formData.zltoReward}
-                      </label>
-                      {errorsStep2.zltoReward && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.zltoReward.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">
-                          Zlto Reward Pool
-                        </span>
-                      </label>
-                      <label className="label-text text-sm">
-                        {formData.zltoRewardPool}
-                      </label>
-                      {errorsStep2.zltoRewardPool && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.zltoRewardPool.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">
-                          Participants
-                        </span>
-                      </label>
-                      <label className="label-text text-sm">
+                      <label className="label label-text pt-0 text-sm ">
                         {formData.participantLimit}
                       </label>
                       {errorsStep2.participantLimit && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep2.participantLimit.message}`}
                           </span>
@@ -2444,19 +2516,57 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
                     </div>
 
+                    <div>
+                      <h5 className="font-bold">Rewards</h5>
+                      <div className="flex flex-row gap-4">
+                        <div className="form-control flex flex-row">
+                          <label className="label">
+                            <span className="label-text font-semibold">
+                              Zlto Reward&#58;
+                            </span>
+                          </label>
+                          <label className="label label-text text-sm ">
+                            {formData.zltoReward}
+                          </label>
+                          {errorsStep2.zltoReward && (
+                            <label className="label -mb-5">
+                              <span className="label-text-alt italic text-red-500">
+                                {`${errorsStep2.zltoReward.message}`}
+                              </span>
+                            </label>
+                          )}
+                        </div>
+                        <div className="form-control flex flex-row">
+                          <label className="label">
+                            <span className="label-text font-semibold">
+                              Zlto Reward Pool&#58;
+                            </span>
+                          </label>
+                          <label className="label label-text text-sm ">
+                            {formData.zltoRewardPool}
+                          </label>
+                          {errorsStep2.zltoRewardPool && (
+                            <label className="label -mb-5">
+                              <span className="label-text-alt italic text-red-500">
+                                {`${errorsStep2.zltoRewardPool.message}`}
+                              </span>
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">
-                          Verification Supported
-                        </span>
+                        <h5 className="font-bold">Verification Supported</h5>
                       </label>
-                      <label className="label-text text-sm">
+                      <label className="label label-text pt-0 text-sm ">
                         {formData.verificationEnabled
                           ? "Youth should upload proof of completion"
                           : "No verification is required"}
                       </label>
                       {errorsStep3.verificationEnabled && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep3.verificationEnabled.message}`}
                           </span>
@@ -2467,11 +2577,9 @@ const OpportunityDetails: NextPageWithLayout<{
                     {formData.verificationEnabled && (
                       <div className="form-control">
                         <label className="label">
-                          <span className="label-text font-bold">
-                            Verification Types
-                          </span>
+                          <h5 className="font-bold">Verification Types</h5>
                         </label>
-                        <label className="label-text text-sm">
+                        <label className="label label-text pt-0 text-sm ">
                           {formData.verificationTypes
                             ?.map(
                               (x) =>
@@ -2482,7 +2590,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             .join(", ")}
                         </label>
                         {errorsStep3.verificationTypes && (
-                          <label className="label">
+                          <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
                               {`${errorsStep3.verificationTypes.message}`}
                             </span>
@@ -2493,15 +2601,15 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">Credential</span>
+                        <h5 className="font-bold">Credential</h5>
                       </label>
-                      <label className="label-text text-sm">
+                      <label className="label label-text pt-0 text-sm ">
                         {formData.credentialIssuanceEnabled
                           ? "I want to issue a credential upon completionn"
                           : "No credential is required"}
                       </label>
                       {errorsStep6.credentialIssuanceEnabled && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep6.credentialIssuanceEnabled.message}`}
                           </span>
@@ -2511,13 +2619,13 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-bold">Schema</span>
+                        <h5 className="font-bold">Schema</h5>
                       </label>
-                      <label className="label-text text-sm">
+                      <label className="label label-text pt-0 text-sm ">
                         {formData.ssiSchemaName}
                       </label>
                       {errorsStep6.ssiSchemaName && (
-                        <label className="label">
+                        <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep6.ssiSchemaName.message}`}
                           </span>
@@ -2576,7 +2684,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       </label>
 
                       {errorsStep7.postAsActive && (
-                        <label className="label font-bold">
+                        <label className="label -mb-5 font-bold">
                           <span className="label-text-alt italic text-red-500">
                             {`${errorsStep7.postAsActive.message}`}
                           </span>
@@ -2585,10 +2693,10 @@ const OpportunityDetails: NextPageWithLayout<{
                     </div>
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-2">
+                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       <button
                         type="button"
-                        className="btn btn-warning btn-sm flex-grow"
+                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                         onClick={() => {
                           setStep(6);
                         }}
@@ -2597,7 +2705,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       </button>
                       <button
                         type="submit"
-                        className="btn btn-success btn-sm flex-grow disabled:bg-gray-light"
+                        className="btn btn-success flex-grow disabled:bg-gray-light md:w-1/3 md:flex-grow-0"
                         disabled={
                           !(
                             isValidStep1 &&
@@ -2610,7 +2718,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           )
                         }
                       >
-                        Submit
+                        Publish opportunity
                       </button>
                     </div>
                   </form>

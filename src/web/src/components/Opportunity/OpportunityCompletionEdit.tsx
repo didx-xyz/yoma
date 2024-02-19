@@ -230,7 +230,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       {isLoading && <Loading />}
       <form
         key={`OpportunityComplete_${id}`}
-        className="flex flex-col gap-2"
+        className="flex h-full flex-col gap-2 overflow-y-auto"
         onSubmit={handleSubmit(onSubmit)}
       >
         <div className="flex flex-col gap-2">
@@ -261,7 +261,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 />
               </div>
             </div>
-            <div className="flex flex-grow flex-col gap-4 overflow-x-hidden overflow-y-scroll px-10 md:max-h-[480px] md:min-h-[350px]">
+            <div className="flex flex-grow flex-col gap-4 overflow-y-auto px-10 md:max-h-[480px] md:min-h-[350px]">
               <div className="mb-8 flex flex-col items-center gap-1">
                 <h4 className="font-semibold tracking-wide">
                   Well done for completing this opportunity!
@@ -275,7 +275,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
               <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
                 <div className="flex w-full flex-row">
-                  <div className="ml-2 flex items-center p-6">
+                  <div className="ml-2 flex items-center p-2 md:p-6">
                     <Image
                       src={iconClock}
                       alt="Icon Clock"
@@ -294,7 +294,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                   </div>
                 </div>
 
-                <div className="-mt-2 grid grid-cols-2 gap-4 px-4 pb-4">
+                <div className="grid gap-4 px-4 pb-4 md:-mt-2 md:grid-cols-2">
                   <div className="form-control">
                     {/* eslint-disable @typescript-eslint/no-unsafe-argument */}
                     <Controller

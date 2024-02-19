@@ -220,7 +220,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       countries: null,
       languages: null,
       types: null,
-      valueContains: query?.toString() ?? null,
+      valueContains: null,
       commitmentIntervals: null,
       mostViewed: null,
       organizations: null,
@@ -263,7 +263,8 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       const params = new URLSearchParams();
       if (
         opportunitySearchFilter.valueContains !== undefined &&
-        opportunitySearchFilter.valueContains !== null
+        opportunitySearchFilter.valueContains !== null &&
+        opportunitySearchFilter.valueContains.length > 0
       )
         params.append("query", opportunitySearchFilter.valueContains);
       if (
@@ -324,7 +325,8 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
 
       if (
         opportunitySearchFilter?.publishedStates !== undefined &&
-        opportunitySearchFilter?.publishedStates !== null
+        opportunitySearchFilter?.publishedStates !== null &&
+        opportunitySearchFilter?.publishedStates.length > 0
       )
         params.append(
           "publishedStates",
@@ -366,7 +368,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         await searchOpportunities({
           pageNumber: page ? parseInt(page.toString()) : 1,
           pageSize: PAGE_SIZE,
-          valueContains: query?.toString() ?? null,
+          valueContains: query ? decodeURIComponent(query.toString()) : null,
           mostViewed: mostViewed ? Boolean(mostViewed) : null,
           // publishedStates:
           //   publishedStates != undefined
@@ -459,7 +461,7 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       setOpportunitySearchFilter({
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
-        valueContains: query?.toString() ?? null,
+        valueContains: query ? decodeURIComponent(query.toString()) : null,
         mostViewed: mostViewed ? Boolean(mostViewed) : null,
         publishedStates:
           publishedStates != undefined
@@ -553,12 +555,12 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         // uri encode the search value
         const searchValueEncoded = encodeURIComponent(query);
         query = searchValueEncoded;
+      }
 
-        opportunitySearchFilter.valueContains = query;
-        redirectWithSearchFilterParams(opportunitySearchFilter);
-      } else void router.push("/opportunities", undefined, { scroll: false });
+      opportunitySearchFilter.valueContains = query;
+      redirectWithSearchFilterParams(opportunitySearchFilter);
     },
-    [router, opportunitySearchFilter, redirectWithSearchFilterParams],
+    [opportunitySearchFilter, redirectWithSearchFilterParams],
   );
 
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
@@ -607,13 +609,19 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
 
   // scroll to results when search is executed
   useEffect(() => {
-    if (isSearchExecuted) {
+    if (searchResults && !isLoading) {
       setTimeout(() => {
         const element = document.getElementById("results");
-        element?.scrollIntoView({ behavior: "smooth" });
+
+        if (element) {
+          window.scrollTo({
+            top: element.offsetTop - 55,
+            behavior: "smooth",
+          });
+        }
       }, 500);
     }
-  }, [isSearchExecuted]);
+  }, [searchResults, isLoading]);
 
   return (
     <>
@@ -671,7 +679,9 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
               <SearchInputLarge
                 onSearch={onSearchInputSubmit}
                 placeholder="What are you looking for today?"
-                defaultValue={query as string}
+                defaultValue={
+                  query ? decodeURIComponent(query.toString()) : null
+                }
               />
               <button
                 type="button"
@@ -770,6 +780,13 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
         </div> */}
           </div>
         )}
+
+        <div
+          id="scrollToResults"
+          //className="mt-10"
+          //className="flexx hidden flex-col items-center rounded-lg p-4"
+          //style={{ display: "none" }}
+        ></div>
 
         {/* SEARCH EXECUTED, SHOW RESULTS */}
         {isSearchExecuted && (

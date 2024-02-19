@@ -19,6 +19,7 @@ export default {
         pink: "#FE4D57",
         orange: "#F9AB3E",
         green: "#387F6A",
+        "green-tint": "#4C8C79",
         "green-light": "#E6F5F3",
         "green-dark": "#4CA78C",
         // yellow: "#AE9C3E",
@@ -31,6 +32,10 @@ export default {
       },
       fontFamily: {
         openSans: ["var(--font-open-sans)"],
+      },
+      boxShadow: {
+        custom:
+          "0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)",
       },
     },
   },

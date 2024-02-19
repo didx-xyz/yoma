@@ -12,6 +12,7 @@ export const SearchInputLarge: React.FC<InputProps> = ({
   onSearch,
 }) => {
   const [searchInputValue, setSearchInputValue] = useState(defaultValue);
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   // hack: reset searchInputValue when defaultValue changes
   // the initialValue on the useState ain't working
@@ -19,16 +20,39 @@ export const SearchInputLarge: React.FC<InputProps> = ({
     setSearchInputValue(defaultValue);
   }, [defaultValue, setSearchInputValue]);
 
-  const handleSubmit = useCallback(
-    (e: React.SyntheticEvent) => {
-      e.preventDefault(); // 👈️ prevent page refresh
-
-      // trim whitespace
+  const doSubmit = useCallback(
+    (searchInputValue: string | undefined | null) => {
       const searchValue = searchInputValue?.trim() ?? "";
 
       if (onSearch) onSearch(searchValue);
     },
-    [onSearch, searchInputValue],
+    [onSearch],
+  );
+
+  const handleSubmit = useCallback(
+    (e: React.SyntheticEvent) => {
+      e.preventDefault(); // 👈️ prevent page refresh
+
+      doSubmit(searchInputValue);
+    },
+    [doSubmit, searchInputValue],
+  );
+
+  const handleInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (timeoutId) clearTimeout(timeoutId);
+
+      if (e.target.value === "") {
+        doSubmit(null);
+      } else if (e.target.value.length > 2) {
+        const newTimeoutId = setTimeout(() => {
+          doSubmit(e.target.value);
+        }, 2000); // 2000 milliseconds = 2 seconds
+
+        setTimeoutId(newTimeoutId);
+      }
+    },
+    [timeoutId, doSubmit],
   );
 
   return (
@@ -59,6 +83,28 @@ export const SearchInputLarge: React.FC<InputProps> = ({
           onChange={(e) => setSearchInputValue(e.target.value)}
           onFocus={(e) => (e.target.placeholder = "")}
           onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
+          onInput={handleInput}
+          //       onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
+
+          //         if (e.target.value === "") {
+          //           console.log("Input cleared");
+          //           // Handle input cleared event here
+          //           //setSearchInputValue(null);
+
+          //           //submit the form
+          //           if (onSearch) onSearch(e.target.value);
+          //         }
+          //         else{
+          //            // Clear any existing timeouts
+          // clearTimeout(timeoutId);
+
+          // // Set a new timeout
+          // timeoutId = setTimeout(function() {
+          //     // Submit the form
+          //     myForm.submit();
+          // }, 2000); // 2000 milliseconds = 2 seconds
+          //         }
+          //       }}
         />
       </div>
     </form>

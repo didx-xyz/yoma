@@ -486,10 +486,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                       styles={{
                         menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                       }}
-                      onChange={(val) => {
-                        onChange(val.map((c) => c.label));
-                        void handleSubmit(onSubmitHandler)();
-                      }}
+                      onChange={(val) => onChange(val.map((c) => c.label))}
                       value={lookups_publishedStates.filter(
                         (c) => value?.includes(c.label),
                       )}

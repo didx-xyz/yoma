@@ -185,7 +185,7 @@ const MyCredentials: NextPageWithLayout<{
                   </div>
                 )}
 
-                <div className="overflow-y-scrollx flex flex-grow flex-col gap-4 overflow-x-hidden p-4 pt-0 md:max-h-[480px] md:min-h-[350px]">
+                <div className="flex flex-grow flex-col gap-4 overflow-x-hidden overflow-y-scroll p-4 pt-0 md:max-h-[480px] md:min-h-[350px]">
                   <h4 className="text-center">{activeCredential?.title}</h4>
 
                   {/* CREDENTIAL DETAILS */}
