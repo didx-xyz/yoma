@@ -269,7 +269,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var countryIds = query.Select(o => o.CountryId).Distinct().ToList();
 
-            return _countryService.List().Where(o => countryIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
+            return _countryService.List().Where(o => countryIds.Contains(o.Id))
+                .OrderBy(o => o.CodeAlpha2 != Core.Country.Worldwide.ToDescription()).ThenBy(o => o.Name).ToList(); //esnure Worldwide appears first
         }
 
         public List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(List<PublishedState>? publishedStates)
