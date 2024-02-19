@@ -109,7 +109,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 throw new ArgumentNullException(nameof(id));
             id = id.Trim();
 
-            var client = _clientFactory.CreateTenantClient(tenantId); //will result in a HttpClientException(StatusCode=NotFound)
+            var client = _clientFactory.CreateTenantClient(tenantId); // will result in a HttpClientException(StatusCode=NotFound)
 
             var result = await client.GetIndyCredentialByIdAsync(id);
 
