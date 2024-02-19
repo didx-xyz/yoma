@@ -1,7 +1,7 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { use, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getOrganisationById } from "~/api/services/organisations";
 import { getUserProfile, patchYoIDOnboarding } from "~/api/services/user";
 import {
@@ -21,7 +21,7 @@ import {
   userProfileAtom,
 } from "~/lib/store";
 import ReactModal from "react-modal";
-import { IoMdClose, IoMdFingerPrint, IoMdThumbsUp } from "react-icons/io";
+import { IoMdFingerPrint, IoMdThumbsUp } from "react-icons/io";
 import iconBell from "public/images/icon-bell.webp";
 import Image from "next/image";
 import { toast } from "react-toastify";
