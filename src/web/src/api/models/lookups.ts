@@ -42,3 +42,8 @@ export interface TimeInterval {
   id: string;
   name: string;
 }
+
+export interface Education {
+  id: string;
+  name: string;
+}

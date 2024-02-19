@@ -1,6 +1,7 @@
 import ApiClient from "~/lib/axiosClient";
 import type {
   Country,
+  Education,
   Gender,
   Language,
   SkillSearchFilter,
@@ -57,5 +58,13 @@ export const getSkills = async (
   const { data } = await instance.get<SkillSearchResults>(
     `/lookup/skill?${params.toString()}`,
   );
+  return data;
+};
+
+export const getEducations = async (
+  context?: GetServerSidePropsContext,
+): Promise<Education[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<Education[]>("/lookup/education");
   return data;
 };

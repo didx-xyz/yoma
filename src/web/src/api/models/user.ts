@@ -34,6 +34,7 @@ export interface UserProfileRequest {
   dateOfBirth: string | null;
   resetPassword: boolean;
 }
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -43,7 +44,7 @@ export interface UserProfile {
   displayName: string | null;
   phoneNumber: string | null;
   countryId: string | null;
-  countryOfResidenceId: string | null;
+  educationId: string | null;
   genderId: string | null;
   dateOfBirth: string | null;
   photoId: string | null;

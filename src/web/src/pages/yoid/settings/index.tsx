@@ -11,7 +11,11 @@ import { useForm, type FieldValues } from "react-hook-form";
 import { toast } from "react-toastify";
 import zod from "zod";
 import { type UserProfileRequest } from "~/api/models/user";
-import { getCountries, getGenders } from "~/api/services/lookups";
+import {
+  getCountries,
+  getEducations,
+  getGenders,
+} from "~/api/services/lookups";
 import { getUserProfile, patchPhoto, patchUser } from "~/api/services/user";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
@@ -55,6 +59,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       queryFn: async () => await getCountries(),
     }),
     await queryClient.prefetchQuery({
+      queryKey: ["educations"],
+      queryFn: async () => await getEducations(),
+    }),
+    await queryClient.prefetchQuery({
       queryKey: ["userProfile"],
       queryFn: async () => await getUserProfile(),
     }),
@@ -88,6 +96,11 @@ const Settings: NextPageWithLayout<{
     queryFn: async () => await getCountries(),
     enabled: !error,
   });
+  const { data: educations } = useQuery({
+    queryKey: ["educations"],
+    queryFn: async () => await getEducations(),
+    enabled: !error,
+  });
   const { data: userProfile } = useQuery({
     queryKey: ["userProfile"],
     queryFn: async () => await getUserProfile(),
@@ -109,9 +122,7 @@ const Settings: NextPageWithLayout<{
         "Phone number is invalid",
       ),
     countryId: zod.string().min(1, "Country is required."),
-    countryOfResidenceId: zod
-      .string()
-      .min(1, "Country of residence is required."),
+    educationId: zod.string().min(1, "Education is required."),
     genderId: zod.string().min(1, "Gender is required."),
     dateOfBirth: zod.coerce
       .date({
@@ -150,8 +161,7 @@ const Settings: NextPageWithLayout<{
     //HACK: 'expected string, received null' form validation error
     if (!userProfile.phoneNumber) userProfile.phoneNumber = "";
     if (!userProfile.countryId) userProfile.countryId = "";
-    if (!userProfile.countryOfResidenceId)
-      userProfile.countryOfResidenceId = "";
+    if (!userProfile.educationId) userProfile.educationId = "";
     if (!userProfile.genderId) userProfile.genderId = "";
 
     // reset form
@@ -351,23 +361,23 @@ const Settings: NextPageWithLayout<{
 
               <div className="form-control">
                 <label className="label font-bold">
-                  <span className="label-text">Country Of Residence</span>
+                  <span className="label-text">Education</span>
                 </label>
                 <select
                   className="select select-bordered border-gray focus:border-gray focus:outline-none"
-                  {...register("countryOfResidenceId")}
+                  {...register("educationId")}
                 >
                   <option value="">Please select</option>
-                  {countries?.map((country) => (
-                    <option key={country.id} value={country.id}>
-                      {country.name}
+                  {educations?.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
                     </option>
                   ))}
                 </select>
-                {errors.countryOfResidenceId && (
+                {errors.educationId && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
-                      {`${errors.countryOfResidenceId.message}`}
+                      {`${errors.educationId.message}`}
                     </span>
                   </label>
                 )}
