@@ -52,10 +52,12 @@ import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityB
 import { trackGAEvent } from "~/lib/google-analytics";
 import { RoundedImage } from "~/components/RoundedImage";
 import Moment from "react-moment";
+import router from "next/router";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
   opportunityId: string;
+  returlUrl?: string;
 }
 
 // ⚠️ SSR
@@ -101,6 +103,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
+// 👇 PAGE COMPONENT: Opportunity Detail
+// this page is accessed from the /organisations/[id]/.. pages (OrgAdmin role)
+// or from the /admin/opportunities/.. pages (Admin role). the retunUrl query param is used to redirect back to the admin page
 const OpportunityDetails: NextPageWithLayout<{
   id: string;
   opportunityId: string;
@@ -108,6 +113,7 @@ const OpportunityDetails: NextPageWithLayout<{
   error: string;
   theme: string;
 }> = ({ id, opportunityId, user, error }) => {
+  const { returlUrl } = router.query;
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
   const currentOrganisationInactive = useAtomValue(
@@ -176,7 +182,10 @@ const OpportunityDetails: NextPageWithLayout<{
               <li className="inline">
                 <Link
                   className="inline font-bold text-white hover:text-gray"
-                  href={`/organisations/${id}/opportunities`}
+                  href={
+                    returlUrl?.toString() ??
+                    `/organisations/${id}/opportunities`
+                  }
                 >
                   <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
                   Opportunities
@@ -194,7 +203,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
           <div className="flex gap-2 sm:justify-end">
             <button
-              className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white disabled:cursor-not-allowed disabled:bg-gray-dark"
+              className="bg-theme hover:bg-theme flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 hover:brightness-110 disabled:cursor-not-allowed disabled:bg-gray-dark"
               onClick={() => {
                 setManageOpportunityMenuVisible(true);
               }}
@@ -219,7 +228,9 @@ const OpportunityDetails: NextPageWithLayout<{
             <div className="flex flex-col gap-4 p-4 text-xs">
               {opportunity?.status != "Deleted" && (
                 <Link
-                  href={`/organisations/${id}/opportunities/${opportunityId}`}
+                  href={`/organisations/${id}/opportunities/${opportunityId}${
+                    returlUrl ? `?returlUrl=${returlUrl}` : ""
+                  }`}
                   className="flex flex-row items-center text-gray-dark hover:brightness-50"
                 >
                   <FaPencilAlt className="mr-2 h-3 w-3" />
@@ -416,16 +427,6 @@ const OpportunityDetails: NextPageWithLayout<{
                       Deleted
                     </div>
                   )}
-                  {/* {opportunity?.published && (
-                    <div className="badge h-6 rounded-md bg-green-light text-blue">
-                      Published
-                    </div>
-                  )}
-                  {!opportunity?.published && (
-                    <div className="badge h-6 rounded-md bg-green-light text-red-400">
-                      Not published
-                    </div>
-                  )} */}
                 </div>
 
                 {/* DATES */}
@@ -485,7 +486,9 @@ const OpportunityDetails: NextPageWithLayout<{
                     {opportunity?.participantCountVerificationPending &&
                       opportunity?.participantCountVerificationPending > 0 && (
                         <Link
-                          href={`/organisations/${id}/verifications?opportunity=${opportunityId}`}
+                          href={`/organisations/${id}/verifications?opportunity=${opportunityId}${
+                            returlUrl ? `&returlUrl=${returlUrl}` : ""
+                          }`}
                         >
                           <div className="flex flex-row items-center gap-2 rounded-lg bg-yellow-light p-1">
                             <div className="badge badge-warning rounded-lg bg-yellow text-white">

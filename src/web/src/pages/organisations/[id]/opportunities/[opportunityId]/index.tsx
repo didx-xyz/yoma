@@ -84,6 +84,7 @@ import moment from "moment";
 interface IParams extends ParsedUrlQuery {
   id: string;
   opportunityId: string;
+  returlUrl?: string;
 }
 
 // ⚠️ SSR
@@ -187,6 +188,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
+// 👇 PAGE COMPONENT: Opportunity Create/Edit
+// this page acts as a create (/opportunites/create) or edit page (/opportunities/:id) based on the [opportunityId] route param
+// this page is accessed from the /organisations/[id]/.. pages (OrgAdmin role)
+// or from the /admin/opportunities/.. pages (Admin role). the retunUrl query param is used to redirect back to the admin page
 const OpportunityDetails: NextPageWithLayout<{
   id: string;
   opportunityId: string;
@@ -194,6 +199,7 @@ const OpportunityDetails: NextPageWithLayout<{
   theme: string;
   error: string;
 }> = ({ id, opportunityId, error }) => {
+  const { returlUrl } = router.query;
   const queryClient = useQueryClient();
 
   // 👇 use prefetched queries from server
@@ -741,6 +747,7 @@ const OpportunityDetails: NextPageWithLayout<{
   return (
     <>
       {isLoading && <Loading />}
+
       <PageBackground />
 
       <div className="container z-10 mt-20 max-w-5xl px-2 py-4">
@@ -750,9 +757,11 @@ const OpportunityDetails: NextPageWithLayout<{
             <li className="inline">
               <Link
                 className="inline text-white hover:text-gray"
-                href={`/organisations/${id}/opportunities`}
+                href={
+                  returlUrl?.toString() ?? `/organisations/${id}/opportunities`
+                }
               >
-                <IoMdArrowRoundBack className="mr-2 inline-block h-6 w-6 rounded-full bg-green-tint p-1" />
+                <IoMdArrowRoundBack className="bg-theme mr-2 inline-block h-6 w-6 rounded-full p-1 brightness-105" />
                 Opportunities
               </Link>
             </li>
@@ -764,7 +773,9 @@ const OpportunityDetails: NextPageWithLayout<{
                 ) : (
                   <Link
                     className="inline text-white hover:text-gray"
-                    href={`/organisations/${id}/opportunities/${opportunityId}/info`}
+                    href={`/organisations/${id}/opportunities/${opportunityId}/info${
+                      returlUrl ? `?returlUrl=${returlUrl}` : ""
+                    }`}
                   >
                     {opportunity?.title}
                   </Link>

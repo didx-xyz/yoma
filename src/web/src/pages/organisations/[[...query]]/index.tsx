@@ -264,7 +264,7 @@ const Opportunities: NextPageWithLayout<{
           <div className="flex gap-2 sm:justify-end">
             <Link
               href="/organisations/register"
-              className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
+              className="bg-theme hover:bg-theme flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 hover:brightness-110"
             >
               <IoMdAdd className="h-5 w-5" />
               Add organisation
