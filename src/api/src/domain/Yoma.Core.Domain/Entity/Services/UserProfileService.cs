@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using System.Transactions;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Extensions;
@@ -104,10 +105,10 @@ namespace Yoma.Core.Domain.Entity.Services
                 if (_userService.GetByEmailOrNull(request.Email, false, false) != null)
                     throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
 
-            user.Email = request.Email;
+            user.Email = request.Email.ToLower();
             if (emailUpdated) user.EmailConfirmed = false;
-            user.FirstName = request.FirstName;
-            user.Surname = request.Surname;
+            user.FirstName = request.FirstName.TitleCase();
+            user.Surname = request.Surname.TitleCase();
             user.DisplayName = request.DisplayName ?? string.Empty;
             user.SetDisplayName();
             user.PhoneNumber = request.PhoneNumber;

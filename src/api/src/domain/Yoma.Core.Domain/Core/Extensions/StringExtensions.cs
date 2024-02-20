@@ -69,11 +69,11 @@ namespace Yoma.Core.Domain.Core.Extensions
         }
 
         /// <summary>
-        /// Converts string to PascalCase (TitleCase)
+        /// Converts string to TitleCase
         /// </summary>
         /// <param name="e"></param>
         /// <returns></returns>
-        public static string PascalCase(this string e)
+        public static string TitleCase(this string e)
         {
             return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(e.NormalizeTrim());
         }

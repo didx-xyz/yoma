@@ -83,7 +83,8 @@ BEGIN
         SELECT
             gen_random_uuid(),
             V_OrgName,
-            MD5(V_OrgName),
+            ENCODE(DIGEST(V_OrgName, 'sha256'), 'hex')
+            MD5(),
             'https://www.google.com/',
             'Primary Contact',
             'primarycontact@gmail.com',
