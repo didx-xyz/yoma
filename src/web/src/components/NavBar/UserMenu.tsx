@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useCallback, useState } from "react";
 import {
   IoMdAdd,
-  IoMdCard,
   IoMdCheckmark,
   IoMdClose,
   IoMdImage,

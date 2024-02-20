@@ -23,7 +23,7 @@ import { type NextPageWithLayout } from "~/pages/_app";
 import { type User, authOptions } from "~/server/auth";
 import { config } from "~/lib/react-query-config";
 import { getOpportunitiesAdmin } from "~/api/services/opportunities";
-import {
+import type {
   OpportunityInfo,
   OpportunitySearchResults,
 } from "~/api/models/opportunity";
@@ -174,33 +174,8 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   error: string;
   user: User;
   theme: string;
-}> = ({ error, user }) => {
+}> = ({ error }) => {
   const router = useRouter();
-  // const [showAll, setShowAll] = useState(true);
-  // const [showPending, setShowPending] = useState(false);
-  // const [showApproved, setShowApproved] = useState(false);
-
-  // const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-  //   type TabStates = Record<string, [boolean, boolean, boolean]>;
-
-  //   const tabStates: TabStates = {
-  //     all_tab: [true, false, false],
-  //     pending_tab: [false, true, false],
-  //     approved_tab: [false, false, true],
-  //   };
-
-  //   const { id } = event.target;
-
-  //   if (id && tabStates.hasOwnProperty(id)) {
-  //     const tabState = tabStates[id] as [boolean, boolean, boolean];
-
-  //     const [showAll, showPending, showApproved] = tabState;
-
-  //     // setShowAll(showAll);
-  //     // setShowPending(showPending);
-  //     // setShowApproved(showApproved);
-  //   }
-  // };
 
   // get query parameter from route
   const { query, page } = router.query;

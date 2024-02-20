@@ -220,7 +220,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         void router.push(`/organisations/${id}/verifications`);
       }
     },
-    [router, id, opportunity],
+    [router, id, opportunity, returnUrl],
   );
   const onFilterOpportunity = useCallback(
     (opportunityId: string) => {
@@ -237,7 +237,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         void router.push(`/organisations/${id}/verifications`);
       }
     },
-    [router, id, query],
+    [router, id, query, returnUrl],
   );
 
   // 🔔 pager change event

@@ -168,7 +168,7 @@ const OrganisationCreate: NextPageWithLayout<{
         return;
       }
     },
-    [setIsLoading, setUserProfile, update, session],
+    [setIsLoading, setUserProfile, update, session, router],
   );
 
   // form submission handler
@@ -203,7 +203,7 @@ const OrganisationCreate: NextPageWithLayout<{
 
   const handleCancel = useCallback(() => {
     router.push(returnUrl?.toString() ?? "/");
-  }, [returnUrl]);
+  }, [router, returnUrl]);
 
   // scroll to top on step change
   useEffect(() => {
