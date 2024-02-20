@@ -1,0 +1,63 @@
+load database
+  from mssql://username:password@endpoint:1433/yoma-staging
+  into pgsql://username:password@endpoint:5433/yoma-dev
+
+set
+  client_encoding to 'utf8'
+
+cast
+  type char      to text drop typemod using remove-null-characters,
+  type nchar     to text drop typemod using remove-null-characters,
+  type varchar   to text drop typemod using remove-null-characters,
+  type nvarchar  to text drop typemod using remove-null-characters,
+  type xml       to text drop typemod using remove-null-characters
+
+before load do
+  $$
+    DROP SCHEMA IF EXISTS dbo CASCADE;
+  $$
+
+after load do
+  $$
+    -- drop all orphaned entries in the `dbo.files` table
+    WITH referenced_files AS (
+    -- Subquery to identify all distinct File IDs referenced in the specified tables and columns
+    SELECT DISTINCT files.id AS file_id
+    FROM
+        dbo.credentials
+        JOIN dbo.files ON credentials.fileid = files.id
+    UNION
+    SELECT DISTINCT files.id AS file_id
+    FROM
+        dbo.organisations
+        JOIN dbo.files ON organisations.companyregistrationid = files.id
+    UNION
+    SELECT DISTINCT files.id AS file_id
+    FROM
+        dbo.organisations
+        JOIN dbo.files ON organisations.logoid = files.id
+    UNION
+    SELECT DISTINCT files.id AS file_id
+    FROM
+        dbo.users
+        JOIN dbo.files ON users.photoid = files.id
+    )
+    DELETE FROM dbo.files
+    WHERE id IN (
+        SELECT
+            files.id
+        FROM
+            dbo.files
+            LEFT JOIN referenced_files ON files.id = referenced_files.file_id
+        WHERE
+            referenced_files.file_id IS NULL
+    );
+  $$,
+  $$
+    -- add `contenttype` column to `dbo.files` table
+    ALTER TABLE dbo.files
+      ADD COLUMN contenttype text
+      NOT NULL
+      DEFAULT 'application/octet-stream';
+  $$
+;
