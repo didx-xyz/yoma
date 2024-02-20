@@ -79,7 +79,6 @@ export const Global: React.FC = () => {
     if (session && !session?.error && !userProfile) {
       getUserProfile()
         .then((res) => {
-          console.log("user profile");
           // update atom
           setUserProfile(res);
 
@@ -138,21 +137,13 @@ export const Global: React.FC = () => {
         router.asPath.startsWith("/organisations"))
     ) {
       setActiveNavigationRoleViewAtom(RoleView.Admin);
-    } else if (isOrgAdmin && router.asPath.startsWith("/organisations")) {
-      setActiveNavigationRoleViewAtom(RoleView.OrgAdmin);
-    } else {
-      setActiveNavigationRoleViewAtom(RoleView.User);
-    }
-
-    // override for organisations & registration page (no active organisation yet)
-    if (
-      router.asPath == "/organisations" ||
-      router.asPath.startsWith("/organisations/register")
+    } else if (
+      isOrgAdmin &&
+      (router.route == "/organisations" ||
+        router.asPath.startsWith("/organisations/register"))
     ) {
       setActiveNavigationRoleViewAtom(RoleView.User);
-    }
-    //  if organisation page, change navbar links & company logo
-    else if (router.asPath.startsWith("/organisations")) {
+    } else if (isOrgAdmin && router.asPath.startsWith("/organisations")) {
       const matches = router.asPath.match(/\/organisations\/([a-z0-9-]{36})/);
 
       if (matches && matches.length > 1) {
@@ -178,11 +169,13 @@ export const Global: React.FC = () => {
         }
 
         return;
+      } else {
+        setCurrentOrganisationIdAtom(null);
+        setCurrentOrganisationLogoAtom(null);
+        setCurrentOrganisationInactiveAtom(false);
       }
     } else {
-      setCurrentOrganisationIdAtom(null);
-      setCurrentOrganisationLogoAtom(null);
-      setCurrentOrganisationInactiveAtom(false);
+      setActiveNavigationRoleViewAtom(RoleView.User);
     }
   }, [
     router,
