@@ -57,7 +57,7 @@ import router from "next/router";
 interface IParams extends ParsedUrlQuery {
   id: string;
   opportunityId: string;
-  returlUrl?: string;
+  returnUrl?: string;
 }
 
 // ⚠️ SSR
@@ -113,7 +113,7 @@ const OpportunityDetails: NextPageWithLayout<{
   error: string;
   theme: string;
 }> = ({ id, opportunityId, user, error }) => {
-  const { returlUrl } = router.query;
+  const { returnUrl } = router.query;
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
   const currentOrganisationInactive = useAtomValue(
@@ -183,7 +183,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 <Link
                   className="inline font-bold text-white hover:text-gray"
                   href={
-                    returlUrl?.toString() ??
+                    returnUrl?.toString() ??
                     `/organisations/${id}/opportunities`
                   }
                 >
@@ -229,7 +229,7 @@ const OpportunityDetails: NextPageWithLayout<{
               {opportunity?.status != "Deleted" && (
                 <Link
                   href={`/organisations/${id}/opportunities/${opportunityId}${
-                    returlUrl ? `?returlUrl=${returlUrl}` : ""
+                    returnUrl ? `?returnUrl=${returnUrl}` : ""
                   }`}
                   className="flex flex-row items-center text-gray-dark hover:brightness-50"
                 >
@@ -487,7 +487,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       opportunity?.participantCountVerificationPending > 0 && (
                         <Link
                           href={`/organisations/${id}/verifications?opportunity=${opportunityId}${
-                            returlUrl ? `&returlUrl=${returlUrl}` : ""
+                            returnUrl ? `&returnUrl=${returnUrl}` : ""
                           }`}
                         >
                           <div className="flex flex-row items-center gap-2 rounded-lg bg-yellow-light p-1">

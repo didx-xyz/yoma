@@ -3,7 +3,7 @@ import { QueryClient, dehydrate } from "@tanstack/react-query";
 import { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
-import router from "next/router";
+import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement, useEffect } from "react";
 import { type FieldValues } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -89,6 +89,8 @@ const OrganisationCreate: NextPageWithLayout<{
   error: string;
   theme: string;
 }> = ({ error }) => {
+  const router = useRouter();
+  const { returnUrl } = router.query;
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
   const setUserProfile = useSetAtom(userProfileAtom);
@@ -199,9 +201,9 @@ const OrganisationCreate: NextPageWithLayout<{
     [setStep, OrganizationRequestBase, onSubmit],
   );
 
-  const handleCancel = () => {
-    router.push("/");
-  };
+  const handleCancel = useCallback(() => {
+    router.push(returnUrl?.toString() ?? "/");
+  }, [returnUrl]);
 
   // scroll to top on step change
   useEffect(() => {

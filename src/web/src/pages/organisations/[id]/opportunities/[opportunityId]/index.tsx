@@ -84,7 +84,7 @@ import moment from "moment";
 interface IParams extends ParsedUrlQuery {
   id: string;
   opportunityId: string;
-  returlUrl?: string;
+  returnUrl?: string;
 }
 
 // ⚠️ SSR
@@ -199,7 +199,7 @@ const OpportunityDetails: NextPageWithLayout<{
   theme: string;
   error: string;
 }> = ({ id, opportunityId, error }) => {
-  const { returlUrl } = router.query;
+  const { returnUrl } = router.query;
   const queryClient = useQueryClient();
 
   // 👇 use prefetched queries from server
@@ -758,7 +758,7 @@ const OpportunityDetails: NextPageWithLayout<{
               <Link
                 className="inline text-white hover:text-gray"
                 href={
-                  returlUrl?.toString() ?? `/organisations/${id}/opportunities`
+                  returnUrl?.toString() ?? `/organisations/${id}/opportunities`
                 }
               >
                 <IoMdArrowRoundBack className="bg-theme mr-2 inline-block h-6 w-6 rounded-full p-1 brightness-105" />
@@ -774,7 +774,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   <Link
                     className="inline text-white hover:text-gray"
                     href={`/organisations/${id}/opportunities/${opportunityId}/info${
-                      returlUrl ? `?returlUrl=${returlUrl}` : ""
+                      returnUrl ? `?returnUrl=${returnUrl}` : ""
                     }`}
                   >
                     {opportunity?.title}

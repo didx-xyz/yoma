@@ -68,7 +68,7 @@ interface IParams extends ParsedUrlQuery {
   query?: string;
   opportunity?: string;
   page?: string;
-  returlUrl?: string;
+  returnUrl?: string;
 }
 
 // ⚠️ SSR
@@ -160,7 +160,7 @@ const OpportunityVerifications: NextPageWithLayout<{
   theme: string;
 }> = ({ id, query, opportunity, page, error }) => {
   const router = useRouter();
-  const { returlUrl } = router.query;
+  const { returnUrl } = router.query;
   const queryClient = useQueryClient();
 
   // 👇 use prefetched queries from server
@@ -213,7 +213,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           query: {
             query: queryEncoded,
             opportunity: opportunity,
-            returlUrl: returlUrl,
+            returnUrl: returnUrl,
           },
         });
       } else {
@@ -230,7 +230,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           query: {
             query: query,
             opportunity: opportunityId,
-            returlUrl: returlUrl,
+            returnUrl: returnUrl,
           },
         });
       } else {
@@ -250,14 +250,14 @@ const OpportunityVerifications: NextPageWithLayout<{
           query: query,
           opportunity: opportunity,
           page: value,
-          returlUrl: returlUrl,
+          returnUrl: returnUrl,
         },
       });
 
       // reset scroll position
       window.scrollTo(0, 0);
     },
-    [router, query, id, opportunity, returlUrl],
+    [router, query, id, opportunity, returnUrl],
   );
 
   const [isLoading, setIsLoading] = useState(false);
@@ -896,7 +896,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                           className="line-clamp-2"
                           href={`/organisations/${id}/opportunities/${
                             item.opportunityId
-                          }/info${returlUrl ? `?returlUrl=${returlUrl}` : ""}`}
+                          }/info${returnUrl ? `?returnUrl=${returnUrl}` : ""}`}
                         >
                           {item.opportunityTitle}
                         </Link>

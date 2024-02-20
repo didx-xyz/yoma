@@ -342,7 +342,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                     <tr key={opportunity.id} className="border-gray">
                       <td>
                         <Link
-                          href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}/info?returlUrl=/admin/opportunities`}
+                          href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}/info?returnUrl=/admin/opportunities`}
                         >
                           {opportunity.title}
                         </Link>
