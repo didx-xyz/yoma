@@ -84,27 +84,6 @@ export const SearchInputLarge: React.FC<InputProps> = ({
           onFocus={(e) => (e.target.placeholder = "")}
           onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
           onInput={handleInput}
-          //       onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
-
-          //         if (e.target.value === "") {
-          //           console.log("Input cleared");
-          //           // Handle input cleared event here
-          //           //setSearchInputValue(null);
-
-          //           //submit the form
-          //           if (onSearch) onSearch(e.target.value);
-          //         }
-          //         else{
-          //            // Clear any existing timeouts
-          // clearTimeout(timeoutId);
-
-          // // Set a new timeout
-          // timeoutId = setTimeout(function() {
-          //     // Submit the form
-          //     myForm.submit();
-          // }, 2000); // 2000 milliseconds = 2 seconds
-          //         }
-          //       }}
         />
       </div>
     </form>
