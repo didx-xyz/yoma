@@ -57,8 +57,9 @@ export const UserMenu: React.FC = () => {
     return (
       <li
         key={`userMenu_orgs_${organisation.id}`}
-        className="flex flex-row hover:bg-gray-light"
+        className="flex flex-row flex-nowrap hover:bg-gray-light"
       >
+        {/* ORGANISATION LINK */}
         <Link
           key={organisation.id}
           href={
@@ -66,7 +67,7 @@ export const UserMenu: React.FC = () => {
               ? `/organisations/${organisation.id}`
               : `/organisations/${organisation.id}/edit`
           }
-          className="flex-grow text-gray-dark"
+          className="text-gray-dark"
           onClick={() => setUserMenuVisible(false)}
           id={`userMenu_orgs_${organisation.name}`} // e2e
         >
@@ -99,7 +100,7 @@ export const UserMenu: React.FC = () => {
           )}
 
           <div className="flex flex-col gap-1">
-            <div className="flex w-[325px] items-center overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[170px]">
+            <div className="w-[325px] overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[150px]">
               {organisation.name}
             </div>
             <div className="flex flex-row items-center">
@@ -112,9 +113,7 @@ export const UserMenu: React.FC = () => {
               {organisation.status == "Inactive" && (
                 <>
                   <IoMdClose className="h-4 w-4 text-warning" />
-                  <div className="text-xs text-warning">
-                    {organisation.status}
-                  </div>
+                  <div className="text-xs text-warning">Pending</div>
                 </>
               )}
               {organisation.status == "Declined" && (
@@ -129,14 +128,17 @@ export const UserMenu: React.FC = () => {
           </div>
         </Link>
 
-        <Link
-          key={organisation.id}
-          href={`/organisations/${organisation.id}/edit`}
-          className="flex items-center p-2 text-gray-dark"
-          onClick={() => setUserMenuVisible(false)}
-        >
-          <IoMdSettings className="h-6 w-6" />
-        </Link>
+        {/* SETTING BUTTON */}
+        <div className="flex items-center">
+          <Link
+            key={organisation.id}
+            href={`/organisations/${organisation.id}/edit`}
+            className="rounded-full p-1 text-gray-dark shadow hover:bg-gray-dark hover:text-gray-light"
+            onClick={() => setUserMenuVisible(false)}
+          >
+            <IoMdSettings className="h-6 w-6" />
+          </Link>
+        </div>
       </li>
     );
   };
@@ -286,10 +288,14 @@ export const UserMenu: React.FC = () => {
             <>
               <div className="flex flex-row items-center justify-center py-2 pl-4">
                 <div className="w-full text-base font-semibold text-gray-dark">
-                  Organisations
+                  My organisations
                 </div>
                 <div className="justify-end">
-                  <Link href="/organisations" className="text-gray-dark">
+                  <Link
+                    href="/organisations"
+                    className="text-gray-dark"
+                    onClick={() => setUserMenuVisible(false)}
+                  >
                     <div className="flex items-center justify-center whitespace-nowrap rounded-full bg-white px-4 text-sm font-semibold text-orange shadow transition-transform duration-200 hover:scale-105">
                       <IoMdSearch className="h-5 w-5 text-gray-dark" />
                       View all

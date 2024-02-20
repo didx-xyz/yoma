@@ -297,7 +297,6 @@ const Opportunities: NextPageWithLayout<{
           />
 
           {/* ALL ORGS CONTENT */}
-
           <div role="tabpanel" className="tab-content">
             <div className="flex flex-row justify-end py-4">
               <SearchInput
@@ -308,7 +307,7 @@ const Opportunities: NextPageWithLayout<{
             </div>
             {/* NO ROWS */}
             {!organisationsAll ||
-              (organisationsAll.length === 0 && (
+              (organisationsAll.length === 0 && !query && (
                 <NoRowsMessage
                   title={"No organisations found"}
                   description={"Approved organisations will be displayed here."}
@@ -361,7 +360,7 @@ const Opportunities: NextPageWithLayout<{
             </div>
             {/* NO ROWS */}
             {!organisationsActive ||
-              (organisationsActive.items.length === 0 && (
+              (organisationsActive.items.length === 0 && !query && (
                 <NoRowsMessage
                   title={"No organisations found"}
                   description={"Approved organisations will be displayed here."}

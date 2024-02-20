@@ -173,9 +173,7 @@ export const Global: React.FC = () => {
             if (res.logoURL) setCurrentOrganisationLogoAtom(res.logoURL);
             else setCurrentOrganisationLogoAtom(null);
 
-            if (res.status !== "Active") {
-              setCurrentOrganisationInactiveAtom(true);
-            }
+            setCurrentOrganisationInactiveAtom(res.status !== "Active");
           });
         }
 
