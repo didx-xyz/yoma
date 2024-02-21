@@ -72,6 +72,7 @@ export interface OpportunityInfo {
   title: string;
   description: string;
   type: string;
+  organizationId: string;
   organizationName: string;
   organizationLogoURL: string | null;
   instructions: string | null;

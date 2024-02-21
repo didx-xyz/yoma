@@ -33,7 +33,8 @@
     "src/components/Organisation/Upsert/OrgRolesEdit.tsx",
     "src/pages/opportunities/opportunity/[id].remtsx",
     "src/pages/organisations/[id]/opportunities/[opportunityId]/verify.remtsx",
-    "prettier.ignore"
+    "prettier.ignore",
+    "src/pages/admin/opportunities/index.atsx"
   ],
   "exclude": ["node_modules"]
 }
