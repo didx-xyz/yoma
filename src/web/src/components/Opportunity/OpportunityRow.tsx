@@ -23,7 +23,7 @@ export const OpportunityRow: React.FC<InputProps> = ({
             <div className="flex-grow">
               <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-black md:max-w-[800px]">
                 {title}
-              </div>{" "}
+              </div>
             </div>
             {viewAllUrl && (
               <Link

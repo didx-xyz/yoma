@@ -9,6 +9,7 @@ import type {
   OpportunitySearchFilter,
   OpportunitySearchCriteriaZltoReward,
   OpportunityType,
+  OpportunitySearchFilterAdmin,
 } from "~/api/models/opportunity";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import Image from "next/image";
@@ -19,7 +20,10 @@ import type { OrganizationInfo } from "~/api/models/organisation";
 
 export interface InputProps {
   htmlRef: HTMLDivElement;
-  opportunitySearchFilter: OpportunitySearchFilter | null;
+  opportunitySearchFilter:
+    | OpportunitySearchFilter
+    | OpportunitySearchFilterAdmin
+    | null;
   lookups_categories: OpportunityCategory[];
   lookups_countries: Country[];
   lookups_languages: Language[];
@@ -28,7 +32,9 @@ export interface InputProps {
   lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
   lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
   lookups_publishedStates: SelectOption[];
-  onSubmit?: (fieldValues: OpportunitySearchFilter) => void;
+  onSubmit?: (
+    fieldValues: OpportunitySearchFilter | OpportunitySearchFilterAdmin,
+  ) => void;
   onCancel?: () => void;
   cancelButtonText?: string;
   submitButtonText?: string;
@@ -472,7 +478,7 @@ export const OpportunityFilterVertical: React.FC<InputProps> = ({
                 <Controller
                   name="publishedStates"
                   control={form.control}
-                  defaultValue={opportunitySearchFilter?.publishedStates}
+                  //defaultValue={opportunitySearchFilter?.publishedStates}
                   render={({ field: { onChange, value } }) => (
                     <Select
                       instanceId="publishedStates"

@@ -234,3 +234,69 @@ export const updateOpportunityStatus = async (
   );
   return data;
 };
+
+export const getOpportunitiesAdminExportToCSV = async (
+  filter: OpportunitySearchFilterAdmin,
+
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<File> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.post(`/opportunity/search/csv`, filter, {
+    responseType: "blob", // set responseType to 'blob' or 'arraybuffer'
+  });
+
+  // create the file name
+  const date = new Date();
+  const dateString = `${date.getFullYear()}-${
+    date.getMonth() + 1
+  }-${date.getDate()}`;
+  const fileName = `Opportunities_${dateString}.csv`;
+
+  // create a new Blob object using the data
+  const blob = new Blob([data], { type: "text/csv" });
+
+  // create a new File object from the Blob
+  const file = new File([blob], fileName);
+
+  return file;
+};
+
+// const getTransactionsExportToCSV = async (
+//   access_token: string,
+//   filter: OpportunitySearchFilterAdmin,
+// ): Promise<File> => {
+//   if (!access_token) {
+//     return Promise.reject("access_token is NULL");
+//   }
+
+//   var headers = new Headers();
+//   headers.append("Access-Control-Allow-Origin", "*");
+//   headers.append("Content-Type", "application/json");
+//   headers.append("Accept", "application/json");
+//   headers.append("Authorization", "Bearer " + access_token);
+
+//   var options = {
+//     method: "POST",
+//     headers: headers,
+//     body: JSON.stringify(filter),
+//   };
+
+//   return await fetch(
+//     `${baseUri}/payout/my/seller/transactions/csv`,
+//     options,
+//   ).then(async (res) => {
+//     const formattedDate = new Date()
+//       .toISOString()
+//       .replace(/:/g, "-")
+//       .replace(/-/g, "-")
+//       .replace(/T/g, "--");
+
+//     const filename = res?.headers?.get("content-disposition")?.split('"')[1];
+//     const blob = await res.blob();
+//     return {
+//       filename: filename ?? `Transactions_${formattedDate}.csv`,
+//       blob: blob,
+//     };
+//   });
+// };
