@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.Core.Extensions
         {
             url = url?.Trim();
             if (string.IsNullOrWhiteSpace(url)) return null;
- 
+
             try
             {
                 var uri = new Uri(url, UriKind.RelativeOrAbsolute);
