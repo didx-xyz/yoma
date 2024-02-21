@@ -56,9 +56,6 @@ import { useSession } from "next-auth/react";
 // It may be called again, on a serverless function, if
 // revalidation is enabled and a new request comes in
 export const getStaticProps: GetStaticProps = async (context) => {
-  //TODO: remove
-  console.warn("REGENERATING");
-
   const opportunities_trending = await searchOpportunities(
     {
       pageNumber: 1,
@@ -529,10 +526,18 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
       opportunitySearchFilter.types?.map((c) => `'${c}'`).join(", "),
       opportunitySearchFilter.organizations?.map((c) => `'${c}'`).join(", "),
       opportunitySearchFilter.publishedStates?.map((c) => `'${c}'`).join(", "),
-      // opportunitySearchFilter.commitmentIntervals
-      //   ?.map((c) => `'${c}'`)
-      //   .join(", "),
-      // opportunitySearchFilter.zltoRewardRanges?.map((c) => `'${c}'`).join(", "),
+      opportunitySearchFilter.commitmentIntervals
+        ? `'${
+            opportunitySearchFilter.commitmentIntervals.length
+          } commitment interval${
+            opportunitySearchFilter.commitmentIntervals.length > 1 ? "s" : ""
+          }'`
+        : undefined,
+      opportunitySearchFilter.zltoRewardRanges
+        ? `'${opportunitySearchFilter.zltoRewardRanges.length} reward${
+            opportunitySearchFilter.zltoRewardRanges.length > 1 ? "s" : ""
+          }'`
+        : undefined,
     ]
       .filter(Boolean)
       .join(", ");
@@ -764,33 +769,8 @@ const Opportunities: NextPageWithLayout<InputProps> = ({
                 data={opportunities_allOpportunities}
               />
             )}
-
-            {/* RECENTLY VIEWED */}
-
-            {/* <div className="flex flex-col gap-2 py-4 sm:flex-row">
-          <h3 className="flex flex-grow text-white">Opportunities</h3>
-
-          <div className="flex gap-2 sm:justify-end">
-            <SearchInput defaultValue={query as string} onSearch={onSearch} />
-
-            <Link
-              href="/organisations/register"
-              className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
-            >
-              <IoMdAdd className="h-5 w-5" />
-              Add organisation
-            </Link>
-          </div>
-        </div> */}
           </div>
         )}
-
-        <div
-          id="scrollToResults"
-          //className="mt-10"
-          //className="flexx hidden flex-col items-center rounded-lg p-4"
-          //style={{ display: "none" }}
-        ></div>
 
         {/* SEARCH EXECUTED, SHOW RESULTS */}
         {isSearchExecuted && (
