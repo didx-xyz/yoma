@@ -120,7 +120,7 @@ fi
 
 # Yoma System User
 if [ ! -z "${YOMA_SYSTEM_USER}" ]; then
-  echo "Creating Test Org Admin User"
+  echo "Creating Yoma System User"
   curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users" \
     -H 'Content-Type: application/json' \
     -H "Authorization: bearer ${KC_JWT}" \
