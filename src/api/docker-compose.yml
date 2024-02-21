@@ -181,6 +181,8 @@ services:
       ORG_ADMIN_USER_PASSWORD: P@ssword1
       TEST_USER: testuser@gmail.com
       TEST_USER_PASSWORD: P@ssword1
+      YOMA_SYSTEM_USER: system@yoma.world
+      YOMA_SYSTEM_USER_PASSWORD: P@ssword1
 
     user: 0:0 # because we need to install jq
     command:

@@ -76,7 +76,17 @@ postInstallHook:
       valueFrom:
         secretKeyRef:
           name: keycloak-users
-          key: admin-user-password
+          key: org-admin-user-password
+    - name: YOMA_SYSTEM_USER
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-users
+          key: yoma-system-user
+    - name: YOMA_SYSTEM_USER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-users
+          key: yoma-system-user-password
     - name: TEST_USER
       valueFrom:
         secretKeyRef:
@@ -86,7 +96,7 @@ postInstallHook:
       valueFrom:
         secretKeyRef:
           name: keycloak-users
-          key: admin-user-password
+          key: test-user-password
   volumes:
     - name: scripts
       emptyDir: {}
