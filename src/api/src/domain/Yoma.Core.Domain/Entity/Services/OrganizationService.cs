@@ -222,6 +222,8 @@ namespace Yoma.Core.Domain.Entity.Services
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
+            request.WebsiteURL = request.WebsiteURL?.EnsureHttpsScheme();
+
             await _organizationCreateRequestValidator.ValidateAndThrowAsync(request);
 
             var existingByName = GetByNameOrNull(request.Name, false, false);
@@ -335,9 +337,15 @@ namespace Yoma.Core.Domain.Entity.Services
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
+            request.WebsiteURL = request.WebsiteURL?.EnsureHttpsScheme();
+
             await _organizationUpdateRequestValidator.ValidateAndThrowAsync(request);
 
             var result = GetById(request.Id, true, true, ensureOrganizationAuthorization);
+
+            if (string.Equals(result.Name, _appSettings.SSIIssuerNameYomaOrganization, StringComparison.InvariantCultureIgnoreCase)
+                && !string.Equals(result.Name, request.Name))
+                throw new ValidationException($"{nameof(Organization)} '{result.Name}' is a system organization and its name cannot be changed");
 
             var statusCurrent = result.Status;
 

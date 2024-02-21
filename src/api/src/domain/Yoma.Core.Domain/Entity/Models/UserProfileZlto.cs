@@ -11,5 +11,7 @@ namespace Yoma.Core.Domain.Entity.Models
         public decimal Pending { get; set; }
 
         public decimal Total { get; set; }
+
+        public bool? ZltoOffline { get; set; }
     }
 }

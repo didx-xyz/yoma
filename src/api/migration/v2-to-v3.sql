@@ -1,9 +1,40 @@
 --!!!THIS SCRIPT IS DESIGNED TO BE APPLIED TO AN EMPTY EF MIGRATED DATABASE WITH NO POST.SQL SCRIPTS EXECUTED!!!--
 
+--ensure 'Yoma (Youth Agency Marketplace)' organization exist and is active
+DO $$
+DECLARE
+    org_name CONSTANT VARCHAR := 'Yoma (Youth Agency Marketplace)';
+    org_exists BOOLEAN;
+BEGIN
+    -- Check if the organization exists with case-insensitive comparison
+    SELECT EXISTS(
+        SELECT 1
+        FROM dbo.organisations
+        WHERE LOWER("name") = LOWER(org_name)
+    ) INTO org_exists;
+
+    -- Raise an exception if the organization does not exist
+    IF NOT org_exists THEN
+        RAISE EXCEPTION '% does not exist', org_name;
+    END IF;
+    
+    -- Update approvedat if it is NULL, for the existing organization
+    UPDATE dbo.organisations
+    SET approvedat = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+    WHERE LOWER("name") = LOWER(org_name)
+    AND approvedat IS NULL;
+    
+    -- Set deletedat to NULL if it is not NULL, for the existing organization
+    UPDATE dbo.organisations
+    SET deletedat = NULL
+    WHERE LOWER("name") = LOWER(org_name)
+    AND deletedat IS NOT NULL;
+END $$;
+
 --extentions
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
---temporary function creation
+--create temporary functions 
 CREATE OR REPLACE FUNCTION remove_double_spacing(input_text text)
 RETURNS text AS $$
 BEGIN
@@ -135,10 +166,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
-/***User & Organizations***/
+/***BEGIN: User & Organizations***/
 --Object.Blob (user photos)
 INSERT INTO "Object"."Blob" (
-    "Id", "StorageType", "FileType", "Key", "ContentType", "OriginalFileName", "ParentId", "DateCreated"
+    "Id", 
+    "StorageType", 
+    "FileType", 
+    "Key", 
+    "ContentType", 
+    "OriginalFileName", 
+    "ParentId", 
+    "DateCreated"
 )
 SELECT DISTINCT
     f.id AS "Id", 
@@ -158,9 +196,24 @@ WHERE
 
 --Entity.User
 INSERT INTO "Entity"."User" (
-    "Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "CountryId", 
-    "EducationId", "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", 
-    "DateYoIDOnboarded", "DateCreated", "DateModified"
+    "Id", 
+    "Email", 
+    "EmailConfirmed", 
+    "FirstName", 
+    "Surname", 
+    "DisplayName", 
+    "PhoneNumber", 
+    "CountryId", 
+    "EducationId", 
+    "PhotoId", 
+    "GenderId", 
+    "DateOfBirth", 
+    "DateLastLogin", 
+    "ExternalId", 
+    "YoIDOnboarded", 
+    "DateYoIDOnboarded", 
+    "DateCreated", 
+    "DateModified"
 )
 SELECT
     u.id as "Id",
@@ -197,7 +250,15 @@ WHERE
 
 --Reward.WalletCreation (users that were migrated to new zlto wallet)
 INSERT INTO "Reward"."WalletCreation" (
-    "Id", "StatusId", "UserId", "WalletId", "Balance", "ErrorReason", "RetryCount", "DateCreated", "DateModified"
+    "Id", 
+    "StatusId", 
+    "UserId", 
+    "WalletId", 
+    "Balance", 
+    "ErrorReason", 
+    "RetryCount", 
+    "DateCreated", 
+    "DateModified"
 )
 SELECT
     gen_random_uuid() AS "Id",
@@ -216,11 +277,18 @@ WHERE
     AND u.zltowalletid IS NOT NULL
     AND u.email IS NOT NULL;
 
---Entity.UserSkills
+--TODO: Entity.UserSkills (needs to be populated for complete 'my' opportunities)
 
---Object.Blob (organization logo)
+--Object.Blob (organization logos)
 INSERT INTO "Object"."Blob" (
-    "Id", "StorageType", "FileType", "Key", "ContentType", "OriginalFileName", "ParentId", "DateCreated"
+    "Id", 
+    "StorageType", 
+    "FileType", 
+    "Key", 
+    "ContentType", 
+    "OriginalFileName", 
+    "ParentId", 
+    "DateCreated"
 )
 SELECT DISTINCT
     f.id AS "Id", 
@@ -234,14 +302,36 @@ SELECT DISTINCT
 FROM 
     dbo.files f
 INNER JOIN 
-    dbo.organisations o ON f.id = o.logoid 
-WHERE
-	u.email IS NOT NULL;
+    dbo.organisations o ON f.id = o.logoid;
    
 --Entity.Organization
-INSERT INTO "Entity"."Organization"
-("Id", "Name", "NameHashValue", "WebsiteURL", "PrimaryContactName", "PrimaryContactEmail", "PrimaryContactPhone", "VATIN", "TaxNumber", "RegistrationNumber", "City", "CountryId", "StreetAddress", "Province", 
-"PostalCode", "Tagline", "Biography", "StatusId", "CommentApproval", "DateStatusModified", "LogoId", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId")
+INSERT INTO "Entity"."Organization" (
+    "Id", 
+    "Name", 
+    "NameHashValue", 
+    "WebsiteURL", 
+    "PrimaryContactName", 
+    "PrimaryContactEmail", 
+    "PrimaryContactPhone", 
+    "VATIN", 
+    "TaxNumber", 
+    "RegistrationNumber", 
+    "City", 
+    "CountryId", 
+    "StreetAddress", 
+    "Province", 
+    "PostalCode", 
+    "Tagline", 
+    "Biography", 
+    "StatusId", 
+    "CommentApproval", 
+    "DateStatusModified", 
+    "LogoId", 
+    "DateCreated", 
+    "CreatedByUserId", 
+    "DateModified", 
+    "ModifiedByUserId"
+)
 SELECT
     o.id,
     remove_double_spacing(o.name) AS "Name",
@@ -299,11 +389,272 @@ SELECT
 		) AS "DateModified",
 	  (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'system@yoma.world') as "ModifiedByUserId"
 FROM 
-	dbo.organisations o
+	dbo.organisations o;
+
+--SSI.TenantCreation (pending for active organizations)
+INSERT INTO "SSI"."TenantCreation"(
+    "Id", 
+    "EntityType", 
+    "StatusId", 
+    "UserId", 
+    "OrganizationId", 
+    "TenantId", 
+    "ErrorReason", 
+    "RetryCount", 
+    "DateCreated", 
+    "DateModified"
+)
+SELECT 
+    gen_random_uuid() AS "Id", 
+    'Organization' AS "EntityType", 
+    (SELECT "Id" FROM "SSI"."TenantCreationStatus" WHERE "Name" = 'Pending') AS "StatusId", 
+    NULL::uuid AS "UserId", 
+    "Id" AS "OrganizationId", 
+    NULL::uuid AS "TenantId", 
+    NULL::text AS "ErrorReason", 
+    NULL::int2 AS "RetryCount", 
+    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AS "DateCreated", 
+    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AS "DateModified"
+FROM 
+    "Entity"."Organization"
+WHERE 
+    "StatusId" = (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active');
+
+--Entity.OrganizationProviderTypes
+INSERT INTO "Entity"."OrganizationProviderTypes" (
+    "Id", 
+    "OrganizationId", 
+    "ProviderTypeId", 
+    "DateCreated"
+)
+SELECT
+    gen_random_uuid() AS "Id",
+    o.Id AS "OrganizationId",
+    (
+        SELECT "Id"
+        FROM "Entity"."OrganizationProviderType"
+        WHERE "Name" = 'Education' --default to Education for all existing organizations
+    ) AS "ProviderTypeId",
+    o.createdat AS "DateCreated"
+FROM
+    dbo.organisations o;
+
+--Entity.OrganizationUsers (organization admins)
+INSERT INTO "Entity"."OrganizationUsers" (
+    "Id", 
+    "OrganizationId", 
+    "UserId", 
+    "DateCreated"
+)
+SELECT
+    gen_random_uuid() AS "Id", 
+    u.organisationid AS "OrganizationId", 
+    u.id AS "UserId", 
+    u.createdat AS "DateCreated"
+FROM
+    dbo.users u
+WHERE
+    u.organisationid IS NOT NULL
+    AND EXISTS (
+        SELECT 1
+        FROM "Entity"."Organization" o
+        WHERE o."Id" = u.organisationid
+    );
+ 
+--Entity.OrganizationUsers (organization admins for orphans >> system@yoma.world)
+INSERT INTO "Entity"."OrganizationUsers" (
+    "Id",
+    "OrganizationId",
+    "UserId",
+    "DateCreated"
+)
+SELECT
+    gen_random_uuid(),
+    o."Id" AS "OrganizationId",
+    (SELECT id FROM dbo.users WHERE email = 'system@yoma.world') AS "UserId",
+    CURRENT_TIMESTAMP
+FROM
+    "Entity"."Organization" o
+WHERE
+    NOT EXISTS (
+        SELECT 1
+        FROM "Entity"."OrganizationUsers" ou
+        WHERE ou."OrganizationId" = o."Id"
+    );
    
---Entity.UserSkillOrganizations
+--Object.Blob (registration documents)
+INSERT INTO "Object"."Blob" (
+    "Id", 
+    "StorageType", 
+    "FileType", 
+    "Key", 
+    "ContentType", 
+    "OriginalFileName", 
+    "ParentId", 
+    "DateCreated"
+)
+SELECT DISTINCT
+    f.id AS "Id", 
+    'Private' AS "StorageType", 
+    'Documents' AS "FileType", 
+    f.s3objectid AS "Key", 
+    f.contenttype AS "ContentType",
+    split_part(f.s3objectid, '/', array_length(string_to_array(f.s3objectid, '/'), 1)) AS "OriginalFileName",
+    NULL::uuid AS "ParentId", 
+    f.createdat AS "DateCreated"
+FROM 
+    dbo.files f
+INNER JOIN 
+    dbo.organisations o ON f.id = o.companyregistrationid;
    
---temporary function cleanup
+--Enity.OrganizationDocuments (registration documents)
+INSERT INTO "Entity"."OrganizationDocuments" (
+    "Id", 
+    "OrganizationId", 
+    "FileId", 
+    "Type", 
+    "DateCreated"
+)
+SELECT
+    gen_random_uuid(), -- Generates a unique ID for each document
+    o."Id" AS "OrganizationId",
+    o.companyregistrationid AS "FileId",
+    'Registration' AS "Type",
+    o.createdat AS "DateCreated"
+FROM 
+    dbo.organisations o
+WHERE 
+    EXISTS (
+        SELECT 1
+        FROM "Object"."Blob" b
+        WHERE b."Id" = o.companyregistrationid
+    );
+   
+--TODO: Entity.UserSkillOrganizations (populaterd from completed 'my' opportunities)
+   
+/***END: User & Organizations***/
+   
+/***BEGIN: Opportunities***/
+--Opportunity.Opportunity
+INSERT INTO "Opportunity"."Opportunity" (
+    "Id", 
+    "Title", 
+    "Description", 
+    "TypeId", 
+    "OrganizationId", 
+    "Summary", 
+    "Instructions", 
+    "URL", 
+    "ZltoReward", 
+    "ZltoRewardPool", 
+    "ZltoRewardCumulative", 
+    "YomaReward", 
+    "YomaRewardPool", 
+    "YomaRewardCumulative", 
+    "VerificationEnabled", 
+    "VerificationMethod", 
+    "DifficultyId", 
+    "CommitmentIntervalId", 
+    "CommitmentIntervalCount", 
+    "ParticipantLimit", 
+    "ParticipantCount", 
+    "StatusId", 
+    "Keywords", 
+    "DateStart", 
+    "DateEnd", 
+    "CredentialIssuanceEnabled", 
+    "SSISchemaName", 
+    "DateCreated", 
+    "CreatedByUserId", 
+    "DateModified", 
+    "ModifiedByUserId"
+)
+SELECT
+	o.id AS "Id",
+	remove_double_spacing(o.title) AS "Title" ,
+	remove_double_spacing(o.description) AS "Description" ,
+	(SELECT "Id" FROM "Opportunity"."OpportunityType" WHERE "Name" = 
+    	CASE 
+        	WHEN lower(o.type) = 'task' THEN 'Task'
+	        WHEN lower(o.type) = 'learning' THEN 'Learning'
+    	    WHEN lower(o.type) = 'learningopportunity' THEN 'Learning'
+	        WHEN lower(o.type) = 'impactopportunity' THEN 'Task'
+    	    WHEN lower(o.type) = 'taskopportunity' THEN 'Task'
+	    END
+	) AS "TypeId",
+    o.organisationid AS "OrganizationId",
+    NULL:varchar(500) AS "Summary",
+    remove_double_spacing(o.instructions) AS "Instructions",
+    LOWER(ensure_valid_http_url(opportunityurl)) AS "URL",
+    CASE 
+    	WHEN o.zltoreward IS NOT NULL THEN CAST(ABS(o.zltoreward) AS numeric(8,2))
+	    ELSE NULL
+	END AS "ZltoReward",
+	CASE 
+    	WHEN o.zltoreward IS NULL THEN NULL
+	    WHEN o.zltorewardpool IS NOT NULL THEN CAST(ABS(o.zltorewardpool) AS numeric(12,2))
+    	ELSE NULL
+	END AS "ZltoRewardPool",
+	NULL::numberic(12,2) as "ZltoRewardCumulative", --set below (running totals)
+	NULL::numberic(8,2) AS "YomaReward",
+	NULL::numberic(12,2) AS "YomaRewardPool",
+	NULL::numberic(12,2) AS "YomaRewardCumulative",
+	true AS "VerificationEnabled",
+	'Manual' as "VerificationMethod",
+	(SELECT "Id" FROM "Opportunity"."OpportunityDifficulty" WHERE "Name" = 
+    	CASE
+        	WHEN lower(o.difficulty) = 'beginner' THEN 'Beginner'
+        	WHEN lower(o.difficulty) = 'advanced' THEN 'Advanced'
+        	WHEN o.difficulty IS NULL OR lower(o.difficulty) = 'alllevels' THEN 'Any Level'
+        	WHEN lower(o.difficulty) = 'intermediate' THEN 'Intermediate'
+	    END
+	) AS "DifficultyId",
+	(SELECT "Id" FROM "Lookup"."TimeInterval" WHERE "Name" = 
+	    CASE
+    	    WHEN lower(o.commitmentInterval) = 'week' THEN 'Week'
+        	WHEN lower(o.commitmentInterval) = 'day' THEN 'Day'
+	        WHEN lower(o.commitmentInterval) = 'hour' THEN 'Hour'
+    	    WHEN o.commitmentInterval = '1' THEN 'Day'
+	        WHEN lower(o.commitmentInterval) = 'month' THEN 'Month'
+	    END
+	) AS "CommitmentIntervalId",
+	COALESCE(o.timevalue, 1)::int2 AS "CommitmentIntervalCount",
+	CASE
+    	WHEN o.participantlimit IS NOT NULL THEN ABS(o.participantlimit)
+	    ELSE NULL
+	END AS "ParticipantLimit",
+	NULL::int4 as "ParticipantCount", --set below (running totals)
+	
+
+
+FROM dbo.opportunities o
+
+SELECT id, title, "type", description, createdat, organisationid, createdbyadmin, zltoreward, deletedat, zltorewardpool, enddate, startdate, published, 
+difficulty, instructions, timeperiod, timevalue, templateid, opportunityurl, participantcount, participantlimit, noenddate, sharing
+FROM dbo.opportunities;
+
+--Opportunity.Opportunity (update running totals based on completed opportunities)
+SELECT
+    O."Id" AS "OpportunityId",
+    COUNT(MO."Id") AS "Count",
+    SUM(MO."ZltoReward") AS "ZltoRewardTotal",
+FROM "Opportunity"."Opportunity" O
+LEFT JOIN "Opportunity"."MyOpportunity" MO ON O."Id" = MO."OpportunityId"
+WHERE MO."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
+    AND MO."VerificationStatusId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
+GROUP BY O."Id"
+)
+UPDATE "Opportunity"."Opportunity" O
+SET
+    "ParticipantCount" = A."Count",
+    "ZltoRewardCumulative" = A."ZltoRewardTotal",
+FROM AggregatedData A
+WHERE O."Id" = A."OpportunityId";
+
+
+/***END: Opportunities***/
+   
+--drop temporary functions
 DROP FUNCTION remove_double_spacing(text);
 DROP FUNCTION title_case(text, boolean);
 DROP FUNCTION construct_display_name(text, text);

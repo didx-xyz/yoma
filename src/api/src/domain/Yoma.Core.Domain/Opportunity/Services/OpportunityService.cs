@@ -662,6 +662,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
+            request.URL = request.URL?.EnsureHttpsScheme();
+
             await _opportunityRequestValidatorCreate.ValidateAndThrowAsync(request);
 
             request.DateStart = request.DateStart.RemoveTime();
@@ -757,6 +759,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
+
+            request.URL = request.URL?.EnsureHttpsScheme();
 
             await _opportunityRequestValidatorUpdate.ValidateAndThrowAsync(request);
 

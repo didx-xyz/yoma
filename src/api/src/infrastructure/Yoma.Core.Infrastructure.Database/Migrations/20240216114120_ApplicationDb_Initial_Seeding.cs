@@ -43,7 +43,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             columns: new[] { "Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "DateCreated", "DateModified" },
             values: new object[,]
             {
-                    {"8929632E-2911-42FF-9A44-055DEF231B87",HttpContextAccessorHelper.GetUsernameSystem,false,"Yoma","System","Yoma System",DateTimeOffset.UtcNow,DateTimeOffset.UtcNow}
+                    {"8929632E-2911-42FF-9A44-055DEF231B87",HttpContextAccessorHelper.GetUsernameSystem,true,"Yoma","System","Yoma System",DateTimeOffset.UtcNow,DateTimeOffset.UtcNow}
             },
             schema: "Entity");
 

@@ -106,9 +106,17 @@ namespace Yoma.Core.Domain.Reward.Services
 
                     if (string.IsNullOrEmpty(item.WalletId))
                         throw new DataInconsistencyException($"Wallet id expected with wallet creation status of 'Created' for item with id '{item.Id}'");
-                    var wallet = await _rewardProviderClient.GetWallet(item.WalletId);
 
-                    balance.Available = wallet.Balance;
+                    try
+                    {
+                        var wallet = await _rewardProviderClient.GetWallet(item.WalletId);
+                        balance.Available = wallet.Balance;
+                    }
+                    catch
+                    {
+                        balance.Available = decimal.Zero;
+                        balance.ZltoOffline = true;
+                    }
                     break;
                 default:
                     throw new InvalidOperationException($"Status of '{status}' not supported");

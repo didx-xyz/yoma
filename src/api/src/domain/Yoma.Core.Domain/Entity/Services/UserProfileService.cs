@@ -157,7 +157,8 @@ namespace Yoma.Core.Domain.Entity.Services
                 Pending = balance.Pending,
                 Available = balance.Available,
                 Total = balance.Total,
-                WalletCreationStatus = status
+                WalletCreationStatus = status,
+                ZltoOffline = balance.ZltoOffline
             };
 
             result.AdminsOf = _organizationService.ListAdminsOf(true);
