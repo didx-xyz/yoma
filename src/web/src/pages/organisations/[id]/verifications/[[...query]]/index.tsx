@@ -68,6 +68,7 @@ interface IParams extends ParsedUrlQuery {
   query?: string;
   opportunity?: string;
   page?: string;
+  returnUrl?: string;
 }
 
 // ⚠️ SSR
@@ -147,6 +148,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
+// 👇 PAGE COMPONENT: Opportunity Verifications (Single & Bulk)
+// this page is accessed from the /organisations/[id]/.. pages (OrgAdmin role)
+// or from the /admin/opportunities/.. pages (Admin role). the retunUrl query param is used to redirect back to the admin page
 const OpportunityVerifications: NextPageWithLayout<{
   id: string;
   query?: string;
@@ -155,8 +159,9 @@ const OpportunityVerifications: NextPageWithLayout<{
   error: string;
   theme: string;
 }> = ({ id, query, opportunity, page, error }) => {
-  const queryClient = useQueryClient();
   const router = useRouter();
+  const { returnUrl } = router.query;
+  const queryClient = useQueryClient();
 
   // 👇 use prefetched queries from server
   const { data: data } = useQuery<MyOpportunitySearchResults>({
@@ -195,6 +200,7 @@ const OpportunityVerifications: NextPageWithLayout<{
   ];
   const [selectedOption, setSelectedOption] = useState(null);
 
+  // const appendReturnUrl
   const onSearch = useCallback(
     (query: string) => {
       if (query && query.length > 2) {
@@ -204,26 +210,34 @@ const OpportunityVerifications: NextPageWithLayout<{
         // redirect to the search page
         void router.push({
           pathname: `/organisations/${id}/verifications`,
-          query: { query: queryEncoded, opportunity: opportunity },
+          query: {
+            query: queryEncoded,
+            opportunity: opportunity,
+            returnUrl: returnUrl,
+          },
         });
       } else {
         void router.push(`/organisations/${id}/verifications`);
       }
     },
-    [router, id, opportunity],
+    [router, id, opportunity, returnUrl],
   );
   const onFilterOpportunity = useCallback(
     (opportunityId: string) => {
       if (opportunityId) {
         void router.push({
           pathname: `/organisations/${id}/verifications`,
-          query: { query: query, opportunity: opportunityId },
+          query: {
+            query: query,
+            opportunity: opportunityId,
+            returnUrl: returnUrl,
+          },
         });
       } else {
         void router.push(`/organisations/${id}/verifications`);
       }
     },
-    [router, id, query],
+    [router, id, query, returnUrl],
   );
 
   // 🔔 pager change event
@@ -232,13 +246,18 @@ const OpportunityVerifications: NextPageWithLayout<{
       // redirect
       void router.push({
         pathname: `/organisations/${id}/verifications`,
-        query: { query: query, opportunity: opportunity, page: value },
+        query: {
+          query: query,
+          opportunity: opportunity,
+          page: value,
+          returnUrl: returnUrl,
+        },
       });
 
       // reset scroll position
       window.scrollTo(0, 0);
     },
-    [router, query, id, opportunity],
+    [router, query, id, opportunity, returnUrl],
   );
 
   const [isLoading, setIsLoading] = useState(false);
@@ -594,7 +613,6 @@ const OpportunityVerifications: NextPageWithLayout<{
 
           <div className="flex flex-grow flex-col overflow-x-hidden overflow-y-scroll bg-gray">
             <div className="flex flex-grow flex-col gap-4 bg-gray-light p-6 pt-8">
-              {/* <div className="flex flex-col gap-4 rounded-lg bg-white p-4"> */}
               {selectedRows?.map((row) => (
                 <OpportunityCompletionRead data={row} key={row?.id} />
               ))}
@@ -876,7 +894,9 @@ const OpportunityVerifications: NextPageWithLayout<{
                       <td className="w-[400px]">
                         <Link
                           className="line-clamp-2"
-                          href={`/organisations/${id}/opportunities/${item.opportunityId}/info`}
+                          href={`/organisations/${id}/opportunities/${
+                            item.opportunityId
+                          }/info${returnUrl ? `?returnUrl=${returnUrl}` : ""}`}
                         >
                           {item.opportunityTitle}
                         </Link>

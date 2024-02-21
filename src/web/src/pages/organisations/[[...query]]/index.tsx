@@ -263,8 +263,8 @@ const Opportunities: NextPageWithLayout<{
 
           <div className="flex gap-2 sm:justify-end">
             <Link
-              href="/organisations/register"
-              className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
+              href={`/organisations/register?returnUrl=${router.asPath}`}
+              className="bg-theme hover:bg-theme flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 hover:brightness-110"
             >
               <IoMdAdd className="h-5 w-5" />
               Add organisation
@@ -281,7 +281,6 @@ const Opportunities: NextPageWithLayout<{
           </span>
 
           {/* ALL ORGS TAB */}
-
           <input
             type="radio"
             name="org_tabs_1"
@@ -298,14 +297,17 @@ const Opportunities: NextPageWithLayout<{
           />
 
           {/* ALL ORGS CONTENT */}
-
           <div role="tabpanel" className="tab-content">
             <div className="flex flex-row justify-end py-4">
-              <SearchInput defaultValue={query as string} onSearch={onSearch} />
+              <SearchInput
+                defaultValue={query as string}
+                onSearch={onSearch}
+                className="bg-theme hover:bg-theme brightness-105 hover:brightness-110"
+              />
             </div>
             {/* NO ROWS */}
             {!organisationsAll ||
-              (organisationsAll.length === 0 && (
+              (organisationsAll.length === 0 && !query && (
                 <NoRowsMessage
                   title={"No organisations found"}
                   description={"Approved organisations will be displayed here."}
@@ -358,7 +360,7 @@ const Opportunities: NextPageWithLayout<{
             </div>
             {/* NO ROWS */}
             {!organisationsActive ||
-              (organisationsActive.items.length === 0 && (
+              (organisationsActive.items.length === 0 && !query && (
                 <NoRowsMessage
                   title={"No organisations found"}
                   description={"Approved organisations will be displayed here."}

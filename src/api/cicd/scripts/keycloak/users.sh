@@ -40,8 +40,7 @@ if [ ! -z "${ADMIN_USER}" ]; then
           "attributes": {
             "dateOfBirth": ["01/01/2001"],
             "phoneNumber": ["202-918-2132"],
-            "countryOfOrigin": ["Afghanistan"],
-            "countryOfResidence": ["Afghanistan"],
+            "country": ["Afghanistan"],
             "gender": ["Male"]
           },
           "credentials": [{
@@ -89,8 +88,7 @@ if [ ! -z "${ORG_ADMIN_USER}" ]; then
           "attributes": {
             "dateOfBirth": ["01/01/2001"],
             "phoneNumber": ["202-918-2132"],
-            "countryOfOrigin": ["Afghanistan"],
-            "countryOfResidence": ["Afghanistan"],
+            "country": ["Afghanistan"],
             "gender": ["Male"]
           },
           "credentials": [{
@@ -106,6 +104,52 @@ if [ ! -z "${ORG_ADMIN_USER}" ]; then
     -H "Authorization: bearer ${KC_JWT}" | jq .[].id -r)
   # Assign Test Organisation Admin User to required roles
   curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users/${orgAdminUserID}/role-mappings/realm" \
+    -H 'Content-Type: application/json' \
+    -H "Authorization: bearer ${KC_JWT}" \
+    -d "[
+          {
+            \"id\": \"$(echo ${roleIDs} | jq .orgAdmin -r)\",
+            \"name\": \"OrganisationAdmin\"
+          },
+          {
+            \"id\": \"$(echo ${roleIDs} | jq .user -r)\",
+            \"name\": \"User\"
+          }
+        ]"
+fi
+
+# Yoma System User
+if [ ! -z "${YOMA_SYSTEM_USER}" ]; then
+  echo "Creating Yoma System User"
+  curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users" \
+    -H 'Content-Type: application/json' \
+    -H "Authorization: bearer ${KC_JWT}" \
+    -d '{
+          "username": "'"${YOMA_SYSTEM_USER}"'",
+          "enabled": true,
+          "emailVerified": true,
+          "firstName": "Yoma",
+          "lastName": "System",
+          "email": "'"${YOMA_SYSTEM_USER}"'",
+          "attributes": {
+            "dateOfBirth": ["01/01/2001"],
+            "phoneNumber": ["202-918-2132"],
+            "country": ["Afghanistan"],
+            "gender": ["Male"]
+          },
+          "credentials": [{
+            "type": "password",
+            "value": "'"${YOMA_SYSTEM_USER_PASSWORD}"'",
+            "temporary": false
+          }],
+          "realmRoles": ["default-roles-yoma", "OrganisationAdmin", "User"]
+        }'
+  # Get Yoma System User ID
+  yomaSystemUserId=$(curl -s -X GET "${KC_BASE_URL}/admin/realms/${KC_REALM}/users?exact=true&username=${YOMA_SYSTEM_USER}" \
+    -H 'Content-Type: application/json' \
+    -H "Authorization: bearer ${KC_JWT}" | jq .[].id -r)
+  # Assign Yoma System User to required roles
+  curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users/${yomaSystemUserId}/role-mappings/realm" \
     -H 'Content-Type: application/json' \
     -H "Authorization: bearer ${KC_JWT}" \
     -d "[
@@ -136,8 +180,7 @@ if [ ! -z "${TEST_USER}" ]; then
           "attributes": {
             "dateOfBirth": ["01/01/2001"],
             "phoneNumber": ["202-918-2132"],
-            "countryOfOrigin": ["Afghanistan"],
-            "countryOfResidence": ["Afghanistan"],
+            "country": ["Afghanistan"],
             "gender": ["Male"]
           },
           "credentials": [{
