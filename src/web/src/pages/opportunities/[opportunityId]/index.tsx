@@ -924,7 +924,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         {opportunity?.description}
                       </div>
                     </div>
-                    <div className="flex flex-col gap-2 shadow-lg md:w-[33%]">
+                    <div className="flex flex-col gap-2 rounded-lg shadow-lg md:w-[33%]">
                       <div className="flex flex-col gap-1 rounded-lg bg-white p-6">
                         <div>
                           <div className="mt-2 flex flex-row items-center gap-1 text-sm font-bold">

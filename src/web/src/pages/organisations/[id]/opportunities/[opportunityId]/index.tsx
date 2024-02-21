@@ -465,9 +465,8 @@ const OpportunityDetails: NextPageWithLayout<{
       .max(2048, "Opportunity URL cannot exceed 2048 characters.")
       .regex(
         REGEX_URL_VALIDATION,
-        "Please enter a valid URL - example.com | www.example.com",
-      )
-      .transform((value) => `https://${value}`), // Transform function to prepend "https://"
+        "Please enter a valid URL - example.com | www.example.com | https://www.example.com",
+      ),
   });
 
   const schemaStep2 = z.object({
@@ -504,16 +503,16 @@ const OpportunityDetails: NextPageWithLayout<{
         // eslint-disable-next-line
         return val === null || Number.isNaN(val as any) ? undefined : val;
       }),
-    yomaReward: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
-      // eslint-disable-next-line
-      return val === null || Number.isNaN(val as any) ? undefined : val;
-    }),
-    yomaRewardPool: z
-      .union([z.nan(), z.null(), z.number()])
-      .transform((val) => {
-        // eslint-disable-next-line
-        return val === null || Number.isNaN(val as any) ? undefined : val;
-      }),
+    // yomaReward: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
+    //   // eslint-disable-next-line
+    //   return val === null || Number.isNaN(val as any) ? undefined : val;
+    // }),
+    // yomaRewardPool: z
+    //   .union([z.nan(), z.null(), z.number()])
+    //   .transform((val) => {
+    //     // eslint-disable-next-line
+    //     return val === null || Number.isNaN(val as any) ? undefined : val;
+    //   }),
     skills: z.array(z.string()).optional(),
   });
 
@@ -1064,7 +1063,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input !border-gray",
+                              control: () => "input !border-gray py-1 h-fit",
                             }}
                             isMulti={true}
                             options={categories}
@@ -1186,7 +1185,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input !border-gray",
+                              control: () => "input !border-gray h-fit py-1",
                             }}
                             isMulti={true}
                             options={languages}
@@ -1228,7 +1227,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         render={({ field: { onChange, value } }) => (
                           <Select
                             classNames={{
-                              control: () => "input !border-gray",
+                              control: () => "input !border-gray h-fit py-1",
                             }}
                             isMulti={true}
                             options={countries}

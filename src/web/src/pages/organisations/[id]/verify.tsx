@@ -349,7 +349,7 @@ const OrganisationDetails: NextPageWithLayout<{
       <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
         {isLoading && <Loading />}
         {/* BREADCRUMB */}
-        <span className="flex flex-row items-center text-xs text-gray">
+        <span className="flex flex-row items-center text-xs text-white">
           <span>Organisations</span>
           <span className="mx-2 font-bold">|</span>
           <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
