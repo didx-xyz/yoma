@@ -56,6 +56,9 @@ import { useSession } from "next-auth/react";
 // It may be called again, on a serverless function, if
 // revalidation is enabled and a new request comes in
 export const getStaticProps: GetStaticProps = async (context) => {
+  //TODO: remove
+  console.warn("REGENERATING");
+
   const opportunities_trending = await searchOpportunities(
     {
       pageNumber: 1,
@@ -145,11 +148,12 @@ export const getStaticProps: GetStaticProps = async (context) => {
       lookups_types,
       lookups_commitmentIntervals,
       lookups_zltoRewardRanges,
-      // Next.js will attempt to re-generate the page:
-      // - When a request comes in
-      // - At most once every 300 seconds
-      revalidate: 300,
     },
+
+    // Next.js will attempt to re-generate the page:
+    // - When a request comes in
+    // - At most once every 300 seconds
+    revalidate: 300,
   };
 };
 
