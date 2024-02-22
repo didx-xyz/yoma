@@ -265,7 +265,7 @@ SELECT
     (SELECT WCS."Id" FROM "Reward"."WalletCreationStatus" WCS WHERE WCS."Name" = 'Created') AS "StatusId",
     u.id AS "UserId",
     TRIM(u.zltowalletid) AS "WalletId",
-    NULL::numeric(12, 2) AS "Balance", -- Awarded inline in v2, so no pending transactions can exist; new concept in v3
+    NULL::numeric(12, 2) AS "Balance", -- Updated after populating Reward.Trnasaction for VerifiedAt credentials and users not yet migrated to new zlto wallet (see 'My' Opportunities section)
     NULL::text AS "ErrorReason", 
     0 AS "RetryCount", -- Assuming retry count should be initialized to 0 rather than NULL
     (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AS "DateCreated",
@@ -277,6 +277,8 @@ WHERE
     AND u.zltowalletid IS NOT NULL
     AND u.email IS NOT NULL;
 
+--SSI.TenantCreation (scheduled upon 1st login and acceptance of YoId onboarding)
+   
 --TODO: Entity.UserSkills (needs to be populated for complete 'my' opportunities)
 
 --Object.Blob (organization logos)
@@ -458,6 +460,63 @@ FROM
 WHERE 
     "StatusId" = (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active');
 
+--Object.Blob (registration documents)
+INSERT INTO "Object"."Blob" (
+    "Id", 
+    "StorageType", 
+    "FileType", 
+    "Key", 
+    "ContentType", 
+    "OriginalFileName", 
+    "ParentId", 
+    "DateCreated"
+)
+SELECT DISTINCT
+    f.id AS "Id", 
+    'Private' AS "StorageType", 
+    'Documents' AS "FileType", 
+    f.s3objectid AS "Key", 
+    f.contenttype AS "ContentType",
+    split_part(f.s3objectid, '/', array_length(string_to_array(f.s3objectid, '/'), 1)) AS "OriginalFileName",
+    NULL::uuid AS "ParentId", 
+    f.createdat AS "DateCreated"
+FROM 
+    dbo.files f
+INNER JOIN 
+    dbo.organisations o ON f.id = o.companyregistrationid
+JOIN
+    dbo.opportunities opp ON o.id = opp.organisationid; -- Ensure only organizations with opportunities are included   
+   
+--Enity.OrganizationDocuments (registration documents)
+INSERT INTO "Entity"."OrganizationDocuments" (
+    "Id", 
+    "OrganizationId", 
+    "FileId", 
+    "Type", 
+    "DateCreated"
+)
+SELECT
+    gen_random_uuid() AS "Id", -- Generates a unique ID for each document
+    o.id AS "OrganizationId",
+    o.companyregistrationid AS "FileId",
+    'Registration' AS "Type",
+    o.createdat AS "DateCreated"
+FROM 
+    dbo.organisations o
+WHERE 
+    EXISTS (
+        -- Checks if the company registration ID corresponds to an existing Blob
+        SELECT 1
+        FROM "Object"."Blob" b
+        WHERE b."Id" = o.companyregistrationid
+    )
+    AND EXISTS (
+        -- Ensures the organization has at least one mapped opportunity
+        SELECT 1
+        FROM dbo.opportunities opp
+        WHERE opp.organisationid = o.id
+    );
+   
 --Entity.OrganizationProviderTypes
 INSERT INTO "Entity"."OrganizationProviderTypes" (
     "Id", 
@@ -542,63 +601,6 @@ WHERE
         SELECT 1
         FROM "Entity"."OrganizationUsers" ou
         WHERE ou."OrganizationId" = o."Id"
-    );
-   
---Object.Blob (registration documents)
-INSERT INTO "Object"."Blob" (
-    "Id", 
-    "StorageType", 
-    "FileType", 
-    "Key", 
-    "ContentType", 
-    "OriginalFileName", 
-    "ParentId", 
-    "DateCreated"
-)
-SELECT DISTINCT
-    f.id AS "Id", 
-    'Private' AS "StorageType", 
-    'Documents' AS "FileType", 
-    f.s3objectid AS "Key", 
-    f.contenttype AS "ContentType",
-    split_part(f.s3objectid, '/', array_length(string_to_array(f.s3objectid, '/'), 1)) AS "OriginalFileName",
-    NULL::uuid AS "ParentId", 
-    f.createdat AS "DateCreated"
-FROM 
-    dbo.files f
-INNER JOIN 
-    dbo.organisations o ON f.id = o.companyregistrationid
-JOIN
-    dbo.opportunities opp ON o.id = opp.organisationid; -- Ensure only organizations with opportunities are included   
-   
---Enity.OrganizationDocuments (registration documents)
-INSERT INTO "Entity"."OrganizationDocuments" (
-    "Id", 
-    "OrganizationId", 
-    "FileId", 
-    "Type", 
-    "DateCreated"
-)
-SELECT
-    gen_random_uuid() AS "Id", -- Generates a unique ID for each document
-    o.id AS "OrganizationId",
-    o.companyregistrationid AS "FileId",
-    'Registration' AS "Type",
-    o.createdat AS "DateCreated"
-FROM 
-    dbo.organisations o
-WHERE 
-    EXISTS (
-        -- Checks if the company registration ID corresponds to an existing Blob
-        SELECT 1
-        FROM "Object"."Blob" b
-        WHERE b."Id" = o.companyregistrationid
-    )
-    AND EXISTS (
-        -- Ensures the organization has at least one mapped opportunity
-        SELECT 1
-        FROM dbo.opportunities opp
-        WHERE opp.organisationid = o.id
     );
    
 --TODO: Entity.UserSkillOrganizations (populaterd from completed 'my' opportunities)
@@ -690,7 +692,7 @@ SELECT
 	    WHEN o.zltorewardpool IS NOT NULL THEN CAST(ABS(o.zltorewardpool) AS numeric(12,2))
     	ELSE NULL
 	END AS "ZltoRewardPool",
-	NULL::numeric(12,2) as "ZltoRewardCumulative", --set below (running totals)
+	NULL::numeric(12,2) as "ZltoRewardCumulative", --set below (see 'My' Opportunities section)
 	NULL::numeric(8,2) AS "YomaReward",
 	NULL::numeric(12,2) AS "YomaRewardPool",
 	NULL::numeric(12,2) AS "YomaRewardCumulative",
@@ -720,7 +722,7 @@ SELECT
     	WHEN o.participantlimit IS NOT NULL THEN ABS(o.participantlimit)
 	    ELSE NULL
 	END AS "ParticipantLimit",
-	NULL::int4 as "ParticipantCount", --set below (running totals)
+	NULL::int4 as "ParticipantCount", --set below (see 'My' Opportunities section)
 	(SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 
        CASE
            WHEN o.deletedat IS NOT NULL THEN 'Deleted'
@@ -743,6 +745,92 @@ SELECT
 	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'system@yoma.world') as "ModifiedByUserId"
 FROM dbo.opportunities o
 
+--Opportunity.OpportunityCategories - No mappings; New concept in V3; To be updated by operations
+
+--Opportunity.OpportunityCountries
+INSERT INTO "Opportunity"."OpportunityCountries" ("Id", "OpportunityId", "CountryId", "DateCreated")
+SELECT DISTINCT ON (oo."Id", lc."Id")
+    gen_random_uuid() AS "Id",
+    oo."Id" AS "OpportunityId",
+    lc."Id" AS "CountryId",
+    oo."DateCreated" AS "DateCreated"
+FROM
+    "Opportunity"."Opportunity" oo
+JOIN
+    dbo.opportunitycountry ooc ON oo."Id" = ooc.opportunityid
+JOIN
+    "Lookup"."Country" lc ON lc."CodeAlpha2" = ooc.country
+WHERE
+    NOT EXISTS (
+        SELECT 1
+        FROM "Opportunity"."OpportunityCountries" existing
+        WHERE existing."OpportunityId" = oo."Id"
+        AND existing."CountryId" = lc."Id"
+    )
+
+-- Opportunity.OpportunityLanguages
+INSERT INTO "Opportunity"."OpportunityLanguages" ("Id", "OpportunityId", "LanguageId", "DateCreated")
+SELECT DISTINCT ON (oo."Id", ll."Id")
+    gen_random_uuid() AS "Id",
+    oo."Id" AS "OpportunityId",
+    ll."Id" AS "LanguageId",
+    oo."DateCreated" AS "DateCreated"
+FROM
+    "Opportunity"."Opportunity" oo
+JOIN
+    dbo.opportunitylanguages ool ON oo."Id" = ool.opportunityid
+JOIN
+    "Lookup"."Language" ll ON ll."CodeAlpha2" = ool.language
+WHERE
+    NOT EXISTS (
+        SELECT 1
+        FROM "Opportunity"."OpportunityLanguages" existing
+        WHERE existing."OpportunityId" = oo."Id"
+        AND existing."LanguageId" = ll."Id"
+    )
+
+--Opportunity.Skills
+INSERT INTO "Opportunity"."OpportunitySkills" ("Id", "OpportunityId", "SkillId", "DateCreated")
+SELECT DISTINCT ON (oo."Id", ls."Id")
+    gen_random_uuid() AS "Id",
+    oo."Id" AS "OpportunityId",
+    ls."Id" AS "SkillId",
+    oo."DateCreated" AS "DateCreated"
+FROM
+    "Opportunity"."Opportunity" oo
+JOIN
+    dbo.opportunityskills os ON oo."Id" = os.opportunityid
+JOIN
+    dbo.skills ds ON ds.id = os.skillid  
+JOIN
+    "Lookup"."Skill" ls ON lower(ls."Name") = lower(ds."name")
+ORDER BY oo."Id", ls."Id";
+    
+--Opportunity.OpportunityVerificationTypes
+INSERT INTO "Opportunity"."OpportunityVerificationTypes" ("Id", "OpportunityId", "VerificationTypeId", "Description", "DateCreated", "DateModified")
+SELECT
+    gen_random_uuid() AS "Id",
+    oo."Id" AS "OpportunityId",
+    (SELECT "Id" FROM "Opportunity"."OpportunityVerificationType" WHERE "Name" = 'FileUpload') AS "VerificationTypeId",
+    NULL::text AS "Description", 
+    oo."DateCreated" AS "DateCreated",
+    oo."DateCreated" AS "DateModified" 
+FROM
+    "Opportunity"."Opportunity" oo;
+/***END: Opportunities***/   
+   
+/***BEGIN: 'My' Opportunities***/
+
+--TODO: Opptorunity.MyOpportunity (Verificaton: Pending (VerifiedAt null | Approved=null) Rejected (VerifiedAt not null | Approved=false) | Completed (VerifiedAt not null | Approved=true)
+   
+--TODO: Opportunity.MyOpportunityVerifications (type FileUpload <> dbo.credentials.fileid)
+   
+--TODO: SSI.CredentialIssuance (for 'My' Opportunities with verification Completed)
+   
+--TODO: Reward.Transactions (for 'My' Opportunities with verification Completed: for users nwith no zlto wallet added as pending; for user with zlot wallet added as Processed)
+   
+--TODO: Reard.WalletCreation (Update balance and set to sum of pending Reward.Transactions)
+   
 --Opportunity.Opportunity (update running totals based on completed opportunities)
 WITH AggregatedData AS (
 	SELECT
@@ -761,9 +849,7 @@ SET
     "ZltoRewardCumulative" = a."ZltoRewardTotal"
 FROM AggregatedData a
 WHERE o."Id" = a."OpportunityId";
-
-
-/***END: Opportunities***/
+/***END: 'My' Opportunities***/
    
 --drop temporary functions
 DROP FUNCTION remove_double_spacing(text);
