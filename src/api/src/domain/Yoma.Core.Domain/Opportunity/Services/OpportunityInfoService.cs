@@ -85,7 +85,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 ValueContains = filter.ValueContains,
                 PageNumber = filter.PageNumber,
                 PageSize = filter.PageSize,
-                OrderInstructions =  new List<Core.Models.FilterOrdering<Models.Opportunity>>
+                OrderInstructions = new List<Core.Models.FilterOrdering<Models.Opportunity>>
                 {
                     new() { OrderBy = e => e.DateStart, SortOrder = Core.FilterSortOrder.Descending },
                     new() { OrderBy = e => e.DateEnd ?? DateTime.MaxValue, SortOrder = Core.FilterSortOrder.Descending },
