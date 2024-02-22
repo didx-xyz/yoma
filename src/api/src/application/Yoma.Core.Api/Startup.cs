@@ -204,7 +204,7 @@ namespace Yoma.Core.Api
             services.AddAuthorization(options =>
             {
                 // Authorization policy for Authorization Code flow
-                options.AddPolicy(Common.Constants.Authorization_Policy, policy =>
+                options.AddPolicy(Constants.Authorization_Policy, policy =>
                 {
                     policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
                     policy.RequireAuthenticatedUser();
@@ -213,7 +213,7 @@ namespace Yoma.Core.Api
                 });
 
                 // Authorization policy for Client Credentials flow
-                options.AddPolicy(Common.Constants.Authorization_Policy_External_Partner, policy =>
+                options.AddPolicy(Constants.Authorization_Policy_External_Partner, policy =>
                 {
                     policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
                     policy.RequireAuthenticatedUser();

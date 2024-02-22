@@ -84,7 +84,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 ZltoRewardRanges = filter.ZltoRewardRanges,
                 ValueContains = filter.ValueContains,
                 PageNumber = filter.PageNumber,
-                PageSize = filter.PageSize
+                PageSize = filter.PageSize,
+                OrderInstructions =  new List<Core.Models.FilterOrdering<Models.Opportunity>>
+                {
+                    new() { OrderBy = e => e.DateStart, SortOrder = Core.FilterSortOrder.Descending },
+                    new() { OrderBy = e => e.DateEnd ?? DateTime.MaxValue, SortOrder = Core.FilterSortOrder.Descending },
+                    new() { OrderBy = e => e.Title, SortOrder = Core.FilterSortOrder.Ascending },
+                }
             };
 
             var mostViewed = filter.MostViewed.HasValue && filter.MostViewed.Value;

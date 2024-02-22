@@ -638,7 +638,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 return result;
             }
 
-            query = query.OrderByDescending(o => o.DateCreated);
+            if (filter.OrderInstructions == null || !filter.OrderInstructions.Any())
+                throw new ArgumentOutOfRangeException(nameof(filter), $"{filter.OrderInstructions} are required");
+            query = query.ApplyFiltersAndOrdering(filter.OrderInstructions);
 
             //pagination
             if (filter.PaginationEnabled)

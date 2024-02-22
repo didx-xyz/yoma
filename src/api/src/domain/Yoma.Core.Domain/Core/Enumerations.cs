@@ -51,4 +51,10 @@ namespace Yoma.Core.Domain.Core
         Week,
         Month
     }
+
+    public enum FilterSortOrder
+    {
+        Ascending,
+        Descending
+    }
 }

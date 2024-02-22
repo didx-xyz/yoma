@@ -302,17 +302,29 @@ SELECT DISTINCT
 FROM 
     dbo.files f
 INNER JOIN 
-    dbo.organisations o ON f.id = o.logoid;
+    dbo.organisations o ON f.id = o.logoid
+INNER JOIN 
+    dbo.opportunities opp ON o.id = opp.organisationid; -- Ensure only organizations with opportunities are included
    
 --Enity.Organization (ensure unique names)
-WITH CleanedOrganisations AS (
-    SELECT
+WITH MappedOrganisations AS (
+    SELECT DISTINCT
         o.id,
         o.name,
-        LOWER(remove_double_spacing(o.name)) AS CleanName,
-        ROW_NUMBER() OVER (PARTITION BY LOWER(remove_double_spacing(o.name)) ORDER BY o.createdat) AS DupNum
+        o.createdat
     FROM
         dbo.organisations o
+    INNER JOIN
+        dbo.opportunities opp ON o.id = opp.organisationid -- Ensure only organizations with opportunities are included
+),
+CleanedOrganisations AS (
+    SELECT
+        mo.id,
+        mo.name,
+        LOWER(remove_double_spacing(mo.name)) AS CleanName,
+        ROW_NUMBER() OVER (PARTITION BY LOWER(remove_double_spacing(mo.name)) ORDER BY mo.createdat) AS DupNum
+    FROM
+        MappedOrganisations mo -- Use the filtered list of organizations
 ),
 NumberedDuplicates AS (
     SELECT
@@ -357,7 +369,7 @@ INSERT INTO "Entity"."Organization" (
     "ModifiedByUserId"
 )
 SELECT
-    o.id,
+    DISTINCT(o.id),
     remove_double_spacing(o.name) AS "Name",
     ENCODE(DIGEST(remove_double_spacing(o.name), 'sha256'), 'hex') as "NameHashValue",
     LOWER(ensure_valid_http_url(url)) as "WebsiteURL",
@@ -413,7 +425,9 @@ SELECT
 		) AS "DateModified",
 	  (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'system@yoma.world') as "ModifiedByUserId"
 FROM 
-	dbo.organisations o;
+	dbo.organisations o
+JOIN
+    dbo.opportunities opp ON o.id = opp.organisationid; -- Ensure only organizations with opportunities are included
 
 --SSI.TenantCreation (pending for active organizations)
 INSERT INTO "SSI"."TenantCreation"(
@@ -457,11 +471,29 @@ SELECT
     (
         SELECT "Id"
         FROM "Entity"."OrganizationProviderType"
-        WHERE "Name" = 'Education' --default to Education for all existing organizations
+        WHERE "Name" = 'Education'
     ) AS "ProviderTypeId",
     o.createdat AS "DateCreated"
 FROM
-    dbo.organisations o;
+    dbo.organisations o
+WHERE
+    EXISTS (
+        -- Ensures the organization has at least one associated opportunity
+        SELECT 1
+        FROM dbo.opportunities opp 
+        WHERE opp.organisationid = o.id
+    )
+    AND NOT EXISTS (
+        -- Prevents adding duplicates based on OrganizationId and ProviderTypeId
+        SELECT 1
+        FROM "Entity"."OrganizationProviderTypes" opt
+        WHERE opt."OrganizationId" = o.Id
+        AND opt."ProviderTypeId" = (
+            SELECT "Id"
+            FROM "Entity"."OrganizationProviderType"
+            WHERE "Name" = 'Education'
+        )
+    );
 
 --Entity.OrganizationUsers (organization admins)
 INSERT INTO "Entity"."OrganizationUsers" (
@@ -483,6 +515,12 @@ WHERE
         SELECT 1
         FROM "Entity"."Organization" o
         WHERE o."Id" = u.organisationid
+        AND EXISTS (
+        	-- Ensures the organization has at least one mapped opportunity
+            SELECT 1
+            FROM dbo.opportunities opp
+            WHERE opp.organisationid = o."Id"   
+        )
     );
  
 --Entity.OrganizationUsers (organization admins for orphans >> system@yoma.world)
@@ -529,7 +567,9 @@ SELECT DISTINCT
 FROM 
     dbo.files f
 INNER JOIN 
-    dbo.organisations o ON f.id = o.companyregistrationid;
+    dbo.organisations o ON f.id = o.companyregistrationid
+JOIN
+    dbo.opportunities opp ON o.id = opp.organisationid; -- Ensure only organizations with opportunities are included   
    
 --Enity.OrganizationDocuments (registration documents)
 INSERT INTO "Entity"."OrganizationDocuments" (
@@ -540,7 +580,7 @@ INSERT INTO "Entity"."OrganizationDocuments" (
     "DateCreated"
 )
 SELECT
-    gen_random_uuid(), -- Generates a unique ID for each document
+    gen_random_uuid() AS "Id", -- Generates a unique ID for each document
     o.id AS "OrganizationId",
     o.companyregistrationid AS "FileId",
     'Registration' AS "Type",
@@ -549,9 +589,16 @@ FROM
     dbo.organisations o
 WHERE 
     EXISTS (
+        -- Checks if the company registration ID corresponds to an existing Blob
         SELECT 1
         FROM "Object"."Blob" b
         WHERE b."Id" = o.companyregistrationid
+    )
+    AND EXISTS (
+        -- Ensures the organization has at least one mapped opportunity
+        SELECT 1
+        FROM dbo.opportunities opp
+        WHERE opp.organisationid = o.id
     );
    
 --TODO: Entity.UserSkillOrganizations (populaterd from completed 'my' opportunities)

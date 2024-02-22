@@ -46,5 +46,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         [JsonIgnore]
         internal bool TotalCountOnly { get; set; }
+
+        [JsonIgnore]
+        internal List<FilterOrdering<Opportunity>>? OrderInstructions { get; set; }
+            = new List<FilterOrdering<Opportunity>> { new() { OrderBy = e => e.DateCreated, SortOrder = Core.FilterSortOrder.Descending } };
     }
 }
