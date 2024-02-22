@@ -52,7 +52,7 @@ import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityB
 import { trackGAEvent } from "~/lib/google-analytics";
 import { RoundedImage } from "~/components/RoundedImage";
 import Moment from "react-moment";
-import router from "next/router";
+import { useRouter } from "next/router";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -113,6 +113,7 @@ const OpportunityDetails: NextPageWithLayout<{
   error: string;
   theme: string;
 }> = ({ id, opportunityId, user, error }) => {
+  const router = useRouter();
   const { returnUrl } = router.query;
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
@@ -172,6 +173,7 @@ const OpportunityDetails: NextPageWithLayout<{
   return (
     <>
       {isLoading && <Loading />}
+
       <PageBackground />
 
       <div className="container z-10 mt-20 max-w-5xl px-2 py-4">
@@ -200,7 +202,6 @@ const OpportunityDetails: NextPageWithLayout<{
               </li>
             </ul>
           </div>
-
           <div className="flex gap-2 sm:justify-end">
             <button
               className="bg-theme hover:bg-theme flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 hover:brightness-110 disabled:cursor-not-allowed disabled:bg-gray-dark"
@@ -226,10 +227,13 @@ const OpportunityDetails: NextPageWithLayout<{
             overlayClassName="fixed inset-0"
           >
             <div className="flex flex-col gap-4 p-4 text-xs">
+              returnUrl: {returnUrl}
               {opportunity?.status != "Deleted" && (
                 <Link
                   href={`/organisations/${id}/opportunities/${opportunityId}${
-                    returnUrl ? `?returnUrl=${returnUrl}` : ""
+                    returnUrl
+                      ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
+                      : ""
                   }`}
                   className="flex flex-row items-center text-gray-dark hover:brightness-50"
                 >
@@ -237,7 +241,6 @@ const OpportunityDetails: NextPageWithLayout<{
                   Edit
                 </Link>
               )}
-
               {/* TODO */}
               {/* <Link
                 href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
@@ -246,7 +249,6 @@ const OpportunityDetails: NextPageWithLayout<{
                 <FaClipboard className="mr-2 h-3 w-3" />
                 Duplicate
               </Link> */}
-
               {/* if active or expired, then org admins can make it inactive
                   if deleted, admins can make it inactive */}
               {(opportunity?.status == "Active" ||
@@ -261,7 +263,6 @@ const OpportunityDetails: NextPageWithLayout<{
                   Make Inactive
                 </button>
               )}
-
               {opportunity?.status == "Inactive" && (
                 <button
                   className="flex flex-row items-center text-gray-dark hover:brightness-50"
@@ -271,7 +272,6 @@ const OpportunityDetails: NextPageWithLayout<{
                   Make Active
                 </button>
               )}
-
               {/* TODO */}
               {/* <Link
                 href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
@@ -280,7 +280,6 @@ const OpportunityDetails: NextPageWithLayout<{
                 <FaArrowCircleUp className="mr-2 h-3 w-3" />
                 Short link
               </Link> */}
-
               {/* TODO */}
               {/* <Link
                 href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
@@ -289,9 +288,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 <FaLink className="mr-2 h-3 w-3" />
                 Generate magic link
               </Link> */}
-
               <div className="divider -m-2" />
-
               {opportunity?.status != "Deleted" && (
                 <button
                   className="flex flex-row items-center text-red-500 hover:brightness-50"
@@ -487,7 +484,11 @@ const OpportunityDetails: NextPageWithLayout<{
                       opportunity?.participantCountVerificationPending > 0 && (
                         <Link
                           href={`/organisations/${id}/verifications?opportunity=${opportunityId}${
-                            returnUrl ? `&returnUrl=${returnUrl}` : ""
+                            returnUrl
+                              ? `&returnUrl=${encodeURIComponent(
+                                  returnUrl.toString(),
+                                )}`
+                              : ""
                           }`}
                         >
                           <div className="flex flex-row items-center gap-2 rounded-lg bg-yellow-light p-1">

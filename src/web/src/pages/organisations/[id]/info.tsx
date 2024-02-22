@@ -22,6 +22,7 @@ import {
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
+import { useRouter } from "next/router";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -75,6 +76,9 @@ const OrganisationOverview: NextPageWithLayout<{
   error: string;
   theme: string;
 }> = ({ id, error }) => {
+  const router = useRouter();
+  const { returnUrl } = router.query;
+
   // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
@@ -96,7 +100,7 @@ const OrganisationOverview: NextPageWithLayout<{
         <div className="flex flex-row text-xs text-gray">
           <Link
             className="font-bold text-white hover:text-gray"
-            href={"/organisations"}
+            href={returnUrl?.toString() ?? "/organisations"}
           >
             Organisations
           </Link>

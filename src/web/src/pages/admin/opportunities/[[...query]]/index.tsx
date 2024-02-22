@@ -13,13 +13,17 @@ import React, {
   useEffect,
 } from "react";
 import { OpportunityFilterOptions } from "~/api/models/opportunity";
-import { OrganizationInfo, Status } from "~/api/models/organisation";
+import type { OrganizationInfo } from "~/api/models/organisation";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { SearchInput } from "~/components/SearchInput";
-import { PAGE_SIZE, ROLE_ADMIN, THEME_BLUE } from "~/lib/constants";
+import {
+  DATE_FORMAT_HUMAN,
+  PAGE_SIZE,
+  PAGE_SIZE_MAXIMUM,
+  THEME_BLUE,
+} from "~/lib/constants";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { type User } from "~/server/auth";
 import {
   getCommitmentIntervals,
   getOpportunitiesAdmin,
@@ -33,7 +37,6 @@ import {
 } from "~/api/services/opportunities";
 import type {
   OpportunityCategory,
-  OpportunityInfo,
   OpportunitySearchCriteriaCommitmentInterval,
   OpportunitySearchCriteriaZltoReward,
   OpportunitySearchFilterCombined,
@@ -43,13 +46,16 @@ import type {
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { OpportunityFilterHorizontal } from "~/components/Opportunity/OpportunityFilterHorizontal";
-import { Country, Language, SelectOption } from "~/api/models/lookups";
+import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import { Loading } from "~/components/Status/Loading";
 import FileSaver from "file-saver";
 import { useAtomValue } from "jotai";
 import { smallDisplayAtom } from "~/lib/store";
 import ReactModal from "react-modal";
 import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
+import moment from "moment";
+import iconBell from "public/images/icon-bell.webp";
+import { IoMdDownload } from "react-icons/io";
 
 // 👇 SSG
 // This function gets called at build time on server-side.
@@ -107,15 +113,23 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   lookups_zltoRewardRanges,
 }) => {
   const router = useRouter();
-  var [isExportButtonLoading, setIsExportButtonLoading] = useState(false);
+  const [isExportButtonLoading, setIsExportButtonLoading] = useState(false);
   const myRef = useRef<HTMLDivElement>(null);
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const smallDisplay = useAtomValue(smallDisplayAtom);
 
   const lookups_publishedStates: SelectOption[] = [
     { value: "0", label: "Not started" },
     { value: "1", label: "Active" },
     { value: "2", label: "Expired" },
+  ];
+
+  const lookups_statuses: SelectOption[] = [
+    { value: "0", label: "Active" },
+    { value: "1", label: "Deleted" },
+    { value: "2", label: "Expired" },
+    { value: "2", label: "Inactive" },
   ];
 
   // get filter parameters from route
@@ -253,8 +267,8 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             zltoRewardRanges != undefined
               ? zltoRewardRanges?.toString().split(",")
               : null,
-          startDate: null,
-          endDate: null,
+          startDate: startDate != undefined ? startDate.toString() : null,
+          endDate: endDate != undefined ? endDate.toString() : null,
           statuses:
             statuses != undefined
               ? statuses
@@ -322,8 +336,8 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             ? zltoRewardRanges?.toString().split(",")
             : null,
         publishedStates: null,
-        startDate: null,
-        endDate: null,
+        startDate: startDate != undefined ? startDate.toString() : null,
+        endDate: endDate != undefined ? endDate.toString() : null,
         statuses:
           statuses != undefined ? statuses?.toString().split(",") : null,
       });
@@ -374,7 +388,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
     const { totalCount } = searchResults;
     const resultText = totalCount === 1 ? "result" : "results";
-    const countText = `${totalCount} ${resultText}`;
+    const countText = `${totalCount?.toLocaleString()} ${resultText}`;
 
     const filterText = [
       opportunitySearchFilter.valueContains &&
@@ -398,10 +412,14 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           }'`
         : undefined,
       opportunitySearchFilter.startDate
-        ? `'${opportunitySearchFilter.startDate}'`
+        ? `'${moment(new Date(opportunitySearchFilter.startDate)).format(
+            DATE_FORMAT_HUMAN,
+          )}'`
         : undefined,
       opportunitySearchFilter.endDate
-        ? `'${opportunitySearchFilter.endDate}'`
+        ? `'${moment(new Date(opportunitySearchFilter.endDate)).format(
+            DATE_FORMAT_HUMAN,
+          )}'`
         : undefined,
     ]
       .filter(Boolean)
@@ -479,6 +497,18 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         params.append("statuses", opportunitySearchFilter?.statuses.join(","));
 
       if (
+        opportunitySearchFilter.startDate !== undefined &&
+        opportunitySearchFilter.startDate !== null
+      )
+        params.append("startDate", opportunitySearchFilter.startDate);
+
+      if (
+        opportunitySearchFilter.endDate !== undefined &&
+        opportunitySearchFilter.endDate !== null
+      )
+        params.append("endDate", opportunitySearchFilter.endDate);
+
+      if (
         opportunitySearchFilter.pageNumber !== null &&
         opportunitySearchFilter.pageNumber !== undefined &&
         opportunitySearchFilter.pageNumber !== 1
@@ -544,11 +574,22 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   }, [router]);
 
   const handleExportToCSV = useCallback(async () => {
-    var data = await getOpportunitiesAdminExportToCSV(opportunitySearchFilter);
-    if (!data) return;
+    setIsExportButtonLoading(true);
 
-    //FileSaver.saveAs(data.blob, data.filename);
-  }, [opportunitySearchFilter]);
+    try {
+      opportunitySearchFilter.pageSize = PAGE_SIZE_MAXIMUM;
+      const data = await getOpportunitiesAdminExportToCSV(
+        opportunitySearchFilter,
+      );
+      if (!data) return;
+
+      FileSaver.saveAs(data);
+
+      setExportDialogOpen(false);
+    } finally {
+      setIsExportButtonLoading(false);
+    }
+  }, [opportunitySearchFilter, setIsExportButtonLoading, setExportDialogOpen]);
 
   return (
     <>
@@ -582,11 +623,84 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           lookups_commitmentIntervals={lookups_commitmentIntervals}
           lookups_zltoRewardRanges={lookups_zltoRewardRanges}
           lookups_publishedStates={lookups_publishedStates}
+          lookups_statuses={lookups_statuses}
           cancelButtonText="Close"
           submitButtonText="Done"
           onCancel={onCloseFilter}
-          onSubmit={(e) => onSubmitFilter(e as OpportunitySearchFilterCombined)}
+          onSubmit={onSubmitFilter}
+          filterOptions={[
+            OpportunityFilterOptions.CATEGORIES,
+            OpportunityFilterOptions.TYPES,
+            OpportunityFilterOptions.COUNTRIES,
+            OpportunityFilterOptions.LANGUAGES,
+            OpportunityFilterOptions.ORGANIZATIONS,
+            OpportunityFilterOptions.DATE_START,
+            OpportunityFilterOptions.DATE_END,
+            OpportunityFilterOptions.STATUSES,
+          ]}
         />
+      </ReactModal>
+
+      {/* EXPORT DIALOG */}
+      <ReactModal
+        isOpen={exportDialogOpen}
+        shouldCloseOnOverlayClick={true}
+        onRequestClose={() => {
+          setExportDialogOpen(false);
+        }}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[480px] md:w-[600px] md:rounded-3xl`}
+        portalClassName={"fixed z-40"}
+        overlayClassName="fixed inset-0 bg-overlay"
+      >
+        <div className="flex flex-col gap-2">
+          <div className="flex h-20 flex-row bg-blue p-4 shadow-lg"></div>
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+              <Image
+                src={iconBell}
+                alt="Icon Bell"
+                width={28}
+                height={28}
+                sizes="100vw"
+                priority={true}
+                style={{ width: "28px", height: "28px" }}
+              />
+            </div>
+
+            <div className="flex w-96 flex-col gap-4">
+              <h4>
+                Just a heads up, the result set is quite large and we can only
+                return a maximum of {PAGE_SIZE_MAXIMUM.toLocaleString()} rows
+                for each export.
+              </h4>
+              <h5>
+                To help manage this, consider applying search filters like start
+                date or end date. This will narrow down the size of your results
+                and make your data more manageable.
+              </h5>
+              <h5>When you&apos;re ready, click the button to continue.</h5>
+            </div>
+
+            <div className="mt-4 flex flex-grow gap-4">
+              <button
+                type="button"
+                className="btn rounded-full bg-green normal-case text-white hover:bg-green hover:brightness-110 disabled:border-0 disabled:bg-green disabled:brightness-90 md:w-[250px]"
+                onClick={handleExportToCSV}
+                disabled={isExportButtonLoading}
+              >
+                {isExportButtonLoading && (
+                  <p className="text-white">Exporting...</p>
+                )}
+                {!isExportButtonLoading && (
+                  <>
+                    <IoMdDownload className="h-5 w-5 text-white" />
+                    <p className="text-white">Export to CSV</p>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       </ReactModal>
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
@@ -600,21 +714,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           </h3>
 
           <div className="flex gap-2 sm:justify-end">
-            {/* EXPORT TO CSV */}
-            <div>
-              <button
-                type="button"
-                className="btn-blue btn btn-sm w-[200px] gap-2"
-                onClick={handleExportToCSV}
-                disabled={isExportButtonLoading}
-              >
-                {isExportButtonLoading && (
-                  <div className="lds-dual-ring lds-dual-ring-sm lds-dual-ring-white h-6 w-6"></div>
-                )}
-                Export to CSV
-              </button>
-            </div>
-
             <SearchInput
               className={
                 "bg-theme hover:bg-theme brightness-105 hover:brightness-110"
@@ -653,11 +752,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             lookups_commitmentIntervals={lookups_commitmentIntervals}
             lookups_zltoRewardRanges={lookups_zltoRewardRanges}
             lookups_publishedStates={lookups_publishedStates}
+            lookups_statuses={lookups_statuses}
             clearButtonText="Clear"
             onClear={onClearFilter}
-            onSubmit={(e) =>
-              onSubmitFilter(e as OpportunitySearchFilterCombined)
-            }
+            onSubmit={onSubmitFilter}
             onOpenFilterFullWindow={() => {
               setFilterFullWindowVisible(!filterFullWindowVisible);
             }}
@@ -666,11 +764,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
               OpportunityFilterOptions.TYPES,
               OpportunityFilterOptions.COUNTRIES,
               OpportunityFilterOptions.LANGUAGES,
-              OpportunityFilterOptions.COMMITMENTINTERVALS,
-              OpportunityFilterOptions.ZLTOREWARDRANGES,
               OpportunityFilterOptions.ORGANIZATIONS,
               OpportunityFilterOptions.DATE_START,
               OpportunityFilterOptions.DATE_END,
+              OpportunityFilterOptions.STATUSES,
               OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
             ]}
           />
@@ -679,36 +776,50 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         {/* SEARCH RESULTS */}
         {!isLoading && (
           <div id="results">
-            {/* RESULTS INFO */}
-            <div className="overflow-hidden text-ellipsis whitespace-nowrap py-4 text-xl font-semibold text-black md:max-w-[800px]">
-              {searchFilterText}
-            </div>
+            <div className="flex flex-row items-center">
+              {/* RESULTS INFO */}
+              <div className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap py-4 text-xl font-semibold text-black md:max-w-[800px]">
+                {searchFilterText}
+              </div>
 
+              {/* EXPORT TO CSV */}
+              <div className="ml-96">
+                <button
+                  type="button"
+                  className="btn-blue btn btn-xs w-40 gap-2"
+                  onClick={() => setExportDialogOpen(true)}
+                >
+                  Export to CSV
+                </button>
+              </div>
+            </div>
             <div className="rounded-lg bg-white p-4">
               {/* NO ROWS */}
-              {searchResults && searchResults.items?.length === 0 && !query && (
-                <div className="flex flex-col place-items-center py-52">
-                  <NoRowsMessage
-                    title={"You will find your active opportunities here"}
-                    description={
-                      "This is where you will find all the awesome opportunities that have been created"
-                    }
-                  />
-                  {/* <Link href={`/organisations/${id}/opportunities/create`}>
+              {(!searchResults || searchResults.items?.length === 0) &&
+                !isSearchPerformed && (
+                  <div className="flex flex-col place-items-center py-52">
+                    <NoRowsMessage
+                      title={"You will find your active opportunities here"}
+                      description={
+                        "This is where you will find all the awesome opportunities that have been created"
+                      }
+                    />
+                    {/* <Link href={`/organisations/${id}/opportunities/create`}>
                 <button className="btn btn-primary btn-sm mt-10 rounded-3xl px-16">
                   Add opportunity
                 </button>
               </Link> */}
-                </div>
-              )}
-              {searchResults && searchResults.items?.length === 0 && query && (
-                <div className="flex flex-col place-items-center py-52">
-                  <NoRowsMessage
-                    title={"No opportunities found"}
-                    description={"Please try refining your search query."}
-                  />
-                </div>
-              )}
+                  </div>
+                )}
+              {(!searchResults || searchResults.items?.length === 0) &&
+                isSearchPerformed && (
+                  <div className="flex flex-col place-items-center py-52">
+                    <NoRowsMessage
+                      title={"No opportunities found"}
+                      description={"Please try refining your search query."}
+                    />
+                  </div>
+                )}
 
               {/* GRID */}
               {searchResults && searchResults.items?.length > 0 && (
@@ -727,7 +838,13 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                         <tr key={opportunity.id} className="border-gray">
                           <td>
                             <Link
-                              href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}/info?returnUrl=/admin/opportunities`}
+                              href={`/organisations/${
+                                opportunity.organizationId
+                              }/opportunities/${
+                                opportunity.id
+                              }/info?returnUrl=${encodeURIComponent(
+                                router.asPath,
+                              )}`}
                             >
                               {opportunity.title}
                             </Link>

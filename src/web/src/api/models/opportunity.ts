@@ -1,7 +1,7 @@
 import type { PaginationFilter } from "./common";
 import type { Country, Language, Skill } from "./lookups";
 
-// NB: this is a combined model for re-uable components
+// NB: this is a combined model for re-uasability
 export interface OpportunitySearchFilterCombined
   extends OpportunitySearchFilter,
     OpportunitySearchFilterAdmin {}
@@ -192,6 +192,7 @@ export enum OpportunityFilterOptions {
   ORGANIZATIONS = "organizations",
   DATE_START = "dateStart",
   DATE_END = "dateEnd",
+  STATUSES = "statuses",
   VIEWALLFILTERSBUTTON = "viewAllFiltersButton",
 }
 

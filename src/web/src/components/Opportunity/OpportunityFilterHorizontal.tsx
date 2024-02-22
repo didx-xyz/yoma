@@ -5,10 +5,8 @@ import zod from "zod";
 import type {
   OpportunityCategory,
   OpportunitySearchCriteriaCommitmentInterval,
-  OpportunitySearchFilter,
   OpportunitySearchCriteriaZltoReward,
   OpportunityType,
-  OpportunitySearchFilterAdmin,
   OpportunitySearchFilterCombined,
 } from "~/api/models/opportunity";
 import { OpportunityFilterOptions } from "~/api/models/opportunity";
@@ -16,9 +14,9 @@ import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import Select, { components, type ValueContainerProps } from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizontalCard";
-import Image from "next/image";
-import iconNextArrow from "public/images/icon-next-arrow.svg";
-import { toBase64, shimmer } from "~/lib/image";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { toISOStringForTimezone } from "~/lib/utils";
 
 const ValueContainer = ({
   children,
@@ -50,9 +48,8 @@ export const OpportunityFilterHorizontal: React.FC<{
   lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
   lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
   lookups_publishedStates: SelectOption[];
-  onSubmit?: (
-    fieldValues: OpportunitySearchFilter | OpportunitySearchFilterAdmin,
-  ) => void;
+  lookups_statuses: SelectOption[];
+  onSubmit?: (fieldValues: OpportunitySearchFilterCombined) => void;
   onClear?: () => void;
   onOpenFilterFullWindow?: () => void;
   clearButtonText?: string;
@@ -68,6 +65,7 @@ export const OpportunityFilterHorizontal: React.FC<{
   lookups_commitmentIntervals,
   lookups_zltoRewardRanges,
   lookups_publishedStates,
+  lookups_statuses,
   onSubmit,
   onClear,
   onOpenFilterFullWindow,
@@ -84,6 +82,9 @@ export const OpportunityFilterHorizontal: React.FC<{
     zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
     publishedStates: zod.array(zod.string()).optional().nullable(),
     valueContains: zod.string().optional().nullable(),
+    startDate: zod.string().optional().nullable(),
+    endDate: zod.string().optional().nullable(),
+    statuses: zod.array(zod.string()).optional().nullable(),
   });
 
   const form = useForm({
@@ -159,7 +160,7 @@ export const OpportunityFilterHorizontal: React.FC<{
               )}
 
               {/* VIEW ALL FILTERS BUTTON */}
-              {filterOptions?.includes(
+              {/* {filterOptions?.includes(
                 OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
               ) && (
                 <button
@@ -198,7 +199,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                     </div>
                   </div>
                 </button>
-              )}
+              )} */}
             </div>
           </div>
         )}
@@ -218,7 +219,7 @@ export const OpportunityFilterHorizontal: React.FC<{
               Filter by:
             </div>
             <div className="flex flex-row gap-2">
-              {/* valueContains: hidden input */}
+              {/* VALUECONTAINS: hidden input */}
               <input
                 type="hidden"
                 {...form.register("valueContains")}
@@ -517,7 +518,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                 </>
               )}
 
-              {/* PUBLISHEDSTATES */}
+              {/* PUBLISHED STATES */}
               {filterOptions?.includes(
                 OpportunityFilterOptions.PUBLISHEDSTATES,
               ) && (
@@ -563,11 +564,132 @@ export const OpportunityFilterHorizontal: React.FC<{
                 </>
               )}
 
-              <div className="flex w-24 items-center justify-center rounded-md border-2 border-green text-xs font-semibold text-green">
-                <button type="button" onClick={onClear}>
+              {/* STATUSES */}
+              {filterOptions?.includes(OpportunityFilterOptions.STATUSES) && (
+                <>
+                  <Controller
+                    name="statuses"
+                    control={form.control}
+                    render={({ field: { onChange, value } }) => (
+                      <Select
+                        instanceId="statuses"
+                        classNames={{
+                          control: () => "input input-xs",
+                        }}
+                        isMulti={true}
+                        options={lookups_statuses}
+                        // fix menu z-index issue
+                        menuPortalTarget={htmlRef}
+                        styles={{
+                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                        }}
+                        onChange={(val) => {
+                          onChange(val.map((c) => c.label));
+                          void handleSubmit(onSubmitHandler)();
+                        }}
+                        value={lookups_statuses.filter(
+                          (c) => value?.includes(c.label),
+                        )}
+                        placeholder="Status"
+                        components={{
+                          ValueContainer,
+                        }}
+                      />
+                    )}
+                  />
+
+                  {formState.errors.statuses && (
+                    <label className="label font-bold">
+                      <span className="label-text-alt italic text-red-500">
+                        {`${formState.errors.statuses.message}`}
+                      </span>
+                    </label>
+                  )}
+                </>
+              )}
+
+              {/* BUTTONS */}
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  className="btn btn-sm rounded-md border-2 border-green text-xs font-semibold text-green"
+                  onClick={onClear}
+                >
                   {clearButtonText}
                 </button>
+
+                {filterOptions?.includes(
+                  OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
+                ) && (
+                  <button
+                    type="button"
+                    className="btn btn-sm rounded-md border-2 border-green text-xs font-semibold text-green"
+                    onClick={onOpenFilterFullWindow}
+                  >
+                    View All Filters
+                  </button>
+                )}
               </div>
+            </div>
+
+            <div className="flex flex-row gap-2">
+              {/* DATE START */}
+              {filterOptions?.includes(OpportunityFilterOptions.DATE_START) && (
+                <>
+                  <Controller
+                    control={form.control}
+                    name="startDate"
+                    render={({ field: { onChange, value } }) => (
+                      <DatePicker
+                        className="input input-bordered input-sm w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                        onChange={(date) => {
+                          onChange(toISOStringForTimezone(date));
+                          void handleSubmit(onSubmitHandler)();
+                        }}
+                        selected={value ? new Date(value) : null}
+                        placeholderText="Start Date"
+                      />
+                    )}
+                  />
+
+                  {formState.errors.startDate && (
+                    <label className="label">
+                      <span className="label-text-alt px-4 text-base italic text-red-500">
+                        {`${formState.errors.startDate.message}`}
+                      </span>
+                    </label>
+                  )}
+                </>
+              )}
+
+              {/* DATE END */}
+              {filterOptions?.includes(OpportunityFilterOptions.DATE_END) && (
+                <>
+                  <Controller
+                    control={form.control}
+                    name="endDate"
+                    render={({ field: { onChange, value } }) => (
+                      <DatePicker
+                        className="input input-bordered input-sm w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                        onChange={(date) => {
+                          onChange(toISOStringForTimezone(date));
+                          void handleSubmit(onSubmitHandler)();
+                        }}
+                        selected={value ? new Date(value) : null}
+                        placeholderText="End Date"
+                      />
+                    )}
+                  />
+
+                  {formState.errors.endDate && (
+                    <label className="label">
+                      <span className="label-text-alt px-4 text-base italic text-red-500">
+                        {`${formState.errors.endDate.message}`}
+                      </span>
+                    </label>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </form>

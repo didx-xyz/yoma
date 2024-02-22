@@ -101,7 +101,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
           {/* INFO */}
           {showInfo && (
             <div className="text-sm font-bold">
-              {currentPage} of {totalPages}
+              {currentPage.toLocaleString()} of {totalPages.toLocaleString()}
             </div>
           )}
 

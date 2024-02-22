@@ -455,7 +455,7 @@ const Opportunities: NextPageWithLayout<{
 
     const { totalCount } = searchResults;
     const resultText = totalCount === 1 ? "result" : "results";
-    const countText = `${totalCount} ${resultText}`;
+    const countText = `${totalCount?.toLocaleString()} ${resultText}`;
 
     const filterText = [
       opportunitySearchFilter.valueContains &&
@@ -668,10 +668,21 @@ const Opportunities: NextPageWithLayout<{
           lookups_commitmentIntervals={lookups_commitmentIntervals}
           lookups_zltoRewardRanges={lookups_zltoRewardRanges}
           lookups_publishedStates={lookups_publishedStates}
+          lookups_statuses={[]}
           cancelButtonText="Close"
           submitButtonText="Done"
           onCancel={onCloseFilter}
-          onSubmit={(e) => onSubmitFilter(e as OpportunitySearchFilterCombined)}
+          onSubmit={(e) => onSubmitFilter(e)}
+          filterOptions={[
+            OpportunityFilterOptions.CATEGORIES,
+            OpportunityFilterOptions.TYPES,
+            OpportunityFilterOptions.COUNTRIES,
+            OpportunityFilterOptions.LANGUAGES,
+            OpportunityFilterOptions.COMMITMENTINTERVALS,
+            OpportunityFilterOptions.ZLTOREWARDRANGES,
+            OpportunityFilterOptions.ORGANIZATIONS,
+            OpportunityFilterOptions.PUBLISHEDSTATES,
+          ]}
         />
       </ReactModal>
 
@@ -720,11 +731,10 @@ const Opportunities: NextPageWithLayout<{
             lookups_commitmentIntervals={lookups_commitmentIntervals}
             lookups_zltoRewardRanges={lookups_zltoRewardRanges}
             lookups_publishedStates={lookups_publishedStates}
+            lookups_statuses={[]}
             clearButtonText="Clear"
             onClear={onClearFilter}
-            onSubmit={(e) =>
-              onSubmitFilter(e as OpportunitySearchFilterCombined)
-            }
+            onSubmit={(e) => onSubmitFilter(e)}
             onOpenFilterFullWindow={() => {
               setFilterFullWindowVisible(!filterFullWindowVisible);
             }}
@@ -738,8 +748,9 @@ const Opportunities: NextPageWithLayout<{
                     OpportunityFilterOptions.COMMITMENTINTERVALS,
                     OpportunityFilterOptions.ZLTOREWARDRANGES,
                     OpportunityFilterOptions.ORGANIZATIONS,
+                    OpportunityFilterOptions.PUBLISHEDSTATES,
                   ]
-                : []
+                : [OpportunityFilterOptions.CATEGORIES]
             }
           />
         </div>
