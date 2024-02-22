@@ -52,10 +52,9 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         .string()
         .regex(
           REGEX_URL_VALIDATION,
-          "Please enter a valid URL - www.example.com | example.com",
+          "Please enter a valid URL - example.com | www.example.com | https://www.example.com",
         )
-        .optional()
-        .transform((value) => (value ? `https://${value}` : "")),
+        .optional(),
       logo: zod.any().optional(),
       logoExisting: zod.any().optional(),
       tagline: zod
@@ -106,7 +105,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
       reset({
         ...formData,
         logoExisting: organisation?.logoURL,
-        websiteURL: formData?.websiteURL?.replace(/^https?:\/\//, ""), // remove https:// or http://
       });
     }, 100);
   }, [reset]);

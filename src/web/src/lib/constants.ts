@@ -19,7 +19,7 @@ export const ACCEPTED_DOC_TYPES_LABEL = ".pdf, .doc and .docx";
 export const ACCEPTED_AUDIO_TYPES = ["audio/mpeg", "audio/wav"];
 export const ACCEPTED_AUDIO_TYPES_LABEL = ".mp3, .wav";
 export const REGEX_URL_VALIDATION =
-  /^((www\.)?)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/;
+  /^(https?:\/\/)?((www\.)?)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/;
 
 export const ROLE_ADMIN = "Admin";
 export const ROLE_ORG_ADMIN = "OrganisationAdmin";
