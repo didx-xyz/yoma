@@ -278,8 +278,6 @@ WHERE
     AND u.email IS NOT NULL;
 
 --SSI.TenantCreation (scheduled upon 1st login and acceptance of YoId onboarding)
-   
---TODO: Entity.UserSkills (needs to be populated for complete 'my' opportunities)
 
 --Object.Blob (organization logos)
 INSERT INTO "Object"."Blob" (
@@ -602,9 +600,6 @@ WHERE
         FROM "Entity"."OrganizationUsers" ou
         WHERE ou."OrganizationId" = o."Id"
     );
-   
---TODO: Entity.UserSkillOrganizations (populaterd from completed 'my' opportunities)
-   
 /***END: User & Organizations***/
    
 /***BEGIN: Opportunities***/
@@ -821,15 +816,21 @@ FROM
    
 /***BEGIN: 'My' Opportunities***/
 
---TODO: Opptorunity.MyOpportunity (Verificaton: Pending (VerifiedAt null | Approved=null) Rejected (VerifiedAt not null | Approved=false) | Completed (VerifiedAt not null | Approved=true)
+--TODO: Opptorunity.MyOpportunity (Saved: dbo.myopportunities entries)
+   
+--TODO: Opptorunity.MyOpportunity (Verificaton: Pending (VerifiedAt=null | Approved=null) Rejected (VerifiedAt!=null | Approved=false) | Completed (VerifiedAt!= | Approved=true)
    
 --TODO: Opportunity.MyOpportunityVerifications (type FileUpload <> dbo.credentials.fileid)
    
---TODO: SSI.CredentialIssuance (for 'My' Opportunities with verification Completed)
+--TODO: SSI.CredentialIssuance (for 'My' Opportunities with verification completed)
    
---TODO: Reward.Transactions (for 'My' Opportunities with verification Completed: for users nwith no zlto wallet added as pending; for user with zlot wallet added as Processed)
+--TODO: Reward.Transaction (for 'My' Opportunities with verification completed: for users with no zlto wallet added as pending; for user with zlto wallet added as processed)
    
---TODO: Reard.WalletCreation (Update balance and set to sum of pending Reward.Transactions)
+--TODO: Reward.WalletCreation (Update balance and set to sum of pending Reward.Transactions)
+
+--TODO: Entity.UserSkills (populated for 'My' Opportunities with verification completed)
+   
+--TODO: Entity.UserSkillOrganizations (populated for 'My' Opportunities with verification completed)
    
 --Opportunity.Opportunity (update running totals based on completed opportunities)
 WITH AggregatedData AS (
