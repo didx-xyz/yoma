@@ -475,13 +475,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (filter.StartDate.HasValue)
             {
                 filter.StartDate = filter.StartDate.Value.RemoveTime();
-                query = query.Where(o => o.DateCreated >= filter.StartDate.Value);
+                query = query.Where(o => o.DateStart >= filter.StartDate.Value);
             }
 
             if (filter.EndDate.HasValue)
             {
                 filter.EndDate = filter.EndDate.Value.ToEndOfDay();
-                query = query.Where(o => o.DateCreated <= filter.EndDate.Value);
+                query = query.Where(o => o.DateEnd <= filter.EndDate.Value);
             }
 
             //organization (explicitly specified)

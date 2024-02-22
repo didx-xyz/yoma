@@ -1,3 +1,5 @@
+using CsvHelper;
+using CsvHelper.Configuration;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
@@ -116,6 +118,30 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             results.Items.ForEach(SetParticipantCounts);
             return results;
+        }
+
+        public (string fileName, byte[] bytes) ExportToCSVOpportunitySearch(OpportunitySearchFilterAdmin filter)
+        {
+            if (filter == null)
+                throw new ArgumentNullException(nameof(filter));
+
+            var result = Search(filter, true);
+
+            var cc = new CsvConfiguration(System.Globalization.CultureInfo.CurrentCulture);
+
+            using (var stream = new MemoryStream())
+            {
+                using (var sw = new StreamWriter(stream: stream, encoding: System.Text.Encoding.UTF8))
+                {
+                    using (var cw = new CsvWriter(sw, cc))
+                    {
+                        cw.WriteRecords(result.Items);
+                    }
+                }
+
+                var fileName = $"Transactions_{DateTime.Now:yyyy-dd-M--HH-mm-ss}.csv";
+                return (fileName, stream.ToArray());
+            }
         }
         #endregion
 

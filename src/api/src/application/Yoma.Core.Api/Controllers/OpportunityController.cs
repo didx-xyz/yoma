@@ -494,6 +494,21 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK);
         }
         #endregion Administrative Actions
+
+        [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter, and export the results to a CSV file")]
+        [HttpPost("search/csv")]
+        [ProducesResponseType(typeof(FileStreamResult), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult ExportToCsvOpportunitySearch([FromBody] OpportunitySearchFilterAdmin filter)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ExportToCsvOpportunitySearch));
+
+            var (fileName, bytes) = _opportunityInfoService.ExportToCSVOpportunitySearch(filter);
+            _logger.LogInformation("Request {requestName} handled", nameof(ExportToCsvOpportunitySearch));
+
+            return File(bytes, "text/csv", fileName);
+        }
+
         #endregion
     }
 }
