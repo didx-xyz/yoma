@@ -112,7 +112,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const opportunities_allOpportunities = await searchOpportunities(
     {
       pageNumber: 1,
-      pageSize: 8,
+      pageSize: 10, //NB: page is 10 items (first page only), the PagingButtons control below will allow the user to navigate to the second page
       categories: null,
       countries: null,
       languages: null,
@@ -219,6 +219,7 @@ const Opportunities: NextPageWithLayout<{
   const isSearchPerformed = useMemo<boolean>(() => {
     return (
       query != undefined ||
+      page != undefined ||
       categories != undefined ||
       countries != undefined ||
       languages != undefined ||
@@ -231,6 +232,7 @@ const Opportunities: NextPageWithLayout<{
     );
   }, [
     query,
+    page,
     categories,
     countries,
     languages,
@@ -483,7 +485,7 @@ const Opportunities: NextPageWithLayout<{
       .filter(Boolean)
       .join(", ");
 
-    return `${countText} for ${filterText}`;
+    return `${countText} ${filterText ? `for ${filterText}` : ""}`;
   }, [opportunitySearchFilter, searchResults]);
 
   const currentPage = useMemo(() => {
@@ -790,11 +792,28 @@ const Opportunities: NextPageWithLayout<{
 
             {/* ALL OPPORTUNITIES */}
             {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
-              <OpportunityRow
-                id="opportunities_allOpportunities"
-                title="All Opportunities"
-                data={opportunities_allOpportunities}
-              />
+              <>
+                <OpportunityRow
+                  id="opportunities_allOpportunities"
+                  title="All Opportunities"
+                  data={opportunities_allOpportunities}
+                  viewAllUrl="/opportunities?page=1"
+                />
+
+                {/* PAGINATION */}
+                <div className="mt-2 grid place-items-center justify-center">
+                  <PaginationButtons
+                    currentPage={page ? parseInt(page.toString()) : 1}
+                    totalItems={
+                      opportunities_allOpportunities.totalCount as number
+                    }
+                    pageSize={PAGE_SIZE}
+                    showPages={false}
+                    showInfo={true}
+                    onClick={handlePagerChange}
+                  />
+                </div>
+              </>
             )}
           </div>
         )}
