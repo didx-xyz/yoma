@@ -227,7 +227,6 @@ const OpportunityDetails: NextPageWithLayout<{
             overlayClassName="fixed inset-0"
           >
             <div className="flex flex-col gap-4 p-4 text-xs">
-              returnUrl: {returnUrl}
               {opportunity?.status != "Deleted" && (
                 <Link
                   href={`/organisations/${id}/opportunities/${opportunityId}${

@@ -99,3 +99,16 @@ export function toUTCDateTime(date: Date | null) {
     ),
   ).toISOString();
 }
+
+/**
+ * This function checks if the provided URL is a relative URL (i.e., it starts with a '/').
+ * If the URL is relative, it returns the URL as is. If not, it returns a default URL.
+ * This is used to prevent potential security risks associated with using absolute URLs that could lead to malicious websites.
+ *
+ * @param {string | undefined} returnUrl - The URL to check. This could be undefined.
+ * @param {string} defaultUrl - The default URL to return if returnUrl is not a relative URL. Defaults to "/organisations".
+ * @returns {string} - The safe URL. This will be the returnUrl if it's a relative URL, or the defaultUrl otherwise.
+ */
+export function getSafeUrl(returnUrl: string | undefined, defaultUrl: string  ): string {
+  return (returnUrl?.startsWith('/') ? returnUrl : defaultUrl);
+}
