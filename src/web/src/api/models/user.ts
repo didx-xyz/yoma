@@ -66,6 +66,7 @@ export interface UserProfileZlto {
   available: number;
   pending: number;
   total: number;
+  zltoOffline: boolean | null;
 }
 
 export enum WalletCreationStatus {

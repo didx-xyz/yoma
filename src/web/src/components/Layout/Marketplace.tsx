@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useState, type ReactElement } from "react";
+import { useState, type ReactElement, useEffect } from "react";
 import MainLayout from "./Main";
 import { PageBackground } from "../PageBackground";
 import Image from "next/image";
@@ -23,6 +23,24 @@ const MarketplaceLayout: TabProps = ({ children }) => {
   const [whatIsZltoDialogVisible, setWhatIsZltoDialogVisible] = useState(false);
   const [userProfile] = useAtom(userProfileAtom);
 
+  const [processing, setProcessing] = useState("");
+  const [available, setAvailable] = useState("");
+  const [total, setTotal] = useState("");
+
+  useEffect(() => {
+    if (userProfile?.zlto) {
+      if (userProfile.zlto.zltoOffline) {
+        setProcessing(userProfile.zlto.pending.toLocaleString());
+        setAvailable("Unable to retrieve value");
+        setTotal(userProfile.zlto.total.toLocaleString());
+      } else {
+        setProcessing(userProfile.zlto.pending.toLocaleString());
+        setAvailable(userProfile.zlto.available.toLocaleString());
+        setTotal(userProfile.zlto.total.toLocaleString());
+      }
+    }
+  }, [userProfile]);
+
   return (
     <MainLayout>
       <>
@@ -30,10 +48,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
           <title>Yoma | Marketplace</title>
         </Head>
 
-        <PageBackground
-          //smallHeight={true}
-          height={16}
-        />
+        <PageBackground height={17} />
 
         {/* WHAT IS ZLTO DIALOG */}
         <ReactModal
@@ -95,6 +110,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
         </ReactModal>
 
         <div className="container z-10 mt-20 py-4">
+          {/* SIGN IN TO SEE YOUR ZLTO BALANCE */}
           {!userProfile && (
             <div className="mb-8 flex h-36 flex-col items-center justify-center gap-4 text-white">
               <div className="flex flex-row items-center justify-center">
@@ -152,7 +168,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                 </h5>
               </div>
               <div className="flex flex-row gap-2">
-                <div className="flex">
+                <div className="flex items-center">
                   <Image
                     src={iconZltoWhite}
                     alt="Zlto Logo"
@@ -172,14 +188,57 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                     }}
                   />
                 </div>
-                <div className="flex flex-grow flex-col whitespace-nowrap">
-                  <h1>
-                    {userProfile?.zlto.available
-                      ? userProfile.zlto.available
-                          .toLocaleString("en-US")
-                          .replace(/,/g, " ")
-                      : 0}
-                  </h1>
+                {/* ZLTO Balances */}
+                <div className="mt-2 flex flex-col gap-1">
+                  <div className="flex flex-row items-center gap-2">
+                    <p className="w-28 text-xs uppercase tracking-widest">
+                      Processing:
+                    </p>
+
+                    <div className="badge bg-gray-light py-2 text-xs font-bold text-black">
+                      <Image
+                        src={iconZlto}
+                        className="mr-2"
+                        alt="ZLTO"
+                        width={18}
+                        height={18}
+                      />
+                      {processing ?? "Loading..."}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-row items-center gap-2">
+                    <p className="w-28 text-xs uppercase tracking-widest">
+                      Available:
+                    </p>
+
+                    <div className="badge bg-gray-light py-2 text-xs font-bold text-black">
+                      <Image
+                        src={iconZlto}
+                        className="mr-2"
+                        alt="ZLTO"
+                        width={18}
+                        height={18}
+                      />
+                      {available ?? "Loading..."}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-row items-center gap-2">
+                    <p className="w-28 text-xs uppercase tracking-widest">
+                      Total:
+                    </p>
+                    <div className="badge bg-gray-light py-2 text-xs font-bold text-black">
+                      <Image
+                        src={iconZlto}
+                        className="mr-2"
+                        alt="ZLTO"
+                        width={18}
+                        height={18}
+                      />
+                      {total ?? "Loading..."}
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="flex flex-row gap-4">

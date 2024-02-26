@@ -52,6 +52,7 @@ import type { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { IoIosCheckmark } from "react-icons/io";
+import { getSafeUrl } from "~/lib/utils";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -117,6 +118,7 @@ const OrganisationDetails: NextPageWithLayout<{
   theme: string;
 }> = ({ id, error }) => {
   const router = useRouter();
+  const { returnUrl } = router.query;
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [modalVerifySingleVisible, setModalVerifySingleVisible] =
@@ -361,7 +363,7 @@ const OrganisationDetails: NextPageWithLayout<{
         <div className="-mt-2 flex flex-row">
           <Link
             className="flex flex-row items-center text-white hover:text-gray"
-            href={"/organisations"}
+            href={getSafeUrl(returnUrl?.toString(), "/organisations")}
           >
             <IoIosArrowBack className="inline-block h-6 w-6 rounded-full bg-blue-shade pr-[2px]" />
           </Link>
