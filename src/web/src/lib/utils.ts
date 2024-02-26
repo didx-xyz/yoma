@@ -109,6 +109,9 @@ export function toUTCDateTime(date: Date | null) {
  * @param {string} defaultUrl - The default URL to return if returnUrl is not a relative URL. Defaults to "/organisations".
  * @returns {string} - The safe URL. This will be the returnUrl if it's a relative URL, or the defaultUrl otherwise.
  */
-export function getSafeUrl(returnUrl: string | undefined, defaultUrl: string  ): string {
-  return (returnUrl?.startsWith('/') ? returnUrl : defaultUrl);
+export function getSafeUrl(
+  returnUrl: string | undefined,
+  defaultUrl: string,
+): string {
+  return returnUrl?.startsWith("/") ? returnUrl : defaultUrl;
 }
