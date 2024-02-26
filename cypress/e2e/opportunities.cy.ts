@@ -96,8 +96,8 @@ describe(`Opportunities`, function () {
 
       //* step 3: fill out form and click next
       cy.wait(2000);
-      cy.get("input[name=yomaReward]").type(`1`);
-      cy.get("input[name=zltoReward]").type(`2`);
+      cy.get("input[name=zltoReward]").type(`1`);
+      cy.get("input[name=zltoRewardPool]").type(`2`);
       cy.get("input[id=input_skills]").type(".net assemblies{enter}10 Gigabit Ethernet{enter}3D Animation{enter}");
 
       cy.get("button[type=submit]").should("exist").click();
