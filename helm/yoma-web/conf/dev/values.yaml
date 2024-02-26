@@ -4,6 +4,11 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: "master"
 
+env:
+  NEXT_PUBLIC_API_BASE_URL: https://v3api.dev.yoma.world/api/v3
+  NEXT_PUBLIC_ENVIRONMENT: dev
+  NEXT_PUBLIC_COOKIE_DOMAIN: v3app.dev.yoma.world
+
 ingress:
   internal:
     annotations:
