@@ -71,6 +71,7 @@ describe(`Opportunities`, function () {
       });
 
       //* step 1: fill out form and click next
+      cy.wait(2000);
       cy.get("input[name=title]").type(`Test Opportunity ${this.magicNumber}`);
       cy.get("input[id=input_typeid]").type("Learning{enter}");
       cy.get("input[id=input_categories]").type("Agriculture{enter}Business and Entrepreneurship{enter}");
@@ -108,21 +109,22 @@ describe(`Opportunities`, function () {
       cy.get("button[type=submit]").should("exist").click();
 
       //* step 5: fill out form and click next
+      cy.wait(2000);
       cy.get("button[type=submit]").should("exist").click();
-      cy.get("input[id=verificationEnabledManual]").check();
-      cy.get(`input[id="chk_verificationType_File Upload"]`).check();
+      cy.get("input[id=verificationEnabledManual]").click();
+      cy.get(`input[id="chk_verificationType_File Upload"]`).click();
       cy.get(`input[id="input_verificationType_File Upload"]`).type("2", { moveToEnd: true });
-      cy.get(`input[id="chk_verificationType_Location"]`).check();
+      cy.get(`input[id="chk_verificationType_Location"]`).click();
       cy.get(`input[id="input_verificationType_Location"]`).type("2", { moveToEnd: true });
-      cy.get(`input[id="chk_verificationType_Picture"]`).check();
+      cy.get(`input[id="chk_verificationType_Picture"]`).click();
       cy.get(`input[id="input_verificationType_Picture"]`).type("2", { moveToEnd: true });
-      cy.get(`input[id="chk_verificationType_Voice Note"]`).check();
+      cy.get(`input[id="chk_verificationType_Voice Note"]`).click();
       cy.get(`input[id="input_verificationType_Voice Note"]`).type("2", { moveToEnd: true });
 
       cy.get("button[type=submit]").should("exist").click();
 
       //* step 6: fill out form and click next
-      cy.get("input[name=credentialIssuanceEnabled]").check();
+      cy.get("input[name=credentialIssuanceEnabled]").click();
       cy.wait(500);
       cy.get("input[id=input_ssiSchemaName]").type("Default{enter}");
 
