@@ -34,6 +34,10 @@ BEGIN
 END $$;
 
 --extentions
+-- Drop the pgcrypto extension if it exists (gets corrupted)
+DROP EXTENSION IF EXISTS pgcrypto;
+
+-- Recreate the pgcrypto extension
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 --create temporary functions 
@@ -354,7 +358,7 @@ UPDATE dbo.organisations o
 SET name = nd.FinalName
 FROM NumberedDuplicates nd
 WHERE o.id = nd.id AND LOWER(nd.FinalName) <> LOWER(o.name);
-   
+
 --Entity.Organization
 INSERT INTO "Entity"."Organization" (
     "Id", 
@@ -871,6 +875,91 @@ JOIN
     (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Saved') AS A ON TRUE
     
 --Opptorunity.MyOpportunity (Verificaton: Pending [VerifiedAt=null] | Verificaton: Completed [VerifiedAt!=null] & Approved=true | Verificaton: Rejected [VerifiedAt!=null] & Approved=false)
+-- Create temporary tables if they do not exist
+CREATE TEMP TABLE IF NOT EXISTS TempOpportunityDetails (
+    MyOpportunityId UUID,
+    UserId UUID,
+    OpportunityId UUID,
+    FileId UUID
+);
+
+CREATE TEMP TABLE IF NOT EXISTS TempInsertedOpportunity (
+    "Id" UUID,
+    "UserId" UUID,
+    "OpportunityId" UUID,
+    "ActionId" UUID,
+    "VerificationStatusId" UUID,
+    "CommentVerification" TEXT,
+    "DateStart" TIMESTAMP,
+    "DateEnd" TIMESTAMP,
+    "DateCompleted" TIMESTAMP,
+    "ZltoReward" NUMERIC(8,2),
+    "YomaReward" NUMERIC(8,2),
+    "DateCreated" TIMESTAMP,
+    "DateModified" TIMESTAMP,
+    "FileId" UUID
+);
+
+WITH Inserted AS (
+    INSERT INTO TempInsertedOpportunity (
+        "Id", 
+        "UserId", 
+        "OpportunityId", 
+        "ActionId", 
+        "VerificationStatusId", 
+        "CommentVerification", 
+        "DateStart",
+        "DateEnd", 
+        "DateCompleted", 
+        "ZltoReward", 
+        "YomaReward", 
+        "DateCreated", 
+        "DateModified",
+        "FileId"
+    )
+    SELECT DISTINCT ON (U."Id", O."Id")
+        gen_random_uuid() AS "Id",
+        U."Id" AS "UserId",
+        O."Id" AS "OpportunityId",
+        (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification') AS "ActionId",
+        CASE 
+            WHEN C.verifiedat IS NULL THEN (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Pending')
+            WHEN C.verifiedat IS NOT NULL AND (C.approved IS NULL OR C.approved = FALSE) THEN (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Rejected')
+            WHEN C.verifiedat IS NOT NULL AND C.approved = TRUE THEN (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
+        END AS "VerificationStatusId",
+        CASE 
+            WHEN C.verifiedat IS NOT NULL THEN remove_double_spacing(C.approvalmessage)
+            ELSE NULL 
+        END AS "CommentVerification",
+        start_of_day(C.startdate) AT TIME ZONE 'UTC' AS "DateStart",
+        end_of_day(C.enddate) AT TIME ZONE 'UTC' AS "DateEnd",
+        C.verifiedat AS "DateCompleted",
+        CASE 
+            WHEN C.verifiedat IS NOT NULL AND C.approved = TRUE AND ABS(C.zltoreward) > 0 THEN CAST(ABS(C.zltoreward) AS numeric(8,2))
+            ELSE NULL
+        END AS "ZltoReward",
+        NULL AS "YomaReward",
+        C.createdat AT TIME ZONE 'UTC' AS "DateCreated",
+        C.createdat AT TIME ZONE 'UTC' AS "DateModified",
+        C.fileId AS "FileId"
+    FROM
+        dbo.credentials C
+    JOIN
+        "Entity"."User" U ON U."Id" = C.userid
+    JOIN
+        "Opportunity"."Opportunity" O ON O."Id" = C.opportunityid
+    WHERE
+        C.fileId IS NOT NULL
+    ORDER BY 
+        U."Id", 
+        O."Id", 
+        C.createdat DESC
+    RETURNING *
+)
+INSERT INTO TempOpportunityDetails (MyOpportunityId, UserId, OpportunityId, FileId)
+SELECT "Id", "UserId", "OpportunityId", "FileId" FROM Inserted;
+
+-- Insert into "Opportunity"."MyOpportunity" from the Inserted CTE
 INSERT INTO "Opportunity"."MyOpportunity" (
     "Id", 
     "UserId", 
@@ -884,55 +973,60 @@ INSERT INTO "Opportunity"."MyOpportunity" (
     "ZltoReward", 
     "YomaReward", 
     "DateCreated", 
-    "DateModified"
+    "DateModified",
+    "FileId"
 )
-SELECT DISTINCT ON (U."Id", O."Id")
-    gen_random_uuid() AS "Id",
-    U."Id" AS "UserId",
-    O."Id" AS "OpportunityId",
-    (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification') AS "ActionId",
-    CASE 
-	    WHEN C.verifiedat IS NULL THEN (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Pending')
-        WHEN C.verifiedat IS NOT NULL AND (C.approved IS NULL OR C.approved = FALSE) THEN (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Rejected')
-        WHEN C.verifiedat IS NOT NULL AND C.approved = TRUE THEN (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
-    END AS "VerificationStatusId",
-    CASE 
-        WHEN C.verifiedat IS NOT NULL THEN remove_double_spacing(C.approvalmessage)
-        ELSE NULL 
-    END AS "CommentVerification",
-    start_of_day(C.startdate) AT TIME ZONE 'UTC' AS "DateStart",
-    end_of_day(C.enddate) AT TIME ZONE 'UTC' AS "DateEnd",
-    CASE 
-        WHEN C.verifiedat IS NOT NULL THEN C.verifiedat 
-        ELSE NULL 
-    END AS "DateCompleted",
-    CASE 
-        WHEN C.verifiedat IS NOT NULL AND C.approved = TRUE THEN 
-            CASE 
-                WHEN ABS(C.zltoreward) > 0 THEN CAST(ABS(C.zltoreward) AS numeric(8,2))
-                ELSE NULL
-            END
-        ELSE NULL
-    END AS "ZltoReward",
-    NULL AS "YomaReward",
-    C.createdat AT TIME ZONE 'UTC' AS "DateCreated",
-    C.createdat AT TIME ZONE 'UTC' AS "DateModified"
-FROM
-    dbo.credentials C
-JOIN
-    "Entity"."User" U ON U."Id" = C.userid
-JOIN
-    "Opportunity"."Opportunity" O ON O."Id" = C.opportunityid
---WHERE --not needed; left as reference
---    C.verifiedat IS NULL
---    OR (C.verifiedat IS NOT NULL AND (C.approved IS NULL OR C.approved = FALSE))
---    OR (C.verifiedat IS NOT NULL AND C.approved = TRUE)
-ORDER BY 
-    U."Id", 
-    O."Id", 
-    C.createdat DESC;
+SELECT "Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
+       "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified", "FileId"
+FROM TempInsertedOpportunity;
+  
+--Object.Blob (credential certificates / 'my' opportinity verifcation file upload)
+INSERT INTO "Object"."Blob" (
+    "Id", 
+    "StorageType", 
+    "FileType", 
+    "Key", 
+    "ContentType", 
+    "OriginalFileName", 
+    "ParentId", 
+    "DateCreated"
+)
+SELECT DISTINCT
+    f.id AS "Id", 
+    'Private' AS "StorageType", 
+    'Certificates' AS "FileType", 
+    f.s3objectid AS "Key", 
+    f.contenttype AS "ContentType",
+    split_part(f.s3objectid, '/', array_length(string_to_array(f.s3objectid, '/'), 1)) AS "OriginalFileName",
+    NULL::uuid AS "ParentId", 
+    f.createdat AT TIME ZONE 'UTC' AS "DateCreated"
+FROM 
+    TempOpportunityDetails TOD
+JOIN 
+    dbo.files f ON TOD.FileId = f.id;
    
---TODO: Opportunity.MyOpportunityVerifications (type FileUpload <> dbo.credentials.fileid)
+--Opportunity.MyOpportunityVerifications (type FileUpload <> dbo.credentials.fileid)
+INSERT INTO "Opportunity"."MyOpportunityVerifications" (
+    "Id",
+    "MyOpportunityId",
+    "VerificationTypeId",
+    "GeometryProperties",
+    "FileId",
+    "DateCreated"
+)
+SELECT
+    gen_random_uuid() AS "Id",
+    TOD.MyOpportunityId AS "MyOpportunityId",
+    (SELECT "Id" FROM "Opportunity"."OpportunityVerificationType" WHERE "Name" = 'FileUpload') AS "VerificationTypeId",
+    NULL AS "GeometryProperties",
+    TOD.FileId AS "FileId",
+    CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS "DateCreated"
+FROM
+    TempOpportunityDetails TOD;
+
+DROP TABLE IF EXISTS TempOpportunityDetails;
+DROP TABLE IF EXISTS TempInsertedOpportunity;
+   
    
 --TODO: SSI.CredentialIssuance (for 'My' Opportunities with verification completed)
    
