@@ -844,7 +844,12 @@ export const OpportunityFilterHorizontal: React.FC<{
                               </p>
                               <button
                                 className="btn h-fit w-fit border-none p-0 shadow-none"
-                                onClick={() => removeFromArray(key, item)}
+                                onClick={() =>
+                                  removeFromArray(
+                                    key as keyof OpportunitySearchFilterCombined,
+                                    item,
+                                  )
+                                }
                               >
                                 <IoIosClose className="-mr-2 h-6 w-6" />
                               </button>
@@ -861,7 +866,11 @@ export const OpportunityFilterHorizontal: React.FC<{
                         </p>
                         <button
                           className="btn h-fit w-fit border-none p-0 shadow-none"
-                          onClick={() => removeValue(key)}
+                          onClick={() =>
+                            removeValue(
+                              key as keyof OpportunitySearchFilterCombined,
+                            )
+                          }
                         >
                           <IoIosClose className="-mr-2 h-6 w-6" />
                         </button>
