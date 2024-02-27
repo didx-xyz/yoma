@@ -71,7 +71,6 @@ describe(`Opportunities`, function () {
       });
 
       //* step 1: fill out form and click next
-      cy.wait(2000);
       cy.get("input[name=title]").type(`Test Opportunity ${this.magicNumber}`);
       cy.get("input[id=input_typeid]").type("Learning{enter}");
       cy.get("input[id=input_categories]").type("Agriculture{enter}Business and Entrepreneurship{enter}");
@@ -124,6 +123,7 @@ describe(`Opportunities`, function () {
       cy.get("button[type=submit]").should("exist").click();
 
       //* step 6: fill out form and click next
+      // Enabling Credential Issuance requires access to CloudAPI
       cy.get("input[name=credentialIssuanceEnabled]").click();
       cy.wait(500);
       cy.get("input[id=input_ssiSchemaName]").type("Default{enter}");
