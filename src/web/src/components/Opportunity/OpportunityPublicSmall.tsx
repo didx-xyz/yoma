@@ -5,10 +5,10 @@ import iconRocket from "public/images/icon-rocket.webp";
 import iconClock from "public/images/icon-clock.svg";
 import iconUser from "public/images/icon-user.svg";
 import iconZlto from "public/images/icon-zlto.svg";
-import iconAction from "public/images/icon-action.svg";
 import Moment from "react-moment";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { RoundedImage } from "../RoundedImage";
+import { IoMdPause, IoMdPlay, IoMdClose } from "react-icons/io";
 
 interface InputProps {
   data: OpportunityInfo;
@@ -82,7 +82,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
 
       {/* BADGES */}
       <div className="bottom-5x flex flex-row gap-1 whitespace-nowrap pt-2 font-semibold text-green-dark">
-        <div className="badge h-6 rounded-md bg-green-light text-xs text-green">
+        <div className="badge h-6 rounded-md border-none bg-green-light text-xs text-green">
           <Image
             src={iconClock}
             alt="Icon Clock"
@@ -90,8 +90,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
             height={17}
             sizes="100vw"
             priority={true}
-            style={{ width: "17px", height: "17px" }}
-            className="mr-1"
+            style={{ width: "18px", height: "18px" }}
           />
           <span className="ml-1">{`${data.commitmentIntervalCount} ${
             data.commitmentInterval
@@ -99,7 +98,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
         </div>
 
         {(data?.participantCountTotal ?? 0) > 0 && (
-          <div className="badge h-6 rounded-md bg-green-light text-xs text-green">
+          <div className="badge h-6 rounded-md border-none bg-green-light text-xs text-green">
             <Image
               src={iconUser}
               alt="Icon User"
@@ -115,7 +114,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
         )}
 
         {data.zltoReward && (
-          <div className="badge h-6 rounded-md bg-[#FEF4D9] text-xs text-[#F6B700]">
+          <div className="badge h-6 rounded-md border-none bg-[#FEF4D9] text-xs text-[#F6B700]">
             <Image
               src={iconZlto}
               alt="Icon Zlto"
@@ -132,29 +131,23 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
         {data?.status == "Active" && (
           <>
             {new Date(data.dateStart) > new Date() && (
-              <div className="badge h-6 rounded-md bg-white text-xs text-yellow">
-                Not started
+              <div className="badge h-6 rounded-md border-none bg-orange-light text-xs text-orange">
+                <IoMdPause />
+                <p className="ml-1">Not started</p>
               </div>
             )}
             {new Date(data.dateStart) < new Date() && (
-              <div className="badge h-6 rounded-md bg-purple-light text-xs text-purple">
-                <Image
-                  src={iconAction}
-                  alt="Icon Action"
-                  width={14}
-                  height={14}
-                  sizes="100vw"
-                  priority={true}
-                  style={{ width: "14px", height: "14px" }}
-                />
+              <div className="badge h-6 rounded-md border-none bg-purple-soft text-xs font-semibold text-purple-shade">
+                <IoMdPlay />
                 <span className="ml-1">Started</span>
               </div>
             )}
           </>
         )}
         {data.status == "Expired" && (
-          <div className="badge h-6 rounded-md bg-green-light text-xs font-semibold text-yellow">
-            Expired
+          <div className="badge h-6 rounded-md border-none bg-red-100 text-xs font-semibold text-error">
+            <IoMdClose className="h-4 w-4" />
+            <span className="ml-1">Expired</span>
           </div>
         )}
       </div>

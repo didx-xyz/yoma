@@ -433,60 +433,20 @@ const Opportunities: NextPageWithLayout<{
   }, [smallDisplay]);
 
   // 📜 scroll to results when search is executed
-  useEffect(() => {
-    if (searchResults && !isLoading) {
-      setTimeout(() => {
-        const element = document.getElementById("results");
+  // useEffect(() => {
+  //   if (searchResults && !isLoading) {
+  //     setTimeout(() => {
+  //       const element = document.getElementById("results");
 
-        if (element) {
-          window.scrollTo({
-            top: element.offsetTop - 55,
-            behavior: "smooth",
-          });
-        }
-      }, 500);
-    }
-  }, [searchResults, isLoading]);
-
-  // 🧮 CALCULATED FIELDS
-  // results info text based on filter parameters
-  const searchFilterText = useMemo(() => {
-    if (!searchResults) {
-      return "0 results";
-    }
-
-    const { totalCount } = searchResults;
-    const resultText = totalCount === 1 ? "result" : "results";
-    const countText = `${totalCount?.toLocaleString()} ${resultText}`;
-
-    const filterText = [
-      opportunitySearchFilter.valueContains &&
-        `'${opportunitySearchFilter.valueContains}'`,
-      opportunitySearchFilter.mostViewed && `'Trending'`,
-      opportunitySearchFilter.categories?.map((c) => `'${c}'`)?.join(", "),
-      opportunitySearchFilter.countries?.map((c) => `'${c}'`)?.join(", "),
-      opportunitySearchFilter.languages?.map((c) => `'${c}'`).join(", "),
-      opportunitySearchFilter.types?.map((c) => `'${c}'`).join(", "),
-      opportunitySearchFilter.organizations?.map((c) => `'${c}'`).join(", "),
-      opportunitySearchFilter.publishedStates?.map((c) => `'${c}'`).join(", "),
-      opportunitySearchFilter.commitmentIntervals
-        ? `'${
-            opportunitySearchFilter.commitmentIntervals.length
-          } commitment interval${
-            opportunitySearchFilter.commitmentIntervals.length > 1 ? "s" : ""
-          }'`
-        : undefined,
-      opportunitySearchFilter.zltoRewardRanges
-        ? `'${opportunitySearchFilter.zltoRewardRanges.length} reward${
-            opportunitySearchFilter.zltoRewardRanges.length > 1 ? "s" : ""
-          }'`
-        : undefined,
-    ]
-      .filter(Boolean)
-      .join(", ");
-
-    return `${countText} ${filterText ? `for ${filterText}` : ""}`;
-  }, [opportunitySearchFilter, searchResults]);
+  //       if (element) {
+  //         window.scrollTo({
+  //           top: element.offsetTop - 55,
+  //           behavior: "smooth",
+  //         });
+  //       }
+  //     }, 500);
+  //   }
+  // }, [searchResults, isLoading]);
 
   const currentPage = useMemo(() => {
     return page ? parseInt(page as string) : 1;
@@ -754,6 +714,7 @@ const Opportunities: NextPageWithLayout<{
                   ]
                 : [OpportunityFilterOptions.CATEGORIES]
             }
+            totalCount={searchResults?.totalCount ?? 0}
           />
         </div>
 
@@ -820,10 +781,7 @@ const Opportunities: NextPageWithLayout<{
 
         {/* SEARCH PERFORMED, SHOW RESULTS */}
         {isSearchPerformed && (
-          <div
-            id="results"
-            className="flex flex-col items-center rounded-lg p-4"
-          >
+          <div id="results" className="flex flex-col items-center rounded-lg">
             <div className="flex w-full flex-col gap-2">
               {/* NO ROWS */}
               {!searchResults ||
@@ -840,7 +798,6 @@ const Opportunities: NextPageWithLayout<{
               {searchResults && searchResults.items.length > 0 && (
                 <OpportunityRow
                   id="opportunities_search"
-                  title={searchFilterText}
                   data={searchResults}
                 />
               )}

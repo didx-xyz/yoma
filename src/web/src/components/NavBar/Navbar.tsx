@@ -32,14 +32,14 @@ const navBarLinksUser: TabItem[] = [
     selected: false,
     iconImage: null,
   },
-  {
-    title: "Jobs",
-    description: "Jobs",
-    url: "/jobs",
-    badgeCount: null,
-    selected: false,
-    iconImage: null,
-  },
+  // {
+  //   title: "Jobs",
+  //   description: "Jobs",
+  //   url: "/jobs",
+  //   badgeCount: null,
+  //   selected: false,
+  //   iconImage: null,
+  // },
   {
     title: "Marketplace",
     description: "Marketplace",

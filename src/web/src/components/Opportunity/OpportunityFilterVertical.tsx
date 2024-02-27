@@ -301,7 +301,7 @@ export const OpportunityFilterVertical: React.FC<{
                         value={lookups_countries
                           .filter((c) => value?.includes(c.name))
                           .map((c) => ({ value: c.name, label: c.name }))}
-                        placeholder="Select country (Worldwide by default)"
+                        placeholder="Select Countries..."
                       />
                     )}
                   />
