@@ -124,9 +124,9 @@ describe(`Opportunities`, function () {
 
       //* step 6: fill out form and click next
       // Enabling Credential Issuance requires access to CloudAPI
-      cy.get("input[name=credentialIssuanceEnabled]").click();
-      cy.wait(500);
-      cy.get("input[id=input_ssiSchemaName]").type("Default{enter}");
+      // cy.get("input[name=credentialIssuanceEnabled]").click();
+      // cy.wait(500);
+      // cy.get("input[id=input_ssiSchemaName]").type("Default{enter}");
 
       cy.get("button[type=submit]").should("exist").click();
 
