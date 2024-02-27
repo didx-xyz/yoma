@@ -161,7 +161,7 @@ export const OpportunityFilterHorizontal: React.FC<{
     (key: keyof OpportunitySearchFilterCombined, item: string) => {
       if (!opportunitySearchFilter || !onSubmit) return;
       if (opportunitySearchFilter) {
-        const updatedFilter: OpportunitySearchFilterCombined = {
+        const updatedFilter: any = {
           ...opportunitySearchFilter,
         };
         updatedFilter[key] = updatedFilter[key]?.filter(
