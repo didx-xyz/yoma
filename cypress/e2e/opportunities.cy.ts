@@ -103,7 +103,9 @@ describe(`Opportunities`, function () {
       cy.get("button[type=submit]").should("exist").click();
 
       //* step 4: fill out form and click next
+      cy.wait(1000);
       cy.get("input[id=input_keywords]").type("keyword1{enter}keyword2{enter}keyword3{enter}");
+      cy.wait(1000);
 
       cy.get("button[type=submit]").should("exist").click();
 
