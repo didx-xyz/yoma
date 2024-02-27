@@ -17,10 +17,11 @@ import {
   IoMdClose,
   IoMdFingerPrint,
   IoIosArrowBack,
+  IoMdPause,
+  IoMdPlay,
 } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
-import iconAction from "public/images/icon-action.svg";
 import iconUpload from "public/images/icon-upload.svg";
 import iconOpen from "public/images/icon-open.svg";
 import iconClock from "public/images/icon-clock.svg";
@@ -440,7 +441,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       this page upon finishing to{" "}
                       <strong>earn your ZLTO</strong>.
                     </div>
-                    <div>Don’t show me this message again</div>
+                    {/* <div>Don’t show me this message again</div> */}
                     <div className="text-center md:w-[450px]">
                       Be mindful of external sites&apos; privacy policy and keep
                       your data private.
@@ -636,7 +637,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                         {/* BADGES */}
                         <div className="my-2 flex flex-row gap-1 text-xs font-bold text-green-dark">
-                          <div className="badge h-6 whitespace-nowrap rounded-md bg-green-light text-green">
+                          <div className="badge h-6 whitespace-nowrap rounded-md border-none bg-green-light text-green">
                             <Image
                               src={iconClock}
                               alt="Icon Clock"
@@ -654,7 +655,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             }`}</span>
                           </div>
                           {spotsLeft > 0 && (
-                            <div className="badge h-6 whitespace-nowrap rounded-md bg-green-light text-green">
+                            <div className="badge h-6 whitespace-nowrap rounded-md border-none bg-green-light text-green">
                               <Image
                                 src={iconUser}
                                 alt="Icon User"
@@ -670,7 +671,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             </div>
                           )}
                           {opportunity?.type && (
-                            <div className="badge h-6 rounded-md bg-[#E7E8F5] text-[#5F65B9]">
+                            <div className="badge h-6 rounded-md border-none bg-[#E7E8F5] text-[#5F65B9]">
                               <Image
                                 src={iconTopics}
                                 alt="Icon Type"
@@ -686,7 +687,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             </div>
                           )}
                           {(opportunity.zltoReward ?? 0) > 0 && (
-                            <div className="badge h-6 whitespace-nowrap rounded-md bg-yellow-light text-yellow">
+                            <div className="badge h-6 whitespace-nowrap rounded-md border-none bg-yellow-light text-yellow">
                               <Image
                                 src={iconZlto}
                                 alt="Icon Zlto"
@@ -706,29 +707,23 @@ const OpportunityDetails: NextPageWithLayout<{
                           {opportunity?.status == "Active" && (
                             <>
                               {new Date(opportunity.dateStart) > new Date() && (
-                                <div className="badge h-6 rounded-md bg-white text-xs text-yellow">
-                                  Not started
+                                <div className="badge h-6 rounded-md border-none bg-orange-light text-xs text-orange">
+                                  <IoMdPause />
+                                  <p className="ml-1">Not started</p>
                                 </div>
                               )}
                               {new Date(opportunity.dateStart) < new Date() && (
-                                <div className="badge h-6 rounded-md bg-purple-light text-xs text-purple">
-                                  <Image
-                                    src={iconAction}
-                                    alt="Icon Action"
-                                    width={16}
-                                    height={16}
-                                    sizes="100vw"
-                                    priority={true}
-                                    style={{ width: "16px", height: "16px" }}
-                                  />
-                                  <span className="ml-1 text-xs">Started</span>
+                                <div className="badge h-6 rounded-md border-none bg-purple-soft text-xs font-semibold text-purple-shade">
+                                  <IoMdPlay />
+                                  <span className="ml-1">Started</span>
                                 </div>
                               )}
                             </>
                           )}
                           {opportunity?.status == "Expired" && (
-                            <div className="badge h-6 rounded-md bg-green-light text-xs text-xs text-yellow">
-                              Expired
+                            <div className="badge h-6 rounded-md border-none bg-red-100 text-xs font-semibold text-error">
+                              <IoMdClose className="h-4 w-4" />
+                              <span className="ml-1">Expired</span>
                             </div>
                           )}
                         </div>
@@ -940,11 +935,11 @@ const OpportunityDetails: NextPageWithLayout<{
 
                             <span className="ml-1">Skills you will learn</span>
                           </div>
-                          <div className="my-2">
+                          <div className="my-2 flex flex-wrap gap-1">
                             {opportunity?.skills?.map((item) => (
                               <div
                                 key={item.id}
-                                className="min-h-6 badge mr-1 h-full rounded-md border-0 bg-green text-xs text-white"
+                                className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                               >
                                 {item.name}
                               </div>
@@ -988,11 +983,11 @@ const OpportunityDetails: NextPageWithLayout<{
 
                             <span className="ml-1">Topics</span>
                           </div>
-                          <div className="my-2">
+                          <div className="my-2 flex flex-wrap gap-1">
                             {opportunity?.categories?.map((item) => (
                               <div
                                 key={item.id}
-                                className="min-h-6 badge mr-1 h-full rounded-md bg-green text-xs text-white"
+                                className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                               >
                                 {item.name}
                               </div>
@@ -1014,11 +1009,11 @@ const OpportunityDetails: NextPageWithLayout<{
 
                             <span className="ml-1">Languages</span>
                           </div>
-                          <div className="my-2">
+                          <div className="my-2 flex flex-wrap gap-1">
                             {opportunity?.languages?.map((item) => (
                               <div
                                 key={item.id}
-                                className="min-h-6 badge mr-1 h-full rounded-md bg-green text-xs text-white"
+                                className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                               >
                                 {item.name}
                               </div>

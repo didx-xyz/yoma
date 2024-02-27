@@ -18,6 +18,7 @@ export default {
         "purple-shade": "#54365D",
         pink: "#FE4D57",
         orange: "#F9AB3E",
+        "orange-light": "#FFE8C9",
         green: "#387F6A",
         "green-tint": "#4C8C79",
         "green-light": "#E6F5F3",

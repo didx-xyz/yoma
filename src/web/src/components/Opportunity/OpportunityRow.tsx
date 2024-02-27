@@ -4,7 +4,7 @@ import Link from "next/link";
 
 interface InputProps {
   [id: string]: any;
-  title: string;
+  title?: string;
   data: OpportunitySearchResultsInfo;
   viewAllUrl?: string;
 }
@@ -20,7 +20,7 @@ export const OpportunityRow: React.FC<InputProps> = ({
       {(data?.items?.length ?? 0) > 0 && (
         <div className="flex flex-col gap-6">
           <div className="flex flex-row">
-            <div className="flex-grow">
+            <div className="flex flex-grow">
               <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-black md:max-w-[800px]">
                 {title}
               </div>

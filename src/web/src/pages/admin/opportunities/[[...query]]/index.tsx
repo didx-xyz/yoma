@@ -17,12 +17,7 @@ import type { OrganizationInfo } from "~/api/models/organisation";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { SearchInput } from "~/components/SearchInput";
-import {
-  DATE_FORMAT_HUMAN,
-  PAGE_SIZE,
-  PAGE_SIZE_MAXIMUM,
-  THEME_BLUE,
-} from "~/lib/constants";
+import { PAGE_SIZE, PAGE_SIZE_MAXIMUM, THEME_BLUE } from "~/lib/constants";
 import { type NextPageWithLayout } from "~/pages/_app";
 import {
   getCommitmentIntervals,
@@ -53,7 +48,6 @@ import { useAtomValue } from "jotai";
 import { smallDisplayAtom } from "~/lib/store";
 import ReactModal from "react-modal";
 import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
-import moment from "moment";
 import iconBell from "public/images/icon-bell.webp";
 import { IoMdDownload } from "react-icons/io";
 
@@ -381,52 +375,52 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
   // 🧮 CALCULATED FIELDS
   // results info text based on filter parameters
-  const searchFilterText = useMemo(() => {
-    if (!searchResults) {
-      return "0 results";
-    }
+  // const searchFilterText = useMemo(() => {
+  //   if (!searchResults) {
+  //     return "0 results";
+  //   }
 
-    const { totalCount } = searchResults;
-    const resultText = totalCount === 1 ? "result" : "results";
-    const countText = `${totalCount?.toLocaleString()} ${resultText}`;
+  //   const { totalCount } = searchResults;
+  //   const resultText = totalCount === 1 ? "result" : "results";
+  //   const countText = `${totalCount?.toLocaleString()} ${resultText}`;
 
-    const filterText = [
-      opportunitySearchFilter.valueContains &&
-        `'${opportunitySearchFilter.valueContains}'`,
-      opportunitySearchFilter.categories?.map((c) => `'${c}'`)?.join(", "),
-      opportunitySearchFilter.countries?.map((c) => `'${c}'`)?.join(", "),
-      opportunitySearchFilter.languages?.map((c) => `'${c}'`).join(", "),
-      opportunitySearchFilter.types?.map((c) => `'${c}'`).join(", "),
-      opportunitySearchFilter.organizations?.map((c) => `'${c}'`).join(", "),
-      opportunitySearchFilter.statuses?.map((c) => `'${c}'`).join(", "),
-      opportunitySearchFilter.commitmentIntervals
-        ? `'${
-            opportunitySearchFilter.commitmentIntervals.length
-          } commitment interval${
-            opportunitySearchFilter.commitmentIntervals.length > 1 ? "s" : ""
-          }'`
-        : undefined,
-      opportunitySearchFilter.zltoRewardRanges
-        ? `'${opportunitySearchFilter.zltoRewardRanges.length} reward${
-            opportunitySearchFilter.zltoRewardRanges.length > 1 ? "s" : ""
-          }'`
-        : undefined,
-      opportunitySearchFilter.startDate
-        ? `'${moment(new Date(opportunitySearchFilter.startDate)).format(
-            DATE_FORMAT_HUMAN,
-          )}'`
-        : undefined,
-      opportunitySearchFilter.endDate
-        ? `'${moment(new Date(opportunitySearchFilter.endDate)).format(
-            DATE_FORMAT_HUMAN,
-          )}'`
-        : undefined,
-    ]
-      .filter(Boolean)
-      .join(", ");
+  //   const filterText = [
+  //     opportunitySearchFilter.valueContains &&
+  //       `'${opportunitySearchFilter.valueContains}'`,
+  //     opportunitySearchFilter.categories?.map((c) => `'${c}'`)?.join(", "),
+  //     opportunitySearchFilter.countries?.map((c) => `'${c}'`)?.join(", "),
+  //     opportunitySearchFilter.languages?.map((c) => `'${c}'`).join(", "),
+  //     opportunitySearchFilter.types?.map((c) => `'${c}'`).join(", "),
+  //     opportunitySearchFilter.organizations?.map((c) => `'${c}'`).join(", "),
+  //     opportunitySearchFilter.statuses?.map((c) => `'${c}'`).join(", "),
+  //     opportunitySearchFilter.commitmentIntervals
+  //       ? `'${
+  //           opportunitySearchFilter.commitmentIntervals.length
+  //         } commitment interval${
+  //           opportunitySearchFilter.commitmentIntervals.length > 1 ? "s" : ""
+  //         }'`
+  //       : undefined,
+  //     opportunitySearchFilter.zltoRewardRanges
+  //       ? `'${opportunitySearchFilter.zltoRewardRanges.length} reward${
+  //           opportunitySearchFilter.zltoRewardRanges.length > 1 ? "s" : ""
+  //         }'`
+  //       : undefined,
+  //     opportunitySearchFilter.startDate
+  //       ? `'${moment(new Date(opportunitySearchFilter.startDate)).format(
+  //           DATE_FORMAT_HUMAN,
+  //         )}'`
+  //       : undefined,
+  //     opportunitySearchFilter.endDate
+  //       ? `'${moment(new Date(opportunitySearchFilter.endDate)).format(
+  //           DATE_FORMAT_HUMAN,
+  //         )}'`
+  //       : undefined,
+  //   ]
+  //     .filter(Boolean)
+  //     .join(", ");
 
-    return `${countText} ${filterText ? ` for ${filterText}` : ""}`;
-  }, [opportunitySearchFilter, searchResults]);
+  //   return `${countText} ${filterText ? ` for ${filterText}` : ""}`;
+  // }, [opportunitySearchFilter, searchResults]);
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
@@ -707,7 +701,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       <div ref={myRef} />
 
       {/* TITLE & SEARCH INPUT */}
-      <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
+      <div className="container z-10 mt-20 max-w-7xl px-2 py-8">
         <div className="flex flex-col gap-2 py-4 sm:flex-row">
           <h3 className="flex flex-grow items-center text-white">
             Opportunities
@@ -770,29 +764,15 @@ const OpportunitiesAdmin: NextPageWithLayout<{
               OpportunityFilterOptions.STATUSES,
               OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
             ]}
+            totalCount={searchResults?.totalCount ?? 0}
+            exportToCsv={setExportDialogOpen}
           />
         </div>
 
         {/* SEARCH RESULTS */}
         {!isLoading && (
           <div id="results">
-            <div className="flex flex-row items-center">
-              {/* RESULTS INFO */}
-              <div className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap py-4 text-xl font-semibold text-black md:max-w-[800px]">
-                {searchFilterText}
-              </div>
-
-              {/* EXPORT TO CSV */}
-              <div className="ml-96">
-                <button
-                  type="button"
-                  className="btn-blue btn btn-xs w-40 gap-2"
-                  onClick={() => setExportDialogOpen(true)}
-                >
-                  Export to CSV
-                </button>
-              </div>
-            </div>
+            <div className="mb-6 flex flex-row items-center justify-end"></div>
             <div className="rounded-lg bg-white p-4">
               {/* NO ROWS */}
               {(!searchResults || searchResults.items?.length === 0) &&
