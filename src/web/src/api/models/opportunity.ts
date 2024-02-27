@@ -1,12 +1,17 @@
 import type { PaginationFilter } from "./common";
 import type { Country, Language, Skill } from "./lookups";
 
+// NB: this is a combined model for re-uasability
+export interface OpportunitySearchFilterCombined
+  extends OpportunitySearchFilter,
+    OpportunitySearchFilterAdmin {}
+
 export interface OpportunitySearchFilterAdmin
   extends OpportunitySearchFilterBase {
   startDate: string | null;
   endDate: string | null;
   organizations: string[] | null;
-  statuses: Status[] | null;
+  statuses: Status[] | null | string[];
 }
 
 export interface OpportunitySearchResults extends OpportunitySearchResultsBase {
@@ -107,13 +112,6 @@ export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
   mostViewed: boolean | null;
 }
 
-export interface OpportunitySearchFilterAdmin
-  extends OpportunitySearchFilterBase {
-  startDate: string | null;
-  endDate: string | null;
-  statuses: Status[] | null;
-}
-
 export interface OpportunitySearchFilterBase extends PaginationFilter {
   types: string[] | null;
   categories: string[] | null;
@@ -181,6 +179,21 @@ export interface OpportunityVerificationType {
   type?: VerificationType | string; //NB: hack comes back as string
   displayName: string;
   description: string;
+}
+
+export enum OpportunityFilterOptions {
+  CATEGORIES = "categories",
+  TYPES = "types",
+  COUNTRIES = "countries",
+  LANGUAGES = "languages",
+  COMMITMENTINTERVALS = "commitmentIntervals",
+  ZLTOREWARDRANGES = "zltoRewardRanges",
+  PUBLISHEDSTATES = "publishedStates",
+  ORGANIZATIONS = "organizations",
+  DATE_START = "dateStart",
+  DATE_END = "dateEnd",
+  STATUSES = "statuses",
+  VIEWALLFILTERSBUTTON = "viewAllFiltersButton",
 }
 
 export interface OpportunityRequestBase {

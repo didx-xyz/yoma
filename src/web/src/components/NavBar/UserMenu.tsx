@@ -286,22 +286,8 @@ export const UserMenu: React.FC = () => {
           {/* ORGANISATIONS */}
           {(userProfile?.adminsOf?.length ?? 0) > 0 && (
             <>
-              <div className="flex flex-row items-center justify-center py-2 pl-4">
-                <div className="w-full text-base font-semibold text-gray-dark">
-                  My organisations
-                </div>
-                <div className="justify-end">
-                  <Link
-                    href="/organisations"
-                    className="text-gray-dark"
-                    onClick={() => setUserMenuVisible(false)}
-                  >
-                    <div className="flex items-center justify-center whitespace-nowrap rounded-full bg-white px-4 text-sm font-semibold text-orange shadow transition-transform duration-200 hover:scale-105">
-                      <IoMdSearch className="h-5 w-5 text-gray-dark" />
-                      View all
-                    </div>
-                  </Link>
-                </div>
+              <div className="flex items-center py-2 pl-4 text-base font-semibold text-gray-dark">
+                My organisations
               </div>
 
               <div
@@ -312,8 +298,20 @@ export const UserMenu: React.FC = () => {
                   renderOrganisationMenuItem(organisation),
                 )}
               </div>
-
               <div className="divider m-0" />
+
+              <li>
+                <Link
+                  href="/organisations"
+                  className="text-gray-dark hover:bg-gray-light"
+                  onClick={() => setUserMenuVisible(false)}
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
+                    <IoMdSearch className="h-6 w-6 text-gray-dark" />
+                  </div>
+                  View all organisations
+                </Link>
+              </li>
 
               <li>
                 <Link

@@ -1,4 +1,5 @@
 export const PAGE_SIZE = 10;
+export const PAGE_SIZE_MAXIMUM = 1000;
 export const DATE_FORMAT_HUMAN = "DD MMM YYYY";
 export const DATE_FORMAT_HUMAN_LONG = "dddd Do MMMM YYYY";
 export const DATETIME_FORMAT_HUMAN = "MMM D YYYY, h:mm a";
