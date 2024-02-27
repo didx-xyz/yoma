@@ -43,6 +43,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 YomaReward = entity.YomaReward,
                 ZltoRewardPool = entity.ZltoRewardPool,
                 YomaRewardPool = entity.YomaRewardPool,
+                ZltoRewardCumulative = entity.ZltoRewardCumulative,
+                YomaRewardCumulative = entity.YomaRewardCumulative,
                 VerificationEnabled = entity.VerificationEnabled,
                 VerificationMethod = string.IsNullOrEmpty(entity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(entity.VerificationMethod),
                 DifficultyId = entity.DifficultyId,
@@ -142,6 +144,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 YomaReward = item.YomaReward,
                 ZltoRewardPool = item.ZltoRewardPool,
                 YomaRewardPool = item.YomaRewardPool,
+                ZltoRewardCumulative = item.ZltoRewardCumulative,
+                YomaRewardCumulative = item.YomaRewardCumulative,
                 VerificationEnabled = item.VerificationEnabled,
                 VerificationMethod = item.VerificationMethod?.ToString(),
                 DifficultyId = item.DifficultyId,
@@ -188,6 +192,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                   YomaReward = item.YomaReward,
                   ZltoRewardPool = item.ZltoRewardPool,
                   YomaRewardPool = item.YomaRewardPool,
+                  ZltoRewardCumulative = item.ZltoRewardCumulative,
+                  YomaRewardCumulative = item.YomaRewardCumulative,
                   VerificationEnabled = item.VerificationEnabled,
                   VerificationMethod = item.VerificationMethod?.ToString(),
                   DifficultyId = item.DifficultyId,
@@ -239,6 +245,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
             entity.YomaReward = item.YomaReward;
             entity.ZltoRewardPool = item.ZltoRewardPool;
             entity.YomaRewardPool = item.YomaRewardPool;
+            entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
+            entity.YomaRewardCumulative = item.YomaRewardCumulative;   
             entity.VerificationEnabled = item.VerificationEnabled;
             entity.VerificationMethod = item.VerificationMethod?.ToString();
             entity.DifficultyId = item.DifficultyId;
@@ -285,6 +293,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 entity.YomaReward = item.YomaReward;
                 entity.ZltoRewardPool = item.ZltoRewardPool;
                 entity.YomaRewardPool = item.YomaRewardPool;
+                entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
+                entity.YomaRewardCumulative = item.YomaRewardCumulative;
                 entity.VerificationEnabled = item.VerificationEnabled;
                 entity.VerificationMethod = item.VerificationMethod?.ToString();
                 entity.DifficultyId = item.DifficultyId;

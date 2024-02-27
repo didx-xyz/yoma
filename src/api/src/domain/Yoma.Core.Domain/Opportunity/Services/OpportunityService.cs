@@ -895,18 +895,32 @@ namespace Yoma.Core.Domain.Opportunity.Services
             if (zltoReward.HasValue)
             {
                 if (opportunity.ZltoRewardPool.HasValue)
-                    zltoReward = Math.Max(opportunity.ZltoRewardPool.Value - (opportunity.ZltoRewardCumulative ?? 0 + zltoReward.Value), 0);
+                {
+                    // calculate the remainder of ZltoRewardPool - ZltoRewardCumulative, treating null as 0
+                    var remainder = opportunity.ZltoRewardPool.Value - (opportunity.ZltoRewardCumulative ?? 0);
 
-                opportunity.ZltoRewardCumulative ??= 0 + zltoReward;
+                    // if remainder >= zltoReward, zltoReward stays the same; otherwise, it becomes the remainder
+                    zltoReward = Math.Max(Math.Min(remainder, zltoReward.Value), 0);
+                }
+
+                // update ZltoRewardCumulative, treating null as 0 for the addition
+                opportunity.ZltoRewardCumulative = (opportunity.ZltoRewardCumulative ?? 0) + zltoReward.Value;
             }
 
             var yomaReward = opportunity.YomaReward;
             if (yomaReward.HasValue)
             {
                 if (opportunity.YomaRewardPool.HasValue)
-                    yomaReward = Math.Max(opportunity.YomaRewardPool.Value - (opportunity.YomaRewardCumulative ?? 0 + yomaReward.Value), 0);
+                {
+                    // calculate the remainder of YomaRewardPool - YomaRewardCumulative, treating null as 0
+                    var remainder = opportunity.YomaRewardPool.Value - (opportunity.YomaRewardCumulative ?? 0);
 
-                opportunity.YomaRewardCumulative ??= 0 + yomaReward;
+                    // if remainder >= yomaReward, yomaReward stays the same; otherwise, it becomes the remainder
+                    yomaReward = Math.Max(Math.Min(remainder, yomaReward.Value), 0);
+                }
+
+                // update YomaRewardCumulative, treating null as 0 for the addition
+                opportunity.YomaRewardCumulative = (opportunity.YomaRewardCumulative ?? 0) + yomaReward.Value;
             }
 
             opportunity.ModifiedByUserId = user.Id;

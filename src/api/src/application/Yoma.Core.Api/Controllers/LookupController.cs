@@ -62,7 +62,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Return a list of edcuations")]
         [HttpGet("education")]
-        [ProducesResponseType(typeof(List<Country>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(List<Education>), (int)HttpStatusCode.OK)]
         public IActionResult ListEducations()
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListEducations));

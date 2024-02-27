@@ -790,15 +790,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         myOpportunity = await _myOpportunityRepository.Create(myOpportunity);
                     else
                     {
-                        //track existing (to be deleted)
-                        var items = myOpportunity.Verifications?.Where(o => o.FileId.HasValue).ToList();
-                        if (items != null)
+                        //delete (db) and track existing (blobs to be deleted)
+                        if (myOpportunity.Verifications != null)
                         {
-                            itemsExisting.AddRange(items);
+                            itemsExisting.AddRange(myOpportunity.Verifications);
                             foreach (var item in itemsExisting)
                             {
-                                if (!item.FileId.HasValue)
-                                    throw new InvalidOperationException("File id expected");
+                                await _myOpportunityVerificationRepository.Delete(item);
+
+                                if (!item.FileId.HasValue) continue;
                                 item.File = await _blobService.Download(item.FileId.Value);
                             }
                         }
@@ -865,13 +865,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                             await _myOpportunityVerificationRepository.Create(itemType);
                         }
 
-                    //delete existing items in blob storage and db
+                    //delete existing items in blob storage (deleted in db above)
                     foreach (var item in itemsExisting)
                     {
-                        if (!item.FileId.HasValue)
-                            throw new InvalidOperationException("File expected");
-
-                        await _myOpportunityVerificationRepository.Delete(item);
+                        if (!item.FileId.HasValue) continue;
                         await _blobService.Delete(item.FileId.Value);
                         itemsExistingDeleted.Add(item);
                     }

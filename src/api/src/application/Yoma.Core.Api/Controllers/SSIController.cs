@@ -153,7 +153,7 @@ namespace Yoma.Core.Api.Controllers
 
         [SwaggerOperation(Summary = "Get a specific credential from the user's wallet by id (Authenticated User)")]
         [HttpPost("wallet/user/{id}")]
-        [ProducesResponseType(typeof(SSIWalletSearchResults), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(SSICredential), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [Authorize(Roles = $"{Constants.Role_User}")]
         public async Task<IActionResult> GetUserWalletCredentialById([FromRoute] string id)
