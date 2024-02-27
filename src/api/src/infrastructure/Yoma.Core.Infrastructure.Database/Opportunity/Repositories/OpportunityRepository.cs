@@ -246,7 +246,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
             entity.ZltoRewardPool = item.ZltoRewardPool;
             entity.YomaRewardPool = item.YomaRewardPool;
             entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
-            entity.YomaRewardCumulative = item.YomaRewardCumulative;   
+            entity.YomaRewardCumulative = item.YomaRewardCumulative;
             entity.VerificationEnabled = item.VerificationEnabled;
             entity.VerificationMethod = item.VerificationMethod?.ToString();
             entity.DifficultyId = item.DifficultyId;
