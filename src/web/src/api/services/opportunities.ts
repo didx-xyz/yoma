@@ -234,3 +234,30 @@ export const updateOpportunityStatus = async (
   );
   return data;
 };
+
+export const getOpportunitiesAdminExportToCSV = async (
+  filter: OpportunitySearchFilterAdmin,
+
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<File> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.post(`/opportunity/search/csv`, filter, {
+    responseType: "blob", // set responseType to 'blob' or 'arraybuffer'
+  });
+
+  // create the file name
+  const date = new Date();
+  const dateString = `${date.getFullYear()}-${
+    date.getMonth() + 1
+  }-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+  const fileName = `Opportunities_${dateString}.csv`;
+
+  // create a new Blob object using the data
+  const blob = new Blob([data], { type: "text/csv" });
+
+  // create a new File object from the Blob
+  const file = new File([blob], fileName);
+
+  return file;
+};

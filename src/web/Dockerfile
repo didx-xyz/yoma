@@ -64,8 +64,11 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Next.js Image needs to be able to write to the .next/cache directory
+# Next.js Image needs the .next/cache directory to be writable
 RUN mkdir -p ./.next/cache && chown nextjs:nodejs ./.next/cache
+
+# Next.js SSG requires the .next/server/pages directory to be writable
+RUN chmod -R 777 /app/.next/server/pages
 
 USER nextjs
 EXPOSE 3000

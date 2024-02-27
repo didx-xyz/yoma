@@ -80,6 +80,24 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
     ]);
   }, [router.asPath, setTabItems]);
 
+  const [processing, setProcessing] = useState("");
+  const [available, setAvailable] = useState("");
+  const [total, setTotal] = useState("");
+
+  useEffect(() => {
+    if (userProfile?.zlto) {
+      if (userProfile.zlto.zltoOffline) {
+        setProcessing(userProfile.zlto.pending.toLocaleString());
+        setAvailable("Unable to retrieve value");
+        setTotal(userProfile.zlto.total.toLocaleString());
+      } else {
+        setProcessing(userProfile.zlto.pending.toLocaleString());
+        setAvailable(userProfile.zlto.available.toLocaleString());
+        setTotal(userProfile.zlto.total.toLocaleString());
+      }
+    }
+  }, [userProfile]);
+
   return (
     <MainLayout>
       <>
@@ -144,29 +162,57 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                     <div className="flex flex-grow flex-col">
                       <h5>{userProfile?.displayName}</h5>
 
-                      <div className="divider m-0" />
+                      {/* ZLTO Balances */}
+                      <div className="mt-2 flex flex-col gap-1">
+                        <div className="flex flex-row items-center gap-2">
+                          <p className="w-28 text-xs uppercase tracking-widest">
+                            Processing:
+                          </p>
 
-                      {/* TODO */}
-                      <div className="flex flex-row gap-2">
-                        <p className="text-xs uppercase tracking-widest">
-                          Profile Level:
-                        </p>
+                          <div className="badge bg-gray-light py-2 text-xs font-bold text-black">
+                            <Image
+                              src={iconZlto}
+                              className="mr-2"
+                              alt="ZLTO"
+                              width={18}
+                              height={18}
+                            />
+                            {processing ?? "Loading..."}
+                          </div>
+                        </div>
 
-                        <p className="text-xs uppercase tracking-widest brightness-95">
-                          Adventurer
-                        </p>
-                      </div>
-                      <div className="divider m-0" />
+                        <div className="flex flex-row items-center gap-2">
+                          <p className="w-28 text-xs uppercase tracking-widest">
+                            Available:
+                          </p>
 
-                      <div className="badge bg-green-light py-3 font-bold brightness-95">
-                        <Image
-                          src={iconZlto}
-                          className="mr-2"
-                          alt="ZLTO"
-                          width={18}
-                          height={18}
-                        />
-                        {userProfile?.zlto?.available ?? 0}
+                          <div className="badge bg-gray-light py-2 text-xs font-bold text-black">
+                            <Image
+                              src={iconZlto}
+                              className="mr-2"
+                              alt="ZLTO"
+                              width={18}
+                              height={18}
+                            />
+                            {available ?? "Loading..."}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-row items-center gap-2">
+                          <p className="w-28 text-xs uppercase tracking-widest">
+                            Total:
+                          </p>
+                          <div className="badge bg-gray-light py-2 text-xs font-bold text-black">
+                            <Image
+                              src={iconZlto}
+                              className="mr-2"
+                              alt="ZLTO"
+                              width={18}
+                              height={18}
+                            />
+                            {total ?? "Loading..."}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
