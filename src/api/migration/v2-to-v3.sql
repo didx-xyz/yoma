@@ -757,7 +757,7 @@ SELECT
     	o.createdat
 	) AT TIME ZONE 'UTC' AS "DateModified",
 	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'system@yoma.world') as "ModifiedByUserId"
-FROM dbo.opportunities o
+FROM dbo.opportunities o;
 
 --Opportunity.OpportunityCategories - No mappings; New concept in V3; To be updated by operations
 
@@ -780,7 +780,7 @@ WHERE
         FROM "Opportunity"."OpportunityCountries" existing
         WHERE existing."OpportunityId" = oo."Id"
         AND existing."CountryId" = lc."Id"
-    )
+    );
 
 -- Opportunity.OpportunityLanguages
 INSERT INTO "Opportunity"."OpportunityLanguages" ("Id", "OpportunityId", "LanguageId", "DateCreated")
@@ -801,7 +801,7 @@ WHERE
         FROM "Opportunity"."OpportunityLanguages" existing
         WHERE existing."OpportunityId" = oo."Id"
         AND existing."LanguageId" = ll."Id"
-    )
+    );
 
 --Opportunity.Skills
 INSERT INTO "Opportunity"."OpportunitySkills" ("Id", "OpportunityId", "SkillId", "DateCreated")
@@ -834,7 +834,6 @@ FROM
 /***END: Opportunities***/   
    
 /***BEGIN: 'My' Opportunities***/
-
 --Opptorunity.MyOpportunity (Saved: dbo.myopportunities entries)
 INSERT INTO "Opportunity"."MyOpportunity" (
     "Id", 
@@ -872,18 +871,19 @@ JOIN
 JOIN
     "Opportunity"."Opportunity" O ON O."Id" = MO.opportunityid
 JOIN
-    (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Saved') AS A ON TRUE
+    (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Saved') AS A ON true;
     
 --Opptorunity.MyOpportunity (Verificaton: Pending [VerifiedAt=null] | Verificaton: Completed [VerifiedAt!=null] & Approved=true | Verificaton: Rejected [VerifiedAt!=null] & Approved=false)
 -- Create temporary tables if they do not exist
-CREATE TEMP TABLE IF NOT EXISTS TempOpportunityDetails (
+CREATE TEMP TABLE TempOpportunityDetails (
     MyOpportunityId UUID,
     UserId UUID,
     OpportunityId UUID,
-    FileId UUID
+    FileId UUID,
+    DateCreated TIMESTAMP
 );
 
-CREATE TEMP TABLE IF NOT EXISTS TempInsertedOpportunity (
+CREATE TEMP TABLE TempInsertedOpportunity (
     "Id" UUID,
     "UserId" UUID,
     "OpportunityId" UUID,
@@ -956,8 +956,8 @@ WITH Inserted AS (
         C.createdat DESC
     RETURNING *
 )
-INSERT INTO TempOpportunityDetails (MyOpportunityId, UserId, OpportunityId, FileId)
-SELECT "Id", "UserId", "OpportunityId", "FileId" FROM Inserted;
+INSERT INTO TempOpportunityDetails (MyOpportunityId, UserId, OpportunityId, FileId, DateCreated)
+SELECT "Id", "UserId", "OpportunityId", "FileId", "DateCreated" FROM Inserted;
 
 -- Insert into "Opportunity"."MyOpportunity" from the Inserted CTE
 INSERT INTO "Opportunity"."MyOpportunity" (
@@ -973,11 +973,10 @@ INSERT INTO "Opportunity"."MyOpportunity" (
     "ZltoReward", 
     "YomaReward", 
     "DateCreated", 
-    "DateModified",
-    "FileId"
+    "DateModified"
 )
 SELECT "Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
-       "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified", "FileId"
+       "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified"
 FROM TempInsertedOpportunity;
   
 --Object.Blob (credential certificates / 'my' opportinity verifcation file upload)
@@ -1020,23 +1019,215 @@ SELECT
     (SELECT "Id" FROM "Opportunity"."OpportunityVerificationType" WHERE "Name" = 'FileUpload') AS "VerificationTypeId",
     NULL AS "GeometryProperties",
     TOD.FileId AS "FileId",
-    CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS "DateCreated"
+    TOD.DateCreated AS "DateCreated"
 FROM
     TempOpportunityDetails TOD;
 
-DROP TABLE IF EXISTS TempOpportunityDetails;
-DROP TABLE IF EXISTS TempInsertedOpportunity;
+DROP TABLE TempOpportunityDetails;
+DROP TABLE TempInsertedOpportunity;
    
-   
---TODO: SSI.CredentialIssuance (for 'My' Opportunities with verification completed)
-   
---TODO: Reward.Transaction (for 'My' Opportunities with verification completed: for users with no zlto wallet added as pending; for user with zlto wallet added as processed)
-   
---TODO: Reward.WalletCreation (Update balance and set to sum of pending Reward.Transactions)
+--SSI.CredentialIssuance (for 'My' Opportunities with verification completed)
+INSERT INTO "SSI"."CredentialIssuance" (
+    "Id", 
+    "SchemaTypeId", 
+    "ArtifactType", 
+    "SchemaName", 
+    "SchemaVersion", 
+    "StatusId", 
+    "UserId", 
+    "OrganizationId",
+    "MyOpportunityId", 
+    "CredentialId", 
+    "ErrorReason", 
+    "RetryCount", 
+    "DateCreated", 
+    "DateModified"
+)
+SELECT 
+    gen_random_uuid() AS "Id", 
+    (SELECT "Id" FROM "SSI"."SchemaType" WHERE "Name" = 'Opportunity') AS "SchemaTypeId", 
+    'Indy' AS "ArtifactType", 
+    O."SSISchemaName" AS "SchemaName", 
+    '1.0' AS "SchemaVersion", 
+    (SELECT "Id" FROM "SSI"."CredentialIssuanceStatus" WHERE "Name" = 'Pending') AS "StatusId", 
+    NULL AS "UserId", 
+    NULL AS "OrganizationId", 
+    MO."Id" AS "MyOpportunityId", 
+    NULL AS "CredentialId", 
+    NULL AS "ErrorReason", 
+    NULL AS "RetryCount", 
+    MO."DateModified" AS "DateCreated", 
+    MO."DateModified" AS "DateModified"
+FROM 
+    "Opportunity"."MyOpportunity" MO
+INNER JOIN 
+    "Opportunity"."Opportunity" O ON MO."OpportunityId" = O."Id"
+WHERE 
+    MO."ActionId" = (
+        SELECT "Id" 
+        FROM "Opportunity"."MyOpportunityAction" 
+        WHERE "Name" = 'Verification'
+    )
+    AND MO."VerificationStatusId" = (
+        SELECT "Id" 
+        FROM "Opportunity"."MyOpportunityVerificationStatus" 
+        WHERE "Name" = 'Completed'
+    )
+    AND O."CredentialIssuanceEnabled" = true;
 
---TODO: Entity.UserSkills (populated for 'My' Opportunities with verification completed)
+--Reward.Transaction (for 'My' Opportunities with verification completed: for users with no zlto wallet added as pending; for user with zlto wallet added as processed)
+INSERT INTO "Reward"."Transaction" (
+    "Id", 
+    "UserId", 
+    "StatusId", 
+    "SourceEntityType", 
+    "MyOpportunityId", 
+    "Amount", 
+    "TransactionId", 
+    "ErrorReason", 
+    "RetryCount", 
+    "DateCreated", 
+    "DateModified"
+)
+SELECT 
+    gen_random_uuid() AS "Id", 
+    MO."UserId" AS "UserId", 
+    COALESCE(
+        (
+            SELECT TS."Id" 
+            FROM "Reward"."TransactionStatus" TS
+            WHERE TS."Name" = 'Processed' 
+            AND EXISTS (
+                SELECT 1
+                FROM "Reward"."WalletCreation" WC
+                WHERE WC."UserId" = MO."UserId"
+                AND WC."StatusId" = (
+                    SELECT WCS."Id" 
+                    FROM "Reward"."WalletCreationStatus" WCS 
+                    WHERE WCS."Name" = 'Created'
+                )
+            )
+        ), 
+        (
+            SELECT TS."Id" 
+            FROM "Reward"."TransactionStatus" TS
+            WHERE TS."Name" = 'Pending'
+        )
+    ) AS "StatusId", 
+    'MyOpportunity' AS "SourceEntityType", 
+    MO."Id" AS "MyOpportunityId", 
+    MO."ZltoReward" AS "Amount", 
+    CASE
+        WHEN EXISTS (
+            SELECT 1
+            FROM "Reward"."WalletCreation" WC
+            WHERE WC."UserId" = MO."UserId"
+            AND WC."StatusId" = (
+                SELECT WCS."Id" 
+                FROM "Reward"."WalletCreationStatus" WCS 
+                WHERE WCS."Name" = 'Created'
+            )
+        ) THEN 'Migrated from v2 to v3'
+        ELSE NULL
+    END AS "TransactionId", 
+    NULL AS "ErrorReason", 
+    NULL AS "RetryCount", 
+    MO."DateModified" AS "DateCreated", 
+    MO."DateModified" AS "DateModified"
+FROM 
+    "Opportunity"."MyOpportunity" MO
+WHERE 
+    MO."ActionId" = (
+        SELECT "Id" 
+        FROM "Opportunity"."MyOpportunityAction" 
+        WHERE "Name" = 'Verification'
+    )
+    AND MO."VerificationStatusId" = (
+        SELECT "Id" 
+        FROM "Opportunity"."MyOpportunityVerificationStatus" 
+        WHERE "Name" = 'Completed'
+    )
+    AND MO."ZltoReward" > 0;
    
---TODO: Entity.UserSkillOrganizations (populated for 'My' Opportunities with verification completed)
+--Reward.WalletCreation (Update balance and set to sum of processed Reward.Transactions for users with wallets)
+UPDATE "Reward"."WalletCreation" WC
+SET "Balance" = COALESCE(WC."Balance", 0) + T.SumZltoReward
+FROM (
+    SELECT 
+        RT."UserId", 
+        SUM(RT."Amount") AS SumZltoReward
+    FROM 
+        "Reward"."Transaction" RT
+    INNER JOIN 
+        "Reward"."TransactionStatus" RTS ON RT."StatusId" = RTS."Id" AND RTS."Name" = 'Processed'
+    GROUP BY RT."UserId"
+) T
+WHERE WC."UserId" = T."UserId"
+AND WC."StatusId" = (
+    SELECT WCS."Id"
+    FROM "Reward"."WalletCreationStatus" WCS
+    WHERE WCS."Name" = 'Created'
+);
+   
+--Entity.UserSkills (populated for 'My' Opportunities with verification completed)
+INSERT INTO "Entity"."UserSkills" (
+    "Id", 
+    "UserId", 
+    "SkillId", 
+    "DateCreated"
+)
+SELECT DISTINCT ON (MO."UserId", OS."SkillId")
+    gen_random_uuid(),
+    MO."UserId",
+    OS."SkillId",
+    MAX(MO."DateModified") OVER (PARTITION BY MO."UserId", OS."SkillId") AS "DateCreated"
+FROM 
+    "Opportunity"."MyOpportunity" MO
+INNER JOIN 
+    "Opportunity"."OpportunitySkills" OS ON MO."OpportunityId" = OS."OpportunityId"
+WHERE 
+    MO."ActionId" = (
+        SELECT "Id" 
+        FROM "Opportunity"."MyOpportunityAction" 
+        WHERE "Name" = 'Verification'
+    )
+    AND MO."VerificationStatusId" = (
+        SELECT "Id" 
+        FROM "Opportunity"."MyOpportunityVerificationStatus" 
+        WHERE "Name" = 'Completed'
+    );
+
+--Entity.UserSkillOrganizations (populated for 'My' Opportunities with verification completed)
+INSERT INTO "Entity"."UserSkillOrganizations" (
+    "Id", 
+    "UserSkillId", 
+    "OrganizationId", 
+    "DateCreated"
+)
+SELECT
+    gen_random_uuid() AS "Id",
+    US."Id" AS "UserSkillId",
+    OP."OrganizationId" AS "OrganizationId",
+    US."DateCreated" AS "DateCreated" 
+FROM
+    "Entity"."UserSkills" US
+INNER JOIN "Opportunity"."OpportunitySkills" OS ON US."SkillId" = OS."SkillId"
+INNER JOIN "Opportunity"."Opportunity" OP ON OP."Id" = OS."OpportunityId"
+INNER JOIN "Opportunity"."MyOpportunity" MO ON MO."OpportunityId" = OS."OpportunityId"
+    AND MO."ActionId" = (
+        SELECT "Id" 
+        FROM "Opportunity"."MyOpportunityAction" 
+        WHERE "Name" = 'Verification'
+    )
+    AND MO."VerificationStatusId" = (
+        SELECT "Id" 
+        FROM "Opportunity"."MyOpportunityVerificationStatus" 
+        WHERE "Name" = 'Completed'
+    )
+GROUP BY
+    US."Id",
+    OP."OrganizationId",
+    US."DateCreated"; 
    
 --Opportunity.Opportunity (update running totals based on completed opportunities)
 WITH AggregatedData AS (
