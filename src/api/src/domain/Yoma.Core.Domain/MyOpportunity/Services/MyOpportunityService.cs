@@ -364,6 +364,22 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 await _myOpportunityRepository.Update(myOpportunity); //update DateModified
         }
 
+        public bool ActionedSaved(Guid opportunityId)
+        {
+            //published opportunities (irrespective of started)
+            var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
+            if (!opportunity.Published)
+                throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
+
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+            var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
+
+            var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionSavedId);
+
+            return myOpportunity != null;
+        }
+
         public async Task PerformActionSaved(Guid opportunityId)
         {
             //published opportunities (irrespective of started)

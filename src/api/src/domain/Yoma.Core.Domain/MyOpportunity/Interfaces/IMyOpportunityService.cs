@@ -19,6 +19,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
         Task PerformActionSaved(Guid opportunityId);
 
+        bool ActionedSaved(Guid opportunityId);
+
         Task PerformActionSavedRemove(Guid opportunityId);
 
         Task PerformActionSendForVerificationManual(Guid opportunityId, MyOpportunityRequestVerify request);

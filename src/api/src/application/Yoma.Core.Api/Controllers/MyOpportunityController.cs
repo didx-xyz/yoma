@@ -176,6 +176,22 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK);
         }
 
+        [SwaggerOperation(Summary = "Check if an opportunity is saved (Authenticated User)")]
+        [HttpGet("action/{opportunityId}/saved")]
+        [ProducesResponseType(typeof(bool), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [Authorize(Roles = $"{Constants.Role_User}")]
+        public ActionResult ActionedSaved([FromRoute] Guid opportunityId)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSaved));
+
+            var result = _myOpportunityService.ActionedSaved(opportunityId);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSaved));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
         [SwaggerOperation(Summary = "Remove a saved opportunity (Authenticated User)")]
         [HttpDelete("action/{opportunityId}/save/remove")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
