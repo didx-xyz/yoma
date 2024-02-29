@@ -733,8 +733,9 @@ SELECT
 	) AS "CommitmentIntervalId",
 	COALESCE(o.timevalue, 1)::int2 AS "CommitmentIntervalCount",
 	CASE
-    	WHEN o.participantlimit IS NOT NULL THEN ABS(o.participantlimit)
-	    ELSE NULL
+    	WHEN o.participantlimit IS NULL THEN NULL
+    	WHEN ABS(o.participantlimit) = 0 THEN NULL
+    	ELSE ABS(o.participantlimit)
 	END AS "ParticipantLimit",
 	NULL::int4 as "ParticipantCount", --set below (see 'My' Opportunities section)
 	(SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 
