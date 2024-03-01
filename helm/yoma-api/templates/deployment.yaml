@@ -4,6 +4,9 @@ metadata:
   name: {{ include "yoma-api.fullname" . }}
   labels:
     {{- include "yoma-api.labels" . | nindent 4 }}
+    {{- with .Values.deploymentLabels }}
+    {{- tpl (toYaml .) $ | nindent 4 }}
+    {{- end }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -15,10 +18,13 @@ spec:
     metadata:
       {{- with .Values.podAnnotations }}
       annotations:
-        {{- toYaml . | nindent 8 }}
+        {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
       labels:
         {{- include "yoma-api.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- tpl (toYaml .) $ | nindent 8 }}
+        {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -30,7 +36,7 @@ spec:
       initContainers:
         {{- toYaml .Values.initContainers | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: yoma-api
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

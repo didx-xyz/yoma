@@ -1,8 +1,14 @@
+replicaCount: 2
+
 image:
   repository: ghcr.io/didx-xyz/yoma-web
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "master"
+
+env:
+  NEXT_PUBLIC_API_BASE_URL: https://v3api.stage.yoma.world/api/v3
+  NEXT_PUBLIC_ENVIRONMENT: staging
 
 ingress:
   internal:

@@ -23,7 +23,20 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-podAnnotations: {}
+podAnnotations:
+  ad.datadoghq.com/yoma-api.logs: '[{ "service" : "yoma-api", "source" : "csharp"}]'
+  # gcr.io/datadoghq/dd-lib-dotnet-init
+  admission.datadoghq.com/dotnet-lib.version: v2.47.0
+deploymentLabels:
+  tags.datadoghq.com/service: yoma-api
+  tags.datadoghq.com/version: '{{ .Values.image.tag | default .Chart.AppVersion }}'
+podLabels:
+  admission.datadoghq.com/enabled: "false" # disabled by default (for now)
+  tags.datadoghq.com/service: yoma-api
+  tags.datadoghq.com/version: '{{ .Values.image.tag | default .Chart.AppVersion }}'
+
+env:
+  DD_RUNTIME_METRICS_ENABLED: "true"
 
 podSecurityContext: {}
   # fsGroup: 2000
@@ -85,9 +98,6 @@ autoscaling:
 nodeSelector: {}
 tolerations: []
 affinity: {}
-
-env: {}
-  # KEY: VALUE
 
 volumeMounts: {}
 volumes: {}
