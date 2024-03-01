@@ -75,9 +75,21 @@ const LanguageSwitcher = () => {
   const switchLanguage = (lang: string) => {
     // We just need to set the related cookie and reload the page
     // "/auto/" prefix is Google's definition as far as a cookie name
+
+    // Get the current hostname from the window location
+    const cookieDomain = window.location.hostname;
+    // Split the hostname into its constituent parts
+    const domainParts = cookieDomain.split(".");
+    // Get the last two parts of the domain (e.g., 'example.com' from 'www.example.com')
+    // This works for domains of variable length (e.g., 'a.b.c.d', 'a.b.c', 'a.b', 'a')
+    // If the domain has only one part (e.g., 'localhost'), it takes that single part
+    const cookieParent = domainParts
+      .slice(Math.max(domainParts.length - 2, 0))
+      .join(".");
+
     setCookie(null, COOKIE_NAME, "/auto/" + lang);
     setCookie(null, COOKIE_NAME, "/auto/" + lang, {
-      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
+      domain: `.${cookieParent}`,
     });
 
     // 📊 GOOGLE ANALYTICS: track event
