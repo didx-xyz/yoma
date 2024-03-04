@@ -28,10 +28,6 @@ import {
   GA_ACTION_ORGANISATION_VERIFY,
   GA_CATEGORY_ORGANISATION,
   PAGE_SIZE,
-  ROLE_ADMIN,
-  THEME_BLUE,
-  THEME_GREEN,
-  THEME_PURPLE,
 } from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import {
@@ -87,7 +83,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   // 👇 set theme based on role
-  let theme = getThemeFromRole(session, id);
+  const theme = getThemeFromRole(session, id);
 
   // 👇 prefetch queries on server
   const { query, opportunity, page } = context.query;

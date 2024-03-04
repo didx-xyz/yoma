@@ -40,10 +40,6 @@ import {
   DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_UPDATE,
   GA_CATEGORY_OPPORTUNITY,
-  ROLE_ADMIN,
-  THEME_BLUE,
-  THEME_GREEN,
-  THEME_PURPLE,
 } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { useAtomValue } from "jotai";
@@ -76,7 +72,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   // 👇 set theme based on role
-  let theme = getThemeFromRole(session, id);
+  const theme = getThemeFromRole(session, id);
 
   // 👇 prefetch queries on server
   const queryClient = new QueryClient(config);

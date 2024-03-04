@@ -83,7 +83,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
   // 👇 set theme based on role
-  let theme = getThemeFromRole(session, id);
+  const theme = getThemeFromRole(session, id);
 
   const { query, page } = context.query;
   const queryClient = new QueryClient(config);
@@ -453,8 +453,6 @@ const OrganisationDashboard: NextPageWithLayout<{
   id: string;
   error: string;
 }> = ({ id, error }) => {
-  return <UnderConstruction />; // TODO:
-
   if (error) return <Unauthorized />;
 
   const router = useRouter();

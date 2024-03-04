@@ -43,11 +43,6 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   GA_ACTION_ORGANISATION_VERIFY,
   GA_CATEGORY_ORGANISATION,
-  ROLE_ADMIN,
-  ROLE_ORG_ADMIN,
-  THEME_BLUE,
-  THEME_GREEN,
-  THEME_PURPLE,
 } from "~/lib/constants";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
@@ -74,7 +69,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   // 👇 set theme based on role
-  let theme = getThemeFromRole(session, id);
+  const theme = getThemeFromRole(session, id);
 
   const queryClient = new QueryClient(config);
 

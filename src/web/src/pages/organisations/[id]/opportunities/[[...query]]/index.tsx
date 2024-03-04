@@ -48,7 +48,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   // 👇 set theme based on role
-  let theme = getThemeFromRole(session, id);
+  const theme = getThemeFromRole(session, id);
 
   // 👇 prefetch queries on server
   const { query, page } = context.query;

@@ -13,7 +13,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
 import {
   OrganisationDashboardFilterOptions,
-  OrganizationSearchFilterQueryTerm,
+  type OrganizationSearchFilterQueryTerm,
 } from "~/api/models/organizationDashboard";
 
 const ValueContainer = ({

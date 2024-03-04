@@ -19,7 +19,7 @@ export const getOrganisationDashboardSummary = async (
   // return data;
 
   // return hard-code data for now
-  return {
+  return Promise.resolve({
     opportunities: {
       viewed: {
         timeInterval: {
@@ -173,5 +173,5 @@ export const getOrganisationDashboardSummary = async (
       ],
     },
     dateStamp: "2021-01-01",
-  };
+  });
 };

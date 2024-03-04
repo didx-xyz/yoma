@@ -63,10 +63,6 @@ import CreatableSelect from "react-select/creatable";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { getSchemas } from "~/api/services/credentials";
 import {
-  ROLE_ADMIN,
-  THEME_BLUE,
-  THEME_GREEN,
-  THEME_PURPLE,
   REGEX_URL_VALIDATION,
   MAXINT32,
   GA_CATEGORY_OPPORTUNITY,
@@ -103,7 +99,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   // 👇 set theme based on role
-  let theme = getThemeFromRole(session, id);
+  const theme = getThemeFromRole(session, id);
 
   // 👇 prefetch queries on server
   const queryClient = new QueryClient(config);

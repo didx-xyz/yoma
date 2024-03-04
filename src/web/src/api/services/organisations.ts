@@ -1,4 +1,4 @@
-import { GetStaticPropsContext, type GetServerSidePropsContext } from "next";
+import type { GetStaticPropsContext, GetServerSidePropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type {

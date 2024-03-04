@@ -1,6 +1,6 @@
-import { PaginationFilter } from "./common";
-import { Skill, TimeInterval } from "./lookups";
-import { OpportunityInfo } from "./opportunity";
+import type { PaginationFilter } from "./common";
+import type { Skill, TimeInterval } from "./lookups";
+import type { OpportunityInfo } from "./opportunity";
 
 export interface OrganizationSearchFilterSummary
   extends OrganizationSearchFilterBase {}

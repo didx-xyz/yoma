@@ -13,12 +13,6 @@ import { Overview } from "~/components/Organisation/Detail/Overview";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
-import {
-  ROLE_ADMIN,
-  THEME_BLUE,
-  THEME_GREEN,
-  THEME_PURPLE,
-} from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
@@ -43,7 +37,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
   // 👇 set theme based on role
-  let theme = getThemeFromRole(session, id);
+  const theme = getThemeFromRole(session, id);
 
   // 👇 prefetch queries on server
   const queryClient = new QueryClient(config);

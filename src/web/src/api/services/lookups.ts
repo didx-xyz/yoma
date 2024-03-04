@@ -20,12 +20,12 @@ export const getAges = async (
   // return data;
 
   // return hard-code data for now
-  return [
+  return Promise.resolve([
     { name: "0-19", id: "0-19" },
     { name: "20-39", id: "20-39" },
     { name: "40-59", id: "40-59" },
     { name: "60+", id: "60+" },
-  ];
+  ]);
 };
 
 export const getGenders = async (

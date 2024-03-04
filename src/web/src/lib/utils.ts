@@ -1,4 +1,4 @@
-import { Session } from "next-auth";
+import type { Session } from "next-auth";
 import { ROLE_ADMIN, THEME_BLUE, THEME_GREEN, THEME_PURPLE } from "./constants";
 
 const isBuilding = process.env.CI === "true";
