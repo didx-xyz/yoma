@@ -62,13 +62,13 @@ spec:
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             httpGet:
-              path: /
+              path: /index.html
               port: {{ .Values.service.portName | default "http"  }}
           {{- end }}
           {{- if .Values.readinessProbe.enabled }}
           readinessProbe:
             httpGet:
-              path: /
+              path: /index.html
               port: {{ .Values.service.portName | default "http"  }}
           {{- end }}
           resources:
