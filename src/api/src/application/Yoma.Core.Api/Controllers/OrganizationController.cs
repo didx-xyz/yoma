@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
+using Yoma.Core.Domain.Analytics.Interfaces;
+using Yoma.Core.Domain.Analytics.Models;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -21,17 +23,20 @@ namespace Yoma.Core.Api.Controllers
         private readonly ILogger<OrganizationController> _logger;
         private readonly IOrganizationService _organizationService;
         private readonly IOrganizationProviderTypeService _providerTypeService;
+        private readonly IAnalyticsService _analyticsService;
         #endregion
 
         #region Constructor
         public OrganizationController(
             ILogger<OrganizationController> logger,
             IOrganizationService organizationService,
-            IOrganizationProviderTypeService providerTypeService)
+            IOrganizationProviderTypeService providerTypeService,
+            IAnalyticsService analyticsService)
         {
             _logger = logger;
             _organizationService = organizationService;
             _providerTypeService = providerTypeService;
+            _analyticsService = analyticsService;
         }
         #endregion
 
@@ -270,6 +275,21 @@ namespace Yoma.Core.Api.Controllers
             var result = _organizationService.ListAdminsOf(true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListAdminsOf));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Return the summay analytics based on the supplied filter")]
+        [HttpPost("analytics/summary")]
+        [ProducesResponseType(typeof(OrganizationSearchResultsSummary), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult SearchAnalyticsSummary([FromBody] OrganizationSearchFilterSummary filter)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(SearchAnalyticsSummary));
+
+            var result = _analyticsService.SearchOrganizationSummary(filter);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(SearchAnalyticsSummary));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

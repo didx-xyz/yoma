@@ -2,6 +2,8 @@ using FluentValidation;
 using Hangfire;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Yoma.Core.Domain.Analytics.Interfaces;
+using Yoma.Core.Domain.Analytics.Services;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Services;
@@ -43,6 +45,10 @@ namespace Yoma.Core.Domain
         {
             //register all validators in Yoma.Core.Domain assembly
             services.AddValidatorsFromAssemblyContaining<UserService>();
+
+            #region Analytics
+            services.AddScoped<IAnalyticsService, AnalyticsService>();
+            #endregion Analytics
 
             #region Core
             services.AddScoped<IBlobService, BlobService>();

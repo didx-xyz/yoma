@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.Analytics.Models
     {
         public int AverageTimeInDays { get; set; }
 
-        public decimal? Percentage { get; set; } //v3.1
+        public decimal? Percentage { get; set; } // v3.1
     }
 }
