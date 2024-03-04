@@ -21,6 +21,10 @@ ingress:
     annotations:
       nginx.ingress.kubernetes.io/enable-cors: "true"
       nginx.ingress.kubernetes.io/cors-allow-origin: "https://v3app.stage.yoma.world"
+      nginx.ingress.kubernetes.io/server-snippet: |
+        location /hangfire {
+          deny all;
+        }
     rules:
       - host: v3api.stage.yoma.world
 
