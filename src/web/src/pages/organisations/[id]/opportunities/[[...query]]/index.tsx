@@ -240,6 +240,7 @@ const Opportunities: NextPageWithLayout<{
               />
             </div>
           )}
+
           {/* GRID */}
           {opportunities && opportunities.items?.length > 0 && (
             <div className="overflow-x-auto">
