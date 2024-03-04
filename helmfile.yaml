@@ -9,6 +9,7 @@ environments:
         lifecycle: spot
         tag: {{ env "TAG" | default "master" }}
         ddInjectEnabled: false
+        ddProfilingEnabled: false
         gitref: master
         postgresEnabled: true
   stage:
@@ -17,7 +18,9 @@ environments:
         arch: amd64
         lifecycle: on-demand
         tag: {{ env "TAG" | default "master" }}
-        ddInjectEnabled: false
+        ddInjectEnabled: true
+        ddProfilingEnabled: true
+        gitref: master
         postgresEnabled: false
 ---
 repositories:
@@ -104,6 +107,8 @@ releases:
     values:
       - ./helm/yoma-api/conf/base/values.yaml
       - ./helm/yoma-api/conf/{{ .Environment.Name }}/values.yaml
+      - env:
+          DD_PROFILING_ENABLED: {{ .Values.ddProfilingEnabled }}
       - nodeSelector:
           kubernetes.io/arch: {{ .Values.arch }}
           node.kubernetes.io/lifecycle: {{ .Values.lifecycle }}
