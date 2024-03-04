@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Analytics.Models
     {
         public TimeIntervalSummary ViewedCompleted { get; set; } 
 
-        public OpporunityCompletion Completion { get; set; }
+        public OpportunityCompletion Completion { get; set; }
 
         public OpportunityConversionRate ConversionRate { get; set; }
 

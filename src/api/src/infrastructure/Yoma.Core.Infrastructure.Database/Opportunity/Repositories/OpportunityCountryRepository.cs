@@ -22,6 +22,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 OpportunityDateStart = entity.Opportunity.DateStart,
                 OrganizationStatusId = entity.Opportunity.Organization.Status.Id,
                 CountryId = entity.CountryId,
+                CountryName = entity.Country.Name,
                 DateCreated = entity.DateCreated
             });
         }

@@ -23,6 +23,7 @@ namespace Yoma.Core.Domain.Analytics.Services
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
         private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
+        private readonly IRepository<OpportunityCountry> _opportunityCountryRepository;
         #endregion
 
         #region Constructor
@@ -32,7 +33,8 @@ namespace Yoma.Core.Domain.Analytics.Services
             IOpportunityStatusService opportunityStatusService,
             IOrganizationStatusService organizationStatusService,
             IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
-            IRepository<OpportunityCategory> opportunityCategoryRepository)
+            IRepository<OpportunityCategory> opportunityCategoryRepository,
+            IRepository<OpportunityCountry> opportunityCountryRepository)
         {
             _organizationService = organizationService;
             _myOpportunityActionService = myOpportunityActionService;
@@ -41,6 +43,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             _organizationStatusService = organizationStatusService;
             _myOpportunityRepository = myOpportunityRepository;
             _opportunityCategoryRepository = opportunityCategoryRepository;
+            _opportunityCountryRepository = opportunityCountryRepository;
         }
         #endregion
 
@@ -107,12 +110,13 @@ namespace Yoma.Core.Domain.Analytics.Services
             var resultsCompleted = new List<TimeValueEntry>();
             itemsCompleted.ForEach(o => { resultsCompleted.Add(new TimeValueEntry(o.WeekEnding, default(int), o.Count)); });
 
+            //'my' opportunities: viewed & completed combined
             var resultsViewedCompleted = resultsViewed.Concat(resultsCompleted)
                 .GroupBy(e => e.Date)
                 .Select(g => new TimeValueEntry(
                     g.Key,
-                    g.Sum(e => (int)e.Values[0]),
-                    g.Sum(e => (int)e.Values[1])
+                    g.Sum(e => Convert.ToInt32(e.Values[0])),
+                    g.Sum(e => Convert.ToInt32(e.Values[1]))
                 ))
                 .OrderBy(e => e.Date)
                 .ToList();
@@ -129,11 +133,17 @@ namespace Yoma.Core.Domain.Analytics.Services
             { Legend = new[] { "Viewed", "Completions" }, Data = resultsViewedCompleted, Count = new[] { viewedCount, completedCount } };
 
             //average time
-            var averageCompletionTimeInDays = queryCompleted
-                .Where(o => o.DateStart.HasValue && o.DateEnd.HasValue)
-                .Select(o => (o.DateEnd!.Value - o.DateStart!.Value).TotalDays)
-                .Average();
-            result.Opportunities.Completion = new OpporunityCompletion { AverageTimeInDays = (int)Math.Round(averageCompletionTimeInDays) };
+            var dates = queryCompleted
+                 .Where(o => o.DateStart.HasValue && o.DateEnd.HasValue)
+                 .Select(o => new { o.DateStart, o.DateEnd })
+                 .ToList(); 
+
+            var averageCompletionTimeInDays = dates
+                .Select(o => (o.DateEnd!.Value - o.DateStart!.Value).TotalDays) 
+                .DefaultIfEmpty(0) 
+                .Average(); 
+
+            result.Opportunities.Completion = new OpportunityCompletion { AverageTimeInDays = (int)Math.Round(averageCompletionTimeInDays) };
 
             //converstion rate
             result.Opportunities.ConversionRate = new OpportunityConversionRate { ViewedCount = viewedCount, CompletedCount = completedCount };
@@ -141,7 +151,8 @@ namespace Yoma.Core.Domain.Analytics.Services
             //active opportunities
 
             //'my' opportunities: pending verifications
-            result.Opportunities.PendingVerification = new TimeIntervalSummary() { Legend = new[] { "Pending Verifications" }, Data = resultsPending, Count = new[] { itemsPending.Sum(o => o.Count) } };
+            result.Opportunities.PendingVerification = new TimeIntervalSummary()
+            { Legend = new[] { "Pending Verifications" }, Data = resultsPending, Count = new[] { itemsPending.Sum(o => o.Count) } };
 
             //zlto rewards
             var totalRewards = queryCompleted.Sum(o => o.ZltoReward ?? 0);
@@ -178,6 +189,29 @@ namespace Yoma.Core.Domain.Analytics.Services
             };
 
             //demogrpahics
+            result.Demographics = new OrganizationDemographic
+            {
+                //countries
+                Countries = queryCompleted
+                .Join(_opportunityCountryRepository.Query(),
+                    opportunity => opportunity.OpportunityId,
+                    countryInfo => countryInfo.OpportunityId,
+                    (opportunity, countryInfo) => new { opportunity, countryInfo.CountryName })
+                .GroupBy(x => x.CountryName)
+                .Select(g => new { CountryName = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .Take(5)
+                .ToDictionary(country => country.CountryName, country => country.Count),
+
+                //gender
+                Genders = queryCompleted
+                .Where(opportunity => !string.IsNullOrEmpty(opportunity.UserGender))
+                .GroupBy(opportunity => opportunity.UserGender!)
+                .Select(group => new { UserGender = group.Key, Count = group.Count() })
+                .ToDictionary(genderGroup => genderGroup.UserGender, genderGroup => genderGroup.Count)
+
+                //age
+            };
 
             result.DateStamp = DateTimeOffset.UtcNow;
             return result;

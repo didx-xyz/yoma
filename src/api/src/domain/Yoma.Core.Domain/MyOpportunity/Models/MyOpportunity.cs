@@ -15,6 +15,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public DateTimeOffset? UserDateOfBirth { get; set; }
 
+        public string? UserGender { get; set; }
+
         public string? UserCountry { get; set; }
 
         public string? UserEducation { get; set; }

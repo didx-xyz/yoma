@@ -14,6 +14,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
         public Guid CountryId { get; set; }
 
+        public string CountryName { get; set; }
+
         public DateTimeOffset DateCreated { get; set; }
     }
 }
