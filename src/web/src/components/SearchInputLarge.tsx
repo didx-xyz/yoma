@@ -85,7 +85,7 @@ export const SearchInputLarge: React.FC<InputProps> = ({
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="w-6mr-1 mr-1 h-6"
+            className="mr-1 h-6 w-6"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
