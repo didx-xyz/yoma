@@ -44,5 +44,10 @@ volumeMounts:
 postInstallHook:
   enabled: false
 
-readinessProbe:
-  enabled: true
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: 2000m
+    memory: 512Mi

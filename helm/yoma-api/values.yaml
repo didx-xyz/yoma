@@ -36,7 +36,11 @@ podLabels:
   tags.datadoghq.com/version: '{{ .Values.image.tag | default .Chart.AppVersion }}'
 
 env:
-  DD_RUNTIME_METRICS_ENABLED: "true"
+  DD_RUNTIME_METRICS_ENABLED: true
+  # https://docs.datadoghq.com/profiler/enabling/dotnet/?tab=linux#configuration
+  DD_PROFILING_ENABLED: false
+  DD_PROFILING_HEAP_ENABLED: true
+  DD_PROFILING_ALLOCATION_ENABLED: true
 
 podSecurityContext: {}
   # fsGroup: 2000
@@ -81,10 +85,10 @@ resources: {}
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
+  # requests:
   #   cpu: 100m
   #   memory: 128Mi
-  # requests:
+  # limits:
   #   cpu: 100m
   #   memory: 128Mi
 
@@ -105,3 +109,8 @@ persistence: {}
 
 postInstallHook:
   enabled: false
+
+readinessProbe:
+  enabled: true
+livenessProbe:
+  enabled: true
