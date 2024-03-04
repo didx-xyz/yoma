@@ -137,6 +137,7 @@ namespace Yoma.Core.Api
             app.UseHangfireDashboard(options: new DashboardOptions
             {
                 DarkModeEnabled = true,
+                IgnoreAntiforgeryToken = true, //replicas >=2 will cause antiforgery token issues
                 Authorization = new IDashboardAuthorizationFilter[]
                 {
                     new BasicAuthAuthorizationFilter(
