@@ -5,6 +5,7 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
+using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
@@ -147,6 +148,34 @@ namespace Yoma.Core.Domain.Analytics.Services
             result.Opportunities.Reward = new OpportunityReward { TotalAmount = totalRewards };
 
             //skills
+            var skills = queryCompleted.Select(o => new { o.DateModified, o.Skills }).ToList();
+
+            var flattenedSkills = skills
+                 .SelectMany(o => o.Skills ?? new List<Skill>())
+                 .GroupBy(skill => skill.Id)
+                 .Select(g => new { Skill = g.First(), Count = g.Count() })
+                 .OrderByDescending(g => g.Count)
+                 .ToList();
+
+            var itemSkills = skills
+                .SelectMany(o => (o.Skills ?? new List<Skill>()).Select(skill => new { o.DateModified, SkillId = skill.Id }))
+                .GroupBy(x => DateTimeOffset.UtcNow.Date.AddDays(-(int)x.DateModified.DayOfWeek).AddDays(7))
+                .Select(group => new
+                {
+                    WeekEnding = group.Key,
+                    Count = group.Select(x => x.SkillId).Distinct().Count()
+                })
+                .OrderBy(result => result.WeekEnding)
+                .ToList();
+
+            var resultsSkills = new List<TimeValueEntry>();
+            itemSkills.ForEach(o => { resultsSkills.Add(new TimeValueEntry(o.WeekEnding, o.Count)); });
+            result.Skills = new OrganizationOpportunitySkill
+            {
+                TopCompleted = flattenedSkills.Take(10).Select(g => g.Skill).ToList(),
+                Items = new TimeIntervalSummary()
+                { Legend = new[] { "Total Skills", }, Data = resultsSkills, Count = new[] { itemSkills.Sum(o => o.Count) } }
+            };
 
             //demogrpahics
 
@@ -159,7 +188,7 @@ namespace Yoma.Core.Domain.Analytics.Services
         private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryBase(OrganizationSearchFilterSummary filter)
         {
             //organization
-            var result = _myOpportunityRepository.Query().Where(o => o.OrganizationId == filter.Organization);
+            var result = _myOpportunityRepository.Query(true).Where(o => o.OrganizationId == filter.Organization);
 
             //opportunities
             if (filter.Opportunities != null && filter.Opportunities.Any())
