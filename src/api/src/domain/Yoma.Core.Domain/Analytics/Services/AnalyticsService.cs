@@ -189,28 +189,47 @@ namespace Yoma.Core.Domain.Analytics.Services
             };
 
             //demogrpahics
+            var currentDate = DateTimeOffset.UtcNow;
             result.Demographics = new OrganizationDemographic
             {
                 //countries
                 Countries = queryCompleted
-                .Join(_opportunityCountryRepository.Query(),
-                    opportunity => opportunity.OpportunityId,
-                    countryInfo => countryInfo.OpportunityId,
-                    (opportunity, countryInfo) => new { opportunity, countryInfo.CountryName })
-                .GroupBy(x => x.CountryName)
-                .Select(g => new { CountryName = g.Key, Count = g.Count() })
-                .OrderByDescending(x => x.Count)
-                .Take(5)
-                .ToDictionary(country => country.CountryName, country => country.Count),
+                    .Join(_opportunityCountryRepository.Query(),
+                        opportunity => opportunity.OpportunityId,
+                        countryInfo => countryInfo.OpportunityId,
+                        (opportunity, countryInfo) => new { opportunity, countryInfo.CountryName })
+                    .GroupBy(x => x.CountryName)
+                    .Select(g => new { CountryName = g.Key, Count = g.Count() })
+                    .OrderByDescending(x => x.Count)
+                    .Take(5)
+                    .ToDictionary(country => country.CountryName, country => country.Count),
 
                 //gender
                 Genders = queryCompleted
-                .Where(opportunity => !string.IsNullOrEmpty(opportunity.UserGender))
-                .GroupBy(opportunity => opportunity.UserGender!)
-                .Select(group => new { UserGender = group.Key, Count = group.Count() })
-                .ToDictionary(genderGroup => genderGroup.UserGender, genderGroup => genderGroup.Count)
-
+                    .GroupBy(opportunity => string.IsNullOrEmpty(opportunity.UserGender) ? "Unspecified" : opportunity.UserGender)
+                    .Select(group => new { UserGender = group.Key, Count = group.Count() })
+                    .ToDictionary(genderGroup => genderGroup.UserGender, genderGroup => genderGroup.Count),
                 //age
+                Ages = queryCompleted
+                    .Select(o => new {
+                        o.UserDateOfBirth,
+                        Age = o.UserDateOfBirth.HasValue ?
+                            (int?)(currentDate.Year - o.UserDateOfBirth.Value.Year -
+                            ((currentDate.Month < o.UserDateOfBirth.Value.Month) || (currentDate.Month == o.UserDateOfBirth.Value.Month && currentDate.Day < o.UserDateOfBirth.Value.Day) ? 1 : 0))
+                            : null
+                    })
+                    .ToList() 
+                    .Select(o => {
+                        var age = o.Age;
+                        var bracket = age >= 30 ? "30+" :
+                                      age >= 25 ? "25-29" :
+                                      age >= 20 ? "20-24" :
+                                      age >= 0 ? "0-19" : "Unspecified";
+                        return new { AgeBracket = bracket };
+                    })
+                    .GroupBy(x => x.AgeBracket)
+                    .Select(group => new { AgeBracket = group.Key, Count = group.Count() })
+                    .ToDictionary(x => x.AgeBracket, x => x.Count)
             };
 
             result.DateStamp = DateTimeOffset.UtcNow;
