@@ -130,20 +130,35 @@ export const Global: React.FC = () => {
     // set the active navigation role view atom (based on roles)
     const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
     const isOrgAdmin = session?.user?.roles.includes(ROLE_ORG_ADMIN);
+    // const isAdminOfOrg = currentOrganisationIdValue ? session?.user?.adminsOf.includes(
+    //   currentOrganisationIdValue,
+    // ): ;
 
+    // admins see blue with admin view (admin and organisation pages)
+    // if (
+    //   isAdmin &&
+    //   router.asPath.startsWith("/admin") &&
+    //   router.asPath.startsWith("/organisations")
+    // ) {
+    //   setActiveNavigationRoleViewAtom(RoleView.Admin);
+    // }
+
+    setActiveNavigationRoleViewAtom(RoleView.User);
+
+    // check for "current" organisation
     if (
-      isAdmin &&
-      (router.asPath.startsWith("/admin") ||
-        router.asPath.startsWith("/organisations"))
+      router.asPath.startsWith("/admin") ||
+      router.asPath.startsWith("/organisations")
     ) {
-      setActiveNavigationRoleViewAtom(RoleView.Admin);
-    } else if (
-      isOrgAdmin &&
-      (router.route == "/organisations" ||
-        router.asPath.startsWith("/organisations/register"))
-    ) {
-      setActiveNavigationRoleViewAtom(RoleView.User);
-    } else if (isOrgAdmin && router.asPath.startsWith("/organisations")) {
+      if (isAdmin) setActiveNavigationRoleViewAtom(RoleView.Admin);
+      else if (isOrgAdmin) setActiveNavigationRoleViewAtom(RoleView.OrgAdmin);
+
+      // override for registration page (no "current" organisation)
+      if (router.asPath.startsWith("/organisations/register")) {
+        return;
+      }
+
+      // check for "current" organisation page (contains organisation id in route)
       const matches = router.asPath.match(/\/organisations\/([a-z0-9-]{36})/);
 
       if (matches && matches.length > 1) {
@@ -153,7 +168,7 @@ export const Global: React.FC = () => {
         // override the active navigation role view if admin of the organisation
         if (session.user.adminsOf.includes(orgId)) {
           setActiveNavigationRoleViewAtom(RoleView.OrgAdmin);
-        }
+        } else if (isAdmin) setActiveNavigationRoleViewAtom(RoleView.Admin);
 
         if (orgId != currentOrganisationIdValue) {
           // update atom (navbar items)
@@ -167,16 +182,29 @@ export const Global: React.FC = () => {
             setCurrentOrganisationInactiveAtom(res.status !== "Active");
           });
         }
-
-        return;
       } else {
         setCurrentOrganisationIdAtom(null);
         setCurrentOrganisationLogoAtom(null);
         setCurrentOrganisationInactiveAtom(false);
       }
-    } else {
-      setActiveNavigationRoleViewAtom(RoleView.User);
     }
+
+    // if (
+    //   isAdmin &&
+    //   router.asPath.startsWith("/admin") &&
+    //   !router.asPath.startsWith("/organisations")
+    // ) {
+    //   setActiveNavigationRoleViewAtom(RoleView.Admin);
+    // } else if (
+    //   isOrgAdmin &&
+    //   (router.route == "/organisations" ||
+    //     router.asPath.startsWith("/organisations/register"))
+    // ) {
+    //   setActiveNavigationRoleViewAtom(RoleView.User);
+    // } else
+    // } else {
+    //   setActiveNavigationRoleViewAtom(RoleView.User);
+    // }
   }, [
     router,
     session,

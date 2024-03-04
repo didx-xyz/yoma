@@ -63,6 +63,7 @@ import Link from "next/link";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { UnderConstruction } from "~/components/Status/UnderConstruction";
+import { getThemeFromRole } from "~/lib/utils";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -81,21 +82,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       },
     };
   }
-
   // 👇 set theme based on role
-  let theme;
-
-  if (session?.user?.roles.includes(ROLE_ADMIN)) {
-    theme = THEME_BLUE;
-  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
-    theme = THEME_GREEN;
-  } else {
-    return {
-      props: {
-        error: "Unauthorized",
-      },
-    };
-  }
+  let theme = getThemeFromRole(session, id);
 
   const { query, page } = context.query;
   const queryClient = new QueryClient(config);

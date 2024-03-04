@@ -1,3 +1,6 @@
+import { Session } from "next-auth";
+import { ROLE_ADMIN, THEME_BLUE, THEME_GREEN, THEME_PURPLE } from "./constants";
+
 const isBuilding = process.env.CI === "true";
 
 export async function fetchClientEnv() {
@@ -114,4 +117,14 @@ export function getSafeUrl(
   defaultUrl: string,
 ): string {
   return returnUrl?.startsWith("/") ? returnUrl : defaultUrl;
+}
+
+export function getThemeFromRole(
+  session: Session,
+  organisationId: string,
+): string {
+  let theme = THEME_PURPLE;
+  if (session?.user?.adminsOf?.includes(organisationId)) theme = THEME_GREEN;
+  if (session?.user?.roles.includes(ROLE_ADMIN)) theme = THEME_BLUE;
+  return theme;
 }

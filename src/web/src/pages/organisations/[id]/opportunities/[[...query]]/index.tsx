@@ -18,19 +18,14 @@ import { PageBackground } from "~/components/PageBackground";
 import { IoIosAdd } from "react-icons/io";
 import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import {
-  PAGE_SIZE,
-  ROLE_ADMIN,
-  THEME_BLUE,
-  THEME_GREEN,
-  THEME_PURPLE,
-} from "~/lib/constants";
+import { PAGE_SIZE, ROLE_ADMIN } from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { useAtomValue } from "jotai";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
+import { getThemeFromRole } from "~/lib/utils";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -53,15 +48,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   // 👇 set theme based on role
-  let theme;
-
-  if (session?.user?.adminsOf?.includes(id)) {
-    theme = THEME_GREEN;
-  } else if (session?.user?.roles.includes(ROLE_ADMIN)) {
-    theme = THEME_BLUE;
-  } else {
-    theme = THEME_PURPLE;
-  }
+  let theme = getThemeFromRole(session, id);
 
   // 👇 prefetch queries on server
   const { query, page } = context.query;
@@ -199,13 +186,13 @@ const Opportunities: NextPageWithLayout<{
             <SearchInput defaultValue={query} onSearch={onSearch} />
 
             {currentOrganisationInactive ? (
-              <span className="flex w-56 cursor-not-allowed flex-row items-center justify-center whitespace-nowrap rounded-full bg-gray-dark p-1 text-xs text-white">
+              <span className="bg-theme flex w-56 cursor-not-allowed flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-75">
                 Add opportunity (disabled)
               </span>
             ) : (
               <Link
                 href={`/organisations/${id}/opportunities/create`}
-                className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
+                className="bg-theme flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 hover:brightness-110"
                 id="btnCreateOpportunity" // e2e
               >
                 <IoIosAdd className="mr-1 h-5 w-5" />
@@ -225,11 +212,20 @@ const Opportunities: NextPageWithLayout<{
                   "This is where you will find all the awesome opportunities you have shared"
                 }
               />
-              <Link href={`/organisations/${id}/opportunities/create`}>
-                <button className="btn btn-primary btn-sm mt-10 rounded-3xl px-16">
+              {currentOrganisationInactive ? (
+                <span className="btn btn-primary btn-sm mt-10 rounded-3xl bg-purple px-16 brightness-75">
+                  Add opportunity (disabled)
+                </span>
+              ) : (
+                <Link
+                  href={`/organisations/${id}/opportunities/create`}
+                  className="bg-theme btn btn-primary btn-sm mt-10 rounded-3xl border-0 px-16 brightness-105 hover:brightness-110"
+                  id="btnCreateOpportunity" // e2e
+                >
+                  <IoIosAdd className="mr-1 h-5 w-5" />
                   Add opportunity
-                </button>
-              </Link>
+                </Link>
+              )}
             </div>
           )}
           {opportunities && opportunities.items?.length === 0 && query && (

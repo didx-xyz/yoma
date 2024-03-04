@@ -48,6 +48,7 @@ import { config } from "~/lib/react-query-config";
 import { getCountries } from "~/api/services/lookups";
 import { IoMdWarning } from "react-icons/io";
 import { trackGAEvent } from "~/lib/google-analytics";
+import { getThemeFromRole } from "~/lib/utils";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -68,15 +69,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   // 👇 set theme based on role
-  let theme;
-
-  if (session?.user?.adminsOf?.includes(id)) {
-    theme = THEME_GREEN;
-  } else if (session?.user?.roles.includes(ROLE_ADMIN)) {
-    theme = THEME_BLUE;
-  } else {
-    theme = THEME_PURPLE;
-  }
+  let theme = getThemeFromRole(session, id);
 
   // 👇 prefetch queries on server
   const queryClient = new QueryClient(config);

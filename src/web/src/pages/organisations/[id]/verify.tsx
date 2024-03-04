@@ -47,12 +47,13 @@ import {
   ROLE_ORG_ADMIN,
   THEME_BLUE,
   THEME_GREEN,
+  THEME_PURPLE,
 } from "~/lib/constants";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { IoIosCheckmark } from "react-icons/io";
-import { getSafeUrl } from "~/lib/utils";
+import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -60,6 +61,7 @@ interface IParams extends ParsedUrlQuery {
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { id } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
 
   // 👇 ensure authenticated
@@ -72,21 +74,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   // 👇 set theme based on role
-  let theme;
+  let theme = getThemeFromRole(session, id);
 
-  if (session?.user?.roles.includes(ROLE_ADMIN)) {
-    theme = THEME_BLUE;
-  } else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) {
-    theme = THEME_GREEN;
-  } else {
-    return {
-      props: {
-        error: "Unauthorized",
-      },
-    };
-  }
-
-  const { id } = context.params as IParams;
   const queryClient = new QueryClient(config);
 
   // 👇 prefetch queries on server
