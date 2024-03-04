@@ -137,6 +137,12 @@ namespace Yoma.Core.Api
             app.UseHangfireDashboard(options: new DashboardOptions
             {
                 DarkModeEnabled = true,
+                /*
+                TODO: Resolve shared Data Protection Keys (NFS or S3 or SSM or Postgres) and set this back to `false`
+                * https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/implementation/key-storage-providers
+                * https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/configuration/overview
+                * https://github.com/aws/aws-ssm-data-protection-provider-for-aspnet
+                */
                 IgnoreAntiforgeryToken = true, //replicas >=2 will cause antiforgery token issues
                 Authorization = new IDashboardAuthorizationFilter[]
                 {
