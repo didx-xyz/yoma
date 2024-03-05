@@ -21,7 +21,7 @@ ingress:
           - path: /js
 
 postInstallHook:
-  enabled: true
+  enabled: false
 
 keycloak:
   replicas: 2
