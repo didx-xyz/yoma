@@ -42,7 +42,7 @@ namespace Yoma.Core.Domain.Core.Extensions
                 throw new ArgumentNullException(nameof(input));
 
             var rgx = RegexContactNumber();
-            return rgx.Replace(e.Normalize().Trim(), "");
+            return rgx.Replace(input.Normalize().Trim(), "");
         }
 
         /// <summary>
