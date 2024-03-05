@@ -13,6 +13,8 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
         List<Models.Opportunity> Contains(string value, bool includeComputed);
 
+        List<OpportunitySearchCriteriaOpportunity> ListSearchCriteriaOpportunities(Guid organizationId, bool ensureOrganizationAuthorization);
+
         List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategories(List<PublishedState>? publishedStates);
 
         List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountries(List<PublishedState>? publishedStates);

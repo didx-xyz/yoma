@@ -182,6 +182,21 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results;
         }
 
+        public List<OpportunitySearchCriteriaOpportunity> ListSearchCriteriaOpportunities(Guid organizationId, bool ensureOrganizationAuthorization)
+        {
+            if (organizationId == Guid.Empty)
+                throw new ArgumentNullException(nameof(organizationId));
+
+            if (ensureOrganizationAuthorization)
+                _organizationService.IsAdmin(organizationId, true);
+
+            var query = _opportunityRepository.Query().Where(o => o.OrganizationId == organizationId);
+
+            var results = query.ToList().Select(o => o.ToOpportunitySearchCriteria()).ToList();
+
+            return results;
+        }
+
         public List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategories(List<PublishedState>? publishedStates)
         {
             publishedStates = publishedStates == null || !publishedStates.Any() ?

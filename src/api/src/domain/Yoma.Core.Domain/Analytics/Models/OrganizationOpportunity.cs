@@ -8,10 +8,8 @@ namespace Yoma.Core.Domain.Analytics.Models
 
         public OpportunityConversionRate ConversionRate { get; set; }
 
-        public TimeIntervalSummary Active { get; set; }
-
-        public TimeIntervalSummary PendingVerification { get; set; }
-
         public OpportunityReward Reward { get; set; }
+
+        public int SelectedCount { get; set; }
     }
 }
