@@ -32,14 +32,14 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
               {data.title}
             </h2>
           </div>
-          <div className="absolute right-1 top-1">
+          <div className="absolute right-4 top-3">
             <RoundedImage
               icon={data?.organizationLogoURL ?? iconRocket}
               alt="Company Logo"
-              imageWidth={40}
-              imageHeight={40}
-              containerWidth={50}
-              containerHeight={50}
+              imageWidth={30}
+              imageHeight={30}
+              containerWidth={60}
+              containerHeight={60}
             />
           </div>
         </div>

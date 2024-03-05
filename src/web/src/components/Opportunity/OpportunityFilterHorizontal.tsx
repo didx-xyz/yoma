@@ -90,7 +90,7 @@ export const OpportunityFilterHorizontal: React.FC<{
   onSubmit,
   onClear,
   onOpenFilterFullWindow,
-  clearButtonText = "Clear",
+  clearButtonText,
   filterOptions,
   totalCount,
   exportToCsv,
@@ -214,48 +214,6 @@ export const OpportunityFilterHorizontal: React.FC<{
                   ))}
                 </div>
               )}
-
-              {/* VIEW ALL FILTERS BUTTON */}
-              {/* {filterOptions?.includes(
-                OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
-              ) && (
-                <button
-                  type="button"
-                  onClick={onOpenFilterFullWindow}
-                  className="-ml-10 flex aspect-square h-[120px] flex-col items-center rounded-lg bg-white p-2 shadow-lg"
-                >
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-center">
-                      <Image
-                        src={iconNextArrow}
-                        alt="Icon View All"
-                        width={31}
-                        height={31}
-                        sizes="100vw"
-                        priority={true}
-                        placeholder="blur"
-                        blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                          shimmer(288, 182),
-                        )}`}
-                        style={{
-                          width: "31px",
-                          height: "31px",
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex flex-grow flex-row">
-                      <div className="flex flex-grow flex-col gap-1">
-                        <h1 className="h-10 overflow-hidden text-ellipsis text-center text-sm font-semibold text-black">
-                          View all
-                          <br />
-                          Topics
-                        </h1>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              )} */}
             </div>
           </div>
         )}
@@ -267,8 +225,9 @@ export const OpportunityFilterHorizontal: React.FC<{
       ) && (
         <form
           onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
-          className={`
-        ${filterOptions ? "flex flex-col gap-2" : "hidden"} `}
+          // className={`
+          // ${filterOptions ? "flex flex-col gap-2" : "hidden"} `}
+          className="flex flex-col gap-2"
         >
           <div className="flex flex-col gap-2">
             <div className="mr-4 flex text-sm font-bold text-gray-dark">

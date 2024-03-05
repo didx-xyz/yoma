@@ -44,7 +44,7 @@ export const SearchInput: React.FC<InputProps> = ({
         <button
           type="submit"
           aria-label="Search"
-          className={`btn-search btn join-item btn-sm border-0 bg-green-dark ${heightOverride} ${className}`}
+          className={`btn-search bg-theme btn join-item btn-sm border-0 brightness-105 hover:brightness-110 ${heightOverride} ${className}`}
           onSubmit={handleSubmit}
         >
           <IoMdSearch className="icon-search h-6 w-6 text-white" />

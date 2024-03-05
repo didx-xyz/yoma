@@ -1,18 +1,25 @@
 /* eslint-disable */
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
-import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
+import Head from "next/head";
 import { type ParsedUrlQuery } from "querystring";
-import { type ReactElement } from "react";
+import {
+  useRef,
+  type ReactElement,
+  useMemo,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { type Organization } from "~/api/models/organisation";
 import { getOrganisationById } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { authOptions, type User } from "~/server/auth";
-import Link from "next/link";
 import {
+  PAGE_SIZE,
   ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
   THEME_BLUE,
   THEME_GREEN,
   THEME_PURPLE,
@@ -20,9 +27,43 @@ import {
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
-import { currentOrganisationInactiveAtom } from "~/lib/store";
-import { useAtomValue } from "jotai";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
+import { PageBackground } from "~/components/PageBackground";
+import { Chart } from "react-google-charts";
+import { IoMdArrowUp, IoMdDocument } from "react-icons/io";
+import { useRouter } from "next/router";
+import {
+  OrganisationDashboardFilterOptions,
+  OrganizationSearchFilterQueryTerm,
+  OrganizationSearchResultsSummary,
+  TimeIntervalSummary,
+} from "~/api/models/organizationDashboard";
+import { getOrganisationDashboardSummary } from "~/api/services/organizationDashboard";
+import type {
+  GetServerSidePropsContext,
+  GetStaticPaths,
+  GetStaticProps,
+} from "next";
+import {
+  getOpportunitiesAdmin,
+  getOpportunityCategories,
+} from "~/api/services/opportunities";
+import { getAges, getCountries, getGenders } from "~/api/services/lookups";
+import {
+  OpportunityCategory,
+  OpportunitySearchResults,
+} from "~/api/models/opportunity";
+import { Country, Gender } from "~/api/models/lookups";
+import { getServerSession } from "next-auth";
+import { Loading } from "~/components/Status/Loading";
+import { OrganisationRowFilter } from "~/components/Organisation/Dashboard/OrganisationRowFilter";
+import FilterBadges from "~/components/FilterBadges";
+import { toISOStringForTimezone } from "~/lib/utils";
+import Link from "next/link";
+import NoRowsMessage from "~/components/NoRowsMessage";
+import { PaginationButtons } from "~/components/PaginationButtons";
+import { UnderConstruction } from "~/components/Status/UnderConstruction";
+import { getThemeFromRole } from "~/lib/utils";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -41,715 +82,1197 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       },
     };
   }
-
   // 👇 set theme based on role
-  let theme;
+  const theme = getThemeFromRole(session, id);
 
-  if (session?.user?.adminsOf?.includes(id)) {
-    theme = THEME_GREEN;
-  } else if (session?.user?.roles.includes(ROLE_ADMIN)) {
-    theme = THEME_BLUE;
-  } else {
-    theme = THEME_PURPLE;
-  }
+  const { query, page } = context.query;
+  const queryClient = new QueryClient(config);
 
   // 👇 prefetch queries on server
-  const queryClient = new QueryClient(config);
-  await queryClient.prefetchQuery({
-    queryKey: ["organisation", id],
-    queryFn: () => getOrganisationById(id, context),
-  });
+  await Promise.all([
+    // await queryClient.prefetchQuery({
+    //   queryKey: ["OrganisationDashboardCategories"],
+    //   queryFn: () => getOpportunityCategories(context),
+    // }),
+    // await queryClient.prefetchQuery({
+    //   queryKey: ["OrganisationDashboardOpportunities", id],
+    //   queryFn: () =>
+    //     getOpportunitiesAdmin(
+    //       {
+    //         types: null,
+    //         categories: null,
+    //         languages: null,
+    //         countries: null,
+    //         organizations: [id],
+    //         commitmentIntervals: null,
+    //         zltoRewardRanges: null,
+    //         valueContains: null,
+    //         startDate: null,
+    //         endDate: null,
+    //         statuses: null,
+    //         pageNumber: 1,
+    //         pageSize: 1000,
+    //       },
+    //       context,
+    //     ),
+    // }),
+    // await queryClient.prefetchQuery({
+    //   queryKey: ["OrganisationDashboardAges"],
+    //   queryFn: () => getAges(context),
+    // }),
+    // await queryClient.prefetchQuery({
+    //   queryKey: ["OrganisationDashboardGenders"],
+    //   queryFn: () => getGenders(context),
+    // }),
+    // await queryClient.prefetchQuery({
+    //   queryKey: ["OrganisationDashboardCountries"],
+    //   queryFn: () => getCountries(context),
+    // }),
+    await queryClient.prefetchQuery({
+      queryKey: ["organisation", id],
+      queryFn: () => getOrganisationById(id, context),
+    }),
+
+    // await queryClient.prefetchQuery({
+    //   queryKey: [
+    //     `OrganisationsInactive_${query?.toString()}_${page?.toString()}`,
+    //   ],
+    //   queryFn: () =>
+    //     getOrganisations(
+    //       {
+    //         pageNumber: page ? parseInt(page.toString()) : 1,
+    //         pageSize: 20,
+    //         valueContains: query?.toString() ?? null,
+    //         statuses: [Status.Inactive],
+    //       },
+    //       context,
+    //     ),
+    // }),
+  ]);
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
-      id: id,
       theme: theme,
+      id,
     },
   };
 }
 
-const OrganisationOverview: NextPageWithLayout<{
-  id: string;
-  user: User;
-  error: string;
-  theme: string;
-}> = ({ id, error }) => {
-  // 👇 use prefetched queries from server
-  const { data: organisation } = useQuery<Organization>({
-    queryKey: ["organisation", id],
-    enabled: !error,
-  });
+// 👇 SSG
+// This function gets called at build time on server-side.
+// It may be called again, on a serverless function, if
+// revalidation is enabled and a new request comes in
+// export const getStaticProps: GetStaticProps = async (context) => {
+//   const { id } = context.params as IParams;
 
-  if (error) return <Unauthorized />;
+//   const lookups_categories = await getOpportunityCategories(context);
+//   const lookups_opportunities = await getOpportunitiesAdmin(
+//     {
+//       types: null,
+//       categories: null,
+//       languages: null,
+//       countries: null,
+//       organizations: [id],
+//       commitmentIntervals: null,
+//       zltoRewardRanges: null,
+//       valueContains: null,
+//       startDate: null,
+//       endDate: null,
+//       statuses: null,
+//       pageNumber: 1,
+//       pageSize: 1000,
+//     },
+//     context,
+//   );
+//   const lookups_ages = await getAges(context);
+//   const lookups_genders = await getGenders(context);
+//   const lookups_countries = await getCountries(context);
+//   const organisation = await getOrganisationById(id, context);
+
+//   return {
+//     props: {
+//       id,
+//       lookups_categories,
+//       lookups_opportunities,
+//       lookups_ages,
+//       lookups_genders,
+//       lookups_countries,
+//       organisation,
+//     },
+
+//     // Next.js will attempt to re-generate the page:
+//     // - When a request comes in
+//     // - At most once every 300 seconds
+//     revalidate: 300,
+//   };
+// };
+
+// export const getStaticPaths: GetStaticPaths = () => {
+//   return {
+//     paths: [],
+//     fallback: "blocking",
+//   };
+// };
+
+// ⚠️ SSR
+// export async function getServerSideProps(context: GetServerSidePropsContext) {
+//   const { id } = context.params as IParams;
+//   const session = await getServerSession(context.req, context.res, authOptions);
+
+//   // 👇 ensure authenticated
+//   if (!session) {
+//     return {
+//       props: {
+//         error: "Unauthorized",
+//       },
+//     };
+//   }
+
+//   // 👇 set theme based on role
+//   let theme;
+
+//   if (session?.user?.adminsOf?.includes(id)) {
+//     theme = THEME_GREEN;
+//   } else if (session?.user?.roles.includes(ROLE_ADMIN)) {
+//     theme = THEME_BLUE;
+//   } else {
+//     theme = THEME_PURPLE;
+//   }
+
+//   // 👇 prefetch queries on server
+//   const queryClient = new QueryClient(config);
+//   await queryClient.prefetchQuery({
+//     queryKey: ["organisation", id],
+//     queryFn: () => getOrganisationById(id, context),
+//   });
+//   //todo: other lookups
+
+//   return {
+//     props: {
+//       dehydratedState: dehydrate(queryClient),
+//       user: session?.user ?? null,
+//       id: id,
+//       theme: theme,
+//     },
+//   };
+// }
+
+const LineChart: React.FC<{
+  title: string;
+  data: TimeIntervalSummary;
+  labels: string[];
+}> = ({ title, data, labels }) => {
+  // map the data to the format required by the chart
+  const localData = data.data.map((x) => [x.item1.toString(), x.item2]);
+
+  // add labels to the beginning of the data array
+  localData.unshift(labels);
 
   return (
-    <div className="bg-lightest-grey font-small-12px-regular relative h-[969px] w-full overflow-hidden text-left text-sm text-white">
-      <div className="bg-theme absolute bottom-[72.58%] left-[-0.02%] right-[0%] top-[0.02%] h-[27.41%] w-[100.03%]" />
-      <div className="text-13xl absolute left-[112px] top-[105px] flex flex-col items-start justify-center">
-        <div className="relative flex h-[38.03px] w-[589px] shrink-0 items-center font-semibold leading-[166%]">
-          {/* Good morning, Julie ☀️ */}
-          <LogoTitle
-            logoUrl={organisation?.logoURL}
-            title={organisation?.name}
-          />
-          <LimitedFunctionalityBadge />
-        </div>
-        <div className="relative mt-[-5px] flex h-[38.03px] w-[589px] shrink-0 items-center text-sm leading-[153%]">
-          <span className="w-full [line-break:anywhere]">
-            <span>{`Your dashboard progress so far for the month of `}</span>
-            <span className="font-semibold">April</span>
-          </span>
-        </div>
+    <div className="relative w-64 overflow-hidden rounded-lg bg-white pt-10 shadow">
+      <div
+        className="flex flex-row items-center gap-2"
+        style={{ position: "absolute", top: "10px", left: "10px", zIndex: 1 }}
+      >
+        <IoMdDocument className="text-green" />
+        <div className="text-sm font-semibold">{title}</div>
       </div>
-      <div className="absolute left-[109.99px] top-[215px] flex flex-col items-start justify-start gap-[18px] text-base text-black">
-        <div className="flex flex-row items-start justify-start gap-[18px]">
-          <div className="relative h-[154px] w-[291px] rounded-2xl bg-white shadow-[10px_10px_45px_rgba(108,_109,_133,_0.08)]">
-            <div className="absolute left-[22.99px] top-[12px] flex flex-col items-start justify-start gap-[14px]">
-              <div className="flex flex-row items-end justify-start gap-[48px]">
-                <div className="relative flex h-[20.59px] w-[178px] shrink-0 items-center leading-[140%]">
-                  Total youth
-                </div>
-                <img
-                  className="relative h-[30.27px] w-[30px]"
-                  alt=""
-                  src="/dashboardgreen.svg"
-                />
-              </div>
-              <b className="text-13xl relative flex h-[25.14px] w-[218.08px] shrink-0 items-center leading-[166%]">
-                832,221
-              </b>
-              <img
-                className="relative h-[46.5px] w-[256.93px]"
-                alt=""
-                src="/charts-micro.svg"
-              />
-            </div>
-          </div>
-          <div className="relative h-[154px] w-[291px] rounded-2xl bg-white shadow-[10px_10px_45px_rgba(108,_109,_133,_0.08)]">
-            <div className="absolute left-[22.99px] top-[12px] flex flex-col items-start justify-start gap-[13px]">
-              <div className="flex flex-row items-end justify-start gap-[48px]">
-                <div className="relative flex h-[20.59px] w-[178px] shrink-0 items-center leading-[140%]">
-                  Verifications required
-                </div>
-                <div className="relative h-[30.27px] w-[30px]">
-                  <div className="bg-primary-red absolute bottom-[0%] left-[0%] right-[0%] top-[0.89%] h-[99.11%] w-full rounded-md opacity-[0.2]" />
-                  <img
-                    className="absolute bottom-[16.96%] left-[11.67%] right-[11.67%] top-[16.96%] h-[66.08%] max-h-full w-[76.67%] max-w-full overflow-hidden"
-                    alt=""
-                    src="/alert2.svg"
-                  />
-                </div>
-              </div>
-              <b className="text-13xl relative flex h-[37.07px] w-[218.08px] shrink-0 items-center leading-[166%]">
-                10
-              </b>
-              <div className="text-primary-green flex flex-row items-center justify-start gap-[6px] text-sm">
-                <img
-                  className="relative h-[22.43px] w-[22.43px]"
-                  alt=""
-                  src="/indicatorup1.svg"
-                />
-                <div className="relative flex h-[24.67px] w-[222.69px] shrink-0 items-center leading-[153%]">
-                  <span className="w-full [line-break:anywhere]">
-                    <span className="font-semibold">
-                      <span>+27.02%</span>
-                      <span className="text-light-grey">{` `}</span>
-                    </span>
-                    <span className="text-grey">monthly total so far</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="relative h-[154px] w-[291px] rounded-2xl bg-white shadow-[10px_10px_45px_rgba(108,_109,_133,_0.08)]">
-            <div className="absolute left-[22.99px] top-[12px] flex flex-col items-start justify-start gap-[13px]">
-              <div className="flex flex-row items-end justify-start gap-[48px]">
-                <div className="relative flex h-[20.59px] w-[178px] shrink-0 items-center leading-[140%]">
-                  ZLTO remaining
-                </div>
-                <img
-                  className="relative h-[30.27px] w-[30px]"
-                  alt=""
-                  src="/dashboardgreen1.svg"
-                />
-              </div>
-              <div className="text-13xl flex flex-row items-center justify-start gap-[6px]">
-                <img
-                  className="relative h-[26px] w-[29.9px] shrink-0 overflow-hidden"
-                  alt=""
-                  src="/zlto13.svg"
-                />
-                <b className="relative flex h-[37.07px] w-[218.08px] shrink-0 items-center leading-[166%]">
-                  12,000
-                </b>
-              </div>
-              <div className="text-primary-green flex flex-row items-center justify-start gap-[6px] text-sm">
-                <img
-                  className="relative h-[22.43px] w-[22.43px]"
-                  alt=""
-                  src="/indicatorup2.svg"
-                />
-                <div className="relative flex h-[24.67px] w-[222.69px] shrink-0 items-center leading-[153%]">
-                  <span className="w-full [line-break:anywhere]">
-                    <span className="font-semibold">
-                      <span>+27.02%</span>
-                      <span className="text-light-grey">{` `}</span>
-                    </span>
-                    <span className="text-grey">monthly total so far</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="relative h-[154px] w-[291px] rounded-2xl bg-white shadow-[10px_10px_45px_rgba(108,_109,_133,_0.08)]">
-            <div className="absolute left-[22.99px] top-[12px] flex flex-col items-start justify-start gap-[13px]">
-              <div className="flex flex-row items-end justify-start gap-[48px]">
-                <div className="relative flex h-[20.59px] w-[178px] shrink-0 items-center leading-[140%]">
-                  Credentials verified
-                </div>
-                <img
-                  className="relative h-[30.27px] w-[30px]"
-                  alt=""
-                  src="/dashboardgreen2.svg"
-                />
-              </div>
-              <b className="text-13xl relative flex h-[37.07px] w-[218.08px] shrink-0 items-center leading-[166%]">
-                832,221
-              </b>
-              <div className="text-primary-green flex flex-row items-center justify-start gap-[6px] text-sm">
-                <img
-                  className="relative h-[22.43px] w-[22.43px]"
-                  alt=""
-                  src="/indicatorup3.svg"
-                />
-                <div className="relative flex h-[24.67px] w-[222.69px] shrink-0 items-center leading-[153%]">
-                  <span className="w-full [line-break:anywhere]">
-                    <span className="font-semibold">
-                      <span>+27.02%</span>
-                      <span className="text-light-grey">{` `}</span>
-                    </span>
-                    <span className="text-lightslategray">
-                      monthly total so far
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <Link
-            href={`/organisations/${id}/opportunities`}
-            className="font-helvetica-neue relative inline-block h-[20.52px] w-[205.08px] shrink-0 text-lg font-medium leading-[119%]"
-          >
-            Opportunities
-          </Link>
-        </div>
-        <div className="flex flex-row items-start justify-start gap-[18px]">
-          <div className="relative h-[326px] w-[909px]">
-            <div className="absolute left-[0px] top-[0px] flex flex-row items-start justify-start gap-[18px]">
-              <div className="relative h-[154px] w-[291px] rounded-2xl bg-white shadow-[10px_10px_45px_rgba(108,_109,_133,_0.08)]">
-                <div className="absolute left-[22.99px] top-[12px] flex flex-col items-start justify-start gap-[13px]">
-                  <div className="flex flex-row items-end justify-start gap-[48px]">
-                    <div className="relative flex h-[20.59px] w-[178px] shrink-0 items-center leading-[140%]">
-                      Active opportunities
-                    </div>
-                    <div className="relative h-[30.27px] w-[30px]">
-                      <div className="bg-primary-green absolute bottom-[0%] left-[0%] right-[0%] top-[0.89%] h-[99.11%] w-full rounded-md opacity-[0.2]" />
-                      <img
-                        className="absolute bottom-[18.61%] left-[13.58%] right-[13.58%] top-[18.61%] h-[62.77%] max-h-full w-[72.83%] max-w-full overflow-hidden"
-                        alt=""
-                        src="/opportunities4.svg"
-                      />
-                    </div>
-                  </div>
-                  <b className="text-13xl relative flex h-[37.07px] w-[218.08px] shrink-0 items-center leading-[166%]">
-                    10
-                  </b>
-                  <div className="text-primary-green flex flex-row items-center justify-start gap-[6px] text-sm">
-                    <img
-                      className="relative h-[22.43px] w-[22.43px]"
-                      alt=""
-                      src="/indicatorup4.svg"
-                    />
-                    <div className="relative flex h-[24.67px] w-[222.69px] shrink-0 items-center leading-[153%]">
-                      <span className="w-full [line-break:anywhere]">
-                        <span className="font-semibold">
-                          <span>+27.02%</span>
-                          <span className="text-light-grey">{` `}</span>
-                        </span>
-                        <span className="text-grey">monthly total so far</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="relative h-[154px] w-[291px] rounded-2xl bg-white shadow-[10px_10px_45px_rgba(108,_109,_133,_0.08)]">
-                <div className="absolute left-[22.99px] top-[12px] flex flex-col items-start justify-start gap-[13px]">
-                  <div className="flex flex-row items-end justify-start gap-[48px]">
-                    <div className="relative flex h-[20.59px] w-[178px] shrink-0 items-center leading-[140%]">
-                      Opportunity drafts
-                    </div>
-                    <div className="relative h-[30.27px] w-[30px]">
-                      <div className="bg-primary-green absolute bottom-[0%] left-[0%] right-[0%] top-[0.89%] h-[99.11%] w-full rounded-md opacity-[0.2]" />
-                      <img
-                        className="absolute bottom-[18.61%] left-[13.58%] right-[13.58%] top-[18.61%] h-[62.77%] max-h-full w-[72.83%] max-w-full overflow-hidden"
-                        alt=""
-                        src="/edit.svg"
-                      />
-                    </div>
-                  </div>
-                  <b className="text-13xl relative flex h-[37.07px] w-[218.08px] shrink-0 items-center leading-[166%]">
-                    2
-                  </b>
-                  <div className="text-primary-green flex flex-row items-center justify-start gap-[6px] text-sm">
-                    <img
-                      className="relative h-[22.43px] w-[22.43px]"
-                      alt=""
-                      src="/indicatorup5.svg"
-                    />
-                    <div className="relative flex h-[24.67px] w-[222.69px] shrink-0 items-center leading-[153%]">
-                      <span className="w-full [line-break:anywhere]">
-                        <span className="font-semibold">
-                          <span>+27.02%</span>
-                          <span className="text-light-grey">{` `}</span>
-                        </span>
-                        <span className="text-grey">monthly total so far</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="relative h-[154px] w-[291px] rounded-2xl bg-white shadow-[10px_10px_45px_rgba(108,_109,_133,_0.08)]">
-                <div className="absolute left-[22.99px] top-[12px] flex flex-col items-start justify-start gap-[13px]">
-                  <div className="flex flex-row items-end justify-start gap-[21px]">
-                    <div className="relative flex h-[20.59px] w-[203.2px] shrink-0 items-center leading-[140%]">
-                      Completed opportunities
-                    </div>
-                    <div className="relative h-[30.27px] w-[30px]">
-                      <div className="bg-primary-green absolute bottom-[0%] left-[0%] right-[0%] top-[0.89%] h-[99.11%] w-full rounded-md opacity-[0.2]" />
-                      <img
-                        className="absolute bottom-[18.61%] left-[13.58%] right-[13.58%] top-[18.61%] h-[62.77%] max-h-full w-[72.83%] max-w-full overflow-hidden"
-                        alt=""
-                        src="/opportunities5.svg"
-                      />
-                    </div>
-                  </div>
-                  <b className="text-13xl relative flex h-[37.07px] w-[218.08px] shrink-0 items-center leading-[166%]">
-                    832,221
-                  </b>
-                  <div className="text-primary-green flex flex-row items-center justify-start gap-[6px] text-sm">
-                    <img
-                      className="relative h-[22.43px] w-[22.43px]"
-                      alt=""
-                      src="/indicatorup4.svg"
-                    />
-                    <div className="relative flex h-[24.67px] w-[222.69px] shrink-0 items-center leading-[153%]">
-                      <span className="w-full [line-break:anywhere]">
-                        <span className="font-semibold">
-                          <span>+27.02%</span>
-                          <span className="text-light-grey">{` `}</span>
-                        </span>
-                        <span className="text-grey">monthly total so far</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="absolute left-[0px] top-[172px] flex flex-row items-start justify-start gap-[18px]">
-              <div className="relative h-[154px] w-[291px] rounded-2xl bg-white shadow-[10px_10px_45px_rgba(108,_109,_133,_0.08)]">
-                <div className="absolute left-[22.99px] top-[12px] flex flex-col items-start justify-start gap-[14px]">
-                  <div className="flex flex-row items-end justify-start gap-[48px]">
-                    <div className="relative flex h-[20.59px] w-[178px] shrink-0 items-center leading-[140%]">
-                      Active participants
-                    </div>
-                    <img
-                      className="relative h-[30.27px] w-[30px]"
-                      alt=""
-                      src="/dashboardgreen3.svg"
-                    />
-                  </div>
-                  <b className="text-13xl relative flex h-[25.14px] w-[218.08px] shrink-0 items-center leading-[166%]">
-                    832,221
-                  </b>
-                  <img
-                    className="relative h-[46.5px] w-[256.93px]"
-                    alt=""
-                    src="/charts-micro1.svg"
-                  />
-                </div>
-              </div>
-              <div className="relative h-[154px] w-[291px] rounded-2xl bg-white shadow-[10px_10px_45px_rgba(108,_109,_133,_0.08)]">
-                <div className="absolute left-[22.99px] top-[12px] flex flex-col items-start justify-start gap-[13px]">
-                  <div className="flex flex-row items-end justify-start gap-[48px]">
-                    <div className="relative flex h-[20.59px] w-[178px] shrink-0 items-center leading-[140%]">
-                      Atingi trending skills
-                    </div>
-                    <div className="relative h-[30.27px] w-[30px]">
-                      <div className="bg-primary-green absolute bottom-[0%] left-[0%] right-[0%] top-[0.89%] h-[99.11%] w-full rounded-md opacity-[0.2]" />
-                      <img
-                        className="absolute bottom-[18.61%] left-[13.58%] right-[13.58%] top-[18.61%] h-[62.77%] max-h-full w-[72.83%] max-w-full overflow-hidden"
-                        alt=""
-                        src="/skills1.svg"
-                      />
-                    </div>
-                  </div>
-                  <div className="text-grey relative h-[47px] w-[216px] text-center text-xs">
-                    <div className="border-primary-green absolute left-[0px] top-[0px] box-border flex h-[21px] w-[94px] flex-row items-center justify-center rounded border-[1px] border-solid px-2.5 py-px">
-                      <div className="relative flex h-[18.8px] w-[94px] shrink-0 items-center justify-center font-semibold leading-[137%]">
-                        Data science
-                      </div>
-                    </div>
-                    <div className="border-primary-green absolute left-[0px] top-[26px] box-border flex h-[21px] w-[72px] flex-row items-center justify-center rounded border-[1px] border-solid px-2.5 py-px">
-                      <div className="relative flex h-[18.8px] w-[94px] shrink-0 items-center justify-center font-semibold leading-[137%]">
-                        AI policy
-                      </div>
-                    </div>
-                    <div className="border-primary-green absolute left-[100px] top-[0px] box-border flex h-[21px] w-11 flex-row items-center justify-center rounded border-[1px] border-solid px-2.5 py-px">
-                      <div className="relative flex h-[18.8px] w-[94px] shrink-0 items-center justify-center font-semibold leading-[137%]">
-                        AI
-                      </div>
-                    </div>
-                    <div className="border-primary-green absolute left-[152px] top-[0px] box-border flex h-[21px] w-16 flex-row items-center justify-center rounded border-[1px] border-solid px-2.5 py-px">
-                      <div className="relative flex h-[18.8px] w-[94px] shrink-0 items-center justify-center font-semibold leading-[137%]">
-                        Coding
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="relative h-[327px] w-[291px] text-sm">
-            <div className="absolute left-[0px] top-[0px] flex flex-row items-start justify-start">
-              <div className="relative h-[327px] w-[291px] rounded-2xl bg-white shadow-[10px_10px_45px_rgba(108,_109,_133,_0.08)]">
-                <div className="absolute left-[22.99px] top-[12px] flex flex-col items-start justify-start gap-[13px]">
-                  <div className="flex h-[30.27px] flex-col items-start justify-start text-base">
-                    <div className="flex flex-row items-end justify-start gap-[48px]">
-                      <div className="relative flex h-[20.59px] w-[178px] shrink-0 items-center leading-[140%]">
-                        Top opportunities
-                      </div>
-                      <div className="relative h-[30.27px] w-[30px]">
-                        <div className="bg-primary-green absolute bottom-[0%] left-[0%] right-[0%] top-[0.89%] h-[99.11%] w-full rounded-md opacity-[0.2]" />
-                        <img
-                          className="absolute bottom-[18.61%] left-[13.58%] right-[13.58%] top-[18.61%] h-[62.77%] max-h-full w-[72.83%] max-w-full overflow-hidden"
-                          alt=""
-                          src="/opportunities6.svg"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex w-64 flex-row items-center justify-start gap-[12px]">
-                    <img
-                      className="relative h-[33px] w-[33px]"
-                      alt=""
-                      src="/logoatingi8.svg"
-                    />
-                    <div className="flex w-[203.47px] flex-row items-center justify-start gap-[1px]">
-                      <div className="relative flex w-[164.63px] shrink-0 items-end leading-[153%]">
-                        How to Get Involved in Artificial Intelligence
-                      </div>
-                      <div className="text-primary-green relative h-[20.99px] w-[46.23px] text-center text-xs">
-                        <div className="bg-primary-green absolute left-[0px] top-[0px] h-[20.99px] w-[46.23px] rounded opacity-[0.15]" />
-                        <div className="absolute left-[3.73px] top-[0px] flex flex-row items-center justify-start">
-                          <img
-                            className="relative h-3 w-[13.8px] shrink-0 overflow-hidden"
-                            alt=""
-                            src="/profile10.svg"
-                          />
-                          <div className="relative flex h-[20.29px] w-[26.74px] shrink-0 items-center justify-center font-semibold leading-[128%]">
-                            300
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="border-text-box-grey relative box-border h-px w-[267.88px] border-t-[1px] border-solid opacity-[0.4]" />
-                  <div className="flex w-64 flex-row items-center justify-start gap-[12px]">
-                    <img
-                      className="relative h-[33px] w-[33px]"
-                      alt=""
-                      src="/logoatingi8.svg"
-                    />
-                    <div className="flex w-[203.47px] flex-row items-center justify-start gap-[1px]">
-                      <div className="relative flex w-[164.63px] shrink-0 items-end leading-[153%]">
-                        Introduction to Digital Marketing for Tourism..
-                      </div>
-                      <div className="text-primary-green relative h-[20.99px] w-[46.23px] text-center text-xs">
-                        <div className="bg-primary-green absolute left-[0px] top-[0px] h-[20.99px] w-[46.23px] rounded opacity-[0.15]" />
-                        <div className="absolute left-[3.73px] top-[0px] flex flex-row items-center justify-start">
-                          <img
-                            className="relative h-3 w-[13.8px] shrink-0 overflow-hidden"
-                            alt=""
-                            src="/profile10.svg"
-                          />
-                          <div className="relative flex h-[20.29px] w-[26.74px] shrink-0 items-center justify-center font-semibold leading-[128%]">
-                            300
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="border-text-box-grey relative box-border h-px w-[267.88px] border-t-[1px] border-solid opacity-[0.4]" />
-                  <div className="flex w-64 flex-row items-center justify-start gap-[12px]">
-                    <img
-                      className="relative h-[33px] w-[33px]"
-                      alt=""
-                      src="/logoatingi9.svg"
-                    />
-                    <div className="flex w-[203.47px] flex-row items-center justify-start gap-[1px]">
-                      <div className="relative flex w-[164.63px] shrink-0 items-end leading-[153%]">
-                        Computer and Online Essentials
-                      </div>
-                      <div className="text-primary-green relative h-[20.99px] w-[46.23px] text-center text-xs">
-                        <div className="bg-primary-green absolute left-[0px] top-[0px] h-[20.99px] w-[46.23px] rounded opacity-[0.15]" />
-                        <div className="absolute left-[3.73px] top-[0px] flex flex-row items-center justify-start">
-                          <img
-                            className="relative h-3 w-[13.8px] shrink-0 overflow-hidden"
-                            alt=""
-                            src="/profile10.svg"
-                          />
-                          <div className="relative flex h-[20.29px] w-[26.74px] shrink-0 items-center justify-center font-semibold leading-[128%]">
-                            300
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="border-text-box-grey relative box-border h-px w-[267.88px] border-t-[1px] border-solid opacity-[0.4]" />
-                  <div className="flex w-64 flex-row items-center justify-start gap-[12px]">
-                    <img
-                      className="relative h-[33px] w-[33px]"
-                      alt=""
-                      src="/logoatingi10.svg"
-                    />
-                    <div className="flex w-[203.47px] flex-row items-center justify-start gap-[1px]">
-                      <div className="relative flex w-[164.63px] shrink-0 items-end leading-[153%]">
-                        Why Tourism Business should be Sustainable
-                      </div>
-                      <div className="text-primary-green relative h-[20.99px] w-[46.23px] text-center text-xs">
-                        <div className="bg-primary-green absolute left-[0px] top-[0px] h-[20.99px] w-[46.23px] rounded opacity-[0.15]" />
-                        <div className="absolute left-[3.73px] top-[0px] flex flex-row items-center justify-start">
-                          <img
-                            className="relative h-3 w-[13.8px] shrink-0 overflow-hidden"
-                            alt=""
-                            src="/profile10.svg"
-                          />
-                          <div className="relative flex h-[20.29px] w-[26.74px] shrink-0 items-center justify-center font-semibold leading-[128%]">
-                            300
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="font-helvetica-neue relative inline-block h-[20.52px] w-[205.08px] shrink-0 text-lg font-medium leading-[119%]">
-          Demographics
-        </div>
-        <div className="flex flex-row items-start justify-start gap-[18px]">
-          <div className="relative h-[167px] w-[291px] rounded-2xl bg-white shadow-[10px_10px_45px_rgba(108,_109,_133,_0.08)]">
-            <div className="absolute left-[22.99px] top-[12px] flex flex-col items-start justify-start gap-[9px]">
-              <div className="flex flex-row items-end justify-start">
-                <div className="relative flex h-[20.59px] w-[178px] shrink-0 items-center leading-[140%]">
-                  Location
-                </div>
-              </div>
-              <div className="text-grey font-helvetica-neue flex flex-row items-center justify-start gap-[3px] text-xs">
-                <div className="flex w-[145px] flex-col items-start justify-start gap-[7px]">
-                  <div className="flex flex-row items-center justify-start gap-[8px]">
-                    <div className="bg-primary-purple relative h-[12.6px] w-[12.6px] rounded-sm" />
-                    <div className="relative inline-block h-[17px] w-[67.45px] shrink-0 leading-[153%]">
-                      Cape Town
-                    </div>
-                  </div>
-                  <div className="flex flex-row items-center justify-start gap-[8px]">
-                    <div className="bg-primary-green relative h-[12.6px] w-[12.6px] rounded-sm" />
-                    <div className="relative inline-block h-[17px] w-[75.08px] shrink-0 leading-[153%]">
-                      Mpumalanga
-                    </div>
-                  </div>
-                  <div className="flex flex-row items-center justify-start gap-[8px]">
-                    <div className="bg-deepskyblue relative h-[12.6px] w-[12.6px] rounded-sm" />
-                    <div className="relative inline-block h-[17px] w-[59.06px] shrink-0 leading-[153%]">
-                      Gauteng
-                    </div>
-                  </div>
-                  <div className="flex flex-row items-start justify-start gap-[8px]">
-                    <div className="bg-primary-yellow relative h-[12.6px] w-[12.6px] rounded-sm" />
-                    <div className="relative inline-block h-[15.26px] w-[87.48px] shrink-0 leading-[129%]">
-                      Northern Cape
-                    </div>
-                  </div>
-                </div>
-                <div className="relative h-[104.02px] w-[104.02px] text-center">
-                  <img
-                    className="absolute bottom-[0%] left-[0%] right-[0%] top-[0%] h-full max-h-full w-full max-w-full overflow-hidden"
-                    alt=""
-                    src="/mask-group.svg"
-                  />
-                  <div className="absolute bottom-[6.28%] left-[55.97%] right-[4.58%] top-[70.63%] h-[23.1%] w-[39.45%]">
-                    <div className="absolute bottom-[0%] left-[0%] right-[0%] top-[0%] h-full w-full rounded-xl bg-white shadow-[0px_4px_4px_rgba(0,_0,_0,_0.25)]" />
-                    <div className="absolute left-[0.95%] top-[9.82%] inline-block h-[70.76%] w-[99.05%] font-medium leading-[153%]">
-                      59%
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="relative h-[167px] w-[291px] rounded-2xl bg-white shadow-[10px_10px_45px_rgba(108,_109,_133,_0.08)]">
-            <div className="absolute left-[22.99px] top-[12px] flex flex-col items-start justify-start gap-[9px]">
-              <div className="flex flex-row items-end justify-start">
-                <div className="relative flex h-[20.59px] w-[178px] shrink-0 items-center leading-[140%]">
-                  Gender
-                </div>
-              </div>
-              <div className="text-grey font-helvetica-neue flex flex-row items-center justify-start gap-[3px] text-xs">
-                <div className="flex w-[145px] flex-col items-start justify-start gap-[7px]">
-                  <div className="flex flex-row items-center justify-start gap-[8px]">
-                    <div className="bg-primary-purple relative h-[12.6px] w-[12.6px] rounded-sm" />
-                    <div className="relative inline-block h-[17px] w-[67.45px] shrink-0 leading-[153%]">
-                      Male
-                    </div>
-                  </div>
-                  <div className="flex flex-row items-center justify-start gap-[8px]">
-                    <div className="bg-primary-green relative h-[12.6px] w-[12.6px] rounded-sm" />
-                    <div className="relative inline-block h-[17px] w-[75.08px] shrink-0 leading-[153%]">
-                      Female
-                    </div>
-                  </div>
-                  <div className="flex flex-row items-center justify-start gap-[8px]">
-                    <div className="bg-primary-yellow relative h-[12.6px] w-[12.6px] rounded-sm" />
-                    <div className="relative inline-block h-[17px] w-[59.06px] shrink-0 leading-[153%]">
-                      Other
-                    </div>
-                  </div>
-                </div>
-                <img
-                  className="relative h-[104.02px] w-[104.02px]"
-                  alt=""
-                  src="/mask-group1.svg"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="relative h-[167px] w-[291px] rounded-2xl bg-white shadow-[10px_10px_45px_rgba(108,_109,_133,_0.08)]">
-            <div className="absolute left-[22.99px] top-[12px] flex flex-col items-start justify-start gap-[10px]">
-              <div className="flex flex-row items-end justify-start">
-                <div className="relative flex h-[20.59px] w-[178px] shrink-0 items-center leading-[140%]">
-                  Age
-                </div>
-              </div>
-              <div className="text-grey font-helvetica-neue flex flex-row items-center justify-start gap-[3px] text-xs">
-                <div className="flex w-[145px] flex-col items-start justify-start gap-[5px]">
-                  <div className="flex flex-row items-center justify-start gap-[8px]">
-                    <div className="bg-primary-purple relative h-[12.6px] w-[12.6px] rounded-sm" />
-                    <div className="relative inline-block h-[17px] w-[67.45px] shrink-0 leading-[153%]">
-                      0-19
-                    </div>
-                  </div>
-                  <div className="flex flex-row items-center justify-start gap-[8px]">
-                    <div className="bg-primary-green relative h-[12.6px] w-[12.6px] rounded-sm" />
-                    <div className="relative inline-block h-[17px] w-[75.08px] shrink-0 leading-[153%]">
-                      20-24
-                    </div>
-                  </div>
-                  <div className="flex flex-row items-center justify-start gap-[8px]">
-                    <div className="bg-deepskyblue relative h-[12.6px] w-[12.6px] rounded-sm" />
-                    <div className="relative inline-block h-[17px] w-[59.06px] shrink-0 leading-[153%]">
-                      25-29
-                    </div>
-                  </div>
-                  <div className="flex flex-row items-start justify-start gap-[8px]">
-                    <div className="bg-primary-yellow relative h-[12.6px] w-[12.6px] rounded-sm" />
-                    <div className="relative inline-block h-[15.26px] w-[87.48px] shrink-0 leading-[129%]">
-                      30+
-                    </div>
-                  </div>
-                  <div className="flex flex-row items-start justify-start gap-[8px]">
-                    <div className="bg-primary-yellow relative h-[12.6px] w-[12.6px] rounded-sm" />
-                    <div className="relative inline-block h-[15.26px] w-[87.48px] shrink-0 leading-[129%]">
-                      Unspecified
-                    </div>
-                  </div>
-                </div>
-                <img
-                  className="relative h-[104.02px] w-[104.02px]"
-                  alt=""
-                  src="/mask-group2.svg"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="relative h-[167px] w-[291px] rounded-2xl bg-white shadow-[10px_10px_45px_rgba(108,_109,_133,_0.08)]">
-            <div className="absolute left-[22.99px] top-[12px] flex flex-col items-start justify-start gap-[9px]">
-              <div className="flex flex-row items-end justify-start">
-                <div className="relative flex h-[20.59px] w-[178px] shrink-0 items-center leading-[140%]">
-                  Activity
-                </div>
-              </div>
-              <div className="text-grey font-helvetica-neue flex flex-row items-center justify-start gap-[3px] text-xs">
-                <div className="flex w-[145px] flex-col items-start justify-start gap-[7px]">
-                  <div className="flex flex-row items-center justify-start gap-[8px]">
-                    <div className="bg-primary-purple relative h-[12.6px] w-[12.6px] rounded-sm" />
-                    <div className="relative inline-block h-[17px] w-[67.45px] shrink-0 leading-[153%]">
-                      Active
-                    </div>
-                  </div>
-                  <div className="flex flex-row items-center justify-start gap-[8px]">
-                    <div className="bg-primary-yellow relative h-[12.6px] w-[12.6px] rounded-sm" />
-                    <div className="relative inline-block h-[17px] w-[75.08px] shrink-0 leading-[153%]">
-                      Inactive
-                    </div>
-                  </div>
-                </div>
-                <img
-                  className="relative h-[104.02px] w-[104.02px]"
-                  alt=""
-                  src="/mask-group3.svg"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+      <div
+        className="text-2xl font-bold"
+        style={{ position: "absolute", top: "28px", left: "10px", zIndex: 1 }}
+      >
+        {data.count}
       </div>
-      <div className="absolute left-[210px] top-[372px] h-[15px] w-[83.67px]" />
-      <div className="absolute left-[1121px] top-[159px] flex flex-row items-center justify-start gap-[9px] text-center">
-        <div className="border-darkslateblue-100 box-border flex h-[38px] w-[171px] flex-row items-center justify-center gap-[10px] rounded-[23px] border-[1px] border-solid px-[19px] py-2">
-          <div className="relative font-semibold leading-[153%]">
-            1 April - 18 April
-          </div>
-          <img
-            className="relative h-4 w-4 shrink-0 overflow-hidden"
-            alt=""
-            src="/iconforward3.svg"
-          />
-        </div>
-        <img
-          className="relative h-5 w-[23px] shrink-0 overflow-hidden"
-          alt=""
-          src="/download.svg"
-        />
-      </div>
+      <Chart
+        chartType="LineChart"
+        loader={<div>Loading Chart</div>}
+        data={localData}
+        options={{
+          // hAxis: { textPosition: "none", gridlines: { color: "transparent" } },
+          // vAxis: { textPosition: "none", gridlines: { color: "transparent" } },
+          // chartArea: {
+          //   left: 0,
+          //   top: 20,
+          //   right: 0,
+          //   bottom: 0,
+          //   width: "100%",
+          //   height: "100%",
+          // }, // this removes the padding
+          // chartArea: {
+          //   left: 10,
+          //   top: 30,
+          //   right: 10,
+          //   bottom: 10,
+          //   // width: "100%",
+          //   // height: "100%",
+          // }, // this removes the padding
+          chartArea: {
+            // left: 10,
+            // top: 10,
+          }, // this removes the padding
+          legend: "none",
+          lineWidth: 2,
+          areaOpacity: 0.1,
+          colors: ["#387F6A", "#240b36"],
+          curveType: "function",
+          title: "", // Remove the title from the chart itself
+          pointSize: 5, // this sets the size of the data points
+          pointShape: "circle", // this sets the shape of the data points
+        }}
+      />
     </div>
   );
 };
 
-OrganisationOverview.getLayout = function getLayout(page: ReactElement) {
+const PercentageDisplay: React.FC<{
+  percentage: number;
+}> = ({ percentage }) => {
+  return (
+    <div className="text-green-500 flex items-center gap-2">
+      <IoMdArrowUp className="rounded-full bg-gray text-green" />
+      <span className="text-xs font-bold text-green">
+        +{percentage.toFixed(2)}%
+      </span>
+      <span className="text-xs">monthly total so far</span>
+    </div>
+  );
+};
+
+const TitleAndSummaryCard: React.FC<{
+  title: string;
+  children: ReactElement;
+}> = ({ title, children }) => {
+  return (
+    <div className="flex h-60 w-64 flex-col rounded-lg bg-white p-4 shadow">
+      <div className="flex flex-row items-center gap-2">
+        <IoMdDocument className="text-green" />
+        <div className="text-sm font-semibold">{title}</div>
+      </div>
+
+      {children}
+    </div>
+  );
+};
+
+type GoogleChartData = (string | number)[][];
+
+const PieChart: React.FC<{
+  title: string;
+  data: GoogleChartData;
+  colors?: string[];
+}> = ({ title, data, colors }) => {
+  return (
+    <div className="relative w-64 overflow-hidden rounded-lg bg-white pt-10 shadow">
+      <div
+        className="flex flex-row items-center gap-2"
+        style={{ position: "absolute", top: "10px", left: "10px", zIndex: 1 }}
+      >
+        <IoMdDocument className="text-green" />
+        <div className="text-sm font-semibold">{title}</div>
+      </div>
+
+      {data && (
+        <Chart
+          chartType="PieChart"
+          loader={<div>Loading Chart</div>}
+          data={data}
+          options={{
+            legend: { position: "left" }, // Position the legend on the left
+            colors: colors,
+            chartArea: {
+              top: 10, // Reduce the top margin
+              width: "90%",
+              height: "80%",
+            },
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+const BubbleChart: React.FC<{ title: string; subTitle: string }> = ({
+  title,
+  subTitle,
+}) => {
+  return (
+    <div className="w-64x relative overflow-hidden rounded-lg bg-white pt-10 shadow">
+      <div
+        className="flex flex-row items-center gap-2"
+        style={{ position: "absolute", top: "10px", left: "10px", zIndex: 1 }}
+      >
+        <IoMdDocument className="text-green" />
+        <div className="text-sm font-semibold">{title}</div>
+      </div>
+      <p
+        className="text-2xl font-bold"
+        style={{ position: "absolute", top: "28px", left: "10px", zIndex: 1 }}
+      >
+        {subTitle}
+      </p>
+      <Chart
+        // width={"100%"}
+        // height={"100%"}
+        chartType="BubbleChart"
+        loader={<div>Loading Chart</div>}
+        data={[
+          ["ID", "Count", "Age", "Country", "Population"],
+          ["Term", 80.66, 60, "North America", 33739900],
+          ["Term", 79.84, 30, "Europe", 81902307],
+          ["Term", 78.6, 32, "Europe", 5523095],
+          ["Term", 72.73, 55, "Middle East", 79716203],
+          ["Term", 80.05, 24, "Europe", 61801570],
+          ["Term", 72.49, 18, "Middle East", 73137148],
+          ["Term", 68.09, 33, "Middle East", 31090763],
+          ["Term", 81.55, 44, "Middle East", 7485600],
+          ["Term", 68.6, 55, "Europe", 141850000],
+          ["Term", 78.09, 66, "North America", 307007000],
+        ]}
+        options={{
+          title: "",
+          // hAxis: { textPosition: "none", gridlines: { color: "transparent" } },
+          // vAxis: { textPosition: "none", gridlines: { color: "transparent" } },
+          hAxis: { title: "Age" },
+          vAxis: { title: "Count" },
+          bubble: { textStyle: { fontSize: 11 } },
+          //legend: { position: "left" },
+          chartArea: {
+            width: "60%",
+            height: "80%",
+          },
+        }}
+      />
+    </div>
+  );
+};
+
+// OrgAdmin dashboard page
+const OrganisationDashboard: NextPageWithLayout<{
+  id: string;
+  error: string;
+}> = ({ id, error }) => {
+  if (error) return <Unauthorized />;
+
+  const router = useRouter();
+  const myRef = useRef<HTMLDivElement>(null);
+
+  // 👇 use prefetched queries from server
+  const { data: lookups_categories } = useQuery<OpportunityCategory[]>({
+    queryKey: ["OrganisationDashboardCategories"],
+    queryFn: () => getOpportunityCategories(),
+  });
+  const { data: lookups_opportunities } = useQuery<OpportunitySearchResults>({
+    queryKey: ["OrganisationDashboardOpportunities", id],
+    queryFn: () =>
+      getOpportunitiesAdmin({
+        types: null,
+        categories: null,
+        languages: null,
+        countries: null,
+        organizations: [id],
+        commitmentIntervals: null,
+        zltoRewardRanges: null,
+        valueContains: null,
+        startDate: null,
+        endDate: null,
+        statuses: null,
+        pageNumber: 1,
+        pageSize: 1000,
+      }),
+  });
+  //TODO:
+  const { data: lookups_ages } = useQuery<Gender[]>({
+    queryKey: ["OrganisationDashboardAges"],
+    queryFn: () => getAges(),
+  });
+  const { data: lookups_genders } = useQuery<Gender[]>({
+    queryKey: ["OrganisationDashboardGenders"],
+    queryFn: () => getGenders(),
+  });
+  const { data: lookups_countries } = useQuery<Country[]>({
+    queryKey: ["OrganisationDashboardCountries"],
+    queryFn: () => getCountries(),
+  });
+  const { data: organisation } = useQuery<Organization>({
+    queryKey: ["organisation", id],
+  });
+
+  // get filter parameters from route
+  const {
+    page,
+    categories,
+    opportunities,
+    startDate,
+    endDate,
+    ages,
+    genders,
+    countries,
+  } = router.query;
+
+  // memo for isSearchPerformed based on filter parameters
+  const isSearchPerformed = useMemo<boolean>(() => {
+    return (
+      categories != undefined ||
+      opportunities != undefined ||
+      startDate != undefined ||
+      endDate != undefined ||
+      ages != undefined ||
+      genders != undefined ||
+      countries != undefined
+    );
+  }, [categories, opportunities, startDate, endDate, ages, genders, countries]);
+
+  // QUERY: SEARCH RESULTS
+  // the filter values from the querystring are mapped to it's corresponding id
+  const { data: searchResults, isLoading } =
+    useQuery<OrganizationSearchResultsSummary>({
+      queryKey: [
+        "OrganizationSearchResultsSummary",
+        page,
+        categories,
+        opportunities,
+        startDate,
+        endDate,
+      ],
+      queryFn: async () =>
+        await getOrganisationDashboardSummary({
+          pageNumber: page ? parseInt(page.toString()) : 1,
+          pageSize: PAGE_SIZE,
+          organization: id,
+          //valueContains: query ? decodeURIComponent(query.toString()) : null,
+          categories:
+            categories != undefined
+              ? categories
+                  ?.toString()
+                  .split(",")
+                  .map((x) => {
+                    const item = lookups_categories?.find((y) => y.name === x);
+                    return item ? item?.id : "";
+                  })
+                  .filter((x) => x != "")
+              : null,
+          opportunities:
+            opportunities != undefined
+              ? opportunities
+                  ?.toString()
+                  .split(",")
+                  .map((x) => {
+                    const item = lookups_opportunities?.items.find(
+                      (y) => y.title === x,
+                    );
+                    return item ? item?.id : "";
+                  })
+                  .filter((x) => x != "")
+              : null,
+
+          startDate: startDate != undefined ? startDate.toString() : null,
+          endDate: endDate != undefined ? endDate.toString() : null,
+        }),
+      //enabled: isSearchPerformed, // only run query if search is executed
+    });
+
+  // search filter state
+  const [searchFilter, setSearchFilter] =
+    useState<OrganizationSearchFilterQueryTerm>({
+      pageNumber: page ? parseInt(page.toString()) : 1,
+      pageSize: PAGE_SIZE,
+      organization: id,
+      categories: null,
+      opportunities: null,
+      startDate: null,
+      endDate: null,
+      ageRanges: null,
+      genders: null,
+      countries: null,
+    });
+
+  // sets the filter values from the querystring to the filter state
+  useEffect(() => {
+    if (isSearchPerformed)
+      setSearchFilter({
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: PAGE_SIZE,
+        //valueContains: query ? decodeURIComponent(query.toString()) : null,
+        organization: id,
+        categories:
+          categories != undefined ? categories?.toString().split(",") : null,
+        opportunities:
+          opportunities != undefined && opportunities != null
+            ? opportunities?.toString().split(",")
+            : null,
+        startDate: startDate != undefined ? startDate.toString() : null,
+        endDate: endDate != undefined ? endDate.toString() : null,
+        ageRanges: ages != undefined ? ages?.toString().split(",") : null,
+        genders: genders != undefined ? genders?.toString().split(",") : null,
+        countries:
+          countries != undefined ? countries?.toString().split(",") : null,
+      });
+  }, [
+    setSearchFilter,
+    isSearchPerformed,
+    id,
+    page,
+    categories,
+    opportunities,
+    startDate,
+    endDate,
+    ages,
+    genders,
+    countries,
+  ]);
+
+  // 🎈 FUNCTIONS
+  const getSearchFilterAsQueryString = useCallback(
+    (opportunitySearchFilter: OrganizationSearchFilterQueryTerm) => {
+      if (!opportunitySearchFilter) return null;
+
+      // construct querystring parameters from filter
+      const params = new URLSearchParams();
+      // if (
+      //   opportunitySearchFilter.valueContains !== undefined &&
+      //   opportunitySearchFilter.valueContains !== null &&
+      //   opportunitySearchFilter.valueContains.length > 0
+      // )
+      //   params.append("query", opportunitySearchFilter.valueContains);
+      if (
+        opportunitySearchFilter?.categories?.length !== undefined &&
+        opportunitySearchFilter.categories.length > 0
+      )
+        params.append(
+          "categories",
+          opportunitySearchFilter.categories.join(","),
+        );
+
+      if (
+        opportunitySearchFilter?.opportunities?.length !== undefined &&
+        opportunitySearchFilter.opportunities.length > 0
+      )
+        params.append(
+          "opportunities",
+          opportunitySearchFilter.opportunities.join(","),
+        );
+
+      if (
+        opportunitySearchFilter.startDate !== undefined &&
+        opportunitySearchFilter.startDate !== null
+      )
+        params.append("startDate", opportunitySearchFilter.startDate);
+
+      if (
+        opportunitySearchFilter.endDate !== undefined &&
+        opportunitySearchFilter.endDate !== null
+      )
+        params.append("endDate", opportunitySearchFilter.endDate);
+
+      if (
+        opportunitySearchFilter.ageRanges !== null &&
+        opportunitySearchFilter.ageRanges !== undefined
+      )
+        params.append("ages", opportunitySearchFilter.ageRanges.toString());
+
+      if (
+        opportunitySearchFilter.genders !== null &&
+        opportunitySearchFilter.genders !== undefined
+      )
+        params.append("genders", opportunitySearchFilter.genders.toString());
+
+      if (
+        opportunitySearchFilter.countries !== null &&
+        opportunitySearchFilter.countries !== undefined
+      )
+        params.append(
+          "countries",
+          opportunitySearchFilter.countries.toString(),
+        );
+
+      if (
+        opportunitySearchFilter.pageNumber !== null &&
+        opportunitySearchFilter.pageNumber !== undefined &&
+        opportunitySearchFilter.pageNumber !== 1
+      )
+        params.append("page", opportunitySearchFilter.pageNumber.toString());
+
+      if (params.size === 0) return null;
+      return params;
+    },
+    [],
+  );
+
+  const redirectWithSearchFilterParams = useCallback(
+    (filter: OrganizationSearchFilterQueryTerm) => {
+      let url = `/organisations/${id}`;
+      const params = getSearchFilterAsQueryString(filter);
+      if (params != null && params.size > 0)
+        url = `${url}?${params.toString()}`;
+
+      if (url != router.asPath)
+        void router.push(url, undefined, { scroll: false });
+    },
+    [router, getSearchFilterAsQueryString],
+  );
+
+  // filter popup handlers
+  const onSubmitFilter = useCallback(
+    (val: OrganizationSearchFilterQueryTerm) => {
+      redirectWithSearchFilterParams(val);
+    },
+    [redirectWithSearchFilterParams],
+  );
+
+  const onClearFilter = useCallback(() => {
+    void router.push(`/organisations/${id}`, undefined, { scroll: true });
+  }, [router]);
+
+  return (
+    <>
+      <Head>
+        <title>Yoma | Organisation Dashboard</title>
+      </Head>
+
+      <PageBackground height={15} />
+
+      {isSearchPerformed && isLoading && <Loading />}
+
+      {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
+      <div ref={myRef} />
+
+      <div className="container z-10 mt-20 max-w-7xl px-4 py-1 md:py-4">
+        <div className="flex flex-col">
+          {/* LOGO & TITLE */}
+          <div className="flex flex-row font-semibold text-white">
+            <LogoTitle
+              logoUrl={organisation?.logoURL}
+              title={organisation?.name}
+            />
+            <LimitedFunctionalityBadge />
+          </div>
+          {/* DESCRIPTION */}
+          <span className="w-full [line-break:anywhere]">
+            <span>{`Your dashboard progress so far for the month of `}</span>
+            <span className="font-semibold">TODO</span>
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-4 ">
+          {/* FILTERS: TOP-LEVEL */}
+          <div className="mb-4 mt-10 hidden md:flex">
+            {!lookups_categories ||
+              (!lookups_opportunities && <div>Loading...</div>)}
+            {lookups_categories && lookups_opportunities && (
+              <div className="flex flex-col">
+                <OrganisationRowFilter
+                  htmlRef={myRef.current!}
+                  searchFilter={searchFilter}
+                  lookups_categories={lookups_categories}
+                  lookups_opportunities={lookups_opportunities}
+                  clearButtonText="Clear"
+                  onClear={onClearFilter}
+                  onSubmit={(e) => onSubmitFilter(e)}
+                  filterOptions={[
+                    OrganisationDashboardFilterOptions.CATEGORIES,
+                    OrganisationDashboardFilterOptions.OPPORTUNITIES,
+                    OrganisationDashboardFilterOptions.DATE_START,
+                    OrganisationDashboardFilterOptions.DATE_END,
+                    OrganisationDashboardFilterOptions.VIEWALLFILTERSBUTTON,
+                  ]}
+                  totalCount={0}
+                />
+                {/* FILTER BADGES */}
+                <FilterBadges
+                  searchFilter={searchFilter}
+                  excludeKeys={[
+                    "pageNumber",
+                    "pageSize",
+                    "organization",
+                    "ageRanges",
+                    "genders",
+                    "countries",
+                  ]}
+                  resolveValue={(key, value) => {
+                    if (key === "startDate" || key === "endDate")
+                      return value
+                        ? toISOStringForTimezone(new Date(value)).split("T")[0]
+                        : "";
+                    else {
+                      return value;
+                    }
+                  }}
+                  onSubmit={(e) => onSubmitFilter(e)}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* ENGAGEMENT */}
+          <div className="flex flex-col gap-2">
+            <div className="text-xl font-semibold">Engagement</div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {searchResults?.opportunities.viewed && (
+                <LineChart
+                  title="All visitors"
+                  data={searchResults?.opportunities.viewed}
+                  labels={["Year", "Visits"]}
+                />
+              )}
+
+              {searchResults?.opportunities.completed && (
+                <LineChart
+                  title="Completions"
+                  data={searchResults?.opportunities.completed}
+                  labels={["Year", "Visits"]}
+                />
+              )}
+
+              <TitleAndSummaryCard title="Average time">
+                <div className="flex flex-grow flex-col">
+                  <div className="flex-grow text-2xl font-bold">
+                    {searchResults?.opportunities.completion
+                      .averageTimeInDays ?? 0}
+                  </div>
+                  {searchResults?.opportunities.completion.percentage && (
+                    <PercentageDisplay
+                      percentage={
+                        searchResults?.opportunities.completion.percentage
+                      }
+                    />
+                  )}
+                </div>
+              </TitleAndSummaryCard>
+
+              {searchResults?.opportunities?.conversionRate && (
+                <PieChart
+                  title="Conversion rate"
+                  colors={["#387F6A", "#F9AB3E"]} // green and yellow
+                  data={[
+                    ["Completed", "Viewed"],
+                    [
+                      "Completed",
+                      searchResults.opportunities.conversionRate.completedCount,
+                    ],
+                    [
+                      "Viewed",
+                      searchResults.opportunities.conversionRate.viewedCount,
+                    ],
+                  ]}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* REWARDS */}
+          <div className="flex flex-col gap-2">
+            <div className="text-xl font-semibold">Rewards</div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              <TitleAndSummaryCard title="ZLTO amount awarded">
+                <div className="flex flex-grow flex-col">
+                  <div className="flex-grow text-2xl font-bold">
+                    {searchResults?.opportunities.reward.totalAmount ?? 0}
+                  </div>
+                  {searchResults?.opportunities.reward.percentage && (
+                    <PercentageDisplay
+                      percentage={
+                        searchResults?.opportunities.reward.percentage
+                      }
+                    />
+                  )}
+                </div>
+              </TitleAndSummaryCard>
+
+              {searchResults?.skills.items && (
+                <LineChart
+                  title="Total skills"
+                  data={searchResults?.skills.items}
+                  labels={["Year", "Count"]}
+                />
+              )}
+
+              {/* SKILLS */}
+              {searchResults?.skills.topCompleted && (
+                <TitleAndSummaryCard title="Most completed skills">
+                  <div className="mt-2 flex flex-grow flex-wrap overflow-hidden">
+                    {searchResults?.skills.topCompleted.map((x) => (
+                      <div
+                        key={x.id}
+                        className="min-h-6 badge mr-2 rounded-md border-0 bg-green text-white"
+                      >
+                        {x.name}
+                      </div>
+                    ))}
+                  </div>
+                </TitleAndSummaryCard>
+              )}
+            </div>
+          </div>
+
+          {/* DEMOGRAPHICS */}
+          <div className="flex flex-col gap-2">
+            <div className="text-xl font-semibold">Demographics</div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {/* COUNTRIES */}
+              {searchResults?.demographics?.countries && (
+                <PieChart
+                  title="Country"
+                  colors={["#41204B", "#4CADE9", "#387F6A", "#F9AB3E"]} // purple, blue, green and yellow
+                  data={[
+                    ["Country", "Value"],
+                    ...searchResults.demographics.countries.map((x) => [
+                      x.item1,
+                      x.item2,
+                    ]),
+                  ]}
+                />
+              )}
+              {/* GENDERS */}
+              {searchResults?.demographics?.genders && (
+                <PieChart
+                  title="Genders"
+                  colors={["#41204B", "#4CADE9", "#387F6A", "#F9AB3E"]} // purple, blue, green and yellow
+                  data={[
+                    ["Gender", "Value"],
+                    ...searchResults.demographics.genders.map((x) => [
+                      x.item1,
+                      x.item2,
+                    ]),
+                  ]}
+                />
+              )}
+              {/* AGE */}
+              {searchResults?.demographics?.genders && (
+                <PieChart
+                  title="Age"
+                  colors={["#41204B", "#4CADE9", "#387F6A", "#F9AB3E"]} // purple, blue, green and yellow
+                  data={[
+                    ["Age", "Value"],
+                    ...searchResults.demographics.ages.map((x) => [
+                      x.item1,
+                      x.item2,
+                    ]),
+                  ]}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* ALL OPPORTUNITIES */}
+          <div className="flex flex-col gap-2">
+            <div className="text-xl font-semibold">All Opportunities</div>
+            <div className="font-semiboldx text-lg">
+              Opportunities performance (sort by views, completions, conversion
+              ratio)
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {searchResults?.opportunities.published && (
+                <LineChart
+                  title="Published Opportunities"
+                  data={searchResults?.opportunities.published}
+                  labels={["Year", "Count"]}
+                />
+              )}
+              {searchResults?.opportunities.unpublished && (
+                <LineChart
+                  title="Unpublished Opportunities"
+                  data={searchResults?.opportunities.unpublished}
+                  labels={["Year", "Count"]}
+                />
+              )}
+              {searchResults?.opportunities.expired && (
+                <LineChart
+                  title="Expired Opportunities"
+                  data={searchResults?.opportunities.expired}
+                  labels={["Year", "Count"]}
+                />
+              )}
+              {searchResults?.opportunities.pending && (
+                <LineChart
+                  title="Pending Opportunities"
+                  data={searchResults?.opportunities.pending}
+                  labels={["Year", "Count"]}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* POPULAR SEARCH TERMS */}
+          <div className="flex flex-col gap-2">
+            <div className="text-xl font-semibold">Popular search terms</div>
+
+            {/* FILTERS: BOTTOM-LEVEL */}
+            {lookups_ages && lookups_genders && lookups_countries && (
+              <div className="mb-4 flex">
+                <div className="flex flex-col">
+                  <OrganisationRowFilter
+                    htmlRef={myRef.current!}
+                    searchFilter={searchFilter}
+                    lookups_ageRanges={lookups_ages}
+                    lookups_genders={lookups_genders}
+                    lookups_countries={lookups_countries}
+                    clearButtonText="Clear"
+                    onClear={onClearFilter}
+                    onSubmit={(e) => onSubmitFilter(e)}
+                    // onOpenFilterFullWindow={() => {
+                    //   setFilterFullWindowVisible(!filterFullWindowVisible);
+                    // }}
+                    filterOptions={[
+                      OrganisationDashboardFilterOptions.AGES,
+                      OrganisationDashboardFilterOptions.GENDERS,
+                      OrganisationDashboardFilterOptions.COUNTRIES,
+                      OrganisationDashboardFilterOptions.VIEWALLFILTERSBUTTON,
+                    ]}
+                    // totalCount={searchResults?.totalCount ?? 0}
+                    totalCount={0}
+                  />
+
+                  {/* FILTER BADGES */}
+                  <FilterBadges
+                    searchFilter={searchFilter}
+                    excludeKeys={[
+                      "pageNumber",
+                      "pageSize",
+                      "organization",
+                      "opportunities",
+                      "categories",
+                      "startDate",
+                      "endDate",
+                    ]}
+                    resolveValue={(key, value) => {
+                      return value;
+                    }}
+                    onSubmit={(e) => onSubmitFilter(e)}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="">
+              <BubbleChart title="Search terms" subTitle="1,020" />
+            </div>
+          </div>
+
+          {/* OPPORTUNITIES TABLE */}
+          <div className="text-xl font-semibold">Opportunities</div>
+          <div className="rounded-lg bg-white p-4">
+            {/* NO ROWS */}
+            {/* {opportunities && opportunities.items?.length === 0 && !query && (
+              <div className="flex flex-col place-items-center py-52">
+                <NoRowsMessage
+                  title={"You will find your active opportunities here"}
+                  description={
+                    "This is where you will find all the awesome opportunities you have shared"
+                  }
+                />
+                <Link href={`/organisations/${id}/opportunities/create`}>
+                  <button className="btn btn-primary btn-sm mt-10 rounded-3xl px-16">
+                    Add opportunity
+                  </button>
+                </Link>
+              </div>
+            )}
+            {opportunities && opportunities.items?.length === 0 && query && (
+              <div className="flex flex-col place-items-center py-52">
+                <NoRowsMessage
+                  title={"No opportunities found"}
+                  description={"Please try refining your search query."}
+                />
+              </div>
+            )} */}
+
+            {/* GRID */}
+            {/* {opportunities && opportunities.items?.length > 0 && ( */}
+            <div className="overflow-x-auto">
+              <table className="table">
+                <thead>
+                  <tr className="border-gray text-gray-dark">
+                    <th>Opportunity</th>
+                    <th>Views</th>
+                    <th>Conversion ratio</th>
+                    <th>Completions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-gray">
+                    <td>
+                      <Link href={`/organisations/${id}/opportunities/1/info`}>
+                        Opportunity 1
+                      </Link>
+                    </td>
+                    <td>200</td>
+                    <td>78%</td>
+                    <td>330</td>
+                  </tr>
+                  <tr className="border-gray">
+                    <td>
+                      <Link href={`/organisations/${id}/opportunities/1/info`}>
+                        Opportunity 2
+                      </Link>
+                    </td>
+                    <td>200</td>
+                    <td>78%</td>
+                    <td>330</td>
+                  </tr>
+                  <tr className="border-gray">
+                    <td>
+                      <Link href={`/organisations/${id}/opportunities/1/info`}>
+                        Opportunity 3
+                      </Link>
+                    </td>
+                    <td>200</td>
+                    <td>78%</td>
+                    <td>330</td>
+                  </tr>
+                  <tr className="border-gray">
+                    <td>
+                      <Link href={`/organisations/${id}/opportunities/1/info`}>
+                        Opportunity 4
+                      </Link>
+                    </td>
+                    <td>200</td>
+                    <td>78%</td>
+                    <td>330</td>
+                  </tr>
+                  <tr className="border-gray">
+                    <td>
+                      <Link href={`/organisations/${id}/opportunities/1/info`}>
+                        Opportunity 5
+                      </Link>
+                    </td>
+                    <td>200</td>
+                    <td>78%</td>
+                    <td>330</td>
+                  </tr>
+                  <tr className="border-gray">
+                    <td>
+                      <Link href={`/organisations/${id}/opportunities/1/info`}>
+                        Opportunity 6
+                      </Link>
+                    </td>
+                    <td>200</td>
+                    <td>78%</td>
+                    <td>330</td>
+                  </tr>
+                  <tr className="border-gray">
+                    <td>
+                      <Link href={`/organisations/${id}/opportunities/1/info`}>
+                        Opportunity 7
+                      </Link>
+                    </td>
+                    <td>200</td>
+                    <td>78%</td>
+                    <td>330</td>
+                  </tr>
+                  <tr className="border-gray">
+                    <td>
+                      <Link href={`/organisations/${id}/opportunities/1/info`}>
+                        Opportunity 8
+                      </Link>
+                    </td>
+                    <td>200</td>
+                    <td>78%</td>
+                    <td>330</td>
+                  </tr>
+                  <tr className="border-gray">
+                    <td>
+                      <Link href={`/organisations/${id}/opportunities/1/info`}>
+                        Opportunity 9
+                      </Link>
+                    </td>
+                    <td>200</td>
+                    <td>78%</td>
+                    <td>330</td>
+                  </tr>
+                  <tr className="border-gray">
+                    <td>
+                      <Link href={`/organisations/${id}/opportunities/1/info`}>
+                        Opportunity 10
+                      </Link>
+                    </td>
+                    <td>200</td>
+                    <td>78%</td>
+                    <td>330</td>
+                  </tr>
+                  <tr className="border-gray">
+                    <td>
+                      <Link href={`/organisations/${id}/opportunities/1/info`}>
+                        Opportunity 11
+                      </Link>
+                    </td>
+                    <td>200</td>
+                    <td>78%</td>
+                    <td>330</td>
+                  </tr>
+                  <tr className="border-gray">
+                    <td>
+                      <Link href={`/organisations/${id}/opportunities/1/info`}>
+                        Opportunity 12
+                      </Link>
+                    </td>
+                    <td>200</td>
+                    <td>78%</td>
+                    <td>330</td>
+                  </tr>
+
+                  {/* {opportunities.items.map((opportunity) => ( */}
+                  {/* <tr key={opportunity.id} className="border-gray">
+                        <td>
+                          <Link
+                            href={`/organisations/${id}/opportunities/${opportunity.id}/info`}
+                          >
+                            {opportunity.title}
+                          </Link>
+                        </td>
+                        <td className="w-28">
+                          <div className="flex flex-col">
+                            {opportunity.zltoReward && (
+                              <span className="text-xs">
+                                {opportunity.zltoReward} Zlto
+                              </span>
+                            )}
+                            {opportunity.yomaReward && (
+                              <span className="text-xs">
+                                {opportunity.yomaReward} Yoma
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td>{opportunity.url}</td>
+                        <td>{opportunity.participantCountTotal}</td>
+                      </tr> */}
+                  {/* ))} */}
+                </tbody>
+              </table>
+            </div>
+            {/* )} */}
+
+            <div className="mt-2 grid place-items-center justify-center">
+              {/* PAGINATION */}
+              {/* <PaginationButtons
+                currentPage={page ? parseInt(page) : 1}
+                totalItems={opportunities?.totalCount ?? 0}
+                pageSize={PAGE_SIZE}
+                onClick={handlePagerChange}
+                showPages={false}
+                showInfo={true}
+              />*/}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+OrganisationDashboard.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-OrganisationOverview.theme = function getTheme(page: ReactElement) {
+OrganisationDashboard.theme = function getTheme(page: ReactElement) {
   return page.props.theme;
 };
 
-export default OrganisationOverview;
+export default OrganisationDashboard;
 /* eslint-enable */

@@ -6,7 +6,13 @@ import {
 } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { type ParsedUrlQuery } from "querystring";
-import { useState, type ReactElement, useMemo, useCallback } from "react";
+import {
+  useState,
+  type ReactElement,
+  useMemo,
+  useCallback,
+  useEffect,
+} from "react";
 import { type OpportunityInfo } from "~/api/models/opportunity";
 import { getOpportunityInfoById } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
@@ -19,6 +25,7 @@ import {
   IoIosArrowBack,
   IoMdPause,
   IoMdPlay,
+  IoMdBookmark,
 } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
@@ -42,6 +49,8 @@ import {
   performActionViewed,
   performActionCancel,
   saveMyOpportunity,
+  isOpportunitySaved,
+  removeMySavedOpportunity,
 } from "~/api/services/myOpportunities";
 import { toast } from "react-toastify";
 import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityCompletionEdit";
@@ -157,6 +166,7 @@ const OpportunityDetails: NextPageWithLayout<{
   ] = useState(false);
   const [cancelOpportunityDialogVisible, setCancelOpportunityDialogVisible] =
     useState(false);
+  const [isOppSaved, setIsOppSaved] = useState(false);
 
   const {
     data: opportunity,
@@ -190,25 +200,49 @@ const OpportunityDetails: NextPageWithLayout<{
     return Math.max(participantLimit - participantCountTotal, 0);
   }, [opportunity]);
 
+  useEffect(() => {
+    if (user) {
+      isOpportunitySaved(opportunityId).then((res) => {
+        setIsOppSaved(!!res);
+      });
+    }
+  }, [user, isOppSaved, opportunityId]);
+
   // CLICK HANDLERS
-  const onSaveOpportunity = useCallback(() => {
+  const onUpdateSavedOpportunity = useCallback(() => {
     if (!user) {
       toast.warning("You need to be logged in to save an opportunity");
       return;
     }
 
-    saveMyOpportunity(opportunityId)
-      .then(() => {
-        toast.success("Opportunity saved");
-      })
-      .catch((error) => {
-        toast(<ApiErrors error={error as AxiosError} />, {
-          type: "error",
-          autoClose: false,
-          icon: false,
+    if (isOppSaved) {
+      removeMySavedOpportunity(opportunityId)
+        .then(() => {
+          setIsOppSaved(false);
+          toast.success("Opportunity removed from saved");
+        })
+        .catch((error) => {
+          toast(<ApiErrors error={error as AxiosError} />, {
+            type: "error",
+            autoClose: false,
+            icon: false,
+          });
         });
-      });
-  }, [opportunityId, user]);
+    } else {
+      saveMyOpportunity(opportunityId)
+        .then(() => {
+          setIsOppSaved(true);
+          toast.success("Opportunity saved");
+        })
+        .catch((error) => {
+          toast(<ApiErrors error={error as AxiosError} />, {
+            type: "error",
+            autoClose: false,
+            icon: false,
+          });
+        });
+    }
+  }, [opportunityId, user, isOppSaved]);
 
   const onGoToOpportunity = useCallback(() => {
     if (!opportunity?.url) return;
@@ -449,20 +483,23 @@ const OpportunityDetails: NextPageWithLayout<{
                     <div className="mt-4 flex flex-grow justify-center gap-4">
                       <button
                         type="button"
-                        className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[250px]"
-                        onClick={onSaveOpportunity}
+                        className={
+                          "btn rounded-full border-purple bg-white normal-case text-purple md:w-[250px]" +
+                          `${
+                            isOppSaved
+                              ? " border-yellow bg-yellow-light text-yellow"
+                              : ""
+                          }`
+                        }
+                        onClick={onUpdateSavedOpportunity}
                       >
-                        <Image
-                          src={iconBookmark}
-                          alt="Icon Bookmark"
-                          width={20}
-                          height={20}
-                          sizes="100vw"
-                          priority={true}
+                        <IoMdBookmark
                           style={{ width: "20px", height: "20px" }}
                         />
 
-                        <span className="ml-1">Save opportunity</span>
+                        <span className="ml-1">
+                          {isOppSaved ? "Opportunty saved" : "Save opportunity"}
+                        </span>
                       </button>
                       <button
                         type="button"
@@ -867,20 +904,29 @@ const OpportunityDetails: NextPageWithLayout<{
                           <div className="flex gap-4 md:justify-end lg:justify-end">
                             <button
                               type="button"
-                              className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10"
-                              onClick={onSaveOpportunity}
+                              // className="btn btn-xs border-gray-dark text-gray-dark md:btn-sm hover:bg-green-dark rounded-full bg-white normal-case hover:text-white md:h-10"
+                              // className={`btn btn-xs border-gray-dark text-gray-dark md:btn-sm hover:bg-green-dark rounded-full bg-white normal-case hover:text-white md:h-10 ${
+                              //   isOppSaved
+                              //     ? "bg-green-dark text-white"
+                              //     : "bg-yellow text-black"
+                              // }`}
+                              className={
+                                "btn btn-xs rounded-full border-gray-dark normal-case text-gray-dark md:btn-sm md:h-10" +
+                                ` ${
+                                  isOppSaved
+                                    ? "border-yellow bg-yellow-light text-yellow"
+                                    : "bg-white hover:bg-green-dark hover:text-white"
+                                }`
+                              }
+                              onClick={onUpdateSavedOpportunity}
                             >
-                              <Image
-                                src={iconBookmark}
-                                alt="Icon Bookmark"
-                                width={20}
-                                height={20}
-                                sizes="100vw"
-                                priority={true}
+                              <IoMdBookmark
                                 style={{ width: "20px", height: "20px" }}
                               />
 
-                              <span className="ml-1">Save</span>
+                              <span className="ml-1">
+                                {isOppSaved ? "Saved" : "Save"}
+                              </span>
                             </button>
 
                             <button

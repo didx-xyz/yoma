@@ -13,17 +13,11 @@ import { Overview } from "~/components/Organisation/Detail/Overview";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
-import {
-  ROLE_ADMIN,
-  THEME_BLUE,
-  THEME_GREEN,
-  THEME_PURPLE,
-} from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
 import { useRouter } from "next/router";
-import { getSafeUrl } from "~/lib/utils";
+import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -42,17 +36,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       },
     };
   }
-
   // 👇 set theme based on role
-  let theme;
-
-  if (session?.user?.adminsOf?.includes(id)) {
-    theme = THEME_GREEN;
-  } else if (session?.user?.roles.includes(ROLE_ADMIN)) {
-    theme = THEME_BLUE;
-  } else {
-    theme = THEME_PURPLE;
-  }
+  const theme = getThemeFromRole(session, id);
 
   // 👇 prefetch queries on server
   const queryClient = new QueryClient(config);
