@@ -391,7 +391,7 @@ SELECT
     DISTINCT(o.id),
     remove_double_spacing(o.name) AS "Name",
     ENCODE(DIGEST(remove_double_spacing(o.name), 'sha256'), 'hex') as "NameHashValue",
-    LOWER(ensure_valid_http_url(url)) as "WebsiteURL",
+    ensure_valid_http_url(url) as "WebsiteURL",
     title_case(primarycontactname, false) as "PrimaryContactName",
     ensure_valid_email(primarycontactemail) as "PrimaryContactEmail",
     format_phone_number(primarycontactphone) as "PrimaryContactPhone",
@@ -647,6 +647,23 @@ FROM UpdatedTitles ut
 WHERE o.id = ut.id AND LOWER(o.title) <> LOWER(ut.FinalTitle);
    
 --Opportunity.Opportunity
+--checks for any opportunities with a type not listed among the expected values and raises an exception if found.
+DO $$
+DECLARE
+    v_invalid_type_exists BOOLEAN;
+BEGIN
+    -- Check for any o.type that does not match the expected values
+    SELECT EXISTS (
+        SELECT 1
+        FROM dbo.opportunities o
+        WHERE lower(o.type) NOT IN ('task', 'learning', 'learningopportunity', 'impactopportunity', 'taskopportunity')
+    ) INTO v_invalid_type_exists;
+
+    IF v_invalid_type_exists THEN
+        RAISE EXCEPTION 'One or more opportunities have an invalid type.';
+    END IF;
+END $$;
+
 INSERT INTO "Opportunity"."Opportunity" (
     "Id", 
     "Title", 
@@ -696,16 +713,17 @@ SELECT
     o.organisationid AS "OrganizationId",
     NULL::varchar(500) AS "Summary",
     remove_double_spacing(o.instructions) AS "Instructions",
-    LOWER(ensure_valid_http_url(opportunityurl)) AS "URL",
-    CASE 
-    	WHEN o.zltoreward IS NOT NULL THEN CAST(ABS(o.zltoreward) AS numeric(8,2))
-	    ELSE NULL
-	END AS "ZltoReward",
+    ensure_valid_http_url(opportunityurl) AS "URL",
 	CASE 
     	WHEN o.zltoreward IS NULL THEN NULL
-	    WHEN o.zltorewardpool IS NOT NULL THEN CAST(ABS(o.zltorewardpool) AS numeric(12,2))
-    	ELSE NULL
-	END AS "ZltoRewardPool",
+    	WHEN ABS(o.zltoreward) = 0 THEN NULL
+    	ELSE CAST(ABS(o.zltoreward) AS numeric(8,2))
+	END AS "ZltoReward",
+	CASE 
+    	WHEN o.zltoreward IS NULL OR ABS(o.zltoreward) = 0 THEN NULL
+    	WHEN o.zltorewardpool IS NULL OR ABS(o.zltorewardpool) = 0 THEN NULL
+	    ELSE CAST(ABS(o.zltorewardpool) AS numeric(12,2))
+		END AS "ZltoRewardPool",
 	NULL::numeric(12,2) as "ZltoRewardCumulative", --set below (see 'My' Opportunities section)
 	NULL::numeric(8,2) AS "YomaReward",
 	NULL::numeric(12,2) AS "YomaRewardPool",
