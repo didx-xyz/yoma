@@ -19,7 +19,7 @@ environments:
         lifecycle: on-demand
         tag: {{ env "TAG" | default "master" }}
         ddInjectEnabled: true
-        ddProfilingEnabled: true
+        ddProfilingEnabled: false
         gitref: master
         postgresEnabled: false
 ---
