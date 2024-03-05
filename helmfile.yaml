@@ -111,7 +111,6 @@ releases:
           DD_PROFILING_ENABLED: {{ .Values.ddProfilingEnabled }}
       - nodeSelector:
           kubernetes.io/arch: {{ .Values.arch }}
-          node.kubernetes.io/lifecycle: {{ .Values.lifecycle }}
         labels:
           tags.datadoghq.com/env: v3-{{ .Environment.Name }}
         podLabels:
@@ -164,7 +163,6 @@ releases:
       - ./helm/yoma-web/conf/{{ .Environment.Name }}/values.yaml
       - nodeSelector:
           kubernetes.io/arch: {{ .Values.arch }}
-          node.kubernetes.io/lifecycle: {{ .Values.lifecycle }}
     secrets:
       - ./helm/yoma-web/conf/base/secrets.yaml
       - ./helm/yoma-web/conf/{{ .Environment.Name }}/secrets.yaml
