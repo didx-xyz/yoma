@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Collections;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -118,7 +119,7 @@ namespace Yoma.Core.Domain.SSI.Services
                                     {
                                         // utilize user id, ensuring a consistent tenant reference or name even if the name is altered
                                         Referent = user.Id.ToString(),
-                                        Name = user.DisplayName,
+                                        Name = user.DisplayName.RemoveSpecialCharacters(),
                                         ImageUrl = user.PhotoURL,
                                         Roles = new List<Role> { Role.Holder }
                                     };
@@ -134,7 +135,7 @@ namespace Yoma.Core.Domain.SSI.Services
                                     {
                                         //requiring uniqueness for both the name (wallet label) and its corresponding referent (wallet name) as issuers and verifiers are published to the trust registry
                                         Referent = org.NameHashValue, //use hash value of name instead if id as dev and stage can be reset with deployments
-                                        Name = org.Name,
+                                        Name = org.Name.RemoveSpecialCharacters(),
                                         ImageUrl = org.LogoURL,
                                         Roles = new List<Role> { Role.Holder, Role.Issuer, Role.Verifier }
                                     };
