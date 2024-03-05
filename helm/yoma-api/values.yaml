@@ -141,3 +141,8 @@ readinessProbe:
   enabled: true
 livenessProbe:
   enabled: true
+
+podDisruptionBudget:
+  enabled: false
+  maxUnavailable: 1
+  minAvailable: 1
