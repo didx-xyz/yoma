@@ -24,6 +24,24 @@ export const saveMyOpportunity = async (
   return data;
 };
 
+export const removeMySavedOpportunity = async (
+  opportunityId: string,
+): Promise<Opportunity> => {
+  const { data } = await (
+    await ApiClient
+  ).delete<Opportunity>(`/myopportunity/action/${opportunityId}/save/remove`);
+  return data;
+};
+
+export const isOpportunitySaved = async (
+  opportunityId: string,
+): Promise<Opportunity> => {
+  const { data } = await (
+    await ApiClient
+  ).get<Opportunity>(`/myopportunity/action/${opportunityId}/saved`);
+  return data;
+};
+
 export const performActionSendForVerificationManual = async (
   opportunityId: string,
   model: MyOpportunityRequestVerify,

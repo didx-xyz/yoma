@@ -49,7 +49,6 @@ import NoRowsMessage from "~/components/NoRowsMessage";
 import { OpportunityFilterHorizontal } from "~/components/Opportunity/OpportunityFilterHorizontal";
 import { Loading } from "~/components/Status/Loading";
 import { PaginationButtons } from "~/components/PaginationButtons";
-import { IoMdOptions } from "react-icons/io";
 import { useSession } from "next-auth/react";
 import { OpportunityFilterOptions } from "~/api/models/opportunity";
 
@@ -615,7 +614,7 @@ const Opportunities: NextPageWithLayout<{
         onRequestClose={() => {
           setFilterFullWindowVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll rounded-lg bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px]`}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px]`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
@@ -631,10 +630,12 @@ const Opportunities: NextPageWithLayout<{
           lookups_zltoRewardRanges={lookups_zltoRewardRanges}
           lookups_publishedStates={lookups_publishedStates}
           lookups_statuses={[]}
-          cancelButtonText="Close"
-          submitButtonText="Done"
+          cancelButtonText="Cancel"
+          submitButtonText="Apply Filters"
           onCancel={onCloseFilter}
           onSubmit={(e) => onSubmitFilter(e)}
+          onClear={onClearFilter}
+          clearButtonText="Clear All Filters"
           filterOptions={[
             OpportunityFilterOptions.CATEGORIES,
             OpportunityFilterOptions.TYPES,
@@ -662,20 +663,12 @@ const Opportunities: NextPageWithLayout<{
             <div className="flex flex-row items-center justify-center gap-2">
               <SearchInputLarge
                 onSearch={onSearchInputSubmit}
-                placeholder="What are you looking for today?"
+                placeholder="What are you looking for?"
                 defaultValue={
                   query ? decodeURIComponent(query.toString()) : null
                 }
+                openFilter={setFilterFullWindowVisible}
               />
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => {
-                  setFilterFullWindowVisible(!filterFullWindowVisible);
-                }}
-              >
-                <IoMdOptions className="h-5 w-5" />
-              </button>
             </div>
           </div>
         </div>
@@ -700,20 +693,16 @@ const Opportunities: NextPageWithLayout<{
             onOpenFilterFullWindow={() => {
               setFilterFullWindowVisible(!filterFullWindowVisible);
             }}
-            filterOptions={
-              isSearchPerformed
-                ? [
-                    OpportunityFilterOptions.CATEGORIES,
-                    OpportunityFilterOptions.TYPES,
-                    OpportunityFilterOptions.COUNTRIES,
-                    OpportunityFilterOptions.LANGUAGES,
-                    OpportunityFilterOptions.COMMITMENTINTERVALS,
-                    OpportunityFilterOptions.ZLTOREWARDRANGES,
-                    OpportunityFilterOptions.ORGANIZATIONS,
-                    OpportunityFilterOptions.PUBLISHEDSTATES,
-                  ]
-                : [OpportunityFilterOptions.CATEGORIES]
-            }
+            filterOptions={[
+              OpportunityFilterOptions.CATEGORIES,
+              OpportunityFilterOptions.TYPES,
+              OpportunityFilterOptions.COUNTRIES,
+              OpportunityFilterOptions.LANGUAGES,
+              OpportunityFilterOptions.COMMITMENTINTERVALS,
+              OpportunityFilterOptions.ZLTOREWARDRANGES,
+              OpportunityFilterOptions.ORGANIZATIONS,
+              OpportunityFilterOptions.PUBLISHEDSTATES,
+            ]}
             totalCount={searchResults?.totalCount ?? 0}
           />
         </div>

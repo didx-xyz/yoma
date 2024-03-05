@@ -40,10 +40,6 @@ import {
   DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_UPDATE,
   GA_CATEGORY_OPPORTUNITY,
-  ROLE_ADMIN,
-  THEME_BLUE,
-  THEME_GREEN,
-  THEME_PURPLE,
 } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { useAtomValue } from "jotai";
@@ -53,6 +49,7 @@ import { trackGAEvent } from "~/lib/google-analytics";
 import { RoundedImage } from "~/components/RoundedImage";
 import Moment from "react-moment";
 import { useRouter } from "next/router";
+import { getThemeFromRole } from "~/lib/utils";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -75,15 +72,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   // 👇 set theme based on role
-  let theme;
-
-  if (session?.user?.adminsOf?.includes(id)) {
-    theme = THEME_GREEN;
-  } else if (session?.user?.roles.includes(ROLE_ADMIN)) {
-    theme = THEME_BLUE;
-  } else {
-    theme = THEME_PURPLE;
-  }
+  const theme = getThemeFromRole(session, id);
 
   // 👇 prefetch queries on server
   const queryClient = new QueryClient(config);

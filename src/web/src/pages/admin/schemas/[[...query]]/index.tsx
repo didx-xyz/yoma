@@ -75,7 +75,7 @@ const Schemas: NextPageWithLayout<{
           <div className="flex gap-2 sm:justify-end">
             <Link
               href={`/admin/schemas/create`}
-              className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
+              className="bg-theme flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 hover:brightness-110"
             >
               <IoIosAdd className="mr-1 h-5 w-5" />
               Add schema

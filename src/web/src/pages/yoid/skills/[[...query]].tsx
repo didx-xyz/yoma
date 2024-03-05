@@ -5,7 +5,6 @@ import { type ReactElement } from "react";
 import { type User, authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 import Image from "next/image";
-import { searchCredentials } from "~/api/services/credentials";
 import { type ParsedUrlQuery } from "querystring";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { toBase64, shimmer } from "~/lib/image";
@@ -15,6 +14,8 @@ import { userProfileAtom } from "~/lib/store";
 import { useAtomValue } from "jotai";
 import Link from "next/link";
 import { config } from "~/lib/react-query-config";
+import { RoundedImage } from "~/components/RoundedImage";
+import iconRocket from "public/images/icon-rocket.webp";
 
 interface IParams extends ParsedUrlQuery {
   query?: string;
@@ -38,21 +39,21 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query, schemaType, page } = context.query;
 
   // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: [
-      `Credentials_${id}_${query?.toString()}_${schemaType}_${page?.toString()}`,
-    ],
-    queryFn: () =>
-      searchCredentials(
-        {
-          //TODO: PAGING NOT SUPPORTED BY API (ARIES CLOUD)
-          pageNumber: null, //page ? parseInt(page.toString()) : 1,
-          pageSize: null, //PAGE_SIZE,
-          schemaType: null, //schemaType?.toString() ?? null,
-        },
-        context,
-      ),
-  });
+  // await queryClient.prefetchQuery({
+  //   queryKey: [
+  //     `Credentials_${id}_${query?.toString()}_${schemaType}_${page?.toString()}`,
+  //   ],
+  //   queryFn: () =>
+  //     searchCredentials(
+  //       {
+  //         //TODO: PAGING NOT SUPPORTED BY API (ARIES CLOUD)
+  //         pageNumber: null, //page ? parseInt(page.toString()) : 1,
+  //         pageSize: null, //PAGE_SIZE,
+  //         schemaType: null, //schemaType?.toString() ?? null,
+  //       },
+  //       context,
+  //     ),
+  // });
 
   return {
     props: {
@@ -296,30 +297,44 @@ const MyCredentials: NextPageWithLayout<{
                       <div className="flex flex-row items-start overflow-hidden">
                         {item.organizations.map((org, index) => (
                           <div
-                            className="cursor-pointerx relative -mr-4 overflow-hidden rounded-full shadow"
+                            className="relative -mr-4 overflow-hidden rounded-full shadow"
                             style={{
                               zIndex: item.organizations.length - index,
                             }}
                             key={`${item.id}_${index}`}
                           >
-                            <Image
-                              src={org.logoURL!}
-                              alt={`${org.name} Logo`}
-                              width={40}
-                              height={40}
-                              sizes="(max-width: 40px) 30vw, 50vw"
-                              priority={true}
-                              placeholder="blur"
-                              blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                                shimmer(40, 40),
-                              )}`}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                maxWidth: "40px",
-                                maxHeight: "40px",
-                              }}
-                            />
+                            <>
+                              {!org.logoURL && (
+                                <RoundedImage
+                                  icon={iconRocket}
+                                  alt={""}
+                                  imageWidth={20}
+                                  imageHeight={20}
+                                  containerWidth={40}
+                                  containerHeight={40}
+                                />
+                              )}
+                              {org.logoURL && (
+                                <Image
+                                  src={org.logoURL}
+                                  alt={`${org.name} Logo`}
+                                  width={40}
+                                  height={40}
+                                  sizes="(max-width: 40px) 30vw, 50vw"
+                                  priority={true}
+                                  placeholder="blur"
+                                  blurDataURL={`data:image/svg+xml;base64,${toBase64(
+                                    shimmer(40, 40),
+                                  )}`}
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    maxWidth: "40px",
+                                    maxHeight: "40px",
+                                  }}
+                                />
+                              )}
+                            </>
                           </div>
                         ))}
                       </div>

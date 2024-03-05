@@ -1,4 +1,4 @@
-import { type GetServerSidePropsContext } from "next";
+import type { GetStaticPropsContext, GetServerSidePropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type {
@@ -100,7 +100,7 @@ export const patchOrganisation = async (
 
 export const getOrganisationById = async (
   id: string,
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Organization> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 

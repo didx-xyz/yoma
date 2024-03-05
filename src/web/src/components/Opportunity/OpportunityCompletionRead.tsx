@@ -128,17 +128,17 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           </p>
         </div>
         <div className="flex flex-col items-center justify-center gap-4">
-          <div className="-mt-14 flex h-24 w-24 items-center justify-center rounded-full border-green-dark bg-white p-4 shadow-lg">
+          <div className="h-18 w-18 -mt-14 flex items-center justify-center rounded-full border-green-dark bg-white p-4 shadow-lg">
             <Image
               src={data?.userPhotoURL ?? iconSuccess}
               alt="Icon User"
-              width={60}
-              height={60}
+              width={45}
+              height={45}
               sizes="100vw"
               priority={true}
               style={{
-                width: "60px",
-                height: "60px",
+                width: "45px",
+                height: "45px",
               }}
             />
           </div>

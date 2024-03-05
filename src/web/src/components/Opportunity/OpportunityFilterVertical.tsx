@@ -35,9 +35,11 @@ export const OpportunityFilterVertical: React.FC<{
   lookups_statuses: SelectOption[];
   onSubmit?: (fieldValues: OpportunitySearchFilterCombined) => void;
   onCancel?: () => void;
+  clearButtonText?: string;
   cancelButtonText?: string;
   submitButtonText?: string;
   filterOptions: OpportunityFilterOptions[];
+  onClear?: () => void;
 }> = ({
   htmlRef,
   opportunitySearchFilter,
@@ -55,6 +57,8 @@ export const OpportunityFilterVertical: React.FC<{
   cancelButtonText = "Cancel",
   submitButtonText = "Submit",
   filterOptions,
+  onClear,
+  clearButtonText,
 }) => {
   const schema = zod.object({
     types: zod.array(zod.string()).optional().nullable(),
@@ -102,17 +106,17 @@ export const OpportunityFilterVertical: React.FC<{
         className="flex flex-col gap-2"
       >
         <div className="flex flex-row p-4">
-          <h1 className="flex-grow text-2xl font-bold">Filter</h1>
+          <h1 className="my-auto flex-grow text-2xl font-bold">Filter</h1>
           <button
             type="button"
-            className="btn btn-primary rounded-lg"
+            className="btn btn-primary rounded-full px-3"
             onClick={onCancel}
           >
             <IoMdClose className="h-6 w-6"></IoMdClose>
           </button>
         </div>
 
-        <div className="flex flex-col bg-gray">
+        <div className="-mb-2 flex flex-col bg-gray-light">
           <div className="join join-vertical w-full">
             {/* CATEGORIES */}
             {lookups_categories &&
@@ -122,7 +126,7 @@ export const OpportunityFilterVertical: React.FC<{
                   OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
                 )) && (
                 <div className="collapse join-item collapse-arrow">
-                  <input type="radio" name="my-accordion-1" checked={true} />
+                  <input type="checkbox" name="my-accordion-1" />
                   <div className="collapse-title text-xl font-medium">
                     Topics
                   </div>
@@ -227,7 +231,7 @@ export const OpportunityFilterVertical: React.FC<{
             {/* TYPES */}
             {filterOptions?.includes(OpportunityFilterOptions.TYPES) && (
               <div className="collapse join-item collapse-arrow">
-                <input type="radio" name="my-accordion-2" />
+                <input type="checkbox" name="my-accordion-2" />
                 <div className="collapse-title text-xl font-medium">
                   Opportunity type
                 </div>
@@ -273,7 +277,7 @@ export const OpportunityFilterVertical: React.FC<{
             {/* COUNTRIES */}
             {filterOptions?.includes(OpportunityFilterOptions.COUNTRIES) && (
               <div className="collapse join-item collapse-arrow">
-                <input type="radio" name="my-accordion-3" />
+                <input type="checkbox" name="my-accordion-3" />
                 <div className="collapse-title text-xl font-medium">
                   Location
                 </div>
@@ -320,7 +324,7 @@ export const OpportunityFilterVertical: React.FC<{
             {/* LANGUAGES */}
             {filterOptions?.includes(OpportunityFilterOptions.LANGUAGES) && (
               <div className="collapse join-item collapse-arrow">
-                <input type="radio" name="my-accordion-4" />
+                <input type="checkbox" name="my-accordion-4" />
                 <div className="collapse-title text-xl font-medium">
                   Language
                 </div>
@@ -368,7 +372,7 @@ export const OpportunityFilterVertical: React.FC<{
               OpportunityFilterOptions.ORGANIZATIONS,
             ) && (
               <div className="collapse join-item collapse-arrow">
-                <input type="radio" name="my-accordion-5" />
+                <input type="checkbox" name="my-accordion-5" />
                 <div className="collapse-title text-xl font-medium">
                   Organisation
                 </div>
@@ -416,7 +420,7 @@ export const OpportunityFilterVertical: React.FC<{
               OpportunityFilterOptions.COMMITMENTINTERVALS,
             ) && (
               <div className="collapse join-item collapse-arrow">
-                <input type="radio" name="my-accordion-6" />
+                <input type="checkbox" name="my-accordion-6" />
                 <div className="collapse-title text-xl font-medium">Effort</div>
                 <div className="collapse-content">
                   <Controller
@@ -462,7 +466,7 @@ export const OpportunityFilterVertical: React.FC<{
               OpportunityFilterOptions.ZLTOREWARDRANGES,
             ) && (
               <div className="collapse join-item collapse-arrow">
-                <input type="radio" name="my-accordion-7" />
+                <input type="checkbox" name="my-accordion-7" />
                 <div className="collapse-title text-xl font-medium">Reward</div>
                 <div className="collapse-content">
                   <Controller
@@ -508,7 +512,7 @@ export const OpportunityFilterVertical: React.FC<{
               OpportunityFilterOptions.PUBLISHEDSTATES,
             ) && (
               <div className="collapse join-item collapse-arrow">
-                <input type="radio" name="my-accordion-7" />
+                <input type="checkbox" name="my-accordion-7" />
                 <div className="collapse-title text-xl font-medium">Status</div>
                 <div className="collapse-content">
                   <Controller
@@ -518,7 +522,7 @@ export const OpportunityFilterVertical: React.FC<{
                       <Select
                         instanceId="publishedStates"
                         classNames={{
-                          control: () => "input input-xs",
+                          control: () => "input",
                         }}
                         isMulti={true}
                         options={lookups_publishedStates}
@@ -550,7 +554,7 @@ export const OpportunityFilterVertical: React.FC<{
             {/* STATUSES */}
             {filterOptions?.includes(OpportunityFilterOptions.STATUSES) && (
               <div className="collapse join-item collapse-arrow">
-                <input type="radio" name="my-accordion-8" />
+                <input type="checkbox" name="my-accordion-8" />
                 <div className="collapse-title text-xl font-medium">Status</div>
                 <div className="collapse-content">
                   <Controller
@@ -594,7 +598,7 @@ export const OpportunityFilterVertical: React.FC<{
               filterOptions?.includes(OpportunityFilterOptions.DATE_END)) && (
               <>
                 <div className="collapse-title text-xl font-medium">Dates</div>
-
+                <input type="checkbox" name="my-accordion-9" />
                 <div className="flex flex-row gap-1 px-4 pb-4">
                   {/* DATE START */}
                   {filterOptions?.includes(
@@ -669,22 +673,22 @@ export const OpportunityFilterVertical: React.FC<{
         </div>
 
         {/* BUTTONS */}
-        <div className="m`-4 flex items-center justify-center gap-2">
-          {onCancel && (
-            <button
-              type="button"
-              className="btn btn-warning btn-sm w-40 flex-grow rounded-full"
-              onClick={onCancel}
-            >
-              {cancelButtonText}
-            </button>
-          )}
+        <div className="mx-4 my-8 flex flex-col items-center justify-center gap-6 md:flex-row">
           {onSubmit && (
             <button
               type="submit"
-              className="btn btn-primary btn-sm w-40 flex-grow rounded-full"
+              className="btn btn-primary w-full flex-grow rounded-full md:w-40"
             >
               {submitButtonText}
+            </button>
+          )}
+          {onClear && (
+            <button
+              type="button"
+              className="btn btn-warning w-full flex-grow rounded-full md:w-40"
+              onClick={onClear}
+            >
+              {clearButtonText}
             </button>
           )}
         </div>
