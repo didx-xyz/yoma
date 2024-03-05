@@ -80,7 +80,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                         Name = o.Skill.Name,
                         InfoURL = o.Skill.InfoURL
                     }).OrderBy(o => o.Name).ToList() : null,
-            }).AsSplitQuery();
+            }); //MS SQL: .AsSplitQuery();
         }
 
         public async Task<Domain.MyOpportunity.Models.MyOpportunity> Create(Domain.MyOpportunity.Models.MyOpportunity item)
