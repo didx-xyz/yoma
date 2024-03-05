@@ -75,7 +75,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                         DisplayName = o.User.DisplayName
                     }).OrderBy(o => o.DisplayName).ToList() : null
 
-            }); //MS SQL: .AsSplitQuery();
+            }).AsSingleQuery(); //MS SQL: .AsSplitQuery();
         }
 
         public Expression<Func<Domain.Entity.Models.Organization, bool>> Contains(Expression<Func<Domain.Entity.Models.Organization, bool>> predicate, string value)
