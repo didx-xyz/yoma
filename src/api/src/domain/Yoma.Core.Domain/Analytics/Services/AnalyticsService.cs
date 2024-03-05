@@ -136,12 +136,12 @@ namespace Yoma.Core.Domain.Analytics.Services
             var dates = queryCompleted
                  .Where(o => o.DateStart.HasValue && o.DateEnd.HasValue)
                  .Select(o => new { o.DateStart, o.DateEnd })
-                 .ToList(); 
+                 .ToList();
 
             var averageCompletionTimeInDays = dates
-                .Select(o => (o.DateEnd!.Value - o.DateStart!.Value).TotalDays) 
-                .DefaultIfEmpty(0) 
-                .Average(); 
+                .Select(o => (o.DateEnd!.Value - o.DateStart!.Value).TotalDays)
+                .DefaultIfEmpty(0)
+                .Average();
 
             result.Opportunities.Completion = new OpportunityCompletion { AverageTimeInDays = (int)Math.Round(averageCompletionTimeInDays) };
 
@@ -211,15 +211,17 @@ namespace Yoma.Core.Domain.Analytics.Services
                     .ToDictionary(genderGroup => genderGroup.UserGender, genderGroup => genderGroup.Count),
                 //age
                 Ages = queryCompleted
-                    .Select(o => new {
+                    .Select(o => new
+                    {
                         o.UserDateOfBirth,
                         Age = o.UserDateOfBirth.HasValue ?
                             (int?)(currentDate.Year - o.UserDateOfBirth.Value.Year -
                             ((currentDate.Month < o.UserDateOfBirth.Value.Month) || (currentDate.Month == o.UserDateOfBirth.Value.Month && currentDate.Day < o.UserDateOfBirth.Value.Day) ? 1 : 0))
                             : null
                     })
-                    .ToList() 
-                    .Select(o => {
+                    .ToList()
+                    .Select(o =>
+                    {
                         var age = o.Age;
                         var bracket = age >= 30 ? "30+" :
                                       age >= 25 ? "25-29" :

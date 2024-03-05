@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Analytics.Models
 {
-    public class OrganizationSearchFilterSummary 
+    public class OrganizationSearchFilterSummary
     {
         public Guid Organization { get; set; }
 

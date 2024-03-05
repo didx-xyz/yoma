@@ -2,7 +2,7 @@ namespace Yoma.Core.Domain.Analytics.Models
 {
     public class OrganizationOpportunity
     {
-        public TimeIntervalSummary ViewedCompleted { get; set; } 
+        public TimeIntervalSummary ViewedCompleted { get; set; }
 
         public OpportunityCompletion Completion { get; set; }
 
