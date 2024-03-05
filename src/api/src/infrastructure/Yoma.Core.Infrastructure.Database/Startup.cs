@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -44,14 +45,14 @@ namespace Yoma.Core.Infrastructure.Database
             // infrastructure
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseNpgsql(configuration.Configuration_ConnectionString(), options =>
+                options.UseNpgsql(configuration.Configuration_ConnectionString(), npgsqlOptions =>
                 {
-                    options.EnableRetryOnFailure(
+                    npgsqlOptions.EnableRetryOnFailure(
                         maxRetryCount: appSettings.DatabaseRetryPolicy.MaxRetryCount,
                         maxRetryDelay: TimeSpan.FromSeconds(appSettings.DatabaseRetryPolicy.MaxRetryDelayInSeconds),
                         errorCodesToAdd: null);
-                });
-
+                })
+                .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.MultipleCollectionIncludeWarning));
             }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
             //<PackageReference Include="EntityFrameworkProfiler.Appender" Version="6.0.6040" />
