@@ -25,7 +25,7 @@ namespace Yoma.Core.Domain.Analytics.Services
         private readonly IMyOpportunityActionService _myOpportunityActionService;
         private readonly IMyOpportunityVerificationStatusService _myOpportunityVerificationStatusService;
 
-        private readonly OrganizationSearchFilterSummaryValidator _organizationSearchFilterSummaryValidator;
+        private readonly OrganizationSearchFilterEngagementValidator _organizationSearchFilterEngagementValidator;
 
         private readonly IRepositoryBatchedValueContainsWithNavigation<Opportunity.Models.Opportunity> _opportunityRepository;
         private readonly IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             IOrganizationService organizationService,
             IMyOpportunityActionService myOpportunityActionService,
             IMyOpportunityVerificationStatusService myOpportunityVerificationStatusService,
-            OrganizationSearchFilterSummaryValidator organizationSearchFilterSummaryValidator,
+            OrganizationSearchFilterEngagementValidator organizationSearchFilterEngagementValidator,
             IRepositoryBatchedValueContainsWithNavigation<Opportunity.Models.Opportunity> opportunityRepository,
             IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
             IRepository<OpportunityCategory> opportunityCategoryRepository,
@@ -55,7 +55,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             _organizationService = organizationService;
             _myOpportunityActionService = myOpportunityActionService;
             _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService;
-            _organizationSearchFilterSummaryValidator = organizationSearchFilterSummaryValidator;
+            _organizationSearchFilterEngagementValidator = organizationSearchFilterEngagementValidator;
             _opportunityRepository = opportunityRepository;
             _myOpportunityRepository = myOpportunityRepository;
             _opportunityCategoryRepository = opportunityCategoryRepository;
@@ -64,27 +64,37 @@ namespace Yoma.Core.Domain.Analytics.Services
         #endregion
 
         #region Public Members
-        public OrganizationSearchResultsSummary SearchOrganizationSummary(OrganizationSearchFilterSummary filter)
+        public OrganizationSearchResultsEngagement SearchOrganizationEngagement(OrganizationSearchFilterEngagement filter)
         {
             if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Analytics))
                 return SearchOrganizationSummaryInternal(filter);
 
-            var result = _memoryCache.GetOrCreate($"{nameof(OrganizationSearchResultsSummary)}:{HashHelper.ComputeSHA256Hash(filter)}", entry =>
+            var result = _memoryCache.GetOrCreate($"{nameof(OrganizationSearchResultsEngagement)}:{HashHelper.ComputeSHA256Hash(filter)}", entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
                 return SearchOrganizationSummaryInternal(filter);
-            }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(OrganizationSearchResultsSummary)}s'");
+            }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(OrganizationSearchResultsEngagement)}s'");
             return result;
+        }
+
+        public OrganizationSearchResultsOpportunity SearchOrganizationOpportunities(OrganizationSearchFilterOpportunity filter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public OrganizationSearchResultsYouth SearchOrganizationYouth(OrganizationSearchFilterYouth filter)
+        {
+            throw new NotImplementedException();
         }
         #endregion
 
         #region Private Members
-        private OrganizationSearchResultsSummary SearchOrganizationSummaryInternal(OrganizationSearchFilterSummary filter)
+        private OrganizationSearchResultsEngagement SearchOrganizationSummaryInternal(OrganizationSearchFilterEngagement filter)
         {
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
 
-            _organizationSearchFilterSummaryValidator.ValidateAndThrow(filter);
+            _organizationSearchFilterEngagementValidator.ValidateAndThrow(filter);
 
             _organizationService.IsAdmin(filter.Organization, true);
 
@@ -136,7 +146,7 @@ namespace Yoma.Core.Domain.Analytics.Services
                 .ToList();
 
             //results
-            var result = new OrganizationSearchResultsSummary { Opportunities = new OrganizationOpportunity() };
+            var result = new OrganizationSearchResultsEngagement { Opportunities = new OrganizationOpportunity() };
 
             var viewedCount = itemsViewed.Sum(o => o.Count);
             var completedCount = itemsCompleted.Sum(o => o.Count);
@@ -269,7 +279,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             return result;
         }
 
-        private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryBase(OrganizationSearchFilterSummary filter)
+        private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryBase(OrganizationSearchFilterEngagement filter)
         {
             //organization
             var result = _myOpportunityRepository.Query(true).Where(o => o.OrganizationId == filter.Organization);
@@ -327,7 +337,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             return result;
         }
 
-        private IQueryable<Opportunity.Models.Opportunity> OpportunityQueryBase(OrganizationSearchFilterSummary filter)
+        private IQueryable<Opportunity.Models.Opportunity> OpportunityQueryBase(OrganizationSearchFilterEngagement filter)
         {
             //organization
             var result = _opportunityRepository.Query(true).Where(o => o.OrganizationId == filter.Organization);

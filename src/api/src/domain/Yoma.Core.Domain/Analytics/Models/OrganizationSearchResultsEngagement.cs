@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Analytics.Models
 {
-    public class OrganizationSearchResultsSummary
+    public class OrganizationSearchResultsEngagement
     {
         public OrganizationOpportunity Opportunities { get; set; }
 

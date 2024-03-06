@@ -196,7 +196,7 @@ namespace Yoma.Core.Api.Controllers
 
         #region Administrative Actions
         [SwaggerOperation(Summary = "Search for opporutnities based on the supplied filter, returning a lightweight result set/list for search filter input")]
-        [HttpPost("search/filter/opportunity/search")]
+        [HttpPost("search/filter/opportunity")]
         [ProducesResponseType(typeof(OpportunitySearchResultsCriteria), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
         public IActionResult SearchCriteriaOpportunities([FromBody] OpportunitySearchFilterCriteria filter)

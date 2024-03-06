@@ -4,14 +4,14 @@ using Yoma.Core.Domain.Entity.Interfaces;
 
 namespace Yoma.Core.Domain.Analytics.Validators
 {
-    public class OrganizationSearchFilterSummaryValidator : AbstractValidator<OrganizationSearchFilterSummary>
+    public class OrganizationSearchFilterEngagementValidator : AbstractValidator<OrganizationSearchFilterEngagement>
     {
         #region Class Variables
         private readonly IOrganizationService _organizationService;
         #endregion
 
         #region Constructor
-        public OrganizationSearchFilterSummaryValidator(IOrganizationService organizationService)
+        public OrganizationSearchFilterEngagementValidator(IOrganizationService organizationService)
         {
             _organizationService = organizationService;
 

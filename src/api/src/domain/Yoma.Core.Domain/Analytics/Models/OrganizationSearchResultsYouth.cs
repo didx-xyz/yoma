@@ -1,11 +1,12 @@
 namespace Yoma.Core.Domain.Analytics.Models
 {
-    public class OrganizationSearchResultsOpportunity
+    public class OrganizationSearchResultsYouth
     {
-        public List<OpportunityInfoAnalytics> Items { get; set; }
+        public List<YouthInfo> Items { get; set; }
 
         public int TotalCount { get; set; }
 
         public DateTimeOffset DateStamp { get; set; }
+
     }
 }

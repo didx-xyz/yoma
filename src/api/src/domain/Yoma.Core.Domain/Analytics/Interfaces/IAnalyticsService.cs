@@ -4,6 +4,10 @@ namespace Yoma.Core.Domain.Analytics.Interfaces
 {
     public interface IAnalyticsService
     {
-        OrganizationSearchResultsSummary SearchOrganizationSummary(OrganizationSearchFilterSummary filter);
+        OrganizationSearchResultsEngagement SearchOrganizationEngagement(OrganizationSearchFilterEngagement filter);
+
+        OrganizationSearchResultsOpportunity SearchOrganizationOpportunities(OrganizationSearchFilterOpportunity filter);
+
+        OrganizationSearchResultsYouth SearchOrganizationYouth(OrganizationSearchFilterYouth filter);
     }
 }

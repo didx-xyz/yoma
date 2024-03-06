@@ -279,17 +279,47 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
-        [SwaggerOperation(Summary = "Return the summay analytics based on the supplied filter")]
-        [HttpPost("analytics/summary")]
-        [ProducesResponseType(typeof(OrganizationSearchResultsSummary), (int)HttpStatusCode.OK)]
+        [SwaggerOperation(Summary = "Search for engagement analytics based on the supplied filter")]
+        [HttpPost("search/analytics/engagement")]
+        [ProducesResponseType(typeof(OrganizationSearchResultsEngagement), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public IActionResult SearchAnalyticsSummary([FromBody] OrganizationSearchFilterSummary filter)
+        public IActionResult SearchOrganizationEngagement([FromBody] OrganizationSearchFilterEngagement filter)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(SearchAnalyticsSummary));
+            _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationEngagement));
 
-            var result = _analyticsService.SearchOrganizationSummary(filter);
+            var result = _analyticsService.SearchOrganizationEngagement(filter);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(SearchAnalyticsSummary));
+            _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationEngagement));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Search for opportunity analytics based on the supplied filter")]
+        [HttpPost("search/analytics/opportunities")]
+        [ProducesResponseType(typeof(OrganizationSearchResultsOpportunity), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult SearchOrganizationOpportunities([FromBody] OrganizationSearchFilterOpportunity filter)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationOpportunities));
+
+            var result = _analyticsService.SearchOrganizationOpportunities(filter);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationOpportunities));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Search for youth analytics based on the supplied filter")]
+        [HttpPost("search/analytics/youth")]
+        [ProducesResponseType(typeof(OrganizationSearchResultsYouth), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult SearchOrganizationYouth([FromBody] OrganizationSearchFilterYouth filter)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationYouth));
+
+            var result = _analyticsService.SearchOrganizationYouth(filter);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationYouth));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

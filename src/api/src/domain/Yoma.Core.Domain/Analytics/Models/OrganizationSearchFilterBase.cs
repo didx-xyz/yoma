@@ -1,6 +1,8 @@
+using Yoma.Core.Domain.Core.Models;
+
 namespace Yoma.Core.Domain.Analytics.Models
 {
-    public class OrganizationSearchFilterSummary
+    public class OrganizationSearchFilterBase : PaginationFilter
     {
         public Guid Organization { get; set; }
 

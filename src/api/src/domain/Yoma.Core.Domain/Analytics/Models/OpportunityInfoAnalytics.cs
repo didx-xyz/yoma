@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Analytics.Models
 {
-    public class OpportunityInfo
+    public class OpportunityInfoAnalytics
     {
         public Guid Id { get; set; }
 
@@ -10,8 +10,8 @@ namespace Yoma.Core.Domain.Analytics.Models
 
         public int ViewedCount { get; set; }
 
-        public decimal ConversionRatio { get; set; }
-
         public int CompletedCount { get; set; }
+
+        public decimal ConversionRatioPercentage { get; set; }
     }
 }
