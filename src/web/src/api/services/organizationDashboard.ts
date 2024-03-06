@@ -1,177 +1,136 @@
 import { type GetServerSidePropsContext } from "next";
-// import ApiClient from "~/lib/axiosClient";
-// import ApiServer from "~/lib/axiosServer";
+import ApiClient from "~/lib/axiosClient";
+import ApiServer from "~/lib/axiosServer";
 import type {
-  OrganizationSearchFilterBase,
+  OrganizationSearchFilterSummary,
   OrganizationSearchResultsSummary,
 } from "../models/organizationDashboard";
 
-//TODO:
 export const getOrganisationDashboardSummary = async (
-  filter: OrganizationSearchFilterBase,
+  filter: OrganizationSearchFilterSummary,
   context?: GetServerSidePropsContext,
 ): Promise<OrganizationSearchResultsSummary> => {
-  // const instance = context ? ApiServer(context) : await ApiClient;
-  // const { data } = await instance.post<OrganizationSearchResultsSummary>(
-  //   "/organization/TODO",
-  //   filter,
-  // );
-  // return data;
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.post<OrganizationSearchResultsSummary>(
+    "/organization/analytics/summary",
+    filter,
+  );
+  return data;
+  console.info("getOrganisationDashboardSummary", filter);
 
+  //TODO:
   // return hard-code data for now
-  return Promise.resolve({
+  return {
     opportunities: {
-      viewed: {
-        timeInterval: {
-          id: "1",
-          name: "timeInterval1",
-          // startDate: "2021-01-01",
-          // endDate: "2021-12-31",
-        },
+      viewedCompleted: {
+        legend: ["Viewed", "Completed"],
         data: [
-          { item1: 2019, item2: 2 },
-          { item1: 2020, item2: 4 },
-          { item1: 2021, item2: 4 },
-          { item1: 2022, item2: 2 },
-          { item1: 2023, item2: 4 },
-          { item1: 2024, item2: 5 },
+          {
+            date: "2021-01",
+            values: [100, 150],
+          },
+          {
+            date: "2021-02",
+            values: [190, 10],
+          },
+          {
+            date: "2021-03",
+            values: [110, 250],
+          },
+          {
+            date: "2021-04",
+            values: [200, 70],
+          },
         ],
-        count: 5,
-      },
-      completed: {
-        timeInterval: {
-          id: "1",
-          name: "timeInterval1",
-          // startDate: "2021-01-01",
-          // endDate: "2021-12-31",
-        },
-        data: [
-          { item1: 6, item2: 7 },
-          { item1: 8, item2: 9 },
-        ],
-        count: 10,
+        count: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200],
       },
       completion: {
-        averageTimeInDays: 11,
-        percentage: 12,
+        legend: "Completion",
+        averageTimeInDays: 10,
       },
       conversionRate: {
-        completedCount: 13,
-        viewedCount: 14,
+        legend: "Conversion Rate",
+        completedCount: 1000,
+        viewedCount: 1200,
+        percentage: 80,
       },
       reward: {
-        totalAmount: 15,
-        percentage: 16,
+        legend: "Reward",
+        totalAmount: 10000,
       },
-      published: {
-        timeInterval: {
-          id: "1",
-          name: "timeInterval1",
-          // startDate: "2021-01-01",
-          // endDate: "2021-12-31",
-        },
-        data: [
-          { item1: 17, item2: 18 },
-          { item1: 19, item2: 20 },
-        ],
-        count: 21,
-      },
-      unpublished: {
-        timeInterval: {
-          id: "1",
-          name: "timeInterval1",
-          // startDate: "2021-01-01",
-          // endDate: "2021-12-31",
-        },
-        data: [
-          { item1: 22, item2: 23 },
-          { item1: 24, item2: 25 },
-        ],
-        count: 26,
-      },
-      expired: {
-        timeInterval: {
-          id: "1",
-          name: "timeInterval1",
-          // startDate: "2021-01-01",
-          // endDate: "2021-12-31",
-        },
-        data: [
-          { item1: 27, item2: 28 },
-          { item1: 29, item2: 30 },
-        ],
-        count: 31,
-      },
-      pending: {
-        timeInterval: {
-          id: "1",
-          name: "timeInterval1",
-          // startDate: "2021-01-01",
-          // endDate: "2021-12-31",
-        },
-        data: [
-          { item1: 32, item2: 33 },
-          { item1: 34, item2: 35 },
-        ],
-        count: 36,
+      selected: {
+        legend: "Selected",
+        count: 100,
       },
     },
     skills: {
       items: {
-        timeInterval: {
-          id: "1",
-          name: "timeInterval1",
-          // startDate: "2021-01-01",
-          // endDate: "2021-12-31",
-        },
+        legend: ["Skills"],
         data: [
-          { item1: 37, item2: 38 },
-          { item1: 39, item2: 40 },
+          {
+            date: "2021-01",
+            values: [200],
+          },
+          {
+            date: "2021-02",
+            values: [250],
+          },
+          {
+            date: "2021-03",
+            values: [100],
+          },
+          {
+            date: "2021-04",
+            values: [550],
+          },
         ],
-        count: 41,
+        count: [100, 200, 300, 400],
       },
-      topCompleted: [
-        { id: "skill_1", name: "skill1", infoURL: "infoURL1" },
-        { id: "skill_2", name: "skill2", infoURL: "infoURL2" },
-        { id: "skill_3", name: "skill3", infoURL: "infoURL3" },
-        { id: "skill_4", name: "skill4", infoURL: "infoURL4" },
-        { id: "skill_5", name: "skill5", infoURL: "infoURL5" },
-        { id: "skill_6", name: "skill6", infoURL: "infoURL6" },
-        { id: "skill_7", name: "skill7", infoURL: "infoURL7" },
-        { id: "skill_8", name: "skill8", infoURL: "infoURL8" },
-        { id: "skill_9", name: "skill9", infoURL: "infoURL9" },
-        { id: "skill_10", name: "skill10", infoURL: "infoURL10" },
-        { id: "skill_11", name: "skill11", infoURL: "infoURL11" },
-        { id: "skill_12", name: "skill12", infoURL: "infoURL12" },
-        { id: "skill_13", name: "skill13", infoURL: "infoURL13" },
-        { id: "skill_14", name: "skill14", infoURL: "infoURL14" },
-        { id: "skill_15", name: "skill15", infoURL: "infoURL15" },
-        { id: "skill_16", name: "skill16", infoURL: "infoURL16" },
-        { id: "skill_17", name: "skill17", infoURL: "infoURL17" },
-        { id: "skill_18", name: "skill18", infoURL: "infoURL18" },
-        { id: "skill_19", name: "skill19", infoURL: "infoURL19" },
-        { id: "skill_20", name: "skill20", infoURL: "infoURL20" },
-      ],
+      topCompleted: {
+        legend: "Top Completed",
+        topCompleted: [
+          {
+            id: "1",
+            name: "Skill 1",
+            infoURL: "https://www.google.com",
+          },
+          {
+            id: "2",
+            name: "Skill 2",
+            infoURL: "https://www.google.com",
+          },
+          {
+            id: "3",
+            name: "Skill 3",
+            infoURL: "https://www.google.com",
+          },
+          {
+            id: "4",
+            name: "Skill 4",
+            infoURL: "https://www.google.com",
+          },
+          {
+            id: "5",
+            name: "Skill 5",
+            infoURL: "https://www.google.com",
+          },
+        ],
+      },
     },
     demographics: {
-      countries: [
-        { item1: "South Africa", item2: 24 },
-        { item1: "Nigeria", item2: 45 },
-        { item1: "Congo", item2: 15 },
-        { item1: "Ivory Coast", item2: 17 },
-      ],
-      genders: [
-        { item1: "Male", item2: 846 },
-        { item1: "Femail", item2: 346 },
-        { item1: "Other", item2: 0 },
-      ],
-      ages: [
-        { item1: "0-19", item2: 48 },
-        { item1: "20-39", item2: 246 },
-        { item1: "40-59", item2: 246 },
-        { item1: "60+", item2: 246 },
-      ],
+      countries: {
+        legend: "Countries",
+        items: { date1: 100, item2: 200 },
+      },
+      genders: {
+        legend: "genders",
+        items: { item1: 100, item2: 200 },
+      },
+      ages: {
+        legend: "ages",
+        items: { item1: 100, item2: 200 },
+      },
     },
-    dateStamp: "2021-01-01",
-  });
+    dateStamp: "2021-12-01",
+  };
 };

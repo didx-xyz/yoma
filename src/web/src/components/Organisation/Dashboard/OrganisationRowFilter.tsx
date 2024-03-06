@@ -6,15 +6,13 @@ import type {
   OpportunityCategory,
   OpportunitySearchResults,
 } from "~/api/models/opportunity";
-import type { Country, Gender, SelectOption } from "~/api/models/lookups";
+import type { SelectOption } from "~/api/models/lookups";
 import Select, { components, type ValueContainerProps } from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
-import {
-  OrganisationDashboardFilterOptions,
-  type OrganizationSearchFilterQueryTerm,
-} from "~/api/models/organizationDashboard";
+import { OrganizationSearchFilterSummary } from "~/api/models/organizationDashboard";
+import { IoMdDownload } from "react-icons/io";
 
 const ValueContainer = ({
   children,
@@ -55,17 +53,15 @@ const ValueContainer = ({
 
 export const OrganisationRowFilter: React.FC<{
   htmlRef: HTMLDivElement;
-  searchFilter: OrganizationSearchFilterQueryTerm | null;
+  searchFilter: OrganizationSearchFilterSummary | null;
   lookups_categories?: OpportunityCategory[];
   lookups_opportunities?: OpportunitySearchResults;
-  lookups_ageRanges?: Gender[]; //TODO:
-  lookups_genders?: Gender[];
-  lookups_countries?: Country[];
-  onSubmit?: (fieldValues: OrganizationSearchFilterQueryTerm) => void;
+
+  onSubmit?: (fieldValues: OrganizationSearchFilterSummary) => void;
   onClear?: () => void;
   onOpenFilterFullWindow?: () => void;
   clearButtonText?: string;
-  filterOptions: OrganisationDashboardFilterOptions[];
+
   totalCount?: number;
   exportToCsv?: (arg0: boolean) => void;
 }> = ({
@@ -73,14 +69,11 @@ export const OrganisationRowFilter: React.FC<{
   searchFilter,
   lookups_categories,
   lookups_opportunities,
-  lookups_ageRanges,
-  lookups_genders,
-  lookups_countries,
+
   onSubmit,
   onClear,
-  onOpenFilterFullWindow,
   clearButtonText = "Clear",
-  filterOptions,
+
   totalCount,
   exportToCsv,
 }) => {
@@ -90,18 +83,13 @@ export const OrganisationRowFilter: React.FC<{
     categories: zod.array(zod.string()).optional().nullable(),
     startDate: zod.string().optional().nullable(),
     endDate: zod.string().optional().nullable(),
-
-    //
-    ageRanges: zod.array(zod.string()).optional().nullable(),
-    genders: zod.array(zod.string()).optional().nullable(),
-    countries: zod.array(zod.string()).optional().nullable(),
   });
 
   const form = useForm({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { handleSubmit, formState, reset } = form;
+  const { handleSubmit, formState, reset, setValue } = form;
 
   // set default values
   useEffect(() => {
@@ -119,7 +107,7 @@ export const OrganisationRowFilter: React.FC<{
   // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      if (onSubmit) onSubmit(data as OrganizationSearchFilterQueryTerm);
+      if (onSubmit) onSubmit(data as OrganizationSearchFilterSummary);
     },
     [onSubmit],
   );
@@ -179,471 +167,201 @@ export const OrganisationRowFilter: React.FC<{
   //   [onSubmit],
   // );
 
-  const resultText = totalCount === 1 ? "result" : "results";
-  const countText = `${totalCount?.toLocaleString()} ${resultText} for:`;
-
   return (
     <div className="flex flex-grow flex-col">
-      {lookups_categories &&
-        lookups_categories.length > 0 &&
-        (filterOptions?.includes(
-          OrganisationDashboardFilterOptions.CATEGORIES,
-        ) ||
-          filterOptions?.includes(
-            OrganisationDashboardFilterOptions.VIEWALLFILTERSBUTTON,
-          )) && (
-          <div className="flex-col items-center justify-center gap-2 pb-8">
-            <div className="flex justify-center gap-2">
-              {/* CATEGORIES */}
-              {/* {filterOptions?.includes(OrganisationDashboardFilterOptions.CATEGORIES) && (
-                <div className="flex justify-center gap-4 overflow-hidden md:w-full">
-                  {lookups_categories.map((item) => (
-                    <OpportunityCategoryHorizontalCard
-                      key={item.id}
-                      data={item}
-                      selected={searchFilter?.categories?.includes(item.name)}
-                      onClick={onClickCategoryFilter}
-                    />
-                  ))}
-                </div>
-              )} */}
+      <form
+        onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
+        className="flex flex-col gap-2"
+      >
+        <div className="flex flex-grow flex-row items-center gap-2">
+          <div className="mr-4 text-sm font-bold text-white">Filter by:</div>
 
-              {/* VIEW ALL FILTERS BUTTON */}
-              {/* {filterOptions?.includes(
-                OrganisationDashboardFilterOptions.VIEWALLFILTERSBUTTON,
-              ) && (
-                <button
-                  type="button"
-                  onClick={onOpenFilterFullWindow}
-                  className="-ml-10 flex aspect-square h-[120px] flex-col items-center rounded-lg bg-white p-2 shadow-lg"
-                >
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-center">
-                      <Image
-                        src={iconNextArrow}
-                        alt="Icon View All"
-                        width={31}
-                        height={31}
-                        sizes="100vw"
-                        priority={true}
-                        placeholder="blur"
-                        blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                          shimmer(288, 182),
-                        )}`}
-                        style={{
-                          width: "31px",
-                          height: "31px",
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex flex-grow flex-row">
-                      <div className="flex flex-grow flex-col gap-1">
-                        <h1 className="h-10 overflow-hidden text-ellipsis text-center text-sm font-semibold text-black">
-                          View all
-                          <br />
-                          Topics
-                        </h1>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              )} */}
-            </div>
-          </div>
-        )}
-
-      {filterOptions?.some(
-        (filter) =>
-          filter !== OrganisationDashboardFilterOptions.CATEGORIES &&
-          filter !== OrganisationDashboardFilterOptions.VIEWALLFILTERSBUTTON,
-      ) && (
-        <form
-          onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
-          className={`
-        ${filterOptions ? "flex flex-col gap-2" : "hidden"} `}
-        >
-          <div className="flex flex-col gap-2">
-            <div className="mr-4 flex text-sm font-bold text-gray-dark">
-              Filter by:
-            </div>
-
-            <div className="flex justify-between gap-2">
-              <div className="flex flex-wrap justify-start gap-2">
-                {/* VALUECONTAINS: hidden input */}
-                {/* <input
+          <div className="flex flex-grow flex-row gap-2">
+            {/* VALUECONTAINS: hidden input */}
+            {/* <input
                   type="hidden"
                   {...form.register("valueContains")}
                   value={searchFilter?.valueContains ?? ""}
                 /> */}
-                {/* CATEGORIES */}
-                {filterOptions?.includes(
-                  OrganisationDashboardFilterOptions.CATEGORIES,
-                ) &&
-                  lookups_categories && (
-                    <>
-                      <Controller
-                        name="categories"
-                        control={form.control}
-                        defaultValue={searchFilter?.categories}
-                        render={({ field: { onChange, value } }) => (
-                          <Select
-                            instanceId="categories"
-                            classNames={{
-                              control: () =>
-                                "input input-xs h-fit !border-gray",
-                            }}
-                            isMulti={true}
-                            options={lookups_categories.map((c) => ({
-                              value: c.name,
-                              label: c.name,
-                            }))}
-                            // fix menu z-index issue
-                            menuPortalTarget={htmlRef}
-                            styles={{
-                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                            }}
-                            onChange={(val) => {
-                              onChange(val.map((c) => c.value));
-                              void handleSubmit(onSubmitHandler)();
-                            }}
-                            value={lookups_categories
-                              .filter((c) => value?.includes(c.name))
-                              .map((c) => ({ value: c.name, label: c.name }))}
-                            placeholder="Category"
-                            components={{
-                              ValueContainer,
-                            }}
-                          />
-                        )}
-                      />
 
-                      {formState.errors.categories && (
-                        <label className="label font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formState.errors.categories.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </>
-                  )}
+            {/* OPPORTUNITIES */}
+            {/* TODO: this has been removed till the on-demand dropdown is developed */}
+            {/* {lookups_opportunities && (
+              <>
+                <Controller
+                  name="opportunities"
+                  control={form.control}
+                  defaultValue={searchFilter?.opportunities}
+                  render={({ field: { onChange, value } }) => (
+                    <Select
+                      instanceId="opportunities"
+                      classNames={{
+                        control: () => "input input-xs h-fit !border-gray",
+                      }}
+                      isMulti={true}
+                      options={lookups_opportunities?.items.map((c) => ({
+                        value: c.title,
+                        label: c.title,
+                      }))}
+                      // fix menu z-index issue
+                      menuPortalTarget={htmlRef}
+                      styles={{
+                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                      }}
+                      onChange={(val) => {
+                        // clear categories
+                        setValue("categories", []);
 
-                {/* OPPORTUNITIES */}
-                {filterOptions?.includes(
-                  OrganisationDashboardFilterOptions.OPPORTUNITIES,
-                ) &&
-                  lookups_opportunities && (
-                    <>
-                      <Controller
-                        name="opportunities"
-                        control={form.control}
-                        defaultValue={searchFilter?.opportunities}
-                        render={({ field: { onChange, value } }) => (
-                          <Select
-                            instanceId="opportunities"
-                            classNames={{
-                              control: () =>
-                                "input input-xs h-fit !border-gray",
-                            }}
-                            isMulti={true}
-                            options={lookups_opportunities?.items.map((c) => ({
-                              value: c.title,
-                              label: c.title,
-                            }))}
-                            // fix menu z-index issue
-                            menuPortalTarget={htmlRef}
-                            styles={{
-                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                            }}
-                            onChange={(val) => {
-                              onChange(val.map((c) => c.value));
-                              void handleSubmit(onSubmitHandler)();
-                            }}
-                            value={lookups_opportunities?.items
-                              .filter((c) => value?.includes(c.title))
-                              .map((c) => ({ value: c.title, label: c.title }))}
-                            placeholder="Opportunity"
-                            components={{
-                              ValueContainer,
-                            }}
-                          />
-                        )}
-                      />
-                      {formState.errors.opportunities && (
-                        <label className="label font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formState.errors.opportunities.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </>
-                  )}
-                {/* DATE START */}
-                {filterOptions?.includes(
-                  OrganisationDashboardFilterOptions.DATE_START,
-                ) && (
-                  <>
-                    <Controller
-                      control={form.control}
-                      name="startDate"
-                      render={({ field: { onChange, value } }) => (
-                        <DatePicker
-                          className="input input-bordered input-sm w-32 rounded border-gray !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none"
-                          onChange={(date) => {
-                            onChange(toISOStringForTimezone(date));
-                            void handleSubmit(onSubmitHandler)();
-                          }}
-                          selected={value ? new Date(value) : null}
-                          placeholderText="Start Date"
-                        />
-                      )}
+                        onChange(val.map((c) => c.value));
+                        void handleSubmit(onSubmitHandler)();
+                      }}
+                      value={lookups_opportunities?.items
+                        .filter((c) => value?.includes(c.title))
+                        .map((c) => ({ value: c.title, label: c.title }))}
+                      placeholder="Opportunity"
+                      components={{
+                        ValueContainer,
+                      }}
                     />
-
-                    {formState.errors.startDate && (
-                      <label className="label">
-                        <span className="label-text-alt px-4 text-base italic text-red-500">
-                          {`${formState.errors.startDate.message}`}
-                        </span>
-                      </label>
-                    )}
-                  </>
+                  )}
+                />
+                {formState.errors.opportunities && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${formState.errors.opportunities.message}`}
+                    </span>
+                  </label>
                 )}
-                {/* DATE END */}
-                {filterOptions?.includes(
-                  OrganisationDashboardFilterOptions.DATE_END,
-                ) && (
-                  <>
-                    <Controller
-                      control={form.control}
-                      name="endDate"
-                      render={({ field: { onChange, value } }) => (
-                        <DatePicker
-                          className="input input-bordered input-sm w-32 rounded border-gray !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none"
-                          onChange={(date) => {
-                            onChange(toISOStringForTimezone(date));
-                            void handleSubmit(onSubmitHandler)();
-                          }}
-                          selected={value ? new Date(value) : null}
-                          placeholderText="End Date"
-                        />
-                      )}
+              </>
+            )}
+
+            <div className="flex items-center text-xs text-white">OR</div> */}
+
+            {/* CATEGORIES */}
+            {lookups_categories && (
+              <>
+                <Controller
+                  name="categories"
+                  control={form.control}
+                  defaultValue={searchFilter?.categories}
+                  render={({ field: { onChange, value } }) => (
+                    <Select
+                      instanceId="categories"
+                      classNames={{
+                        control: () => "input input-xs h-fit !border-gray",
+                      }}
+                      isMulti={true}
+                      options={lookups_categories.map((c) => ({
+                        value: c.name,
+                        label: c.name,
+                      }))}
+                      // fix menu z-index issue
+                      menuPortalTarget={htmlRef}
+                      styles={{
+                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                      }}
+                      onChange={(val) => {
+                        // clear opportunities
+                        setValue("opportunities", []);
+
+                        onChange(val.map((c) => c.value));
+                        void handleSubmit(onSubmitHandler)();
+                      }}
+                      value={lookups_categories
+                        .filter((c) => value?.includes(c.name))
+                        .map((c) => ({ value: c.name, label: c.name }))}
+                      placeholder="Category"
+                      components={{
+                        ValueContainer,
+                      }}
                     />
+                  )}
+                />
 
-                    {formState.errors.endDate && (
-                      <label className="label">
-                        <span className="label-text-alt px-4 text-base italic text-red-500">
-                          {`${formState.errors.endDate.message}`}
-                        </span>
-                      </label>
-                    )}
-                  </>
+                {formState.errors.categories && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${formState.errors.categories.message}`}
+                    </span>
+                  </label>
                 )}
-
-                {/* AGE RANGES */}
-                {filterOptions?.includes(
-                  OrganisationDashboardFilterOptions.AGES,
-                ) &&
-                  lookups_ageRanges && (
-                    <>
-                      <Controller
-                        name="ageRanges"
-                        control={form.control}
-                        defaultValue={searchFilter?.ageRanges}
-                        render={({ field: { onChange, value } }) => (
-                          <Select
-                            instanceId="ageRanges"
-                            classNames={{
-                              control: () =>
-                                "input input-xs h-fit !border-gray",
-                            }}
-                            isMulti={true}
-                            options={lookups_ageRanges.map((c) => ({
-                              value: c.name,
-                              label: c.name,
-                            }))}
-                            // fix menu z-index issue
-                            menuPortalTarget={htmlRef}
-                            styles={{
-                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                            }}
-                            onChange={(val) => {
-                              onChange(val.map((c) => c.value));
-                              void handleSubmit(onSubmitHandler)();
-                            }}
-                            value={lookups_ageRanges
-                              .filter((c) => value?.includes(c.name))
-                              .map((c) => ({ value: c.name, label: c.name }))}
-                            placeholder="Age"
-                            components={{
-                              ValueContainer,
-                            }}
-                          />
-                        )}
-                      />
-                      {formState.errors.ageRanges && (
-                        <label className="label font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formState.errors.ageRanges.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </>
-                  )}
-
-                {/* GENDERS */}
-                {filterOptions?.includes(
-                  OrganisationDashboardFilterOptions.GENDERS,
-                ) &&
-                  lookups_genders && (
-                    <>
-                      <Controller
-                        name="genders"
-                        control={form.control}
-                        defaultValue={searchFilter?.genders}
-                        render={({ field: { onChange, value } }) => (
-                          <Select
-                            instanceId="genders"
-                            classNames={{
-                              control: () =>
-                                "input input-xs h-fit !border-gray",
-                            }}
-                            isMulti={true}
-                            options={lookups_genders.map((c) => ({
-                              value: c.name,
-                              label: c.name,
-                            }))}
-                            // fix menu z-index issue
-                            menuPortalTarget={htmlRef}
-                            styles={{
-                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                            }}
-                            onChange={(val) => {
-                              onChange(val.map((c) => c.value));
-                              void handleSubmit(onSubmitHandler)();
-                            }}
-                            value={lookups_genders
-                              .filter((c) => value?.includes(c.name))
-                              .map((c) => ({ value: c.name, label: c.name }))}
-                            placeholder="Gender"
-                            components={{
-                              ValueContainer,
-                            }}
-                          />
-                        )}
-                      />
-                      {formState.errors.genders && (
-                        <label className="label font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formState.errors.genders.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </>
-                  )}
-
-                {/* COUNTRIES */}
-                {filterOptions?.includes(
-                  OrganisationDashboardFilterOptions.COUNTRIES,
-                ) &&
-                  lookups_countries && (
-                    <>
-                      <Controller
-                        name="countries"
-                        control={form.control}
-                        defaultValue={searchFilter?.countries}
-                        render={({ field: { onChange, value } }) => (
-                          <Select
-                            instanceId="countries"
-                            classNames={{
-                              control: () =>
-                                "input input-xs h-fit !border-gray",
-                            }}
-                            isMulti={true}
-                            options={lookups_countries.map((c) => ({
-                              value: c.name,
-                              label: c.name,
-                            }))}
-                            // fix menu z-index issue
-                            menuPortalTarget={htmlRef}
-                            styles={{
-                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                            }}
-                            onChange={(val) => {
-                              onChange(val.map((c) => c.value));
-                              void handleSubmit(onSubmitHandler)();
-                            }}
-                            value={lookups_countries
-                              .filter((c) => value?.includes(c.name))
-                              .map((c) => ({ value: c.name, label: c.name }))}
-                            placeholder="Country"
-                            components={{
-                              ValueContainer,
-                            }}
-                          />
-                        )}
-                      />
-                      {formState.errors.countries && (
-                        <label className="label font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formState.errors.countries.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </>
-                  )}
-              </div>
-
-              {/* BUTTONS */}
-              <div className="mb-auto flex gap-2">
-                <button
-                  type="button"
-                  className="btn btn-sm my-auto h-[2.4rem] rounded-md border-2 border-green px-6 text-xs font-semibold text-green"
-                  onClick={onClear}
-                >
-                  {clearButtonText}
-                </button>
-
-                {filterOptions?.includes(
-                  OrganisationDashboardFilterOptions.VIEWALLFILTERSBUTTON,
-                ) && (
-                  <button
-                    type="button"
-                    className="btn btn-sm my-auto h-[2.4rem] rounded-md border-2 border-green text-xs font-semibold text-green"
-                    onClick={onOpenFilterFullWindow}
-                  >
-                    View All Filters
-                  </button>
-                )}
-              </div>
-            </div>
+              </>
+            )}
           </div>
-        </form>
-      )}
-      <div>
-        <div className="mt-6 flex h-fit flex-col md:max-w-[1300px]">
-          <div className="mb-2 flex items-center justify-between">
-            {/* COUNT RESULT TEXT */}
-            <div className="whitespace-nowrap text-xl font-semibold text-black">
-              {countText && totalCount && totalCount > 0 ? (
-                <span>{countText}</span>
-              ) : null}
-            </div>
+
+          <div className="flex justify-end gap-2">
+            {/* DATE START */}
+            <>
+              <Controller
+                control={form.control}
+                name="startDate"
+                render={({ field: { onChange, value } }) => (
+                  <DatePicker
+                    className="input input-bordered input-sm w-32 rounded border-gray !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none"
+                    onChange={(date) => {
+                      onChange(toISOStringForTimezone(date));
+                      void handleSubmit(onSubmitHandler)();
+                    }}
+                    selected={value ? new Date(value) : null}
+                    placeholderText="Start Date"
+                  />
+                )}
+              />
+
+              {formState.errors.startDate && (
+                <label className="label">
+                  <span className="label-text-alt px-4 text-base italic text-red-500">
+                    {`${formState.errors.startDate.message}`}
+                  </span>
+                </label>
+              )}
+            </>
+
+            {/* DATE END */}
+            <>
+              <Controller
+                control={form.control}
+                name="endDate"
+                render={({ field: { onChange, value } }) => (
+                  <DatePicker
+                    className="input input-bordered input-sm w-32 rounded border-gray !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none"
+                    onChange={(date) => {
+                      // change time to 1 second to midnight
+                      if (date) date.setHours(23, 59, 59, 999);
+                      onChange(toISOStringForTimezone(date));
+                      void handleSubmit(onSubmitHandler)();
+                    }}
+                    selected={value ? new Date(value) : null}
+                    placeholderText="End Date"
+                  />
+                )}
+              />
+
+              {formState.errors.endDate && (
+                <label className="label">
+                  <span className="label-text-alt px-4 text-base italic text-red-500">
+                    {`${formState.errors.endDate.message}`}
+                  </span>
+                </label>
+              )}
+            </>
 
             {/* EXPORT TO CSV */}
             {exportToCsv && (
               <div className="flex flex-row items-center justify-end">
-                <button
+                <IoMdDownload className="cursor-pointer text-white" />
+                {/* <button
                   type="button"
                   className="btn btn-sm h-[2.4rem] rounded-md border-2 border-green text-xs font-semibold text-green"
                   onClick={() => exportToCsv(true)}
                 >
                   Export to CSV
-                </button>
+                </button> */}
               </div>
             )}
           </div>
         </div>
-      </div>
+      </form>
     </div>
   );
 };

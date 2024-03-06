@@ -16,6 +16,14 @@ import { getOrganisationById } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { authOptions, type User } from "~/server/auth";
+import {
+  PAGE_SIZE,
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+  THEME_PURPLE,
+} from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
@@ -27,7 +35,6 @@ import {
   IoMdCompass,
   IoMdDocument,
   IoMdHourglass,
-  IoMdPerson,
 } from "react-icons/io";
 import { useRouter } from "next/router";
 import {
@@ -68,8 +75,6 @@ import { getThemeFromRole } from "~/lib/utils";
 // } from "@types/google.visualization";
 import Image from "next/image";
 import iconZlto from "public/images/icon-zlto.svg";
-import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
-import { LoadingInline } from "~/components/Status/LoadingInline";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -284,11 +289,11 @@ const colors = [
   "#6EE7B7",
 ];
 
-// type DataTable = {
-//   legend: string[];
-//   count: number[];
-//   // Add other properties as needed
-// };
+type DataTable = {
+  legend: string[];
+  count: number[];
+  // Add other properties as needed
+};
 
 type VisualizationSelectionArray = {
   column?: number;
@@ -298,20 +303,12 @@ type VisualizationSelectionArray = {
 
 const updateCustomLegendLineChart = (
   legend_div: string,
-  data: TimeIntervalSummary | undefined,
-  selection: VisualizationSelectionArray | undefined,
+  data: DataTable,
+  selection: VisualizationSelectionArray | null,
 ) => {
-  if (!data) {
-    console.warn("No data for custom legend");
-    return;
-  }
-
   // Get the legend div
   const legendDiv = document.getElementById(legend_div);
-  if (!legendDiv) {
-    console.warn("No legendDiv for custom legend");
-    return;
-  }
+  if (!legendDiv) return;
 
   // Clear the current legend
   legendDiv.innerHTML = "";
@@ -349,7 +346,7 @@ const updateCustomLegendLineChart = (
 const LineChart: React.FC<{
   id: string;
   title: string;
-  data: TimeIntervalSummary | undefined;
+  data: TimeIntervalSummary;
   width: number;
   height: number;
   chartWidth?: number;
@@ -366,31 +363,22 @@ const LineChart: React.FC<{
   hideAxisesAndGridLines,
 }) => {
   // map the data to the format required by the chart
-  const localData = useMemo(() => {
-    if (!data) return null;
+  // const localData = data.data.map((x) => [x.date, ...x.values]);
 
-    const mappedData = data.data.map((x) => {
-      const date = new Date(x.date);
-      const formattedDate = `${date.getFullYear()}-${String(
-        date.getMonth() + 1,
-      ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      return [formattedDate, ...x.values];
-    });
+  // map the data to the format required by the chart
+  const localData = data.data.map((x) => {
+    const date = new Date(x.date);
+    const formattedDate = `${date.getFullYear()}-${String(
+      date.getMonth() + 1,
+    ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return [formattedDate, ...x.values];
+  });
 
-    const labels = data.legend.map((x, i) => `${x} (Total: ${data.count[i]})`);
+  // add the totals to the labels
+  var labels = data.legend.map((x, i) => `${x} (Total: ${data.count[i]})`);
 
-    return [["Date", ...labels], ...mappedData];
-  }, [data]);
-
-  useEffect(() => {
-    if (!data || !localData) return;
-    // Update the custom legend when the chart is ready (ready event does not always fire)
-    updateCustomLegendLineChart(`legend_div_${id}`, data, undefined);
-  }, [localData, data]);
-
-  if (!(localData && localData.length > 1) || !data) {
-    return <LoadingSkeleton />;
-  }
+  // add labels to the beginning of the data array
+  localData.unshift(["Date", ...labels]);
 
   return (
     <div
@@ -402,11 +390,7 @@ const LineChart: React.FC<{
         width={chartWidth}
         height={chartHeight}
         chartType="LineChart"
-        loader={
-          <div className="mt-10 flex flex-grow items-center justify-center">
-            Loading...
-          </div>
-        }
+        loader={<div>Loading Chart</div>}
         data={localData}
         options={{
           legend: "none",
@@ -441,7 +425,7 @@ const LineChart: React.FC<{
             eventName: "ready",
             callback: () => {
               // Update the custom legend when the chart is ready
-              updateCustomLegendLineChart(`legend_div_${id}`, data, undefined);
+              updateCustomLegendLineChart(`legend_div_${id}`, data, null);
             },
           },
           {
@@ -512,13 +496,10 @@ const PieChart: React.FC<{
 
       {data && (
         <Chart
+          // width={100}
           height={100}
           chartType="PieChart"
-          loader={
-            <div className="mt-10 flex flex-grow items-center justify-center">
-              Loading...
-            </div>
-          }
+          loader={<div>Loading Chart</div>}
           data={data}
           options={{
             legend: { position: "left" }, // Position the legend on the left
@@ -607,26 +588,25 @@ const OrganisationDashboard: NextPageWithLayout<{
     queryKey: ["OrganisationDashboardCategories"],
     queryFn: () => getCategories(),
   });
-  //TODO: this has been removed till the on-demand dropdown is developed
-  // const { data: lookups_opportunities } = useQuery<OpportunitySearchResults>({
-  //   queryKey: ["OrganisationDashboardOpportunities", id],
-  //   queryFn: () =>
-  //     getOpportunitiesAdmin({
-  //       types: null,
-  //       categories: null,
-  //       languages: null,
-  //       countries: null,
-  //       organizations: [id],
-  //       commitmentIntervals: null,
-  //       zltoRewardRanges: null,
-  //       valueContains: null,
-  //       startDate: null,
-  //       endDate: null,
-  //       statuses: null,
-  //       pageNumber: 1,
-  //       pageSize: 1000,
-  //     }),
-  // });
+  const { data: lookups_opportunities } = useQuery<OpportunitySearchResults>({
+    queryKey: ["OrganisationDashboardOpportunities", id],
+    queryFn: () =>
+      getOpportunitiesAdmin({
+        types: null,
+        categories: null,
+        languages: null,
+        countries: null,
+        organizations: [id],
+        commitmentIntervals: null,
+        zltoRewardRanges: null,
+        valueContains: null,
+        startDate: null,
+        endDate: null,
+        statuses: null,
+        pageNumber: 1,
+        pageSize: 1000,
+      }),
+  });
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
   });
@@ -686,21 +666,19 @@ const OrganisationDashboard: NextPageWithLayout<{
                   })
                   .filter((x) => x != "")
               : null,
-          //TODO: this has been removed till the on-demand dropdown is developed
-          // opportunities:
-          //   opportunities != undefined
-          //     ? opportunities
-          //         ?.toString()
-          //         .split(",")
-          //         .map((x) => {
-          //           const item = lookups_opportunities?.items.find(
-          //             (y) => y.title === x,
-          //           );
-          //           return item ? item?.id : "";
-          //         })
-          //         .filter((x) => x != "")
-          //     : null,
-          opportunities: null,
+          opportunities:
+            opportunities != undefined
+              ? opportunities
+                  ?.toString()
+                  .split(",")
+                  .map((x) => {
+                    const item = lookups_opportunities?.items.find(
+                      (y) => y.title === x,
+                    );
+                    return item ? item?.id : "";
+                  })
+                  .filter((x) => x != "")
+              : null,
 
           startDate: startDate ? startDate.toString() : "",
           endDate: endDate ? endDate.toString() : "",
@@ -781,10 +759,16 @@ const OrganisationDashboard: NextPageWithLayout<{
           opportunitySearchFilter.opportunities.join(","),
         );
 
-      if (opportunitySearchFilter.startDate)
+      if (
+        opportunitySearchFilter.startDate !== undefined &&
+        opportunitySearchFilter.startDate !== null
+      )
         params.append("startDate", opportunitySearchFilter.startDate);
 
-      if (opportunitySearchFilter.endDate)
+      if (
+        opportunitySearchFilter.endDate !== undefined &&
+        opportunitySearchFilter.endDate !== null
+      )
         params.append("endDate", opportunitySearchFilter.endDate);
 
       //TODO:
@@ -858,7 +842,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         <title>Yoma | Organisation Dashboard</title>
       </Head>
 
-      <PageBackground height={28} />
+      <PageBackground height={18} />
 
       {isSearchPerformed && isLoading && <Loading />}
 
@@ -900,15 +884,15 @@ const OrganisationDashboard: NextPageWithLayout<{
         <div className="flex flex-col gap-4 ">
           {/* FILTERS */}
           <div className="mb-4 mt-10 hidden md:flex">
-            {!lookups_categories && <div>Loading...</div>}
-            {lookups_categories && (
+            {!lookups_categories ||
+              (!lookups_opportunities && <div>Loading...</div>)}
+            {lookups_categories && lookups_opportunities && (
               <div className="flex flex-grow flex-col gap-3">
                 <OrganisationRowFilter
                   htmlRef={myRef.current!}
                   searchFilter={searchFilter}
                   lookups_categories={lookups_categories}
-                  //TODO: this has been removed till the on-demand dropdown is developed */}
-                  //lookups_opportunities={lookups_opportunities}
+                  lookups_opportunities={lookups_opportunities}
                   clearButtonText="Clear"
                   onClear={onClearFilter}
                   onSubmit={(e) => onSubmitFilter(e)}
@@ -934,9 +918,11 @@ const OrganisationDashboard: NextPageWithLayout<{
             )}
           </div>
 
+          {/* searchResults: {JSON.stringify(searchResults)} */}
+
           {/* ENGAGEMENT */}
           <div className="flex flex-col gap-2">
-            <div className="text-xl font-semibold text-white">Engagement</div>
+            <div className="text-xl font-semibold">Engagement</div>
 
             <div className="flex flex-col gap-2 md:flex-row">
               {/* VIEWED COMPLETED */}
@@ -953,63 +939,94 @@ const OrganisationDashboard: NextPageWithLayout<{
               )}
 
               <div className="flex flex-col gap-2">
-                {/* OPPORTUNITIES SELECTED */}
-                <div className="flex h-40 w-72 flex-col rounded-lg bg-white p-4 shadow">
-                  <div className="flex flex-row items-center gap-2">
-                    <IoMdDocument className="text-green" />
-                    <div className="text-sm font-semibold">
-                      Opportunities selected
+                <div className="flex flex-row gap-2">
+                  {/* AVERAGE TIME */}
+                  <div className="flex h-40 w-72 flex-col rounded-lg bg-white p-4 shadow">
+                    <div className="flex flex-row items-center gap-2">
+                      {/* <IoMdHourglass className="text-green" /> */}
+                      <div className="text-sm font-semibold">Average time</div>
+                    </div>
+
+                    <div className="flex flex-grow flex-col">
+                      <div className="flex-grow text-2xl font-bold">
+                        {searchResults?.opportunities.completion
+                          .averageTimeInDays ?? 0}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-grow flex-col">
-                    <div className="flex-grow text-2xl font-bold">
-                      {searchResults?.opportunities?.selected?.count ?? 0}
+                  {/* <TitleAndSummaryCard
+                    title="Average time"
+                    width={288}
+                    height={160}
+                  >
+                    <div className="flex flex-grow flex-col">
+                      <div className="flex-grow text-2xl font-bold">
+                        {searchResults?.opportunities.completion
+                          .averageTimeInDays ?? 0}
+                      </div>
                     </div>
-                  </div>
+                  </TitleAndSummaryCard> */}
+
+                  {/* CONVERSERSION RATE */}
+                  {searchResults?.opportunities?.conversionRate && (
+                    <PieChart
+                      id="conversionRate"
+                      title="Conversion rate"
+                      colors={["#387F6A", "#F9AB3E"]} // green and yellow
+                      data={[
+                        ["Completed", "Viewed"],
+                        [
+                          "Completed",
+                          searchResults.opportunities.conversionRate
+                            .completedCount,
+                        ],
+                        [
+                          "Viewed",
+                          searchResults.opportunities.conversionRate
+                            .viewedCount,
+                        ],
+                      ]}
+                    />
+                  )}
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-row gap-2">
-                    {/* AVERAGE TIME */}
-                    <div className="flex h-40 w-72 flex-col rounded-lg bg-white p-4 shadow">
-                      <div className="flex flex-row items-center gap-2">
-                        <IoMdHourglass className="text-green" />
-                        <div className="text-sm font-semibold">
-                          Average time
-                        </div>
-                      </div>
+                <div className="flex flex-row gap-2">
+                  {/* ACTIVE OPPORTUNITIES */}
+                  {searchResults?.opportunities?.active && (
+                    <LineChart
+                      id="activeOpportunities"
+                      title="Active Opportunities"
+                      data={searchResults?.opportunities.active}
+                      width={291}
+                      height={160}
+                      chartWidth={291}
+                      chartHeight={100}
+                      hideAxisesAndGridLines={true}
+                    />
+                  )}
 
-                      <div className="flex flex-grow flex-col">
-                        <div className="flex-grow text-2xl font-bold">
-                          {searchResults?.opportunities.completion
-                            .averageTimeInDays ?? 0}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* CONVERSERSION RATE */}
-                    {searchResults?.opportunities?.conversionRate && (
-                      <PieChart
-                        id="conversionRate"
-                        title="Conversion rate"
-                        colors={["#387F6A", "#F9AB3E"]} // green and yellow
-                        data={[
-                          ["Completed", "Viewed"],
-                          [
-                            "Completed",
-                            searchResults.opportunities.conversionRate
-                              .completedCount,
-                          ],
-                          [
-                            "Viewed",
-                            searchResults.opportunities.conversionRate
-                              .viewedCount,
-                          ],
-                        ]}
-                      />
-                    )}
-                  </div>
+                  {/* PENDING VERIFICATIONS */}
+                  {searchResults?.opportunities?.pendingVerification && (
+                    <LineChart
+                      id="pendingVerification"
+                      title="Pending verifications"
+                      data={searchResults?.opportunities.pendingVerification}
+                      width={291}
+                      height={160}
+                      chartWidth={291}
+                      chartHeight={100}
+                      hideAxisesAndGridLines={true}
+                    />
+                    // <TitleAndSummaryCard title="Pending verifications">
+                    //   <div className="flex flex-grow flex-col">
+                    //     <div className="flex-grow text-2xl font-bold">
+                    //       {searchResults?.opportunities.pendingVerification
+                    //         .count ?? 0}
+                    //     </div>
+                    //   </div>
+                    // </TitleAndSummaryCard>
+                  )}
                 </div>
               </div>
             </div>
@@ -1025,7 +1042,7 @@ const OrganisationDashboard: NextPageWithLayout<{
               className="flex flex-col gap-2 md:flex-row"
             >
               {/* ZLTO AMOUNT AWARDED */}
-              <div className="h-40 min-w-[288px] flex-col rounded-lg bg-white p-4 shadow">
+              <div className="flexx h-40 min-w-[288px] flex-col rounded-lg bg-white p-4 shadow">
                 <div className="flex flex-row items-center gap-2">
                   {/* <IoMdDocument className="text-green" /> */}
                   <Image
@@ -1047,43 +1064,37 @@ const OrganisationDashboard: NextPageWithLayout<{
                   </div>
                 </div>
               </div>
-
-              {/* TOTAL UNIQUE SKILLS */}
-              {!(
-                searchResults?.skills?.items &&
-                searchResults?.skills?.items.data.length > 1
-              ) && (
-                <div
-                  className="overflow-hidden rounded-lg bg-white  shadow"
-                  style={{ minWidth: "291px", height: "160px" }}
-                >
-                  <div className="h-40 min-w-[288px] flex-col rounded-lg bg-white p-4 shadow">
-                    <div className="flex flex-row items-center gap-2">
-                      <IoMdPerson className="text-green" />
-                      <div className="whitespace-nowrap text-sm font-semibold">
-                        Total unique skills
-                      </div>
-                    </div>
-                    <div className="flex flex-grow flex-col">
-                      <div className="flex-grow text-2xl font-bold">0</div>
-                    </div>
+              {/* <TitleAndSummaryCard
+                title="ZLTO amount awarded"
+                width={288}
+                height={160}
+              >
+                <div className="flex flex-grow flex-col">
+                  <div className="flex-grow text-2xl font-bold">
+                    {searchResults?.opportunities.reward.totalAmount ?? 0}
                   </div>
+                  {/* {searchResults?.opportunities.reward.percentage && (
+                    <PercentageDisplay
+                      percentage={
+                        searchResults?.opportunities.reward.percentage
+                      }
+                    />
+                  )}
                 </div>
-              )}
+              </TitleAndSummaryCard> */}
 
-              {searchResults?.skills?.items &&
-                searchResults?.skills?.items.data.length > 1 && (
-                  <LineChart
-                    id="totalUniqueSkills"
-                    title="Total unique skills"
-                    data={searchResults?.skills?.items}
-                    width={291}
-                    height={160}
-                    chartWidth={291}
-                    chartHeight={100}
-                    hideAxisesAndGridLines={true}
-                  />
-                )}
+              {searchResults?.skills?.items && (
+                <LineChart
+                  id="totalSkills"
+                  title="Total skills"
+                  data={searchResults?.skills.items}
+                  width={291}
+                  height={160}
+                  chartWidth={291}
+                  chartHeight={100}
+                  hideAxisesAndGridLines={true}
+                />
+              )}
 
               {/* SKILLS */}
               {searchResults?.skills?.topCompleted && (
@@ -1093,23 +1104,38 @@ const OrganisationDashboard: NextPageWithLayout<{
                     <div className="flex flex-row items-center gap-2">
                       <IoMdCompass className="text-green" />
                       <div className="text-sm font-semibold">
-                        {searchResults?.skills.topCompleted.legend}
+                        Most completed skills
                       </div>
                     </div>
                     <div className="mt-2 flex flex-grow flex-wrap gap-1 overflow-hidden">
-                      {searchResults?.skills.topCompleted.topCompleted.map(
-                        (x) => (
-                          <div
-                            key={x.id}
-                            className="min-h-6 badge rounded-md border-0 bg-green text-white"
-                          >
-                            {x.name}
-                          </div>
-                        ),
-                      )}
+                      {searchResults?.skills.topCompleted.map((x) => (
+                        <div
+                          key={x.id}
+                          className="min-h-6 badge rounded-md border-0 bg-green text-white"
+                        >
+                          {x.name}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </>
+
+                // <TitleAndSummaryCard
+                //   title="Most completed skills"
+                //   width={576}
+                //   height={160}
+                // >
+                //   <div className="mt-2 flex flex-grow flex-wrap overflow-hidden">
+                //     {searchResults?.skills.topCompleted.map((x) => (
+                //       <div
+                //         key={x.id}
+                //         className="min-h-6 badge mr-2 rounded-md border-0 bg-green text-white"
+                //       >
+                //         {x.name}
+                //       </div>
+                //     ))}
+                //   </div>
+                // </TitleAndSummaryCard>
               )}
             </div>
           </div>
@@ -1120,45 +1146,47 @@ const OrganisationDashboard: NextPageWithLayout<{
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {/* COUNTRIES */}
-              {searchResults?.demographics?.countries?.items && (
-                <PieChart
-                  id="countries"
-                  title="Country"
-                  colors={colors}
-                  data={[
-                    ["Country", "Value"],
-                    ...Object.entries(
-                      searchResults?.demographics?.countries?.items || {},
-                    ),
-                  ]}
-                />
-              )}
+              {searchResults &&
+                searchResults.demographics &&
+                searchResults.demographics.countries && (
+                  <PieChart
+                    id="countries"
+                    title="Country"
+                    colors={colors}
+                    data={[
+                      ["Country", "Value"],
+                      ...Object.entries(
+                        searchResults.demographics.countries,
+                      ).map(([item1, item2]) => [item1, item2]),
+                    ]}
+                  />
+                )}
 
               {/* GENDERS */}
-              {searchResults?.demographics?.genders?.items && (
+              {searchResults?.demographics?.genders && (
                 <PieChart
                   id="genders"
                   title="Genders"
                   colors={colors}
                   data={[
                     ["Gender", "Value"],
-                    ...Object.entries(
-                      searchResults?.demographics?.genders?.items || {},
+                    ...Object.entries(searchResults.demographics.genders).map(
+                      ([item1, item2]) => [item1, item2],
                     ),
                   ]}
                 />
               )}
 
               {/* AGE */}
-              {searchResults?.demographics?.ages?.items && (
+              {searchResults?.demographics?.genders && (
                 <PieChart
                   id="ages"
                   title="Age"
                   colors={colors}
                   data={[
                     ["Age", "Value"],
-                    ...Object.entries(
-                      searchResults?.demographics?.ages?.items || {},
+                    ...Object.entries(searchResults.demographics.ages).map(
+                      ([item1, item2]) => [item1, item2],
                     ),
                   ]}
                 />

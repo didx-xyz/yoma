@@ -6,7 +6,7 @@ const FilterBadges: React.FC<{
   excludeKeys: string[];
   resolveValue: (key: string, item: string) => any;
   onSubmit: (filter: any) => void;
-}> = ({ searchFilter, excludeKeys, resolveValue: resolveLookup, onSubmit }) => {
+}> = ({ searchFilter, excludeKeys, resolveValue, onSubmit }) => {
   // function to handle removing an item from an array in the filter object
   const removeFromArray = useCallback(
     (key: string, item: string) => {
@@ -29,7 +29,6 @@ const FilterBadges: React.FC<{
     (key: string) => {
       if (!searchFilter || !onSubmit) return;
       if (searchFilter) {
-        debugger;
         const updatedFilter = { ...searchFilter };
         updatedFilter[key] = null;
         onSubmit(updatedFilter);
@@ -45,13 +44,16 @@ const FilterBadges: React.FC<{
           !excludeKeys.includes(key) &&
           value != null &&
           (Array.isArray(value) ? value.length > 0 : true) ? (
-            <>
+            <div
+              key={`searchFilter_filter_badge_${key}`}
+              className="flex flex-wrap gap-1"
+            >
               {Array.isArray(value) ? (
                 value.map((item: string) => {
-                  const lookup = resolveLookup(key, item);
+                  const lookup = resolveValue(key, item);
                   return (
                     <span
-                      key={`searchFilter_filter_badge_${item}`}
+                      key={`searchFilter_filter_badge_${key}_${item}`}
                       className="badge h-6 max-w-[200px] rounded-md border-none bg-green-light p-2 text-green"
                     >
                       <p className="truncate text-center text-xs font-semibold">
@@ -66,10 +68,10 @@ const FilterBadges: React.FC<{
                     </span>
                   );
                 })
-              ) : (
+              ) : resolveValue(key, value as string) ?? (value as string) ? (
                 <span className="badge h-6 max-w-[200px] rounded-md border-none bg-green-light p-2 text-green">
                   <p className="truncate text-center text-xs font-semibold">
-                    {resolveLookup(key, value as string) ?? (value as string)}
+                    {resolveValue(key, value as string) ?? (value as string)}
                   </p>
                   <button
                     className="btn h-fit w-fit border-none p-0 shadow-none"
@@ -78,8 +80,10 @@ const FilterBadges: React.FC<{
                     <IoIosClose className="-mr-2 h-6 w-6" />
                   </button>
                 </span>
+              ) : (
+                <> </>
               )}
-            </>
+            </div>
           ) : null,
         )}
     </div>
