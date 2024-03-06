@@ -34,7 +34,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="NSwag.Annotations" Version="14.0.2" />
+    <PackageReference Include="NSwag.Annotations" Version="14.0.3" />
 	<PackageReference Include="Sentry.AspNetCore" Version="3.41.4" />
   </ItemGroup>
 
