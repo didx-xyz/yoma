@@ -182,7 +182,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results;
         }
 
-        public List<OpportunitySearchCriteriaOpportunity> ListSearchCriteriaOpportunities(Guid organizationId, bool ensureOrganizationAuthorization)
+        public List<OpportunitySearchCriteriaOpportunity> ListSearchCriteriaOpportunities(Guid organizationId, string? valueContains, bool ensureOrganizationAuthorization)
         {
             if (organizationId == Guid.Empty)
                 throw new ArgumentNullException(nameof(organizationId));
@@ -191,6 +191,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 _organizationService.IsAdmin(organizationId, true);
 
             var query = _opportunityRepository.Query().Where(o => o.OrganizationId == organizationId);
+
+            valueContains = valueContains?.Trim();
+            if (!string.IsNullOrEmpty(valueContains))
+            {
+                if (valueContains.Length < 3 || valueContains.Length > 50)
+                    throw new ValidationException("The value must be between 3 and 50 characters.");
+                query = _opportunityRepository.Contains(query, valueContains);
+            }
 
             var results = query.ToList().Select(o => o.ToOpportunitySearchCriteria()).ToList();
 

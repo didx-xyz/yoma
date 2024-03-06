@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -5,6 +6,13 @@ namespace Yoma.Core.Domain.Core.Helpers
 {
     public static class HashHelper
     {
+        public static string ComputeSHA256Hash<T>(T instance) where T : class
+        {
+            var jsonString = JsonConvert.SerializeObject(instance);
+
+            return ComputeSHA256Hash(jsonString);
+        }
+
         public static string ComputeSHA256Hash(string input)
         {
             var bytes = Encoding.UTF8.GetBytes(input);

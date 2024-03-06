@@ -1,8 +1,12 @@
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Analytics.Interfaces;
 using Yoma.Core.Domain.Analytics.Models;
 using Yoma.Core.Domain.Analytics.Validators;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
@@ -13,6 +17,9 @@ namespace Yoma.Core.Domain.Analytics.Services
     public class AnalyticsService : IAnalyticsService
     {
         #region Class Variables
+        private readonly AppSettings _appSettings;
+        private readonly IMemoryCache _memoryCache;
+
         private readonly IOrganizationService _organizationService;
         private readonly IMyOpportunityActionService _myOpportunityActionService;
         private readonly IMyOpportunityVerificationStatusService _myOpportunityVerificationStatusService;
@@ -31,7 +38,9 @@ namespace Yoma.Core.Domain.Analytics.Services
         #endregion
 
         #region Constructor
-        public AnalyticsService(IOrganizationService organizationService,
+        public AnalyticsService(IOptions<AppSettings> appSettings,
+            IMemoryCache memoryCache,
+            IOrganizationService organizationService,
             IMyOpportunityActionService myOpportunityActionService,
             IMyOpportunityVerificationStatusService myOpportunityVerificationStatusService,
             OrganizationSearchFilterSummaryValidator organizationSearchFilterSummaryValidator,
@@ -40,6 +49,8 @@ namespace Yoma.Core.Domain.Analytics.Services
             IRepository<OpportunityCategory> opportunityCategoryRepository,
             IRepository<OpportunityCountry> opportunityCountryRepository)
         {
+            _appSettings = appSettings.Value;
+            _memoryCache = memoryCache;
             _organizationService = organizationService;
             _myOpportunityActionService = myOpportunityActionService;
             _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService;
@@ -53,6 +64,21 @@ namespace Yoma.Core.Domain.Analytics.Services
 
         #region Public Members
         public OrganizationSearchResultsSummary SearchOrganizationSummary(OrganizationSearchFilterSummary filter)
+        {
+            if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Analytics))
+                return SearchOrganizationSummaryInternal(filter);
+
+            var result = _memoryCache.GetOrCreate($"{nameof(OrganizationSearchResultsSummary)}:{HashHelper.ComputeSHA256Hash(filter)}", entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
+                return SearchOrganizationSummaryInternal(filter);
+            }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(OrganizationSearchResultsSummary)}s'");
+            return result;
+        }
+        #endregion
+
+        #region Private Members
+        private OrganizationSearchResultsSummary SearchOrganizationSummaryInternal(OrganizationSearchFilterSummary filter)
         {
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
@@ -241,9 +267,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             result.DateStamp = DateTimeOffset.UtcNow;
             return result;
         }
-        #endregion
 
-        #region Private Members
         private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryBase(OrganizationSearchFilterSummary filter)
         {
             //organization

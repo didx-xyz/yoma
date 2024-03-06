@@ -199,11 +199,11 @@ namespace Yoma.Core.Api.Controllers
         [HttpGet("search/filter/{organizationId}/opportunity")]
         [ProducesResponseType(typeof(List<OpportunitySearchCriteriaOpportunity>), (int)HttpStatusCode.OK)]
         [AllowAnonymous]
-        public IActionResult ListSearchCriteriaOpportunities([FromRoute] Guid organizationId)
+        public IActionResult ListSearchCriteriaOpportunities([FromRoute] Guid organizationId, [FromQuery] string? valueContains)
         {
             _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaOpportunities));
 
-            var result = _opportunityService.ListSearchCriteriaOpportunities(organizationId, true);
+            var result = _opportunityService.ListSearchCriteriaOpportunities(organizationId, valueContains, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaOpportunities));
 

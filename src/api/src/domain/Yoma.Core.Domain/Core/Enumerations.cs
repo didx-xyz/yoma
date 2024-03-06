@@ -21,7 +21,8 @@ namespace Yoma.Core.Domain.Core
     {
         None = 0,
         Lookups = 1, //lookup entities i.e. countries; reference data store in lookup db namespace
-        AmazonS3Client = 2
+        AmazonS3Client = 2,
+        Analytics = 3
     }
 
     public enum FileType
