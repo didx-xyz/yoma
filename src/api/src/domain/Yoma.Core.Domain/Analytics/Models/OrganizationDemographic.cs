@@ -8,11 +8,4 @@ namespace Yoma.Core.Domain.Analytics.Models
 
         public Demographic Ages { get; set; }
     }
-
-    public class Demographic
-    {
-        public string Legend { get; set; }
-
-        public Dictionary<string, int> Items { get; set; }
-    }
 }

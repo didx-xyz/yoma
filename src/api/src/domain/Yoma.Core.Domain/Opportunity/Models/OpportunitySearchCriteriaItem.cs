@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Opportunity.Models
 {
-    public class OpportunitySearchCriteriaOpportunity
+    public class OpportunitySearchCriteriaItem
     {
         public Guid Id { get; set; }
 

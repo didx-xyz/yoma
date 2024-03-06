@@ -195,17 +195,17 @@ namespace Yoma.Core.Api.Controllers
         #endregion
 
         #region Administrative Actions
-        [SwaggerOperation(Summary = "Return a list of opportunities for the specified organization")]
-        [HttpGet("search/filter/{organizationId}/opportunity")]
-        [ProducesResponseType(typeof(List<OpportunitySearchCriteriaOpportunity>), (int)HttpStatusCode.OK)]
-        [AllowAnonymous]
-        public IActionResult ListSearchCriteriaOpportunities([FromRoute] Guid organizationId, [FromQuery] string? valueContains)
+        [SwaggerOperation(Summary = "Search for opporutnities based on the supplied filter, returning a lightweight result set/list for search filter input")]
+        [HttpPost("search/filter/opportunity/search")]
+        [ProducesResponseType(typeof(OpportunitySearchResultsCriteria), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult SearchCriteriaOpportunities([FromBody] OpportunitySearchFilterCriteria filter)
         {
-            _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaOpportunities));
+            _logger.LogInformation("Handling request {requestName}", nameof(SearchCriteriaOpportunities));
 
-            var result = _opportunityService.ListSearchCriteriaOpportunities(organizationId, valueContains, true);
+            var result = _opportunityService.SearchCriteriaOpportunities(filter, true);
 
-            _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaOpportunities));
+            _logger.LogInformation("Request {requestName} handled", nameof(SearchCriteriaOpportunities));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

@@ -10,6 +10,7 @@ using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
@@ -39,7 +40,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
         private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
-        private readonly OpportunitySearchFilterValidator _searchFilterValidator;
+        private readonly OpportunitySearchFilterValidator _opportunitySearchFilterValidator;
+        private readonly OpportunitySearchFilterCriteriaValidator _opportunitySearchFilterCriteriaValidator;
 
         private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
         private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
@@ -75,7 +77,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             IUserService userService,
             OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
             OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
-            OpportunitySearchFilterValidator searchFilterValidator,
+            OpportunitySearchFilterValidator opportunitySearchFilterValidator,
+            OpportunitySearchFilterCriteriaValidator opportunitySearchFilterCriteriaValidator,
             IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
             IRepository<OpportunityCategory> opportunityCategoryRepository,
             IRepository<OpportunityCountry> opportunityCountryRepository,
@@ -102,7 +105,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate;
             _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate;
-            _searchFilterValidator = searchFilterValidator;
+            _opportunitySearchFilterValidator = opportunitySearchFilterValidator;
+            _opportunitySearchFilterCriteriaValidator = opportunitySearchFilterCriteriaValidator;
 
             _opportunityRepository = opportunityRepository;
             _opportunityCategoryRepository = opportunityCategoryRepository;
@@ -182,25 +186,30 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results;
         }
 
-        public List<OpportunitySearchCriteriaOpportunity> ListSearchCriteriaOpportunities(Guid organizationId, string? valueContains, bool ensureOrganizationAuthorization)
+        public OpportunitySearchResultsCriteria SearchCriteriaOpportunities(OpportunitySearchFilterCriteria filter, bool ensureOrganizationAuthorization)
         {
-            if (organizationId == Guid.Empty)
-                throw new ArgumentNullException(nameof(organizationId));
+            if (filter == null)
+                throw new ArgumentNullException(nameof(filter));
+
+            _opportunitySearchFilterCriteriaValidator.ValidateAndThrow(filter);
 
             if (ensureOrganizationAuthorization)
-                _organizationService.IsAdmin(organizationId, true);
+                _organizationService.IsAdmin(filter.Organization, true);
 
-            var query = _opportunityRepository.Query().Where(o => o.OrganizationId == organizationId);
+            var query = _opportunityRepository.Query().Where(o => o.OrganizationId == filter.Organization);
 
-            valueContains = valueContains?.Trim();
-            if (!string.IsNullOrEmpty(valueContains))
+            if (!string.IsNullOrEmpty(filter.TitleContains))
+                query = _opportunityRepository.Contains(query, filter.TitleContains);
+
+            var results = new OpportunitySearchResultsCriteria();
+            query = query.OrderBy(o => o.Title);
+
+            if (filter.PaginationEnabled)
             {
-                if (valueContains.Length < 3 || valueContains.Length > 50)
-                    throw new ValidationException("The value must be between 3 and 50 characters.");
-                query = _opportunityRepository.Contains(query, valueContains);
+                results.TotalCount = query.Count();
+                query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
             }
-
-            var results = query.ToList().Select(o => o.ToOpportunitySearchCriteria()).ToList();
+            results.Items = query.ToList().Select(o => o.ToOpportunitySearchCriteria()).ToList();
 
             return results;
         }
@@ -490,7 +499,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             ParseOpportunitySearchFilterCommitmentIntervals(filter);
             ParseOpportunitySearchFilterZltoRewardRanges(filter);
 
-            _searchFilterValidator.ValidateAndThrow(filter);
+            _opportunitySearchFilterValidator.ValidateAndThrow(filter);
 
             var query = _opportunityRepository.Query(true);
 

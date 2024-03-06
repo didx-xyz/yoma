@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Analytics.Interfaces;
@@ -83,7 +84,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
 
-            _organizationSearchFilterSummaryValidator.Validate(filter);
+            _organizationSearchFilterSummaryValidator.ValidateAndThrow(filter);
 
             _organizationService.IsAdmin(filter.Organization, true);
 
