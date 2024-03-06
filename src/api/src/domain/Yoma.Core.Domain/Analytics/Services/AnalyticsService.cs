@@ -341,7 +341,7 @@ namespace Yoma.Core.Domain.Analytics.Services
                     OrganizationLogoId = result.Opportunity.OrganizationLogoId,
                     ViewedCount = result.ViewedCount,
                     CompletedCount = result.CompletedCount,
-                    ConversionRatioPercentage = (result.ViewedCount > 0) ?  Math.Min(100, Math.Round((decimal)result.CompletedCount / result.ViewedCount * 100, 2)) : 0
+                    ConversionRatioPercentage = (result.ViewedCount > 0) ? Math.Min(100, Math.Round((decimal)result.CompletedCount / result.ViewedCount * 100, 2)) : 0
                 });
 
             query = query.OrderByDescending(o => o.ConversionRatioPercentage).ThenBy(o => o.Title);
