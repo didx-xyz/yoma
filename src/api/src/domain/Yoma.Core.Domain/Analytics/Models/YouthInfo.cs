@@ -10,9 +10,11 @@ namespace Yoma.Core.Domain.Analytics.Models
 
         public string OpportunityTitle { get; set; }
 
+        public Guid? OrganizationLogoId { get; set; }
+
         public string? OrganizationLogoURL { get; set; }
 
-        public DateTimeOffset DateCompleted { get; set; }
+        public DateTimeOffset? DateCompleted { get; set; }
 
         public bool Verified { get; set; }
     }

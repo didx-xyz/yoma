@@ -6,6 +6,8 @@ namespace Yoma.Core.Domain.Analytics.Models
 
         public string Title { get; set; }
 
+        public Guid? OrganizationLogoId { get; set; }
+
         public string? OrganizationLogoURL { get; set; }
 
         public int ViewedCount { get; set; }

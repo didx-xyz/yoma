@@ -24,8 +24,11 @@ namespace Yoma.Core.Domain.Analytics.Services
         private readonly IOrganizationService _organizationService;
         private readonly IMyOpportunityActionService _myOpportunityActionService;
         private readonly IMyOpportunityVerificationStatusService _myOpportunityVerificationStatusService;
+        private readonly IBlobService _blobService;
 
         private readonly OrganizationSearchFilterEngagementValidator _organizationSearchFilterEngagementValidator;
+        private readonly OrganizationSearchFilterOpportunityValidator _organizationSearchFilterOpportunityValidator;
+        private readonly OrganizationSearchFilterYouthValidator _organizationSearchFilterYouthValidator;
 
         private readonly IRepositoryBatchedValueContainsWithNavigation<Opportunity.Models.Opportunity> _opportunityRepository;
         private readonly IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
@@ -44,7 +47,10 @@ namespace Yoma.Core.Domain.Analytics.Services
             IOrganizationService organizationService,
             IMyOpportunityActionService myOpportunityActionService,
             IMyOpportunityVerificationStatusService myOpportunityVerificationStatusService,
+            IBlobService blobService,
             OrganizationSearchFilterEngagementValidator organizationSearchFilterEngagementValidator,
+            OrganizationSearchFilterOpportunityValidator organizationSearchFilterOpportunityValidator,
+            OrganizationSearchFilterYouthValidator organizationSearchFilterYouthValidator,
             IRepositoryBatchedValueContainsWithNavigation<Opportunity.Models.Opportunity> opportunityRepository,
             IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
             IRepository<OpportunityCategory> opportunityCategoryRepository,
@@ -55,7 +61,10 @@ namespace Yoma.Core.Domain.Analytics.Services
             _organizationService = organizationService;
             _myOpportunityActionService = myOpportunityActionService;
             _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService;
+            _blobService = blobService;
             _organizationSearchFilterEngagementValidator = organizationSearchFilterEngagementValidator;
+            _organizationSearchFilterOpportunityValidator = organizationSearchFilterOpportunityValidator;
+            _organizationSearchFilterYouthValidator = organizationSearchFilterYouthValidator;
             _opportunityRepository = opportunityRepository;
             _myOpportunityRepository = myOpportunityRepository;
             _opportunityCategoryRepository = opportunityCategoryRepository;
@@ -79,16 +88,38 @@ namespace Yoma.Core.Domain.Analytics.Services
 
         public OrganizationSearchResultsOpportunity SearchOrganizationOpportunities(OrganizationSearchFilterOpportunity filter)
         {
-            throw new NotImplementedException();
+            if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Analytics))
+                return SearchOrganizationOpportunitiesInternal(filter);
+
+            var result = _memoryCache.GetOrCreate($"{nameof(OrganizationSearchResultsOpportunity)}:{HashHelper.ComputeSHA256Hash(filter)}", entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
+                return SearchOrganizationOpportunitiesInternal(filter);
+            }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(OrganizationSearchResultsOpportunity)}s'");
+            return result;
         }
 
         public OrganizationSearchResultsYouth SearchOrganizationYouth(OrganizationSearchFilterYouth filter)
         {
-            throw new NotImplementedException();
+            if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Analytics))
+                return SearchOrganizationYouthInternal(filter);
+
+            var result = _memoryCache.GetOrCreate($"{nameof(OrganizationSearchResultsYouth)}:{HashHelper.ComputeSHA256Hash(filter)}", entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
+                return SearchOrganizationYouthInternal(filter);
+            }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(OrganizationSearchResultsYouth)}s'");
+            return result;
         }
         #endregion
 
         #region Private Members
+        private string? GetBlobObjectURL(Guid? id)
+        {
+            if (!id.HasValue) return null;
+            return _blobService.GetURL(id.Value);
+        }
+
         private OrganizationSearchResultsEngagement SearchOrganizationSummaryInternal(OrganizationSearchFilterEngagement filter)
         {
             if (filter == null)
@@ -120,7 +151,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             //'my' opportunities: completed
             var queryCompleted = MyOpportunityQueryCompleted(queryBase);
 
-            var itemsCompleted = queryViewed.GroupBy(opportunity =>
+            var itemsCompleted = queryCompleted.GroupBy(opportunity =>
                  DateTimeOffset.UtcNow.Date.AddDays(-(int)opportunity.DateModified.DayOfWeek).AddDays(7)
                  )
                  .Select(group => new
@@ -173,7 +204,13 @@ namespace Yoma.Core.Domain.Analytics.Services
             result.Opportunities.Completion = new OpportunityCompletion { Legend = "Average time (days)", AverageTimeInDays = (int)Math.Round(averageCompletionTimeInDays) };
 
             //converstion rate
-            result.Opportunities.ConversionRate = new OpportunityConversionRate { Legend = "Conversion rate", ViewedCount = viewedCount, CompletedCount = completedCount, Percentage = completedCount / viewedCount * 100 };
+            result.Opportunities.ConversionRate = new OpportunityConversionRatio
+            {
+                Legend = "Conversion rate",
+                ViewedCount = viewedCount,
+                CompletedCount = completedCount,
+                Percentage = viewedCount > 0 ? Math.Min(100M, Math.Round((decimal)completedCount / viewedCount * 100, 2)) : 0
+            };
 
             //zlto rewards
             var totalRewards = queryCompleted.Sum(o => o.ZltoReward ?? 0);
@@ -279,7 +316,89 @@ namespace Yoma.Core.Domain.Analytics.Services
             return result;
         }
 
-        private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryBase(OrganizationSearchFilterEngagement filter)
+        private OrganizationSearchResultsOpportunity SearchOrganizationOpportunitiesInternal(OrganizationSearchFilterOpportunity filter)
+        {
+            if (filter == null)
+                throw new ArgumentNullException(nameof(filter));
+
+            _organizationSearchFilterOpportunityValidator.ValidateAndThrow(filter);
+
+            var query = OpportunityQueryBase(filter)
+                .Select(opportunity => new
+                {
+                    opportunity,
+                    Opportunity = opportunity,
+                    ViewedCount = _myOpportunityRepository.Query()
+                        .Count(mo => mo.OpportunityId == opportunity.Id && mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Viewed.ToString()).Id),
+                    CompletedCount = _myOpportunityRepository.Query()
+                        .Count(mo => mo.OpportunityId == opportunity.Id && mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id &&
+                                     mo.VerificationStatusId == _myOpportunityVerificationStatusService.GetByName(MyOpportunity.VerificationStatus.Completed.ToString()).Id)
+                })
+                .Select(result => new OpportunityInfoAnalytics
+                {
+                    Id = result.Opportunity.Id,
+                    Title = result.Opportunity.Title,
+                    OrganizationLogoId = result.Opportunity.OrganizationLogoId,
+                    ViewedCount = result.ViewedCount,
+                    CompletedCount = result.CompletedCount,
+                    ConversionRatioPercentage = (result.ViewedCount > 0) ?  Math.Min(100, Math.Round((decimal)result.CompletedCount / result.ViewedCount * 100, 2)) : 0
+                });
+
+            query = query.OrderByDescending(o => o.ConversionRatioPercentage).ThenBy(o => o.Title);
+
+            var result = new OrganizationSearchResultsOpportunity();
+            //pagination
+            if (filter.PaginationEnabled)
+            {
+                result.TotalCount = query.Count();
+                query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+            }
+
+            result.Items = query.ToList();
+            result.Items.ForEach(o => o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoId));
+
+            result.DateStamp = DateTimeOffset.UtcNow;
+            return result;
+        }
+
+        private OrganizationSearchResultsYouth SearchOrganizationYouthInternal(OrganizationSearchFilterYouth filter)
+        {
+            if (filter == null)
+                throw new ArgumentNullException(nameof(filter));
+
+            _organizationSearchFilterYouthValidator.ValidateAndThrow(filter);
+
+            var query = MyOpportunityQueryCompleted(MyOpportunityQueryBase(filter))
+                .Select(o => new YouthInfo
+                {
+                    UserId = o.UserId,
+                    UserDisplayName = o.UserDisplayName,
+                    OpportunityId = o.OpportunityId,
+                    OpportunityTitle = o.OpportunityTitle,
+                    OrganizationLogoId = o.OrganizationLogoId,
+                    DateCompleted = o.DateCompleted,
+                    Verified = o.OpportunityCredentialIssuanceEnabled
+                });
+
+            var result = new OrganizationSearchResultsYouth();
+
+            query = query.OrderByDescending(o => o.DateCompleted).ThenBy(o => o.UserDisplayName).ThenBy(o => o.OpportunityTitle);
+
+            //pagination
+            if (filter.PaginationEnabled)
+            {
+                result.TotalCount = query.Count();
+                query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+            }
+
+            result.Items = query.ToList();
+            result.Items.ForEach(o => o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoId));
+
+            result.DateStamp = DateTimeOffset.UtcNow;
+            return result;
+        }
+
+        private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryBase(IOrganizationSearchFilterBase filter)
         {
             //organization
             var result = _myOpportunityRepository.Query(true).Where(o => o.OrganizationId == filter.Organization);
@@ -303,13 +422,13 @@ namespace Yoma.Core.Domain.Analytics.Services
             if (filter.StartDate.HasValue)
             {
                 var startDate = filter.StartDate.Value.RemoveTime();
-                result = result.Where(o => !o.DateStart.HasValue || o.DateStart >= startDate);
+                result = result.Where(o => o.OpportunityDateStart >= startDate);
             }
 
             if (filter.EndDate.HasValue)
             {
                 var endDate = filter.EndDate.Value.ToEndOfDay();
-                result = result.Where(o => !o.DateEnd.HasValue || o.DateEnd <= endDate);
+                result = result.Where(o => !o.OpportunityDateEnd.HasValue || o.OpportunityDateEnd.Value <= endDate);
             }
 
             return result;
@@ -337,7 +456,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             return result;
         }
 
-        private IQueryable<Opportunity.Models.Opportunity> OpportunityQueryBase(OrganizationSearchFilterEngagement filter)
+        private IQueryable<Opportunity.Models.Opportunity> OpportunityQueryBase(IOrganizationSearchFilterBase filter)
         {
             //organization
             var result = _opportunityRepository.Query(true).Where(o => o.OrganizationId == filter.Organization);
@@ -367,7 +486,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             if (filter.EndDate.HasValue)
             {
                 filter.EndDate = filter.EndDate.ToEndOfDay();
-                result = result.Where(o => !o.DateEnd.HasValue || o.DateEnd <= filter.EndDate);
+                result = result.Where(o => !o.DateEnd.HasValue || o.DateEnd.Value <= filter.EndDate);
             }
 
             return result;

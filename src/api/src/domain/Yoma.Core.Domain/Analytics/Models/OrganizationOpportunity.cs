@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.Analytics.Models
 
         public OpportunityCompletion Completion { get; set; }
 
-        public OpportunityConversionRate ConversionRate { get; set; }
+        public OpportunityConversionRatio ConversionRate { get; set; }
 
         public OpportunityReward Reward { get; set; }
 

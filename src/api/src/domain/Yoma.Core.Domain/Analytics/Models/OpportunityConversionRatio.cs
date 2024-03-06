@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Analytics.Models
 {
-    public class OpportunityConversionRate
+    public class OpportunityConversionRatio
     {
         public string Legend { get; set; }
 

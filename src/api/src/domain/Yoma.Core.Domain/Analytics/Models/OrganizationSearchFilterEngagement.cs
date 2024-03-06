@@ -1,6 +1,8 @@
+using Yoma.Core.Domain.Analytics.Interfaces;
+
 namespace Yoma.Core.Domain.Analytics.Models
 {
-    public class OrganizationSearchFilterEngagement
+    public class OrganizationSearchFilterEngagement : IOrganizationSearchFilterBase
     {
         public Guid Organization { get; set; }
 

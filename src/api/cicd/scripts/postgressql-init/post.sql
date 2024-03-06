@@ -382,8 +382,6 @@ SELECT
 FROM "Opportunity"."Opportunity" O
 WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active')
 ORDER BY "DateCreated"
-OFFSET 0 ROWS
-FETCH NEXT 30 ROWS ONLY;
 
 -- Saved
 INSERT INTO "Opportunity"."MyOpportunity"("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
@@ -405,7 +403,7 @@ SELECT
 FROM "Opportunity"."Opportunity" O
 WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active')
 ORDER BY "DateCreated"
-OFFSET 30 ROWS
+OFFSET 0 ROWS
 FETCH NEXT 30 ROWS ONLY;
 
 -- Verification (Pending)
@@ -428,7 +426,7 @@ SELECT
 FROM "Opportunity"."Opportunity" O
 WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active') AND O."DateStart" <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AND O."DateEnd" > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 ORDER BY "DateCreated"
-OFFSET 60 ROWS
+OFFSET 30 ROWS
 FETCH NEXT 30 ROWS ONLY;
 
 -- Verification (Rejected)
@@ -451,7 +449,7 @@ SELECT
 FROM "Opportunity"."Opportunity" O
 WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active') AND O."DateStart" <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AND O."DateEnd" > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 ORDER BY "DateCreated"
-OFFSET 90 ROWS
+OFFSET 60 ROWS
 FETCH NEXT 30 ROWS ONLY;
 
 -- Verification (Completed)
@@ -474,7 +472,7 @@ SELECT
 FROM "Opportunity"."Opportunity" O
 WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active') AND O."DateStart" <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AND O."DateEnd" > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 ORDER BY "DateCreated"
-OFFSET 120 ROWS
+OFFSET 90 ROWS
 FETCH NEXT 30 ROWS ONLY;
 
 -- SSI Credential Issuance (Pending) for Verification (Completed) mapped to opportunities with CredentialIssuanceEnabled
