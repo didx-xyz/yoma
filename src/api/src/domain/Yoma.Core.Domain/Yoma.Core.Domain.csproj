@@ -38,8 +38,4 @@
 	<PackageReference Include="Sentry.AspNetCore" Version="3.41.4" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Analytics\Validators\" />
-  </ItemGroup>
-
 </Project>

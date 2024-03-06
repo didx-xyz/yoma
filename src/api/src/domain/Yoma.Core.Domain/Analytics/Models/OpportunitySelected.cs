@@ -1,9 +1,9 @@
 namespace Yoma.Core.Domain.Analytics.Models
 {
-    public class OpportunityCompletion
+    public class OpportunitySelected
     {
         public string Legend { get; set; }
 
-        public int AverageTimeInDays { get; set; }
+        public int Count { get; set; }
     }
 }

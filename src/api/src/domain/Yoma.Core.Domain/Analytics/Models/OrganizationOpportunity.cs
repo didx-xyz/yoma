@@ -10,6 +10,6 @@ namespace Yoma.Core.Domain.Analytics.Models
 
         public OpportunityReward Reward { get; set; }
 
-        public int SelectedCount { get; set; }
+        public OpportunitySelected Selected { get; set; }
     }
 }

@@ -2,10 +2,17 @@ namespace Yoma.Core.Domain.Analytics.Models
 {
     public class OrganizationDemographic
     {
-        public Dictionary<string, int> Countries { get; set; }
+        public Demographic Countries { get; set; }
 
-        public Dictionary<string, int> Genders { get; set; }
+        public Demographic Genders { get; set; }
 
-        public Dictionary<string, int> Ages { get; set; }
+        public Demographic Ages { get; set; }
+    }
+
+    public class Demographic
+    {
+        public string Legend { get; set; }
+
+        public Dictionary<string, int> Items { get; set; }
     }
 }

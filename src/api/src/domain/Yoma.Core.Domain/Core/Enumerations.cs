@@ -57,4 +57,10 @@ namespace Yoma.Core.Domain.Core
         Ascending,
         Descending
     }
+
+    public enum Gender
+    {
+        [Description("Prefer not to say")]
+        PreferNotToSay
+    }
 }
