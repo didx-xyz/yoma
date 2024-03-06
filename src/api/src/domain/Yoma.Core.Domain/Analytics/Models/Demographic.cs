@@ -1,4 +1,4 @@
-﻿namespace Yoma.Core.Domain.Analytics.Models
+namespace Yoma.Core.Domain.Analytics.Models
 {
     public class Demographic
     {
