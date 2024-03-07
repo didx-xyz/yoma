@@ -34,12 +34,27 @@ export const getOpportunitiesAdmin = async (
   return data;
 };
 
+// this is used for public youth
 export const getCategories = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityCategory[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<OpportunityCategory[]>(
     "/opportunity/category",
+  );
+  return data;
+};
+
+// this is used for orgAdmin dashboards, admin pages etc
+export const getCategoriesAdmin = async (
+  organisationId: string | null,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<OpportunityCategory[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<OpportunityCategory[]>(
+    `/opportunity/search/filter/category/admin${
+      organisationId ? `?organizationId=${organisationId}` : ""
+    }`,
   );
   return data;
 };

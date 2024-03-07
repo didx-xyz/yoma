@@ -304,6 +304,21 @@ namespace Yoma.Core.Domain.Opportunity.Services
             return results;
         }
 
+        public List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountriesAdmin(Guid? organizationId, bool ensureOrganizationAuthorization)
+        {
+            var org = SearchCriteriaAdminValidateRequest(organizationId, ensureOrganizationAuthorization);
+
+            var query = _opportunityCountryRepository.Query();
+
+            if (org != null)
+                query = query.Where(o => o.OrganizationId == org.Id);
+
+            var countryIds = query.Select(o => o.CountryId).Distinct().ToList();
+
+            return _countryService.List().Where(o => countryIds.Contains(o.Id))
+                .OrderBy(o => o.CodeAlpha2 != Country.Worldwide.ToDescription()).ThenBy(o => o.Name).ToList(); //esnure Worldwide appears first
+        }
+
         public List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountries(List<PublishedState>? publishedStates)
         {
             publishedStates = publishedStates == null || !publishedStates.Any() ?
@@ -340,7 +355,21 @@ namespace Yoma.Core.Domain.Opportunity.Services
             var countryIds = query.Select(o => o.CountryId).Distinct().ToList();
 
             return _countryService.List().Where(o => countryIds.Contains(o.Id))
-                .OrderBy(o => o.CodeAlpha2 != Core.Country.Worldwide.ToDescription()).ThenBy(o => o.Name).ToList(); //esnure Worldwide appears first
+                .OrderBy(o => o.CodeAlpha2 != Country.Worldwide.ToDescription()).ThenBy(o => o.Name).ToList(); //esnure Worldwide appears first
+        }
+
+        public List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguagesAdmin(Guid? organizationId, bool ensureOrganizationAuthorization)
+        {
+            var org = SearchCriteriaAdminValidateRequest(organizationId, ensureOrganizationAuthorization);
+
+            var query = _opportunityLanguageRepository.Query();
+
+            if (org != null)
+                query = query.Where(o => o.OrganizationId == org.Id);
+
+            var languageIds = query.Select(o => o.LanguageId).Distinct().ToList();
+
+            return _languageService.List().Where(o => languageIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
         }
 
         public List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(List<PublishedState>? publishedStates)
@@ -379,6 +408,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
             var languageIds = query.Select(o => o.LanguageId).Distinct().ToList();
 
             return _languageService.List().Where(o => languageIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
+        }
+
+        public List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizationsAdmin()
+        {
+            var organizationIds = _opportunityRepository.Query().Select(o => o.OrganizationId).Distinct().ToList();
+
+            var filter = new OrganizationSearchFilter
+            {
+                Organizations = organizationIds,
+                InternalUse = true
+            };
+
+            return _organizationService.Search(filter, false).Items;
         }
 
         public List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizations(List<PublishedState>? publishedStates)

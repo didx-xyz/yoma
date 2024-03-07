@@ -20,6 +20,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 OpportunityId = entity.OpportunityId,
                 OpportunityStatusId = entity.Opportunity.Status.Id,
                 OpportunityDateStart = entity.Opportunity.DateStart,
+                OrganizationId = entity.Opportunity.OrganizationId,
                 OrganizationStatusId = entity.Opportunity.Organization.Status.Id,
                 CountryId = entity.CountryId,
                 CountryName = entity.Country.Name,

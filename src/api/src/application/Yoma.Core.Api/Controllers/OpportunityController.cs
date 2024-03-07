@@ -210,6 +210,51 @@ namespace Yoma.Core.Api.Controllers
             return StatusCode((int)HttpStatusCode.OK, result);
         }
 
+        [SwaggerOperation(Summary = "Return a list of countries associated with opportunities, optionally filter by organization")]
+        [HttpGet("search/filter/country/admin")]
+        [ProducesResponseType(typeof(List<Domain.Lookups.Models.Country>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult ListOpportunitySearchCriteriaCountriesAdmin([FromQuery] Guid? organizationId)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCountriesAdmin));
+
+            var result = _opportunityService.ListOpportunitySearchCriteriaCountriesAdmin(organizationId, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCountriesAdmin));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Return a list of languages associated with opportunities, optionally filter by organization")]
+        [HttpGet("search/filter/language/admin")]
+        [ProducesResponseType(typeof(List<Domain.Lookups.Models.Language>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult ListOpportunitySearchCriteriaLanguagesAdmin([FromQuery] Guid? organizationId)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaLanguagesAdmin));
+
+            var result = _opportunityService.ListOpportunitySearchCriteriaLanguagesAdmin(organizationId, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaLanguagesAdmin));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Return a list of active organizations associated with opportunities")]
+        [HttpGet("search/filter/organization/admin")]
+        [ProducesResponseType(typeof(List<Domain.Entity.Models.OrganizationInfo>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}")]
+        public IActionResult ListOpportunitySearchCriteriaOrganizationsAdmin()
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaOrganizationsAdmin));
+
+            var result = _opportunityService.ListOpportunitySearchCriteriaOrganizationsAdmin();
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaOrganizationsAdmin));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
         [SwaggerOperation(Summary = "Search for opporutnities based on the supplied filter, returning a lightweight result set/list for search filter input")]
         [HttpPost("search/filter/opportunity")]
         [ProducesResponseType(typeof(OpportunitySearchResultsCriteria), (int)HttpStatusCode.OK)]
