@@ -1,6 +1,5 @@
 import type { PaginationFilter } from "./common";
-import type { Skill, TimeInterval } from "./lookups";
-import type { OpportunityInfo } from "./opportunity";
+import type { Skill } from "./lookups";
 
 export interface OrganizationSearchFilterBase extends PaginationFilter {
   organization: string;
@@ -83,27 +82,8 @@ export interface OrganizationDemographic {
 
 export interface Demographic {
   legend: string;
-  items: { [key: string]: number };
+  items: Record<string, number>;
 }
-
-// export interface OrganizationSearchFilterQueryTerm
-//   extends OrganizationSearchFilterBase {
-//   ageRanges: string[] | null;
-//   genders: string[] | null;
-//   countries: string[] | null;
-// }
-
-// export interface OrganizationSearchResultsQueryTerm {
-//   items: { item1: string; item2: number };
-//   dateStamp: string;
-// }
-
-// export interface OrganizationSearchFilterOpportunity
-//   extends OrganizationSearchFilterBase {
-//   ageRanges: string[] | null;
-//   genders: string[] | null;
-//   countries: string[] | null;
-// }
 
 export interface OrganizationSearchResultsOpportunity {
   items: OpportunityInfoAnalytics[];

@@ -36,7 +36,6 @@ export const OpportunityFilterVertical: React.FC<{
   onSubmit?: (fieldValues: OpportunitySearchFilterCombined) => void;
   onCancel?: () => void;
   clearButtonText?: string;
-  cancelButtonText?: string;
   submitButtonText?: string;
   filterOptions: OpportunityFilterOptions[];
   onClear?: () => void;
@@ -54,7 +53,6 @@ export const OpportunityFilterVertical: React.FC<{
   lookups_statuses,
   onSubmit,
   onCancel,
-  cancelButtonText = "Cancel",
   submitButtonText = "Submit",
   filterOptions,
   onClear,

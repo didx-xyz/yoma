@@ -14,7 +14,7 @@ import { type Organization } from "~/api/models/organisation";
 import { getOrganisationById } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
-import { authOptions, type User } from "~/server/auth";
+import { authOptions } from "~/server/auth";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
@@ -34,15 +34,8 @@ import {
   searchOrganizationYouth,
 } from "~/api/services/organizationDashboard";
 import type { GetServerSidePropsContext } from "next";
-import {
-  getCategories,
-  getOpportunitiesAdmin,
-  searchOpportunities,
-} from "~/api/services/opportunities";
-import {
-  OpportunityCategory,
-  OpportunitySearchResults,
-} from "~/api/models/opportunity";
+import { getCategories } from "~/api/services/opportunities";
+import type { OpportunityCategory } from "~/api/models/opportunity";
 import { getServerSession } from "next-auth";
 import { Loading } from "~/components/Status/Loading";
 import { OrganisationRowFilter } from "~/components/Organisation/Dashboard/OrganisationRowFilter";
@@ -55,7 +48,7 @@ import iconZlto from "public/images/icon-zlto.svg";
 import { DATETIME_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
-import {
+import type {
   OrganizationSearchFilterSummary,
   OrganizationSearchResultsOpportunity,
   OrganizationSearchResultsSummary,
@@ -95,8 +88,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
-  const { query, pageSelectedOpportunities, pageCompletedYouth } =
-    context.query;
+  // const { query, pageSelectedOpportunities, pageCompletedYouth } =
+  //   context.query;
   const queryClient = new QueryClient(config);
 
   // 👇 prefetch queries on server
@@ -160,7 +153,6 @@ const colors = [
 type VisualizationSelectionArray = {
   column?: number;
   row?: number;
-  // Add other properties as needed
 }[];
 
 const updateCustomLegendLineChart = (
@@ -215,7 +207,6 @@ const updateCustomLegendLineChart = (
 
 const LineChart: React.FC<{
   id: string;
-  title: string;
   data: TimeIntervalSummary | undefined;
   width: number;
   height: number;
@@ -224,7 +215,6 @@ const LineChart: React.FC<{
   hideAxisesAndGridLines?: boolean;
 }> = ({
   id,
-  title,
   data,
   width,
   height,
@@ -233,8 +223,8 @@ const LineChart: React.FC<{
   hideAxisesAndGridLines,
 }) => {
   // map the data to the format required by the chart
-  const localData = useMemo(() => {
-    if (!data) return;
+  const localData = useMemo<(string | number)[][]>(() => {
+    if (!data) return [];
 
     // if no data was provided, supply empty values so that the chart does not show errors
     if (!(data?.data && data.data.length > 0))
@@ -244,8 +234,6 @@ const LineChart: React.FC<{
           values: [0],
         },
       ];
-
-    //return null;
 
     const mappedData = data.data.map((x) => {
       const date = new Date(x.date);
@@ -264,7 +252,7 @@ const LineChart: React.FC<{
     if (!data || !localData) return;
     // Update the custom legend when the chart is ready (ready event does not always fire)
     updateCustomLegendLineChart(`legend_div_${id}`, data, undefined);
-  }, [localData, data]);
+  }, [id, localData, data]);
 
   if (!localData) {
     return (
@@ -384,7 +372,10 @@ const PieChart: React.FC<{
   colors?: string[];
 }> = ({ id, title, data, colors }) => {
   return (
-    <div className="relative w-72 overflow-hidden rounded-lg bg-white pt-10 shadow">
+    <div
+      key={id}
+      className="relative w-72 overflow-hidden rounded-lg bg-white pt-10 shadow"
+    >
       <div
         className="flex flex-row items-center gap-2"
         style={{ position: "absolute", top: "10px", left: "10px", zIndex: 1 }}
@@ -478,8 +469,6 @@ const OrganisationDashboard: NextPageWithLayout<{
   id: string;
   error: string;
 }> = ({ id, error }) => {
-  if (error) return <Unauthorized />;
-
   const router = useRouter();
   const myRef = useRef<HTMLDivElement>(null);
 
@@ -487,6 +476,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   const { data: lookups_categories } = useQuery<OpportunityCategory[]>({
     queryKey: ["OrganisationDashboardCategories"],
     queryFn: () => getCategories(),
+    enabled: !error,
   });
   //TODO: this has been removed till the on-demand dropdown is developed
   // const { data: lookups_opportunities } = useQuery<OpportunitySearchResults>({
@@ -510,6 +500,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   // });
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
+    enabled: !error,
   });
 
   // get filter parameters from route
@@ -538,8 +529,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     useQuery<OrganizationSearchResultsSummary>({
       queryKey: [
         "OrganizationSearchResultsSummary",
-        pageSelectedOpportunities,
-        pageCompletedYouth,
+
         categories,
         opportunities,
         startDate,
@@ -582,7 +572,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           pageSize: null,
         });
       },
-      //enabled: isSearchPerformed, // only run query if search is executed
+      enabled: !error,
     });
 
   // QUERY: SELECTED OPPORTUNITIES
@@ -590,7 +580,15 @@ const OrganisationDashboard: NextPageWithLayout<{
     data: selectedOpportunities,
     isLoading: selectedOpportunitiesIsLoading,
   } = useQuery<OrganizationSearchResultsOpportunity>({
-    queryKey: ["OrganizationSearchResultsSelectedOpportunities", id],
+    queryKey: [
+      "OrganizationSearchResultsSelectedOpportunities",
+      id,
+      pageSelectedOpportunities,
+      categories,
+      opportunities,
+      startDate,
+      endDate,
+    ],
     queryFn: () =>
       searchOrganizationOpportunities({
         organization: id,
@@ -629,16 +627,24 @@ const OrganisationDashboard: NextPageWithLayout<{
           : 1,
         pageSize: PAGE_SIZE,
       }),
+    enabled: !error,
   });
 
   // QUERY: COMPLETED YOUTH
   const { data: completedYouth, isLoading: completedYouthIsLoading } =
     useQuery<OrganizationSearchResultsYouth>({
-      queryKey: ["OrganizationSearchResultsCompletedYouth", id],
+      queryKey: [
+        "OrganizationSearchResultsCompletedYouth",
+        id,
+        pageCompletedYouth,
+        categories,
+        opportunities,
+        startDate,
+        endDate,
+      ],
       queryFn: () =>
         searchOrganizationYouth({
           organization: id,
-          //valueContains: query ? decodeURIComponent(query.toString()) : null,
           categories:
             categories != undefined
               ? categories
@@ -824,35 +830,35 @@ const OrganisationDashboard: NextPageWithLayout<{
     ],
   );
 
-  const onClearFilter = useCallback(() => {
-    void router.push(`/organisations/${id}`, undefined, { scroll: true });
-  }, [router]);
+  //const onClearFilter = useCallback(() => {
+  //   void router.push(`/organisations/${id}`, undefined, { scroll: true });
+  // }, [router]);
 
   //
-  const [isExportButtonLoading, setIsExportButtonLoading] = useState(false);
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const handleExportToCSV = useCallback(
-    async () => {
-      setIsExportButtonLoading(true);
+  // const [isExportButtonLoading, setIsExportButtonLoading] = useState(false);
+  // const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  // const handleExportToCSV = useCallback(
+  //   async () => {
+  //     setIsExportButtonLoading(true);
 
-      // try {
-      //   opportunitySearchFilter.pageSize = PAGE_SIZE_MAXIMUM;
-      //   const data = await getOpportunitiesAdminExportToCSV(
-      //     opportunitySearchFilter,
-      //   );
-      //   if (!data) return;
+  //     // try {
+  //     //   opportunitySearchFilter.pageSize = PAGE_SIZE_MAXIMUM;
+  //     //   const data = await getOpportunitiesAdminExportToCSV(
+  //     //     opportunitySearchFilter,
+  //     //   );
+  //     //   if (!data) return;
 
-      //   FileSaver.saveAs(data);
+  //     //   FileSaver.saveAs(data);
 
-      //   setExportDialogOpen(false);
-      // } finally {
-      //   setIsExportButtonLoading(false);
-      // }
-    },
-    [
-      //opportunitySearchFilter, setIsExportButtonLoading, setExportDialogOpen
-    ],
-  );
+  //     //   setExportDialogOpen(false);
+  //     // } finally {
+  //     //   setIsExportButtonLoading(false);
+  //     // }
+  //   },
+  //   [
+  //     //opportunitySearchFilter, setIsExportButtonLoading, setExportDialogOpen
+  //   ],
+  // );
 
   // 🔔 CHANGE EVENTS
   const handlePagerChangeSelectedOpportunities = useCallback(
@@ -869,6 +875,8 @@ const OrganisationDashboard: NextPageWithLayout<{
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
+
+  if (error) return <Unauthorized />;
 
   return (
     <>
@@ -947,11 +955,11 @@ const OrganisationDashboard: NextPageWithLayout<{
                   lookups_categories={lookups_categories}
                   //TODO: this has been removed till the on-demand dropdown is developed */}
                   //lookups_opportunities={lookups_opportunities}
-                  clearButtonText="Clear"
-                  onClear={onClearFilter}
+                  //clearButtonText="Clear"
+                  //onClear={onClearFilter}
                   onSubmit={(e) => onSubmitFilter(e)}
-                  totalCount={0}
-                  exportToCsv={handleExportToCSV}
+                  //totalCount={0}
+                  //exportToCsv={handleExportToCSV}
                 />
                 {/* FILTER BADGES */}
                 <FilterBadges
@@ -989,7 +997,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 {searchResults?.opportunities?.viewedCompleted && (
                   <LineChart
                     id="viewedCompleted"
-                    title="All visitors"
+                    //title="All visitors"
                     data={searchResults.opportunities.viewedCompleted}
                     width={602}
                     height={328}
@@ -1115,7 +1123,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   searchResults?.skills?.items.data.length > 1 && (
                     <LineChart
                       id="totalUniqueSkills"
-                      title="Total unique skills"
+                      //title="Total unique skills"
                       data={searchResults?.skills?.items}
                       width={291}
                       height={160}
@@ -1248,9 +1256,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                               <tr key={opportunity.id} className="border-gray">
                                 <td>
                                   <Link
-                                    href={`/organisations/${
-                                      opportunity.organizationId
-                                    }/opportunities/${
+                                    href={`/organisations/${id}/opportunities/${
                                       opportunity.id
                                     }/info?returnUrl=${encodeURIComponent(
                                       router.asPath,

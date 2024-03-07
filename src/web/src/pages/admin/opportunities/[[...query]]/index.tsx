@@ -618,7 +618,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           lookups_zltoRewardRanges={lookups_zltoRewardRanges}
           lookups_publishedStates={lookups_publishedStates}
           lookups_statuses={lookups_statuses}
-          cancelButtonText="Close"
           submitButtonText="Done"
           onCancel={onCloseFilter}
           onSubmit={onSubmitFilter}

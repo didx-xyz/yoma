@@ -2,19 +2,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
 import { type FieldValues, Controller, useForm } from "react-hook-form";
 import zod from "zod";
-import type {
-  OpportunityCategory,
-  OpportunitySearchResults,
-} from "~/api/models/opportunity";
+import type { OpportunityCategory } from "~/api/models/opportunity";
 import type { SelectOption } from "~/api/models/lookups";
 import Select, { components, type ValueContainerProps } from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
-import {
-  OrganizationSearchFilterBase,
-  OrganizationSearchFilterSummary,
-} from "~/api/models/organizationDashboard";
+import type { OrganizationSearchFilterBase } from "~/api/models/organizationDashboard";
 import { IoMdDownload } from "react-icons/io";
 
 const ValueContainer = ({
@@ -58,26 +52,26 @@ export const OrganisationRowFilter: React.FC<{
   htmlRef: HTMLDivElement;
   searchFilter: OrganizationSearchFilterBase | null;
   lookups_categories?: OpportunityCategory[];
-  lookups_opportunities?: OpportunitySearchResults;
+  //lookups_opportunities?: OpportunitySearchResults;
 
   onSubmit?: (fieldValues: OrganizationSearchFilterBase) => void;
-  onClear?: () => void;
+  //onClear?: () => void;
   onOpenFilterFullWindow?: () => void;
-  clearButtonText?: string;
+  //clearButtonText?: string;
 
-  totalCount?: number;
+  //totalCount?: number;
   exportToCsv?: (arg0: boolean) => void;
 }> = ({
   htmlRef,
   searchFilter,
   lookups_categories,
-  lookups_opportunities,
+  //lookups_opportunities,
 
   onSubmit,
-  onClear,
-  clearButtonText = "Clear",
+  //onClear,
+  //clearButtonText = "Clear",
 
-  totalCount,
+  //totalCount,
   exportToCsv,
 }) => {
   const schema = zod.object({
@@ -115,61 +109,6 @@ export const OrganisationRowFilter: React.FC<{
     [onSubmit],
   );
 
-  // const onClickCategoryFilter = useCallback(
-  //   (cat: OpportunityCategory) => {
-  //     if (!searchFilter || !onSubmit) return;
-
-  //     const prev = { ...searchFilter };
-  //     prev.categories = prev.categories ?? [];
-
-  //     if (prev.categories.includes(cat.name)) {
-  //       prev.categories = prev.categories.filter((x) => x !== cat.name);
-  //     } else {
-  //       prev.categories.push(cat.name);
-  //     }
-
-  //     onSubmit(prev);
-  //   },
-  //   [searchFilter, onSubmit],
-  // );
-
-  // // Function to handle removing an item from an array in the filter object
-  // const removeFromArray = useCallback(
-  //   (key: keyof OrganizationSearchFilterBase, item: string) => {
-  //     if (!searchFilter || !onSubmit) return;
-  //     if (searchFilter) {
-  //       const updatedFilter: any = {
-  //         ...searchFilter,
-  //       };
-  //       updatedFilter[key] = updatedFilter[key]?.filter(
-  //         (val: any) => val !== item,
-  //       );
-  //       onSubmit(updatedFilter);
-  //     }
-  //   },
-  //   [searchFilter, onSubmit],
-  // );
-
-  // // Function to handle removing a value from the filter object
-  // const removeValue = useCallback(
-  //   (key: keyof OrganizationSearchFilterQueryTerm) => {
-  //     if (!searchFilter || !onSubmit) return;
-  //     if (searchFilter) {
-  //       const updatedFilter = { ...searchFilter };
-  //       updatedFilter[key] = null;
-  //       onSubmit(updatedFilter);
-  //     }
-  //   },
-  //   [searchFilter, onSubmit],
-  // );
-
-  // const onSearchBadgesSubmit = useCallback(
-  //   (filter: any) => {
-  //     if (onSubmit) onSubmit(filter);
-  //   },
-  //   [onSubmit],
-  // );
-
   return (
     <div className="flex flex-grow flex-col">
       <form
@@ -180,13 +119,6 @@ export const OrganisationRowFilter: React.FC<{
           <div className="mr-4 text-sm font-bold text-white">Filter by:</div>
 
           <div className="flex flex-grow flex-row gap-2">
-            {/* VALUECONTAINS: hidden input */}
-            {/* <input
-                  type="hidden"
-                  {...form.register("valueContains")}
-                  value={searchFilter?.valueContains ?? ""}
-                /> */}
-
             {/* OPPORTUNITIES */}
             {/* TODO: this has been removed till the on-demand dropdown is developed */}
             {/* {lookups_opportunities && (
