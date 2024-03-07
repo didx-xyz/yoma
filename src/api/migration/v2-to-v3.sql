@@ -783,7 +783,11 @@ SELECT
     ) AS "StatusId",
     NULL::varchar(500) AS "Keywords",
     start_of_day(o.startdate) AT TIME ZONE 'UTC' AS "DateStart",
-    end_of_day(o.enddate) AT TIME ZONE 'UTC' AS "DateEnd",
+    CASE
+	    WHEN o.enddate IS NULL THEN NULL
+		WHEN o.enddate::date = '3850-01-02' THEN NULL
+    	ELSE end_of_day(o.enddate) AT TIME ZONE 'UTC'
+    END AS "DateEnd",
     true AS "CredentialIssuanceEnabled",
     'Opportunity|Default' AS "SSISchemaName",
     o.createdat AT TIME ZONE 'UTC' as "DateCreated",
@@ -968,7 +972,11 @@ WITH Inserted AS (
             ELSE NULL 
         END AS "CommentVerification",
         start_of_day(C.startdate) AT TIME ZONE 'UTC' AS "DateStart",
-        end_of_day(C.enddate) AT TIME ZONE 'UTC' AS "DateEnd",
+        CASE 
+	        WHEN C.enddate IS NULL THEN NULL
+			WHEN C.enddate::date = '3850-01-02' THEN NULL
+		    ELSE end_of_day(C.enddate) AT TIME ZONE 'UTC'
+		END AS "DateEnd",
         C.verifiedat AS "DateCompleted",
         CASE 
             WHEN C.verifiedat IS NOT NULL AND C.approved = TRUE AND ABS(C.zltoreward) > 0 THEN CAST(ABS(C.zltoreward) AS numeric(8,2))
