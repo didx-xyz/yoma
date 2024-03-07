@@ -195,7 +195,7 @@ namespace Yoma.Core.Api.Controllers
         #endregion
 
         #region Administrative Actions
-        [SwaggerOperation(Summary = "Return a list of categories associated with opportunities. Optionally filter by organization")]
+        [SwaggerOperation(Summary = "Return a list of categories associated with opportunities, optionally filter by organization")]
         [HttpGet("search/filter/category/admin")]
         [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityCategory>), (int)HttpStatusCode.OK)]
         [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
