@@ -61,7 +61,7 @@ releases:
     namespace: {{ .Values.namespace }}
     # https://github.com/bitnami/charts/tree/main/bitnami/postgresql
     chart: oci://registry-1.docker.io/bitnamicharts/postgresql
-    version: "14.2.3"
+    version: "14.3.1"
     installed: {{ .Values.postgresEnabled }}
     set:
       - name: fullnameOverride
@@ -79,7 +79,7 @@ releases:
     namespace: {{ .Values.namespace }}
     # https://github.com/bitnami/charts/tree/main/bitnami/postgresql
     chart: oci://registry-1.docker.io/bitnamicharts/postgresql
-    version: "14.2.3"
+    version: "14.3.1"
     installed: {{ .Values.postgresEnabled }}
     set:
       - name: fullnameOverride
