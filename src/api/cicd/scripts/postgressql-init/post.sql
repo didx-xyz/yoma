@@ -380,8 +380,7 @@ SELECT
 	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
 	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
-WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active')
-ORDER BY "DateCreated"
+WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active');
 
 -- Saved
 INSERT INTO "Opportunity"."MyOpportunity"("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",

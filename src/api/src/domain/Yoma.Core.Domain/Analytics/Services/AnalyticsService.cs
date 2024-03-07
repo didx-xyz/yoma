@@ -76,12 +76,12 @@ namespace Yoma.Core.Domain.Analytics.Services
         public OrganizationSearchResultsEngagement SearchOrganizationEngagement(OrganizationSearchFilterEngagement filter)
         {
             if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Analytics))
-                return SearchOrganizationSummaryInternal(filter);
+                return SearchOrganizationEngagementInternal(filter);
 
             var result = _memoryCache.GetOrCreate($"{nameof(OrganizationSearchResultsEngagement)}:{HashHelper.ComputeSHA256Hash(filter)}", entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
-                return SearchOrganizationSummaryInternal(filter);
+                return SearchOrganizationEngagementInternal(filter);
             }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(OrganizationSearchResultsEngagement)}s'");
             return result;
         }
@@ -120,7 +120,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             return _blobService.GetURL(id.Value);
         }
 
-        private OrganizationSearchResultsEngagement SearchOrganizationSummaryInternal(OrganizationSearchFilterEngagement filter)
+        private OrganizationSearchResultsEngagement SearchOrganizationEngagementInternal(OrganizationSearchFilterEngagement filter)
         {
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
@@ -341,7 +341,7 @@ namespace Yoma.Core.Domain.Analytics.Services
                     OrganizationLogoId = result.Opportunity.OrganizationLogoId,
                     ViewedCount = result.ViewedCount,
                     CompletedCount = result.CompletedCount,
-                    ConversionRatioPercentage = (result.ViewedCount > 0) ?  Math.Min(100, Math.Round((decimal)result.CompletedCount / result.ViewedCount * 100, 2)) : 0
+                    ConversionRatioPercentage = (result.ViewedCount > 0) ? Math.Min(100, Math.Round((decimal)result.CompletedCount / result.ViewedCount * 100, 2)) : 0
                 });
 
             query = query.OrderByDescending(o => o.ConversionRatioPercentage).ThenBy(o => o.Title);
