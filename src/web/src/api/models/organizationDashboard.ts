@@ -1,5 +1,6 @@
 import type { PaginationFilter } from "./common";
 import type { Skill } from "./lookups";
+import type { Status } from "./opportunity";
 
 export interface OrganizationSearchFilterBase extends PaginationFilter {
   organization: string;
@@ -94,6 +95,7 @@ export interface OrganizationSearchResultsOpportunity {
 export interface OpportunityInfoAnalytics {
   id: string;
   title: string;
+  status: Status;
   organizationLogoId: string | null;
   organizationLogoURL: string | null;
   viewedCount: number;
@@ -111,11 +113,13 @@ export enum OrganisationDashboardFilterOptions {
   COUNTRIES = "countries",
   VIEWALLFILTERSBUTTON = "viewAllFiltersButton",
 }
+
 export interface YouthInfo {
   userId: string;
   userDisplayName: string;
   opportunityId: string;
   opportunityTitle: string;
+  opportunityStatus: Status;
   organizationLogoId: string | null;
   organizationLogoURL: string | null;
   dateCompleted: string | null;

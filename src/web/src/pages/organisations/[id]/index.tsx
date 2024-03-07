@@ -29,7 +29,6 @@ import {
 } from "react-icons/io";
 import { useRouter } from "next/router";
 import {
-  getCategoriesAdmin,
   searchOrganizationEngagement,
   searchOrganizationOpportunities,
   searchOrganizationYouth,
@@ -57,6 +56,7 @@ import type {
 } from "~/api/models/organizationDashboard";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import moment from "moment";
+import { getCategoriesAdmin } from "~/api/services/opportunities";
 
 interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
@@ -907,7 +907,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     {moment(new Date(searchResults?.dateStamp)).format(
                       DATETIME_FORMAT_HUMAN,
                     )}
-                  </span>{" "}
+                  </span>
                 </span>
               )}
             </div>
@@ -1226,6 +1226,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                               <th>Views</th>
                               <th>Converson ratio</th>
                               <th>Completions</th>
+                              <th>Status</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1242,9 +1243,16 @@ const OrganisationDashboard: NextPageWithLayout<{
                                     {opportunity.title}
                                   </Link>
                                 </td>
-                                <td>{opportunity.viewedCount}</td>
-                                <td>{opportunity.conversionRatioPercentage}</td>
-                                <td>{opportunity.completedCount}</td>
+                                <td className="text-center">
+                                  {opportunity.viewedCount}
+                                </td>
+                                <td className="text-center">
+                                  {opportunity.conversionRatioPercentage}
+                                </td>
+                                <td className="text-center">
+                                  {opportunity.completedCount}
+                                </td>
+                                <td>{opportunity.status}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1306,6 +1314,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                             <th>Opportunity</th>
                             <th>Date connected</th>
                             <th>Verified</th>
+                            <th>Status</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1326,8 +1335,19 @@ const OrganisationDashboard: NextPageWithLayout<{
                                   {opportunity.opportunityTitle}
                                 </Link>
                               </td>
-                              <td>{opportunity.dateCompleted}</td>
-                              <td>{opportunity.verified}</td>
+                              <td>
+                                {opportunity.dateCompleted
+                                  ? moment(
+                                      new Date(opportunity.dateCompleted),
+                                    ).format(DATETIME_FORMAT_HUMAN)
+                                  : ""}
+                              </td>
+                              <td>
+                                {opportunity.verified
+                                  ? "Verified"
+                                  : "Not verified"}
+                              </td>
+                              <td>{opportunity.opportunityStatus}</td>
                             </tr>
                           ))}
                         </tbody>

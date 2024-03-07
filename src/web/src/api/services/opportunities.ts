@@ -45,6 +45,18 @@ export const getCategories = async (
   return data;
 };
 
+// this is used for orgAdmin dashboards, admin pages etc
+export const getCategoriesAdmin = async (
+  organisationId: string,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<OpportunityCategory[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<OpportunityCategory[]>(
+    `/opportunity/search/filter/category/admin?organizationId=${organisationId}`,
+  );
+  return data;
+};
+
 export const getDifficulties = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityDifficulty[]> => {

@@ -1,4 +1,4 @@
-import { GetStaticPropsContext, type GetServerSidePropsContext } from "next";
+import { type GetServerSidePropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type {
@@ -7,19 +7,6 @@ import type {
   OrganizationSearchResultsSummary,
   OrganizationSearchResultsYouth,
 } from "../models/organizationDashboard";
-import { OpportunityCategory } from "../models/opportunity";
-
-// this is used for orgAdmin dashboards, admin pages etc
-export const getCategoriesAdmin = async (
-  organisationId: string,
-  context?: GetServerSidePropsContext | GetStaticPropsContext,
-): Promise<OpportunityCategory[]> => {
-  const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.get<OpportunityCategory[]>(
-    `/organization/search/filter/category/admin?organisationId=${organisationId}`,
-  );
-  return data;
-};
 
 export const searchOrganizationEngagement = async (
   filter: OrganizationSearchFilterBase,
