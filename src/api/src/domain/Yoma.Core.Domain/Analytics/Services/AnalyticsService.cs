@@ -136,7 +136,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             var queryViewed = MyOpportunityQueryViewed(queryBase);
 
             var itemsViewed = queryViewed.GroupBy(opportunity =>
-                DateTimeOffset.UtcNow.Date.AddDays(-(int)opportunity.DateModified.DayOfWeek).AddDays(7)
+                 opportunity.DateModified.AddDays(-(int)opportunity.DateModified.DayOfWeek).AddDays(7).Date
                 )
                 .Select(group => new
                 {
@@ -153,7 +153,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             var queryCompleted = MyOpportunityQueryCompleted(queryBase);
 
             var itemsCompleted = queryCompleted.GroupBy(opportunity =>
-                 DateTimeOffset.UtcNow.Date.AddDays(-(int)opportunity.DateModified.DayOfWeek).AddDays(7)
+                 opportunity.DateModified.AddDays(-(int)opportunity.DateModified.DayOfWeek).AddDays(7).Date
                  )
                  .Select(group => new
                  {
@@ -229,7 +229,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
             var itemSkills = skills
                 .SelectMany(o => (o.Skills ?? new List<Skill>()).Select(skill => new { o.DateModified, SkillId = skill.Id }))
-                .GroupBy(x => DateTimeOffset.UtcNow.Date.AddDays(-(int)x.DateModified.DayOfWeek).AddDays(7))
+                .GroupBy(x => x.DateModified.AddDays(-(int)x.DateModified.DayOfWeek).AddDays(7).Date)
                 .Select(group => new
                 {
                     WeekEnding = group.Key,
