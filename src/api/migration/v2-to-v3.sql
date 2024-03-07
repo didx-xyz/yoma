@@ -973,8 +973,9 @@ WITH Inserted AS (
         END AS "CommentVerification",
         start_of_day(C.startdate) AT TIME ZONE 'UTC' AS "DateStart",
         CASE 
-	        WHEN C.enddate IS NULL THEN NULL
-			WHEN C.enddate::date = '3850-01-02' THEN NULL
+		    WHEN C.enddate IS NULL AND (C.verifiedat IS NOT NULL AND C.approved = TRUE) THEN end_of_day(C.verifiedat) AT TIME ZONE 'UTC'
+		    WHEN C.enddate::date = '3850-01-02' AND (C.verifiedat IS NOT NULL AND C.approved = TRUE) THEN end_of_day(C.verifiedat) AT TIME ZONE 'UTC'
+		    WHEN C.enddate IS NULL OR C.enddate::date = '3850-01-02' THEN NULL
 		    ELSE end_of_day(C.enddate) AT TIME ZONE 'UTC'
 		END AS "DateEnd",
         C.verifiedat AS "DateCompleted",
