@@ -175,7 +175,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   className="inline font-bold text-white hover:text-gray"
                   href={
                     returnUrl?.toString() ??
-                    `/organisations/${id}/opportunities`
+                    `/organisations/${opportunity?.organizationId}/opportunities`
                   }
                 >
                   <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
