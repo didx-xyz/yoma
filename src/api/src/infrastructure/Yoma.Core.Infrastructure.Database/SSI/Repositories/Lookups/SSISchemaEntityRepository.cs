@@ -49,7 +49,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
                         Description = o.SSISchemaType.Description,
                         SupportMultiple = o.SSISchemaType.SupportMultiple
                     }).OrderBy(o => o.Name).ToList() : null
-            }).AsSingleQuery(); //MS SQL: .AsSplitQuery();
+            }).AsSplitQuery(); //AsSingleQuery() causes bottlenecks;
         }
 
         public Task<SSISchemaEntity> Create(SSISchemaEntity item)
