@@ -34,6 +34,7 @@ export const getOpportunitiesAdmin = async (
   return data;
 };
 
+// this is used for public youth
 export const getCategories = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityCategory[]> => {

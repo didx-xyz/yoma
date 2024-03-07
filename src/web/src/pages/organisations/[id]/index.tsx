@@ -29,12 +29,12 @@ import {
 } from "react-icons/io";
 import { useRouter } from "next/router";
 import {
+  getCategoriesAdmin,
   searchOrganizationEngagement,
   searchOrganizationOpportunities,
   searchOrganizationYouth,
 } from "~/api/services/organizationDashboard";
 import type { GetServerSidePropsContext } from "next";
-import { getCategories } from "~/api/services/opportunities";
 import type { OpportunityCategory } from "~/api/models/opportunity";
 import { getServerSession } from "next-auth";
 import { Loading } from "~/components/Status/Loading";
@@ -88,38 +88,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
-  // const { query, pageSelectedOpportunities, pageCompletedYouth } =
-  //   context.query;
   const queryClient = new QueryClient(config);
 
   // 👇 prefetch queries on server
   await Promise.all([
-    // await queryClient.prefetchQuery({
-    //   queryKey: ["OrganisationDashboardCategories"],
-    //   queryFn: () => getOpportunityCategories(context),
-    // }),
-    // await queryClient.prefetchQuery({
-    //   queryKey: ["OrganisationDashboardOpportunities", id],
-    //   queryFn: () =>
-    //     getOpportunitiesAdmin(
-    //       {
-    //         types: null,
-    //         categories: null,
-    //         languages: null,
-    //         countries: null,
-    //         organizations: [id],
-    //         commitmentIntervals: null,
-    //         zltoRewardRanges: null,
-    //         valueContains: null,
-    //         startDate: null,
-    //         endDate: null,
-    //         statuses: null,
-    //         pageNumber: 1,
-    //         pageSize: 1000,
-    //       },
-    //       context,
-    //     ),
-    // }),
+    await queryClient.prefetchQuery({
+      queryKey: ["OrganisationDashboardCategories", id],
+      queryFn: () => getCategoriesAdmin(id, context),
+    }),
     await queryClient.prefetchQuery({
       queryKey: ["organisation", id],
       queryFn: () => getOrganisationById(id, context),
@@ -474,8 +450,8 @@ const OrganisationDashboard: NextPageWithLayout<{
 
   // 👇 use prefetched queries from server
   const { data: lookups_categories } = useQuery<OpportunityCategory[]>({
-    queryKey: ["OrganisationDashboardCategories"],
-    queryFn: () => getCategories(),
+    queryKey: ["OrganisationDashboardCategories", id],
+    queryFn: () => getCategoriesAdmin(id),
     enabled: !error,
   });
   //TODO: this has been removed till the on-demand dropdown is developed
@@ -529,7 +505,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     useQuery<OrganizationSearchResultsSummary>({
       queryKey: [
         "OrganizationSearchResultsSummary",
-
+        id,
         categories,
         opportunities,
         startDate,
