@@ -4,14 +4,7 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import React, {
-  type ReactElement,
-  useCallback,
-  useState,
-  useRef,
-  useMemo,
-  useEffect,
-} from "react";
+import React, { type ReactElement, useCallback, useState, useRef, useMemo, useEffect } from "react";
 import { OpportunityFilterOptions } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import MainLayout from "~/components/Layout/Main";
@@ -173,132 +166,120 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
   // QUERY: SEARCH RESULTS
   // the filter values from the querystring are mapped to it's corresponding id
-  const { data: searchResults, isLoading } =
-    useQuery<OpportunitySearchResultsInfo>({
-      queryKey: [
-        "OpportunitiesSearch",
-        query,
-        page,
-        categories,
-        countries,
-        languages,
-        types,
-        commitmentIntervals,
-        organizations,
-        zltoRewardRanges,
-        startDate,
-        endDate,
-        statuses,
-      ],
-      queryFn: async () =>
-        await getOpportunitiesAdmin({
-          pageNumber: page ? parseInt(page.toString()) : 1,
-          pageSize: PAGE_SIZE,
-          valueContains: query ? decodeURIComponent(query.toString()) : null,
+  const { data: searchResults, isLoading } = useQuery<OpportunitySearchResultsInfo>({
+    queryKey: [
+      "OpportunitiesSearch",
+      query,
+      page,
+      categories,
+      countries,
+      languages,
+      types,
+      commitmentIntervals,
+      organizations,
+      zltoRewardRanges,
+      startDate,
+      endDate,
+      statuses,
+    ],
+    queryFn: async () =>
+      await getOpportunitiesAdmin({
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: PAGE_SIZE,
+        valueContains: query ? decodeURIComponent(query.toString()) : null,
 
-          types:
-            types != undefined
-              ? types
-                  ?.toString()
-                  .split(",")
-                  .map((x) => {
-                    const item = lookups_types.find((y) => y.name === x);
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
-          categories:
-            categories != undefined
-              ? categories
-                  ?.toString()
-                  .split(",")
-                  .map((x) => {
-                    const item = lookups_categories.find((y) => y.name === x);
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
-          countries:
-            countries != undefined
-              ? countries
-                  ?.toString()
-                  .split(",")
-                  .map((x) => {
-                    const item = lookups_countries.find((y) => y.name === x);
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
-          languages:
-            languages != undefined
-              ? languages
-                  ?.toString()
-                  .split(",")
-                  .map((x) => {
-                    const item = lookups_languages.find((y) => y.name === x);
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
-          organizations:
-            organizations != undefined
-              ? organizations
-                  ?.toString()
-                  .split(",")
-                  .map((x) => {
-                    const item = lookups_organisations.find(
-                      (y) => y.name === x,
-                    );
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
-          commitmentIntervals:
-            commitmentIntervals != undefined
-              ? commitmentIntervals?.toString().split(",")
-              : null,
-          zltoRewardRanges:
-            zltoRewardRanges != undefined
-              ? zltoRewardRanges?.toString().split(",")
-              : null,
-          startDate: startDate != undefined ? startDate.toString() : null,
-          endDate: endDate != undefined ? endDate.toString() : null,
-          statuses:
-            statuses != undefined
-              ? statuses
-                  ?.toString()
-                  .split(",")
-                  .map((x) => {
-                    const item = lookups_publishedStates.find(
-                      (y) => y.label === x,
-                    );
-                    return item ? item?.value : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
-        }),
-      //enabled: isSearchPerformed, // only run query if search is executed
-    });
+        types:
+          types != undefined
+            ? types
+                ?.toString()
+                .split(",")
+                .map((x) => {
+                  const item = lookups_types.find((y) => y.name === x);
+                  return item ? item?.id : "";
+                })
+                .filter((x) => x != "")
+            : null,
+        categories:
+          categories != undefined
+            ? categories
+                ?.toString()
+                .split(",")
+                .map((x) => {
+                  const item = lookups_categories.find((y) => y.name === x);
+                  return item ? item?.id : "";
+                })
+                .filter((x) => x != "")
+            : null,
+        countries:
+          countries != undefined
+            ? countries
+                ?.toString()
+                .split(",")
+                .map((x) => {
+                  const item = lookups_countries.find((y) => y.name === x);
+                  return item ? item?.id : "";
+                })
+                .filter((x) => x != "")
+            : null,
+        languages:
+          languages != undefined
+            ? languages
+                ?.toString()
+                .split(",")
+                .map((x) => {
+                  const item = lookups_languages.find((y) => y.name === x);
+                  return item ? item?.id : "";
+                })
+                .filter((x) => x != "")
+            : null,
+        organizations:
+          organizations != undefined
+            ? organizations
+                ?.toString()
+                .split(",")
+                .map((x) => {
+                  const item = lookups_organisations.find((y) => y.name === x);
+                  return item ? item?.id : "";
+                })
+                .filter((x) => x != "")
+            : null,
+        commitmentIntervals: commitmentIntervals != undefined ? commitmentIntervals?.toString().split(",") : null,
+        zltoRewardRanges: zltoRewardRanges != undefined ? zltoRewardRanges?.toString().split(",") : null,
+        startDate: startDate != undefined ? startDate.toString() : null,
+        endDate: endDate != undefined ? endDate.toString() : null,
+        statuses:
+          statuses != undefined
+            ? statuses
+                ?.toString()
+                .split(",")
+                .map((x) => {
+                  const item = lookups_publishedStates.find((y) => y.label === x);
+                  return item ? item?.value : "";
+                })
+                .filter((x) => x != "")
+            : null,
+      }),
+    //enabled: isSearchPerformed, // only run query if search is executed
+  });
 
   // search filter state
-  const [opportunitySearchFilter, setOpportunitySearchFilter] =
-    useState<OpportunitySearchFilterCombined>({
-      pageNumber: page ? parseInt(page.toString()) : 1,
-      pageSize: PAGE_SIZE,
-      categories: null,
-      countries: null,
-      languages: null,
-      types: null,
-      valueContains: null,
-      commitmentIntervals: null,
-      mostViewed: null,
-      organizations: null,
-      zltoRewardRanges: null,
-      publishedStates: null,
-      startDate: null,
-      endDate: null,
-      statuses: null,
-    });
+  const [opportunitySearchFilter, setOpportunitySearchFilter] = useState<OpportunitySearchFilterCombined>({
+    pageNumber: page ? parseInt(page.toString()) : 1,
+    pageSize: PAGE_SIZE,
+    categories: null,
+    countries: null,
+    languages: null,
+    types: null,
+    valueContains: null,
+    commitmentIntervals: null,
+    mostViewed: null,
+    organizations: null,
+    zltoRewardRanges: null,
+    publishedStates: null,
+    startDate: null,
+    endDate: null,
+    statuses: null,
+  });
 
   // sets the filter values from the querystring to the filter state
   useEffect(() => {
@@ -309,31 +290,16 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         valueContains: query ? decodeURIComponent(query.toString()) : null,
         mostViewed: null,
         types: types != undefined ? types?.toString().split(",") : null,
-        categories:
-          categories != undefined ? categories?.toString().split(",") : null,
-        countries:
-          countries != undefined && countries != null
-            ? countries?.toString().split(",")
-            : null,
-        languages:
-          languages != undefined ? languages?.toString().split(",") : null,
-        organizations:
-          organizations != undefined
-            ? organizations?.toString().split(",")
-            : null,
-        commitmentIntervals:
-          commitmentIntervals != undefined
-            ? commitmentIntervals?.toString().split(",")
-            : null,
-        zltoRewardRanges:
-          zltoRewardRanges != undefined
-            ? zltoRewardRanges?.toString().split(",")
-            : null,
+        categories: categories != undefined ? categories?.toString().split(",") : null,
+        countries: countries != undefined && countries != null ? countries?.toString().split(",") : null,
+        languages: languages != undefined ? languages?.toString().split(",") : null,
+        organizations: organizations != undefined ? organizations?.toString().split(",") : null,
+        commitmentIntervals: commitmentIntervals != undefined ? commitmentIntervals?.toString().split(",") : null,
+        zltoRewardRanges: zltoRewardRanges != undefined ? zltoRewardRanges?.toString().split(",") : null,
         publishedStates: null,
         startDate: startDate != undefined ? startDate.toString() : null,
         endDate: endDate != undefined ? endDate.toString() : null,
-        statuses:
-          statuses != undefined ? statuses?.toString().split(",") : null,
+        statuses: statuses != undefined ? statuses?.toString().split(",") : null,
       });
   }, [
     setOpportunitySearchFilter,
@@ -423,109 +389,74 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   // }, [opportunitySearchFilter, searchResults]);
 
   // 🎈 FUNCTIONS
-  const getSearchFilterAsQueryString = useCallback(
-    (opportunitySearchFilter: OpportunitySearchFilterCombined) => {
-      if (!opportunitySearchFilter) return null;
+  const getSearchFilterAsQueryString = useCallback((opportunitySearchFilter: OpportunitySearchFilterCombined) => {
+    if (!opportunitySearchFilter) return null;
 
-      // construct querystring parameters from filter
-      const params = new URLSearchParams();
-      if (
-        opportunitySearchFilter.valueContains !== undefined &&
-        opportunitySearchFilter.valueContains !== null &&
-        opportunitySearchFilter.valueContains.length > 0
-      )
-        params.append("query", opportunitySearchFilter.valueContains);
-      if (
-        opportunitySearchFilter?.categories?.length !== undefined &&
-        opportunitySearchFilter.categories.length > 0
-      )
-        params.append(
-          "categories",
-          opportunitySearchFilter.categories.join(","),
-        );
-      if (
-        opportunitySearchFilter?.countries?.length !== undefined &&
-        opportunitySearchFilter.countries.length > 0
-      )
-        params.append("countries", opportunitySearchFilter.countries.join(","));
-      if (
-        opportunitySearchFilter?.languages?.length !== undefined &&
-        opportunitySearchFilter.languages.length > 0
-      )
-        params.append("languages", opportunitySearchFilter.languages.join(","));
-      if (
-        opportunitySearchFilter?.types?.length !== undefined &&
-        opportunitySearchFilter.types.length > 0
-      )
-        params.append("types", opportunitySearchFilter.types.join(","));
-      if (
-        opportunitySearchFilter?.commitmentIntervals?.length !== undefined &&
-        opportunitySearchFilter.commitmentIntervals.length > 0
-      )
-        params.append(
-          "commitmentIntervals",
-          opportunitySearchFilter.commitmentIntervals.join(","),
-        );
-      if (
-        opportunitySearchFilter?.organizations?.length !== undefined &&
-        opportunitySearchFilter.organizations.length > 0
-      )
-        params.append(
-          "organizations",
-          opportunitySearchFilter.organizations.join(","),
-        );
-      if (
-        opportunitySearchFilter?.zltoRewardRanges?.length !== undefined &&
-        opportunitySearchFilter.zltoRewardRanges.length > 0
-      )
-        params.append(
-          "zltoRewardRanges",
-          opportunitySearchFilter.zltoRewardRanges.join(","),
-        );
+    // construct querystring parameters from filter
+    const params = new URLSearchParams();
+    if (
+      opportunitySearchFilter.valueContains !== undefined &&
+      opportunitySearchFilter.valueContains !== null &&
+      opportunitySearchFilter.valueContains.length > 0
+    )
+      params.append("query", opportunitySearchFilter.valueContains);
+    if (opportunitySearchFilter?.categories?.length !== undefined && opportunitySearchFilter.categories.length > 0)
+      params.append("categories", opportunitySearchFilter.categories.join(","));
+    if (opportunitySearchFilter?.countries?.length !== undefined && opportunitySearchFilter.countries.length > 0)
+      params.append("countries", opportunitySearchFilter.countries.join(","));
+    if (opportunitySearchFilter?.languages?.length !== undefined && opportunitySearchFilter.languages.length > 0)
+      params.append("languages", opportunitySearchFilter.languages.join(","));
+    if (opportunitySearchFilter?.types?.length !== undefined && opportunitySearchFilter.types.length > 0)
+      params.append("types", opportunitySearchFilter.types.join(","));
+    if (
+      opportunitySearchFilter?.commitmentIntervals?.length !== undefined &&
+      opportunitySearchFilter.commitmentIntervals.length > 0
+    )
+      params.append("commitmentIntervals", opportunitySearchFilter.commitmentIntervals.join(","));
+    if (
+      opportunitySearchFilter?.organizations?.length !== undefined &&
+      opportunitySearchFilter.organizations.length > 0
+    )
+      params.append("organizations", opportunitySearchFilter.organizations.join(","));
+    if (
+      opportunitySearchFilter?.zltoRewardRanges?.length !== undefined &&
+      opportunitySearchFilter.zltoRewardRanges.length > 0
+    )
+      params.append("zltoRewardRanges", opportunitySearchFilter.zltoRewardRanges.join(","));
 
-      if (
-        opportunitySearchFilter?.statuses !== undefined &&
-        opportunitySearchFilter?.statuses !== null &&
-        opportunitySearchFilter?.statuses.length > 0
-      )
-        params.append("statuses", opportunitySearchFilter?.statuses.join(","));
+    if (
+      opportunitySearchFilter?.statuses !== undefined &&
+      opportunitySearchFilter?.statuses !== null &&
+      opportunitySearchFilter?.statuses.length > 0
+    )
+      params.append("statuses", opportunitySearchFilter?.statuses.join(","));
 
-      if (
-        opportunitySearchFilter.startDate !== undefined &&
-        opportunitySearchFilter.startDate !== null
-      )
-        params.append("startDate", opportunitySearchFilter.startDate);
+    if (opportunitySearchFilter.startDate !== undefined && opportunitySearchFilter.startDate !== null)
+      params.append("startDate", opportunitySearchFilter.startDate);
 
-      if (
-        opportunitySearchFilter.endDate !== undefined &&
-        opportunitySearchFilter.endDate !== null
-      )
-        params.append("endDate", opportunitySearchFilter.endDate);
+    if (opportunitySearchFilter.endDate !== undefined && opportunitySearchFilter.endDate !== null)
+      params.append("endDate", opportunitySearchFilter.endDate);
 
-      if (
-        opportunitySearchFilter.pageNumber !== null &&
-        opportunitySearchFilter.pageNumber !== undefined &&
-        opportunitySearchFilter.pageNumber !== 1
-      )
-        params.append("page", opportunitySearchFilter.pageNumber.toString());
+    if (
+      opportunitySearchFilter.pageNumber !== null &&
+      opportunitySearchFilter.pageNumber !== undefined &&
+      opportunitySearchFilter.pageNumber !== 1
+    )
+      params.append("page", opportunitySearchFilter.pageNumber.toString());
 
-      if (params.size === 0) return null;
-      return params;
-    },
-    [],
-  );
+    if (params.size === 0) return null;
+    return params;
+  }, []);
 
   const redirectWithSearchFilterParams = useCallback(
     (filter: OpportunitySearchFilterCombined) => {
       let url = "/admin/opportunities";
       const params = getSearchFilterAsQueryString(filter);
-      if (params != null && params.size > 0)
-        url = `/admin/opportunities?${params.toString()}`;
+      if (params != null && params.size > 0) url = `/admin/opportunities?${params.toString()}`;
 
-      if (url != router.asPath)
-        void router.push(url, undefined, { scroll: false });
+      if (url != router.asPath) void router.push(url, undefined, { scroll: false });
     },
-    [router, getSearchFilterAsQueryString],
+    [router, getSearchFilterAsQueryString]
   );
 
   // 🔔 CHANGE EVENTS
@@ -534,7 +465,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       opportunitySearchFilter.pageNumber = value;
       redirectWithSearchFilterParams(opportunitySearchFilter);
     },
-    [opportunitySearchFilter, redirectWithSearchFilterParams],
+    [opportunitySearchFilter, redirectWithSearchFilterParams]
   );
 
   const onSearchInputSubmit = useCallback(
@@ -548,7 +479,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       opportunitySearchFilter.valueContains = query;
       redirectWithSearchFilterParams(opportunitySearchFilter);
     },
-    [opportunitySearchFilter, redirectWithSearchFilterParams],
+    [opportunitySearchFilter, redirectWithSearchFilterParams]
   );
 
   // filter popup handlers
@@ -560,7 +491,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     (val: OpportunitySearchFilterCombined) => {
       redirectWithSearchFilterParams(val);
     },
-    [redirectWithSearchFilterParams],
+    [redirectWithSearchFilterParams]
   );
 
   const onClearFilter = useCallback(() => {
@@ -572,9 +503,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
     try {
       opportunitySearchFilter.pageSize = PAGE_SIZE_MAXIMUM;
-      const data = await getOpportunitiesAdminExportToCSV(
-        opportunitySearchFilter,
-      );
+      const data = await getOpportunitiesAdminExportToCSV(opportunitySearchFilter);
       if (!data) return;
 
       FileSaver.saveAs(data);
@@ -618,7 +547,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           lookups_zltoRewardRanges={lookups_zltoRewardRanges}
           lookups_publishedStates={lookups_publishedStates}
           lookups_statuses={lookups_statuses}
-          cancelButtonText="Close"
           submitButtonText="Done"
           onCancel={onCloseFilter}
           onSubmit={onSubmitFilter}
@@ -663,14 +591,12 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
             <div className="flex w-96 flex-col gap-4">
               <h4>
-                Just a heads up, the result set is quite large and we can only
-                return a maximum of {PAGE_SIZE_MAXIMUM.toLocaleString()} rows
-                for each export.
+                Just a heads up, the result set is quite large and we can only return a maximum of{" "}
+                {PAGE_SIZE_MAXIMUM.toLocaleString()} rows for each export.
               </h4>
               <h5>
-                To help manage this, consider applying search filters like start
-                date or end date. This will narrow down the size of your results
-                and make your data more manageable.
+                To help manage this, consider applying search filters like start date or end date. This will narrow down
+                the size of your results and make your data more manageable.
               </h5>
               <h5>When you&apos;re ready, click the button to continue.</h5>
             </div>
@@ -682,9 +608,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                 onClick={handleExportToCSV}
                 disabled={isExportButtonLoading}
               >
-                {isExportButtonLoading && (
-                  <p className="text-white">Exporting...</p>
-                )}
+                {isExportButtonLoading && <p className="text-white">Exporting...</p>}
                 {!isExportButtonLoading && (
                   <>
                     <IoMdDownload className="h-5 w-5 text-white" />
@@ -703,15 +627,11 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       {/* TITLE & SEARCH INPUT */}
       <div className="container z-10 mt-20 max-w-7xl px-2 py-8">
         <div className="flex flex-col gap-2 py-4 sm:flex-row">
-          <h3 className="flex flex-grow items-center text-white">
-            Opportunities
-          </h3>
+          <h3 className="flex flex-grow items-center text-white">Opportunities</h3>
 
           <div className="flex gap-2 sm:justify-end">
             <SearchInput
-              className={
-                "bg-theme hover:bg-theme brightness-105 hover:brightness-110"
-              }
+              className={"bg-theme hover:bg-theme brightness-105 hover:brightness-110"}
               defaultValue={query ? decodeURIComponent(query.toString()) : null}
               onSearch={onSearchInputSubmit}
             />
@@ -775,31 +695,27 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             <div className="mb-6 flex flex-row items-center justify-end"></div>
             <div className="rounded-lg bg-white p-4">
               {/* NO ROWS */}
-              {(!searchResults || searchResults.items?.length === 0) &&
-                !isSearchPerformed && (
-                  <div className="flex flex-col place-items-center py-52">
-                    <NoRowsMessage
-                      title={"You will find your active opportunities here"}
-                      description={
-                        "This is where you will find all the awesome opportunities that have been created"
-                      }
-                    />
-                    {/* <Link href={`/organisations/${id}/opportunities/create`}>
+              {(!searchResults || searchResults.items?.length === 0) && !isSearchPerformed && (
+                <div className="flex flex-col place-items-center py-52">
+                  <NoRowsMessage
+                    title={"You will find your active opportunities here"}
+                    description={"This is where you will find all the awesome opportunities that have been created"}
+                  />
+                  {/* <Link href={`/organisations/${id}/opportunities/create`}>
                 <button className="btn btn-primary btn-sm mt-10 rounded-3xl px-16">
                   Add opportunity
                 </button>
               </Link> */}
-                  </div>
-                )}
-              {(!searchResults || searchResults.items?.length === 0) &&
-                isSearchPerformed && (
-                  <div className="flex flex-col place-items-center py-52">
-                    <NoRowsMessage
-                      title={"No opportunities found"}
-                      description={"Please try refining your search query."}
-                    />
-                  </div>
-                )}
+                </div>
+              )}
+              {(!searchResults || searchResults.items?.length === 0) && isSearchPerformed && (
+                <div className="flex flex-col place-items-center py-52">
+                  <NoRowsMessage
+                    title={"No opportunities found"}
+                    description={"Please try refining your search query."}
+                  />
+                </div>
+              )}
 
               {/* GRID */}
               {searchResults && searchResults.items?.length > 0 && (
@@ -818,29 +734,17 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                         <tr key={opportunity.id} className="border-gray">
                           <td>
                             <Link
-                              href={`/organisations/${
-                                opportunity.organizationId
-                              }/opportunities/${
+                              href={`/organisations/${opportunity.organizationId}/opportunities/${
                                 opportunity.id
-                              }/info?returnUrl=${encodeURIComponent(
-                                router.asPath,
-                              )}`}
+                              }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
                             >
                               {opportunity.title}
                             </Link>
                           </td>
                           <td className="w-28">
                             <div className="flex flex-col">
-                              {opportunity.zltoReward && (
-                                <span className="text-xs">
-                                  {opportunity.zltoReward} Zlto
-                                </span>
-                              )}
-                              {opportunity.yomaReward && (
-                                <span className="text-xs">
-                                  {opportunity.yomaReward} Yoma
-                                </span>
-                              )}
+                              {opportunity.zltoReward && <span className="text-xs">{opportunity.zltoReward} Zlto</span>}
+                              {opportunity.yomaReward && <span className="text-xs">{opportunity.yomaReward} Yoma</span>}
                             </div>
                           </td>
                           <td>{opportunity.url}</td>

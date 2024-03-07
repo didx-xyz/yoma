@@ -630,7 +630,6 @@ const Opportunities: NextPageWithLayout<{
           lookups_zltoRewardRanges={lookups_zltoRewardRanges}
           lookups_publishedStates={lookups_publishedStates}
           lookups_statuses={[]}
-          cancelButtonText="Cancel"
           submitButtonText="Apply Filters"
           onCancel={onCloseFilter}
           onSubmit={(e) => onSubmitFilter(e)}
