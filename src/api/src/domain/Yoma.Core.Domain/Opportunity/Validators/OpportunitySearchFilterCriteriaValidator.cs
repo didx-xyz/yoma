@@ -16,14 +16,16 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         {
             _organizationService = organizationService;
 
-            RuleFor(x => x.Organization).NotEmpty().Must(Organizationxists).WithMessage($"Specified organization is invalid / does not exist.");
+            RuleFor(x => x.Organization)
+                .Must(organizationId => !organizationId.HasValue || (organizationId != Guid.Empty && OrganizationExists(organizationId.Value)))
+                .WithMessage("If specified, the organization must not be empty and must exist.");
             RuleFor(x => x.TitleContains).Length(3, 50).When(x => !string.IsNullOrEmpty(x.TitleContains)).WithMessage("{PropertyName} is optional, but when specified,m must be between 3 and 50 characters");
             RuleFor(x => x.PaginationEnabled).Equal(true).WithMessage("Pagination required");
         }
         #endregion
 
         #region Private Members
-        private bool Organizationxists(Guid id)
+        private bool OrganizationExists(Guid id)
         {
             return _organizationService.GetByIdOrNull(id, false, false, false) != null;
         }

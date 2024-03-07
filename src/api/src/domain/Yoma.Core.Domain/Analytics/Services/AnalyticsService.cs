@@ -11,6 +11,7 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
+using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.Analytics.Services
@@ -338,6 +339,7 @@ namespace Yoma.Core.Domain.Analytics.Services
                 {
                     Id = result.Opportunity.Id,
                     Title = result.Opportunity.Title,
+                    Status = result.opportunity.Status,
                     OrganizationLogoId = result.Opportunity.OrganizationLogoId,
                     ViewedCount = result.ViewedCount,
                     CompletedCount = result.CompletedCount,
@@ -375,6 +377,7 @@ namespace Yoma.Core.Domain.Analytics.Services
                     UserDisplayName = o.UserDisplayName,
                     OpportunityId = o.OpportunityId,
                     OpportunityTitle = o.OpportunityTitle,
+                    OpportunityStatus = o.OpportunityStatus,
                     OrganizationLogoId = o.OrganizationLogoId,
                     DateCompleted = o.DateCompleted,
                     Verified = o.OpportunityCredentialIssuanceEnabled

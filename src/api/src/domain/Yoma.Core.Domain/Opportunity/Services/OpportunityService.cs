@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using System.Transactions;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -192,10 +193,20 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             _opportunitySearchFilterCriteriaValidator.ValidateAndThrow(filter);
 
-            if (ensureOrganizationAuthorization)
-                _organizationService.IsAdmin(filter.Organization, true);
+            var query = _opportunityRepository.Query();
 
-            var query = _opportunityRepository.Query().Where(o => o.OrganizationId == filter.Organization);
+            if (filter.Organization.HasValue)
+            {
+                if (ensureOrganizationAuthorization)
+                    _organizationService.IsAdmin(filter.Organization.Value, true);
+
+                query = query.Where(o => o.OrganizationId == filter.Organization.Value);
+            }
+            else
+            {
+                if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+                    throw new ValidationException($"Organization required for '{Constants.Role_OrganizationAdmin}' role only");
+            }
 
             if (!string.IsNullOrEmpty(filter.TitleContains))
                 query = _opportunityRepository.Contains(query, filter.TitleContains);
@@ -209,6 +220,34 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
             }
             results.Items = query.ToList().Select(o => o.ToOpportunitySearchCriteria()).ToList();
+
+            return results;
+        }
+
+        public List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategoriesAdmin(Guid? organizationId, bool ensureOrganizationAuthorization)
+        {
+            var org = SearchCriteriaAdminValidateRequest(organizationId, ensureOrganizationAuthorization);
+
+            var query = _opportunityCategoryRepository.Query();
+
+            if (org != null)
+                query = query.Where(o => o.OrganizationId == org.Id);
+
+            var categoryIds = query.Select(o => o.CategoryId).Distinct().ToList();
+
+            var results = _opportunityCategoryService.List().Where(o => categoryIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
+
+            foreach (var item in results)
+            {
+                var filter = new OpportunitySearchFilterAdmin
+                {
+                    Organizations = org == null ? null : new List<Guid> { org.Id },
+                    Categories = new List<Guid> { item.Id },
+                    TotalCountOnly = true
+                };
+
+                item.Count = Search(filter, false).TotalCount;
+            }
 
             return results;
         }
@@ -1226,6 +1265,22 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Private Members
+        private Organization? SearchCriteriaAdminValidateRequest(Guid? organizationId, bool ensureOrganizationAuthorization)
+        {
+            if (!organizationId.HasValue)
+            {
+                if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+                    throw new ValidationException($"Organization required for '{Constants.Role_OrganizationAdmin}' role only");
+
+                return null;
+            }
+
+            if (organizationId.Value == Guid.Empty)
+                throw new ArgumentNullException(nameof(organizationId));
+
+            return _organizationService.GetById(organizationId.Value, false, false, ensureOrganizationAuthorization);
+        }
+
         private static void ParseOpportunitySearchFilterCommitmentIntervals(OpportunitySearchFilterAdmin filter)
         {
             if (filter.CommitmentIntervals == null || !filter.CommitmentIntervals.Any())
