@@ -195,6 +195,21 @@ namespace Yoma.Core.Api.Controllers
         #endregion
 
         #region Administrative Actions
+        [SwaggerOperation(Summary = "Return a list of categories associated with opportunities. Optionally filter by organization")]
+        [HttpGet("search/filter/category/admin")]
+        [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityCategory>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult ListOpportunitySearchCriteriaCategoriesAdmin([FromQuery] Guid? organizationId)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCategoriesAdmin));
+
+            var result = _opportunityService.ListOpportunitySearchCriteriaCategoriesAdmin(organizationId, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCategoriesAdmin));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
         [SwaggerOperation(Summary = "Search for opporutnities based on the supplied filter, returning a lightweight result set/list for search filter input")]
         [HttpPost("search/filter/opportunity")]
         [ProducesResponseType(typeof(OpportunitySearchResultsCriteria), (int)HttpStatusCode.OK)]

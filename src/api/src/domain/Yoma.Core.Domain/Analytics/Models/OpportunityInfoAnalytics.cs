@@ -1,3 +1,5 @@
+using Yoma.Core.Domain.Opportunity;
+
 namespace Yoma.Core.Domain.Analytics.Models
 {
     public class OpportunityInfoAnalytics
@@ -5,6 +7,8 @@ namespace Yoma.Core.Domain.Analytics.Models
         public Guid Id { get; set; }
 
         public string Title { get; set; }
+
+        public Status Status { get; set; }
 
         public Guid? OrganizationLogoId { get; set; }
 
