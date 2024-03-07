@@ -56,6 +56,7 @@ import { IoMdDownload } from "react-icons/io";
 // It may be called again, on a serverless function, if
 // revalidation is enabled and a new request comes in
 export const getStaticProps: GetStaticProps = async (context) => {
+  //const lookups_categories = await getCategoriesAdmin(null, context);
   const lookups_countries = await getOpportunityCountries(context);
   const lookups_languages = await getOpportunityLanguages(context);
   const lookups_organisations = await getOpportunityOrganizations(context);
@@ -65,6 +66,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   return {
     props: {
+      //lookups_categories,
       lookups_countries,
       lookups_languages,
       lookups_organisations,
@@ -88,6 +90,7 @@ export const getStaticPaths: GetStaticPaths = () => {
 };
 
 const OpportunitiesAdmin: NextPageWithLayout<{
+  //lookups_categories: OpportunityCategory[];
   lookups_countries: Country[];
   lookups_languages: Language[];
   lookups_organisations: OrganizationInfo[];
@@ -95,6 +98,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
   lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
 }> = ({
+  //lookups_categories,
   lookups_countries,
   lookups_languages,
   lookups_organisations,
@@ -122,12 +126,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     { value: "2", label: "Inactive" },
   ];
 
-  // 👇 use prefetched queries from server
-  const { data: lookups_categories } = useQuery<OpportunityCategory[]>({
-    queryKey: ["AdminOpportunityCategories"],
-    queryFn: () => getCategoriesAdmin(null),
-  });
-
   // get filter parameters from route
   const {
     query,
@@ -143,6 +141,11 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     endDate,
     statuses,
   } = router.query;
+
+  const { data: lookups_categories } = useQuery<OpportunityCategory[]>({
+    queryKey: ["AdminOpportunitiesCategories"],
+    queryFn: () => getCategoriesAdmin(null),
+  });
 
   // memo for isSearchPerformed based on filter parameters
   const isSearchPerformed = useMemo<boolean>(() => {
@@ -215,7 +218,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   ?.toString()
                   .split(",")
                   .map((x) => {
-                    const item = lookups_categories.find((y) => y.name === x);
+                    const item = lookups_categories?.find((y) => y.name === x);
                     return item ? item?.id : "";
                   })
                   .filter((x) => x != "")
@@ -360,20 +363,20 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   }, [smallDisplay]);
 
   // 📜 scroll to results when search is executed
-  useEffect(() => {
-    if (searchResults && !isLoading) {
-      setTimeout(() => {
-        const element = document.getElementById("results");
+  // useEffect(() => {
+  //   if (searchResults && !isLoading) {
+  //     setTimeout(() => {
+  //       const element = document.getElementById("results");
 
-        if (element) {
-          window.scrollTo({
-            top: element.offsetTop - 55,
-            behavior: "smooth",
-          });
-        }
-      }, 500);
-    }
-  }, [searchResults, isLoading]);
+  //       if (element) {
+  //         window.scrollTo({
+  //           top: element.offsetTop - 55,
+  //           behavior: "smooth",
+  //         });
+  //       }
+  //     }, 500);
+  //   }
+  // }, [searchResults, isLoading]);
 
   // 🧮 CALCULATED FIELDS
   // results info text based on filter parameters
@@ -611,7 +614,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         <OpportunityFilterVertical
           htmlRef={myRef.current!}
           opportunitySearchFilter={opportunitySearchFilter}
-          lookups_categories={lookups_categories}
+          lookups_categories={lookups_categories!}
           lookups_countries={lookups_countries}
           lookups_languages={lookups_languages}
           lookups_types={lookups_types}
@@ -739,7 +742,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           <OpportunityFilterHorizontal
             htmlRef={myRef.current!}
             opportunitySearchFilter={opportunitySearchFilter}
-            lookups_categories={lookups_categories}
+            lookups_categories={lookups_categories!}
             lookups_countries={lookups_countries}
             lookups_languages={lookups_languages}
             lookups_types={lookups_types}
@@ -845,7 +848,9 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             </div>
                           </td>
                           <td>{opportunity.url}</td>
-                          <td>{opportunity.participantCountTotal}</td>
+                          <td className="text-center">
+                            {opportunity.participantCountTotal}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
