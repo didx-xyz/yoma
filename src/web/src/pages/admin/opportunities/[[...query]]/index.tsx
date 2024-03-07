@@ -23,7 +23,7 @@ import {
   getCommitmentIntervals,
   getOpportunitiesAdmin,
   getOpportunitiesAdminExportToCSV,
-  getOpportunityCategories,
+  getCategoriesAdmin,
   getOpportunityCountries,
   getOpportunityLanguages,
   getOpportunityOrganizations,
@@ -56,7 +56,6 @@ import { IoMdDownload } from "react-icons/io";
 // It may be called again, on a serverless function, if
 // revalidation is enabled and a new request comes in
 export const getStaticProps: GetStaticProps = async (context) => {
-  const lookups_categories = await getOpportunityCategories(context);
   const lookups_countries = await getOpportunityCountries(context);
   const lookups_languages = await getOpportunityLanguages(context);
   const lookups_organisations = await getOpportunityOrganizations(context);
@@ -66,7 +65,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   return {
     props: {
-      lookups_categories,
       lookups_countries,
       lookups_languages,
       lookups_organisations,
@@ -90,7 +88,6 @@ export const getStaticPaths: GetStaticPaths = () => {
 };
 
 const OpportunitiesAdmin: NextPageWithLayout<{
-  lookups_categories: OpportunityCategory[];
   lookups_countries: Country[];
   lookups_languages: Language[];
   lookups_organisations: OrganizationInfo[];
@@ -98,7 +95,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
   lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
 }> = ({
-  lookups_categories,
   lookups_countries,
   lookups_languages,
   lookups_organisations,
@@ -125,6 +121,12 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     { value: "2", label: "Expired" },
     { value: "2", label: "Inactive" },
   ];
+
+  // 👇 use prefetched queries from server
+  const { data: lookups_categories } = useQuery<OpportunityCategory[]>({
+    queryKey: ["AdminOpportunityCategories"],
+    queryFn: () => getCategoriesAdmin(null),
+  });
 
   // get filter parameters from route
   const {
