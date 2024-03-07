@@ -16,7 +16,7 @@ import MainLayout from "~/components/Layout/Main";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { authOptions } from "~/server/auth";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { NextPageWithLayout } from "~/pages/_app";
+import type { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { PageBackground } from "~/components/PageBackground";
@@ -240,12 +240,12 @@ const LineChart: React.FC<{
       const formattedDate = `${date.getFullYear()}-${String(
         date.getMonth() + 1,
       ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      return [formattedDate, ...x.values];
+      return [formattedDate, ...x.values] as (string | number)[];
     });
 
     const labels = data.legend.map((x, i) => `${x} (Total: ${data.count[i]})`);
 
-    return [["Date", ...labels], ...mappedData];
+    return [["Date", ...labels], ...mappedData] as (string | number)[][];
   }, [data]);
 
   useEffect(() => {
@@ -802,7 +802,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       if (url != router.asPath)
         void router.push(url, undefined, { scroll: false });
     },
-    [router, getSearchFilterAsQueryString],
+    [id, router, getSearchFilterAsQueryString],
   );
 
   // filter popup handlers
@@ -824,6 +824,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       });
     },
     [
+      id,
       redirectWithSearchFilterParams,
       pageSelectedOpportunities,
       pageCompletedYouth,
@@ -1277,7 +1278,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                   {/* PAGINATION */}
                   {selectedOpportunities &&
-                    (selectedOpportunities.totalCount as number) > 0 && (
+                    selectedOpportunities.totalCount > 0 && (
                       <div className="mt-2 grid place-items-center justify-center">
                         <PaginationButtons
                           currentPage={
@@ -1285,9 +1286,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                               ? parseInt(pageSelectedOpportunities.toString())
                               : 1
                           }
-                          totalItems={
-                            selectedOpportunities.totalCount as number
-                          }
+                          totalItems={selectedOpportunities.totalCount}
                           pageSize={PAGE_SIZE}
                           showPages={false}
                           showInfo={true}
@@ -1361,23 +1360,22 @@ const OrganisationDashboard: NextPageWithLayout<{
                   )}
 
                   {/* PAGINATION */}
-                  {completedYouth &&
-                    (completedYouth.totalCount as number) > 0 && (
-                      <div className="mt-2 grid place-items-center justify-center">
-                        <PaginationButtons
-                          currentPage={
-                            pageCompletedYouth
-                              ? parseInt(pageCompletedYouth.toString())
-                              : 1
-                          }
-                          totalItems={completedYouth.totalCount as number}
-                          pageSize={PAGE_SIZE}
-                          showPages={false}
-                          showInfo={true}
-                          onClick={handlePagerChangeCompletedYouth}
-                        />
-                      </div>
-                    )}
+                  {completedYouth && completedYouth.totalCount > 0 && (
+                    <div className="mt-2 grid place-items-center justify-center">
+                      <PaginationButtons
+                        currentPage={
+                          pageCompletedYouth
+                            ? parseInt(pageCompletedYouth.toString())
+                            : 1
+                        }
+                        totalItems={completedYouth.totalCount}
+                        pageSize={PAGE_SIZE}
+                        showPages={false}
+                        showInfo={true}
+                        onClick={handlePagerChangeCompletedYouth}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1394,6 +1392,7 @@ OrganisationDashboard.getLayout = function getLayout(page: ReactElement) {
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
 OrganisationDashboard.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };
 
