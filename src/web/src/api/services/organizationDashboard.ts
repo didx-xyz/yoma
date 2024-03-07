@@ -2,17 +2,19 @@ import { type GetServerSidePropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type {
-  OrganizationSearchFilterSummary,
+  OrganizationSearchFilterBase,
+  OrganizationSearchResultsOpportunity,
   OrganizationSearchResultsSummary,
+  OrganizationSearchResultsYouth,
 } from "../models/organizationDashboard";
 
-export const getOrganisationDashboardSummary = async (
-  filter: OrganizationSearchFilterSummary,
+export const searchOrganizationEngagement = async (
+  filter: OrganizationSearchFilterBase,
   context?: GetServerSidePropsContext,
 ): Promise<OrganizationSearchResultsSummary> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.post<OrganizationSearchResultsSummary>(
-    "/organization/analytics/summary",
+    "/organization/search/analytics/engagement",
     filter,
   );
   return data;
@@ -133,4 +135,28 @@ export const getOrganisationDashboardSummary = async (
     },
     dateStamp: "2021-12-01",
   };
+};
+
+export const searchOrganizationOpportunities = async (
+  filter: OrganizationSearchFilterBase,
+  context?: GetServerSidePropsContext,
+): Promise<OrganizationSearchResultsOpportunity> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.post<OrganizationSearchResultsOpportunity>(
+    "/organization/search/analytics/opportunities",
+    filter,
+  );
+  return data;
+};
+
+export const searchOrganizationYouth = async (
+  filter: OrganizationSearchFilterBase,
+  context?: GetServerSidePropsContext,
+): Promise<OrganizationSearchResultsYouth> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.post<OrganizationSearchResultsYouth>(
+    "/organization/search/analytics/youth",
+    filter,
+  );
+  return data;
 };

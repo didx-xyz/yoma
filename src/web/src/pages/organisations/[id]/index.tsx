@@ -28,7 +28,11 @@ import {
   IoMdPerson,
 } from "react-icons/io";
 import { useRouter } from "next/router";
-import { getOrganisationDashboardSummary } from "~/api/services/organizationDashboard";
+import {
+  searchOrganizationEngagement,
+  searchOrganizationOpportunities,
+  searchOrganizationYouth,
+} from "~/api/services/organizationDashboard";
 import type { GetServerSidePropsContext } from "next";
 import {
   getCategories,
@@ -48,14 +52,18 @@ import Link from "next/link";
 import { getThemeFromRole } from "~/lib/utils";
 import Image from "next/image";
 import iconZlto from "public/images/icon-zlto.svg";
-import { PAGE_SIZE } from "~/lib/constants";
+import { DATETIME_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import {
+  OrganizationSearchFilterSummary,
+  OrganizationSearchResultsOpportunity,
   OrganizationSearchResultsSummary,
+  OrganizationSearchResultsYouth,
   TimeIntervalSummary,
 } from "~/api/models/organizationDashboard";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
+import moment from "moment";
 
 interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
@@ -226,7 +234,18 @@ const LineChart: React.FC<{
 }) => {
   // map the data to the format required by the chart
   const localData = useMemo(() => {
-    if (!data) return null;
+    if (!data) return;
+
+    // if no data was provided, supply empty values so that the chart does not show errors
+    if (!(data?.data && data.data.length > 0))
+      data.data = [
+        {
+          date: "",
+          values: [0],
+        },
+      ];
+
+    //return null;
 
     const mappedData = data.data.map((x) => {
       const date = new Date(x.date);
@@ -247,7 +266,7 @@ const LineChart: React.FC<{
     updateCustomLegendLineChart(`legend_div_${id}`, data, undefined);
   }, [localData, data]);
 
-  if (!(localData && localData.length > 1) || !data) {
+  if (!localData) {
     return (
       <div className="mt-10 flex flex-grow items-center justify-center">
         Loading...
@@ -385,7 +404,6 @@ const PieChart: React.FC<{
           data={data}
           options={{
             legend: { position: "left" }, // Position the legend on the left
-
             title: "",
             colors: colors,
             chartArea: {
@@ -528,7 +546,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         endDate,
       ],
       queryFn: async () => {
-        return await getOrganisationDashboardSummary({
+        return await searchOrganizationEngagement({
           organization: id,
           //valueContains: query ? decodeURIComponent(query.toString()) : null,
           categories:
@@ -560,6 +578,8 @@ const OrganisationDashboard: NextPageWithLayout<{
 
           startDate: startDate ? startDate.toString() : "",
           endDate: endDate ? endDate.toString() : "",
+          pageNumber: null,
+          pageSize: null,
         });
       },
       //enabled: isSearchPerformed, // only run query if search is executed
@@ -569,11 +589,12 @@ const OrganisationDashboard: NextPageWithLayout<{
   const {
     data: selectedOpportunities,
     isLoading: selectedOpportunitiesIsLoading,
-  } = useQuery<OpportunitySearchResults>({
+  } = useQuery<OrganizationSearchResultsOpportunity>({
     queryKey: ["OrganizationSearchResultsSelectedOpportunities", id],
     queryFn: () =>
-      searchOpportunities({
-        types: null,
+      searchOrganizationOpportunities({
+        organization: id,
+        //valueContains: query ? decodeURIComponent(query.toString()) : null,
         categories:
           categories != undefined
             ? categories
@@ -585,32 +606,39 @@ const OrganisationDashboard: NextPageWithLayout<{
                 })
                 .filter((x) => x != "")
             : null,
-        languages: null,
-        countries: null,
-        organizations: [id],
-        commitmentIntervals: null,
-        zltoRewardRanges: null,
-        valueContains: null,
-        //startDate: startDate ? startDate.toString() : "",
-        //endDate: endDate ? endDate.toString() : "",
-        //statuses: ["Active"],
+        //TODO: this has been removed till the on-demand dropdown is developed
+        // opportunities:
+        //   opportunities != undefined
+        //     ? opportunities
+        //         ?.toString()
+        //         .split(",")
+        //         .map((x) => {
+        //           const item = lookups_opportunities?.items.find(
+        //             (y) => y.title === x,
+        //           );
+        //           return item ? item?.id : "";
+        //         })
+        //         .filter((x) => x != "")
+        //     : null,
+        opportunities: null,
+
+        startDate: startDate ? startDate.toString() : "",
+        endDate: endDate ? endDate.toString() : "",
         pageNumber: pageSelectedOpportunities
           ? parseInt(pageSelectedOpportunities.toString())
           : 1,
         pageSize: PAGE_SIZE,
-        //remove
-        publishedStates: ["Active"],
-        mostViewed: false,
       }),
   });
 
   // QUERY: COMPLETED YOUTH
   const { data: completedYouth, isLoading: completedYouthIsLoading } =
-    useQuery<OpportunitySearchResults>({
+    useQuery<OrganizationSearchResultsYouth>({
       queryKey: ["OrganizationSearchResultsCompletedYouth", id],
       queryFn: () =>
-        getOpportunitiesAdmin({
-          types: null,
+        searchOrganizationYouth({
+          organization: id,
+          //valueContains: query ? decodeURIComponent(query.toString()) : null,
           categories:
             categories != undefined
               ? categories
@@ -622,15 +650,24 @@ const OrganisationDashboard: NextPageWithLayout<{
                   })
                   .filter((x) => x != "")
               : null,
-          languages: null,
-          countries: null,
-          organizations: [id],
-          commitmentIntervals: null,
-          zltoRewardRanges: null,
-          valueContains: null,
+          //TODO: this has been removed till the on-demand dropdown is developed
+          // opportunities:
+          //   opportunities != undefined
+          //     ? opportunities
+          //         ?.toString()
+          //         .split(",")
+          //         .map((x) => {
+          //           const item = lookups_opportunities?.items.find(
+          //             (y) => y.title === x,
+          //           );
+          //           return item ? item?.id : "";
+          //         })
+          //         .filter((x) => x != "")
+          //     : null,
+          opportunities: null,
+
           startDate: startDate ? startDate.toString() : "",
           endDate: endDate ? endDate.toString() : "",
-          statuses: ["Active"],
           pageNumber: pageCompletedYouth
             ? parseInt(pageCompletedYouth.toString())
             : 1,
@@ -764,10 +801,27 @@ const OrganisationDashboard: NextPageWithLayout<{
 
   // filter popup handlers
   const onSubmitFilter = useCallback(
-    (val: OrganizationSearchFilterSummaryViewModel) => {
-      redirectWithSearchFilterParams(val);
+    (val: OrganizationSearchFilterSummary) => {
+      redirectWithSearchFilterParams({
+        categories: val.categories,
+        opportunities: val.opportunities,
+        startDate: val.startDate,
+        endDate: val.endDate,
+        pageSelectedOpportunities: pageSelectedOpportunities
+          ? parseInt(pageSelectedOpportunities.toString())
+          : 1,
+        pageCompletedYouth: pageCompletedYouth
+          ? parseInt(pageCompletedYouth.toString())
+          : 1,
+
+        organization: id,
+      });
     },
-    [redirectWithSearchFilterParams],
+    [
+      redirectWithSearchFilterParams,
+      pageSelectedOpportunities,
+      pageCompletedYouth,
+    ],
   );
 
   const onClearFilter = useCallback(() => {
@@ -843,8 +897,8 @@ const OrganisationDashboard: NextPageWithLayout<{
             </div>
             {/* DESCRIPTION */}
             <div className="flex flex-row gap-1">
-              <span>Your dashboard progress so far</span>
-              {(startDate || endDate) && (
+              <span>Your dashboard progress so far.</span>
+              {/* {(startDate || endDate) && (
                 <div className="flex flex-row gap-1">
                   <span>for</span>
                   {startDate && (
@@ -859,6 +913,17 @@ const OrganisationDashboard: NextPageWithLayout<{
                     </span>
                   )}
                 </div>
+              )} */}
+
+              {searchResults?.dateStamp && (
+                <span>
+                  Last updated on{" "}
+                  <span className="font-semibold">
+                    {moment(new Date(searchResults?.dateStamp)).format(
+                      DATETIME_FORMAT_HUMAN,
+                    )}
+                  </span>{" "}
+                </span>
               )}
             </div>
           </div>
@@ -870,7 +935,15 @@ const OrganisationDashboard: NextPageWithLayout<{
               <div className="flex flex-grow flex-col gap-3">
                 <OrganisationRowFilter
                   htmlRef={myRef.current!}
-                  searchFilter={searchFilter}
+                  searchFilter={{
+                    categories: searchFilter.categories,
+                    opportunities: searchFilter.opportunities,
+                    startDate: searchFilter.startDate,
+                    endDate: searchFilter.endDate,
+                    organization: id,
+                    pageNumber: null,
+                    pageSize: null,
+                  }}
                   lookups_categories={lookups_categories}
                   //TODO: this has been removed till the on-demand dropdown is developed */}
                   //lookups_opportunities={lookups_opportunities}
@@ -991,15 +1064,10 @@ const OrganisationDashboard: NextPageWithLayout<{
             <div className="flex flex-col gap-2">
               <div className="text-xl font-semibold">Rewards</div>
 
-              <div
-                //className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-
-                className="flex flex-col gap-2 md:flex-row"
-              >
+              <div className="flex flex-col gap-2 md:flex-row">
                 {/* ZLTO AMOUNT AWARDED */}
                 <div className="h-40 min-w-[288px] flex-col rounded-lg bg-white p-4 shadow">
                   <div className="flex flex-row items-center gap-2">
-                    {/* <IoMdDocument className="text-green" /> */}
                     <Image
                       src={iconZlto}
                       alt="Icon Zlto"
@@ -1143,8 +1211,9 @@ const OrganisationDashboard: NextPageWithLayout<{
           {/* SELECTED OPPORTUNITIES */}
           <div className="flex flex-col">
             <div className="text-xl font-semibold">Selected Opportunities</div>
-            selectedOpportunities: {JSON.stringify(selectedOpportunities)}
+
             {selectedOpportunitiesIsLoading && <LoadingSkeleton />}
+
             {/* SELECTED OPPORTUNITIES */}
             {!selectedOpportunitiesIsLoading && (
               <div id="results">
@@ -1152,32 +1221,14 @@ const OrganisationDashboard: NextPageWithLayout<{
                 <div className="rounded-lg bg-white p-4">
                   {/* NO ROWS */}
                   {(!selectedOpportunities ||
-                    selectedOpportunities.items?.length === 0) &&
-                    !isSearchPerformed && (
-                      <div className="flex flex-col place-items-center py-52">
-                        <NoRowsMessage
-                          title={"You will find your active opportunities here"}
-                          description={
-                            "This is where you will find all the awesome opportunities that have been created"
-                          }
-                        />
-                        {/* <Link href={`/organisations/${id}/opportunities/create`}>
-                <button className="btn btn-primary btn-sm mt-10 rounded-3xl px-16">
-                  Add opportunity
-                </button>
-              </Link> */}
-                      </div>
-                    )}
-                  {(!selectedOpportunities ||
-                    selectedOpportunities.items?.length === 0) &&
-                    isSearchPerformed && (
-                      <div className="flex flex-col place-items-center py-52">
-                        <NoRowsMessage
-                          title={"No opportunities found"}
-                          description={"Please try refining your search query."}
-                        />
-                      </div>
-                    )}
+                    selectedOpportunities.items?.length === 0) && (
+                    <div className="flex flex-col place-items-center py-52">
+                      <NoRowsMessage
+                        title={"No opportunities found"}
+                        description={"Please try refining your search query."}
+                      />
+                    </div>
+                  )}
 
                   {/* GRID */}
                   {selectedOpportunities &&
@@ -1186,10 +1237,10 @@ const OrganisationDashboard: NextPageWithLayout<{
                         <table className="table">
                           <thead>
                             <tr className="border-gray text-gray-dark">
-                              <th>Opportunity title</th>
-                              <th>Reward</th>
-                              <th>Url</th>
-                              <th>Participants</th>
+                              <th>Opportunity</th>
+                              <th>Views</th>
+                              <th>Converson ratio</th>
+                              <th>Completions</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1208,22 +1259,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                                     {opportunity.title}
                                   </Link>
                                 </td>
-                                <td className="w-28">
-                                  <div className="flex flex-col">
-                                    {opportunity.zltoReward && (
-                                      <span className="text-xs">
-                                        {opportunity.zltoReward} Zlto
-                                      </span>
-                                    )}
-                                    {opportunity.yomaReward && (
-                                      <span className="text-xs">
-                                        {opportunity.yomaReward} Yoma
-                                      </span>
-                                    )}
-                                  </div>
-                                </td>
-                                <td>{opportunity.url}</td>
-                                <td>{opportunity.participantCountTotal}</td>
+                                <td>{opportunity.viewedCount}</td>
+                                <td>{opportunity.conversionRatioPercentage}</td>
+                                <td>{opportunity.completedCount}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1248,6 +1286,89 @@ const OrganisationDashboard: NextPageWithLayout<{
                           showPages={false}
                           showInfo={true}
                           onClick={handlePagerChangeSelectedOpportunities}
+                        />
+                      </div>
+                    )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* COMPLETED YOUTH */}
+          <div className="flex flex-col">
+            <div className="text-xl font-semibold">Completed Youth</div>
+
+            {completedYouthIsLoading && <LoadingSkeleton />}
+
+            {/* COMPLETED YOUTH */}
+            {!completedYouthIsLoading && (
+              <div id="results">
+                <div className="mb-6 flex flex-row items-center justify-end"></div>
+                <div className="rounded-lg bg-white p-4">
+                  {/* NO ROWS */}
+                  {(!completedYouth || completedYouth.items?.length === 0) && (
+                    <div className="flex flex-col place-items-center py-52">
+                      <NoRowsMessage
+                        title={"No opportunities found"}
+                        description={"Please try refining your search query."}
+                      />
+                    </div>
+                  )}
+
+                  {/* GRID */}
+                  {completedYouth && completedYouth.items?.length > 0 && (
+                    <div className="overflow-x-auto">
+                      <table className="table">
+                        <thead>
+                          <tr className="border-gray text-gray-dark">
+                            <th>Student</th>
+                            <th>Opportunity</th>
+                            <th>Date connected</th>
+                            <th>Verified</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {completedYouth.items.map((opportunity) => (
+                            <tr
+                              key={`completedYouth_${opportunity.opportunityId}_${opportunity.userId}`}
+                              className="border-gray"
+                            >
+                              <td>{opportunity.userDisplayName}</td>
+                              <td>
+                                <Link
+                                  href={`/organisations/${id}/opportunities/${
+                                    opportunity.opportunityId
+                                  }/info?returnUrl=${encodeURIComponent(
+                                    router.asPath,
+                                  )}`}
+                                >
+                                  {opportunity.opportunityTitle}
+                                </Link>
+                              </td>
+                              <td>{opportunity.dateCompleted}</td>
+                              <td>{opportunity.verified}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* PAGINATION */}
+                  {completedYouth &&
+                    (completedYouth.totalCount as number) > 0 && (
+                      <div className="mt-2 grid place-items-center justify-center">
+                        <PaginationButtons
+                          currentPage={
+                            pageCompletedYouth
+                              ? parseInt(pageCompletedYouth.toString())
+                              : 1
+                          }
+                          totalItems={completedYouth.totalCount as number}
+                          pageSize={PAGE_SIZE}
+                          showPages={false}
+                          showInfo={true}
+                          onClick={handlePagerChangeCompletedYouth}
                         />
                       </div>
                     )}

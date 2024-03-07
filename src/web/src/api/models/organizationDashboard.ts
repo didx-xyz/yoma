@@ -2,15 +2,13 @@ import type { PaginationFilter } from "./common";
 import type { Skill, TimeInterval } from "./lookups";
 import type { OpportunityInfo } from "./opportunity";
 
-//TODO: replace with model from api
-// export interface OrganizationSearchFilterSummaryCombined
-//   extends OrganizationSearchFilterSummary {
-//   pageNumber: number | null;
-//   pageSize: number | null;
-//   ageRanges: string[] | null;
-//   genders: string[] | null;
-//   countries: string[] | null;
-// }
+export interface OrganizationSearchFilterBase extends PaginationFilter {
+  organization: string;
+  opportunities: string[] | null;
+  categories: string[] | null;
+  startDate: string | null;
+  endDate: string | null;
+}
 
 export interface OrganizationSearchFilterSummary {
   organization: string;
@@ -30,7 +28,7 @@ export interface OrganizationSearchResultsSummary {
 export interface OrganizationOpportunity {
   viewedCompleted: TimeIntervalSummary;
   completion: OpportunityCompletion;
-  conversionRate: OpportunityConversionRate;
+  conversionRate: OpportunityConversionRatio;
   reward: OpportunityReward;
   selected: OpportunitySelected;
 }
@@ -45,7 +43,7 @@ export interface OpportunityCompletion {
   averageTimeInDays: number;
 }
 
-export interface OpportunityConversionRate {
+export interface OpportunityConversionRatio {
   legend: string;
   completedCount: number;
   viewedCount: number;
@@ -108,9 +106,19 @@ export interface Demographic {
 // }
 
 export interface OrganizationSearchResultsOpportunity {
-  items: OpportunityInfo[];
+  items: OpportunityInfoAnalytics[];
   totalCount: number;
   dateStamp: string;
+}
+
+export interface OpportunityInfoAnalytics {
+  id: string;
+  title: string;
+  organizationLogoId: string | null;
+  organizationLogoURL: string | null;
+  viewedCount: number;
+  completedCount: number;
+  conversionRatioPercentage: number;
 }
 
 export enum OrganisationDashboardFilterOptions {
@@ -122,4 +130,28 @@ export enum OrganisationDashboardFilterOptions {
   GENDERS = "genders",
   COUNTRIES = "countries",
   VIEWALLFILTERSBUTTON = "viewAllFiltersButton",
+}
+export interface YouthInfo {
+  userId: string;
+  userDisplayName: string;
+  opportunityId: string;
+  opportunityTitle: string;
+  organizationLogoId: string | null;
+  organizationLogoURL: string | null;
+  dateCompleted: string | null;
+  verified: boolean;
+}
+
+export interface OrganizationSearchFilterEngagement {
+  organization: string;
+  opportunities: string[] | null;
+  categories: string[] | null;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export interface OrganizationSearchResultsYouth {
+  items: YouthInfo[];
+  totalCount: number;
+  dateStamp: string;
 }

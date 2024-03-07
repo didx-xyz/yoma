@@ -11,7 +11,10 @@ import Select, { components, type ValueContainerProps } from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
-import { OrganizationSearchFilterSummary } from "~/api/models/organizationDashboard";
+import {
+  OrganizationSearchFilterBase,
+  OrganizationSearchFilterSummary,
+} from "~/api/models/organizationDashboard";
 import { IoMdDownload } from "react-icons/io";
 
 const ValueContainer = ({
@@ -53,11 +56,11 @@ const ValueContainer = ({
 
 export const OrganisationRowFilter: React.FC<{
   htmlRef: HTMLDivElement;
-  searchFilter: OrganizationSearchFilterSummary | null;
+  searchFilter: OrganizationSearchFilterBase | null;
   lookups_categories?: OpportunityCategory[];
   lookups_opportunities?: OpportunitySearchResults;
 
-  onSubmit?: (fieldValues: OrganizationSearchFilterSummary) => void;
+  onSubmit?: (fieldValues: OrganizationSearchFilterBase) => void;
   onClear?: () => void;
   onOpenFilterFullWindow?: () => void;
   clearButtonText?: string;
@@ -107,7 +110,7 @@ export const OrganisationRowFilter: React.FC<{
   // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      if (onSubmit) onSubmit(data as OrganizationSearchFilterSummary);
+      if (onSubmit) onSubmit(data as OrganizationSearchFilterBase);
     },
     [onSubmit],
   );
