@@ -1,12 +1,16 @@
 import type { PaginationFilter } from "./common";
-import type { Skill, TimeInterval } from "./lookups";
-import type { OpportunityInfo } from "./opportunity";
-
-export interface OrganizationSearchFilterSummary
-  extends OrganizationSearchFilterBase {}
+import type { Skill } from "./lookups";
 
 export interface OrganizationSearchFilterBase extends PaginationFilter {
-  organization: string | null;
+  organization: string;
+  opportunities: string[] | null;
+  categories: string[] | null;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export interface OrganizationSearchFilterSummary {
+  organization: string;
   opportunities: string[] | null;
   categories: string[] | null;
   startDate: string | null;
@@ -21,72 +25,80 @@ export interface OrganizationSearchResultsSummary {
 }
 
 export interface OrganizationOpportunity {
-  viewed: TimeIntervalSummary;
-  completed: TimeIntervalSummary;
-  completion: OpporunityCompletion;
-  conversionRate: OpportunityConversionRate;
+  viewedCompleted: TimeIntervalSummary;
+  completion: OpportunityCompletion;
+  conversionRate: OpportunityConversionRatio;
   reward: OpportunityReward;
-  published: TimeIntervalSummary;
-  unpublished: TimeIntervalSummary;
-  expired: TimeIntervalSummary;
-  pending: TimeIntervalSummary;
+  selected: OpportunitySelected;
 }
 
-export interface OpporunityCompletion {
+export interface OpportunitySelected {
+  legend: string;
+  count: number;
+}
+
+export interface OpportunityCompletion {
+  legend: string;
   averageTimeInDays: number;
-  percentage: number | null;
 }
 
-export interface OpportunityConversionRate {
+export interface OpportunityConversionRatio {
+  legend: string;
   completedCount: number;
   viewedCount: number;
+  percentage: number;
 }
 
 export interface OpportunityReward {
+  legend: string;
   totalAmount: number;
-  percentage: number | null;
 }
 
 export interface OrganizationOpportunitySkill {
   items: TimeIntervalSummary;
-  topCompleted: Skill[];
+  topCompleted: OpportunitySkillTopCompleted;
 }
 
+export interface OpportunitySkillTopCompleted {
+  legend: string;
+  topCompleted: Skill[];
+}
 export interface TimeIntervalSummary {
-  timeInterval: TimeInterval;
-  data: { item1: number; item2: number }[];
-  count: number;
+  legend: string[];
+  data: TimeValueEntry[];
+  count: number[];
+}
+
+export interface TimeValueEntry {
+  date: string;
+  values: any[];
 }
 
 export interface OrganizationDemographic {
-  countries: { item1: string; item2: number }[];
-  genders: { item1: string; item2: number }[];
-  ages: { item1: string; item2: number }[];
+  countries: Demographic;
+  genders: Demographic;
+  ages: Demographic;
 }
 
-export interface OrganizationSearchFilterQueryTerm
-  extends OrganizationSearchFilterBase {
-  ageRanges: string[] | null;
-  genders: string[] | null;
-  countries: string[] | null;
-}
-
-export interface OrganizationSearchResultsQueryTerm {
-  items: { item1: string; item2: number };
-  dateStamp: string;
-}
-
-export interface OrganizationSearchFilterOpportunity
-  extends OrganizationSearchFilterBase {
-  ageRanges: string[] | null;
-  genders: string[] | null;
-  countries: string[] | null;
+export interface Demographic {
+  legend: string;
+  items: Record<string, number>;
 }
 
 export interface OrganizationSearchResultsOpportunity {
-  items: OpportunityInfo[];
+  items: OpportunityInfoAnalytics[];
   totalCount: number;
   dateStamp: string;
+}
+
+export interface OpportunityInfoAnalytics {
+  id: string;
+  title: string;
+  organizationLogoId: string | null;
+  organizationLogoURL: string | null;
+  viewedCount: number;
+  completedCount: number;
+  conversionRatioPercentage: number;
 }
 
 export enum OrganisationDashboardFilterOptions {
@@ -98,4 +110,28 @@ export enum OrganisationDashboardFilterOptions {
   GENDERS = "genders",
   COUNTRIES = "countries",
   VIEWALLFILTERSBUTTON = "viewAllFiltersButton",
+}
+export interface YouthInfo {
+  userId: string;
+  userDisplayName: string;
+  opportunityId: string;
+  opportunityTitle: string;
+  organizationLogoId: string | null;
+  organizationLogoURL: string | null;
+  dateCompleted: string | null;
+  verified: boolean;
+}
+
+export interface OrganizationSearchFilterEngagement {
+  organization: string;
+  opportunities: string[] | null;
+  categories: string[] | null;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export interface OrganizationSearchResultsYouth {
+  items: YouthInfo[];
+  totalCount: number;
+  dateStamp: string;
 }

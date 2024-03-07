@@ -36,7 +36,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const queryClient = new QueryClient(config);
   const { id } = context.params as IParams;
-  const { query, schemaType, page } = context.query;
+  const { query, page } = context.query;
 
   // 👇 prefetch queries on server
   // await queryClient.prefetchQuery({
