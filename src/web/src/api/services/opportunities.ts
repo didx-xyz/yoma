@@ -59,6 +59,39 @@ export const getCategoriesAdmin = async (
   return data;
 };
 
+// this is used for orgAdmin dashboards, admin pages etc
+export const getCountriesAdmin = async (
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<Country[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<Country[]>(
+    `/opportunity/search/filter/country/admin`,
+  );
+  return data;
+};
+
+// this is used for orgAdmin dashboards, admin pages etc
+export const getLanguagesAdmin = async (
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<Language[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<Language[]>(
+    `/opportunity/search/filter/language/admin`,
+  );
+  return data;
+};
+
+// this is used for orgAdmin dashboards, admin pages etc
+export const getOrganisationsAdmin = async (
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<OrganizationInfo[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<OrganizationInfo[]>(
+    `/opportunity/search/filter/organization/admin`,
+  );
+  return data;
+};
+
 export const getDifficulties = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityDifficulty[]> => {
