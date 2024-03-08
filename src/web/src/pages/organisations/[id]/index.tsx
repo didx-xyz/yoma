@@ -130,26 +130,6 @@ const OrganisationDashboard: NextPageWithLayout<{
     queryFn: () => getCategoriesAdmin(id),
     enabled: !error,
   });
-  //TODO: this has been removed till the on-demand dropdown is developed
-  // const { data: lookups_opportunities } = useQuery<OpportunitySearchResults>({
-  //   queryKey: ["OrganisationDashboardOpportunities", id],
-  //   queryFn: () =>
-  //     getOpportunitiesAdmin({
-  //       types: null,
-  //       categories: null,
-  //       languages: null,
-  //       countries: null,
-  //       organizations: [id],
-  //       commitmentIntervals: null,
-  //       zltoRewardRanges: null,
-  //       valueContains: null,
-  //       startDate: null,
-  //       endDate: null,
-  //       statuses: null,
-  //       pageNumber: 1,
-  //       pageSize: 1000,
-  //     }),
-  // });
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
     enabled: !error,
@@ -190,7 +170,6 @@ const OrganisationDashboard: NextPageWithLayout<{
       queryFn: async () => {
         return await searchOrganizationEngagement({
           organization: id,
-          //valueContains: query ? decodeURIComponent(query.toString()) : null,
           categories:
             categories != undefined
               ? categories
@@ -202,22 +181,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                   })
                   .filter((x) => x != "")
               : null,
-          //TODO: this has been removed till the on-demand dropdown is developed
-          // opportunities:
-          //   opportunities != undefined
-          //     ? opportunities
-          //         ?.toString()
-          //         .split(",")
-          //         .map((x) => {
-          //           const item = lookups_opportunities?.items.find(
-          //             (y) => y.title === x,
-          //           );
-          //           return item ? item?.id : "";
-          //         })
-          //         .filter((x) => x != "")
-          //     : null,
-          opportunities: null,
-
+          opportunities: opportunities
+            ? opportunities?.toString().split(",")
+            : null,
           startDate: startDate ? startDate.toString() : "",
           endDate: endDate ? endDate.toString() : "",
           pageNumber: null,
@@ -244,7 +210,6 @@ const OrganisationDashboard: NextPageWithLayout<{
     queryFn: () =>
       searchOrganizationOpportunities({
         organization: id,
-        //valueContains: query ? decodeURIComponent(query.toString()) : null,
         categories:
           categories != undefined
             ? categories
@@ -256,22 +221,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                 })
                 .filter((x) => x != "")
             : null,
-        //TODO: this has been removed till the on-demand dropdown is developed
-        // opportunities:
-        //   opportunities != undefined
-        //     ? opportunities
-        //         ?.toString()
-        //         .split(",")
-        //         .map((x) => {
-        //           const item = lookups_opportunities?.items.find(
-        //             (y) => y.title === x,
-        //           );
-        //           return item ? item?.id : "";
-        //         })
-        //         .filter((x) => x != "")
-        //     : null,
-        opportunities: null,
-
+        opportunities: opportunities
+          ? opportunities?.toString().split(",")
+          : null,
         startDate: startDate ? startDate.toString() : "",
         endDate: endDate ? endDate.toString() : "",
         pageNumber: pageSelectedOpportunities
@@ -308,22 +260,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                   })
                   .filter((x) => x != "")
               : null,
-          //TODO: this has been removed till the on-demand dropdown is developed
-          // opportunities:
-          //   opportunities != undefined
-          //     ? opportunities
-          //         ?.toString()
-          //         .split(",")
-          //         .map((x) => {
-          //           const item = lookups_opportunities?.items.find(
-          //             (y) => y.title === x,
-          //           );
-          //           return item ? item?.id : "";
-          //         })
-          //         .filter((x) => x != "")
-          //     : null,
-          opportunities: null,
-
+          opportunities: opportunities
+            ? opportunities?.toString().split(",")
+            : null,
           startDate: startDate ? startDate.toString() : "",
           endDate: endDate ? endDate.toString() : "",
           pageNumber: pageCompletedYouth
@@ -388,12 +327,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
       // construct querystring parameters from filter
       const params = new URLSearchParams();
-      // if (
-      //   opportunitySearchFilter.valueContains !== undefined &&
-      //   opportunitySearchFilter.valueContains !== null &&
-      //   opportunitySearchFilter.valueContains.length > 0
-      // )
-      //   params.append("query", opportunitySearchFilter.valueContains);
+
       if (
         opportunitySearchFilter?.categories?.length !== undefined &&
         opportunitySearchFilter.categories.length > 0
@@ -483,36 +417,6 @@ const OrganisationDashboard: NextPageWithLayout<{
     ],
   );
 
-  //const onClearFilter = useCallback(() => {
-  //   void router.push(`/organisations/${id}`, undefined, { scroll: true });
-  // }, [router]);
-
-  //
-  // const [isExportButtonLoading, setIsExportButtonLoading] = useState(false);
-  // const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  // const handleExportToCSV = useCallback(
-  //   async () => {
-  //     setIsExportButtonLoading(true);
-
-  //     // try {
-  //     //   opportunitySearchFilter.pageSize = PAGE_SIZE_MAXIMUM;
-  //     //   const data = await getOpportunitiesAdminExportToCSV(
-  //     //     opportunitySearchFilter,
-  //     //   );
-  //     //   if (!data) return;
-
-  //     //   FileSaver.saveAs(data);
-
-  //     //   setExportDialogOpen(false);
-  //     // } finally {
-  //     //   setIsExportButtonLoading(false);
-  //     // }
-  //   },
-  //   [
-  //     //opportunitySearchFilter, setIsExportButtonLoading, setExportDialogOpen
-  //   ],
-  // );
-
   // 🔔 CHANGE EVENTS
   const handlePagerChangeSelectedOpportunities = useCallback(
     (value: number) => {
@@ -559,22 +463,6 @@ const OrganisationDashboard: NextPageWithLayout<{
             {/* DESCRIPTION */}
             <div className="flex flex-row gap-1">
               <span>Your dashboard progress so far.</span>
-              {/* {(startDate || endDate) && (
-                <div className="flex flex-row gap-1">
-                  <span>for</span>
-                  {startDate && (
-                    <span className="font-semibold">
-                      {startDate.toString().split("T")[0]}
-                    </span>
-                  )}
-                  <span>-</span>
-                  {endDate && (
-                    <span className="font-semibold">
-                      {endDate.toString().split("T")[0]}
-                    </span>
-                  )}
-                </div>
-              )} */}
 
               {searchResults?.dateStamp && (
                 <span>
@@ -595,6 +483,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             {lookups_categories && (
               <div className="flex flex-grow flex-col gap-3">
                 <OrganisationRowFilter
+                  organisationId={id}
                   htmlRef={myRef.current!}
                   searchFilter={{
                     categories: searchFilter.categories,
@@ -606,13 +495,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     pageSize: null,
                   }}
                   lookups_categories={lookups_categories}
-                  //TODO: this has been removed till the on-demand dropdown is developed */}
-                  //lookups_opportunities={lookups_opportunities}
-                  //clearButtonText="Clear"
-                  //onClear={onClearFilter}
                   onSubmit={(e) => onSubmitFilter(e)}
-                  //totalCount={0}
-                  //exportToCsv={handleExportToCSV}
                 />
                 {/* FILTER BADGES */}
                 <FilterBadges
@@ -718,6 +601,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 </div>
               </div>
             </div>
+
             {/* REWARDS */}
             <div className="flex flex-col gap-2">
               <div className="text-xl font-semibold">Rewards</div>
@@ -773,7 +657,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                   searchResults?.skills?.items.data.length > 1 && (
                     <LineChart
                       id="totalUniqueSkills"
-                      //title="Total unique skills"
                       data={searchResults?.skills?.items}
                       width={291}
                       height={160}
