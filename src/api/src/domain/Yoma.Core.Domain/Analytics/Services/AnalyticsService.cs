@@ -11,7 +11,6 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
-using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.Analytics.Services

@@ -11,6 +11,7 @@ using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.EmailProvider.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Microsoft.Extensions.Logging;
+using Yoma.Core.Domain.Core.Helpers;
 
 namespace Yoma.Core.Infrastructure.SendGrid.Client
 {
@@ -89,12 +90,13 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
 
             foreach (var recipient in recipients)
             {
-                data.RecipientDisplayName = string.IsNullOrEmpty(recipient.DisplayName) ? recipient.Email : recipient.DisplayName;
+                var dataCopy = ObjectHelper.DeepCopy(data);
+                dataCopy.RecipientDisplayName = string.IsNullOrEmpty(recipient.DisplayName) ? recipient.Email : recipient.DisplayName;
 
                 var item = new Personalization
                 {
                     Tos = new List<EmailAddress>(),
-                    TemplateData = data
+                    TemplateData = dataCopy
                 };
 
                 item.Tos.Add(new EmailAddress(recipient.Email, recipient.DisplayName));
