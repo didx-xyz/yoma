@@ -193,8 +193,9 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
             using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleContainerApi>(_httpClient);
 
             var kcUsers = await rolesApi.GetRolesUsersByRoleNameAsync(_keycloakAuthenticationOptions.Realm, role);
+            kcUsers = kcUsers?.Where(o => o.EmailVerified == true).ToList();
 
-            return kcUsers.Select(o => o.ToUser()).ToList();
+            return kcUsers?.Select(o => o.ToUser()).ToList();
         }
 
         public void Dispose()
