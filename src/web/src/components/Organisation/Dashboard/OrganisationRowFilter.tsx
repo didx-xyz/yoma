@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { use, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { type FieldValues, Controller, useForm } from "react-hook-form";
 import zod from "zod";
 import type { OpportunityCategory } from "~/api/models/opportunity";
@@ -12,6 +12,7 @@ import { IoMdDownload } from "react-icons/io";
 import { searchCriteriaOpportunities } from "~/api/services/opportunities";
 import Select, { components, type ValueContainerProps } from "react-select";
 import Async from "react-select/async";
+import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
 
 const ValueContainer = ({
   children,
@@ -26,14 +27,14 @@ const ValueContainer = ({
       "selectProps" in values[0].props &&
       values[0].props.selectProps.placeholder
     ) {
-      const pluralMapping: { [key: string]: string } = {
+      const pluralMapping: Record<string, string> = {
         Category: "Categories",
         Opportunity: "Opportunities",
       };
 
       const pluralize = (word: string, count: number): string => {
         if (count === 1) return word;
-        return pluralMapping[word] || `${word}s`;
+        return pluralMapping[word] ?? `${word}s`;
       };
 
       const placeholder: string = values[0].props.selectProps.placeholder;
@@ -100,17 +101,14 @@ export const OrganisationRowFilter: React.FC<{
     [onSubmit],
   );
 
-  //
-
-  const loadOptions = useCallback(
+  const loadOpportunities = useCallback(
     (inputValue: string, callback: (options: any) => void) => {
       setTimeout(() => {
-        console.error("loadOptions: ", inputValue);
         searchCriteriaOpportunities({
           organization: organisationId,
           titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
           pageNumber: 1,
-          pageSize: 10,
+          pageSize: PAGE_SIZE_MEDIUM,
         }).then((data) => {
           const options = data.items.map((item) => ({
             value: item.id,
@@ -123,18 +121,20 @@ export const OrganisationRowFilter: React.FC<{
     [organisationId],
   );
 
-  const [defaultOptions, setDefaultOptions] = useState<any>([]);
+  // the AsyncSelect component requires the defaultOptions to be set in the state
+  const [defaultOpportunityOptions, setdefaultOpportunityOptions] =
+    useState<any>([]);
 
   useEffect(() => {
     if (searchFilter?.opportunities) {
-      setDefaultOptions(
+      setdefaultOpportunityOptions(
         searchFilter?.opportunities?.map((c: any) => ({
           value: c,
           label: c,
         })),
       );
     }
-  }, [setDefaultOptions, searchFilter?.opportunities]);
+  }, [setdefaultOpportunityOptions, searchFilter?.opportunities]);
 
   return (
     <div className="flex flex-grow flex-col">
@@ -151,18 +151,17 @@ export const OrganisationRowFilter: React.FC<{
               <Controller
                 name="opportunities"
                 control={form.control}
-                render={({ field: { onChange, value } }) => (
+                render={({ field: { onChange } }) => (
                   <Async
                     instanceId="opportunities"
                     classNames={{
                       control: () => "input input-xs h-fit !border-gray",
                     }}
                     isMulti={true}
-                    defaultOptions={true} // loadOptions for initial results
+                    defaultOptions={true} // calls loadOpportunities for initial results when clicking on the dropdown
                     cacheOptions
-                    loadOptions={loadOptions}
-                    // fix menu z-index issue
-                    menuPortalTarget={htmlRef}
+                    loadOptions={loadOpportunities}
+                    menuPortalTarget={htmlRef} // fix menu z-index issue
                     styles={{
                       menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                     }}
@@ -170,10 +169,11 @@ export const OrganisationRowFilter: React.FC<{
                       // clear categories
                       setValue("categories", []);
 
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                       onChange(val.map((c: any) => c.value));
                       void handleSubmit(onSubmitHandler)();
                     }}
-                    value={defaultOptions}
+                    value={defaultOpportunityOptions}
                     placeholder="Opportunity"
                     components={{
                       ValueContainer,
