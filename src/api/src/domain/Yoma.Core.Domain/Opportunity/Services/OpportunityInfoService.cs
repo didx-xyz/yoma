@@ -25,7 +25,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             IOpportunityService opportunityService,
             IMyOpportunityService myOpportunityService)
         {
-            _httpContextAccessor = httpContextAccessor; 
+            _httpContextAccessor = httpContextAccessor;
             _opportunityService = opportunityService;
             _myOpportunityService = myOpportunityService;
         }
