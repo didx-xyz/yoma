@@ -41,6 +41,39 @@ namespace Yoma.Core.Api.Controllers
         #endregion
 
         #region Public Members
+
+        #region Authenticated User Based Actions
+        [SwaggerOperation(Summary = "Create a new organization (User, Admin or Organization Admin role required)")]
+        [HttpPost()]
+        [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public async Task<IActionResult> Create([FromForm] OrganizationRequestCreate request)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(Create));
+
+            var result = await _organizationService.Create(request);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(Create));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+
+        [SwaggerOperation(Summary = "Return a list of provider types (User, Admin or Organization Admin role required)")]
+        [HttpGet("lookup/providerType")]
+        [ProducesResponseType(typeof(List<Domain.Entity.Models.Lookups.OrganizationProviderType>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult ListProviderTypes()
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(ListProviderTypes));
+
+            var result = _providerTypeService.List();
+
+            _logger.LogInformation("Request {requestName} handled", nameof(ListProviderTypes));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+        #endregion
+
         #region Administrative Actions
         [SwaggerOperation(Summary = "Get the specified organization by id")]
         [HttpGet("{id}")]
@@ -69,21 +102,6 @@ namespace Yoma.Core.Api.Controllers
             var result = _organizationService.Search(filter, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(Search));
-
-            return StatusCode((int)HttpStatusCode.OK, result);
-        }
-
-        [SwaggerOperation(Summary = "Create a new organization (User, Admin or Organization Admin role required)")]
-        [HttpPost()]
-        [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
-        [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public async Task<IActionResult> Create([FromForm] OrganizationRequestCreate request)
-        {
-            _logger.LogInformation("Handling request {requestName}", nameof(Create));
-
-            var result = await _organizationService.Create(request);
-
-            _logger.LogInformation("Request {requestName} handled", nameof(Create));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }
@@ -117,21 +135,6 @@ namespace Yoma.Core.Api.Controllers
             var result = await _organizationService.UpdateStatus(id, request, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
-
-            return StatusCode((int)HttpStatusCode.OK, result);
-        }
-
-        [SwaggerOperation(Summary = "Return a list of provider types (User, Admin or Organization Admin role required)")]
-        [HttpGet("lookup/providerType")]
-        [ProducesResponseType(typeof(List<Domain.Entity.Models.Lookups.OrganizationProviderType>), (int)HttpStatusCode.OK)]
-        [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public IActionResult ListProviderTypes()
-        {
-            _logger.LogInformation("Handling request {requestName}", nameof(ListProviderTypes));
-
-            var result = _providerTypeService.List();
-
-            _logger.LogInformation("Request {requestName} handled", nameof(ListProviderTypes));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

@@ -194,6 +194,24 @@ namespace Yoma.Core.Api.Controllers
         }
         #endregion
 
+        #region Authenticated User Based Actions
+        [SwaggerOperation(Summary = "Get the specified opportunity info by id (User, Admin or Organization Admin role required)")]
+        [HttpGet("{id}/auth/info")]
+        [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+        public IActionResult GetInfoById([FromRoute] Guid id)
+        {
+            _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
+
+            var result = _opportunityInfoService.GetById(id, true);
+
+            _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
+
+            return StatusCode((int)HttpStatusCode.OK, result);
+        }
+        #endregion
+
         #region Administrative Actions
         [SwaggerOperation(Summary = "Return a list of categories associated with opportunities, optionally filter by organization")]
         [HttpGet("search/filter/category/admin")]
@@ -326,22 +344,6 @@ namespace Yoma.Core.Api.Controllers
             var result = _opportunityInfoService.Search(filter, true);
 
             _logger.LogInformation("Request {requestName} handled", nameof(Search));
-
-            return StatusCode((int)HttpStatusCode.OK, result);
-        }
-
-        [SwaggerOperation(Summary = "Get the specified opportunity info by id")]
-        [HttpGet("{id}/admin/info")]
-        [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-        public IActionResult GetInfoById([FromRoute] Guid id)
-        {
-            _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
-
-            var result = _opportunityInfoService.GetById(id, true);
-
-            _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
 
             return StatusCode((int)HttpStatusCode.OK, result);
         }

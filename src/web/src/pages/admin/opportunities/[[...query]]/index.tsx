@@ -24,11 +24,11 @@ import {
   getOpportunitiesAdmin,
   getOpportunitiesAdminExportToCSV,
   getCategoriesAdmin,
-  getOpportunityCountries,
-  getOpportunityLanguages,
-  getOpportunityOrganizations,
   getOpportunityTypes,
   getZltoRewardRanges,
+  getLanguagesAdmin,
+  getOrganisationsAdmin,
+  getCountriesAdmin,
 } from "~/api/services/opportunities";
 import type {
   OpportunityCategory,
@@ -57,9 +57,9 @@ import { IoMdDownload } from "react-icons/io";
 // revalidation is enabled and a new request comes in
 export const getStaticProps: GetStaticProps = async (context) => {
   //const lookups_categories = await getCategoriesAdmin(null, context);
-  const lookups_countries = await getOpportunityCountries(context);
-  const lookups_languages = await getOpportunityLanguages(context);
-  const lookups_organisations = await getOpportunityOrganizations(context);
+  //const lookups_countries = await getOpportunityCountries(context);
+  //const lookups_languages = await getOpportunityLanguages(context);
+  //const lookups_organisations = await getOpportunityOrganizations(context);
   const lookups_types = await getOpportunityTypes(context);
   const lookups_commitmentIntervals = await getCommitmentIntervals(context);
   const lookups_zltoRewardRanges = await getZltoRewardRanges(context);
@@ -67,9 +67,9 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       //lookups_categories,
-      lookups_countries,
-      lookups_languages,
-      lookups_organisations,
+      // lookups_countries,
+      // lookups_languages,
+      // lookups_organisations,
       lookups_types,
       lookups_commitmentIntervals,
       lookups_zltoRewardRanges,
@@ -91,17 +91,17 @@ export const getStaticPaths: GetStaticPaths = () => {
 
 const OpportunitiesAdmin: NextPageWithLayout<{
   //lookups_categories: OpportunityCategory[];
-  lookups_countries: Country[];
-  lookups_languages: Language[];
-  lookups_organisations: OrganizationInfo[];
+  // lookups_countries: Country[];
+  // lookups_languages: Language[];
+  // lookups_organisations: OrganizationInfo[];
   lookups_types: OpportunityType[];
   lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
   lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
 }> = ({
   //lookups_categories,
-  lookups_countries,
-  lookups_languages,
-  lookups_organisations,
+  // lookups_countries,
+  // lookups_languages,
+  // lookups_organisations,
   lookups_types,
   lookups_commitmentIntervals,
   lookups_zltoRewardRanges,
@@ -145,6 +145,21 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   const { data: lookups_categories } = useQuery<OpportunityCategory[]>({
     queryKey: ["AdminOpportunitiesCategories"],
     queryFn: () => getCategoriesAdmin(null),
+  });
+
+  const { data: lookups_countries } = useQuery<Country[]>({
+    queryKey: ["AdminOpportunitiesCountries"],
+    queryFn: () => getCountriesAdmin(),
+  });
+
+  const { data: lookups_languages } = useQuery<Language[]>({
+    queryKey: ["AdminOpportunitiesLanguages"],
+    queryFn: () => getLanguagesAdmin(),
+  });
+
+  const { data: lookups_organisations } = useQuery<OrganizationInfo[]>({
+    queryKey: ["AdminOpportunitiesOrganisations"],
+    queryFn: () => getOrganisationsAdmin(),
   });
 
   // memo for isSearchPerformed based on filter parameters
@@ -229,7 +244,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   ?.toString()
                   .split(",")
                   .map((x) => {
-                    const item = lookups_countries.find((y) => y.name === x);
+                    const item = lookups_countries?.find((y) => y.name === x);
                     return item ? item?.id : "";
                   })
                   .filter((x) => x != "")
@@ -240,7 +255,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   ?.toString()
                   .split(",")
                   .map((x) => {
-                    const item = lookups_languages.find((y) => y.name === x);
+                    const item = lookups_languages?.find((y) => y.name === x);
                     return item ? item?.id : "";
                   })
                   .filter((x) => x != "")
@@ -251,7 +266,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   ?.toString()
                   .split(",")
                   .map((x) => {
-                    const item = lookups_organisations.find(
+                    const item = lookups_organisations?.find(
                       (y) => y.name === x,
                     );
                     return item ? item?.id : "";
@@ -615,10 +630,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           htmlRef={myRef.current!}
           opportunitySearchFilter={opportunitySearchFilter}
           lookups_categories={lookups_categories!}
-          lookups_countries={lookups_countries}
-          lookups_languages={lookups_languages}
+          lookups_countries={lookups_countries!}
+          lookups_languages={lookups_languages!}
           lookups_types={lookups_types}
-          lookups_organisations={lookups_organisations}
+          lookups_organisations={lookups_organisations!}
           lookups_commitmentIntervals={lookups_commitmentIntervals}
           lookups_zltoRewardRanges={lookups_zltoRewardRanges}
           lookups_publishedStates={lookups_publishedStates}
@@ -739,38 +754,43 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
         {/* FILTER ROW: CATEGORIES DROPDOWN FILTERS (SELECT) FOR COUNTRIES, LANGUAGES, TYPE, ORGANISATIONS ETC  */}
         <div className="mb-4 mt-10 hidden md:flex">
-          <OpportunityFilterHorizontal
-            htmlRef={myRef.current!}
-            opportunitySearchFilter={opportunitySearchFilter}
-            lookups_categories={lookups_categories!}
-            lookups_countries={lookups_countries}
-            lookups_languages={lookups_languages}
-            lookups_types={lookups_types}
-            lookups_organisations={lookups_organisations}
-            lookups_commitmentIntervals={lookups_commitmentIntervals}
-            lookups_zltoRewardRanges={lookups_zltoRewardRanges}
-            lookups_publishedStates={lookups_publishedStates}
-            lookups_statuses={lookups_statuses}
-            clearButtonText="Clear"
-            onClear={onClearFilter}
-            onSubmit={onSubmitFilter}
-            onOpenFilterFullWindow={() => {
-              setFilterFullWindowVisible(!filterFullWindowVisible);
-            }}
-            filterOptions={[
-              OpportunityFilterOptions.CATEGORIES,
-              OpportunityFilterOptions.TYPES,
-              OpportunityFilterOptions.COUNTRIES,
-              OpportunityFilterOptions.LANGUAGES,
-              OpportunityFilterOptions.ORGANIZATIONS,
-              OpportunityFilterOptions.DATE_START,
-              OpportunityFilterOptions.DATE_END,
-              OpportunityFilterOptions.STATUSES,
-              OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
-            ]}
-            totalCount={searchResults?.totalCount ?? 0}
-            exportToCsv={setExportDialogOpen}
-          />
+          {lookups_categories &&
+            lookups_countries &&
+            lookups_languages &&
+            lookups_organisations && (
+              <OpportunityFilterHorizontal
+                htmlRef={myRef.current!}
+                opportunitySearchFilter={opportunitySearchFilter}
+                lookups_categories={lookups_categories}
+                lookups_countries={lookups_countries}
+                lookups_languages={lookups_languages}
+                lookups_types={lookups_types}
+                lookups_organisations={lookups_organisations}
+                lookups_commitmentIntervals={lookups_commitmentIntervals}
+                lookups_zltoRewardRanges={lookups_zltoRewardRanges}
+                lookups_publishedStates={lookups_publishedStates}
+                lookups_statuses={lookups_statuses}
+                clearButtonText="Clear"
+                onClear={onClearFilter}
+                onSubmit={onSubmitFilter}
+                onOpenFilterFullWindow={() => {
+                  setFilterFullWindowVisible(!filterFullWindowVisible);
+                }}
+                filterOptions={[
+                  OpportunityFilterOptions.CATEGORIES,
+                  OpportunityFilterOptions.TYPES,
+                  OpportunityFilterOptions.COUNTRIES,
+                  OpportunityFilterOptions.LANGUAGES,
+                  OpportunityFilterOptions.ORGANIZATIONS,
+                  OpportunityFilterOptions.DATE_START,
+                  OpportunityFilterOptions.DATE_END,
+                  OpportunityFilterOptions.STATUSES,
+                  OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
+                ]}
+                totalCount={searchResults?.totalCount ?? 0}
+                exportToCsv={setExportDialogOpen}
+              />
+            )}
         </div>
 
         {/* SEARCH RESULTS */}
@@ -815,6 +835,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                         <th>Reward</th>
                         <th>Url</th>
                         <th>Participants</th>
+                        <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -851,6 +872,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                           <td className="text-center">
                             {opportunity.participantCountTotal}
                           </td>
+                          <td className="text-center">{opportunity.status}</td>
                         </tr>
                       ))}
                     </tbody>
