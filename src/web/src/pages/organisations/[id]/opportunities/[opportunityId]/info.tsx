@@ -10,7 +10,7 @@ import { type ParsedUrlQuery } from "querystring";
 import { useState, type ReactElement, useCallback } from "react";
 import { type OpportunityInfo, Status } from "~/api/models/opportunity";
 import {
-  getOpportunityInfoByIdAdmin,
+  getOpportunityInfoByIdAdminOrgAdminOrUser,
   updateOpportunityStatus,
 } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
@@ -78,7 +78,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient(config);
   await queryClient.prefetchQuery({
     queryKey: ["opportunityInfo", opportunityId],
-    queryFn: () => getOpportunityInfoByIdAdmin(opportunityId, context),
+    queryFn: () =>
+      getOpportunityInfoByIdAdminOrgAdminOrUser(opportunityId, context),
   });
 
   return {
@@ -113,7 +114,7 @@ const OpportunityDetails: NextPageWithLayout<{
   // 👇 use prefetched queries from server
   const { data: opportunity } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
-    queryFn: () => getOpportunityInfoByIdAdmin(opportunityId),
+    queryFn: () => getOpportunityInfoByIdAdminOrgAdminOrUser(opportunityId),
     enabled: !error,
   });
 

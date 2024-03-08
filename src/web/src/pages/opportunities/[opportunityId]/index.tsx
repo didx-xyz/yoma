@@ -14,7 +14,10 @@ import {
   useEffect,
 } from "react";
 import { type OpportunityInfo } from "~/api/models/opportunity";
-import { getOpportunityInfoById } from "~/api/services/opportunities";
+import {
+  getOpportunityInfoById,
+  getOpportunityInfoByIdAdminOrgAdminOrUser,
+} from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
@@ -93,11 +96,21 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   try {
     // 👇 prefetch queries on server
-    dataOpportunityInfo = await getOpportunityInfoById(
-      opportunityId,
-      session != null,
-      context,
-    );
+    if (session) {
+      // authenticated user (user may be an admin, orgDamin or the user has completed the opportunitiy)
+      dataOpportunityInfo = await getOpportunityInfoByIdAdminOrgAdminOrUser(
+        opportunityId,
+        context,
+      );
+    } else {
+      // anonymous user (can see published and active opportunities only)
+      dataOpportunityInfo = await getOpportunityInfoById(
+        opportunityId,
+        false,
+        context,
+      );
+    }
+
     if (session)
       dataVerificationStatus = await getVerificationStatus(
         opportunityId,
@@ -174,7 +187,15 @@ const OpportunityDetails: NextPageWithLayout<{
     isLoading: dataIsLoading,
   } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
-    queryFn: () => getOpportunityInfoById(opportunityId, user != null),
+    queryFn: () => {
+      if (user) {
+        // authenticated user (user may be an admin, orgDamin or the user has completed the opportunitiy)
+        return getOpportunityInfoByIdAdminOrgAdminOrUser(opportunityId);
+      } else {
+        // anonymous user (can see published and active opportunities only)
+        return getOpportunityInfoById(opportunityId, false);
+      }
+    },
   });
 
   const { data: verificationStatus, isLoading: verificationStatusIsLoading } =

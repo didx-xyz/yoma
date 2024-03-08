@@ -152,18 +152,20 @@ export const getOpportunityById = async (
   return data;
 };
 
-export const getOpportunityInfoByIdAdmin = async (
+// used for admins/orgAdmins, as well as users who have completed the opportunity (my opportunities) and tries to view the opportunity
+export const getOpportunityInfoByIdAdminOrgAdminOrUser = async (
   id: string,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.get<OpportunityInfo>(
-    `/opportunity/${id}/admin/info`,
+    `/opportunity/${id}/auth/info`,
   );
   return data;
 };
 
+// returns published and expired opportunities (public/anonymous)
 export const getOpportunityInfoById = async (
   id: string,
   includeExpired?: boolean,

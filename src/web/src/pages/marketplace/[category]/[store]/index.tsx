@@ -33,6 +33,9 @@ import iconBell from "public/images/icon-bell.webp";
 import { fetchClientEnv } from "~/lib/utils";
 import type { ErrorResponseItem } from "~/api/models/common";
 import { trackGAEvent } from "~/lib/google-analytics";
+import { userProfileAtom } from "~/lib/store";
+import { getUserProfile } from "~/api/services/user";
+import { useSetAtom } from "jotai";
 
 interface IParams extends ParsedUrlQuery {
   category: string;
@@ -96,6 +99,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
   );
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const { data: session } = useSession();
+  const setUserProfile = useSetAtom(userProfileAtom);
 
   // 👇 use prefetched queries from server
   const {
@@ -171,14 +175,17 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
 
           // show confirmation dialog
           setBuyDialogConfirmationVisible(true);
+
+          // update user profile (zlto balance)
+          getUserProfile().then((res) => {
+            setUserProfile(res);
+          });
         })
         .catch((err) => {
           const customErrors = err.response?.data as ErrorResponseItem[];
           setBuyDialogErrorMessages(customErrors);
           setBuyDialogErrorVisible(true);
         });
-
-      //TODO: update zlto balance
     },
     [
       store,
@@ -187,6 +194,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
       setBuyDialogConfirmationVisible,
       setBuyDialogErrorVisible,
       setBuyDialogErrorMessages,
+      setUserProfile,
     ],
   );
 

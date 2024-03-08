@@ -1,6 +1,8 @@
 using CsvHelper;
 using CsvHelper.Configuration;
+using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
@@ -12,14 +14,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public class OpportunityInfoService : IOpportunityInfoService
     {
         #region Class Variables
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
         private readonly IOpportunityService _opportunityService;
         private readonly IMyOpportunityService _myOpportunityService;
         #endregion
 
         #region Constructor
-        public OpportunityInfoService(IOpportunityService opportunityService,
+        public OpportunityInfoService(IHttpContextAccessor httpContextAccessor,
+            IOpportunityService opportunityService,
             IMyOpportunityService myOpportunityService)
         {
+            _httpContextAccessor = httpContextAccessor;
             _opportunityService = opportunityService;
             _myOpportunityService = myOpportunityService;
         }
@@ -28,6 +34,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #region Public Members
         public OpportunityInfo GetById(Guid id, bool ensureOrganizationAuthorization)
         {
+            //allowed for authenticated users; if userRoleOnly do not execute ensureOrganizationAuthorization
+            ensureOrganizationAuthorization = ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsUserRoleOnly(_httpContextAccessor);
+
             var opportunity = _opportunityService.GetById(id, true, true, ensureOrganizationAuthorization);
 
             var result = opportunity.ToOpportunityInfo();
