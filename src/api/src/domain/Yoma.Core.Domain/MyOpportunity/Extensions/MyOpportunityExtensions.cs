@@ -42,6 +42,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
                 DateCompleted = value.DateCompleted,
                 ZltoReward = value.ZltoReward,
                 YomaReward = value.YomaReward,
+                DateModified = value.DateModified,
                 Verifications = value.Verifications?.Select(o =>
                     new MyOpportunityInfoVerification
                     {

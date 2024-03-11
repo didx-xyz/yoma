@@ -3,7 +3,8 @@ namespace Yoma.Core.Domain.SSI.Models
     public enum ArtifactType
     {
         Indy,
-        Ld_proof
+        Ld_proof,
+        JWS
     }
 
     public enum Role
