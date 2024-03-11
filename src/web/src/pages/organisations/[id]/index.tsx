@@ -821,7 +821,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                                 <td className="text-center">
                                   {opportunity.completedCount}
                                 </td>
-                                <td>{opportunity.status}</td>
+                                <td className="whitespace-nowrap text-center">
+                                  {opportunity.status}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -883,7 +885,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                             <th>Opportunity</th>
                             <th>Date connected</th>
                             <th>Verified</th>
-                            <th>Status</th>
+                            <th>Opportunity Status</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -904,19 +906,21 @@ const OrganisationDashboard: NextPageWithLayout<{
                                   {opportunity.opportunityTitle}
                                 </Link>
                               </td>
-                              <td>
+                              <td className="whitespace-nowrap">
                                 {opportunity.dateCompleted
                                   ? moment(
                                       new Date(opportunity.dateCompleted),
                                     ).format(DATETIME_FORMAT_HUMAN)
                                   : ""}
                               </td>
-                              <td>
+                              <td className="whitespace-nowrap text-center">
                                 {opportunity.verified
                                   ? "Verified"
                                   : "Not verified"}
                               </td>
-                              <td>{opportunity.opportunityStatus}</td>
+                              <td className="text-center">
+                                {opportunity.opportunityStatus}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
