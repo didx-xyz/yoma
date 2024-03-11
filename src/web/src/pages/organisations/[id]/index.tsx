@@ -579,6 +579,18 @@ const OrganisationDashboard: NextPageWithLayout<{
                         <PieChart
                           id="conversionRate"
                           title="Conversion rate"
+                          subTitle={
+                            searchResults.opportunities.conversionRate
+                              .viewedCount !== 0
+                              ? (
+                                  (searchResults.opportunities.conversionRate
+                                    .completedCount /
+                                    searchResults.opportunities.conversionRate
+                                      .viewedCount) *
+                                  100
+                                ).toFixed(2) + "%"
+                              : "N/A"
+                          }
                           colors={["#387F6A", "#F9AB3E"]} // green and yellow
                           data={[
                             ["Completed", "Viewed"],
@@ -704,6 +716,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   <PieChart
                     id="countries"
                     title="Country"
+                    subTitle=""
                     colors={CHART_COLORS}
                     data={[
                       ["Country", "Value"],
@@ -719,6 +732,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   <PieChart
                     id="genders"
                     title="Genders"
+                    subTitle=""
                     colors={CHART_COLORS}
                     data={[
                       ["Gender", "Value"],
@@ -734,6 +748,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   <PieChart
                     id="ages"
                     title="Age"
+                    subTitle=""
                     colors={CHART_COLORS}
                     data={[
                       ["Age", "Value"],
