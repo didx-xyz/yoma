@@ -25,7 +25,6 @@ export const getOpportunitiesAdmin = async (
   filter: OpportunitySearchFilterAdmin,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunitySearchResults> => {
-  console.warn(filter);
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.post<OpportunitySearchResults>(

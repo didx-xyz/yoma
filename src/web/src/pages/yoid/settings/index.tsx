@@ -486,14 +486,19 @@ const Settings: NextPageWithLayout<{
               </div>
 
               <div className="form-control">
-                <label className="label cursor-pointer">
-                  <span className="label-text">Reset Password</span>
+                <label
+                  htmlFor="resetPassword"
+                  className="label w-full cursor-pointer justify-normal"
+                >
                   <input
+                    {...register(`resetPassword`)}
                     type="checkbox"
-                    className="checkbox mr-2"
-                    {...register("resetPassword")}
+                    id="resetPassword"
+                    className="checkbox-primary checkbox"
                   />
+                  <span className="label-text ml-4">Reset Password</span>
                 </label>
+
                 {errors.resetPassword && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
