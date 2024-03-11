@@ -522,7 +522,6 @@ const OrganisationDashboard: NextPageWithLayout<{
           </div>
 
           {/* SUMMARY */}
-          {/* {!isLoading && ( */}
           <div className="flex flex-col gap-4 ">
             {/* ENGAGEMENT */}
             <div className="flex flex-col gap-2">
@@ -682,7 +681,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           (x) => (
                             <div
                               key={x.id}
-                              className="min-h-6 badge rounded-md border-0 bg-green text-white"
+                              className="min-h-6 badge whitespace-nowrap rounded-md border-0 bg-green text-white"
                             >
                               {x.name}
                             </div>
@@ -747,7 +746,6 @@ const OrganisationDashboard: NextPageWithLayout<{
               </div>
             </div>
           </div>
-          {/* )} */}
 
           {/* SELECTED OPPORTUNITIES */}
           <div className="flex flex-col">

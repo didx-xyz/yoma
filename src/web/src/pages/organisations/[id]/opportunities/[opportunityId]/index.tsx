@@ -75,7 +75,7 @@ import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
 import Moment from "react-moment";
 import moment from "moment";
-import { getThemeFromRole } from "~/lib/utils";
+import { getThemeFromRole, debounce } from "~/lib/utils";
 import Async from "react-select/async";
 import { useRouter } from "next/router";
 
@@ -728,30 +728,53 @@ const OpportunityDetails: NextPageWithLayout<{
     }
   }, [opportunity?.skills, setCacheSkills]);
 
-  // load skills async
-  const loadSkills = useCallback(
-    (inputValue: string, callback: (options: any) => void) => {
-      setTimeout(() => {
-        getSkills({
-          nameContains: (inputValue ?? []).length > 2 ? inputValue : null,
-          pageNumber: 1,
-          pageSize: PAGE_SIZE_MEDIUM,
-        }).then((data) => {
-          const options = data.items.map((item) => ({
-            value: item.id,
-            label: item.name,
-          }));
-          callback(options);
+  // load data asynchronously for the skill dropdown
+  // debounce is used to prevent the API from being called too frequently
+  // const loadSkills = useCallback(
+  //   (inputValue: string, callback: (options: any) => void) => {
+  //     setTimeout(() => {
+  //       getSkills({
+  //         nameContains: (inputValue ?? []).length > 2 ? inputValue : null,
+  //         pageNumber: 1,
+  //         pageSize: PAGE_SIZE_MEDIUM,
+  //       }).then((data) => {
+  //         const options = data.items.map((item) => ({
+  //           value: item.id,
+  //           label: item.name,
+  //         }));
+  //         callback(options);
 
-          // add to cache
-          data.items.forEach((item) => {
-            if (!cacheSkills.some((x) => x.id === item.id)) {
-              setCacheSkills((prev) => [...prev, item]);
-            }
-          });
+  //         // add to cache
+  //         data.items.forEach((item) => {
+  //           if (!cacheSkills.some((x) => x.id === item.id)) {
+  //             setCacheSkills((prev) => [...prev, item]);
+  //           }
+  //         });
+  //       });
+  //     }, 1000);
+  //   },
+  //   [cacheSkills],
+  // );
+  const loadSkills = useCallback(
+    debounce((inputValue: string, callback: (options: any) => void) => {
+      getSkills({
+        nameContains: (inputValue ?? []).length > 2 ? inputValue : null,
+        pageNumber: 1,
+        pageSize: PAGE_SIZE_MEDIUM,
+      }).then((data) => {
+        const options = data.items.map((item) => ({
+          value: item.id,
+          label: item.name,
+        }));
+        callback(options);
+        // add to cache
+        data.items.forEach((item) => {
+          if (!cacheSkills.some((x) => x.id === item.id)) {
+            setCacheSkills((prev) => [...prev, item]);
+          }
         });
-      }, 1000);
-    },
+      });
+    }, 1000),
     [cacheSkills],
   );
 

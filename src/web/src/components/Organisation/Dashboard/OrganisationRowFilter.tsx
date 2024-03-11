@@ -6,7 +6,7 @@ import type { OpportunityCategory } from "~/api/models/opportunity";
 import type { SelectOption } from "~/api/models/lookups";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { toISOStringForTimezone } from "~/lib/utils";
+import { toISOStringForTimezone, debounce } from "~/lib/utils";
 import type { OrganizationSearchFilterBase } from "~/api/models/organizationDashboard";
 import { IoMdDownload } from "react-icons/io";
 import { searchCriteriaOpportunities } from "~/api/services/opportunities";
@@ -101,23 +101,23 @@ export const OrganisationRowFilter: React.FC<{
     [onSubmit],
   );
 
+  // load data asynchronously for the opportunities dropdown
+  // debounce is used to prevent the API from being called too frequently
   const loadOpportunities = useCallback(
-    (inputValue: string, callback: (options: any) => void) => {
-      setTimeout(() => {
-        searchCriteriaOpportunities({
-          organization: organisationId,
-          titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
-          pageNumber: 1,
-          pageSize: PAGE_SIZE_MEDIUM,
-        }).then((data) => {
-          const options = data.items.map((item) => ({
-            value: item.id,
-            label: item.title,
-          }));
-          callback(options);
-        });
-      }, 1000);
-    },
+    debounce((inputValue: string, callback: (options: any) => void) => {
+      searchCriteriaOpportunities({
+        organization: organisationId,
+        titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
+        pageNumber: 1,
+        pageSize: PAGE_SIZE_MEDIUM,
+      }).then((data) => {
+        const options = data.items.map((item) => ({
+          value: item.id,
+          label: item.title,
+        }));
+        callback(options);
+      });
+    }, 1000),
     [organisationId],
   );
 
