@@ -705,7 +705,7 @@ const OpportunityDetails: NextPageWithLayout<{
       resetStep7({
         ...formData,
       });
-    }, 500);
+    }, 2000);
   }, [
     resetStep1,
     resetStep2,
@@ -728,7 +728,7 @@ const OpportunityDetails: NextPageWithLayout<{
     }
   }, [opportunity?.skills, setCacheSkills]);
 
-  // load data asynchronously for the skill dropdown
+  // load data asynchronously for the skills dropdown
   // debounce is used to prevent the API from being called too frequently
   const loadSkills = useCallback(
     debounce((inputValue: string, callback: (options: any) => void) => {
