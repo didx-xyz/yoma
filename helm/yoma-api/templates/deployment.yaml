@@ -4,6 +4,9 @@ metadata:
   name: {{ include "yoma-api.fullname" . }}
   labels:
     {{- include "yoma-api.labels" . | nindent 4 }}
+    {{- with .Values.deploymentLabels }}
+    {{- tpl (toYaml .) $ | nindent 4 }}
+    {{- end }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -13,12 +16,16 @@ spec:
       {{- include "yoma-api.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- tpl (toYaml .) $ | nindent 8 }}
+        {{- end }}
       labels:
         {{- include "yoma-api.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- tpl (toYaml .) $ | nindent 8 }}
+        {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -30,7 +37,7 @@ spec:
       initContainers:
         {{- toYaml .Values.initContainers | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: yoma-api
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -55,13 +62,13 @@ spec:
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             httpGet:
-              path: /
+              path: /index.html
               port: {{ .Values.service.portName | default "http"  }}
           {{- end }}
           {{- if .Values.readinessProbe.enabled }}
           readinessProbe:
             httpGet:
-              path: /
+              path: /index.html
               port: {{ .Values.service.portName | default "http"  }}
           {{- end }}
           resources:
@@ -92,7 +99,7 @@ spec:
       {{- end }}
       {{- with .Values.affinity }}
       affinity:
-        {{- toYaml . | nindent 8 }}
+        {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
       {{- with .Values.tolerations }}
       tolerations:

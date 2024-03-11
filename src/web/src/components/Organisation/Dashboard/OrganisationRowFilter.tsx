@@ -1,15 +1,18 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { type FieldValues, Controller, useForm } from "react-hook-form";
 import zod from "zod";
 import type { OpportunityCategory } from "~/api/models/opportunity";
 import type { SelectOption } from "~/api/models/lookups";
-import Select, { components, type ValueContainerProps } from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
 import type { OrganizationSearchFilterBase } from "~/api/models/organizationDashboard";
 import { IoMdDownload } from "react-icons/io";
+import { searchCriteriaOpportunities } from "~/api/services/opportunities";
+import Select, { components, type ValueContainerProps } from "react-select";
+import Async from "react-select/async";
+import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
 
 const ValueContainer = ({
   children,
@@ -18,26 +21,24 @@ const ValueContainer = ({
   // eslint-disable-next-line prefer-const
   let [values, input] = children as any[];
   if (Array.isArray(values)) {
-    const plural = values.length === 1 ? "" : "s";
-    if (values.length > 0 && values[0].props.selectProps.placeholder) {
-      if (
-        values[0].props.selectProps.placeholder === "Status" &&
-        values.length > 1
-      ) {
-        values = `${values.length} Statuses`;
-      } else if (
-        values[0].props.selectProps.placeholder === "Country" &&
-        values.length > 1
-      ) {
-        values = `${values.length} Countries`;
-      } else if (values[0].props.selectProps.placeholder === "Time to invest") {
-        values =
-          values.length > 1
-            ? `${values.length} Time spans`
-            : `${values.length} Time span`;
-      } else {
-        values = `${values.length} ${values[0].props.selectProps.placeholder}${plural}`;
-      }
+    if (
+      values.length > 0 &&
+      "props" in values[0] &&
+      "selectProps" in values[0].props &&
+      values[0].props.selectProps.placeholder
+    ) {
+      const pluralMapping: Record<string, string> = {
+        Category: "Categories",
+        Opportunity: "Opportunities",
+      };
+
+      const pluralize = (word: string, count: number): string => {
+        if (count === 1) return word;
+        return pluralMapping[word] ?? `${word}s`;
+      };
+
+      const placeholder: string = values[0].props.selectProps.placeholder;
+      values = `${values.length} ${pluralize(placeholder, values.length)}`;
     }
   }
   return (
@@ -49,29 +50,20 @@ const ValueContainer = ({
 };
 
 export const OrganisationRowFilter: React.FC<{
+  organisationId: string;
   htmlRef: HTMLDivElement;
   searchFilter: OrganizationSearchFilterBase | null;
   lookups_categories?: OpportunityCategory[];
-  //lookups_opportunities?: OpportunitySearchResults;
-
   onSubmit?: (fieldValues: OrganizationSearchFilterBase) => void;
-  //onClear?: () => void;
   onOpenFilterFullWindow?: () => void;
-  //clearButtonText?: string;
-
-  //totalCount?: number;
   exportToCsv?: (arg0: boolean) => void;
 }> = ({
+  organisationId,
   htmlRef,
   searchFilter,
   lookups_categories,
-  //lookups_opportunities,
 
   onSubmit,
-  //onClear,
-  //clearButtonText = "Clear",
-
-  //totalCount,
   exportToCsv,
 }) => {
   const schema = zod.object({
@@ -109,6 +101,41 @@ export const OrganisationRowFilter: React.FC<{
     [onSubmit],
   );
 
+  const loadOpportunities = useCallback(
+    (inputValue: string, callback: (options: any) => void) => {
+      setTimeout(() => {
+        searchCriteriaOpportunities({
+          organization: organisationId,
+          titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
+          pageNumber: 1,
+          pageSize: PAGE_SIZE_MEDIUM,
+        }).then((data) => {
+          const options = data.items.map((item) => ({
+            value: item.id,
+            label: item.title,
+          }));
+          callback(options);
+        });
+      }, 1000);
+    },
+    [organisationId],
+  );
+
+  // the AsyncSelect component requires the defaultOptions to be set in the state
+  const [defaultOpportunityOptions, setdefaultOpportunityOptions] =
+    useState<any>([]);
+
+  useEffect(() => {
+    if (searchFilter?.opportunities) {
+      setdefaultOpportunityOptions(
+        searchFilter?.opportunities?.map((c: any) => ({
+          value: c,
+          label: c,
+        })),
+      );
+    }
+  }, [setdefaultOpportunityOptions, searchFilter?.opportunities]);
+
   return (
     <div className="flex flex-grow flex-col">
       <form
@@ -120,57 +147,50 @@ export const OrganisationRowFilter: React.FC<{
 
           <div className="flex flex-grow flex-row gap-2">
             {/* OPPORTUNITIES */}
-            {/* TODO: this has been removed till the on-demand dropdown is developed */}
-            {/* {lookups_opportunities && (
-              <>
-                <Controller
-                  name="opportunities"
-                  control={form.control}
-                  defaultValue={searchFilter?.opportunities}
-                  render={({ field: { onChange, value } }) => (
-                    <Select
-                      instanceId="opportunities"
-                      classNames={{
-                        control: () => "input input-xs h-fit !border-gray",
-                      }}
-                      isMulti={true}
-                      options={lookups_opportunities?.items.map((c) => ({
-                        value: c.title,
-                        label: c.title,
-                      }))}
-                      // fix menu z-index issue
-                      menuPortalTarget={htmlRef}
-                      styles={{
-                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                      }}
-                      onChange={(val) => {
-                        // clear categories
-                        setValue("categories", []);
+            <>
+              <Controller
+                name="opportunities"
+                control={form.control}
+                render={({ field: { onChange } }) => (
+                  <Async
+                    instanceId="opportunities"
+                    classNames={{
+                      control: () => "input input-xs h-fit !border-gray",
+                    }}
+                    isMulti={true}
+                    defaultOptions={true} // calls loadOpportunities for initial results when clicking on the dropdown
+                    cacheOptions
+                    loadOptions={loadOpportunities}
+                    menuPortalTarget={htmlRef} // fix menu z-index issue
+                    styles={{
+                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                    }}
+                    onChange={(val) => {
+                      // clear categories
+                      setValue("categories", []);
 
-                        onChange(val.map((c) => c.value));
-                        void handleSubmit(onSubmitHandler)();
-                      }}
-                      value={lookups_opportunities?.items
-                        .filter((c) => value?.includes(c.title))
-                        .map((c) => ({ value: c.title, label: c.title }))}
-                      placeholder="Opportunity"
-                      components={{
-                        ValueContainer,
-                      }}
-                    />
-                  )}
-                />
-                {formState.errors.opportunities && (
-                  <label className="label font-bold">
-                    <span className="label-text-alt italic text-red-500">
-                      {`${formState.errors.opportunities.message}`}
-                    </span>
-                  </label>
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                      onChange(val.map((c: any) => c.value));
+                      void handleSubmit(onSubmitHandler)();
+                    }}
+                    value={defaultOpportunityOptions}
+                    placeholder="Opportunity"
+                    components={{
+                      ValueContainer,
+                    }}
+                  />
                 )}
-              </>
-            )}
+              />
+              {formState.errors.opportunities && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {`${formState.errors.opportunities.message}`}
+                  </span>
+                </label>
+              )}
+            </>
 
-            <div className="flex items-center text-xs text-white">OR</div> */}
+            <div className="flex items-center text-xs text-white">OR</div>
 
             {/* CATEGORIES */}
             {lookups_categories && (

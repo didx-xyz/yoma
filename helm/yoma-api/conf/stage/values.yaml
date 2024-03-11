@@ -1,3 +1,5 @@
+replicaCount: 2
+
 image:
   repository: ghcr.io/didx-xyz/yoma-api
   pullPolicy: Always
@@ -6,15 +8,29 @@ image:
 
 ingress:
   internal:
+    enabled: true
+    className: nginx-internal
     annotations:
       nginx.ingress.kubernetes.io/enable-cors: "true"
       nginx.ingress.kubernetes.io/cors-allow-origin: "https://v3app.stage.yoma.world"
     rules:
       - host: v3api.stage.yoma.world
+  external:
+    enabled: true
+    className: nginx-external
+    annotations:
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/cors-allow-origin: "https://v3app.stage.yoma.world"
+      nginx.ingress.kubernetes.io/server-snippet: |
+        location /hangfire {
+          deny all;
+        }
+    rules:
+      - host: v3api.stage.yoma.world
 
 env:
   ASPNETCORE_ENVIRONMENT: "Staging"
-  ConnectionStrings__SQLConnection: "Data Source=mssql-mssqlserver-2022,1433;Initial Catalog=yoma-stage;MultipleActiveResultSets=true;User ID=sa;Password=Password1;TrustServerCertificate=True;Encrypt=True"
+  # ConnectionStrings__SQLConnection: "Data Source=mssql-mssqlserver-2022,1433;Initial Catalog=yoma-stage;MultipleActiveResultSets=true;User ID=sa;Password=Password1;TrustServerCertificate=True;Encrypt=True"
 
 appSettings:
   fileName: appsettings.Staging.json
@@ -30,76 +46,12 @@ volumeMounts:
     subPath: appsettings.Staging.json
 
 postInstallHook:
-  enabled: true
-  image:
-    repository: ghcr.io/didx-xyz/mssql-server
-    pullPolicy: Always
-    # Overrides the image tag whose default is the chart appVersion.
-    tag: 2022-latest
-  command:
-    - /bin/bash
-    - /init/post.sh
-    - mssql-mssqlserver-2022
-    - sa
-    - /init/post-stage.sql
-  env:
-    ACCEPT_EULA: "Y"
-    SA_PASSWORD: "Password1"
-    SQLCMDPASSWORD: "Password1"
-  nodeSelector:
-    kubernetes.io/arch: amd64
+  enabled: false
 
-  volumes:
-    - name: init
-      emptyDir: {}
-
-  volumeMounts:
-    - name: init
-      mountPath: /init
-
-  initContainers:
-    - name: download-sql
-      image: docker.io/busybox:stable
-      imagePullPolicy: IfNotPresent
-      command:
-        - sh
-      args:
-        - -c
-        - |-
-          cd /init
-          wget -O - \
-            --header="Authorization: token ${GITHUB_PAT}"\
-            --header="Accept:application/vnd.github.v3.raw" \
-            https://api.github.com/repos/didx-xyz/yoma/tarball/master | tar xz
-          cp -v ./didx-xyz-yoma-*/src/api/cicd/scripts/sqlserver-init/* /init/
-          sed -i "s/{admin_user}/$ADMIN_USER/g" /init/post-stage.sql
-          sed -i "s/{org_admin_user}/$ORG_ADMIN_USER/g" /init/post-stage.sql
-          sed -i "s/{test_user}/$TEST_USER/g" /init/post-stage.sql
-          rm -rf ./didx-xyz-yoma-*
-      env:
-        - name: GITHUB_PAT
-          valueFrom:
-            secretKeyRef:
-              name: keycloak-github-pat
-              key: github-pat
-        - name: ADMIN_USER
-          valueFrom:
-            secretKeyRef:
-              name: keycloak-users
-              key: admin-user
-        - name: ORG_ADMIN_USER
-          valueFrom:
-            secretKeyRef:
-              name: keycloak-users
-              key: org-admin-user
-        - name: TEST_USER
-          valueFrom:
-            secretKeyRef:
-              name: keycloak-users
-              key: test-user
-      volumeMounts:
-        - name: init
-          mountPath: /init
-
-readinessProbe:
-  enabled: true
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: 2000m
+    memory: 512Mi

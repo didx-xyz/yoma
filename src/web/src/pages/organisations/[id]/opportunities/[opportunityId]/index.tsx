@@ -9,7 +9,6 @@ import {
 import { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
-import router from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import {
   useCallback,
@@ -29,7 +28,7 @@ import {
 import Select from "react-select";
 import { toast } from "react-toastify";
 import z from "zod";
-import { type SelectOption } from "~/api/models/lookups";
+import type { Skill, SelectOption } from "~/api/models/lookups";
 import { SchemaType } from "~/api/models/credential";
 import {
   VerificationMethod,
@@ -64,12 +63,12 @@ import type { NextPageWithLayout } from "~/pages/_app";
 import { getSchemas } from "~/api/services/credentials";
 import {
   REGEX_URL_VALIDATION,
-  MAXINT32,
   GA_CATEGORY_OPPORTUNITY,
   GA_ACTION_OPPORTUNITY_CREATE,
   GA_ACTION_OPPORTUNITY_UPDATE,
   DATE_FORMAT_HUMAN,
   DATE_FORMAT_SYSTEM,
+  PAGE_SIZE_MEDIUM,
 } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
@@ -77,6 +76,8 @@ import { trackGAEvent } from "~/lib/google-analytics";
 import Moment from "react-moment";
 import moment from "moment";
 import { getThemeFromRole } from "~/lib/utils";
+import Async from "react-select/async";
+import { useRouter } from "next/router";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -188,6 +189,7 @@ const OpportunityDetails: NextPageWithLayout<{
   theme: string;
   error: string;
 }> = ({ id, opportunityId, error }) => {
+  const router = useRouter();
   const { returnUrl } = router.query;
   const queryClient = useQueryClient();
 
@@ -246,21 +248,6 @@ const OpportunityDetails: NextPageWithLayout<{
     queryKey: ["timeIntervals"],
     queryFn: async () =>
       (await getTimeIntervals()).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
-    enabled: !error,
-  });
-  const { data: skills } = useQuery<SelectOption[]>({
-    queryKey: ["skills"],
-    queryFn: async () =>
-      (
-        await getSkills({
-          nameContains: null,
-          pageNumber: 1,
-          pageSize: MAXINT32,
-        })
-      ).items.map((c) => ({
         value: c.id,
         label: c.name,
       })),
@@ -393,7 +380,7 @@ const OpportunityDetails: NextPageWithLayout<{
       if (opportunityId === "create")
         void router.push(`/organisations/${id}/opportunities`);
     },
-    [setIsLoading, id, opportunityId, opportunity, queryClient],
+    [setIsLoading, id, opportunityId, opportunity, queryClient, router],
   );
 
   // form submission handler
@@ -730,6 +717,44 @@ const OpportunityDetails: NextPageWithLayout<{
     formData,
   ]);
 
+  //* SKILLS
+  // cache skills for name lookups
+  const [cacheSkills, setCacheSkills] = useState<Skill[]>([]);
+
+  // popuplate the cache with the skills from the opportunity
+  useEffect(() => {
+    if (opportunity?.skills) {
+      setCacheSkills((prev) => [...prev, ...(opportunity.skills ?? [])]);
+    }
+  }, [opportunity?.skills, setCacheSkills]);
+
+  // load skills async
+  const loadSkills = useCallback(
+    (inputValue: string, callback: (options: any) => void) => {
+      setTimeout(() => {
+        getSkills({
+          nameContains: (inputValue ?? []).length > 2 ? inputValue : null,
+          pageNumber: 1,
+          pageSize: PAGE_SIZE_MEDIUM,
+        }).then((data) => {
+          const options = data.items.map((item) => ({
+            value: item.id,
+            label: item.name,
+          }));
+          callback(options);
+
+          // add to cache
+          data.items.forEach((item) => {
+            if (!cacheSkills.some((x) => x.id === item.id)) {
+              setCacheSkills((prev) => [...prev, item]);
+            }
+          });
+        });
+      }, 1000);
+    },
+    [cacheSkills],
+  );
+
   if (error) return <Unauthorized />;
 
   return (
@@ -1012,6 +1037,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         name="typeId"
                         render={({ field: { onChange, value } }) => (
                           <Select
+                            instanceId="typeId"
                             classNames={{
                               control: () => "input !border-gray",
                             }}
@@ -1051,6 +1077,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         name="categories"
                         render={({ field: { onChange, value } }) => (
                           <Select
+                            instanceId="categories"
                             classNames={{
                               control: () => "input !border-gray py-1 h-fit",
                             }}
@@ -1173,6 +1200,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         name="languages"
                         render={({ field: { onChange, value } }) => (
                           <Select
+                            instanceId="languages"
                             classNames={{
                               control: () => "input !border-gray h-fit py-1",
                             }}
@@ -1215,6 +1243,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         name="countries"
                         render={({ field: { onChange, value } }) => (
                           <Select
+                            instanceId="countries"
                             classNames={{
                               control: () => "input !border-gray h-fit py-1",
                             }}
@@ -1257,6 +1286,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         name="difficultyId"
                         render={({ field: { onChange, value } }) => (
                           <Select
+                            instanceId="difficultyId"
                             classNames={{
                               control: () => "input !border-gray",
                             }}
@@ -1315,6 +1345,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           name="commitmentIntervalId"
                           render={({ field: { onChange, value } }) => (
                             <Select
+                              instanceId="commitmentIntervalId"
                               classNames={{
                                 control: () => "input !border-gray",
                               }}
@@ -1684,28 +1715,29 @@ const OpportunityDetails: NextPageWithLayout<{
                         name="skills"
                         render={({ field: { onChange, value } }) => (
                           <>
-                            {/* eslint-disable  */}
-                            <Select
+                            <Async
+                              instanceId="skills"
                               classNames={{
-                                control: () => "input !border-gray h-fit py-1",
+                                control: () =>
+                                  "input input-xs h-fit !border-gray",
                               }}
                               isMulti={true}
-                              options={skills}
-                              onChange={(val) =>
-                                onChange(val?.map((c) => c.value ?? ""))
-                              }
-                              value={skills?.filter(
-                                (c) => value?.includes(c.value),
-                              )}
-                              styles={{
-                                placeholder: (base) => ({
-                                  ...base,
-                                  color: "#A3A6AF",
-                                }),
+                              defaultOptions={true} // calls loadSkills for initial results when clicking on the dropdown
+                              cacheOptions
+                              loadOptions={loadSkills}
+                              onChange={(val) => {
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                                onChange(val.map((c: any) => c.value));
                               }}
+                              // for each value, look up the value and label from the cache
+                              value={value?.map((x: any) => ({
+                                value: x,
+                                label: cacheSkills.find((c) => c.id === x)
+                                  ?.name,
+                              }))}
+                              placeholder="Skill"
                               inputId="input_skills" // e2e
                             />
-                            {/* eslint-enable  */}
                           </>
                         )}
                       />
@@ -1767,6 +1799,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           <>
                             {/* eslint-disable */}
                             <CreatableSelect
+                              instanceId="keywords"
                               classNames={{
                                 control: () => "input !border-gray h-fit py-1",
                               }}
@@ -1952,7 +1985,10 @@ const OpportunityDetails: NextPageWithLayout<{
 
                           <div className="flex flex-col gap-1">
                             {verificationTypes?.map((item) => (
-                              <div className="flex flex-col" key={item.id}>
+                              <div
+                                className="flex flex-col"
+                                key={`verificationTypes_${item.id}`}
+                              >
                                 {/* verification type: checkbox label */}
                                 <label
                                   htmlFor={`chk_verificationType_${item.displayName}`}
@@ -2128,6 +2164,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             name="ssiSchemaName"
                             render={({ field: { onChange, value } }) => (
                               <Select
+                                instanceId="ssiSchemaName"
                                 classNames={{
                                   control: () =>
                                     "input !border-gray h-fit py-1",
@@ -2169,11 +2206,13 @@ const OpportunityDetails: NextPageWithLayout<{
                                 </thead>
                                 <tbody>
                                   {schemaAttributes?.map((attribute) => (
-                                    <>
+                                    <div
+                                      key={`schemaAttributes_${attribute.id}`}
+                                    >
                                       {attribute.properties?.map(
                                         (property, index) => (
                                           <tr
-                                            key={`${index}_${property.id}`}
+                                            key={`schemaAttributes_${attribute.id}_${index}_${property.id}`}
                                             className="border-gray text-gray-dark"
                                           >
                                             <td>{attribute?.name}</td>
@@ -2181,7 +2220,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                           </tr>
                                         ),
                                       )}
-                                    </>
+                                    </div>
                                   ))}
                                 </tbody>
                               </table>
@@ -2645,11 +2684,13 @@ const OpportunityDetails: NextPageWithLayout<{
                             </thead>
                             <tbody>
                               {schemaAttributes?.map((attribute) => (
-                                <>
+                                <div
+                                  key={`schemaAttributesPreview_${attribute.id}`}
+                                >
                                   {attribute.properties?.map(
                                     (property, index) => (
                                       <tr
-                                        key={`${index}_${property.id}`}
+                                        key={`schemaAttributesPreview_${attribute.id}_${index}_${property.id}`}
                                         className="border-gray text-gray-dark"
                                       >
                                         <td>{attribute?.name}</td>
@@ -2657,7 +2698,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                       </tr>
                                     ),
                                   )}
-                                </>
+                                </div>
                               ))}
                             </tbody>
                           </table>

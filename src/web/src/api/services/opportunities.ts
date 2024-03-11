@@ -16,6 +16,7 @@ import type {
   OpportunitySearchCriteriaZltoReward,
   OpportunitySearchCriteriaCommitmentInterval,
   Status,
+  OpportunitySearchFilterCriteria,
 } from "../models/opportunity";
 import type { Country, Language } from "../models/lookups";
 import type { OrganizationInfo } from "../models/organisation";
@@ -310,4 +311,17 @@ export const getOpportunitiesAdminExportToCSV = async (
   const file = new File([blob], fileName);
 
   return file;
+};
+
+export const searchCriteriaOpportunities = async (
+  filter: OpportunitySearchFilterCriteria,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<OpportunitySearchResultsInfo> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.post<OpportunitySearchResultsInfo>(
+    `/opportunity/search/filter/opportunity`,
+    filter,
+  );
+  return data;
 };

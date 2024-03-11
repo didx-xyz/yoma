@@ -5,18 +5,23 @@ environments:
   dev:
     values:
       - namespace: yoma-v3-dev
-      - arch: amd64
-      - lifecycle: spot
-      - tag: {{ env "TAG" | default "master" }}
-      - ddInjectEnabled: false
-      - gitref: master
+        arch: amd64
+        lifecycle: spot
+        tag: {{ env "TAG" | default "master" }}
+        ddInjectEnabled: false
+        ddProfilingEnabled: false
+        gitref: master
+        postgresEnabled: true
   stage:
     values:
       - namespace: yoma-v3-stage
-      - arch: amd64
-      - lifecycle: on-demand
-      - tag: {{ env "TAG" | default "master" }}
-      - ddInjectEnabled: false
+        arch: amd64
+        lifecycle: on-demand
+        tag: {{ env "TAG" | default "master" }}
+        ddInjectEnabled: true
+        ddProfilingEnabled: false
+        gitref: master
+        postgresEnabled: false
 ---
 repositories:
 {{ if eq .Environment.Name "local" }}
@@ -30,8 +35,9 @@ releases:
 {{ if eq .Environment.Name "local" }}
   - name: ingress-nginx
     namespace: "ingress-nginx"
+    # https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx
     chart: ingress-nginx/ingress-nginx
-    version: "4.8.3"
+    version: "4.10.0"
 {{ end }}
   - name: keycloak
     labels:
@@ -41,14 +47,22 @@ releases:
     version: "0.3.2"
     values:
       - ./helm/keycloak/conf/{{ .Environment.Name }}/values.yaml
+      - keycloak:
+          statefulsetLabels:
+            tags.datadoghq.com/env: v3-{{ .Environment.Name }}
+          podLabels:
+            admission.datadoghq.com/enabled: {{ quote .Values.ddInjectEnabled }}
+            tags.datadoghq.com/env: v3-{{ .Environment.Name }}
     secrets:
       - ./helm/keycloak/conf/{{ .Environment.Name }}/secrets.yaml
   - name: postgresql-keycloak
     labels:
       app: postgresql-keycloak
     namespace: {{ .Values.namespace }}
+    # https://github.com/bitnami/charts/tree/main/bitnami/postgresql
     chart: oci://registry-1.docker.io/bitnamicharts/postgresql
-    version: "13.4.3"
+    version: "14.3.1"
+    installed: {{ .Values.postgresEnabled }}
     set:
       - name: fullnameOverride
         value: postgresql-keycloak
@@ -63,8 +77,10 @@ releases:
     labels:
       app: postgresql
     namespace: {{ .Values.namespace }}
+    # https://github.com/bitnami/charts/tree/main/bitnami/postgresql
     chart: oci://registry-1.docker.io/bitnamicharts/postgresql
-    version: "13.4.3"
+    version: "14.3.1"
+    installed: {{ .Values.postgresEnabled }}
     set:
       - name: fullnameOverride
         value: postgres-yoma
@@ -91,9 +107,15 @@ releases:
     values:
       - ./helm/yoma-api/conf/base/values.yaml
       - ./helm/yoma-api/conf/{{ .Environment.Name }}/values.yaml
+      - env:
+          DD_PROFILING_ENABLED: {{ .Values.ddProfilingEnabled }}
       - nodeSelector:
           kubernetes.io/arch: {{ .Values.arch }}
-          node.kubernetes.io/lifecycle: {{ .Values.lifecycle }}
+        labels:
+          tags.datadoghq.com/env: v3-{{ .Environment.Name }}
+        podLabels:
+          admission.datadoghq.com/enabled: {{ quote .Values.ddInjectEnabled }}
+          tags.datadoghq.com/env: v3-{{ .Environment.Name }}
       - postInstallHook:
           initContainers:
             - name: download-sql
@@ -141,7 +163,6 @@ releases:
       - ./helm/yoma-web/conf/{{ .Environment.Name }}/values.yaml
       - nodeSelector:
           kubernetes.io/arch: {{ .Values.arch }}
-          node.kubernetes.io/lifecycle: {{ .Values.lifecycle }}
     secrets:
       - ./helm/yoma-web/conf/base/secrets.yaml
       - ./helm/yoma-web/conf/{{ .Environment.Name }}/secrets.yaml

@@ -84,7 +84,32 @@ autoscaling:
 
 nodeSelector: {}
 tolerations: []
-affinity: {}
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+            - key: node.kubernetes.io/lifecycle
+              operator: In
+              values:
+                - spot
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: '{{ include "yoma-web.name" . }}'
+              app.kubernetes.io/instance: '{{ .Release.Name }}'
+          topologyKey: kubernetes.io/hostname
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: '{{ include "yoma-web.name" . }}'
+              app.kubernetes.io/instance: '{{ .Release.Name }}'
+          topologyKey: kubernetes.io/zone
 
 env: {}
   # KEY: VALUE
@@ -92,3 +117,8 @@ env: {}
 volumeMounts: {}
 volumes: {}
 persistence: {}
+
+podDisruptionBudget:
+  enabled: false
+  maxUnavailable: 1
+  minAvailable: 1

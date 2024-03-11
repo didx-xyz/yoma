@@ -4,7 +4,7 @@ ingress:
     annotations:
       nginx.ingress.kubernetes.io/configuration-snippet: |-
         more_clear_headers "Content-Security-Policy";
-        add_header Content-Security-Policy "frame-ancestors 'self' https://app.dev.yoma.world; frame-src 'self'; object-src 'none';" always;
+        add_header Content-Security-Policy "frame-ancestors 'self' https://v3app.dev.yoma.world; frame-src 'self'; object-src 'none';" always;
     rules:
       - host: v3auth.dev.yoma.world
   external:
@@ -12,7 +12,7 @@ ingress:
     annotations:
       nginx.ingress.kubernetes.io/configuration-snippet: |-
         more_clear_headers "Content-Security-Policy";
-        add_header Content-Security-Policy "frame-ancestors 'self' https://app.dev.yoma.world; frame-src 'self'; object-src 'none';" always;
+        add_header Content-Security-Policy "frame-ancestors 'self' https://v3app.dev.yoma.world; frame-src 'self'; object-src 'none';" always;
     rules:
       - host: v3auth.dev.yoma.world
         paths:

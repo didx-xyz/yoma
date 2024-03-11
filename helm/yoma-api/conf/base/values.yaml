@@ -17,11 +17,6 @@ env:
   ASPNETCORE_URLS: "http://+:5000"
   # ConnectionStrings__SQLConnection: "Data Source=mssql-mssqlserver-2022,1433;Initial Catalog=yoma-dev;MultipleActiveResultSets=true;User ID=sa;Password=Password1;TrustServerCertificate=True;Encrypt=True"
 
-livenessProbe:
-  enabled: false
-readinessProbe:
-  enabled: false
-
 appSettings:
   fileName: appsettings.Local.json
 
@@ -37,3 +32,11 @@ volumeMounts:
   - name: app-settings
     mountPath: /api/appsettings.Local.json
     subPath: appsettings.Local.json
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: 2000m
+    memory: 512Mi
