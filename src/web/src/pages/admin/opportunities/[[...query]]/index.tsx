@@ -107,7 +107,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     { value: "0", label: "Active" },
     { value: "1", label: "Deleted" },
     { value: "2", label: "Expired" },
-    { value: "2", label: "Inactive" },
+    { value: "3", label: "Inactive" },
   ];
 
   // get filter parameters from route
@@ -273,9 +273,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   ?.toString()
                   .split(",")
                   .map((x) => {
-                    const item = lookups_publishedStates.find(
-                      (y) => y.label === x,
-                    );
+                    const item = lookups_statuses.find((y) => y.label === x);
                     return item ? item?.value : "";
                   })
                   .filter((x) => x != "")

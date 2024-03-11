@@ -204,7 +204,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                 <div className="flex justify-center gap-4 overflow-hidden md:w-full">
                   {lookups_categories.map((item) => (
                     <OpportunityCategoryHorizontalCard
-                      key={item.id}
+                      key={`categories_${item.id}`}
                       data={item}
                       selected={opportunitySearchFilter?.categories?.includes(
                         item.name,
@@ -749,7 +749,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                 key !== "pageSize" &&
                 value != null &&
                 (Array.isArray(value) ? value.length > 0 : true) ? (
-                  <>
+                  <div key={`filters_${key}`}>
                     {Array.isArray(value) ? (
                       value.map((item: string) => {
                         if (key === "commitmentIntervals") {
@@ -758,7 +758,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                           );
                           return (
                             <span
-                              key={item}
+                              key={`filters_${key}_${item}`}
                               className="badge h-6 max-w-[200px] rounded-md border-none bg-green-light p-2 text-green"
                             >
                               <p className="truncate text-center text-xs font-semibold">
@@ -778,7 +778,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                           );
                           return (
                             <span
-                              key={item}
+                              key={`filters_${key}_${item}`}
                               className="badge h-6 max-w-[200px] rounded-md border-none bg-green-light p-2 text-green"
                             >
                               <p className="truncate text-center text-xs font-semibold">
@@ -795,7 +795,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                         } else {
                           return (
                             <span
-                              key={item}
+                              key={`filters_${key}_${item}`}
                               className="badge h-6 max-w-[200px] rounded-md border-none bg-green-light p-2 text-green"
                             >
                               <p className="truncate text-center text-xs font-semibold">
@@ -835,7 +835,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                         </button>
                       </span>
                     )}
-                  </>
+                  </div>
                 ) : null,
               )}
           </div>
