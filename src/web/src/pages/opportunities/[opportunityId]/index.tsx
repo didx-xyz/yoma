@@ -80,6 +80,7 @@ import Moment from "react-moment";
 import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { RoundedImage } from "~/components/RoundedImage";
+import { useRouter } from "next/router";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -180,6 +181,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const [cancelOpportunityDialogVisible, setCancelOpportunityDialogVisible] =
     useState(false);
   const [isOppSaved, setIsOppSaved] = useState(false);
+  const router = useRouter();
 
   const {
     data: opportunity,
@@ -357,13 +359,13 @@ const OpportunityDetails: NextPageWithLayout<{
                 <div className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
                   <ul>
                     <li className="inline">
-                      <Link
+                      <button
                         className="text-white hover:text-gray"
-                        href={`/opportunities`}
+                        onClick={() => router.back()}
                       >
                         <IoIosArrowBack className="mr-3 inline-block h-6 w-6 rounded-full bg-purple-shade pr-[2px]" />
                         Opportunities
-                      </Link>
+                      </button>
                     </li>
                     <li className="inline">
                       <p className="mx-2 inline font-semibold text-white">|</p>
