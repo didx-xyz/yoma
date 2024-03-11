@@ -730,31 +730,6 @@ const OpportunityDetails: NextPageWithLayout<{
 
   // load data asynchronously for the skill dropdown
   // debounce is used to prevent the API from being called too frequently
-  // const loadSkills = useCallback(
-  //   (inputValue: string, callback: (options: any) => void) => {
-  //     setTimeout(() => {
-  //       getSkills({
-  //         nameContains: (inputValue ?? []).length > 2 ? inputValue : null,
-  //         pageNumber: 1,
-  //         pageSize: PAGE_SIZE_MEDIUM,
-  //       }).then((data) => {
-  //         const options = data.items.map((item) => ({
-  //           value: item.id,
-  //           label: item.name,
-  //         }));
-  //         callback(options);
-
-  //         // add to cache
-  //         data.items.forEach((item) => {
-  //           if (!cacheSkills.some((x) => x.id === item.id)) {
-  //             setCacheSkills((prev) => [...prev, item]);
-  //           }
-  //         });
-  //       });
-  //     }, 1000);
-  //   },
-  //   [cacheSkills],
-  // );
   const loadSkills = useCallback(
     debounce((inputValue: string, callback: (options: any) => void) => {
       getSkills({

@@ -96,13 +96,15 @@ const OpportunityListItem: React.FC<InputProps> = ({ data, onClick }) => {
         </div>
 
         {/* DATE */}
-        <div className="flex flex-row">
-          <h4 className="line-clamp-4 text-sm font-thin">
-            <Moment format={DATETIME_FORMAT_HUMAN} utc={true}>
-              {data.dateCompleted!}
-            </Moment>
-          </h4>
-        </div>
+        {data.dateModified && (
+          <div className="flex flex-row">
+            <h4 className="line-clamp-4 text-sm font-thin">
+              <Moment format={DATETIME_FORMAT_HUMAN} utc={true}>
+                {data.dateModified}
+              </Moment>
+            </h4>
+          </div>
+        )}
       </div>
     </div>
   );
