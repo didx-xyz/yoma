@@ -124,7 +124,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           <p className="text-sm text-gray-dark">{data?.userEmail}</p>
           <p className="mt-2 flex flex-row items-center text-sm text-gray-dark">
             <IoMdPin className="mr-2 h-4 w-4 text-gray-dark" />
-            {data?.userCountryOfResidence}
+            {data?.userCountry}
           </p>
         </div>
         <div className="flex flex-col items-center justify-center gap-4">
