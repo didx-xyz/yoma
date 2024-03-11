@@ -25,6 +25,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         private readonly IRepository<Models.Connection> _connectionRepository;
 
         private const string Schema_Prefix_LdProof = "KtX2yAeljr0zZ9MuoQnIcWb";
+        private const string Schema_Prefix_JWT = "DEEGg5EAUmvm4goxOygg64p";
         #endregion
 
         #region Constructor
@@ -168,11 +169,19 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                     return schemaAries.ToSchema();
 
                 case ArtifactType.Ld_proof:
+                case ArtifactType.JWS:
                     var protocolVersion = _clientFactory.ProtocolVersion.TrimStart('v').TrimStart('V');
+
+                    var schemaPrefix = request.ArtifactType switch
+                    {
+                        ArtifactType.Ld_proof => Schema_Prefix_LdProof,
+                        ArtifactType.JWS => Schema_Prefix_JWT, 
+                        _ => throw new InvalidOperationException($"Artifact type of '{request.ArtifactType}' not supported"),
+                    };
 
                     var credentialSchema = new Models.CredentialSchema
                     {
-                        Id = $"{Schema_Prefix_LdProof}:{protocolVersion}:{request.Name}:{version}",
+                        Id = $"{schemaPrefix}:{protocolVersion}:{request.Name}:{version}",
                         Name = request.Name,
                         Version = version.ToString(),
                         AttributeNames = JsonConvert.SerializeObject(request.Attributes),
@@ -324,7 +333,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                         {
                             Credential = new Aries.CloudAPI.DotnetSDK.AspCore.Clients.Models.Credential
                             {
-                                Context = new List<string> { "https://www.w3.org/2018/credentials/v1" },
+                                Context = new List<string> { "https://www.w3.org/2018/credentials/v1" }, //TODO: Client (Yoma) hosted context based on schema i.e. https://w3id.org/citizenship/v1
                                 Type = new List<string> { "VerifiableCredential", request.SchemaType },
                                 IssuanceDate = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd"),
                                 Issuer = did.Did,
@@ -336,38 +345,6 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                             }
                         }
                     };
-
-
-                    /*
-                        https://aca-py.org/main/demo/AliceWantsAJsonCredential/#request-presentation-example
-                        SendCredential(
-                            type="ld_proof",
-                            connection_id="",
-                            protocol_version="v2",
-                            ld_credential_detail=LDProofVCDetail(
-                                credential=Credential(
-                                    context=[
-                                        "https://www.w3.org/2018/credentials/v1",
-                                        "https://w3id.org/citizenship/v1"
-                                    ],
-                                    type=["VerifiableCredential", "PermanentResident"],
-                                    issuanceDate="2021-04-12",
-                                    issuer="",
-                                    credentialSubject={
-                                        "type": ["PermanentResident"],
-                                        "id": "",
-                                        "givenName": "ALICE",
-                                        "familyName": "SMITH",
-                                        "gender": "Female",
-                                        "birthCountry": "Bahamas",
-                                        "birthDate": "1958-07-17"
-                                    }
-                                ),
-                                options=LDProofVCDetailOptions(proofType="Ed25519Signature2018"),
-                            ),
-                        )
-                    */
-
                     break;
 
                 default:

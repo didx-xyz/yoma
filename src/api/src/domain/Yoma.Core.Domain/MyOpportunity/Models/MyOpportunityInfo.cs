@@ -62,6 +62,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
         public decimal? YomaReward { get; set; }
 
+        public DateTimeOffset DateModified { get; set; }
+
         public List<MyOpportunityInfoVerification>? Verifications { get; set; }
 
         public List<Skill>? Skills { get; set; }
