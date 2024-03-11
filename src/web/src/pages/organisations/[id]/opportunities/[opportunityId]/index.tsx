@@ -730,8 +730,8 @@ const OpportunityDetails: NextPageWithLayout<{
 
   // load data asynchronously for the skills dropdown
   // debounce is used to prevent the API from being called too frequently
-  const loadSkills = useCallback(
-    debounce((inputValue: string, callback: (options: any) => void) => {
+  const loadSkills = debounce(
+    (inputValue: string, callback: (options: any) => void) => {
       getSkills({
         nameContains: (inputValue ?? []).length > 2 ? inputValue : null,
         pageNumber: 1,
@@ -749,8 +749,8 @@ const OpportunityDetails: NextPageWithLayout<{
           }
         });
       });
-    }, 1000),
-    [cacheSkills],
+    },
+    1000,
   );
 
   if (error) return <Unauthorized />;

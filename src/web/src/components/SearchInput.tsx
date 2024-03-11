@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
 import { IoMdSearch } from "react-icons/io";
-import { debounce } from "~/lib/utils";
 
 interface InputProps {
   defaultValue?: string | null;

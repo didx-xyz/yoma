@@ -20,7 +20,6 @@ import {
 } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
-import Link from "next/link";
 import {
   IoMdCheckmark,
   IoMdClose,

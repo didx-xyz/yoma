@@ -136,8 +136,7 @@ export const debounce = function (
 ): (...args: any[]) => void {
   let debounceTimer: NodeJS.Timeout;
   return function (this: any, ...args: any[]): void {
-    const context = this;
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => func.apply(context, args), delay);
+    debounceTimer = setTimeout(() => func.apply(this, args), delay);
   };
 };

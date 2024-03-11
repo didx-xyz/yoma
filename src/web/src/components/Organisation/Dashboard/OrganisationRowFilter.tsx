@@ -103,8 +103,8 @@ export const OrganisationRowFilter: React.FC<{
 
   // load data asynchronously for the opportunities dropdown
   // debounce is used to prevent the API from being called too frequently
-  const loadOpportunities = useCallback(
-    debounce((inputValue: string, callback: (options: any) => void) => {
+  const loadOpportunities = debounce(
+    (inputValue: string, callback: (options: any) => void) => {
       searchCriteriaOpportunities({
         organization: organisationId,
         titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
@@ -117,8 +117,8 @@ export const OrganisationRowFilter: React.FC<{
         }));
         callback(options);
       });
-    }, 1000),
-    [organisationId],
+    },
+    1000,
   );
 
   // the AsyncSelect component requires the defaultOptions to be set in the state
