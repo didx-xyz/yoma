@@ -20,13 +20,11 @@ import { getUserProfile, patchPhoto, patchUser } from "~/api/services/user";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { authOptions, type User } from "~/server/auth";
-import { FileUploader } from "~/components/Organisation/Upsert/FileUpload";
 import {
   ACCEPTED_IMAGE_TYPES,
   GA_ACTION_USER_PROFILE_UPDATE,
   GA_CATEGORY_USER,
 } from "~/lib/constants";
-import Image from "next/image";
 import { useSetAtom } from "jotai";
 import { userProfileAtom } from "~/lib/store";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -34,6 +32,7 @@ import type { NextPageWithLayout } from "~/pages/_app";
 import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
 import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
+import AvatarUpload from "~/components/Organisation/Upsert/AvatarUpload";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -147,7 +146,12 @@ const Settings: NextPageWithLayout<{
 
   // set default values (from user session)
   useEffect(() => {
-    if (!userProfile) return;
+    if (!userProfile) {
+      setIsLoading(true);
+      return;
+    } else {
+      setIsLoading(false);
+    }
 
     //HACK: no validation on date if value is null
     if (!userProfile?.dateOfBirth) {
@@ -430,58 +434,21 @@ const Settings: NextPageWithLayout<{
                   <span className="label-text">Picture</span>
                 </label>
 
-                {/* existing image */}
-                <div className="flex items-center justify-center pb-4">
-                  {/* NO IMAGE */}
-                  {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
-                  {/* {!logoExisting && <IoMdImage className="h-12 w-12 rounded-lg" />} */}
-                  {/* EXISTING IMAGE */}
-                  {userProfile?.photoURL &&
-                    !(logoFiles && logoFiles.length > 0) && (
-                      <div className="indicator">
-                        {/* <button
-                      className="filepond--file-action-button filepond--action-remove-item badge indicator-item badge-secondary"
-                      type="button"
-                      data-align="left"
-                      //onClick={onRemoveLogoExisting}
-                    >
-                      <svg
-                        width="26"
-                        height="26"
-                        viewBox="0 0 26 26"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M11.586 13l-2.293 2.293a1 1 0 0 0 1.414 1.414L13 14.414l2.293 2.293a1 1 0 0 0 1.414-1.414L14.414 13l2.293-2.293a1 1 0 0 0-1.414-1.414L13 11.586l-2.293-2.293a1 1 0 0 0-1.414 1.414L11.586 13z"
-                          fill="currentColor"
-                          fillRule="nonzero"
-                        ></path>
-                      </svg>
-                      <span>Remove</span>
-                    </button> */}
-
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <Image
-                          className="rounded-lg object-contain shadow-lg"
-                          alt="user picture"
-                          width={100}
-                          height={100}
-                          style={{ width: 100, height: 100 }}
-                          src={userProfile.photoURL}
-                        />
-                      </div>
-                    )}
-                </div>
-
                 {/* upload image */}
-                <FileUploader
-                  name="logo"
-                  files={logoFiles as any}
-                  allowMultiple={false}
-                  fileTypes={ACCEPTED_IMAGE_TYPES}
+                <AvatarUpload
                   onUploadComplete={(files) => {
                     setLogoFiles(files);
                   }}
+                  onRemoveImageExisting={() => {
+                    setLogoFiles([]);
+                  }}
+                  existingImage={userProfile?.photoURL ?? ""}
+                  showExisting={
+                    userProfile?.photoURL &&
+                    !(logoFiles && logoFiles.length > 0)
+                      ? true
+                      : false
+                  }
                 />
               </div>
 

@@ -1,5 +1,5 @@
-import Image from "next/image";
 import { IoMdImage } from "react-icons/io";
+import { AvatarImage } from "../AvatarImage";
 
 interface InputProps {
   logoUrl?: string | undefined | null;
@@ -16,16 +16,9 @@ export const LogoTitle: React.FC<InputProps> = ({ logoUrl, title }) => {
 
         {/* EXISTING IMAGE */}
         {logoUrl && (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <Image
-              className="m-4 rounded-lg"
-              alt="company logo"
-              width={40}
-              height={40}
-              src={logoUrl}
-            />
-          </>
+          <div className="mr-4 h-fit">
+            <AvatarImage alt="company logo" size={40} icon={logoUrl} />
+          </div>
         )}
       </div>
 

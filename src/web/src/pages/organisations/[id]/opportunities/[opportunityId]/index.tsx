@@ -2717,7 +2717,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           className="checkbox-primary checkbox"
                         />
                         <span className="label-text ml-4">
-                          I want to this opportunity to be Publicly available
+                          I want to this opportunity to be visible to youth
                         </span>
                       </label>
 

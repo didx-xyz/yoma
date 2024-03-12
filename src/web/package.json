@@ -30,6 +30,7 @@
     "next-themes": "^0.2.1",
     "nookies": "^2.5.2",
     "react": "^18.2.0",
+    "react-avatar-editor": "^13.0.2",
     "react-datepicker": "^4.23.0",
     "react-dom": "^18.2.0",
     "react-ga4": "^2.1.0",

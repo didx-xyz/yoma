@@ -145,46 +145,45 @@ export const Navbar: React.FC = () => {
   return (
     <div className="fixed left-0 right-0 top-0 z-40">
       <div className={`bg-theme navbar z-40`}>
-        <div className="flex-start w-full">
-          <button
-            type="button"
-            aria-label="Navigation Menu"
-            className="ml-1 text-white  lg:hidden"
-            onClick={() => setMenuVisible(!menuVisible)}
-            id="btnNavbarMenu"
-          >
-            <IoMdMenu className="h-8 w-8" />
-          </button>
-          <ReactModal
-            isOpen={menuVisible}
-            shouldCloseOnOverlayClick={true}
-            onRequestClose={() => {
-              setMenuVisible(false);
-            }}
-            className="bg-theme fixed left-0 right-0 top-16 flex-grow items-center animate-in fade-in"
-            portalClassName={"fixed z-50"}
-            overlayClassName="fixed inset-0"
-          >
-            <div className="flex flex-col">
-              {currentNavbarLinks.map((link, index) => (
-                <Link
-                  href={link.url}
-                  key={index}
-                  className="px-7 py-3 text-white hover:brightness-50"
-                  onClick={() => setMenuVisible(false)}
-                  id={`lnkNavbarMenuModal_${link.title}`}
-                >
-                  {link.title}
-                </Link>
-              ))}
-            </div>
-          </ReactModal>
-
-          <div className="ml-8">
+        <div className="flex w-full justify-between md:flex md:justify-between md:px-4">
+          <div className="flex justify-start">
+            <button
+              type="button"
+              aria-label="Navigation Menu"
+              className="ml-1 text-white  lg:hidden"
+              onClick={() => setMenuVisible(!menuVisible)}
+              id="btnNavbarMenu"
+            >
+              <IoMdMenu className="h-8 w-8" />
+            </button>
+            <ReactModal
+              isOpen={menuVisible}
+              shouldCloseOnOverlayClick={true}
+              onRequestClose={() => {
+                setMenuVisible(false);
+              }}
+              className="bg-theme fixed left-0 right-0 top-16 flex-grow items-center animate-in fade-in"
+              portalClassName={"fixed z-50"}
+              overlayClassName="fixed inset-0"
+            >
+              <div className="flex flex-col">
+                {currentNavbarLinks.map((link, index) => (
+                  <Link
+                    href={link.url}
+                    key={index}
+                    className="px-7 py-3 text-white hover:brightness-50"
+                    onClick={() => setMenuVisible(false)}
+                    id={`lnkNavbarMenuModal_${link.title}`}
+                  >
+                    {link.title}
+                  </Link>
+                ))}
+              </div>
+            </ReactModal>
             <LogoImage />
           </div>
 
-          <ul className="hidden w-full flex-row items-center justify-center gap-16 p-0 lg:flex">
+          <ul className="absolute left-0 right-0 top-5 mx-auto hidden w-fit items-center justify-center gap-12 md:flex">
             {currentNavbarLinks.map((link, index) => (
               <li key={index} tabIndex={index}>
                 <Link
@@ -198,13 +197,12 @@ export const Navbar: React.FC = () => {
               </li>
             ))}
           </ul>
-        </div>
+          <div className="flex items-center justify-end">
+            <LanguageSwitcher />
 
-        <div className="justify-end">
-          <LanguageSwitcher />
-
-          {!session && <SignInButton></SignInButton>}
-          {session && <UserMenu />}
+            {!session && <SignInButton></SignInButton>}
+            {session && <UserMenu />}
+          </div>
         </div>
       </div>
     </div>

@@ -1,11 +1,19 @@
+import Image from "next/image";
 export const PageBackground: React.FC<{ height?: number }> = ({
   height = 23,
 }) => {
-  // return an absolute positioned page header background based on the color of the theme (bg-theme)
   return (
     <div
       style={{ height: `${height}rem` }}
-      className="bg-theme absolute left-0 top-0 z-0 h-32 w-full bg-[url('/images/world-map.png')] bg-fixed bg-[center_top_4rem] bg-no-repeat"
-    />
+      className="bg-theme absolute left-0 top-0 z-0 flex h-32 w-full items-center justify-center"
+    >
+      <Image
+        src={"/images/world-map.png"}
+        alt="world-map"
+        width={1280}
+        height={720}
+        className="fixed h-[20rem] object-scale-down opacity-10 md:mt-20"
+      />
+    </div>
   );
 };

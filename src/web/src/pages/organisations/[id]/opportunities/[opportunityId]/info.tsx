@@ -17,7 +17,14 @@ import MainLayout from "~/components/Layout/Main";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
-import { IoIosSettings, IoMdArrowRoundBack, IoMdPerson } from "react-icons/io";
+import {
+  IoIosSettings,
+  IoMdArrowRoundBack,
+  IoMdPerson,
+  IoMdPause,
+  IoMdPlay,
+  IoIosBook,
+} from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
 import { FaClock, FaPencilAlt, FaTrash } from "react-icons/fa";
@@ -27,9 +34,6 @@ import iconDifficulty from "public/images/icon-difficulty.svg";
 import iconLanguage from "public/images/icon-language.svg";
 import iconTopics from "public/images/icon-topics.svg";
 import iconSkills from "public/images/icon-skills.svg";
-import iconUser from "public/images/icon-user.svg";
-import iconSuccess from "public/images/icon-success.webp";
-import iconAction from "public/images/icon-action.svg";
 import iconZlto from "public/images/icon-zlto.svg";
 import { toast } from "react-toastify";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -46,10 +50,10 @@ import { useAtomValue } from "jotai";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { trackGAEvent } from "~/lib/google-analytics";
-import { RoundedImage } from "~/components/RoundedImage";
 import Moment from "react-moment";
 import { useRouter } from "next/router";
 import { getThemeFromRole } from "~/lib/utils";
+import { AvatarImage } from "~/components/AvatarImage";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -302,8 +306,8 @@ const OpportunityDetails: NextPageWithLayout<{
                 <h6 className="text-sm text-gray-dark">
                   By {opportunity.organizationName}
                 </h6>
-                <div className="flex flex-row gap-1 font-bold text-green-dark">
-                  <div className="badge h-6 rounded-md bg-green-light text-xs text-green">
+                <div className="flex flex-row gap-1 border-none font-bold text-green-dark">
+                  <div className="badge h-6 rounded-md border-none bg-green-light text-xs text-green">
                     <Image
                       src={iconClock}
                       alt="Icon Clock"
@@ -321,16 +325,8 @@ const OpportunityDetails: NextPageWithLayout<{
                     }`}</span>
                   </div>
 
-                  <div className="badge h-6 rounded-md bg-green-light text-xs text-green">
-                    <Image
-                      src={iconUser}
-                      alt="Icon User"
-                      width={20}
-                      height={20}
-                      sizes="100vw"
-                      priority={true}
-                      style={{ width: "20px", height: "20px" }}
-                    />
+                  <div className="badge h-6 rounded-md border-none bg-blue-light text-xs text-blue">
+                    <IoMdPerson className="h-4 w-4" />
 
                     <span className="ml-1">
                       {opportunity?.participantCountVerificationCompleted}{" "}
@@ -339,30 +335,22 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
 
                   {opportunity?.type && (
-                    <div className="badge h-6 rounded-md bg-[#E7E8F5] text-[#5F65B9]">
-                      <Image
-                        src={iconTopics}
-                        alt="Icon Type"
-                        width={18}
-                        height={18}
-                        sizes="100vw"
-                        priority={true}
-                        style={{ width: "18px", height: "18px" }}
-                      />
+                    <div className="badge h-6 rounded-md border-none bg-[#E7E8F5] text-[#5F65B9]">
+                      <IoIosBook />
                       <span className="ml-1 text-xs">{opportunity.type}</span>
                     </div>
                   )}
 
                   {(opportunity.zltoReward ?? 0) > 0 && (
-                    <div className="badge h-6 whitespace-nowrap rounded-md bg-yellow-light text-yellow">
+                    <div className="badge h-6 whitespace-nowrap rounded-md border-none bg-orange-light text-orange">
                       <Image
                         src={iconZlto}
                         alt="Icon Zlto"
-                        width={18}
-                        height={18}
+                        width={16}
+                        height={16}
                         sizes="100vw"
                         priority={true}
-                        style={{ width: "18px", height: "18px" }}
+                        style={{ width: "16px", height: "16px" }}
                       />
                       <span className="ml-1 text-xs">
                         {opportunity.zltoReward}
@@ -373,43 +361,36 @@ const OpportunityDetails: NextPageWithLayout<{
                   {/* STATUS BADGES */}
                   {opportunity?.status == "Active" && (
                     <>
-                      <div className="badge h-6 rounded-md bg-green-light text-xs text-blue">
+                      <div className="badge h-6 rounded-md border-none bg-blue-light text-xs text-blue">
                         Active
                       </div>
 
                       {new Date(opportunity.dateStart) > new Date() && (
-                        <div className="badge h-6 rounded-md bg-white text-xs text-yellow">
-                          Not started
+                        <div className="badge h-6 rounded-md border-none bg-yellow-tint text-xs text-yellow">
+                          <IoMdPause />
+                          <p className="ml-1">Not started</p>
                         </div>
                       )}
                       {new Date(opportunity.dateStart) < new Date() && (
-                        <div className="badge h-6 rounded-md bg-purple-light text-xs text-purple">
-                          <Image
-                            src={iconAction}
-                            alt="Icon Action"
-                            width={16}
-                            height={16}
-                            sizes="100vw"
-                            priority={true}
-                            style={{ width: "16px", height: "16px" }}
-                          />
+                        <div className="badge h-6 rounded-md border-none bg-purple-tint text-xs text-purple">
+                          <IoMdPlay />
                           <span className="ml-1 text-xs">Started</span>
                         </div>
                       )}
                     </>
                   )}
                   {opportunity?.status == "Expired" && (
-                    <div className="badge h-6 rounded-md bg-green-light text-xs text-yellow">
+                    <div className="badge h-6 rounded-md border-none bg-green-light text-xs text-yellow">
                       Expired
                     </div>
                   )}
                   {opportunity?.status == "Inactive" && (
-                    <div className="badge h-6 rounded-md bg-green-light text-xs text-red-400">
+                    <div className="badge h-6 rounded-md border-none bg-yellow-tint text-xs text-yellow">
                       Inactive
                     </div>
                   )}
                   {opportunity?.status == "Deleted" && (
-                    <div className="badge h-6 rounded-md bg-green-light text-xs text-red-400">
+                    <div className="badge h-6 rounded-md border-none bg-green-light text-xs text-red-400">
                       Deleted
                     </div>
                   )}
@@ -445,11 +426,10 @@ const OpportunityDetails: NextPageWithLayout<{
               </div>
 
               {/* COMPANY LOGO */}
-              <RoundedImage
-                icon={opportunity?.organizationLogoURL ?? iconSuccess}
+              <AvatarImage
+                icon={opportunity?.organizationLogoURL ?? null}
                 alt="Company Logo"
-                imageWidth={60}
-                imageHeight={60}
+                size={60}
               />
             </div>
 

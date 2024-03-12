@@ -1,10 +1,8 @@
-import Image from "next/image";
-import { shimmer, toBase64 } from "src/lib/image";
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
-import iconRocket from "public/images/icon-rocket.webp";
 import Moment from "react-moment";
 import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
 import { useCallback } from "react";
+import { AvatarImage } from "../AvatarImage";
 
 interface InputProps {
   data: MyOpportunityInfo;
@@ -25,42 +23,11 @@ const OpportunityListItem: React.FC<InputProps> = ({ data, onClick }) => {
       className="flex cursor-pointer flex-col gap-1 rounded-lg border-[1px] border-gray bg-white px-5 py-2"
     >
       <div className="flex flex-row gap-2">
-        {!data.organizationLogoURL && (
-          <Image
-            src={iconRocket}
-            alt="Icon Rocket"
-            width={80}
-            height={80}
-            sizes="100vw"
-            priority={true}
-            placeholder="blur"
-            blurDataURL={`data:image/svg+xml;base64,${toBase64(
-              shimmer(80, 80),
-            )}`}
-            style={{
-              width: "80px",
-              height: "80px",
-            }}
-          />
-        )}
-        {data.organizationLogoURL && (
-          <Image
-            src={data.organizationLogoURL}
-            alt="Organization Logo"
-            width={60}
-            height={60}
-            sizes="100vw"
-            priority={true}
-            placeholder="blur"
-            blurDataURL={`data:image/svg+xml;base64,${toBase64(
-              shimmer(60, 60),
-            )}`}
-            style={{
-              width: "60px",
-              height: "60px",
-            }}
-          />
-        )}
+        <AvatarImage
+          icon={data.organizationLogoURL ? data.organizationLogoURL : null}
+          alt="Organization Logo"
+          size={60}
+        />
 
         <div className="lg:max-w-g flex flex-col justify-center gap-1 truncate md:max-w-md xl:max-w-xl">
           <h1 className="text-xs font-medium text-gray-dark">

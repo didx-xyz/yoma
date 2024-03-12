@@ -8,9 +8,10 @@ import {
   type OrganizationRequestBase,
 } from "~/api/models/organisation";
 import { ACCEPTED_IMAGE_TYPES, REGEX_URL_VALIDATION } from "~/lib/constants";
-import { FileUploader } from "./FileUpload";
 import { useQuery } from "@tanstack/react-query";
 import { getCountries } from "~/api/services/lookups";
+import AvatarUpload from "./AvatarUpload";
+import { AvatarImage } from "~/components/AvatarImage";
 
 export interface InputProps {
   formData: OrganizationRequestBase | null;
@@ -30,7 +31,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
   submitButtonText = "Submit",
 }) => {
   const [logoExisting, setLogoExisting] = useState(organisation?.logoURL);
-  const [logoFiles, setLogoFiles] = useState<File[]>(formData?.logo as any);
+  const [logoFiles, setLogoFiles] = useState(false);
 
   const { data: countries } = useQuery({
     queryKey: ["countries"],
@@ -73,6 +74,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
       if (values.logoExisting) logoCount++;
       if (values.logo && values.logo.length > 0)
         logoCount = logoCount + values.logo.length;
+
       // logo is required
       if (logoCount < 1) {
         ctx.addIssue({
@@ -117,10 +119,11 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
     [onSubmit],
   );
 
-  const onRemoveLogoExisting = useCallback(() => {
-    setValue("logoExisting", null);
-    setLogoExisting(null);
-  }, [setValue, setLogoExisting]);
+  // const onRemoveLogoExisting = useCallback(() => {
+  //   setValue("logoExisting", null);
+  //   // setLogoExisting(null);
+  //   setLogoFiles([]);
+  // }, [setValue, setLogoFiles]);
 
   return (
     <form
@@ -275,67 +278,34 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           <span className="label-text">Logo</span>
         </label>
 
-        {/* existing image */}
         <div className="flex items-center justify-center pb-4">
-          {/* NO IMAGE */}
           {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
-          {/* {!logoExisting && <IoMdImage className="h-12 w-12 rounded-lg" />} */}
-          {/* EXISTING IMAGE */}
-          {logoExisting && (
-            <div className="indicator">
-              <button
-                className="filepond--file-action-button filepond--action-remove-item badge indicator-item badge-secondary"
-                type="button"
-                data-align="left"
-                onClick={onRemoveLogoExisting}
-              >
-                <svg
-                  width="26"
-                  height="26"
-                  viewBox="0 0 26 26"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M11.586 13l-2.293 2.293a1 1 0 0 0 1.414 1.414L13 14.414l2.293 2.293a1 1 0 0 0 1.414-1.414L14.414 13l2.293-2.293a1 1 0 0 0-1.414-1.414L13 11.586l-2.293-2.293a1 1 0 0 0-1.414 1.414L11.586 13z"
-                    fill="currentColor"
-                    fillRule="nonzero"
-                  ></path>
-                </svg>
-                <span>Remove</span>
-              </button>
 
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                className="rounded-lg object-contain shadow-lg"
-                alt="logo"
-                width={100}
-                height={100}
-                style={{ width: 100, height: 100 }}
-                src={logoExisting}
-              />
-            </div>
-          )}
+          {/* UPLOAD IMAGE */}
+          <div className="container mx-auto">
+            <AvatarUpload
+              onRemoveImageExisting={() => {
+                setValue("logoExisting", null);
+                setLogoFiles(false);
+                setValue("logo", null);
+              }}
+              onUploadComplete={(files) => {
+                setLogoFiles(true);
+                setValue("logoExisting", null);
+                setValue("logo", files && files.length > 0 ? [files[0]] : []);
+              }}
+              existingImage={logoExisting ?? ""}
+              showExisting={!logoFiles && logoExisting ? true : false}
+            />
+            {formState.errors.logo && (
+              <label className="label font-bold">
+                <span className="label-text-alt italic text-red-500">
+                  {`${formState.errors.logo.message}`}
+                </span>
+              </label>
+            )}
+          </div>
         </div>
-
-        {/* upload image */}
-        <FileUploader
-          name="logo"
-          files={logoFiles as any}
-          allowMultiple={false}
-          fileTypes={ACCEPTED_IMAGE_TYPES}
-          onUploadComplete={(files) => {
-            setLogoFiles(files);
-            setValue("logo", files && files.length > 0 ? [files[0].file] : []);
-          }}
-        />
-
-        {formState.errors.logo && (
-          <label className="label font-bold">
-            <span className="label-text-alt italic text-red-500">
-              {`${formState.errors.logo.message}`}
-            </span>
-          </label>
-        )}
       </div>
 
       <div className="form-control">

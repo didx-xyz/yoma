@@ -7,7 +7,7 @@ import iconCards from "public/images/cards.webp";
 import Image from "next/image";
 import { userProfileAtom } from "~/lib/store";
 import { useAtom } from "jotai";
-import { IoMdArrowForward, IoMdPerson } from "react-icons/io";
+import { IoMdArrowForward } from "react-icons/io";
 import { toBase64, shimmer } from "~/lib/image";
 import iconZlto from "public/images/icon-zlto.svg";
 import iconCheckmark from "public/images/icon-checkmark.png";
@@ -17,6 +17,7 @@ import iconSmiley from "public/images/icon-smiley.png";
 import iconShare from "public/images/icon-share.png";
 import type { TabItem } from "~/api/models/common";
 import Head from "next/head";
+import { AvatarImage } from "../AvatarImage";
 
 export type TabProps = ({
   children,
@@ -128,36 +129,11 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                   </div>
                   <div className="flex flex-row gap-2">
                     <div className="flex">
-                      {/* USER IMAGE: NONE */}
-                      {!userProfile?.photoURL && (
-                        <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full border-2 shadow">
-                          <IoMdPerson className="absolute -left-1 h-12 w-12 text-white animate-in slide-in-from-top-4" />
-                        </div>
-                      )}
-
-                      {/* USER IMAGE: EXISTING */}
-                      {userProfile?.photoURL && (
-                        <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-full shadow">
-                          <Image
-                            src={userProfile.photoURL}
-                            alt="User Logo"
-                            width={60}
-                            height={60}
-                            sizes="(max-width: 60px) 30vw, 50vw"
-                            priority={true}
-                            placeholder="blur"
-                            blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                              shimmer(44, 44),
-                            )}`}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              maxWidth: "60px",
-                              maxHeight: "60px",
-                            }}
-                          />
-                        </div>
-                      )}
+                      <AvatarImage
+                        icon={userProfile?.photoURL ?? null}
+                        alt="User Logo"
+                        size={60}
+                      />
                     </div>
                     <div className="flex flex-grow flex-col">
                       <h5>{userProfile?.displayName}</h5>
