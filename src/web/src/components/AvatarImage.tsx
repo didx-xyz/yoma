@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { shimmer, toBase64 } from "~/lib/image";
-import { IoMdImage } from "react-icons/io";
+import { IoMdPerson } from "react-icons/io";
 
 interface InputProps {
   icon?: any;
@@ -36,7 +36,7 @@ export const AvatarImage: React.FC<InputProps> = ({ icon, alt, size }) => {
           }}
         />
       ) : (
-        <IoMdImage
+        <IoMdPerson
           className={`p-2 text-gray`}
           style={{
             width: sizePixels,

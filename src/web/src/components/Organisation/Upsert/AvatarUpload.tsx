@@ -63,7 +63,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
     if (inputRef.current) {
       inputRef.current.value = "";
     }
-    editorRef.current?.clear();
+
     setSelectedImage(null);
     setCroppedImage(null);
     onUploadComplete?.([null]);
@@ -72,7 +72,6 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
     inputRef,
     setSelectedImage,
     setCroppedImage,
-    editorRef,
     onUploadComplete,
     onRemoveImageExisting,
   ]);
@@ -107,7 +106,6 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
           {selectedImage && (
             <div className="my-12 flex flex-col items-center gap-6">
               <AvatarEditor
-                name="logo"
                 ref={editorRef}
                 image={selectedImage}
                 width={200}

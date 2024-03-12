@@ -176,23 +176,13 @@ export const UserMenu: React.FC = () => {
               className="text-gray-dark hover:bg-gray-light"
               onClick={() => setUserMenuVisible(false)}
             >
-              {/* NO IMAGE */}
-              {!userProfile?.photoURL && (
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
-                  <IoMdPerson className="h-6 w-6 text-gray-dark" />
-                </div>
-              )}
-
-              {/* EXISTING IMAGE */}
-              {userProfile?.photoURL && (
-                <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full shadow">
-                  <AvatarImage
-                    icon={userProfile.photoURL}
-                    alt="User logo"
-                    size={44}
-                  />
-                </div>
-              )}
+              <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full shadow">
+                <AvatarImage
+                  icon={userProfile?.photoURL}
+                  alt="User logo"
+                  size={44}
+                />
+              </div>
 
               <div className="flex h-10 items-center overflow-hidden text-ellipsis">
                 {session?.user?.name ?? "Settings"}

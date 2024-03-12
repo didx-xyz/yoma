@@ -75,22 +75,22 @@ const navBarLinksAdmin: TabItem[] = [
     selected: false,
     iconImage: null,
   },
-  {
-    title: "Schemas",
-    description: "Schemas",
-    url: "/admin/schemas",
-    badgeCount: null,
-    selected: false,
-    iconImage: null,
-  },
-  {
-    title: "Connections",
-    description: "Connections",
-    url: "/admin/connections",
-    badgeCount: null,
-    selected: false,
-    iconImage: null,
-  },
+  // {
+  //   title: "Schemas",
+  //   description: "Schemas",
+  //   url: "/admin/schemas",
+  //   badgeCount: null,
+  //   selected: false,
+  //   iconImage: null,
+  // },
+  // {
+  //   title: "Connections",
+  //   description: "Connections",
+  //   url: "/admin/connections",
+  //   badgeCount: null,
+  //   selected: false,
+  //   iconImage: null,
+  // },
 ];
 
 export const Navbar: React.FC = () => {
