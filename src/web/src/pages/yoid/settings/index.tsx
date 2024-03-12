@@ -246,7 +246,7 @@ const Settings: NextPageWithLayout<{
           <div className="flex w-full flex-col rounded-lg bg-white p-8">
             <form
               onSubmit={handleSubmit(onSubmit)} // eslint-disable-line @typescript-eslint/no-misused-promises
-              className="gap-2x flex flex-col"
+              className="flex flex-col gap-4"
             >
               <div className="form-control">
                 <label className="label font-bold">
@@ -474,18 +474,15 @@ const Settings: NextPageWithLayout<{
                 )}
               </div>
 
-              <div className="my-4 flex items-center justify-center gap-2">
+              <div className="my-4 flex items-center justify-center gap-4">
                 <button
                   type="button"
-                  className="btn btn-warning btn-sm flex-grow"
+                  className="btn btn-warning flex-grow"
                   onClick={handleCancel}
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="btn btn-success btn-sm flex-grow"
-                >
+                <button type="submit" className="btn btn-success flex-grow">
                   Submit
                 </button>
               </div>

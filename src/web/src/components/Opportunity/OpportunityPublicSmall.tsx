@@ -77,8 +77,8 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
       )}
 
       {/* BADGES */}
-      <div className="bottom-5x flex flex-row gap-1 whitespace-nowrap pt-2 font-semibold text-green-dark">
-        <div className="badge h-6 rounded-md border-none bg-green-light text-xs text-green">
+      <div className="bottom-5x flex flex-row gap-1 whitespace-nowrap pt-2 text-green-dark">
+        <div className="badge bg-green-light text-green">
           <Image
             src={iconClock}
             alt="Icon Clock"
@@ -94,7 +94,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
         </div>
 
         {(data?.participantCountTotal ?? 0) > 0 && (
-          <div className="badge h-6 rounded-md border-none bg-green-light text-xs text-green">
+          <div className="badge bg-green-light text-green">
             <Image
               src={iconUser}
               alt="Icon User"
@@ -110,7 +110,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
         )}
 
         {data.zltoReward && (
-          <div className="badge h-6 rounded-md border-none bg-[#FEF4D9] text-xs text-[#F6B700]">
+          <div className="badge bg-[#FEF4D9] text-[#F6B700]">
             <Image
               src={iconZlto}
               alt="Icon Zlto"
@@ -127,13 +127,13 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
         {data?.status == "Active" && (
           <>
             {new Date(data.dateStart) > new Date() && (
-              <div className="badge h-6 rounded-md border-none bg-yellow-tint text-xs text-yellow">
+              <div className="badge bg-yellow-tint text-yellow">
                 <IoMdPause />
                 <p className="ml-1">Not started</p>
               </div>
             )}
             {new Date(data.dateStart) < new Date() && (
-              <div className="badge h-6 rounded-md border-none bg-purple-tint text-xs font-semibold text-purple-shade">
+              <div className="badge bg-purple-tint text-purple-shade">
                 <IoMdPlay />
                 <span className="ml-1">Started</span>
               </div>
@@ -141,7 +141,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
           </>
         )}
         {data.status == "Expired" && (
-          <div className="badge h-6 rounded-md border-none bg-red-100 text-xs font-semibold text-error">
+          <div className="badge bg-red-100 text-error">
             <IoMdClose className="h-4 w-4" />
             <span className="ml-1">Expired</span>
           </div>

@@ -35,6 +35,7 @@ import iconLanguage from "public/images/icon-language.svg";
 import iconTopics from "public/images/icon-topics.svg";
 import iconSkills from "public/images/icon-skills.svg";
 import iconZlto from "public/images/icon-zlto.svg";
+import iconLocation from "public/images/icon-location.svg";
 import { toast } from "react-toastify";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { type AxiosError } from "axios";
@@ -361,18 +362,18 @@ const OpportunityDetails: NextPageWithLayout<{
                   {/* STATUS BADGES */}
                   {opportunity?.status == "Active" && (
                     <>
-                      <div className="badge h-6 rounded-md border-none bg-blue-light text-xs text-blue">
+                      <div className="badge bg-blue-light text-blue ">
                         Active
                       </div>
 
                       {new Date(opportunity.dateStart) > new Date() && (
-                        <div className="badge h-6 rounded-md border-none bg-yellow-tint text-xs text-yellow">
+                        <div className="badge bg-yellow-tint text-yellow ">
                           <IoMdPause />
                           <p className="ml-1">Not started</p>
                         </div>
                       )}
                       {new Date(opportunity.dateStart) < new Date() && (
-                        <div className="badge h-6 rounded-md border-none bg-purple-tint text-xs text-purple">
+                        <div className="badge bg-purple-tint text-purple ">
                           <IoMdPlay />
                           <span className="ml-1 text-xs">Started</span>
                         </div>
@@ -380,17 +381,17 @@ const OpportunityDetails: NextPageWithLayout<{
                     </>
                   )}
                   {opportunity?.status == "Expired" && (
-                    <div className="badge h-6 rounded-md border-none bg-green-light text-xs text-yellow">
+                    <div className="badge bg-green-light text-yellow ">
                       Expired
                     </div>
                   )}
                   {opportunity?.status == "Inactive" && (
-                    <div className="badge h-6 rounded-md border-none bg-yellow-tint text-xs text-yellow">
+                    <div className="badge bg-yellow-tint text-yellow ">
                       Inactive
                     </div>
                   )}
                   {opportunity?.status == "Deleted" && (
-                    <div className="badge h-6 rounded-md border-none bg-green-light text-xs text-red-400">
+                    <div className="badge bg-green-light  text-red-400">
                       Deleted
                     </div>
                   )}
@@ -439,7 +440,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   {opportunity?.description}
                 </div>
               </div>
-              <div className="flex w-full  flex-col gap-2 md:w-[33%]">
+              <div className="flex w-full flex-col gap-2 md:w-[33%]">
                 <div className="flex flex-col rounded-lg bg-white p-6">
                   <div className="mb-2 flex flex-row items-center gap-1 text-sm font-bold">
                     <IoMdPerson className="h-6 w-6 text-gray" />
@@ -472,8 +473,8 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
                   </div>
                 </div>
-                <div className="flex flex-col gap-1 rounded-lg bg-white p-6">
-                  <div>
+                <div className="flex flex-col gap-2 rounded-lg bg-white p-6">
+                  <div className="mb-2">
                     <div className="flex flex-row items-center gap-1 text-sm font-bold">
                       <Image
                         src={iconSkills}
@@ -487,11 +488,11 @@ const OpportunityDetails: NextPageWithLayout<{
 
                       <span className="ml-1">Skills you will learn</span>
                     </div>
-                    <div className="my-2">
+                    <div className="my-2 flex flex-wrap gap-1">
                       {opportunity?.skills?.map((item) => (
                         <div
                           key={item.id}
-                          className="min-h-6 badge mr-2 h-full rounded-md border-0 bg-green text-white"
+                          className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                         >
                           {item.name}
                         </div>
@@ -513,7 +514,19 @@ const OpportunityDetails: NextPageWithLayout<{
 
                       <span className="ml-1">How much time you will need</span>
                     </div>
-                    <div className="my-2">{`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}`}</div>
+                    <div className="my-2">
+                      {`This task should not take you more than ${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
+                        opportunity?.commitmentIntervalCount > 1 ? "s. " : ". "
+                      }`}
+                      <br />
+                      <p className="mt-2">
+                        The estimated times provided are just a guideline. You
+                        have as much time as you need to complete the tasks at
+                        your own pace. Focus on engaging with the materials and
+                        doing your best without feeling rushed by the time
+                        estimates.
+                      </p>
+                    </div>
                   </div>
                   <div className="divider mt-1" />
                   <div>
@@ -530,11 +543,11 @@ const OpportunityDetails: NextPageWithLayout<{
 
                       <span className="ml-1">Topics</span>
                     </div>
-                    <div className="my-2">
+                    <div className="my-2 flex flex-wrap gap-1">
                       {opportunity?.categories?.map((item) => (
                         <div
                           key={item.id}
-                          className="min-h-6 badge mr-2 h-full rounded-md bg-green text-white"
+                          className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                         >
                           {item.name}
                         </div>
@@ -542,8 +555,8 @@ const OpportunityDetails: NextPageWithLayout<{
                     </div>
                   </div>
                   <div className="divider mt-1" />
-                  <div>
-                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                  <div className="mb-2">
+                    <div className="my-2 flex flex-row items-center gap-1 text-sm font-bold">
                       <Image
                         src={iconLanguage}
                         alt="Icon Language"
@@ -556,11 +569,11 @@ const OpportunityDetails: NextPageWithLayout<{
 
                       <span className="ml-1">Languages</span>
                     </div>
-                    <div className="my-2">
+                    <div className="my-2 flex flex-wrap gap-1">
                       {opportunity?.languages?.map((item) => (
                         <div
                           key={item.id}
-                          className="min-h-6 badge mr-2 h-full rounded-md bg-green text-white"
+                          className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                         >
                           {item.name}
                         </div>
@@ -583,6 +596,32 @@ const OpportunityDetails: NextPageWithLayout<{
                       <span className="ml-1">Course difficulty</span>
                     </div>
                     <div className="my-2">{opportunity?.difficulty}</div>
+                  </div>
+                  <div className="divider mt-1" />
+                  <div>
+                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                      <Image
+                        src={iconLocation}
+                        alt="Icon Location"
+                        width={20}
+                        height={20}
+                        sizes="100vw"
+                        priority={true}
+                        style={{ width: "20px", height: "20px" }}
+                      />
+
+                      <span className="ml-1">Countries</span>
+                    </div>
+                    <div className="my-2 flex flex-wrap gap-1">
+                      {opportunity?.countries?.map((country) => (
+                        <div
+                          key={country.id}
+                          className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                        >
+                          {country.name}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>

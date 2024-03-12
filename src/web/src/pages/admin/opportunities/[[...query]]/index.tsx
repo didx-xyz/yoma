@@ -679,7 +679,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             <div className="mt-4 flex flex-grow gap-4">
               <button
                 type="button"
-                className="btn rounded-full bg-green normal-case text-white hover:bg-green hover:brightness-110 disabled:border-0 disabled:bg-green disabled:brightness-90 md:w-[250px]"
+                className="btn bg-green normal-case text-white hover:bg-green hover:brightness-110 disabled:border-0 disabled:bg-green disabled:brightness-90 md:w-[250px]"
                 onClick={handleExportToCSV}
                 disabled={isExportButtonLoading}
               >
@@ -861,21 +861,20 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   </table>
                 </div>
               )}
-
-              {/* PAGINATION */}
-              {searchResults && (searchResults.totalCount as number) > 0 && (
-                <div className="mt-2 grid place-items-center justify-center">
-                  <PaginationButtons
-                    currentPage={page ? parseInt(page.toString()) : 1}
-                    totalItems={searchResults.totalCount as number}
-                    pageSize={PAGE_SIZE}
-                    showPages={false}
-                    showInfo={true}
-                    onClick={handlePagerChange}
-                  />
-                </div>
-              )}
             </div>
+            {/* PAGINATION */}
+            {searchResults && (searchResults.totalCount as number) > 0 && (
+              <div className="mt-4 grid place-items-center justify-center">
+                <PaginationButtons
+                  currentPage={page ? parseInt(page.toString()) : 1}
+                  totalItems={searchResults.totalCount as number}
+                  pageSize={PAGE_SIZE}
+                  showPages={false}
+                  showInfo={true}
+                  onClick={handlePagerChange}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

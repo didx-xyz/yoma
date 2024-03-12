@@ -23,6 +23,22 @@
   }
 }
 
+.badge {
+  @apply h-6 whitespace-nowrap rounded-md border-none text-xs font-bold;
+}
+
+.btn {
+  @apply rounded-full;
+}
+
+.btn-success {
+  @apply text-white;
+}
+
+.divider {
+  @apply h-[2px] rounded-full bg-gray-light;
+}
+
 body {
   background-color: theme("colors.white");
 }

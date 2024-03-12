@@ -70,7 +70,7 @@ export const SearchInputLarge: React.FC<InputProps> = ({
           //onInput={handleInput}
         />
         <button
-          className="btn btn-primary join-item inline-flex rounded-r-full"
+          className="btn btn-primary join-item inline-flex rounded-r-full brightness-90"
           onClick={() => onSearch}
         >
           <svg

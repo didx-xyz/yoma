@@ -67,7 +67,7 @@ export default {
           // "base-200": "#2a2e37",
           // "base-300": "#16181d",
           // "base-content": "#ebecf0",
-          // info: "#66c6ff",
+          info: "#4CADE9",
           success: "#387F6A",
           warning: "#F9AB3E",
           error: "#FE4D57",

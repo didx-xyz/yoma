@@ -347,7 +347,7 @@ const MyCredentials: NextPageWithLayout<{
                           {item.dateIssued!}
                         </Moment>
                       </div>
-                      <div className="badge h-6 rounded-md bg-green-light text-xs font-bold text-green">
+                      <div className="badge bg-green-light text-green">
                         <IoMdCheckmark className="mr-1 h-4 w-4" />
                         Verified
                       </div>
