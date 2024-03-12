@@ -88,9 +88,10 @@ body {
 [data-theme="blue"] .bg-theme {
   @apply bg-blue;
 }
-// [data-theme="blue"] .bg-theme-gradient {
-//   @apply bg-gradient-to-b from-blue to-blue-dark;
-// }
+[data-theme="orange"] .bg-theme {
+  @apply bg-orange;
+}
+
 
 // hide the google translate toolbar
 .skiptranslate {
