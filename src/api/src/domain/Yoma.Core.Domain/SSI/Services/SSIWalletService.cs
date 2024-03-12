@@ -84,22 +84,30 @@ namespace Yoma.Core.Domain.SSI.Services
             var tenantId = _ssiTenantService.GetTenantIdOrNull(filter.EntityType, filter.EntityId);
             if (string.IsNullOrEmpty(tenantId)) return result; //tenant pending creation
 
-            var start = default(int?);
-            if (filter.PaginationEnabled)
-                start = filter.PageNumber == 1 ? 0 : (filter.PageNumber - 1) * filter.PageSize;
+            //filtered and ordered client side; no way to filter on schemaType or orderByDescending:_Date_Issued on Aries
+            //var start = default(int?);
+            //if (filter.PaginationEnabled)
+            //    start = filter.PageNumber == 1 ? 0 : (filter.PageNumber - 1) * filter.PageSize;
 
-            var items = await _ssiProviderClient.ListCredentials(tenantId, start, filter.PageSize);
+            var items = await _ssiProviderClient.ListCredentials(tenantId);
             if (items == null || !items.Any()) return result;
 
             foreach (var item in items)
                 result.Items.Add(await ParseCredential<SSICredentialInfo>(item));
 
-            //TODO: Remove; filter by schema type (pending wql documentation)   
+            //schemaType filter
             if (filter.SchemaType.HasValue)
                 result.Items = result.Items.Where(o => o.SchemaType == filter.SchemaType.Value).ToList();
 
-            //TODO: Remove; OrderByDesc by provider (pending wql documentation)
             result.Items = result.Items.OrderByDescending(o => o.DateIssued).ToList();
+
+            //pagination (client side)
+            if (filter.PaginationEnabled)
+            {
+                result.TotalCount = result.Items.Count;
+                result.Items = result.Items.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value).ToList();
+            }
+
             return result;
         }
 

@@ -204,7 +204,7 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
 
-            var result = _opportunityInfoService.GetById(id, true);
+            var result = _opportunityInfoService.GetById(id);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
 

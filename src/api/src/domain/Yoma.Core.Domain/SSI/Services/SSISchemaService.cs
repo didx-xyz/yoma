@@ -169,11 +169,15 @@ namespace Yoma.Core.Domain.SSI.Services
 
             await _schemaRequestValidatorCreate.ValidateAndThrowAsync(request);
 
+            if (request.ArtifactType == ArtifactType.Ld_proof)
+                throw new ValidationException($"Artifact type '{request.ArtifactType}' is currently not supported. Support for this artifact type is planned for a future update");
+
             var schemaType = _ssiSchemaTypeService.GetById(request.TypeId);
             var nameFull = SSISSchemaHelper.ToFullName(schemaType.Type, request.Name);
 
-            if (await GetByFullNameOrNull(nameFull) != null)
-                throw new ValidationException($"Schema '{nameFull}' already exists");
+            var existingSchema = await GetByFullNameOrNull(nameFull);
+            if (existingSchema != null && existingSchema.ArtifactType == request.ArtifactType) //allow switching of artifact stores; version incrementally incremented across stores
+                throw new ValidationException($"Schema '{nameFull}' already exists in artifact store '{request.ArtifactType}'");
 
             if (!schemaType.SupportMultiple)
             {

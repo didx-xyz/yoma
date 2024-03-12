@@ -45,6 +45,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud
             }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
             // repositories
+            services.AddScoped<IRepository<Credential>, CredentialRepository>();
             services.AddScoped<IRepository<CredentialSchema>, CredentialSchemaRepository>();
             services.AddScoped<IRepository<Connection>, ConnectionRepository>();
 

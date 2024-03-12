@@ -3,6 +3,7 @@ using CsvHelper.Configuration;
 using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
@@ -32,12 +33,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Public Members
-        public OpportunityInfo GetById(Guid id, bool ensureOrganizationAuthorization)
+        public OpportunityInfo GetById(Guid id)
         {
-            //allowed for authenticated users; if userRoleOnly do not execute ensureOrganizationAuthorization
-            ensureOrganizationAuthorization = ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsUserRoleOnly(_httpContextAccessor);
+            //allowed for authenticated users (any role)
+            if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
+                throw new SecurityException("Unauthorized");
 
-            var opportunity = _opportunityService.GetById(id, true, true, ensureOrganizationAuthorization);
+            var opportunity = _opportunityService.GetById(id, true, true, false);
 
             var result = opportunity.ToOpportunityInfo();
             SetParticipantCounts(result);

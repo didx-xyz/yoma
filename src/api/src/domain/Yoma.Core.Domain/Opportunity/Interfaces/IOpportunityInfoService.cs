@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 {
     public interface IOpportunityInfoService
     {
-        OpportunityInfo? GetById(Guid id, bool ensureOrganizationAuthorization);
+        OpportunityInfo GetById(Guid id);
 
         OpportunityInfo? GetPublishedOrExpiredById(Guid id);
 

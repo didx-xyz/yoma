@@ -13,6 +13,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         private readonly AppSettings _appSettings;
         private readonly ClientFactory _clientFactory;
         private readonly ISSEListenerService _sseListenerService;
+        private readonly IRepository<Models.Credential> _credentialRepository;
         private readonly IRepository<Models.CredentialSchema> _credentialSchemaRepository;
         private readonly IRepository<Models.Connection> _connectionRepository;
         #endregion
@@ -21,12 +22,14 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         public AriesCloudClientFactory(IOptions<AppSettings> appSettings,
             ClientFactory clientFactory,
             ISSEListenerService sseListenerService,
+            IRepository<Models.Credential> credentialRepository,
             IRepository<Models.CredentialSchema> credentialSchemaRepository,
             IRepository<Models.Connection> connectionRepository)
         {
             _appSettings = appSettings.Value;
             _clientFactory = clientFactory;
             _sseListenerService = sseListenerService;
+            _credentialRepository = credentialRepository;
             _credentialSchemaRepository = credentialSchemaRepository;
             _connectionRepository = connectionRepository;
         }
@@ -35,7 +38,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         #region Public Members
         public ISSIProviderClient CreateClient()
         {
-            return new AriesCloudClient(_appSettings, _clientFactory, _sseListenerService, _credentialSchemaRepository, _connectionRepository);
+            return new AriesCloudClient(_appSettings, _clientFactory, _sseListenerService, _credentialRepository, _credentialSchemaRepository, _connectionRepository);
         }
         #endregion
     }

@@ -2,7 +2,7 @@
 
 SET TIMEZONE='UTC';
 
---!!!DESTINATION ENVIRONMENT TOGGLE!!!-- 
+--!!!DESTINATION ENVIRONMENT TOGGLE!!!--
 --with 'staging' zlto wallets will not be migrated and subsequintly no transactions added as processed
 SET SESSION "myvars.environment" = 'staging'; --staging or production
 
@@ -23,13 +23,13 @@ BEGIN
     IF NOT org_exists THEN
         RAISE EXCEPTION '% does not exist', org_name;
     END IF;
-    
+
     -- Update approvedat if it is NULL, for the existing organization
     UPDATE dbo.organisations
     SET approvedat = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
     WHERE LOWER("name") = LOWER(org_name)
     AND approvedat IS NULL;
-    
+
     -- Set deletedat to NULL if it is not NULL, for the existing organization
     UPDATE dbo.organisations
     SET deletedat = NULL
@@ -44,7 +44,7 @@ DROP EXTENSION IF EXISTS pgcrypto;
 -- Recreate the pgcrypto extension
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
---create temporary functions 
+--create temporary functions
 CREATE OR REPLACE FUNCTION remove_double_spacing(input_text text)
 RETURNS text AS $$
 BEGIN
@@ -68,7 +68,7 @@ BEGIN
             RETURN NULL;
         END IF;
     END IF;
-    
+
     RETURN initcap(regexp_replace(trim(str), '\s+', ' ', 'g'));
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
@@ -105,12 +105,12 @@ RETURNS text AS $$
 BEGIN
     -- Trim the input to remove leading and trailing spaces
     phone := trim(phone);
-    
+
     -- Check if the phone number is null or effectively empty after trimming
     IF phone IS NULL OR phone = '' THEN
         RETURN NULL;
     END IF;
-    
+
     -- Check if the trimmed phone number matches the regex pattern
     IF phone ~ '^[+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$' THEN
         RETURN phone;
@@ -154,12 +154,12 @@ BEGIN
     IF input_url IS NULL OR trim(input_url) = '' THEN
         RETURN NULL;
     END IF;
-    
+
     -- Prepend 'https://' if the URL does not start with 'http://' or 'https://'
     IF NOT (input_url ~* '^(http://|https://)') THEN
         input_url := 'https://' || input_url;
     END IF;
-    
+
     -- Validate the URL format; adjust the regex pattern as needed for your validation rules
     IF input_url ~* '^(http://|https://)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+.*$' THEN
         RETURN trim(input_url);  -- Trim the output before returning
@@ -176,10 +176,10 @@ BEGIN
     IF input_email IS NULL OR trim(input_email) = '' THEN
         RETURN NULL;
     END IF;
-    
+
     -- Lowercase the email address
     input_email := LOWER(input_email);
-    
+
     -- Basic regex pattern for email validation; adjust as needed
     IF input_email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$' THEN
         RETURN trim(input_email);  -- Trim the output before returning
@@ -192,50 +192,50 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 /***BEGIN: User & Organizations***/
 --Object.Blob (user photos)
 INSERT INTO "Object"."Blob" (
-    "Id", 
-    "StorageType", 
-    "FileType", 
-    "Key", 
-    "ContentType", 
-    "OriginalFileName", 
-    "ParentId", 
+    "Id",
+    "StorageType",
+    "FileType",
+    "Key",
+    "ContentType",
+    "OriginalFileName",
+    "ParentId",
     "DateCreated"
 )
 SELECT DISTINCT
-    f.id AS "Id", 
-    'Public' AS "StorageType", 
-    'Photos' AS "FileType", 
-    f.s3objectid AS "Key", 
+    f.id AS "Id",
+    'Public' AS "StorageType",
+    'Photos' AS "FileType",
+    f.s3objectid AS "Key",
     f.contenttype AS "ContentType",
     split_part(f.s3objectid, '/', array_length(string_to_array(f.s3objectid, '/'), 1)) AS "OriginalFileName",
-    NULL::uuid AS "ParentId", 
+    NULL::uuid AS "ParentId",
     f.createdat AT TIME ZONE 'UTC' AS "DateCreated"
-FROM 
+FROM
     dbo.files f
-INNER JOIN 
+INNER JOIN
     dbo.users u ON f.id = u.photoid
 WHERE
 	u.email IS NOT NULL;
 
 --Entity.User
 INSERT INTO "Entity"."User" (
-    "Id", 
-    "Email", 
-    "EmailConfirmed", 
-    "FirstName", 
-    "Surname", 
-    "DisplayName", 
-    "PhoneNumber", 
-    "CountryId", 
-    "EducationId", 
-    "PhotoId", 
-    "GenderId", 
-    "DateOfBirth", 
-    "DateLastLogin", 
-    "ExternalId", 
-    "YoIDOnboarded", 
-    "DateYoIDOnboarded", 
-    "DateCreated", 
+    "Id",
+    "Email",
+    "EmailConfirmed",
+    "FirstName",
+    "Surname",
+    "DisplayName",
+    "PhoneNumber",
+    "CountryId",
+    "EducationId",
+    "PhotoId",
+    "GenderId",
+    "DateOfBirth",
+    "DateLastLogin",
+    "ExternalId",
+    "YoIDOnboarded",
+    "DateYoIDOnboarded",
+    "DateCreated",
     "DateModified"
 )
 SELECT
@@ -278,20 +278,20 @@ DECLARE
 BEGIN
     --get the current environment setting
     environment := current_setting('myvars.environment');
-    
-    --wallet migration occurs exclusively in the production environment; staging does not migrate wallets. Instead, 
-    --staging ensures wallet availability upon user login. This distinction is necessary because the staging environment uses a separate Zlto instance, 
+
+    --wallet migration occurs exclusively in the production environment; staging does not migrate wallets. Instead,
+    --staging ensures wallet availability upon user login. This distinction is necessary because the staging environment uses a separate Zlto instance,
     --leading to differences in wallet ids between staging and production
     IF environment <> 'staging' THEN
         INSERT INTO "Reward"."WalletCreation" (
-		    "Id", 
-		    "StatusId", 
-		    "UserId", 
-		    "WalletId", 
-		    "Balance", 
-		    "ErrorReason", 
-		    "RetryCount", 
-		    "DateCreated", 
+		    "Id",
+		    "StatusId",
+		    "UserId",
+		    "WalletId",
+		    "Balance",
+		    "ErrorReason",
+		    "RetryCount",
+		    "DateCreated",
 		    "DateModified"
 		)
 		SELECT
@@ -300,7 +300,7 @@ BEGIN
 		    u.id AS "UserId",
 		    TRIM(u.zltowalletid) AS "WalletId",
 		    NULL::numeric(12, 2) AS "Balance", -- Updated after populating Reward.Transaction for VerifiedAt credentials and users not yet migrated to new zlto wallet (see 'My' Opportunities section)
-		    NULL::text AS "ErrorReason", 
+		    NULL::text AS "ErrorReason",
 		    NULL::int2 AS "RetryCount",
 		    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AS "DateCreated",
 		    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AS "DateModified"
@@ -317,31 +317,31 @@ END $$;
 
 --Object.Blob (organization logos)
 INSERT INTO "Object"."Blob" (
-    "Id", 
-    "StorageType", 
-    "FileType", 
-    "Key", 
-    "ContentType", 
-    "OriginalFileName", 
-    "ParentId", 
+    "Id",
+    "StorageType",
+    "FileType",
+    "Key",
+    "ContentType",
+    "OriginalFileName",
+    "ParentId",
     "DateCreated"
 )
 SELECT DISTINCT
-    f.id AS "Id", 
-    'Public' AS "StorageType", 
-    'Photos' AS "FileType", 
-    f.s3objectid AS "Key", 
+    f.id AS "Id",
+    'Public' AS "StorageType",
+    'Photos' AS "FileType",
+    f.s3objectid AS "Key",
     f.contenttype AS "ContentType",
     split_part(f.s3objectid, '/', array_length(string_to_array(f.s3objectid, '/'), 1)) AS "OriginalFileName",
-    NULL::uuid AS "ParentId", 
+    NULL::uuid AS "ParentId",
     f.createdat AT TIME ZONE 'UTC' AS "DateCreated"
-FROM 
+FROM
     dbo.files f
-INNER JOIN 
+INNER JOIN
     dbo.organisations o ON f.id = o.logoid
-INNER JOIN 
+INNER JOIN
     dbo.opportunities opp ON o.id = opp.organisationid; -- Ensure only organizations with opportunities are included
-   
+
 --Enity.Organization (ensure unique names)
 WITH MappedOrganisations AS (
     SELECT DISTINCT
@@ -378,30 +378,30 @@ WHERE o.id = nd.id AND LOWER(nd.FinalName) <> LOWER(o.name);
 
 --Entity.Organization
 INSERT INTO "Entity"."Organization" (
-    "Id", 
-    "Name", 
-    "NameHashValue", 
-    "WebsiteURL", 
-    "PrimaryContactName", 
-    "PrimaryContactEmail", 
-    "PrimaryContactPhone", 
-    "VATIN", 
-    "TaxNumber", 
-    "RegistrationNumber", 
-    "City", 
-    "CountryId", 
-    "StreetAddress", 
-    "Province", 
-    "PostalCode", 
-    "Tagline", 
-    "Biography", 
-    "StatusId", 
-    "CommentApproval", 
-    "DateStatusModified", 
-    "LogoId", 
-    "DateCreated", 
-    "CreatedByUserId", 
-    "DateModified", 
+    "Id",
+    "Name",
+    "NameHashValue",
+    "WebsiteURL",
+    "PrimaryContactName",
+    "PrimaryContactEmail",
+    "PrimaryContactPhone",
+    "VATIN",
+    "TaxNumber",
+    "RegistrationNumber",
+    "City",
+    "CountryId",
+    "StreetAddress",
+    "Province",
+    "PostalCode",
+    "Tagline",
+    "Biography",
+    "StatusId",
+    "CommentApproval",
+    "DateStatusModified",
+    "LogoId",
+    "DateCreated",
+    "CreatedByUserId",
+    "DateModified",
     "ModifiedByUserId"
 )
 SELECT
@@ -460,73 +460,73 @@ SELECT
 		    o.createdat
 		) AT TIME ZONE 'UTC' AS "DateModified",
 	  (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'system@yoma.world') as "ModifiedByUserId"
-FROM 
+FROM
 	dbo.organisations o
 JOIN
     dbo.opportunities opp ON o.id = opp.organisationid; -- Ensure only organizations with opportunities are included
 
 --SSI.TenantCreation (pending for active organizations)
 INSERT INTO "SSI"."TenantCreation"(
-    "Id", 
-    "EntityType", 
-    "StatusId", 
-    "UserId", 
-    "OrganizationId", 
-    "TenantId", 
-    "ErrorReason", 
-    "RetryCount", 
-    "DateCreated", 
+    "Id",
+    "EntityType",
+    "StatusId",
+    "UserId",
+    "OrganizationId",
+    "TenantId",
+    "ErrorReason",
+    "RetryCount",
+    "DateCreated",
     "DateModified"
 )
-SELECT 
-    gen_random_uuid() AS "Id", 
-    'Organization' AS "EntityType", 
-    (SELECT "Id" FROM "SSI"."TenantCreationStatus" WHERE "Name" = 'Pending') AS "StatusId", 
-    NULL::uuid AS "UserId", 
-    "Id" AS "OrganizationId", 
-    NULL::uuid AS "TenantId", 
-    NULL::text AS "ErrorReason", 
-    NULL::int2 AS "RetryCount", 
-    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AS "DateCreated", 
+SELECT
+    gen_random_uuid() AS "Id",
+    'Organization' AS "EntityType",
+    (SELECT "Id" FROM "SSI"."TenantCreationStatus" WHERE "Name" = 'Pending') AS "StatusId",
+    NULL::uuid AS "UserId",
+    "Id" AS "OrganizationId",
+    NULL::uuid AS "TenantId",
+    NULL::text AS "ErrorReason",
+    NULL::int2 AS "RetryCount",
+    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AS "DateCreated",
     (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AS "DateModified"
-FROM 
+FROM
     "Entity"."Organization"
-WHERE 
+WHERE
     "StatusId" = (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active');
 
 --Object.Blob (registration documents)
 INSERT INTO "Object"."Blob" (
-    "Id", 
-    "StorageType", 
-    "FileType", 
-    "Key", 
-    "ContentType", 
-    "OriginalFileName", 
-    "ParentId", 
+    "Id",
+    "StorageType",
+    "FileType",
+    "Key",
+    "ContentType",
+    "OriginalFileName",
+    "ParentId",
     "DateCreated"
 )
 SELECT DISTINCT
-    f.id AS "Id", 
-    'Private' AS "StorageType", 
-    'Documents' AS "FileType", 
-    f.s3objectid AS "Key", 
+    f.id AS "Id",
+    'Private' AS "StorageType",
+    'Documents' AS "FileType",
+    f.s3objectid AS "Key",
     f.contenttype AS "ContentType",
     split_part(f.s3objectid, '/', array_length(string_to_array(f.s3objectid, '/'), 1)) AS "OriginalFileName",
-    NULL::uuid AS "ParentId", 
+    NULL::uuid AS "ParentId",
     f.createdat AT TIME ZONE 'UTC' AS "DateCreated"
-FROM 
+FROM
     dbo.files f
-INNER JOIN 
+INNER JOIN
     dbo.organisations o ON f.id = o.companyregistrationid
 JOIN
-    dbo.opportunities opp ON o.id = opp.organisationid; -- Ensure only organizations with opportunities are included   
-   
+    dbo.opportunities opp ON o.id = opp.organisationid; -- Ensure only organizations with opportunities are included
+
 --Enity.OrganizationDocuments (registration documents)
 INSERT INTO "Entity"."OrganizationDocuments" (
-    "Id", 
-    "OrganizationId", 
-    "FileId", 
-    "Type", 
+    "Id",
+    "OrganizationId",
+    "FileId",
+    "Type",
     "DateCreated"
 )
 SELECT
@@ -535,9 +535,9 @@ SELECT
     o.companyregistrationid AS "FileId",
     'Registration' AS "Type",
     o.createdat AT TIME ZONE 'UTC' AS "DateCreated"
-FROM 
+FROM
     dbo.organisations o
-WHERE 
+WHERE
     EXISTS (
         -- Checks if the company registration ID corresponds to an existing Blob
         SELECT 1
@@ -550,12 +550,12 @@ WHERE
         FROM dbo.opportunities opp
         WHERE opp.organisationid = o.id
     );
-   
+
 --Entity.OrganizationProviderTypes
 INSERT INTO "Entity"."OrganizationProviderTypes" (
-    "Id", 
-    "OrganizationId", 
-    "ProviderTypeId", 
+    "Id",
+    "OrganizationId",
+    "ProviderTypeId",
     "DateCreated"
 )
 SELECT
@@ -573,7 +573,7 @@ WHERE
     EXISTS (
         -- Ensures the organization has at least one associated opportunity
         SELECT 1
-        FROM dbo.opportunities opp 
+        FROM dbo.opportunities opp
         WHERE opp.organisationid = o.id
     )
     AND NOT EXISTS (
@@ -590,15 +590,15 @@ WHERE
 
 --Entity.OrganizationUsers (organization admins)
 INSERT INTO "Entity"."OrganizationUsers" (
-    "Id", 
-    "OrganizationId", 
-    "UserId", 
+    "Id",
+    "OrganizationId",
+    "UserId",
     "DateCreated"
 )
 SELECT
-    gen_random_uuid() AS "Id", 
-    u.organisationid AS "OrganizationId", 
-    u.id AS "UserId", 
+    gen_random_uuid() AS "Id",
+    u.organisationid AS "OrganizationId",
+    u.id AS "UserId",
     u.createdat AT TIME ZONE 'UTC' AS "DateCreated"
 FROM
     dbo.users u
@@ -612,10 +612,10 @@ WHERE
         	-- Ensures the organization has at least one mapped opportunity
             SELECT 1
             FROM dbo.opportunities opp
-            WHERE opp.organisationid = o."Id"   
+            WHERE opp.organisationid = o."Id"
         )
     );
- 
+
 --Entity.OrganizationUsers (organization admins for orphans >> system@yoma.world)
 INSERT INTO "Entity"."OrganizationUsers" (
     "Id",
@@ -637,7 +637,7 @@ WHERE
         WHERE ou."OrganizationId" = o."Id"
     );
 /***END: User & Organizations***/
-   
+
 /***BEGIN: Opportunities***/
 --Opportunity.Opportunity (ensure unique titles)
 WITH CleanedTitles AS (
@@ -662,7 +662,7 @@ UPDATE dbo.opportunities o
 SET title = ut.FinalTitle
 FROM UpdatedTitles ut
 WHERE o.id = ut.id AND LOWER(o.title) <> LOWER(ut.FinalTitle);
-   
+
 --Opportunity.Opportunity
 --checks for any opportunities with a type not listed among the expected values and raises an exception if found.
 DO $$
@@ -682,44 +682,44 @@ BEGIN
 END $$;
 
 INSERT INTO "Opportunity"."Opportunity" (
-    "Id", 
-    "Title", 
-    "Description", 
-    "TypeId", 
-    "OrganizationId", 
-    "Summary", 
-    "Instructions", 
-    "URL", 
-    "ZltoReward", 
-    "ZltoRewardPool", 
-    "ZltoRewardCumulative", 
-    "YomaReward", 
-    "YomaRewardPool", 
-    "YomaRewardCumulative", 
-    "VerificationEnabled", 
-    "VerificationMethod", 
-    "DifficultyId", 
-    "CommitmentIntervalId", 
-    "CommitmentIntervalCount", 
-    "ParticipantLimit", 
-    "ParticipantCount", 
-    "StatusId", 
-    "Keywords", 
-    "DateStart", 
-    "DateEnd", 
-    "CredentialIssuanceEnabled", 
-    "SSISchemaName", 
-    "DateCreated", 
-    "CreatedByUserId", 
-    "DateModified", 
+    "Id",
+    "Title",
+    "Description",
+    "TypeId",
+    "OrganizationId",
+    "Summary",
+    "Instructions",
+    "URL",
+    "ZltoReward",
+    "ZltoRewardPool",
+    "ZltoRewardCumulative",
+    "YomaReward",
+    "YomaRewardPool",
+    "YomaRewardCumulative",
+    "VerificationEnabled",
+    "VerificationMethod",
+    "DifficultyId",
+    "CommitmentIntervalId",
+    "CommitmentIntervalCount",
+    "ParticipantLimit",
+    "ParticipantCount",
+    "StatusId",
+    "Keywords",
+    "DateStart",
+    "DateEnd",
+    "CredentialIssuanceEnabled",
+    "SSISchemaName",
+    "DateCreated",
+    "CreatedByUserId",
+    "DateModified",
     "ModifiedByUserId"
 )
 SELECT
 	o.id AS "Id",
 	remove_double_spacing(o.title) AS "Title" ,
 	remove_double_spacing(o.description) AS "Description" ,
-	(SELECT "Id" FROM "Opportunity"."OpportunityType" WHERE "Name" = 
-    	CASE 
+	(SELECT "Id" FROM "Opportunity"."OpportunityType" WHERE "Name" =
+    	CASE
         	WHEN lower(o.type) = 'task' THEN 'Task'
 	        WHEN lower(o.type) = 'learning' THEN 'Learning'
     	    WHEN lower(o.type) = 'learningopportunity' THEN 'Learning'
@@ -731,12 +731,12 @@ SELECT
     NULL::varchar(500) AS "Summary",
     remove_double_spacing(o.instructions) AS "Instructions",
     ensure_valid_http_url(opportunityurl) AS "URL",
-	CASE 
+	CASE
     	WHEN o.zltoreward IS NULL THEN NULL
     	WHEN ABS(o.zltoreward) = 0 THEN NULL
     	ELSE CAST(ABS(o.zltoreward) AS numeric(8,2))
 	END AS "ZltoReward",
-	CASE 
+	CASE
     	WHEN o.zltoreward IS NULL OR ABS(o.zltoreward) = 0 THEN NULL
     	WHEN o.zltorewardpool IS NULL OR ABS(o.zltorewardpool) = 0 THEN NULL
 	    ELSE CAST(ABS(o.zltorewardpool) AS numeric(12,2))
@@ -747,7 +747,7 @@ SELECT
 	NULL::numeric(12,2) AS "YomaRewardCumulative",
 	true AS "VerificationEnabled",
 	'Manual' as "VerificationMethod",
-	(SELECT "Id" FROM "Opportunity"."OpportunityDifficulty" WHERE "Name" = 
+	(SELECT "Id" FROM "Opportunity"."OpportunityDifficulty" WHERE "Name" =
     	CASE
         	WHEN lower(o.difficulty) = 'beginner' THEN 'Beginner'
         	WHEN lower(o.difficulty) = 'advanced' THEN 'Advanced'
@@ -756,7 +756,7 @@ SELECT
         	ELSE 'Any Level'
 	    END
 	) AS "DifficultyId",
-	(SELECT "Id" FROM "Lookup"."TimeInterval" WHERE "Name" = 
+	(SELECT "Id" FROM "Lookup"."TimeInterval" WHERE "Name" =
 	    CASE
     	    WHEN lower(o.timeperiod) = 'week' THEN 'Week'
         	WHEN lower(o.timeperiod) = 'day' THEN 'Day'
@@ -773,7 +773,7 @@ SELECT
     	ELSE ABS(o.participantlimit)
 	END AS "ParticipantLimit",
 	NULL::int4 as "ParticipantCount", --set below (see 'My' Opportunities section)
-	(SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 
+	(SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" =
        CASE
            WHEN o.deletedat IS NOT NULL THEN 'Deleted'
            WHEN o.enddate IS NULL OR o.enddate > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') THEN 'Active'
@@ -855,39 +855,39 @@ FROM
 JOIN
     dbo.opportunityskills os ON oo."Id" = os.opportunityid
 JOIN
-    dbo.skills ds ON ds.id = os.skillid  
+    dbo.skills ds ON ds.id = os.skillid
 JOIN
     "Lookup"."Skill" ls ON lower(ls."Name") = lower(ds."name")
 ORDER BY oo."Id", ls."Id";
-    
+
 --Opportunity.OpportunityVerificationTypes
 INSERT INTO "Opportunity"."OpportunityVerificationTypes" ("Id", "OpportunityId", "VerificationTypeId", "Description", "DateCreated", "DateModified")
 SELECT
     gen_random_uuid() AS "Id",
     oo."Id" AS "OpportunityId",
     (SELECT "Id" FROM "Opportunity"."OpportunityVerificationType" WHERE "Name" = 'FileUpload') AS "VerificationTypeId",
-    NULL::text AS "Description", 
+    NULL::text AS "Description",
     oo."DateCreated" AT TIME ZONE 'UTC' AS "DateCreated",
-    oo."DateCreated" AT TIME ZONE 'UTC' AS "DateModified" 
+    oo."DateCreated" AT TIME ZONE 'UTC' AS "DateModified"
 FROM
     "Opportunity"."Opportunity" oo;
-/***END: Opportunities***/   
-   
+/***END: Opportunities***/
+
 /***BEGIN: 'My' Opportunities***/
 --Opptorunity.MyOpportunity (Saved: dbo.myopportunities entries)
 INSERT INTO "Opportunity"."MyOpportunity" (
-    "Id", 
-    "UserId", 
-    "OpportunityId", 
-    "ActionId", 
-    "VerificationStatusId", 
-    "CommentVerification", 
+    "Id",
+    "UserId",
+    "OpportunityId",
+    "ActionId",
+    "VerificationStatusId",
+    "CommentVerification",
     "DateStart",
-    "DateEnd", 
-    "DateCompleted", 
-    "ZltoReward", 
-    "YomaReward", 
-    "DateCreated", 
+    "DateEnd",
+    "DateCompleted",
+    "ZltoReward",
+    "YomaReward",
+    "DateCreated",
     "DateModified"
 )
 SELECT DISTINCT ON (U."Id", O."Id", A."Id")
@@ -912,7 +912,7 @@ JOIN
     "Opportunity"."Opportunity" O ON O."Id" = MO.opportunityid
 JOIN
     (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Saved') AS A ON true;
-    
+
 --Opptorunity.MyOpportunity (Verificaton: Pending [VerifiedAt=null] | Verificaton: Completed [VerifiedAt!=null] & Approved=true | Verificaton: Rejected [VerifiedAt!=null] & Approved=false)
 -- Create temporary tables if they do not exist
 CREATE TEMP TABLE TempOpportunityDetails (
@@ -942,18 +942,18 @@ CREATE TEMP TABLE TempInsertedOpportunity (
 
 WITH Inserted AS (
     INSERT INTO TempInsertedOpportunity (
-        "Id", 
-        "UserId", 
-        "OpportunityId", 
-        "ActionId", 
-        "VerificationStatusId", 
-        "CommentVerification", 
+        "Id",
+        "UserId",
+        "OpportunityId",
+        "ActionId",
+        "VerificationStatusId",
+        "CommentVerification",
         "DateStart",
-        "DateEnd", 
-        "DateCompleted", 
-        "ZltoReward", 
-        "YomaReward", 
-        "DateCreated", 
+        "DateEnd",
+        "DateCompleted",
+        "ZltoReward",
+        "YomaReward",
+        "DateCreated",
         "DateModified",
         "FileId"
     )
@@ -962,24 +962,24 @@ WITH Inserted AS (
         U."Id" AS "UserId",
         O."Id" AS "OpportunityId",
         (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification') AS "ActionId",
-        CASE 
+        CASE
             WHEN C.verifiedat IS NULL THEN (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Pending')
             WHEN C.verifiedat IS NOT NULL AND (C.approved IS NULL OR C.approved = FALSE) THEN (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Rejected')
             WHEN C.verifiedat IS NOT NULL AND C.approved = TRUE THEN (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
         END AS "VerificationStatusId",
-        CASE 
+        CASE
             WHEN C.verifiedat IS NOT NULL THEN remove_double_spacing(C.approvalmessage)
-            ELSE NULL 
+            ELSE NULL
         END AS "CommentVerification",
         start_of_day(C.startdate) AT TIME ZONE 'UTC' AS "DateStart",
-        CASE 
+        CASE
 		    WHEN C.enddate IS NULL AND (C.verifiedat IS NOT NULL AND C.approved = TRUE) THEN end_of_day(C.verifiedat) AT TIME ZONE 'UTC'
 		    WHEN C.enddate::date = '3850-01-02' AND (C.verifiedat IS NOT NULL AND C.approved = TRUE) THEN end_of_day(C.verifiedat) AT TIME ZONE 'UTC'
 		    WHEN C.enddate IS NULL OR C.enddate::date = '3850-01-02' THEN NULL
 		    ELSE end_of_day(C.enddate) AT TIME ZONE 'UTC'
 		END AS "DateEnd",
         C.verifiedat AS "DateCompleted",
-        CASE 
+        CASE
             WHEN C.verifiedat IS NOT NULL AND C.approved = TRUE AND ABS(C.zltoreward) > 0 THEN CAST(ABS(C.zltoreward) AS numeric(8,2))
             ELSE NULL
         END AS "ZltoReward",
@@ -995,9 +995,9 @@ WITH Inserted AS (
         "Opportunity"."Opportunity" O ON O."Id" = C.opportunityid
     WHERE
         C.fileId IS NOT NULL
-    ORDER BY 
-        U."Id", 
-        O."Id", 
+    ORDER BY
+        U."Id",
+        O."Id",
         C.createdat DESC
     RETURNING *
 )
@@ -1006,49 +1006,49 @@ SELECT "Id", "UserId", "OpportunityId", "FileId", "DateCreated" FROM Inserted;
 
 -- Insert into "Opportunity"."MyOpportunity" from the Inserted CTE
 INSERT INTO "Opportunity"."MyOpportunity" (
-    "Id", 
-    "UserId", 
-    "OpportunityId", 
-    "ActionId", 
-    "VerificationStatusId", 
-    "CommentVerification", 
+    "Id",
+    "UserId",
+    "OpportunityId",
+    "ActionId",
+    "VerificationStatusId",
+    "CommentVerification",
     "DateStart",
-    "DateEnd", 
-    "DateCompleted", 
-    "ZltoReward", 
-    "YomaReward", 
-    "DateCreated", 
+    "DateEnd",
+    "DateCompleted",
+    "ZltoReward",
+    "YomaReward",
+    "DateCreated",
     "DateModified"
 )
 SELECT "Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
        "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified"
 FROM TempInsertedOpportunity;
-  
+
 --Object.Blob (credential certificates / 'my' opportinity verifcation file upload)
 INSERT INTO "Object"."Blob" (
-    "Id", 
-    "StorageType", 
-    "FileType", 
-    "Key", 
-    "ContentType", 
-    "OriginalFileName", 
-    "ParentId", 
+    "Id",
+    "StorageType",
+    "FileType",
+    "Key",
+    "ContentType",
+    "OriginalFileName",
+    "ParentId",
     "DateCreated"
 )
 SELECT DISTINCT
-    f.id AS "Id", 
-    'Private' AS "StorageType", 
-    'Certificates' AS "FileType", 
-    f.s3objectid AS "Key", 
+    f.id AS "Id",
+    'Private' AS "StorageType",
+    'Certificates' AS "FileType",
+    f.s3objectid AS "Key",
     f.contenttype AS "ContentType",
     split_part(f.s3objectid, '/', array_length(string_to_array(f.s3objectid, '/'), 1)) AS "OriginalFileName",
-    NULL::uuid AS "ParentId", 
+    NULL::uuid AS "ParentId",
     f.createdat AT TIME ZONE 'UTC' AS "DateCreated"
-FROM 
+FROM
     TempOpportunityDetails TOD
-JOIN 
+JOIN
     dbo.files f ON TOD.FileId = f.id;
-   
+
 --Opportunity.MyOpportunityVerifications (type FileUpload <> dbo.credentials.fileid)
 INSERT INTO "Opportunity"."MyOpportunityVerifications" (
     "Id",
@@ -1070,141 +1070,141 @@ FROM
 
 DROP TABLE TempOpportunityDetails;
 DROP TABLE TempInsertedOpportunity;
-   
+
 --SSI.CredentialIssuance (for 'My' Opportunities with verification completed)
 INSERT INTO "SSI"."CredentialIssuance" (
-    "Id", 
-    "SchemaTypeId", 
-    "ArtifactType", 
-    "SchemaName", 
-    "SchemaVersion", 
-    "StatusId", 
-    "UserId", 
+    "Id",
+    "SchemaTypeId",
+    "ArtifactType",
+    "SchemaName",
+    "SchemaVersion",
+    "StatusId",
+    "UserId",
     "OrganizationId",
-    "MyOpportunityId", 
-    "CredentialId", 
-    "ErrorReason", 
-    "RetryCount", 
-    "DateCreated", 
+    "MyOpportunityId",
+    "CredentialId",
+    "ErrorReason",
+    "RetryCount",
+    "DateCreated",
     "DateModified"
 )
-SELECT 
-    gen_random_uuid() AS "Id", 
-    (SELECT "Id" FROM "SSI"."SchemaType" WHERE "Name" = 'Opportunity') AS "SchemaTypeId", 
-    'Indy' AS "ArtifactType", 
-    O."SSISchemaName" AS "SchemaName", 
-    '1.0' AS "SchemaVersion", 
-    (SELECT "Id" FROM "SSI"."CredentialIssuanceStatus" WHERE "Name" = 'Pending') AS "StatusId", 
-    NULL AS "UserId", 
-    NULL AS "OrganizationId", 
-    MO."Id" AS "MyOpportunityId", 
-    NULL AS "CredentialId", 
-    NULL AS "ErrorReason", 
-    NULL AS "RetryCount", 
-    MO."DateModified" AS "DateCreated", 
+SELECT
+    gen_random_uuid() AS "Id",
+    (SELECT "Id" FROM "SSI"."SchemaType" WHERE "Name" = 'Opportunity') AS "SchemaTypeId",
+    'JWS' AS "ArtifactType",
+    O."SSISchemaName" AS "SchemaName",
+    '1.0' AS "SchemaVersion",
+    (SELECT "Id" FROM "SSI"."CredentialIssuanceStatus" WHERE "Name" = 'Pending') AS "StatusId",
+    NULL AS "UserId",
+    NULL AS "OrganizationId",
+    MO."Id" AS "MyOpportunityId",
+    NULL AS "CredentialId",
+    NULL AS "ErrorReason",
+    NULL AS "RetryCount",
+    MO."DateModified" AS "DateCreated",
     MO."DateModified" AS "DateModified"
-FROM 
+FROM
     "Opportunity"."MyOpportunity" MO
-INNER JOIN 
+INNER JOIN
     "Opportunity"."Opportunity" O ON MO."OpportunityId" = O."Id"
-WHERE 
+WHERE
     MO."ActionId" = (
-        SELECT "Id" 
-        FROM "Opportunity"."MyOpportunityAction" 
+        SELECT "Id"
+        FROM "Opportunity"."MyOpportunityAction"
         WHERE "Name" = 'Verification'
     )
     AND MO."VerificationStatusId" = (
-        SELECT "Id" 
-        FROM "Opportunity"."MyOpportunityVerificationStatus" 
+        SELECT "Id"
+        FROM "Opportunity"."MyOpportunityVerificationStatus"
         WHERE "Name" = 'Completed'
     )
     AND O."CredentialIssuanceEnabled" = true;
 
---Reward.Transaction (for 'My' Opportunities with verification completed: for users with no zlto wallet added as pending; 
+--Reward.Transaction (for 'My' Opportunities with verification completed: for users with no zlto wallet added as pending;
 --for user with zlto wallet added as processed [only on production])
 INSERT INTO "Reward"."Transaction" (
-    "Id", 
-    "UserId", 
-    "StatusId", 
-    "SourceEntityType", 
-    "MyOpportunityId", 
-    "Amount", 
-    "TransactionId", 
-    "ErrorReason", 
-    "RetryCount", 
-    "DateCreated", 
+    "Id",
+    "UserId",
+    "StatusId",
+    "SourceEntityType",
+    "MyOpportunityId",
+    "Amount",
+    "TransactionId",
+    "ErrorReason",
+    "RetryCount",
+    "DateCreated",
     "DateModified"
 )
-SELECT 
-    gen_random_uuid() AS "Id", 
-    MO."UserId" AS "UserId", 
+SELECT
+    gen_random_uuid() AS "Id",
+    MO."UserId" AS "UserId",
     COALESCE(
         (
-            SELECT TS."Id" 
+            SELECT TS."Id"
             FROM "Reward"."TransactionStatus" TS
-            WHERE TS."Name" = 'Processed' 
+            WHERE TS."Name" = 'Processed'
             AND EXISTS (
                 SELECT 1
                 FROM "Reward"."WalletCreation" WC
                 WHERE WC."UserId" = MO."UserId"
                 AND WC."StatusId" = (
-                    SELECT WCS."Id" 
-                    FROM "Reward"."WalletCreationStatus" WCS 
+                    SELECT WCS."Id"
+                    FROM "Reward"."WalletCreationStatus" WCS
                     WHERE WCS."Name" = 'Created'
                 )
             )
-        ), 
+        ),
         (
-            SELECT TS."Id" 
+            SELECT TS."Id"
             FROM "Reward"."TransactionStatus" TS
             WHERE TS."Name" = 'Pending'
         )
-    ) AS "StatusId", 
-    'MyOpportunity' AS "SourceEntityType", 
-    MO."Id" AS "MyOpportunityId", 
-    MO."ZltoReward" AS "Amount", 
+    ) AS "StatusId",
+    'MyOpportunity' AS "SourceEntityType",
+    MO."Id" AS "MyOpportunityId",
+    MO."ZltoReward" AS "Amount",
     CASE
         WHEN EXISTS (
             SELECT 1
             FROM "Reward"."WalletCreation" WC
             WHERE WC."UserId" = MO."UserId"
             AND WC."StatusId" = (
-                SELECT WCS."Id" 
-                FROM "Reward"."WalletCreationStatus" WCS 
+                SELECT WCS."Id"
+                FROM "Reward"."WalletCreationStatus" WCS
                 WHERE WCS."Name" = 'Created'
             )
         ) THEN 'Migrated from v2 to v3'
         ELSE NULL
-    END AS "TransactionId", 
-    NULL AS "ErrorReason", 
-    NULL AS "RetryCount", 
-    MO."DateModified" AS "DateCreated", 
+    END AS "TransactionId",
+    NULL AS "ErrorReason",
+    NULL AS "RetryCount",
+    MO."DateModified" AS "DateCreated",
     MO."DateModified" AS "DateModified"
-FROM 
+FROM
     "Opportunity"."MyOpportunity" MO
-WHERE 
+WHERE
     MO."ActionId" = (
-        SELECT "Id" 
-        FROM "Opportunity"."MyOpportunityAction" 
+        SELECT "Id"
+        FROM "Opportunity"."MyOpportunityAction"
         WHERE "Name" = 'Verification'
     )
     AND MO."VerificationStatusId" = (
-        SELECT "Id" 
-        FROM "Opportunity"."MyOpportunityVerificationStatus" 
+        SELECT "Id"
+        FROM "Opportunity"."MyOpportunityVerificationStatus"
         WHERE "Name" = 'Completed'
     )
     AND MO."ZltoReward" > 0;
-   
+
 --Reward.WalletCreation (Update balance and set to sum of processed Reward.Transactions for users with wallets [only on production])
 UPDATE "Reward"."WalletCreation" WC
 SET "Balance" = COALESCE(WC."Balance", 0) + T.SumZltoReward
 FROM (
-    SELECT 
-        RT."UserId", 
+    SELECT
+        RT."UserId",
         SUM(RT."Amount") AS SumZltoReward
-    FROM 
+    FROM
         "Reward"."Transaction" RT
-    INNER JOIN 
+    INNER JOIN
         "Reward"."TransactionStatus" RTS ON RT."StatusId" = RTS."Id" AND RTS."Name" = 'Processed'
     GROUP BY RT."UserId"
 ) T
@@ -1214,12 +1214,12 @@ AND WC."StatusId" = (
     FROM "Reward"."WalletCreationStatus" WCS
     WHERE WCS."Name" = 'Created'
 );
-   
+
 --Entity.UserSkills (populated for 'My' Opportunities with verification completed)
 INSERT INTO "Entity"."UserSkills" (
-    "Id", 
-    "UserId", 
-    "SkillId", 
+    "Id",
+    "UserId",
+    "SkillId",
     "DateCreated"
 )
 SELECT DISTINCT ON (MO."UserId", OS."SkillId")
@@ -1227,54 +1227,54 @@ SELECT DISTINCT ON (MO."UserId", OS."SkillId")
     MO."UserId",
     OS."SkillId",
     MAX(MO."DateModified") OVER (PARTITION BY MO."UserId", OS."SkillId") AS "DateCreated"
-FROM 
+FROM
     "Opportunity"."MyOpportunity" MO
-INNER JOIN 
+INNER JOIN
     "Opportunity"."OpportunitySkills" OS ON MO."OpportunityId" = OS."OpportunityId"
-WHERE 
+WHERE
     MO."ActionId" = (
-        SELECT "Id" 
-        FROM "Opportunity"."MyOpportunityAction" 
+        SELECT "Id"
+        FROM "Opportunity"."MyOpportunityAction"
         WHERE "Name" = 'Verification'
     )
     AND MO."VerificationStatusId" = (
-        SELECT "Id" 
-        FROM "Opportunity"."MyOpportunityVerificationStatus" 
+        SELECT "Id"
+        FROM "Opportunity"."MyOpportunityVerificationStatus"
         WHERE "Name" = 'Completed'
     );
 
 --Entity.UserSkillOrganizations (populated for 'My' Opportunities with verification completed)
 INSERT INTO "Entity"."UserSkillOrganizations" (
-    "Id", 
-    "UserSkillId", 
-    "OrganizationId", 
+    "Id",
+    "UserSkillId",
+    "OrganizationId",
     "DateCreated"
 )
 SELECT
     gen_random_uuid() AS "Id",
     US."Id" AS "UserSkillId",
     OP."OrganizationId" AS "OrganizationId",
-    US."DateCreated" AS "DateCreated" 
+    US."DateCreated" AS "DateCreated"
 FROM
     "Entity"."UserSkills" US
 INNER JOIN "Opportunity"."OpportunitySkills" OS ON US."SkillId" = OS."SkillId"
 INNER JOIN "Opportunity"."Opportunity" OP ON OP."Id" = OS."OpportunityId"
 INNER JOIN "Opportunity"."MyOpportunity" MO ON MO."OpportunityId" = OS."OpportunityId"
     AND MO."ActionId" = (
-        SELECT "Id" 
-        FROM "Opportunity"."MyOpportunityAction" 
+        SELECT "Id"
+        FROM "Opportunity"."MyOpportunityAction"
         WHERE "Name" = 'Verification'
     )
     AND MO."VerificationStatusId" = (
-        SELECT "Id" 
-        FROM "Opportunity"."MyOpportunityVerificationStatus" 
+        SELECT "Id"
+        FROM "Opportunity"."MyOpportunityVerificationStatus"
         WHERE "Name" = 'Completed'
     )
 GROUP BY
     US."Id",
     OP."OrganizationId",
-    US."DateCreated"; 
-   
+    US."DateCreated";
+
 --Opportunity.Opportunity (update running totals based on completed opportunities)
 WITH AggregatedData AS (
 	SELECT
@@ -1294,7 +1294,7 @@ SET
 FROM AggregatedData a
 WHERE o."Id" = a."OpportunityId";
 /***END: 'My' Opportunities***/
-   
+
 --drop temporary functions
 DROP FUNCTION remove_double_spacing(text);
 DROP FUNCTION title_case(text, boolean);

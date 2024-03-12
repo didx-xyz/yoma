@@ -1,4 +1,5 @@
 using Aries.CloudAPI.DotnetSDK.AspCore.Clients;
+using Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions;
 using Aries.CloudAPI.DotnetSDK.AspCore.Clients.Interfaces;
 using Aries.CloudAPI.DotnetSDK.AspCore.Clients.Models;
 using Newtonsoft.Json;
@@ -21,6 +22,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         private readonly AppSettings _appSettings;
         private readonly ClientFactory _clientFactory;
         private readonly ISSEListenerService _sseListenerService;
+        private readonly IRepository<Models.Credential> _credentialRepository;
         private readonly IRepository<Models.CredentialSchema> _credentialSchemaRepository;
         private readonly IRepository<Models.Connection> _connectionRepository;
 
@@ -32,12 +34,14 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         public AriesCloudClient(AppSettings appSettings,
             ClientFactory clientFactory,
             ISSEListenerService sseListenerService,
+            IRepository<Models.Credential> credentialRepository,
             IRepository<Models.CredentialSchema> credentialSchemaRepository,
             IRepository<Models.Connection> connectionRepository)
         {
             _appSettings = appSettings;
             _clientFactory = clientFactory;
             _sseListenerService = sseListenerService;
+            _credentialRepository = credentialRepository;
             _credentialSchemaRepository = credentialSchemaRepository;
             _connectionRepository = connectionRepository;
         }
@@ -50,8 +54,21 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             var schemasAries = await client.GetSchemasAsync();
             var schemasLocal = _credentialSchemaRepository.Query().ToList();
 
-            return (schemasAries.ToSchema(latestVersion)
+            var results = (schemasAries.ToSchema(latestVersion)
                 ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).Concat(schemasLocal.ToSchema(latestVersion) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).ToList();
+            if (results == null || !results.Any()) return null;
+
+            if (latestVersion)
+            {
+                // when latestVersion is true, group by name and select only the latest version from each group
+                return results?
+                    .GroupBy(schema => schema.Name)
+                    .Select(g => g.OrderByDescending(s => s.Version).First())
+                    .Where(schema => schema != null)
+                    .ToList();
+            }
+
+            return results?.OrderBy(o => o.Name).ThenBy(o => o.Version).ToList();
         }
 
         public async Task<Domain.SSI.Models.Provider.Schema> GetSchemaByName(string name)
@@ -73,10 +90,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             var results = (schemasAries.ToSchema(true) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).Concat(schemasLocal.ToSchema(true) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).ToList();
             if (results == null || !results.Any()) return null;
 
-            if (results.Count > 1)
-                throw new DataInconsistencyException($"More than one schema found with name '{name}' (latest version): {string.Join(", ", results.Select(o => $"{o.Name}:{o.ArtifactType}"))}");
-
-            return results.SingleOrDefault();
+            //return the latest version; schema can exist in both "local" and Aries; latest version reflects the active version
+            var result = results.OrderByDescending(o => o.Version).First();
+            return result;
         }
 
         public async Task<Domain.SSI.Models.Provider.Schema> GetSchemaById(string id)
@@ -92,10 +108,22 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             id = id.Trim();
 
             var client = _clientFactory.CreateGovernanceClient();
-            var schemasAries = await client.GetSchemasAsync(id);
-            var schemasLocal = _credentialSchemaRepository.Query().Where(o => o.Id == id).ToList();
 
-            var results = (schemasAries.ToSchema(false) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).Concat(schemasLocal.ToSchema(false) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).ToList();
+            var schemaLocal = _credentialSchemaRepository.Query().Where(o => o.Id == id).SingleOrDefault();
+            if (schemaLocal != null) return schemaLocal.ToSchema();
+
+            ICollection<CredentialSchema>? schemasAries = null;
+            try
+            {
+                schemasAries = await client.GetSchemasAsync(id);
+            }
+            catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+            {
+                if (ex.StatusCode == System.Net.HttpStatusCode.UnprocessableEntity) return null;
+                throw;
+            }
+
+            var results = (schemasAries.ToSchema(false) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).ToList();
             if (results == null || !results.Any()) return null;
 
             if (results.Count > 1)
@@ -110,28 +138,60 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 throw new ArgumentNullException(nameof(id));
             id = id.Trim();
 
-            var client = _clientFactory.CreateTenantClient(tenantId); // will result in a HttpClientException(StatusCode=NotFound)
+            var resultLocal = _credentialRepository.Query().SingleOrDefault(o => o.Id == Guid.Parse(id));
+            if (resultLocal != null) return resultLocal.ToCredential();
 
-            var result = await client.GetIndyCredentialByIdAsync(id);
+            var client = _clientFactory.CreateTenantClient(tenantId);
+            IndyCredInfo? resultAries = null;
+            try
+            {
+                resultAries = await client.GetIndyCredentialByIdAsync(id);
+            }
+            catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+            {
+                if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+            }
 
-            return result.ToCredential();
+            if (resultAries == null)
+                throw new EntityNotFoundException($"{nameof(Domain.SSI.Models.Provider.Credential)} with id '{id}' does not exist");
+
+            return resultAries.ToCredential();
         }
 
-        public async Task<List<Domain.SSI.Models.Provider.Credential>?> ListCredentials(string tenantId, int? start, int? count)
+        //[int? start, int? count]: filter and ordered client side; no way to filter on schemaType or orderByDescending:_Date_Issued on Aries
+        public async Task<List<Domain.SSI.Models.Provider.Credential>?> ListCredentials(string tenantId)
         {
-            //TODO: schemaType starts with / contains filter on Schema_id (remove client side filtering)
-            //TODO: orderByDescending on attrib _Date_Issued (remove client side ordering)
-
             if (string.IsNullOrWhiteSpace(tenantId))
                 throw new ArgumentNullException(nameof(tenantId));
             tenantId = tenantId.Trim();
 
             var client = _clientFactory.CreateTenantClient(tenantId);
 
+            //var paginationEnabled = start.HasValue || count.HasValue;
             //TODO: ld_proofs
-            var indyCredentials = await client.GetIndyCredentialsAsync(count, start);
 
-            var results = indyCredentials?.Results?.Select(o => o.ToCredential()).ToList();
+            //indy credentials
+            var indyCredentials = await client.GetIndyCredentialsAsync();
+
+            //jws credentials
+            var query = _credentialRepository.Query().Where(o => o.TargetTenantId == tenantId && o.ArtifactType == ArtifactType.JWS.ToString());
+
+            //query = query.OrderByDescending(o => o.DateCreated);
+            //if (paginationEnabled)
+            //{
+            //    if (!start.HasValue || start.Value < default(int))
+            //        throw new ArgumentOutOfRangeException(nameof(start), "Must be equal to or greater than 0");
+
+            //    if (!count.HasValue || count.Value <= default(int))
+            //        throw new ArgumentOutOfRangeException(nameof(count), "Must be greater than 0");
+
+            //    query = query.Skip(start.Value).Take(count.Value);
+            //}
+            var jwsCredentials = query.ToList();
+
+            var results = (indyCredentials?.Results?.Select(o => o.ToCredential()) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Credential>())
+                .Concat(jwsCredentials?.Select(o => o.ToCredential()) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Credential>()).ToList();
+
             return results;
         }
 
@@ -147,12 +207,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             var schemaExisting = await GetSchemaByNameOrNull(request.Name);
 
             var version = VersionExtensions.Default;
-            if (schemaExisting != null)
-            {
-                if (schemaExisting.ArtifactType != request.ArtifactType)
-                    throw new ArgumentException($"Schema with name '{request.Name}' already exist in artifact store '{schemaExisting.ArtifactType}'");
-                version = schemaExisting.Version.IncrementMinor();
-            }
+            if (schemaExisting != null) version = schemaExisting.Version.IncrementMinor(); //allow switching of artifact stores; version incrementally incremented across stores
 
             switch (request.ArtifactType)
             {
@@ -175,7 +230,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                     var schemaPrefix = request.ArtifactType switch
                     {
                         ArtifactType.Ld_proof => Schema_Prefix_LdProof,
-                        ArtifactType.JWS => Schema_Prefix_JWT, 
+                        ArtifactType.JWS => Schema_Prefix_JWT,
                         _ => throw new InvalidOperationException($"Artifact type of '{request.ArtifactType}' not supported"),
                     };
 
@@ -316,12 +371,14 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                             Attributes = request.Attributes
                         }
                     };
+
+                    await SendAndAcceptCredential(tenantHolder, clientHolder, clientIssuer, sendCredentialRequest);
                     break;
 
                 case ArtifactType.Ld_proof:
                     var dids = await clientIssuer.GetDIDsAsync();
-                    var did = dids.SingleOrDefault(o => o.Key_type == DIDKey_type.Ed25519 && o.Posture == DIDPosture.Posted)
-                        ?? throw new InvalidOperationException($"Failed to retrieve the issuer DID of type '{DIDKey_type.Ed25519}' and posture '{DIDPosture.Posted}'");
+                    var did = dids.SingleOrDefault(o => o.Key_type == Key_type.Ed25519 && o.Posture == Posture.Posted)
+                        ?? throw new InvalidOperationException($"Failed to retrieve the issuer DID of type '{Key_type.Ed25519}' and posture '{Posture.Posted}'");
                     var credentialSubject = new Dictionary<string, string> { { "type", request.SchemaType } };
                     credentialSubject = credentialSubject.Concat(request.Attributes).ToDictionary(x => x.Key, x => x.Value);
 
@@ -337,7 +394,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                                 Type = new List<string> { "VerifiableCredential", request.SchemaType },
                                 IssuanceDate = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd"),
                                 Issuer = did.Did,
-                                CredentialSubject = credentialSubject,
+                                CredentialSubject = JsonConvert.SerializeObject(credentialSubject),
                             },
                             Options = new LDProofVCDetailOptions
                             {
@@ -345,12 +402,50 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                             }
                         }
                     };
+
+                    await SendAndAcceptCredential(tenantHolder, clientHolder, clientIssuer, sendCredentialRequest);
+                    break;
+
+                case ArtifactType.JWS:
+                    //get the issuer's public did
+                    var issuerPublicDid = await clientIssuer.GetPublicDIDAsync();
+
+                    //construct the signing request
+                    var signRequest = new JWSCreateRequest
+                    {
+                        Did = issuerPublicDid.Did,
+                        Payload = request.Attributes
+                    };
+
+                    var signedJWS = await clientIssuer.SignJWSAsync(signRequest);
+
+                    //store the credential in the "db" wallet; at time of implementation, Aries did not support stroring of JWS credentials in the holder's wallet
+                    var credential = new Models.Credential
+                    {
+                        ClientReferent = request.ClientReferent.Value,
+                        SourceTenantId = request.TenantIdIssuer,
+                        TargetTenantId = request.TenantIdHolder,
+                        SchemaId = schema.Id,
+                        ArtifactType = request.ArtifactType.ToString(),
+                        Attributes = JsonConvert.SerializeObject(request.Attributes),
+                        SignedValue = JsonConvert.SerializeObject(signedJWS)
+                    };
+
+                    credential = await _credentialRepository.Create(credential);
                     break;
 
                 default:
                     throw new InvalidOperationException($"Artifact type of '{request.ArtifactType}' not supported");
             }
 
+            result = await GetCredentialReferentByClientReferentOrNull(clientHolder, request.ArtifactType, request.ClientReferent, true);
+            return result;
+        }
+        #endregion
+
+        #region Private Members
+        private async Task SendAndAcceptCredential(Tenant tenantHolder, ITenantClient clientHolder, ITenantClient clientIssuer, SendCredential sendCredentialRequest)
+        {
             //send the credential by issuer
             WebhookEvent<CredentialExchange>? sseEvent = null;
             await Task.Run(async () =>
@@ -378,13 +473,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
             if (sseEvent == null)
                 throw new InvalidOperationException($"Failed to receive SSE event for topic '{Topic.Credentials}' and desired state '{CredentialExchangeState.Done}'");
-
-            result = await GetCredentialReferentByClientReferentOrNull(clientHolder, request.ArtifactType, request.ClientReferent, true);
-            return result;
         }
-        #endregion
 
-        #region Private Members
         private static async Task<Tenant?> GetTenantByWalletNameOrNull(string walletName, ITenantAdminClient client)
         {
             var tenants = await client.GetTenantsAsync(wallet_name: walletName);
@@ -513,6 +603,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             };
 
             connectionAries = await clientHolder.AcceptInvitationAsync(acceptInvitationRequest);
+            var protocol = (connectionAries.Connection_protocol?.ToString()) ?? throw new InvalidOperationException("Unable to obtain the required connection protocol");
 
             result = new Models.Connection
             {
@@ -520,7 +611,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 SourceConnectionId = invitation.Connection_id,
                 TargetTenantId = tenantHolder.Wallet_id,
                 TargetConnectionId = connectionAries.Connection_id,
-                Protocol = connectionAries.Connection_protocol.ToString()
+                Protocol = protocol
             };
 
             result = await _connectionRepository.Create(result);
@@ -528,7 +619,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             return result;
         }
 
-        private static async Task<string?> GetCredentialReferentByClientReferentOrNull(ITenantClient clientHolder, ArtifactType artifactType,
+        private async Task<string?> GetCredentialReferentByClientReferentOrNull(ITenantClient clientHolder, ArtifactType artifactType,
             KeyValuePair<string, string> clientReferent, bool throwNotFound)
         {
             var wqlQueryString = $"{{\"attr::{clientReferent.Key}::value\":\"{clientReferent.Value}\"}}";
@@ -549,13 +640,11 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                             throw new InvalidOperationException($"Credential expected but not found for client referent '{clientReferent}'");
                         return null;
                     }
-                    else
-                    {
-                        var result = credIndy?.Referent?.Trim();
-                        if (string.IsNullOrEmpty(result))
-                            throw new InvalidOperationException($"Credential referent expected but is null / empty client referent '{clientReferent}'");
-                        return result;
-                    }
+
+                    var resultIndy = credIndy?.Referent?.Trim();
+                    if (string.IsNullOrEmpty(resultIndy))
+                        throw new InvalidOperationException($"Credential referent expected but is null / empty client referent '{clientReferent}'");
+                    return resultIndy;
 
                 case ArtifactType.Ld_proof:
                     ICollection<W3CCredentialsListRequest>? credsW3C = null;
@@ -579,13 +668,22 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                             throw new InvalidOperationException($"Credential expected but not found for client referent '{clientReferent}'");
                         return null;
                     }
-                    else
+
+                    var resultW3C = credW3C?.Given_id?.Trim();
+                    if (string.IsNullOrEmpty(resultW3C))
+                        throw new InvalidOperationException($"Credential referent expected but is null / empty client referent '{clientReferent}'");
+                    return resultW3C;
+
+                case ArtifactType.JWS:
+                    var credJWS = _credentialRepository.Query().SingleOrDefault(o => o.ClientReferent == clientReferent.Value);
+                    if (credJWS == null)
                     {
-                        var result = credW3C?.Given_id?.Trim();
-                        if (string.IsNullOrEmpty(result))
-                            throw new InvalidOperationException($"Credential referent expected but is null / empty client referent '{clientReferent}'");
-                        return result;
+                        if (throwNotFound)
+                            throw new InvalidOperationException($"Credential expected but not found for client referent '{clientReferent}'");
+                        return null;
                     }
+
+                    return credJWS.Id.ToString();
 
                 default:
                     throw new InvalidOperationException($"Artifact type of '{artifactType}' not supported");

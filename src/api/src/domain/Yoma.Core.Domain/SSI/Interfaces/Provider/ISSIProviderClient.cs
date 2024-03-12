@@ -35,9 +35,9 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Provider
         Task<Credential> GetCredentialById(string tenantId, string id);
 
         /// <summary>
-        /// List the credentials for the specified tenant / wallet, with optional pagination
+        /// List all the credentials for the specified tenant / wallet
         /// </summary>
-        Task<List<Credential>?> ListCredentials(string tenantId, int? start, int? count);
+        Task<List<Credential>?> ListCredentials(string tenantId);
 
         /// <summary>
         /// Create a new schema with the specified name and attributes. If a schema with the same name already exists, a new version will automatically be created

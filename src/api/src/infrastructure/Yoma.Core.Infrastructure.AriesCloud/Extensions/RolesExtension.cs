@@ -5,7 +5,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
 {
     public static class RolesExtension
     {
-        public static List<Roles2> ToAriesRoles(this List<Role> roles)
+        public static List<Roles> ToAriesRoles(this List<Role> roles)
         {
             if (roles == null || !roles.Any())
                 throw new ArgumentNullException(nameof(roles));
@@ -17,8 +17,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
              {
                  return role switch
                  {
-                     Role.Issuer => Roles2.Issuer,
-                     Role.Verifier => Roles2.Verifier,
+                     Role.Issuer => Roles.Issuer,
+                     Role.Verifier => Roles.Verifier,
                      _ => throw new ArgumentException($"Unsupported role '{role}'", nameof(roles)),
                  };
              })

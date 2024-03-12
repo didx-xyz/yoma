@@ -72,7 +72,7 @@ namespace Yoma.Core.Domain.SSI.Services
             {
                 _logger.LogInformation("Processing SSI default schema seeding");
 
-                SeedSchema(ArtifactType.Indy, //TODO: JWT
+                SeedSchema(ArtifactType.JWS, 
                      SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
                      new List<string> { "Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Skills", "Opportunity_Summary", "Opportunity_Type",
                         "MyOpportunity_UserDisplayName", "MyOpportunity_UserDateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
@@ -351,7 +351,7 @@ namespace Yoma.Core.Domain.SSI.Services
         private async Task SeedSchema(ArtifactType artifactType, string schemaFullName, List<string> attributes)
         {
             var schema = await _ssiSchemaService.GetByFullNameOrNull(schemaFullName);
-            if (schema == null)
+            if (schema == null || schema.ArtifactType != artifactType) //allow switching of artifact stores; version incrementally incremented across stores
             {
                 var (schemaType, displayName) = _ssiSchemaService.SchemaFullNameValidateAndGetParts(schemaFullName);
                 await _ssiSchemaService.Create(new SSISchemaRequestCreate
