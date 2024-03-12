@@ -2,7 +2,6 @@ import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, {
@@ -11,7 +10,7 @@ import React, {
   useState,
   type ChangeEvent,
 } from "react";
-import { IoMdAdd, IoMdPhotos } from "react-icons/io";
+import { IoMdAdd } from "react-icons/io";
 import {
   type OrganizationInfo,
   type OrganizationSearchResults,

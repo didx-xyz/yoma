@@ -21,7 +21,6 @@ import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { authOptions, type User } from "~/server/auth";
 import {
-  ACCEPTED_IMAGE_TYPES,
   GA_ACTION_USER_PROFILE_UPDATE,
   GA_CATEGORY_USER,
 } from "~/lib/constants";

@@ -6,7 +6,6 @@ import {
   IoMdAdd,
   IoMdCheckmark,
   IoMdClose,
-  IoMdPerson,
   IoMdPower,
   IoMdSearch,
   IoMdSettings,
