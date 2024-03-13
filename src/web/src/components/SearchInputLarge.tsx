@@ -5,7 +5,7 @@ interface InputProps {
   defaultValue?: string | null;
   placeholder?: string | null;
   onSearch?: (query: string) => void;
-  openFilter: (filterFullWindowVisible: boolean) => void;
+  openFilter?: (filterFullWindowVisible: boolean) => void;
 }
 
 export const SearchInputLarge: React.FC<InputProps> = ({
@@ -54,7 +54,7 @@ export const SearchInputLarge: React.FC<InputProps> = ({
         <button
           type="button"
           className="btn btn-primary join-item inline-flex rounded-l-full md:hidden"
-          onClick={() => openFilter(true)}
+          onClick={() => openFilter && openFilter(true)}
         >
           <IoMdOptions className="h-5 w-5" />
         </button>

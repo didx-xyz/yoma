@@ -579,18 +579,10 @@ const OrganisationDashboard: NextPageWithLayout<{
                         <PieChart
                           id="conversionRate"
                           title="Conversion rate"
-                          subTitle={
+                          subTitle={`${
                             searchResults.opportunities.conversionRate
-                              .viewedCount !== 0
-                              ? (
-                                  (searchResults.opportunities.conversionRate
-                                    .completedCount /
-                                    searchResults.opportunities.conversionRate
-                                      .viewedCount) *
-                                  100
-                                ).toFixed(2) + "%"
-                              : "N/A"
-                          }
+                              .percentage ?? 0
+                          } %`}
                           colors={["#387F6A", "#F9AB3E"]} // green and yellow
                           data={[
                             ["Completed", "Viewed"],
@@ -642,27 +634,24 @@ const OrganisationDashboard: NextPageWithLayout<{
                 </div>
 
                 {/* TOTAL UNIQUE SKILLS */}
-                {!(
-                  searchResults?.skills?.items &&
-                  searchResults?.skills?.items.data.length > 1
-                ) && (
-                  <div
-                    className="overflow-hidden rounded-lg bg-white  shadow"
-                    style={{ minWidth: "291px", height: "160px" }}
-                  >
-                    <div className="h-40 min-w-[288px] flex-col rounded-lg bg-white p-4 shadow">
-                      <div className="flex flex-row items-center gap-2">
-                        <IoMdPerson className="text-green" />
-                        <div className="whitespace-nowrap text-sm font-semibold">
-                          Total unique skills
-                        </div>
+                <div
+                  className="overflow-hidden rounded-lg bg-white  shadow"
+                  style={{ minWidth: "291px", height: "160px" }}
+                >
+                  <div className="h-40 min-w-[288px] flex-col rounded-lg bg-white p-4 shadow">
+                    <div className="flex flex-row items-center gap-2">
+                      <IoMdPerson className="text-green" />
+                      <div className="whitespace-nowrap text-sm font-semibold">
+                        Total unique skills
                       </div>
-                      <div className="flex flex-grow flex-col">
-                        <div className="flex-grow text-2xl font-bold">0</div>
+                    </div>
+                    <div className="flex flex-grow flex-col">
+                      <div className="flex-grow text-2xl font-bold">
+                        {searchResults?.skills?.items?.count ?? 0}
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
 
                 {searchResults?.skills?.items &&
                   searchResults?.skills?.items.data.length > 1 && (
@@ -677,10 +666,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                     />
                   )}
 
-                {/* SKILLS */}
+                {/* MOST COMPLETED SKILLS */}
                 {searchResults?.skills?.topCompleted && (
                   <>
-                    {/* MOST COMPLETED SKILLS */}
                     <div className="flex h-[160px] w-[576px] flex-col rounded-lg bg-white p-4 shadow">
                       <div className="flex flex-row items-center gap-2">
                         <IoMdCompass className="text-green" />
@@ -913,14 +901,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                                     ).format(DATETIME_FORMAT_HUMAN)
                                   : ""}
                               </td>
-                              <td className="whitespace-nowrap text-center">
+                              <td className="whitespace-nowrap">
                                 {opportunity.verified
                                   ? "Verified"
                                   : "Not verified"}
                               </td>
-                              <td className="text-center">
-                                {opportunity.opportunityStatus}
-                              </td>
+                              <td>{opportunity.opportunityStatus}</td>
                             </tr>
                           ))}
                         </tbody>

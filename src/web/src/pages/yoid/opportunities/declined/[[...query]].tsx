@@ -148,12 +148,13 @@ const MyOpportunitiesDeclined: NextPageWithLayout<{
                 key={index}
                 data={item}
                 onClick={handleOnClickOportunity}
+                displayDate={item.dateModified ?? ""}
               />
             ))}
           </div>
 
+          {/* PAGINATION BUTTONS */}
           <div className="mt-2 grid place-items-center justify-center">
-            {/* PAGINATION BUTTONS */}
             <PaginationButtons
               currentPage={page ? parseInt(page) : 1}
               totalItems={dataMyOpportunities?.totalCount ?? 0}

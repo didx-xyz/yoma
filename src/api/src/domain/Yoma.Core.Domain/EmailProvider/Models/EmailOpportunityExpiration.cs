@@ -16,13 +16,13 @@ namespace Yoma.Core.Domain.EmailProvider.Models
         [JsonProperty("title")]
         public string Title { get; set; }
 
-        [JsonIgnore]
+        [JsonProperty("dateStart")]
         public DateTimeOffset DateStart { get; set; }
 
         [JsonProperty("dateStartFormatted")]
         public string DateStartFormatted => DateStart.ToString("ddd, MMM dd, yyyy HH:mm");
 
-        [JsonIgnore]
+        [JsonProperty("dateEnd")]
         public DateTimeOffset? DateEnd { get; set; }
 
         [JsonProperty("dateEndFormatted")]
