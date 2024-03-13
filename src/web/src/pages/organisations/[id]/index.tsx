@@ -913,14 +913,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                                     ).format(DATETIME_FORMAT_HUMAN)
                                   : ""}
                               </td>
-                              <td className="whitespace-nowrap text-center">
+                              <td className="whitespace-nowrap">
                                 {opportunity.verified
                                   ? "Verified"
                                   : "Not verified"}
                               </td>
-                              <td className="text-center">
-                                {opportunity.opportunityStatus}
-                              </td>
+                              <td>{opportunity.opportunityStatus}</td>
                             </tr>
                           ))}
                         </tbody>
