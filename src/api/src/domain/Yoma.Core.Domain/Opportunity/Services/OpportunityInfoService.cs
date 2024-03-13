@@ -1,6 +1,7 @@
 using CsvHelper;
 using CsvHelper.Configuration;
 using Microsoft.AspNetCore.Http;
+using System.Net;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Exceptions;
@@ -9,6 +10,7 @@ using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Models;
+using Yoma.Core.Domain.SSI.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
@@ -33,19 +35,20 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Public Members
-        public OpportunityInfo GetById(Guid id)
+        //authorized access from controller (any role)
+        public OpportunityInfo GetById(Guid id, bool ensureOrganizationAuthorization)
         {
-            //allowed for authenticated users (any role)
-            if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
-                throw new SecurityException("Unauthorized");
+            //ensure ensureOrganizationAuthorization of false for "User" role, bypassing org authorization, even if they also have admin or org admin roles
+            ensureOrganizationAuthorization = ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsUserRole(_httpContextAccessor);
 
-            var opportunity = _opportunityService.GetById(id, true, true, false);
+            var opportunity = _opportunityService.GetById(id, true, true, ensureOrganizationAuthorization);
 
             var result = opportunity.ToOpportunityInfo();
             SetParticipantCounts(result);
             return result;
         }
 
+        //anonymously accesable from controller
         public OpportunityInfo GetPublishedOrExpiredById(Guid id)
         {
             var opportunity = _opportunityService.GetById(id, true, true, false);

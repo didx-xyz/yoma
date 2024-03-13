@@ -155,7 +155,7 @@ namespace Yoma.Core.Domain.SSI.Services
             var schema = await _ssiProviderClient.UpsertSchema(new SchemaRequest
             {
                 Name = request.Name,
-                ArtifactType = schemaExisting.ArtifactType,
+                ArtifactType = schemaExisting.ArtifactType, //preserve existing artifact store; switching of artifact stores only allowed with 'Create'
                 Attributes = request.Attributes
             });
 
