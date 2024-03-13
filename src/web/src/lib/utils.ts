@@ -128,3 +128,15 @@ export function getThemeFromRole(
   if (session?.user?.roles.includes(ROLE_ADMIN)) theme = THEME_BLUE;
   return theme;
 }
+
+export const debounce = function (
+  this: any,
+  func: (...args: any[]) => void,
+  delay: number,
+): (...args: any[]) => void {
+  let debounceTimer: NodeJS.Timeout;
+  return function (this: any, ...args: any[]): void {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => func.apply(this, args), delay);
+  };
+};

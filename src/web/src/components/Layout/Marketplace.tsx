@@ -48,7 +48,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
           <title>Yoma | Marketplace</title>
         </Head>
 
-        <PageBackground height={17} />
+        <PageBackground height={20} />
 
         {/* WHAT IS ZLTO DIALOG */}
         <ReactModal
@@ -66,7 +66,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
               <h1 className="flex-grow"></h1>
               <button
                 type="button"
-                className="btn rounded-full border-0 bg-gray p-3 text-gray-dark hover:bg-gray-light"
+                className="btn rounded-full border-0 bg-gray-light p-3 text-gray-dark hover:bg-gray"
                 onClick={() => {
                   setWhatIsZltoDialogVisible(false);
                 }}
@@ -87,7 +87,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                 />
               </div>
               <h3>What is Zlto?</h3>
-              <p className="rounded-lg bg-gray p-4 text-center md:w-[450px]">
+              <p className="rounded-lg bg-gray-light p-4 text-center md:w-[450px]">
                 Introducing Zlto, Yoma&apos;s fantastic reward system. Earn Zlto
                 by completing tasks and opportunities. Redeem your well-deserved
                 rewards in the marketplace and enjoy the amazing benefits that
@@ -109,7 +109,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
           </div>
         </ReactModal>
 
-        <div className="container z-10 mt-20 py-4">
+        <div className="container z-10 mt-24 py-4">
           {/* SIGN IN TO SEE YOUR ZLTO BALANCE */}
           {!userProfile && (
             <div className="mb-8 flex h-36 flex-col items-center justify-center gap-4 text-white">
@@ -262,7 +262,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
             </div>
           )}
           {/* MAIN CONTENT */}
-          <div className="flex flex-grow items-center justify-center p-4">
+          <div className="mt-20 flex flex-grow items-center justify-center p-4">
             {children}
           </div>
         </div>

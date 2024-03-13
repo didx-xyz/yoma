@@ -1,7 +1,6 @@
-import Image from "next/image";
 import { useCallback } from "react";
 import type { OpportunityCategory } from "~/api/models/opportunity";
-import iconRocket from "public/images/icon-rocket.webp";
+import { AvatarImage } from "../AvatarImage";
 
 interface InputProps {
   data: OpportunityCategory;
@@ -30,34 +29,11 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
     >
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-center">
-          {!data.imageURL && (
-            <Image
-              src={iconRocket}
-              alt="Icon Rocket"
-              width={31}
-              height={31}
-              sizes="100vw"
-              priority={true}
-              style={{
-                width: "31px",
-                height: "31px",
-              }}
-            />
-          )}
-          {data.imageURL && (
-            <Image
-              src={data.imageURL}
-              alt="Organization Logo"
-              width={31}
-              height={31}
-              sizes="100vw"
-              priority={true}
-              style={{
-                width: "31px",
-                height: "31px",
-              }}
-            />
-          )}
+          <AvatarImage
+            icon={data.imageURL ?? null}
+            alt="Organization Logo"
+            size={31}
+          />
         </div>
 
         <div className="flex flex-grow flex-col">

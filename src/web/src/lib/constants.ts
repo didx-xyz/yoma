@@ -71,13 +71,12 @@ export const GA_ACTION_USER_LOGIN_AFTER = "User Logged In";
 export const GA_ACTION_USER_LOGOUT = "User Logged Out";
 export const GA_ACTION_USER_PROFILE_UPDATE = "User Updated Profile";
 
-// colors for green, organge, purple, blue, yellow, red, pink, teal, indigo, cyan
+// colors for green, organge, purple, blue, red, pink, teal, indigo, cyan
 export const CHART_COLORS = [
   "#387F6A",
   "#F9AB3E",
   "#240b36",
   "#4CADE9",
-  "#F9AB3E",
   "#F87171",
   "#F472B6",
   "#60A5FA",

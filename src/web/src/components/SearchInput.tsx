@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { IoMdSearch } from "react-icons/io";
 
 interface InputProps {
@@ -18,14 +18,31 @@ export const SearchInput: React.FC<InputProps> = ({
 }) => {
   const [searchInputValue, setSearchInputValue] = useState(defaultValue);
 
-  const handleSubmit = (e: React.SyntheticEvent) => {
-    e.preventDefault(); // 👈️ prevent page refresh
+  const handleSubmit = useCallback(
+    (e: React.SyntheticEvent) => {
+      e.preventDefault(); // prevent page refresh
 
-    // trim whitespace
-    const searchValue = searchInputValue?.trim() ?? "";
+      // trim whitespace
+      const searchValue = searchInputValue?.trim() ?? "";
 
-    if (onSearch) onSearch(searchValue);
-  };
+      if (onSearch) onSearch(searchValue);
+    },
+    [searchInputValue, onSearch],
+  );
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchInputValue(e.target.value);
+      // submit
+      setTimeout(() => {
+        // trim whitespace
+        const searchValue = e.target.value?.trim() ?? "";
+
+        if (onSearch) onSearch(searchValue);
+      }, 1000);
+    },
+    [onSearch],
+  );
 
   return (
     <form onSubmit={handleSubmit}>
@@ -36,7 +53,7 @@ export const SearchInput: React.FC<InputProps> = ({
           placeholder={placeholder ?? "Search..."}
           autoComplete="off"
           value={searchInputValue ?? ""}
-          onChange={(e) => setSearchInputValue(e.target.value)}
+          onChange={handleChange}
           onFocus={(e) => (e.target.placeholder = "")}
           onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
         />
@@ -44,8 +61,7 @@ export const SearchInput: React.FC<InputProps> = ({
         <button
           type="submit"
           aria-label="Search"
-          className={`btn-search bg-theme btn join-item btn-sm border-0 brightness-105 hover:brightness-110 ${heightOverride} ${className}`}
-          onSubmit={handleSubmit}
+          className={`btn-search bg-theme btn join-item btn-sm !rounded-r-md border-0 brightness-105 hover:brightness-110 ${heightOverride} ${className}`}
         >
           <IoMdSearch className="icon-search h-6 w-6 text-white" />
         </button>

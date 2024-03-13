@@ -2,7 +2,6 @@ import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, {
@@ -11,7 +10,7 @@ import React, {
   useState,
   type ChangeEvent,
 } from "react";
-import { IoMdAdd, IoMdPhotos } from "react-icons/io";
+import { IoMdAdd } from "react-icons/io";
 import {
   type OrganizationInfo,
   type OrganizationSearchResults,
@@ -31,6 +30,7 @@ import {
 import { type NextPageWithLayout } from "~/pages/_app";
 import { type User, authOptions } from "~/server/auth";
 import { config } from "~/lib/react-query-config";
+import { AvatarImage } from "~/components/AvatarImage";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -126,21 +126,13 @@ export const OrganisationCardComponent: React.FC<{
         className="flex flex-col rounded-xl bg-white shadow-custom transition hover:scale-[1.01] dark:bg-neutral-700 md:max-w-xl md:flex-row"
       >
         <div className="flex w-1/4 items-center justify-center p-2">
-          {!props.item.logoURL && (
-            <div className="flex h-28 w-28 items-center justify-center rounded-lg shadow-custom">
-              <IoMdPhotos className="h-16 w-16 text-gray-light" />
-            </div>
-          )}
-
-          {props.item.logoURL && (
-            <Image
-              src={props.item.logoURL}
-              alt={props.item.name}
-              width={80}
-              height={80}
-              className="h-28 w-28 rounded-xl object-cover p-4 shadow-custom"
+          <div className="flex h-28 w-28 items-center justify-center">
+            <AvatarImage
+              icon={props.item.logoURL ?? null}
+              alt={props.item.name ?? null}
+              size={80}
             />
-          )}
+          </div>
         </div>
 
         <div className="relative flex w-3/4 flex-col justify-start p-2 pr-4">

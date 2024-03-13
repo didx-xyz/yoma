@@ -522,7 +522,6 @@ const OrganisationDashboard: NextPageWithLayout<{
           </div>
 
           {/* SUMMARY */}
-          {/* {!isLoading && ( */}
           <div className="flex flex-col gap-4 ">
             {/* ENGAGEMENT */}
             <div className="flex flex-col gap-2">
@@ -580,6 +579,18 @@ const OrganisationDashboard: NextPageWithLayout<{
                         <PieChart
                           id="conversionRate"
                           title="Conversion rate"
+                          subTitle={
+                            searchResults.opportunities.conversionRate
+                              .viewedCount !== 0
+                              ? (
+                                  (searchResults.opportunities.conversionRate
+                                    .completedCount /
+                                    searchResults.opportunities.conversionRate
+                                      .viewedCount) *
+                                  100
+                                ).toFixed(2) + "%"
+                              : "N/A"
+                          }
                           colors={["#387F6A", "#F9AB3E"]} // green and yellow
                           data={[
                             ["Completed", "Viewed"],
@@ -682,7 +693,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           (x) => (
                             <div
                               key={x.id}
-                              className="min-h-6 badge rounded-md border-0 bg-green text-white"
+                              className="min-h-6 badge whitespace-nowrap rounded-md border-0 bg-green text-white"
                             >
                               {x.name}
                             </div>
@@ -705,6 +716,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   <PieChart
                     id="countries"
                     title="Country"
+                    subTitle=""
                     colors={CHART_COLORS}
                     data={[
                       ["Country", "Value"],
@@ -720,6 +732,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   <PieChart
                     id="genders"
                     title="Genders"
+                    subTitle=""
                     colors={CHART_COLORS}
                     data={[
                       ["Gender", "Value"],
@@ -735,6 +748,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   <PieChart
                     id="ages"
                     title="Age"
+                    subTitle=""
                     colors={CHART_COLORS}
                     data={[
                       ["Age", "Value"],
@@ -747,7 +761,6 @@ const OrganisationDashboard: NextPageWithLayout<{
               </div>
             </div>
           </div>
-          {/* )} */}
 
           {/* SELECTED OPPORTUNITIES */}
           <div className="flex flex-col">
@@ -808,7 +821,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                                 <td className="text-center">
                                   {opportunity.completedCount}
                                 </td>
-                                <td>{opportunity.status}</td>
+                                <td className="whitespace-nowrap text-center">
+                                  {opportunity.status}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -870,7 +885,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                             <th>Opportunity</th>
                             <th>Date connected</th>
                             <th>Verified</th>
-                            <th>Status</th>
+                            <th>Opportunity Status</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -891,19 +906,21 @@ const OrganisationDashboard: NextPageWithLayout<{
                                   {opportunity.opportunityTitle}
                                 </Link>
                               </td>
-                              <td>
+                              <td className="whitespace-nowrap">
                                 {opportunity.dateCompleted
                                   ? moment(
                                       new Date(opportunity.dateCompleted),
                                     ).format(DATETIME_FORMAT_HUMAN)
                                   : ""}
                               </td>
-                              <td>
+                              <td className="whitespace-nowrap text-center">
                                 {opportunity.verified
                                   ? "Verified"
                                   : "Not verified"}
                               </td>
-                              <td>{opportunity.opportunityStatus}</td>
+                              <td className="text-center">
+                                {opportunity.opportunityStatus}
+                              </td>
                             </tr>
                           ))}
                         </tbody>

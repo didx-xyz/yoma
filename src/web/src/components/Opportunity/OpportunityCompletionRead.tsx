@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { IoMdPin } from "react-icons/io";
-import iconSuccess from "public/images/icon-success.webp";
 import iconCertificate from "public/images/icon-certificate.svg";
 import iconPicture from "public/images/icon-picture.svg";
 import iconVideo from "public/images/icon-video.svg";
@@ -13,6 +12,7 @@ import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
 import Moment from "react-moment";
 import { Loader } from "@googlemaps/js-api-loader";
 import { fetchClientEnv } from "~/lib/utils";
+import { AvatarImage } from "../AvatarImage";
 
 interface InputProps {
   [id: string]: any;
@@ -124,24 +124,15 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           <p className="text-sm text-gray-dark">{data?.userEmail}</p>
           <p className="mt-2 flex flex-row items-center text-sm text-gray-dark">
             <IoMdPin className="mr-2 h-4 w-4 text-gray-dark" />
-            {data?.userCountryOfResidence}
+            {data?.userCountry}
           </p>
         </div>
         <div className="flex flex-col items-center justify-center gap-4">
-          <div className="h-18 w-18 -mt-14 flex items-center justify-center rounded-full border-green-dark bg-white p-4 shadow-lg">
-            <Image
-              src={data?.userPhotoURL ?? iconSuccess}
-              alt="Icon User"
-              width={45}
-              height={45}
-              sizes="100vw"
-              priority={true}
-              style={{
-                width: "45px",
-                height: "45px",
-              }}
-            />
-          </div>
+          <AvatarImage
+            icon={data?.userPhotoURL ?? null}
+            alt="Icon User"
+            size={60}
+          />
         </div>
       </div>
       <div className="divider m-0 h-[1px] bg-gray-light" />

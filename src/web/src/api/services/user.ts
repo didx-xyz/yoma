@@ -15,7 +15,7 @@ export const getUserProfile = async (): Promise<UserProfile> => {
 
 export const patchPhoto = async (file: any): Promise<UserProfile> => {
   const formData = new FormData();
-  formData.append("file", file.file);
+  formData.append("file", file);
 
   const { data } = await (
     await ApiClient

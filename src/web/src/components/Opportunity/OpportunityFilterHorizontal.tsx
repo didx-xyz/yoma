@@ -204,7 +204,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                 <div className="flex justify-center gap-4 overflow-hidden md:w-full">
                   {lookups_categories.map((item) => (
                     <OpportunityCategoryHorizontalCard
-                      key={item.id}
+                      key={`categories_${item.id}`}
                       data={item}
                       selected={opportunitySearchFilter?.categories?.includes(
                         item.name,
@@ -693,10 +693,10 @@ export const OpportunityFilterHorizontal: React.FC<{
               </div>
 
               {/* BUTTONS */}
-              <div className="mb-auto flex gap-2">
+              <div className="mb-auto mt-1 flex gap-2">
                 <button
                   type="button"
-                  className="btn btn-sm my-auto h-[2.4rem] rounded-md border-2 border-green px-6 text-xs font-semibold text-green"
+                  className="btn btn-sm my-auto border-2 border-green px-6 text-xs font-semibold text-green"
                   onClick={onClear}
                 >
                   {clearButtonText}
@@ -707,7 +707,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                 ) && (
                   <button
                     type="button"
-                    className="btn btn-sm my-auto h-[2.4rem] rounded-md border-2 border-green text-xs font-semibold text-green"
+                    className="btn btn-sm my-auto border-2 border-green text-xs font-semibold text-green"
                     onClick={onOpenFilterFullWindow}
                   >
                     View All Filters
@@ -720,7 +720,7 @@ export const OpportunityFilterHorizontal: React.FC<{
       )}
       <div>
         <div className="mt-6 flex h-fit flex-col md:max-w-[1300px]">
-          <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center justify-between">
             {/* COUNT RESULT TEXT */}
             <div className="whitespace-nowrap text-xl font-semibold text-black">
               {countText && totalCount && totalCount > 0 ? (
@@ -732,7 +732,7 @@ export const OpportunityFilterHorizontal: React.FC<{
               <div className="flex flex-row items-center justify-end">
                 <button
                   type="button"
-                  className="btn btn-sm h-[2.4rem] rounded-md border-2 border-green text-xs font-semibold text-green"
+                  className="btn btn-secondary btn-sm px-4 text-xs text-white"
                   onClick={() => exportToCsv(true)}
                 >
                   Export to CSV
@@ -742,14 +742,14 @@ export const OpportunityFilterHorizontal: React.FC<{
           </div>
 
           {/* FILTER BADGES */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-4">
             {opportunitySearchFilter &&
               Object.entries(opportunitySearchFilter).map(([key, value]) =>
                 key !== "pageNumber" &&
                 key !== "pageSize" &&
                 value != null &&
                 (Array.isArray(value) ? value.length > 0 : true) ? (
-                  <>
+                  <div key={`filters_${key}`}>
                     {Array.isArray(value) ? (
                       value.map((item: string) => {
                         if (key === "commitmentIntervals") {
@@ -758,8 +758,8 @@ export const OpportunityFilterHorizontal: React.FC<{
                           );
                           return (
                             <span
-                              key={item}
-                              className="badge h-6 max-w-[200px] rounded-md border-none bg-green-light p-2 text-green"
+                              key={`filters_${key}_${item}`}
+                              className="badge max-w-[200px] bg-green-light p-2 text-green"
                             >
                               <p className="truncate text-center text-xs font-semibold">
                                 {interval ? interval.name : ""}
@@ -778,8 +778,8 @@ export const OpportunityFilterHorizontal: React.FC<{
                           );
                           return (
                             <span
-                              key={item}
-                              className="badge h-6 max-w-[200px] rounded-md border-none bg-green-light p-2 text-green"
+                              key={`filters_${key}_${item}`}
+                              className="badge max-w-[200px] bg-green-light p-2 text-green"
                             >
                               <p className="truncate text-center text-xs font-semibold">
                                 {zltoRewardRange ? zltoRewardRange.name : ""}
@@ -795,8 +795,8 @@ export const OpportunityFilterHorizontal: React.FC<{
                         } else {
                           return (
                             <span
-                              key={item}
-                              className="badge h-6 max-w-[200px] rounded-md border-none bg-green-light p-2 text-green"
+                              key={`filters_${key}_${item}`}
+                              className="badge max-w-[200px] bg-green-light p-2 text-green"
                             >
                               <p className="truncate text-center text-xs font-semibold">
                                 {item}
@@ -817,7 +817,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                         }
                       })
                     ) : (
-                      <span className="badge h-6 max-w-[200px] rounded-md border-none bg-green-light p-2 text-green">
+                      <span className="badge max-w-[200px] bg-green-light p-2 text-green">
                         <p className="truncate text-center text-xs font-semibold">
                           {key === "startDate" || key === "endDate"
                             ? new Date(value).toISOString().split("T")[0]
@@ -835,7 +835,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                         </button>
                       </span>
                     )}
-                  </>
+                  </div>
                 ) : null,
               )}
           </div>
