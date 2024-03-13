@@ -1,21 +1,21 @@
 import Image from "next/image";
 
-interface InputProps {
+export const RoundedImage: React.FC<{
   icon: any;
   alt: string;
   imageWidth: number;
   imageHeight: number;
   containerWidth?: number;
   containerHeight?: number;
-}
-
-export const RoundedImage: React.FC<InputProps> = ({
+  priority?: boolean;
+}> = ({
   icon,
   alt = "Icon",
   imageWidth = 28,
   imageHeight = 28,
   containerWidth = imageWidth + 20,
   containerHeight = imageHeight + 20,
+  priority = true,
 }) => {
   return (
     <div
@@ -31,7 +31,7 @@ export const RoundedImage: React.FC<InputProps> = ({
         width={imageWidth}
         height={imageHeight}
         sizes="100vw"
-        priority={true}
+        priority={priority}
         style={{ width: `${imageWidth}px`, height: `${imageHeight}px` }}
       />
     </div>

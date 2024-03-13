@@ -4,13 +4,12 @@ import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
 import { useCallback } from "react";
 import { AvatarImage } from "../AvatarImage";
 
-interface InputProps {
+const OpportunityListItem: React.FC<{
   data: MyOpportunityInfo;
   onClick?: (certificate: MyOpportunityInfo) => void;
+  displayDate: string;
   [key: string]: any;
-}
-
-const OpportunityListItem: React.FC<InputProps> = ({ data, onClick }) => {
+}> = ({ data, onClick, displayDate }) => {
   // 🔔 click handler: use callback parameter
   const handleClick = useCallback(() => {
     if (!onClick) return;
@@ -63,11 +62,11 @@ const OpportunityListItem: React.FC<InputProps> = ({ data, onClick }) => {
         </div>
 
         {/* DATE */}
-        {data.dateModified && (
+        {displayDate && (
           <div className="flex flex-row">
             <h4 className="line-clamp-4 text-sm font-thin">
               <Moment format={DATETIME_FORMAT_HUMAN} utc={true}>
-                {data.dateModified}
+                {displayDate}
               </Moment>
             </h4>
           </div>

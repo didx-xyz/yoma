@@ -35,6 +35,7 @@ export const OPPORTUNITY_TYPES_TASK = ["F12A9D90-A8F6-4914-8CA5-6ACF209F7312"];
 export const THEME_BLUE = "blue";
 export const THEME_GREEN = "green";
 export const THEME_PURPLE = "purple";
+export const THEME_ORANGE = "orange";
 
 export const MAXINT32 = 2147483647;
 
