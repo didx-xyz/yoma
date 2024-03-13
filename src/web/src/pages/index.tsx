@@ -1,7 +1,7 @@
 import { QueryClient, dehydrate } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
-import { type ReactElement } from "react";
+import { useState, type ReactElement, useCallback } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import MainLayout from "~/components/Layout/Main";
 import { authOptions, type User } from "~/server/auth";
@@ -43,6 +43,7 @@ import iconUnicef from "public/images/home/logo-unicef.png";
 
 import OpportunityCard from "~/components/Home/OpportunityCard";
 import { IoMdCheckmark } from "react-icons/io";
+import { SearchInputLarge } from "~/components/SearchInputLarge";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient(config);
@@ -60,6 +61,12 @@ const Home: NextPageWithLayout<{
   id: string;
   user: User;
 }> = () => {
+  const [email, setEmail] = useState("");
+
+  const onSubscribe = useCallback(() => {
+    alert("TODO: API - " + email);
+  }, [email]);
+
   return (
     <>
       <PageBackground />
@@ -529,9 +536,9 @@ const Home: NextPageWithLayout<{
         </div>
 
         {/* WHITE BACKGROUND */}
-        <div className="mt-10x flex h-96 w-full items-center justify-center bg-white bg-[url('/images/world-map.png')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
+        <div className="flex h-80 w-full items-center justify-center bg-white bg-[url('/images/world-map.png')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
           {/* OUR PARTNERS */}
-          <div className="-mt-16 flex flex-col items-center justify-center gap-4">
+          <div className=" flex flex-col items-center justify-center gap-4">
             <h2 className="text-2xl font-semibold text-black">Our partners</h2>
             {/* PARTNER LOGOS */}
             <div className="flex flex-col items-center justify-center gap-4 md:flex-row">
@@ -606,7 +613,7 @@ const Home: NextPageWithLayout<{
               />
             </div>
 
-            {/* OPPORTUNITIES BUTTON */}
+            {/* SIGN UP AS PARTNER BUTTON */}
             <Link
               href="/organisations/register"
               className="btn mt-8 w-[260px] rounded-xl border-none bg-green normal-case text-white hover:bg-green hover:text-white hover:brightness-110"
@@ -617,28 +624,18 @@ const Home: NextPageWithLayout<{
         </div>
 
         {/* PURPLE BACKGROUND */}
-        <div className="mt-10x flex h-96 w-full items-center justify-center bg-purple bg-[url('/images/world-map.png')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
+        <div className="flex h-80 w-full items-center justify-center bg-purple bg-[url('/images/world-map.png')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
           {/* JOIN THE YOMA COMMUNITY */}
-          <div className="mt-60x flex max-w-5xl flex-col gap-10 lg:flex-row">
+          <div className="flex max-w-5xl flex-col gap-10 lg:flex-row">
             <div className="flex w-[510px] flex-col">
               <div className="flex flex-col gap-4">
                 <h1 className="text-4xl font-semibold text-white">
                   Join the Yoma community
                 </h1>
               </div>
-
-              {/* MARKETPLACE BUTTON */}
-              {/* <div className="flex items-center justify-center">
-              <Link
-                href="/marketplace"
-                className="btn mt-8 w-[260px] rounded-xl border-none bg-green normal-case text-white hover:bg-green hover:text-white hover:brightness-110"
-              >
-                Visit Marketplace
-              </Link>
-            </div> */}
             </div>
             <div className="flex flex-col items-center justify-center">
-              <div className="flex flex-col">
+              <div className="flex flex-col gap-4">
                 <p className="text-sm text-white">
                   Yoma connects young people to a global community, creating a
                   network of like-minded, talented individuals. Visit our
@@ -646,6 +643,23 @@ const Home: NextPageWithLayout<{
                   Sign up to our newsletter and get Yoma’s latest updates
                   delivered to your inbox:
                 </p>
+
+                <div className="flex flex-row gap-2">
+                  <input
+                    type="email"
+                    placeholder={"Your email..."}
+                    className="input-md min-w-[250px] rounded-md bg-[#653A72] py-5 text-sm text-white placeholder-white focus:outline-0 md:w-[250px] md:!pl-8"
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+
+                  {/* SUBMIT BUTTON */}
+                  <button
+                    className="btn w-[100px] rounded-md border-none bg-green normal-case text-white hover:bg-green hover:text-white hover:brightness-110"
+                    onClick={onSubscribe}
+                  >
+                    Submit
+                  </button>
+                </div>
               </div>
             </div>
           </div>
