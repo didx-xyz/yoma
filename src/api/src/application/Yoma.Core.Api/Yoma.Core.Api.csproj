@@ -19,7 +19,7 @@
 	<PackageReference Include="Hangfire.Core" Version="1.8.7" />
 	<PackageReference Include="Hangfire.Dashboard.BasicAuthorization" Version="1.0.2" />
 	<PackageReference Include="Hangfire.PostgreSql" Version="1.20.5" />
-	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.13" />
+	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.17" />
 	<PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
 	<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
 	<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.5.0" />
