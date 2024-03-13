@@ -15,48 +15,38 @@ export const SearchInputLarge: React.FC<InputProps> = ({
   openFilter,
 }) => {
   const [searchInputValue, setSearchInputValue] = useState(defaultValue);
-  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+
+  const handleSubmit = useCallback(
+    (e: React.SyntheticEvent) => {
+      e.preventDefault(); // prevent page refresh
+
+      // trim whitespace
+      const searchValue = searchInputValue?.trim() ?? "";
+
+      if (onSearch) onSearch(searchValue);
+    },
+    [searchInputValue, onSearch],
+  );
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchInputValue(e.target.value);
+      // submit
+      setTimeout(() => {
+        // trim whitespace
+        const searchValue = e.target.value?.trim() ?? "";
+
+        if (onSearch) onSearch(searchValue);
+      }, 1000);
+    },
+    [onSearch],
+  );
 
   // hack: reset searchInputValue when defaultValue changes
   // the initialValue on the useState ain't working
   useEffect(() => {
     setSearchInputValue(defaultValue);
   }, [defaultValue, setSearchInputValue]);
-
-  const doSubmit = useCallback(
-    (searchInputValue: string | undefined | null) => {
-      const searchValue = searchInputValue?.trim() ?? "";
-
-      if (onSearch) onSearch(searchValue);
-    },
-    [onSearch],
-  );
-
-  const handleSubmit = useCallback(
-    (e: React.SyntheticEvent) => {
-      e.preventDefault(); // 👈️ prevent page refresh
-
-      doSubmit(searchInputValue);
-    },
-    [doSubmit, searchInputValue],
-  );
-
-  const handleInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (timeoutId) clearTimeout(timeoutId);
-
-      if (e.target.value === "") {
-        doSubmit(null);
-      } else if (e.target.value.length > 2) {
-        const newTimeoutId = setTimeout(() => {
-          doSubmit(e.target.value);
-        }, 2000); // 2000 milliseconds = 2 seconds
-
-        setTimeoutId(newTimeoutId);
-      }
-    },
-    [timeoutId, doSubmit],
-  );
 
   return (
     <form onSubmit={handleSubmit}>
@@ -74,13 +64,13 @@ export const SearchInputLarge: React.FC<InputProps> = ({
           placeholder={placeholder ?? "Search..."}
           className="input-md min-w-[250px] bg-[#653A72] py-5 text-sm text-white placeholder-white focus:outline-0 md:w-[600px] md:rounded-bl-full md:rounded-tl-full md:!pl-8"
           value={searchInputValue ?? ""}
-          onChange={(e) => setSearchInputValue(e.target.value)}
+          onChange={handleChange}
           onFocus={(e) => (e.target.placeholder = "")}
           onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
-          onInput={handleInput}
+          //onInput={handleInput}
         />
         <button
-          className="btn btn-primary join-item inline-flex rounded-r-full"
+          className="btn btn-primary join-item inline-flex rounded-r-full brightness-90"
           onClick={() => onSearch}
         >
           <svg

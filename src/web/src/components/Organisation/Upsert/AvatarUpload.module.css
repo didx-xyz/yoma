@@ -1,0 +1,11 @@
+.upload::file-selector-button {
+  background: white;
+  border-radius: 3rem;
+  border: 1px solid black;
+  padding: 0.3rem;
+  padding-inline: 1rem;
+  color: black;
+  cursor: pointer;
+  margin-right: 1rem;
+  font-size: 1rem;
+}

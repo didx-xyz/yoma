@@ -20,7 +20,6 @@ import {
 } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
-import Link from "next/link";
 import {
   IoMdCheckmark,
   IoMdClose,
@@ -29,13 +28,14 @@ import {
   IoMdPause,
   IoMdPlay,
   IoMdBookmark,
+  IoMdPerson,
+  IoIosBook,
 } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
 import iconUpload from "public/images/icon-upload.svg";
 import iconOpen from "public/images/icon-open.svg";
 import iconClock from "public/images/icon-clock.svg";
-import iconUser from "public/images/icon-user.svg";
 import iconZlto from "public/images/icon-zlto.svg";
 import iconBookmark from "public/images/icon-bookmark.svg";
 import iconShare from "public/images/icon-share.svg";
@@ -44,8 +44,8 @@ import iconLanguage from "public/images/icon-language.svg";
 import iconTopics from "public/images/icon-topics.svg";
 import iconSkills from "public/images/icon-skills.svg";
 import iconBell from "public/images/icon-bell.webp";
+import iconLocation from "public/images/icon-location.svg";
 import iconSmiley from "public/images/icon-smiley.webp";
-import iconSuccess from "public/images/icon-success.webp";
 import Image from "next/image";
 import {
   getVerificationStatus,
@@ -79,7 +79,8 @@ import {
 import Moment from "react-moment";
 import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
-import { RoundedImage } from "~/components/RoundedImage";
+import { AvatarImage } from "~/components/AvatarImage";
+import { useRouter } from "next/router";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -180,6 +181,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const [cancelOpportunityDialogVisible, setCancelOpportunityDialogVisible] =
     useState(false);
   const [isOppSaved, setIsOppSaved] = useState(false);
+  const router = useRouter();
 
   const {
     data: opportunity,
@@ -357,13 +359,13 @@ const OpportunityDetails: NextPageWithLayout<{
                 <div className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
                   <ul>
                     <li className="inline">
-                      <Link
+                      <button
                         className="text-white hover:text-gray"
-                        href={`/opportunities`}
+                        onClick={() => router.back()}
                       >
                         <IoIosArrowBack className="mr-3 inline-block h-6 w-6 rounded-full bg-purple-shade pr-[2px]" />
                         Opportunities
-                      </Link>
+                      </button>
                     </li>
                     <li className="inline">
                       <p className="mx-2 inline font-semibold text-white">|</p>
@@ -505,10 +507,10 @@ const OpportunityDetails: NextPageWithLayout<{
                       <button
                         type="button"
                         className={
-                          "btn rounded-full border-purple bg-white normal-case text-purple md:w-[250px]" +
+                          "btn btn-outline rounded-full border-purple  bg-white normal-case text-purple hover:text-purple md:w-[250px]" +
                           `${
                             isOppSaved
-                              ? " border-yellow bg-yellow-light text-yellow"
+                              ? " border-none bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow"
                               : ""
                           }`
                         }
@@ -524,7 +526,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       </button>
                       <button
                         type="button"
-                        className="btn rounded-full bg-purple normal-case text-white md:w-[250px]"
+                        className="btn btn-primary normal-case text-white md:w-[250px]"
                         onClick={onGoToOpportunity}
                         disabled={!opportunity?.url}
                       >
@@ -685,9 +687,18 @@ const OpportunityDetails: NextPageWithLayout<{
                   <div className="relative flex flex-grow flex-row gap-1 rounded-lg bg-white p-6 shadow-lg">
                     <div className="flex flex-grow flex-col gap-1">
                       <div className="flex flex-grow flex-col">
-                        <h4 className="text-2xl font-semibold text-black">
-                          {opportunity.title}
-                        </h4>
+                        <div className="relative flex justify-start">
+                          <h4 className="text-2xl font-semibold text-black">
+                            {opportunity.title}
+                          </h4>
+                          <div className="absolute right-0 top-0">
+                            <AvatarImage
+                              icon={opportunity?.organizationLogoURL ?? null}
+                              alt="Company Logo"
+                              size={80}
+                            />
+                          </div>
+                        </div>
 
                         <h6 className="text-sm text-gray-dark">
                           By {opportunity.organizationName}
@@ -695,7 +706,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                         {/* BADGES */}
                         <div className="my-2 flex flex-row gap-1 text-xs font-bold text-green-dark">
-                          <div className="badge h-6 whitespace-nowrap rounded-md border-none bg-green-light text-green">
+                          <div className="badge bg-green-light text-green">
                             <Image
                               src={iconClock}
                               alt="Icon Clock"
@@ -713,47 +724,32 @@ const OpportunityDetails: NextPageWithLayout<{
                             }`}</span>
                           </div>
                           {spotsLeft > 0 && (
-                            <div className="badge h-6 whitespace-nowrap rounded-md border-none bg-green-light text-green">
-                              <Image
-                                src={iconUser}
-                                alt="Icon User"
-                                width={18}
-                                height={18}
-                                sizes="100vw"
-                                priority={true}
-                                style={{ width: "18px", height: "18px" }}
-                              />
+                            <div className="badge bg-blue-light text-blue">
+                              <IoMdPerson />
+
                               <span className="ml-1 text-xs">
-                                {spotsLeft} spots left
+                                {spotsLeft} Spots left
                               </span>
                             </div>
                           )}
                           {opportunity?.type && (
-                            <div className="badge h-6 rounded-md border-none bg-[#E7E8F5] text-[#5F65B9]">
-                              <Image
-                                src={iconTopics}
-                                alt="Icon Type"
-                                width={18}
-                                height={18}
-                                sizes="100vw"
-                                priority={true}
-                                style={{ width: "18px", height: "18px" }}
-                              />
+                            <div className="badge bg-[#E7E8F5] text-[#5F65B9]">
+                              <IoIosBook />
                               <span className="ml-1 text-xs">
                                 {opportunity.type}
                               </span>
                             </div>
                           )}
                           {(opportunity.zltoReward ?? 0) > 0 && (
-                            <div className="badge h-6 whitespace-nowrap rounded-md border-none bg-yellow-light text-yellow">
+                            <div className="badge bg-orange-light text-orange">
                               <Image
                                 src={iconZlto}
                                 alt="Icon Zlto"
-                                width={18}
-                                height={18}
+                                width={16}
+                                height={16}
                                 sizes="100vw"
                                 priority={true}
-                                style={{ width: "18px", height: "18px" }}
+                                style={{ width: "16px", height: "16px" }}
                               />
                               <span className="ml-1 text-xs">
                                 {opportunity.zltoReward}
@@ -765,13 +761,13 @@ const OpportunityDetails: NextPageWithLayout<{
                           {opportunity?.status == "Active" && (
                             <>
                               {new Date(opportunity.dateStart) > new Date() && (
-                                <div className="badge h-6 rounded-md border-none bg-orange-light text-xs text-orange">
+                                <div className="badge bg-yellow-tint text-yellow">
                                   <IoMdPause />
                                   <p className="ml-1">Not started</p>
                                 </div>
                               )}
                               {new Date(opportunity.dateStart) < new Date() && (
-                                <div className="badge h-6 rounded-md border-none bg-purple-soft text-xs font-semibold text-purple-shade">
+                                <div className="badge bg-purple-tint text-purple-shade">
                                   <IoMdPlay />
                                   <span className="ml-1">Started</span>
                                 </div>
@@ -779,7 +775,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             </>
                           )}
                           {opportunity?.status == "Expired" && (
-                            <div className="badge h-6 rounded-md border-none bg-red-100 text-xs font-semibold text-error">
+                            <div className="badge bg-red-100 text-error">
                               <IoMdClose className="h-4 w-4" />
                               <span className="ml-1">Expired</span>
                             </div>
@@ -922,6 +918,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                 </>
                               )}
                           </div>
+
                           <div className="flex gap-4 md:justify-end lg:justify-end">
                             <button
                               type="button"
@@ -970,14 +967,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         </div>
                       </div>
                     </div>
-
-                    {/* COMPANY LOGO */}
-                    <RoundedImage
-                      icon={opportunity?.organizationLogoURL ?? iconSuccess}
-                      alt="Company Logo"
-                      imageWidth={60}
-                      imageHeight={60}
-                    />
                   </div>
 
                   <div className="flex flex-col gap-4 md:flex-row">
@@ -1006,7 +995,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             {opportunity?.skills?.map((item) => (
                               <div
                                 key={item.id}
-                                className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                                className="min-h-6 badge h-full bg-green py-1 text-white"
                               >
                                 {item.name}
                               </div>
@@ -1031,9 +1020,21 @@ const OpportunityDetails: NextPageWithLayout<{
                             </span>
                           </div>
                           {/* <div className="my-2 text-sm">{`This task should not take you more than ${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}`}</div> */}
-                          <div className="my-2 text-sm">{`This task should not take you more than ${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
-                            opportunity?.commitmentIntervalCount > 1 ? "s" : ""
-                          }`}</div>
+                          <div className="my-2 text-sm">
+                            {`This task should not take you more than ${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
+                              opportunity?.commitmentIntervalCount > 1
+                                ? "s. "
+                                : ". "
+                            }`}
+                            <br />
+                            <p className="mt-2">
+                              The estimated times provided are just a guideline.
+                              You have as much time as you need to complete the
+                              tasks at your own pace. Focus on engaging with the
+                              materials and doing your best without feeling
+                              rushed by the time estimates.
+                            </p>
+                          </div>
                         </div>
                         <div className="divider mt-2" />
                         <div>
@@ -1104,6 +1105,32 @@ const OpportunityDetails: NextPageWithLayout<{
                           </div>
                           <div className="my-2 text-sm">
                             {opportunity?.difficulty}
+                          </div>
+                        </div>
+                        <div className="divider mt-1" />
+                        <div>
+                          <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                            <Image
+                              src={iconLocation}
+                              alt="Icon Location"
+                              width={20}
+                              height={20}
+                              sizes="100vw"
+                              priority={true}
+                              style={{ width: "20px", height: "20px" }}
+                            />
+
+                            <span className="ml-1">Countries</span>
+                          </div>
+                          <div className="my-2 flex flex-wrap gap-1">
+                            {opportunity?.countries?.map((country) => (
+                              <div
+                                key={country.id}
+                                className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                              >
+                                {country.name}
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </div>

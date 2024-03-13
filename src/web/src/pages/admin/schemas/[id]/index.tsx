@@ -561,13 +561,22 @@ const SchemaCreateEdit: NextPageWithLayout<{
                                 value: 1,
                                 label: "Ld_proof",
                               },
+                              {
+                                value: 2,
+                                label: "JWS",
+                              },
                             ]}
                             onChange={(val) => onChange(val?.value)}
                             value={
                               value != null
                                 ? {
                                     value: value,
-                                    label: value === 0 ? "Indy" : "Ld_proof",
+                                    label:
+                                      value === 0
+                                        ? "Indy"
+                                        : value === 1
+                                          ? "Ld_proof"
+                                          : "JWS",
                                   }
                                 : null
                             }
@@ -741,9 +750,11 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       </label>
                       <label className="label-text text-sm">
                         {formData.artifactType != null
-                          ? formData.artifactType == 0
+                          ? formData.artifactType === 0
                             ? "Indy"
-                            : "Ld_proof"
+                            : formData.artifactType === 1
+                              ? "Ld_proof"
+                              : "JWS"
                           : ""}
                       </label>
                       {errorsStep1.artifactType && (

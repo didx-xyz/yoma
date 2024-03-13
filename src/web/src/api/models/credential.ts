@@ -27,6 +27,7 @@ export interface SSISchemaRequest {
 export enum ArtifactType {
   Indy,
   Ld_proof,
+  JWS,
 }
 
 export enum SchemaType {

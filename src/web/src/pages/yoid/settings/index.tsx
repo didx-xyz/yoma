@@ -20,13 +20,10 @@ import { getUserProfile, patchPhoto, patchUser } from "~/api/services/user";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { authOptions, type User } from "~/server/auth";
-import { FileUploader } from "~/components/Organisation/Upsert/FileUpload";
 import {
-  ACCEPTED_IMAGE_TYPES,
   GA_ACTION_USER_PROFILE_UPDATE,
   GA_CATEGORY_USER,
 } from "~/lib/constants";
-import Image from "next/image";
 import { useSetAtom } from "jotai";
 import { userProfileAtom } from "~/lib/store";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -34,6 +31,7 @@ import type { NextPageWithLayout } from "~/pages/_app";
 import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
 import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
+import AvatarUpload from "~/components/Organisation/Upsert/AvatarUpload";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -147,7 +145,12 @@ const Settings: NextPageWithLayout<{
 
   // set default values (from user session)
   useEffect(() => {
-    if (!userProfile) return;
+    if (!userProfile) {
+      setIsLoading(true);
+      return;
+    } else {
+      setIsLoading(false);
+    }
 
     //HACK: no validation on date if value is null
     if (!userProfile?.dateOfBirth) {
@@ -243,7 +246,7 @@ const Settings: NextPageWithLayout<{
           <div className="flex w-full flex-col rounded-lg bg-white p-8">
             <form
               onSubmit={handleSubmit(onSubmit)} // eslint-disable-line @typescript-eslint/no-misused-promises
-              className="gap-2x flex flex-col"
+              className="flex flex-col gap-4"
             >
               <div className="form-control">
                 <label className="label font-bold">
@@ -430,70 +433,38 @@ const Settings: NextPageWithLayout<{
                   <span className="label-text">Picture</span>
                 </label>
 
-                {/* existing image */}
-                <div className="flex items-center justify-center pb-4">
-                  {/* NO IMAGE */}
-                  {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
-                  {/* {!logoExisting && <IoMdImage className="h-12 w-12 rounded-lg" />} */}
-                  {/* EXISTING IMAGE */}
-                  {userProfile?.photoURL &&
-                    !(logoFiles && logoFiles.length > 0) && (
-                      <div className="indicator">
-                        {/* <button
-                      className="filepond--file-action-button filepond--action-remove-item badge indicator-item badge-secondary"
-                      type="button"
-                      data-align="left"
-                      //onClick={onRemoveLogoExisting}
-                    >
-                      <svg
-                        width="26"
-                        height="26"
-                        viewBox="0 0 26 26"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M11.586 13l-2.293 2.293a1 1 0 0 0 1.414 1.414L13 14.414l2.293 2.293a1 1 0 0 0 1.414-1.414L14.414 13l2.293-2.293a1 1 0 0 0-1.414-1.414L13 11.586l-2.293-2.293a1 1 0 0 0-1.414 1.414L11.586 13z"
-                          fill="currentColor"
-                          fillRule="nonzero"
-                        ></path>
-                      </svg>
-                      <span>Remove</span>
-                    </button> */}
-
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <Image
-                          className="rounded-lg object-contain shadow-lg"
-                          alt="user picture"
-                          width={100}
-                          height={100}
-                          style={{ width: 100, height: 100 }}
-                          src={userProfile.photoURL}
-                        />
-                      </div>
-                    )}
-                </div>
-
                 {/* upload image */}
-                <FileUploader
-                  name="logo"
-                  files={logoFiles as any}
-                  allowMultiple={false}
-                  fileTypes={ACCEPTED_IMAGE_TYPES}
+                <AvatarUpload
                   onUploadComplete={(files) => {
                     setLogoFiles(files);
                   }}
+                  onRemoveImageExisting={() => {
+                    setLogoFiles([]);
+                  }}
+                  existingImage={userProfile?.photoURL ?? ""}
+                  showExisting={
+                    userProfile?.photoURL &&
+                    !(logoFiles && logoFiles.length > 0)
+                      ? true
+                      : false
+                  }
                 />
               </div>
 
               <div className="form-control">
-                <label className="label cursor-pointer">
-                  <span className="label-text">Reset Password</span>
+                <label
+                  htmlFor="resetPassword"
+                  className="label w-full cursor-pointer justify-normal"
+                >
                   <input
+                    {...register(`resetPassword`)}
                     type="checkbox"
-                    className="checkbox mr-2"
-                    {...register("resetPassword")}
+                    id="resetPassword"
+                    className="checkbox-primary checkbox"
                   />
+                  <span className="label-text ml-4">Reset Password</span>
                 </label>
+
                 {errors.resetPassword && (
                   <label className="label font-bold">
                     <span className="label-text-alt italic text-red-500">
@@ -503,18 +474,15 @@ const Settings: NextPageWithLayout<{
                 )}
               </div>
 
-              <div className="my-4 flex items-center justify-center gap-2">
+              <div className="my-4 flex items-center justify-center gap-4">
                 <button
                   type="button"
-                  className="btn btn-warning btn-sm flex-grow"
+                  className="btn btn-warning flex-grow"
                   onClick={handleCancel}
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="btn btn-success btn-sm flex-grow"
-                >
+                <button type="submit" className="btn btn-success flex-grow">
                   Submit
                 </button>
               </div>

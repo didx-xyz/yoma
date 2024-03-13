@@ -4,18 +4,15 @@ import { getServerSession } from "next-auth";
 import { type ReactElement } from "react";
 import { type User, authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
-import Image from "next/image";
 import { type ParsedUrlQuery } from "querystring";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { toBase64, shimmer } from "~/lib/image";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import YoIDTabbed from "~/components/Layout/YoIDTabbed";
 import { userProfileAtom } from "~/lib/store";
 import { useAtomValue } from "jotai";
 import Link from "next/link";
 import { config } from "~/lib/react-query-config";
-import { RoundedImage } from "~/components/RoundedImage";
-import iconRocket from "public/images/icon-rocket.webp";
+import { AvatarImage } from "~/components/AvatarImage";
 
 interface IParams extends ParsedUrlQuery {
   query?: string;
@@ -304,36 +301,11 @@ const MyCredentials: NextPageWithLayout<{
                             key={`${item.id}_${index}`}
                           >
                             <>
-                              {!org.logoURL && (
-                                <RoundedImage
-                                  icon={iconRocket}
-                                  alt={""}
-                                  imageWidth={20}
-                                  imageHeight={20}
-                                  containerWidth={40}
-                                  containerHeight={40}
-                                />
-                              )}
-                              {org.logoURL && (
-                                <Image
-                                  src={org.logoURL}
-                                  alt={`${org.name} Logo`}
-                                  width={40}
-                                  height={40}
-                                  sizes="(max-width: 40px) 30vw, 50vw"
-                                  priority={true}
-                                  placeholder="blur"
-                                  blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                                    shimmer(40, 40),
-                                  )}`}
-                                  style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    maxWidth: "40px",
-                                    maxHeight: "40px",
-                                  }}
-                                />
-                              )}
+                              <AvatarImage
+                                icon={org.logoURL ?? null}
+                                alt={`${org.name} Logo`}
+                                size={40}
+                              />
                             </>
                           </div>
                         ))}

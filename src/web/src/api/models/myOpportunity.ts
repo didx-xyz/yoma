@@ -50,7 +50,7 @@ export interface MyOpportunityInfo {
   userEmail: string;
   userDisplayName: string | null;
   userCountry: string | null;
-  userCountryOfResidence: string | null;
+  userEducation: string | null;
   userPhotoId: string | null;
   userPhotoURL: string | null;
   opportunityId: string;
@@ -72,6 +72,7 @@ export interface MyOpportunityInfo {
   dateStart: string | null;
   dateEnd: string | null;
   dateCompleted: string | null;
+  dateModified: string | null; //TODO: add to api
   zltoReward: number | null;
   yomaReward: number | null;
   verifications: MyOpportunityInfoVerification[] | null;

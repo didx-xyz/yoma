@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Yoma.Core.Infrastructure.AriesCloud.Entities
 {
     [Table("CredentialSchema", Schema = "AriesCloud")]
-    [Index(nameof(Name), nameof(ArtifactType))]
+    [Index(nameof(Name), nameof(Version), nameof(ArtifactType))]
     public class CredentialSchema : BaseEntity<string>
     {
         [Column(TypeName = "varchar(125)")]

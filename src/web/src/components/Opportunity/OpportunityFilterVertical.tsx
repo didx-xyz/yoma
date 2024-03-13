@@ -12,14 +12,12 @@ import {
   type OpportunitySearchFilterCombined,
 } from "~/api/models/opportunity";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
-import Image from "next/image";
-import { shimmer, toBase64 } from "src/lib/image";
-import iconRocket from "public/images/icon-rocket.webp";
 import Select from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
+import { AvatarImage } from "../AvatarImage";
 
 export const OpportunityFilterVertical: React.FC<{
   htmlRef: HTMLDivElement;
@@ -140,46 +138,11 @@ export const OpportunityFilterVertical: React.FC<{
                               className="flex cursor-pointer items-center justify-center"
                               htmlFor={`checkbox_${item.id}`}
                             >
-                              {!item.imageURL && (
-                                <Image
-                                  src={iconRocket}
-                                  alt="Icon Rocket"
-                                  width={60}
-                                  height={60}
-                                  sizes="100vw"
-                                  priority={true}
-                                  placeholder="blur"
-                                  blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                                    shimmer(288, 182),
-                                  )}`}
-                                  style={{
-                                    borderTopLeftRadius: "8px",
-                                    borderTopRightRadius: "8px",
-                                    width: "60px",
-                                    height: "60px",
-                                  }}
-                                />
-                              )}
-                              {item.imageURL && (
-                                <Image
-                                  src={item.imageURL}
-                                  alt="Organization Logo"
-                                  width={60}
-                                  height={60}
-                                  sizes="100vw"
-                                  priority={true}
-                                  placeholder="blur"
-                                  blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                                    shimmer(288, 182),
-                                  )}`}
-                                  style={{
-                                    borderTopLeftRadius: "8px",
-                                    borderTopRightRadius: "8px",
-                                    width: "60px",
-                                    height: "60px",
-                                  }}
-                                />
-                              )}
+                              <AvatarImage
+                                icon={item.imageURL ?? null}
+                                alt="Organization Logo"
+                                size={60}
+                              />
                             </label>
 
                             <label

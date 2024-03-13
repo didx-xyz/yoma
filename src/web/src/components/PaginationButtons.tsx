@@ -53,7 +53,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
             <button
               key={`PaginationItem_Prev`}
               type="button"
-              className="btn btn-square btn-primary btn-sm border-0 bg-white text-black hover:bg-gray"
+              className="btn btn-square btn-primary btn-sm !rounded-md border-0 bg-white text-black hover:bg-gray"
               disabled
             >
               «
@@ -63,7 +63,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
             <button
               key={`PaginationItem_Prev`}
               type="button"
-              className="btn btn-square btn-primary btn-sm border-0 bg-white text-black hover:bg-gray"
+              className="btn btn-square btn-primary btn-sm !rounded-md border-0 bg-white text-black hover:bg-gray"
               onClick={(e) => handlePagerChange(e, currentPage - 1)}
             >
               «
@@ -78,7 +78,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
                   {pageNumber === currentPage && (
                     <button
                       type="button"
-                      className="btn btn-square btn-primary btn-sm border-0 bg-white text-black hover:bg-gray disabled:bg-gray-light"
+                      className="btn btn-square btn-primary btn-sm !rounded-md border-0 bg-white text-black hover:bg-gray disabled:bg-gray-light"
                       disabled
                     >
                       {pageNumber}
@@ -88,7 +88,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
                   {pageNumber !== currentPage && (
                     <button
                       type="button"
-                      className="btn btn-square btn-primary btn-sm cursor-pointer border-0 bg-white text-black hover:bg-gray"
+                      className="btn btn-square btn-primary btn-sm cursor-pointer !rounded-md border-0 bg-white text-black hover:bg-gray"
                       onClick={(e) => handlePagerChange(e, pageNumber)}
                     >
                       {pageNumber}
@@ -110,7 +110,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
             <button
               key={`PaginationItem_Next`}
               type="button"
-              className="btn btn-square btn-primary btn-sm border-0 bg-white text-black hover:bg-gray disabled:bg-gray-light"
+              className="btn btn-square btn-primary btn-sm !rounded-md border-0 bg-white text-black hover:bg-gray disabled:bg-gray-light"
               disabled
             >
               »
@@ -120,7 +120,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
             <button
               key={`PaginationItem_Next`}
               type="button"
-              className="btn btn-square btn-primary btn-sm cursor-pointer border-0 bg-white text-black hover:bg-gray"
+              className="btn btn-square btn-primary btn-sm cursor-pointer !rounded-md border-0 bg-white text-black hover:bg-gray"
               onClick={(e) => handlePagerChange(e, currentPage + 1)}
             >
               »

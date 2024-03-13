@@ -64,6 +64,16 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
                 Attributes = o.Attrs
             };
         }
+
+        public static Domain.SSI.Models.Provider.Credential ToCredential(this Models.Credential o)
+        {
+            return new Domain.SSI.Models.Provider.Credential
+            {
+                Id = o.Id.ToString(),
+                SchemaId = o.SchemaId,
+                Attributes = JsonConvert.DeserializeObject<Dictionary<string, string>>(o.Attributes) ?? new Dictionary<string, string>()
+            };
+        }
         #endregion
 
         #region Private Members

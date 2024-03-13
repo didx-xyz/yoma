@@ -95,11 +95,11 @@ const ItemCardComponent: React.FC<InputProps> = ({
                 <Image
                   src={iconZlto}
                   alt="Icon Zlto"
-                  width={18}
-                  height={18}
+                  width={16}
+                  height={16}
                   sizes="100vw"
                   priority={true}
-                  style={{ width: "18px", height: "18px" }}
+                  style={{ width: "16px", height: "16px" }}
                 />
                 <span className="ml-1 text-xs">{amount}</span>
               </div>{" "}

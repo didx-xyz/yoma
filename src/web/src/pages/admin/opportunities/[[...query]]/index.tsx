@@ -56,20 +56,12 @@ import { IoMdDownload } from "react-icons/io";
 // It may be called again, on a serverless function, if
 // revalidation is enabled and a new request comes in
 export const getStaticProps: GetStaticProps = async (context) => {
-  //const lookups_categories = await getCategoriesAdmin(null, context);
-  //const lookups_countries = await getOpportunityCountries(context);
-  //const lookups_languages = await getOpportunityLanguages(context);
-  //const lookups_organisations = await getOpportunityOrganizations(context);
   const lookups_types = await getOpportunityTypes(context);
   const lookups_commitmentIntervals = await getCommitmentIntervals(context);
   const lookups_zltoRewardRanges = await getZltoRewardRanges(context);
 
   return {
     props: {
-      //lookups_categories,
-      // lookups_countries,
-      // lookups_languages,
-      // lookups_organisations,
       lookups_types,
       lookups_commitmentIntervals,
       lookups_zltoRewardRanges,
@@ -90,18 +82,10 @@ export const getStaticPaths: GetStaticPaths = () => {
 };
 
 const OpportunitiesAdmin: NextPageWithLayout<{
-  //lookups_categories: OpportunityCategory[];
-  // lookups_countries: Country[];
-  // lookups_languages: Language[];
-  // lookups_organisations: OrganizationInfo[];
   lookups_types: OpportunityType[];
   lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
   lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
 }> = ({
-  //lookups_categories,
-  // lookups_countries,
-  // lookups_languages,
-  // lookups_organisations,
   lookups_types,
   lookups_commitmentIntervals,
   lookups_zltoRewardRanges,
@@ -123,7 +107,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     { value: "0", label: "Active" },
     { value: "1", label: "Deleted" },
     { value: "2", label: "Expired" },
-    { value: "2", label: "Inactive" },
+    { value: "3", label: "Inactive" },
   ];
 
   // get filter parameters from route
@@ -289,9 +273,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   ?.toString()
                   .split(",")
                   .map((x) => {
-                    const item = lookups_publishedStates.find(
-                      (y) => y.label === x,
-                    );
+                    const item = lookups_statuses.find((y) => y.label === x);
                     return item ? item?.value : "";
                   })
                   .filter((x) => x != "")
@@ -697,7 +679,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             <div className="mt-4 flex flex-grow gap-4">
               <button
                 type="button"
-                className="btn rounded-full bg-green normal-case text-white hover:bg-green hover:brightness-110 disabled:border-0 disabled:bg-green disabled:brightness-90 md:w-[250px]"
+                className="btn bg-green normal-case text-white hover:bg-green hover:brightness-110 disabled:border-0 disabled:bg-green disabled:brightness-90 md:w-[250px]"
                 onClick={handleExportToCSV}
                 disabled={isExportButtonLoading}
               >
@@ -803,7 +785,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                 !isSearchPerformed && (
                   <div className="flex flex-col place-items-center py-52">
                     <NoRowsMessage
-                      title={"You will find your active opportunities here"}
+                      title={"You will find your opportunities here"}
                       description={
                         "This is where you will find all the awesome opportunities that have been created"
                       }
@@ -879,21 +861,20 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   </table>
                 </div>
               )}
-
-              {/* PAGINATION */}
-              {searchResults && (searchResults.totalCount as number) > 0 && (
-                <div className="mt-2 grid place-items-center justify-center">
-                  <PaginationButtons
-                    currentPage={page ? parseInt(page.toString()) : 1}
-                    totalItems={searchResults.totalCount as number}
-                    pageSize={PAGE_SIZE}
-                    showPages={false}
-                    showInfo={true}
-                    onClick={handlePagerChange}
-                  />
-                </div>
-              )}
             </div>
+            {/* PAGINATION */}
+            {searchResults && (searchResults.totalCount as number) > 0 && (
+              <div className="mt-4 grid place-items-center justify-center">
+                <PaginationButtons
+                  currentPage={page ? parseInt(page.toString()) : 1}
+                  totalItems={searchResults.totalCount as number}
+                  pageSize={PAGE_SIZE}
+                  showPages={false}
+                  showInfo={true}
+                  onClick={handlePagerChange}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

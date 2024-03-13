@@ -1,14 +1,11 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { signOut, useSession } from "next-auth/react";
-import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import {
   IoMdAdd,
   IoMdCheckmark,
   IoMdClose,
-  IoMdImage,
-  IoMdPerson,
   IoMdPower,
   IoMdSearch,
   IoMdSettings,
@@ -21,13 +18,13 @@ import {
   ROLE_ADMIN,
 } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
-import { shimmer, toBase64 } from "~/lib/image";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
   currentOrganisationLogoAtom,
   userProfileAtom,
 } from "~/lib/store";
+import { AvatarImage } from "../AvatarImage";
 
 export const UserMenu: React.FC = () => {
   const [userMenuVisible, setUserMenuVisible] = useState(false);
@@ -71,33 +68,11 @@ export const UserMenu: React.FC = () => {
           onClick={() => setUserMenuVisible(false)}
           id={`userMenu_orgs_${organisation.name}`} // e2e
         >
-          {!organisation.logoURL && (
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
-              <IoMdImage className="h-6 w-6 text-gray-dark" />
-            </div>
-          )}
-          {organisation.logoURL && (
-            <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full shadow">
-              <Image
-                src={organisation.logoURL}
-                alt={`${organisation.name} logo`}
-                width={44}
-                height={44}
-                sizes="(max-width: 44px) 30vw, 50vw"
-                priority={true}
-                placeholder="blur"
-                blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                  shimmer(44, 44),
-                )}`}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  maxWidth: "44px",
-                  maxHeight: "44px",
-                }}
-              />
-            </div>
-          )}
+          <AvatarImage
+            icon={organisation?.logoURL ?? null}
+            alt={`${organisation.name} logo`}
+            size={44}
+          />
 
           <div className="flex flex-col gap-1">
             <div className="w-[325px] overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[150px]">
@@ -157,72 +132,26 @@ export const UserMenu: React.FC = () => {
         {(activeRoleView == RoleView.User ||
           activeRoleView == RoleView.Admin) && (
           <>
-            {/* NO IMAGE */}
-            {!userProfile?.photoURL && (
-              <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full border-2 shadow">
-                <IoMdPerson className="absolute -left-1 h-12 w-12 text-white animate-in slide-in-from-top-4" />
-              </div>
-            )}
-
-            {/* EXISTING IMAGE */}
-            {userProfile?.photoURL && (
-              <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full shadow hover:border-2">
-                <Image
-                  src={userProfile.photoURL}
-                  alt="User Logo"
-                  width={44}
-                  height={44}
-                  sizes="(max-width: 44px) 30vw, 50vw"
-                  priority={true}
-                  placeholder="blur"
-                  blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                    shimmer(44, 44),
-                  )}`}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    maxWidth: "44px",
-                    maxHeight: "44px",
-                  }}
-                />
-              </div>
-            )}
+            <div className="rounded-full hover:outline hover:outline-2">
+              <AvatarImage
+                icon={userProfile?.photoURL ?? null}
+                alt="User Logo"
+                size={44}
+              />
+            </div>
           </>
         )}
 
         {/* ORG ADMIN, SHOW COMPANY LOGO */}
         {activeRoleView == RoleView.OrgAdmin && (
           <>
-            {/* NO IMAGE */}
-            {!currentOrganisationLogo && (
-              <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full border-2">
-                <IoMdPerson className="absolute -left-1 h-12 w-12 text-white animate-in slide-in-from-top-4" />
-              </div>
-            )}
-
-            {/* EXISTING IMAGE */}
-            {currentOrganisationLogo && (
-              <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full hover:border-2">
-                <Image
-                  src={currentOrganisationLogo}
-                  alt="Company Logo"
-                  width={44}
-                  height={44}
-                  sizes="(max-width: 44px) 30vw, 50vw"
-                  priority={true}
-                  placeholder="blur"
-                  blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                    shimmer(44, 44),
-                  )}`}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    maxWidth: "44px",
-                    maxHeight: "44px",
-                  }}
-                />
-              </div>
-            )}
+            <div className="rounded-full hover:outline hover:outline-2">
+              <AvatarImage
+                icon={currentOrganisationLogo ?? null}
+                alt="Org Logo"
+                size={44}
+              />
+            </div>
           </>
         )}
       </button>
@@ -246,36 +175,13 @@ export const UserMenu: React.FC = () => {
               className="text-gray-dark hover:bg-gray-light"
               onClick={() => setUserMenuVisible(false)}
             >
-              {/* NO IMAGE */}
-              {!userProfile?.photoURL && (
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
-                  <IoMdPerson className="h-6 w-6 text-gray-dark" />
-                </div>
-              )}
-
-              {/* EXISTING IMAGE */}
-              {userProfile?.photoURL && (
-                <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full shadow">
-                  <Image
-                    src={userProfile.photoURL}
-                    alt="User Logo"
-                    width={44}
-                    height={44}
-                    sizes="(max-width: 44px) 30vw, 50vw"
-                    priority={true}
-                    placeholder="blur"
-                    blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                      shimmer(44, 44),
-                    )}`}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      maxWidth: "44px",
-                      maxHeight: "44px",
-                    }}
-                  />
-                </div>
-              )}
+              <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full shadow">
+                <AvatarImage
+                  icon={userProfile?.photoURL}
+                  alt="User logo"
+                  size={44}
+                />
+              </div>
 
               <div className="flex h-10 items-center overflow-hidden text-ellipsis">
                 {session?.user?.name ?? "Settings"}

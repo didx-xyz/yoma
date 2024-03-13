@@ -114,7 +114,7 @@ const OrganisationOverview: NextPageWithLayout<{
           <Link
             href={`/organisations/${id}/edit`}
             type="button"
-            className="btn btn-info btn-xs"
+            className="btn btn-info btn-wide text-white"
           >
             Edit Details
           </Link>

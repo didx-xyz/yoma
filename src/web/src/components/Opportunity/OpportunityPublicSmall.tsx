@@ -1,14 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import iconRocket from "public/images/icon-rocket.webp";
 import iconClock from "public/images/icon-clock.svg";
 import iconUser from "public/images/icon-user.svg";
 import iconZlto from "public/images/icon-zlto.svg";
 import Moment from "react-moment";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
-import { RoundedImage } from "../RoundedImage";
 import { IoMdPause, IoMdPlay, IoMdClose } from "react-icons/io";
+import { AvatarImage } from "../AvatarImage";
 
 interface InputProps {
   data: OpportunityInfo;
@@ -20,12 +19,12 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
     <Link
       href={`/opportunities/${data.id}`}
       target="_blank"
-      className="relative flex aspect-square min-w-[300px] transform-gpu flex-col gap-1 rounded-lg bg-white p-5 transition-transform hover:scale-105"
+      className="relative flex aspect-square min-w-[300px] transform-gpu flex-col gap-1 rounded-lg bg-white p-5 shadow-custom transition-all duration-300 hover:scale-105 hover:shadow-lg"
     >
       <div className="flex flex-row">
         <div className="flex flex-row">
           <div className="flex w-3/5 flex-grow flex-col">
-            <h1 className="h-[32px] max-w-[220px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark">
+            <h1 className="h-[32px] max-w-[200px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark">
               {data.organizationName}
             </h1>
             <h2 className="line-clamp-3 h-[70px] max-w-[220px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight">
@@ -33,13 +32,10 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
             </h2>
           </div>
           <div className="absolute right-4 top-3">
-            <RoundedImage
-              icon={data?.organizationLogoURL ?? iconRocket}
+            <AvatarImage
+              icon={data?.organizationLogoURL ?? null}
               alt="Company Logo"
-              imageWidth={30}
-              imageHeight={30}
-              containerWidth={60}
-              containerHeight={60}
+              size={60}
             />
           </div>
         </div>
@@ -81,8 +77,8 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
       )}
 
       {/* BADGES */}
-      <div className="bottom-5x flex flex-row gap-1 whitespace-nowrap pt-2 font-semibold text-green-dark">
-        <div className="badge h-6 rounded-md border-none bg-green-light text-xs text-green">
+      <div className="bottom-5x flex flex-row gap-1 whitespace-nowrap pt-2 text-green-dark">
+        <div className="badge bg-green-light text-green">
           <Image
             src={iconClock}
             alt="Icon Clock"
@@ -98,7 +94,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
         </div>
 
         {(data?.participantCountTotal ?? 0) > 0 && (
-          <div className="badge h-6 rounded-md border-none bg-green-light text-xs text-green">
+          <div className="badge bg-green-light text-green">
             <Image
               src={iconUser}
               alt="Icon User"
@@ -114,7 +110,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
         )}
 
         {data.zltoReward && (
-          <div className="badge h-6 rounded-md border-none bg-[#FEF4D9] text-xs text-[#F6B700]">
+          <div className="badge bg-[#FEF4D9] text-[#F6B700]">
             <Image
               src={iconZlto}
               alt="Icon Zlto"
@@ -131,13 +127,13 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
         {data?.status == "Active" && (
           <>
             {new Date(data.dateStart) > new Date() && (
-              <div className="badge h-6 rounded-md border-none bg-orange-light text-xs text-orange">
+              <div className="badge bg-yellow-tint text-yellow">
                 <IoMdPause />
                 <p className="ml-1">Not started</p>
               </div>
             )}
             {new Date(data.dateStart) < new Date() && (
-              <div className="badge h-6 rounded-md border-none bg-purple-soft text-xs font-semibold text-purple-shade">
+              <div className="badge bg-purple-tint text-purple-shade">
                 <IoMdPlay />
                 <span className="ml-1">Started</span>
               </div>
@@ -145,7 +141,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
           </>
         )}
         {data.status == "Expired" && (
-          <div className="badge h-6 rounded-md border-none bg-red-100 text-xs font-semibold text-error">
+          <div className="badge bg-red-100 text-error">
             <IoMdClose className="h-4 w-4" />
             <span className="ml-1">Expired</span>
           </div>
