@@ -579,18 +579,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                         <PieChart
                           id="conversionRate"
                           title="Conversion rate"
-                          subTitle={
-                            searchResults.opportunities.conversionRate
-                              .viewedCount !== 0
-                              ? (
-                                  (searchResults.opportunities.conversionRate
-                                    .completedCount /
-                                    searchResults.opportunities.conversionRate
-                                      .viewedCount) *
-                                  100
-                                ).toFixed(2) + "%"
-                              : "N/A"
-                          }
+                          subTitle={`${
+                            searchResults.opportunities.conversionRate.percentage ?? 0
+                          } %`}
                           colors={["#387F6A", "#F9AB3E"]} // green and yellow
                           data={[
                             ["Completed", "Viewed"],
