@@ -5,7 +5,7 @@ import { useState, type ReactElement, useCallback } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import MainLayout from "~/components/Layout/Main";
 import { authOptions, type User } from "~/server/auth";
-import { NextPageWithLayout } from "./_app";
+import type { NextPageWithLayout } from "./_app";
 import Link from "next/link";
 import { config } from "~/lib/react-query-config";
 import { PageBackground } from "~/components/PageBackground";
@@ -43,7 +43,6 @@ import iconUnicef from "public/images/home/logo-unicef.png";
 
 import OpportunityCard from "~/components/Home/OpportunityCard";
 import { IoMdCheckmark } from "react-icons/io";
-import { SearchInputLarge } from "~/components/SearchInputLarge";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient(config);
@@ -84,7 +83,7 @@ const Home: NextPageWithLayout<{
             <p className="text-sm font-thin">
               Yoma is your friendly platform of trusted partners, bringing you
               the freshest opportunities to keep your skills sharp and stay in
-              the loop with what's happening in the working world.
+              the loop with what&apos;s happening in the working world.
             </p>
           </div>
 

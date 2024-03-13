@@ -1,6 +1,6 @@
-import React, { ReactElement } from "react";
+import React from "react";
 import { RoundedImage } from "../RoundedImage";
-import { StaticImageData } from "next/image";
+import type { StaticImageData } from "next/image";
 import iconClock from "public/images/icon-clock.svg";
 import iconUser from "public/images/icon-user.svg";
 import iconZlto from "public/images/icon-zlto.svg";
@@ -16,26 +16,9 @@ const OpportunityCard: React.FC<{
   reward: number;
   students: number;
   image: StaticImageData;
-  // width: number;
-  // height: number;
-}> = ({
-  title,
-  organisation,
-  description,
-  hours,
-  ongoing,
-  reward,
-  students,
-  image,
-  // width,
-  // height,
-}) => {
+}> = ({ title, organisation, description, hours, reward, students, image }) => {
   return (
-    <div
-      className="h-[200px] w-[250px] overflow-hidden rounded-lg bg-white p-4 shadow-lg"
-      //className="overflow-hidden rounded-lg bg-white p-4 shadow-lg"
-      //style={{ width: width, height: height }}
-    >
+    <div className="h-[200px] w-[250px] overflow-hidden rounded-lg bg-white p-4 shadow-lg">
       <div className="flex">
         <div className="flex flex-grow flex-col">
           <p className="text-xs text-gray-dark">{organisation}</p>
@@ -106,17 +89,6 @@ const OpportunityCard: React.FC<{
             <span className="ml-1 text-xs">{reward}</span>
           </div>
         </div>
-        {/* {ongoing ? (
-          <span className="bg-green-200 text-green-700 mr-2 inline-block rounded-full px-3 py-1 text-sm font-semibold">
-            Ongoing
-          </span>
-        ) : null} */}
-
-        {/* Add your own logic to display star icons based on the rating */}
-        {/* <div>{rating} ⭐</div> */}
-
-        {/* Add your own logic to format the student count, e.g., "500" to "500 students" */}
-        {/* <div>{students} 👥</div> */}
       </div>
     </div>
   );
