@@ -13,7 +13,7 @@ namespace Yoma.Core.Domain.EmailProvider.Models
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        [JsonIgnore]
+        [JsonProperty("comment")]
         public string? Comment { get; set; }
 
         [JsonProperty("commentFormatted")]
