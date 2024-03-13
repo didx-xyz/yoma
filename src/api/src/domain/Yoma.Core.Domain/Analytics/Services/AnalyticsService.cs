@@ -33,11 +33,11 @@ namespace Yoma.Core.Domain.Analytics.Services
         private readonly IRepositoryBatchedValueContainsWithNavigation<Opportunity.Models.Opportunity> _opportunityRepository;
         private readonly IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
         private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
-        private readonly IRepository<OpportunityCountry> _opportunityCountryRepository;
 
         private const int Skill_Count = 10;
         private const int Country_Count = 5;
         private const string Gender_Group_Default = "Other";
+        private const string Country_Group_Default = "Unspecified";
         private const string AgeBracket_Group_Default = "Unspecified";
         #endregion
 
@@ -53,8 +53,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             OrganizationSearchFilterYouthValidator organizationSearchFilterYouthValidator,
             IRepositoryBatchedValueContainsWithNavigation<Opportunity.Models.Opportunity> opportunityRepository,
             IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
-            IRepository<OpportunityCategory> opportunityCategoryRepository,
-            IRepository<OpportunityCountry> opportunityCountryRepository)
+            IRepository<OpportunityCategory> opportunityCategoryRepository)
         {
             _appSettings = appSettings.Value;
             _memoryCache = memoryCache;
@@ -68,7 +67,6 @@ namespace Yoma.Core.Domain.Analytics.Services
             _opportunityRepository = opportunityRepository;
             _myOpportunityRepository = myOpportunityRepository;
             _opportunityCategoryRepository = opportunityCategoryRepository;
-            _opportunityCountryRepository = opportunityCountryRepository;
         }
         #endregion
 
@@ -255,16 +253,14 @@ namespace Yoma.Core.Domain.Analytics.Services
                 {
                     Legend = "Country",
                     Items = queryCompleted
-                    .Join(_opportunityCountryRepository.Query(),
-                        opportunity => opportunity.OpportunityId,
-                        countryInfo => countryInfo.OpportunityId,
-                        (opportunity, countryInfo) => new { opportunity, countryInfo.CountryName })
-                    .GroupBy(opportunity => opportunity.CountryName)
-                    .Select(g => new { CountryName = g.Key, Count = g.Count() })
-                    .OrderByDescending(country => country.Count)
-                    .Take(Country_Count)
-                    .OrderBy(country => country.CountryName)
-                    .ToDictionary(country => country.CountryName, country => country.Count)
+                    .GroupBy(opportunity =>
+                        string.IsNullOrEmpty(opportunity.UserCountry)
+                            ? Country_Group_Default
+                            : opportunity.UserCountry)
+                    .Select(group => new { UserCountry = group.Key, Count = group.Count() })
+                    .OrderBy(country => country.UserCountry.ToLower() == Country_Group_Default.ToLower() ? int.MaxValue : 0)
+                    .ThenBy(country => country.UserCountry)
+                    .ToDictionary(country => country.UserCountry, country => country.Count)
                 },
 
                 //gender
@@ -277,7 +273,7 @@ namespace Yoma.Core.Domain.Analytics.Services
                             ? Gender_Group_Default
                             : opportunity.UserGender)
                     .Select(group => new { UserGender = group.Key, Count = group.Count() })
-                    .OrderBy(gender => gender.UserGender.ToLower() == Gender_Group_Default.ToLower() ? 1 : 0)
+                    .OrderBy(gender => gender.UserGender.ToLower() == Gender_Group_Default.ToLower() ? int.MaxValue : 0)
                     .ThenBy(gender => gender.UserGender)
                     .ToDictionary(gender => gender.UserGender, gender => gender.Count)
                 },
