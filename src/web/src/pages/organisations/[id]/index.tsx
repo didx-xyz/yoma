@@ -580,7 +580,8 @@ const OrganisationDashboard: NextPageWithLayout<{
                           id="conversionRate"
                           title="Conversion rate"
                           subTitle={`${
-                            searchResults.opportunities.conversionRate.percentage ?? 0
+                            searchResults.opportunities.conversionRate
+                              .percentage ?? 0
                           } %`}
                           colors={["#387F6A", "#F9AB3E"]} // green and yellow
                           data={[
@@ -649,7 +650,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                         </div>
                       </div>
                       <div className="flex flex-grow flex-col">
-                        <div className="flex-grow text-2xl font-bold">0</div>
+                        <div className="flex-grow text-2xl font-bold">
+                          {searchResults?.skills?.items?.count}
+                        </div>
                       </div>
                     </div>
                   </div>
