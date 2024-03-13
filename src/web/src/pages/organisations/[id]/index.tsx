@@ -634,29 +634,24 @@ const OrganisationDashboard: NextPageWithLayout<{
                 </div>
 
                 {/* TOTAL UNIQUE SKILLS */}
-                {!(
-                  searchResults?.skills?.items &&
-                  searchResults?.skills?.items.data.length > 1
-                ) && (
-                  <div
-                    className="overflow-hidden rounded-lg bg-white  shadow"
-                    style={{ minWidth: "291px", height: "160px" }}
-                  >
-                    <div className="h-40 min-w-[288px] flex-col rounded-lg bg-white p-4 shadow">
-                      <div className="flex flex-row items-center gap-2">
-                        <IoMdPerson className="text-green" />
-                        <div className="whitespace-nowrap text-sm font-semibold">
-                          Total unique skills
-                        </div>
+                <div
+                  className="overflow-hidden rounded-lg bg-white  shadow"
+                  style={{ minWidth: "291px", height: "160px" }}
+                >
+                  <div className="h-40 min-w-[288px] flex-col rounded-lg bg-white p-4 shadow">
+                    <div className="flex flex-row items-center gap-2">
+                      <IoMdPerson className="text-green" />
+                      <div className="whitespace-nowrap text-sm font-semibold">
+                        Total unique skills
                       </div>
-                      <div className="flex flex-grow flex-col">
-                        <div className="flex-grow text-2xl font-bold">
-                          {searchResults?.skills?.items?.count}
-                        </div>
+                    </div>
+                    <div className="flex flex-grow flex-col">
+                      <div className="flex-grow text-2xl font-bold">
+                        {searchResults?.skills?.items?.count ?? 0}
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
 
                 {searchResults?.skills?.items &&
                   searchResults?.skills?.items.data.length > 1 && (
@@ -671,10 +666,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                     />
                   )}
 
-                {/* SKILLS */}
+                {/* MOST COMPLETED SKILLS */}
                 {searchResults?.skills?.topCompleted && (
                   <>
-                    {/* MOST COMPLETED SKILLS */}
                     <div className="flex h-[160px] w-[576px] flex-col rounded-lg bg-white p-4 shadow">
                       <div className="flex flex-row items-center gap-2">
                         <IoMdCompass className="text-green" />
