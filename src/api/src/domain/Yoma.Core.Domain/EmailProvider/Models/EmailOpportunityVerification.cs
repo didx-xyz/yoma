@@ -4,6 +4,9 @@ namespace Yoma.Core.Domain.EmailProvider.Models
 {
     public class EmailOpportunityVerification : EmailBase
     {
+        [JsonProperty("yoIDURL")]
+        public string YoIDURL { get; set; }
+
         [JsonProperty("opportunities")]
         public List<EmailOpportunityVerificationItem> Opportunities { get; set; }
     }

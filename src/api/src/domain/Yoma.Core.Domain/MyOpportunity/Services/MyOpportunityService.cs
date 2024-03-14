@@ -558,6 +558,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var statusId = _myOpportunityVerificationStatusService.GetByName(request.Status.ToString()).Id;
 
             EmailType? emailType = null;
+            var yoIDURL = _appSettings.AppBaseURL.AppendPathSegment("yoid/opportunities");
             await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
                 using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
@@ -568,6 +569,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 switch (request.Status)
                 {
                     case VerificationStatus.Rejected:
+                        yoIDURL = yoIDURL.AppendPathSegment("declined");
                         emailType = EmailType.Opportunity_Verification_Rejected;
                         break;
 
@@ -575,6 +577,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         if (item.DateEnd.HasValue && item.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())
                             throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd:yyyy-MM-dd}')");
 
+                        yoIDURL = yoIDURL.AppendPathSegment("completed");
                         var (zltoReward, yomaReward) = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, true);
                         item.ZltoReward = zltoReward;
                         item.YomaReward = yomaReward;
@@ -613,6 +616,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
                 var data = new EmailOpportunityVerification
                 {
+                    YoIDURL = yoIDURL.ToUri().ToString(),
                     Opportunities = new List<EmailOpportunityVerificationItem>()
                     {
                         new EmailOpportunityVerificationItem

@@ -168,7 +168,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
                             Title = op.Title,
                             DateStart = op.DateStart,
                             DateEnd = op.DateEnd,
-                            URL = _appSettings.AppBaseURL.AppendPathSegment("opportunities").AppendPathSegment(op.Id).ToUri().ToString()
+                            URL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(op.OrganizationId).AppendPathSegment("opportunities")
+                                .AppendPathSegment(op.Id).AppendPathSegment("info").ToUri().ToString()
                         });
                     }
 

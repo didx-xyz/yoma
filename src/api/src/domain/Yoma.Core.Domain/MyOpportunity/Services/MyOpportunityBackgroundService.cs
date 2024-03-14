@@ -103,6 +103,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
                             var data = new EmailOpportunityVerification
                             {
+                                YoIDURL = _appSettings.AppBaseURL.AppendPathSegment("yoid/opportunities/declined").ToUri().ToString(),
                                 Opportunities = new List<EmailOpportunityVerificationItem>()
                             };
 
