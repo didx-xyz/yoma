@@ -1,15 +1,24 @@
 using FluentValidation;
+using Flurl;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Transactions;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.EmailProvider;
+using Yoma.Core.Domain.EmailProvider.Interfaces;
+using Yoma.Core.Domain.EmailProvider.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
+using Yoma.Core.Domain.IdentityProvider.Helpers;
+using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
@@ -22,6 +31,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public class OpportunityService : IOpportunityService
     {
         #region Class Variables
+        private readonly ILogger<OpportunityService> _logger;
+        private readonly AppSettings _appSettings;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         private readonly IOpportunityStatusService _opportunityStatusService;
@@ -37,6 +48,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly ITimeIntervalService _timeIntervalService;
         private readonly IBlobService _blobService;
         private readonly IUserService _userService;
+        private readonly IEmailProviderClient _emailProviderClient;
+        private readonly IIdentityProviderClient _identityProviderClient;
 
         private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
         private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
@@ -61,7 +74,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Constructor
-        public OpportunityService(IHttpContextAccessor httpContextAccessor,
+        public OpportunityService(ILogger<OpportunityService> logger,
+            IOptions<AppSettings> appSettings,
+            IHttpContextAccessor httpContextAccessor,
             IOpportunityStatusService opportunityStatusService,
             IOpportunityCategoryService opportunityCategoryService,
             ICountryService countryService,
@@ -75,6 +90,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             ITimeIntervalService timeIntervalService,
             IBlobService blobService,
             IUserService userService,
+            IEmailProviderClientFactory emailProviderClientFactory,
+            IIdentityProviderClientFactory identityProviderClientFactory,
             OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
             OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
             OpportunitySearchFilterValidator opportunitySearchFilterValidator,
@@ -87,6 +104,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             IRepository<OpportunityVerificationType> opportunityVerificationTypeRepository,
             IExecutionStrategyService executionStrategyService)
         {
+            _logger = logger;
+            _appSettings = appSettings.Value;
             _httpContextAccessor = httpContextAccessor;
 
             _opportunityStatusService = opportunityStatusService;
@@ -102,6 +121,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             _timeIntervalService = timeIntervalService;
             _blobService = blobService;
             _userService = userService;
+            _emailProviderClient = emailProviderClientFactory.CreateClient();
+            _identityProviderClient = identityProviderClientFactory.CreateClient();
 
             _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate;
             _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate;
@@ -866,6 +887,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
             });
 
             result.SetPublished();
+
+            if (result.Status == Status.Active) await SendEmail(result, EmailType.Opportunity_Posted_Admin);
+
             return result;
         }
 
@@ -964,8 +988,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
                 scope.Complete();
             });
-
             result.SetPublished();
+
             return result;
         }
 
@@ -1086,6 +1110,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.ModifiedByUserId = user.Id;
 
             result = await _opportunityRepository.Update(result);
+
+            if (status == Status.Active) await SendEmail(result, EmailType.Opportunity_Posted_Admin);
 
             return result;
         }
@@ -1307,6 +1333,53 @@ namespace Yoma.Core.Domain.Opportunity.Services
         #endregion
 
         #region Private Members
+        private async Task SendEmail(Models.Opportunity opportunity, EmailType type)
+        {
+            try
+            {
+                List<EmailRecipient>? recipients = null;
+                switch (type)
+                {
+                    case EmailType.Opportunity_Posted_Admin:
+                        var superAdmins = await _identityProviderClient.ListByRole(Constants.Role_Admin);
+                        recipients = superAdmins?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.ToDisplayName() }).ToList();
+
+                        break;
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
+                }
+
+                if (recipients == null || !recipients.Any()) return;
+
+                var data = new EmailOpportunityPosted
+                {
+                    Opportunities = new List<EmailOpportunityPostedItem>
+                    {
+                        new()
+                        {
+                            Title = opportunity.Title,
+                            DateStart = opportunity.DateStart,
+                            DateEnd = opportunity.DateEnd,
+                            URL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(opportunity.OrganizationId)
+                                .AppendPathSegment("opportunities").AppendPathSegment(opportunity.Id).AppendPathSegment("info")
+                                .SetQueryParam("returnUrl", "/admin/opportunities").ToUri().ToString(),
+                            ZltoReward = opportunity.ZltoReward,
+                            YomaReward = opportunity.YomaReward
+                        }
+                    }
+                };
+
+                await _emailProviderClient.Send(type, recipients, data);
+
+                _logger.LogInformation("Successfully send '{emailType}' email", type);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send '{emailType}' email", type);
+            }
+        }
+
         private Organization? SearchCriteriaAdminValidateRequest(Guid? organizationId, bool ensureOrganizationAuthorization)
         {
             if (!organizationId.HasValue)

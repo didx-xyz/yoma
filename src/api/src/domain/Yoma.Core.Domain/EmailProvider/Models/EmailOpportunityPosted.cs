@@ -5,10 +5,10 @@ namespace Yoma.Core.Domain.EmailProvider.Models
     public class EmailOpportunityPosted : EmailBase
     {
         [JsonProperty("opportunities")]
-        public List<EmailOpportunityVerificationItem> Opportunities { get; set; }
+        public List<EmailOpportunityPostedItem> Opportunities { get; set; }
     }
 
-    public class EmailOpportunityPsotedItem
+    public class EmailOpportunityPostedItem
     {
         [JsonProperty("title")]
         public string Title { get; set; }

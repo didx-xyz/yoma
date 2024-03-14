@@ -28,7 +28,6 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
-using static System.Net.WebRequestMethods;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
@@ -772,23 +771,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             try
             {
                 List<EmailRecipient>? recipients = null;
-
-                var data = new EmailOpportunityVerification
-                {
-                    Opportunities = new List<EmailOpportunityVerificationItem>()
-                    {
-                        new() {
-                            Title = myOpportunity.OpportunityTitle,
-                            DateStart = myOpportunity.DateStart,
-                            DateEnd = myOpportunity.DateEnd,
-                            Comment = myOpportunity.CommentVerification,
-                            URL = _appSettings.AppBaseURL.AppendPathSegment("opportunities").AppendPathSegment(myOpportunity.Id).ToUri().ToString(),
-                            ZltoReward = myOpportunity.ZltoReward,
-                            YomaReward = myOpportunity.YomaReward
-                        }
-                    }
-                };
-
+                string opportunityURL = _appSettings.AppBaseURL.AppendPathSegment("opportunities").AppendPathSegment(myOpportunity.OpportunityId).ToUri().ToString();
+                string? yoIDURL = null;
+                string? verificationURL = null;
                 switch (type)
                 {
                     case EmailType.Opportunity_Verification_Rejected:
@@ -799,13 +784,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                             new() { Email = myOpportunity.UserEmail, DisplayName = myOpportunity.UserDisplayName }
                         };
 
-                        data.YoIDURL = _appSettings.AppBaseURL.AppendPathSegment("yoid/opportunities");
-                        data.YoIDURL = data.YoIDURL.AppendPathSegment(type switch
+                        yoIDURL = _appSettings.AppBaseURL.AppendPathSegment("yoid/opportunities");
+                        yoIDURL = yoIDURL.AppendPathSegment(type switch
                         {
                             EmailType.Opportunity_Verification_Rejected => "declined",
                             EmailType.Opportunity_Verification_Completed => "completed",
                             EmailType.Opportunity_Verification_Pending => "submitted",
-                            _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
+                            _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported")
                         });
                         break;
 
@@ -813,7 +798,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         recipients = _organizationService.ListAdmins(myOpportunity.OrganizationId, false, false)
                             .Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList();
 
-                        data.VerificationURL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(myOpportunity.OrganizationId).AppendPathSegment("verifications");
+                        opportunityURL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(myOpportunity.OrganizationId)
+                            .AppendPathSegment("opportunities").AppendPathSegment(myOpportunity.OpportunityId);
+                        verificationURL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(myOpportunity.OrganizationId).AppendPathSegment("verifications");
                         break;
 
                     default:
@@ -821,6 +808,24 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 }
 
                 if (recipients == null || !recipients.Any()) return;
+
+                var data = new EmailOpportunityVerification
+                {
+                    YoIDURL = yoIDURL,
+                    VerificationURL = verificationURL,
+                    Opportunities = new List<EmailOpportunityVerificationItem>()
+                    {
+                        new() {
+                            Title = myOpportunity.OpportunityTitle,
+                            DateStart = myOpportunity.DateStart,
+                            DateEnd = myOpportunity.DateEnd,
+                            Comment = myOpportunity.CommentVerification,
+                            URL = opportunityURL,
+                            ZltoReward = myOpportunity.ZltoReward,
+                            YomaReward = myOpportunity.YomaReward
+                        }
+                    }
+                };
 
                 await _emailProviderClient.Send(type, recipients, data);
 

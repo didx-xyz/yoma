@@ -115,7 +115,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                                     DateStart = myOp.DateStart,
                                     DateEnd = myOp.DateEnd,
                                     Comment = myOp.CommentVerification,
-                                    URL = _appSettings.AppBaseURL.AppendPathSegment("opportunities").AppendPathSegment(myOp.Id).ToUri().ToString(),
+                                    URL = _appSettings.AppBaseURL.AppendPathSegment("opportunities").AppendPathSegment(myOp.OpportunityId).ToUri().ToString(),
                                     ZltoReward = myOp.ZltoReward,
                                     YomaReward = myOp.YomaReward
                                 });
