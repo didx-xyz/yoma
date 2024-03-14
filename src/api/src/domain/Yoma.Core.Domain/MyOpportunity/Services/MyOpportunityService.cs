@@ -28,6 +28,7 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
+using static System.Net.WebRequestMethods;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
@@ -558,7 +559,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var statusId = _myOpportunityVerificationStatusService.GetByName(request.Status.ToString()).Id;
 
             EmailType? emailType = null;
-            var yoIDURL = _appSettings.AppBaseURL.AppendPathSegment("yoid/opportunities");
             await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
                 using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
@@ -569,7 +569,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 switch (request.Status)
                 {
                     case VerificationStatus.Rejected:
-                        yoIDURL = yoIDURL.AppendPathSegment("declined");
                         emailType = EmailType.Opportunity_Verification_Rejected;
                         break;
 
@@ -577,7 +576,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         if (item.DateEnd.HasValue && item.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())
                             throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd:yyyy-MM-dd}')");
 
-                        yoIDURL = yoIDURL.AppendPathSegment("completed");
                         var (zltoReward, yomaReward) = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, true);
                         item.ZltoReward = zltoReward;
                         item.YomaReward = yomaReward;
@@ -607,42 +605,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 scope.Complete();
             });
 
-            try
-            {
-                var recipients = new List<EmailRecipient>
-                {
-                    new EmailRecipient { Email = item.UserEmail, DisplayName = item.UserDisplayName }
-                };
+            if (!emailType.HasValue)
+                throw new InvalidOperationException($"Email type expected");
 
-                var data = new EmailOpportunityVerification
-                {
-                    YoIDURL = yoIDURL.ToUri().ToString(),
-                    Opportunities = new List<EmailOpportunityVerificationItem>()
-                    {
-                        new EmailOpportunityVerificationItem
-                        {
-                            Title = item.OpportunityTitle,
-                            DateStart = item.DateStart,
-                            DateEnd = item.DateEnd,
-                            Comment = item.CommentVerification,
-                            URL = _appSettings.AppBaseURL.AppendPathSegment("opportunities").AppendPathSegment(item.Id).ToUri().ToString(),
-                            ZltoReward = item.ZltoReward,
-                            YomaReward = item.YomaReward
-                        }
-                    }
-                };
-
-                if (!emailType.HasValue)
-                    throw new InvalidOperationException($"Email type expected");
-
-                await _emailProviderClient.Send(emailType.Value, recipients, data);
-
-                _logger.LogInformation("Successfully send email");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send email");
-            }
+            await SendEmail(item, emailType.Value);
         }
 
         public Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(PaginationFilter filter, bool includeExpired)
@@ -793,6 +759,77 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             myOpportunity.DateEnd = request.DateEnd;
 
             await PerformActionSendForVerificationManual(request, opportunity, myOpportunity, isNew);
+
+            //sent to youth
+            await SendEmail(myOpportunity, EmailType.Opportunity_Verification_Pending);
+
+            //sent to organization admins
+            await SendEmail(myOpportunity, EmailType.Opportunity_Verification_Pending_Admin);
+        }
+
+        private async Task SendEmail(Models.MyOpportunity myOpportunity, EmailType type)
+        {
+            try
+            {
+                List<EmailRecipient>? recipients = null;
+
+                var data = new EmailOpportunityVerification
+                {
+                    Opportunities = new List<EmailOpportunityVerificationItem>()
+                    {
+                        new() {
+                            Title = myOpportunity.OpportunityTitle,
+                            DateStart = myOpportunity.DateStart,
+                            DateEnd = myOpportunity.DateEnd,
+                            Comment = myOpportunity.CommentVerification,
+                            URL = _appSettings.AppBaseURL.AppendPathSegment("opportunities").AppendPathSegment(myOpportunity.Id).ToUri().ToString(),
+                            ZltoReward = myOpportunity.ZltoReward,
+                            YomaReward = myOpportunity.YomaReward
+                        }
+                    }
+                };
+
+                switch (type)
+                {
+                    case EmailType.Opportunity_Verification_Rejected:
+                    case EmailType.Opportunity_Verification_Completed:
+                    case EmailType.Opportunity_Verification_Pending:
+                        recipients = new List<EmailRecipient>
+                        {
+                            new() { Email = myOpportunity.UserEmail, DisplayName = myOpportunity.UserDisplayName }
+                        };
+
+                        data.YoIDURL = _appSettings.AppBaseURL.AppendPathSegment("yoid/opportunities");
+                        data.YoIDURL = data.YoIDURL.AppendPathSegment(type switch
+                        {
+                            EmailType.Opportunity_Verification_Rejected => "declined",
+                            EmailType.Opportunity_Verification_Completed => "completed",
+                            EmailType.Opportunity_Verification_Pending => "submitted",
+                            _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
+                        });
+                        break;
+
+                    case EmailType.Opportunity_Verification_Pending_Admin:
+                        recipients = _organizationService.ListAdmins(myOpportunity.OrganizationId, false, false)
+                            .Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList();
+
+                        data.VerificationURL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(myOpportunity.OrganizationId).AppendPathSegment("verifications");
+                        break;
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
+                }
+
+                if (recipients == null || !recipients.Any()) return;
+
+                await _emailProviderClient.Send(type, recipients, data);
+
+                _logger.LogInformation("Successfully send '{emailType}' email", type);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send '{emailType}' email", type);
+            }
         }
 
         private async Task PerformActionSendForVerificationManual(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity myOpportunity, bool isNew)

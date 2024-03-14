@@ -152,7 +152,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 {
                     var recipients = new List<EmailRecipient>
                         {
-                            new EmailRecipient { Email = group.Key.Email, DisplayName = group.Key.DisplayName }
+                            new() { Email = group.Key.Email, DisplayName = group.Key.DisplayName }
                         };
 
                     var data = new EmailOpportunityExpiration

@@ -98,7 +98,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         {
                             var recipients = new List<EmailRecipient>
                         {
-                            new EmailRecipient { Email = group.Key.UserEmail, DisplayName = group.Key.UserDisplayName }
+                            new() { Email = group.Key.UserEmail, DisplayName = group.Key.UserDisplayName }
                         };
 
                             var data = new EmailOpportunityVerification

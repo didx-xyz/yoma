@@ -1159,9 +1159,10 @@ namespace Yoma.Core.Domain.Entity.Services
 
         private async Task SendEmail(Organization organization, EmailProvider.EmailType type)
         {
-            List<EmailRecipient>? recipients = null;
             try
             {
+                List<EmailRecipient>? recipients = null;
+
                 var dataOrg = new EmailOrganizationApprovalItem { Name = organization.Name };
                 switch (type)
                 {
