@@ -98,11 +98,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         {
                             var recipients = new List<EmailRecipient>
                         {
-                            new EmailRecipient { Email = group.Key.UserEmail, DisplayName = group.Key.UserDisplayName }
+                            new() { Email = group.Key.UserEmail, DisplayName = group.Key.UserDisplayName }
                         };
 
                             var data = new EmailOpportunityVerification
                             {
+                                YoIDURL = _appSettings.AppBaseURL.AppendPathSegment("yoid/opportunities/declined").ToUri().ToString(),
                                 Opportunities = new List<EmailOpportunityVerificationItem>()
                             };
 
@@ -114,7 +115,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                                     DateStart = myOp.DateStart,
                                     DateEnd = myOp.DateEnd,
                                     Comment = myOp.CommentVerification,
-                                    URL = _appSettings.AppBaseURL.AppendPathSegment("opportunities").AppendPathSegment(myOp.Id).ToUri().ToString(),
+                                    URL = _appSettings.AppBaseURL.AppendPathSegment("opportunities").AppendPathSegment(myOp.OpportunityId).ToUri().ToString(),
                                     ZltoReward = myOp.ZltoReward,
                                     YomaReward = myOp.YomaReward
                                 });

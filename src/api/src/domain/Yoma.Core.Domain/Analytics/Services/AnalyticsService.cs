@@ -241,7 +241,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             {
                 TopCompleted = new OpportunitySkillTopCompleted { Legend = "Most completed skills", TopCompleted = flattenedSkills.Take(Skill_Count).Select(g => g.Skill).OrderBy(s => s.Name).ToList() },
                 Items = new TimeIntervalSummary()
-                { Legend = new[] { "Total unique skills", }, Data = resultsSkills, Count = new[] { itemSkills.Sum(o => o.Count) } }
+                { Legend = new[] { "Total unique skills", }, Data = resultsSkills, Count = new[] { flattenedSkills.Count } }
             };
 
             //demogrpahics

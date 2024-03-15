@@ -1,5 +1,4 @@
 using Aries.CloudAPI.DotnetSDK.AspCore.Clients;
-using Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions;
 using Aries.CloudAPI.DotnetSDK.AspCore.Clients.Interfaces;
 using Aries.CloudAPI.DotnetSDK.AspCore.Clients.Models;
 using Newtonsoft.Json;

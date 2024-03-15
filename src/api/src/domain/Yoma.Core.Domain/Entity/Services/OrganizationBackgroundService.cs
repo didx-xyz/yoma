@@ -98,7 +98,7 @@ namespace Yoma.Core.Domain.Entity.Services
                         {
                             var recipients = new List<EmailRecipient>
                         {
-                            new EmailRecipient { Email = group.Key.Email, DisplayName = group.Key.DisplayName }
+                            new() { Email = group.Key.Email, DisplayName = group.Key.DisplayName }
                         };
 
                             var data = new EmailOrganizationApproval { Organizations = new List<EmailOrganizationApprovalItem>() };

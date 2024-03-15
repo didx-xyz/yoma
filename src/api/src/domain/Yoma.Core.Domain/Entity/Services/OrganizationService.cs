@@ -464,7 +464,7 @@ namespace Yoma.Core.Domain.Entity.Services
                         result = resultDelete.Organization;
                     }
 
-                    result = await SendForReapproval(result, OrganizationReapprovalAction.Reapproval, OrganizationStatus.Declined);
+                    result = await SendForReapproval(result, OrganizationReapprovalAction.Reapproval, OrganizationStatus.Declined, null);
 
                     scope.Complete();
                 });
@@ -809,6 +809,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new ArgumentNullException(nameof(providerTypeIds));
 
             var updated = false;
+            string? typesAssignedNames = null;
             await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
                 using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
@@ -831,10 +832,16 @@ namespace Yoma.Core.Domain.Entity.Services
                     organization.ProviderTypes.Add(new Models.Lookups.OrganizationProviderType { Id = type.Id, Name = type.Name });
 
                     updated = true;
+
+                    typesAssignedNames = $"{typesAssignedNames}{(string.IsNullOrEmpty(typesAssignedNames) ? string.Empty : ", ")}{type.Name}";
                 }
 
                 //send for reapproval irrespective of status with type additions
-                if (updated) await SendForReapproval(organization, reapprovalAction, null);
+                if (updated)
+                {
+                    var commentApproval = $"Roles Assigned: {typesAssignedNames}";
+                    await SendForReapproval(organization, reapprovalAction, null, commentApproval);
+                }
 
                 scope.Complete();
             });
@@ -866,7 +873,7 @@ namespace Yoma.Core.Domain.Entity.Services
                     updated = true;
                 }
 
-                if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
+                if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined, null);
 
                 scope.Complete();
             });
@@ -895,7 +902,7 @@ namespace Yoma.Core.Domain.Entity.Services
                     if (currentLogoId.HasValue)
                         await _blobService.Archive(currentLogoId.Value, blobObject); //preserve / archive previous logo as they might be referenced in credentials
 
-                    organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
+                    organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined, null);
 
                     scope.Complete();
                 });
@@ -952,7 +959,7 @@ namespace Yoma.Core.Domain.Entity.Services
                     await _identityProviderClient.EnsureRoles(user.ExternalId.Value, new List<string> { Constants.Role_OrganizationAdmin });
                 }
 
-                if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
+                if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined, null);
 
                 scope.Complete();
             });
@@ -993,7 +1000,7 @@ namespace Yoma.Core.Domain.Entity.Services
                         await _identityProviderClient.RemoveRoles(user.ExternalId.Value, new List<string> { Constants.Role_OrganizationAdmin });
                 }
 
-                if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
+                if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined, null);
 
                 scope.Complete();
             });
@@ -1001,7 +1008,7 @@ namespace Yoma.Core.Domain.Entity.Services
             return organization;
         }
 
-        private async Task<Organization> SendForReapproval(Organization organization, OrganizationReapprovalAction action, OrganizationStatus? requiredStatus)
+        private async Task<Organization> SendForReapproval(Organization organization, OrganizationReapprovalAction action, OrganizationStatus? requiredStatus, string? commentApproval)
         {
             switch (action)
             {
@@ -1014,6 +1021,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
                     if (organization.Status == OrganizationStatus.Inactive) return organization;
 
+                    organization.CommentApproval = commentApproval;
                     organization.Status = OrganizationStatus.Inactive;
                     organization.StatusId = _organizationStatusService.GetByName(OrganizationStatus.Inactive.ToString()).Id;
                     organization = await _organizationRepository.Update(organization);
@@ -1066,7 +1074,7 @@ namespace Yoma.Core.Domain.Entity.Services
                         itemsNew.Add(item);
                     }
 
-                    organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
+                    organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined, null);
 
                     scope.Complete();
                 });
@@ -1113,7 +1121,7 @@ namespace Yoma.Core.Domain.Entity.Services
                         itemsExistingDeleted.Add(item);
                     }
 
-                    organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined);
+                    organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined, null);
 
                     scope.Complete();
                 });
@@ -1151,9 +1159,10 @@ namespace Yoma.Core.Domain.Entity.Services
 
         private async Task SendEmail(Organization organization, EmailProvider.EmailType type)
         {
-            List<EmailRecipient>? recipients = null;
             try
             {
+                List<EmailRecipient>? recipients = null;
+
                 var dataOrg = new EmailOrganizationApprovalItem { Name = organization.Name };
                 switch (type)
                 {
@@ -1162,6 +1171,7 @@ namespace Yoma.Core.Domain.Entity.Services
                         var superAdmins = await _identityProviderClient.ListByRole(Constants.Role_Admin);
                         recipients = superAdmins?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.ToDisplayName() }).ToList();
 
+                        dataOrg.Comment = organization.CommentApproval;
                         dataOrg.URL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(organization.Id).AppendPathSegment("verify").ToUri().ToString();
                         break;
 

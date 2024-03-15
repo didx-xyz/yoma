@@ -604,41 +604,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 scope.Complete();
             });
 
-            try
-            {
-                var recipients = new List<EmailRecipient>
-                {
-                    new EmailRecipient { Email = item.UserEmail, DisplayName = item.UserDisplayName }
-                };
+            if (!emailType.HasValue)
+                throw new InvalidOperationException($"Email type expected");
 
-                var data = new EmailOpportunityVerification
-                {
-                    Opportunities = new List<EmailOpportunityVerificationItem>()
-                    {
-                        new EmailOpportunityVerificationItem
-                        {
-                            Title = item.OpportunityTitle,
-                            DateStart = item.DateStart,
-                            DateEnd = item.DateEnd,
-                            Comment = item.CommentVerification,
-                            URL = _appSettings.AppBaseURL.AppendPathSegment("opportunities").AppendPathSegment(item.Id).ToUri().ToString(),
-                            ZltoReward = item.ZltoReward,
-                            YomaReward = item.YomaReward
-                        }
-                    }
-                };
-
-                if (!emailType.HasValue)
-                    throw new InvalidOperationException($"Email type expected");
-
-                await _emailProviderClient.Send(emailType.Value, recipients, data);
-
-                _logger.LogInformation("Successfully send email");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send email");
-            }
+            await SendEmail(item, emailType.Value);
         }
 
         public Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(PaginationFilter filter, bool includeExpired)
@@ -789,6 +758,83 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             myOpportunity.DateEnd = request.DateEnd;
 
             await PerformActionSendForVerificationManual(request, opportunity, myOpportunity, isNew);
+
+            //sent to youth
+            await SendEmail(myOpportunity, EmailType.Opportunity_Verification_Pending);
+
+            //sent to organization admins
+            await SendEmail(myOpportunity, EmailType.Opportunity_Verification_Pending_Admin);
+        }
+
+        private async Task SendEmail(Models.MyOpportunity myOpportunity, EmailType type)
+        {
+            try
+            {
+                List<EmailRecipient>? recipients = null;
+                string opportunityURL = _appSettings.AppBaseURL.AppendPathSegment("opportunities").AppendPathSegment(myOpportunity.OpportunityId).ToUri().ToString();
+                string? yoIDURL = null;
+                string? verificationURL = null;
+                switch (type)
+                {
+                    case EmailType.Opportunity_Verification_Rejected:
+                    case EmailType.Opportunity_Verification_Completed:
+                    case EmailType.Opportunity_Verification_Pending:
+                        recipients = new List<EmailRecipient>
+                        {
+                            new() { Email = myOpportunity.UserEmail, DisplayName = myOpportunity.UserDisplayName }
+                        };
+
+                        yoIDURL = _appSettings.AppBaseURL.AppendPathSegment("yoid/opportunities");
+                        yoIDURL = yoIDURL.AppendPathSegment(type switch
+                        {
+                            EmailType.Opportunity_Verification_Rejected => "declined",
+                            EmailType.Opportunity_Verification_Completed => "completed",
+                            EmailType.Opportunity_Verification_Pending => "submitted",
+                            _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported")
+                        });
+                        break;
+
+                    case EmailType.Opportunity_Verification_Pending_Admin:
+                        recipients = _organizationService.ListAdmins(myOpportunity.OrganizationId, false, false)
+                            .Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList();
+
+                        opportunityURL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(myOpportunity.OrganizationId)
+                            .AppendPathSegment("opportunities").AppendPathSegment(myOpportunity.OpportunityId);
+                        verificationURL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(myOpportunity.OrganizationId).AppendPathSegment("verifications");
+                        break;
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
+                }
+
+                if (recipients == null || !recipients.Any()) return;
+
+                var data = new EmailOpportunityVerification
+                {
+                    YoIDURL = yoIDURL,
+                    VerificationURL = verificationURL,
+                    Opportunities = new List<EmailOpportunityVerificationItem>()
+                    {
+                        new() {
+                            Title = myOpportunity.OpportunityTitle,
+                            DateStart = myOpportunity.DateStart,
+                            DateEnd = myOpportunity.DateEnd,
+                            Comment = myOpportunity.CommentVerification,
+                            URL = opportunityURL,
+                            ZltoReward = myOpportunity.ZltoReward,
+                            YomaReward = myOpportunity.YomaReward
+                        }
+                    }
+                };
+
+                await _emailProviderClient.Send(type, recipients, data);
+
+                _logger.LogInformation("Successfully send '{emailType}' email", type);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send '{emailType}' email", type);
+            }
         }
 
         private async Task PerformActionSendForVerificationManual(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity myOpportunity, bool isNew)
