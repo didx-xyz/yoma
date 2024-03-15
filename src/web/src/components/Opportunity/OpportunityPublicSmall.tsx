@@ -18,8 +18,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
   return (
     <Link
       href={`/opportunities/${data.id}`}
-      target="_blank"
-      className="relative flex aspect-square min-w-[300px] transform-gpu flex-col gap-1 rounded-lg bg-white p-5 shadow-custom transition-all duration-300 hover:scale-105 hover:shadow-lg"
+      className="relative flex aspect-square w-[300px] transform-gpu flex-col gap-1 rounded-lg bg-white p-5 shadow-custom transition-all duration-300 hover:scale-105 hover:shadow-lg md:max-w-[300px]"
     >
       <div className="flex flex-row">
         <div className="flex flex-row">

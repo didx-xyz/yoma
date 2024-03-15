@@ -38,7 +38,7 @@ import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import { Loading } from "~/components/Status/Loading";
 import FileSaver from "file-saver";
 import { useAtomValue } from "jotai";
-import { smallDisplayAtom } from "~/lib/store";
+import { screenWidthAtom } from "~/lib/store";
 import ReactModal from "react-modal";
 import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
 import iconBell from "public/images/icon-bell.webp";
@@ -104,7 +104,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   const myRef = useRef<HTMLDivElement>(null);
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const smallDisplay = useAtomValue(smallDisplayAtom);
+  const smallDisplay = useAtomValue(screenWidthAtom);
 
   const lookups_publishedStates: SelectOption[] = [
     { value: "0", label: "Not started" },

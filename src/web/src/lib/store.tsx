@@ -8,8 +8,8 @@ const userProfileAtom = atom<UserProfile | null>(null);
 //   null,
 // );
 
-// small display state used by search results (show/hide filter)
-const smallDisplayAtom = atom(true);
+// tracks the current screen width for mobile detection
+const screenWidthAtom = atom(0);
 
 // PROFILE SWITCHING:
 // these atoms are used to override the navbar links (based on path & role) and user image/company logo
@@ -31,7 +31,7 @@ const currentLanguageAtom = atom<string>("en");
 
 export {
   userProfileAtom,
-  smallDisplayAtom,
+  screenWidthAtom,
   activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
   currentOrganisationLogoAtom,

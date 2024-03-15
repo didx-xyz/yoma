@@ -1,6 +1,7 @@
 export const PAGE_SIZE = 10;
 export const PAGE_SIZE_MEDIUM = 100;
 export const PAGE_SIZE_MAXIMUM = 1000;
+export const PAGE_SIZE_MINIMUM = 4;
 export const DATE_FORMAT_HUMAN = "DD MMM YYYY";
 export const DATE_FORMAT_HUMAN_LONG = "dddd Do MMMM YYYY";
 export const DATETIME_FORMAT_HUMAN = "MMM D YYYY, h:mm a";
@@ -84,3 +85,11 @@ export const CHART_COLORS = [
   "#818CF8",
   "#6EE7B7",
 ];
+
+export const VIEWPORT_SIZE = {
+  SM: 640,
+  MD: 768,
+  LG: 1024,
+  XL: 1280,
+  "2XL": 1536,
+};
