@@ -1,4 +1,3 @@
-using Flurl;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
@@ -27,6 +26,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         private readonly IMyOpportunityVerificationStatusService _myOpportunityVerificationStatusService;
         private readonly IMyOpportunityActionService _myOpportunityActionService;
         private readonly IOpportunityService _opportunityService;
+        private readonly IEmailURLFactory _emailURLFactory;
         private readonly IEmailProviderClient _emailProviderClient;
         private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
         private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
@@ -45,6 +45,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             IMyOpportunityVerificationStatusService myOpportunityVerificationStatusService,
             IMyOpportunityActionService myOpportunityActionService,
             IOpportunityService opportunityService,
+            IEmailURLFactory emailURLFactory,
             IEmailProviderClientFactory emailProviderClientFactory,
             IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
             IRepository<MyOpportunityVerification> myOpportunityVerificationRepository)
@@ -57,6 +58,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService;
             _myOpportunityActionService = myOpportunityActionService;
             _opportunityService = opportunityService;
+            _emailURLFactory = emailURLFactory;
             _emailProviderClient = emailProviderClientFactory.CreateClient();
             _myOpportunityRepository = myOpportunityRepository;
             _myOpportunityVerificationRepository = myOpportunityVerificationRepository;
@@ -103,7 +105,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
                             var data = new EmailOpportunityVerification
                             {
-                                YoIDURL = _appSettings.AppBaseURL.AppendPathSegment("yoid/opportunities/declined").ToUri().ToString(),
+                                YoIDURL = _emailURLFactory.OpportunityVerificationYoIDURL(emailType),
                                 Opportunities = new List<EmailOpportunityVerificationItem>()
                             };
 
@@ -115,7 +117,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                                     DateStart = myOp.DateStart,
                                     DateEnd = myOp.DateEnd,
                                     Comment = myOp.CommentVerification,
-                                    URL = _appSettings.AppBaseURL.AppendPathSegment("opportunities").AppendPathSegment(myOp.OpportunityId).ToUri().ToString(),
+                                    URL = _emailURLFactory.OpportunityVerificationItemURL(emailType, myOp.OpportunityId, null),
                                     ZltoReward = myOp.ZltoReward,
                                     YomaReward = myOp.YomaReward
                                 });

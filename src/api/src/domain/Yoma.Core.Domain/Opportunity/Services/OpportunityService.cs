@@ -1,5 +1,4 @@
 using FluentValidation;
-using Flurl;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -48,6 +47,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly ITimeIntervalService _timeIntervalService;
         private readonly IBlobService _blobService;
         private readonly IUserService _userService;
+        private readonly IEmailURLFactory _emailURLFactory;
         private readonly IEmailProviderClient _emailProviderClient;
         private readonly IIdentityProviderClient _identityProviderClient;
 
@@ -90,6 +90,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             ITimeIntervalService timeIntervalService,
             IBlobService blobService,
             IUserService userService,
+            IEmailURLFactory emailURLFactory,
             IEmailProviderClientFactory emailProviderClientFactory,
             IIdentityProviderClientFactory identityProviderClientFactory,
             OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
@@ -121,6 +122,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             _timeIntervalService = timeIntervalService;
             _blobService = blobService;
             _userService = userService;
+            _emailURLFactory = emailURLFactory;
             _emailProviderClient = emailProviderClientFactory.CreateClient();
             _identityProviderClient = identityProviderClientFactory.CreateClient();
 
@@ -1361,9 +1363,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                             Title = opportunity.Title,
                             DateStart = opportunity.DateStart,
                             DateEnd = opportunity.DateEnd,
-                            URL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(opportunity.OrganizationId)
-                                .AppendPathSegment("opportunities").AppendPathSegment(opportunity.Id).AppendPathSegment("info")
-                                .SetQueryParam("returnUrl", "/admin/opportunities").ToUri().ToString(),
+                            URL = _emailURLFactory.OpportunityPostedItemURL(type, opportunity.Id, opportunity.OrganizationId),
                             ZltoReward = opportunity.ZltoReward,
                             YomaReward = opportunity.YomaReward
                         }

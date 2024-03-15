@@ -7,7 +7,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.EmailProvider.Interfaces;
 using Yoma.Core.Domain.EmailProvider.Models;
-using Flurl;
 using Yoma.Core.Domain.Core.Helpers;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
@@ -25,6 +24,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IOrganizationStatusService _organizationStatusService;
         private readonly IEmailProviderClient _emailProviderClient;
         private readonly IUserService _userService;
+        private readonly IEmailURLFactory _emailURLFactory;
         private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
         private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
         private static readonly OrganizationStatus[] Statuses_Declination = { OrganizationStatus.Inactive };
@@ -42,6 +42,7 @@ namespace Yoma.Core.Domain.Entity.Services
             IOrganizationStatusService organizationStatusService,
             IEmailProviderClientFactory emailProviderClientFactory,
             IUserService userService,
+            IEmailURLFactory emailURLFactory,
             IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
             IRepository<OrganizationDocument> organizationDocumentRepository)
         {
@@ -53,6 +54,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _organizationStatusService = organizationStatusService;
             _emailProviderClient = emailProviderClientFactory.CreateClient();
             _userService = userService;
+            _emailURLFactory = emailURLFactory;
             _organizationRepository = organizationRepository;
             _organizationDocumentRepository = organizationDocumentRepository;
         }
@@ -108,8 +110,8 @@ namespace Yoma.Core.Domain.Entity.Services
                                 {
                                     Name = org.Name,
                                     Comment = org.CommentApproval,
-                                    URL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(org.Id).ToUri().ToString()
-                                });
+                                    URL = _emailURLFactory.OrganizationApprovalItemURL(emailType, org.Id)
+                                }); 
                             }
 
                             _emailProviderClient.Send(emailType, recipients, data).Wait();

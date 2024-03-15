@@ -7,6 +7,8 @@ using Yoma.Core.Domain.Analytics.Services;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Services;
+using Yoma.Core.Domain.EmailProvider.Interfaces;
+using Yoma.Core.Domain.EmailProvider.Services;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
@@ -53,6 +55,10 @@ namespace Yoma.Core.Domain
             #region Core
             services.AddScoped<IBlobService, BlobService>();
             #endregion Core
+
+            #region EmailProvider
+            services.AddScoped<IEmailURLFactory, EmailURLFactory>();
+            #endregion EmailProvider
 
             #region Entity
             #region Lookups

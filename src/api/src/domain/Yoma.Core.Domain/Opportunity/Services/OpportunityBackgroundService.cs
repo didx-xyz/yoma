@@ -1,4 +1,3 @@
-using Flurl;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Helpers;
@@ -23,6 +22,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         private readonly IOrganizationService _organizationService;
         private readonly IEmailProviderClient _emailProviderClient;
         private readonly IUserService _userService;
+        private readonly IEmailURLFactory _emailURLFactory;
         private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
         private static readonly Status[] Statuses_Expirable = { Status.Active, Status.Inactive };
         private static readonly Status[] Statuses_Deletion = { Status.Inactive, Status.Expired };
@@ -38,6 +38,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             IOrganizationService organizationService,
             IEmailProviderClientFactory emailProviderClientFactory,
             IUserService userService,
+            IEmailURLFactory emailURLFactory,
             IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository)
         {
             _logger = logger;
@@ -47,6 +48,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             _organizationService = organizationService;
             _emailProviderClient = emailProviderClientFactory.CreateClient();
             _userService = userService;
+            _emailURLFactory = emailURLFactory;
             _opportunityRepository = opportunityRepository;
         }
         #endregion
@@ -168,8 +170,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                             Title = op.Title,
                             DateStart = op.DateStart,
                             DateEnd = op.DateEnd,
-                            URL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(op.OrganizationId).AppendPathSegment("opportunities")
-                                .AppendPathSegment(op.Id).AppendPathSegment("info").ToUri().ToString()
+                            URL = _emailURLFactory.OpportunityExpirationItemURL(type, op.Id, op.OrganizationId)
                         });
                     }
 
