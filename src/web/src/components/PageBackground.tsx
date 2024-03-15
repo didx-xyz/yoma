@@ -8,7 +8,7 @@ export const PageBackground: React.FC<{ height?: number }> = ({
       className="bg-theme absolute left-0 top-0 z-0 flex h-32 w-full items-center justify-center"
     >
       <Image
-        src={"/images/world-map.png"}
+        src={"/images/world-map.webp"}
         alt="world-map"
         width={1280}
         height={720}
