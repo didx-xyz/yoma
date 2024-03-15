@@ -33,16 +33,18 @@ import {
   searchOpportunities,
 } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
-import { OpportunityRow } from "~/components/Opportunity/OpportunityRow";
+import { OpportunitiesGrid } from "~/components/Opportunity/OpportunitiesGrid";
 import { PageBackground } from "~/components/PageBackground";
 import { SearchInputLarge } from "~/components/SearchInputLarge";
-import { smallDisplayAtom } from "~/lib/store";
+import { screenWidthAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
 import {
   PAGE_SIZE,
   OPPORTUNITY_TYPES_LEARNING,
   OPPORTUNITY_TYPES_TASK,
+  PAGE_SIZE_MINIMUM,
+  VIEWPORT_SIZE,
 } from "~/lib/constants";
 import { useQuery } from "@tanstack/react-query";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -51,6 +53,7 @@ import { Loading } from "~/components/Status/Loading";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { useSession } from "next-auth/react";
 import { OpportunityFilterOptions } from "~/api/models/opportunity";
+import { OpportunitiesCarousel } from "~/components/Opportunity/OpportunitiesCarousel";
 
 // 👇 SSG
 // This function gets called at build time on server-side.
@@ -60,7 +63,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const opportunities_trending = await searchOpportunities(
     {
       pageNumber: 1,
-      pageSize: 4,
+      pageSize: PAGE_SIZE_MINIMUM,
       categories: null,
       countries: null,
       languages: null,
@@ -77,7 +80,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const opportunities_learning = await searchOpportunities(
     {
       pageNumber: 1,
-      pageSize: 4,
+      pageSize: PAGE_SIZE_MINIMUM,
       categories: null,
       countries: null,
       languages: null,
@@ -94,7 +97,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const opportunities_tasks = await searchOpportunities(
     {
       pageNumber: 1,
-      pageSize: 4,
+      pageSize: PAGE_SIZE_MINIMUM,
       categories: null,
       countries: null,
       languages: null,
@@ -111,7 +114,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const opportunities_allOpportunities = await searchOpportunities(
     {
       pageNumber: 1,
-      pageSize: 10, //NB: page is 10 items (first page only), the PagingButtons control below will allow the user to navigate to the second page
+      pageSize: PAGE_SIZE_MINIMUM,
       categories: null,
       countries: null,
       languages: null,
@@ -191,7 +194,7 @@ const Opportunities: NextPageWithLayout<{
   const { data: session } = useSession();
   const myRef = useRef<HTMLDivElement>(null);
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
-  const smallDisplay = useAtomValue(smallDisplayAtom);
+  const screenWidth = useAtomValue(screenWidthAtom);
 
   const lookups_publishedStates: SelectOption[] = [
     { value: "0", label: "Not started" },
@@ -428,8 +431,8 @@ const Opportunities: NextPageWithLayout<{
 
   // disable full-size search filters when resizing to larger screens
   useEffect(() => {
-    if (!smallDisplay) setFilterFullWindowVisible(false);
-  }, [smallDisplay]);
+    if (screenWidth < VIEWPORT_SIZE.MD) setFilterFullWindowVisible(false);
+  }, [screenWidth]);
 
   // 📜 scroll to results when search is executed
   // useEffect(() => {
@@ -594,6 +597,171 @@ const Opportunities: NextPageWithLayout<{
     void router.push("/opportunities", undefined, { scroll: true });
   }, [router]);
 
+  //
+
+  const loadDataTrending = useCallback(
+    async (startRow: number) => {
+      console.warn("Trending: startRow: ", startRow);
+      console.warn(
+        "Trending: pageNumber: " +
+          Math.ceil((startRow + 1) / PAGE_SIZE_MINIMUM),
+      );
+
+      if (startRow >= (opportunities_trending?.totalCount ?? 0)) {
+        console.warn(
+          "Trending: returning... TotalCount: ",
+          opportunities_trending?.totalCount,
+        );
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+
+      const data = await searchOpportunities({
+        pageNumber: Math.ceil(startRow / PAGE_SIZE_MINIMUM),
+        pageSize: PAGE_SIZE_MINIMUM,
+        categories: null,
+        countries: null,
+        languages: null,
+        types: null,
+        valueContains: null,
+        commitmentIntervals: null,
+        mostViewed: true,
+        organizations: null,
+        zltoRewardRanges: null,
+        publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      });
+
+      console.warn("Trending: data: ", opportunities_trending);
+
+      return data;
+    },
+    [opportunities_trending],
+  );
+
+  const loadDataLearning = useCallback(
+    async (startRow: number) => {
+      console.warn("Learning: startRow: ", startRow);
+      console.warn(
+        "Learning: pageNumber: " +
+          Math.ceil((startRow + 1) / PAGE_SIZE_MINIMUM),
+      );
+
+      if (startRow >= (opportunities_learning?.totalCount ?? 0)) {
+        console.warn(
+          "Learning: returning... TotalCount: ",
+          opportunities_learning?.totalCount,
+        );
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+
+      const data = await searchOpportunities({
+        pageNumber: Math.ceil(startRow / PAGE_SIZE_MINIMUM),
+        pageSize: PAGE_SIZE_MINIMUM,
+        categories: null,
+        countries: null,
+        languages: null,
+        types: OPPORTUNITY_TYPES_LEARNING,
+        valueContains: null,
+        commitmentIntervals: null,
+        mostViewed: null,
+        organizations: null,
+        zltoRewardRanges: null,
+        publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      });
+
+      console.warn("Learning: data: ", data);
+
+      return data;
+    },
+    [opportunities_learning],
+  );
+
+  const loadDataTasks = useCallback(
+    async (startRow: number) => {
+      console.warn("Tasks: startRow: ", startRow);
+      console.warn(
+        "Tasks: pageNumber: " + Math.ceil((startRow + 1) / PAGE_SIZE_MINIMUM),
+      );
+
+      if (startRow >= (opportunities_tasks?.totalCount ?? 0)) {
+        console.warn(
+          "Tasks: returning... TotalCount: ",
+          opportunities_tasks?.totalCount,
+        );
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+
+      const data = await searchOpportunities({
+        pageNumber: Math.ceil((startRow + 1) / PAGE_SIZE_MINIMUM),
+        pageSize: PAGE_SIZE_MINIMUM,
+        categories: null,
+        countries: null,
+        languages: null,
+        types: OPPORTUNITY_TYPES_TASK,
+        valueContains: null,
+        commitmentIntervals: null,
+        mostViewed: null,
+        organizations: null,
+        zltoRewardRanges: null,
+        publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      });
+
+      console.warn("Tasks: data: ", data);
+
+      return data;
+    },
+    [opportunities_tasks],
+  );
+
+  const loadDataOpportunities = useCallback(
+    async (startRow: number) => {
+      console.warn("Opportunities: startRow: ", startRow);
+      console.warn(
+        "Opportunities: pageNumber: " +
+          Math.ceil((startRow + 1) / PAGE_SIZE_MINIMUM),
+      );
+
+      if (startRow >= (opportunities_allOpportunities?.totalCount ?? 0)) {
+        console.warn(
+          "Trending: returning... TotalCount: ",
+          opportunities_allOpportunities?.totalCount,
+        );
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+
+      const data = await searchOpportunities({
+        pageNumber: Math.ceil((startRow + 1) / PAGE_SIZE_MINIMUM),
+        pageSize: PAGE_SIZE_MINIMUM,
+        categories: null,
+        countries: null,
+        languages: null,
+        types: null,
+        valueContains: null,
+        commitmentIntervals: null,
+        mostViewed: null,
+        organizations: null,
+        zltoRewardRanges: null,
+        publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      });
+
+      console.warn("Opportunities: data: ", data);
+
+      return data;
+    },
+    [opportunities_allOpportunities],
+  );
+
   return (
     <>
       <Head>
@@ -711,58 +879,46 @@ const Opportunities: NextPageWithLayout<{
           <div className="flex flex-col gap-6">
             {/* TRENDING */}
             {(opportunities_trending?.totalCount ?? 0) > 0 && (
-              <OpportunityRow
+              <OpportunitiesCarousel
                 id="opportunities_trending"
                 title="Trending 🔥"
                 data={opportunities_trending}
                 viewAllUrl="/opportunities?mostViewed=true"
+                loadData={loadDataTrending}
               />
             )}
 
             {/* LEARNING COURSES */}
             {(opportunities_learning?.totalCount ?? 0) > 0 && (
-              <OpportunityRow
+              <OpportunitiesCarousel
                 id="opportunities_learning"
                 title="Learning Courses 📚"
                 data={opportunities_learning}
                 viewAllUrl="/opportunities?types=Learning"
+                loadData={loadDataLearning}
               />
             )}
 
             {/* IMPACT TASKS */}
             {(opportunities_tasks?.totalCount ?? 0) > 0 && (
-              <OpportunityRow
+              <OpportunitiesCarousel
                 id="opportunities_tasks"
                 title="Impact Tasks ⚡"
                 data={opportunities_tasks}
                 viewAllUrl="/opportunities?types=Task"
+                loadData={loadDataTasks}
               />
             )}
 
             {/* ALL OPPORTUNITIES */}
             {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
-              <>
-                <OpportunityRow
-                  id="opportunities_allOpportunities"
-                  title="All Opportunities"
-                  data={opportunities_allOpportunities}
-                  viewAllUrl="/opportunities?page=1"
-                />
-
-                {/* PAGINATION */}
-                <div className="mt-2 grid place-items-center justify-center">
-                  <PaginationButtons
-                    currentPage={page ? parseInt(page.toString()) : 1}
-                    totalItems={
-                      opportunities_allOpportunities.totalCount as number
-                    }
-                    pageSize={PAGE_SIZE}
-                    showPages={false}
-                    showInfo={true}
-                    onClick={handlePagerChange}
-                  />
-                </div>
-              </>
+              <OpportunitiesCarousel
+                id="opportunities_allOpportunities"
+                title="All Opportunities"
+                data={opportunities_allOpportunities}
+                viewAllUrl="/opportunities?page=1"
+                loadData={loadDataOpportunities}
+              />
             )}
           </div>
         )}
@@ -784,9 +940,10 @@ const Opportunities: NextPageWithLayout<{
 
               {/* GRID */}
               {searchResults && searchResults.items.length > 0 && (
-                <OpportunityRow
+                <OpportunitiesGrid
                   id="opportunities_search"
                   data={searchResults}
+                  loadData={loadDataTrending}
                 />
               )}
 
