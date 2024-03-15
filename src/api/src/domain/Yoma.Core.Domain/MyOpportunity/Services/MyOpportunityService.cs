@@ -761,6 +761,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             await PerformActionSendForVerificationManual(request, opportunity, myOpportunity, isNew);
 
+            //used by emailer
+            myOpportunity.UserEmail = user.Email;
+            myOpportunity.UserDisplayName = user.DisplayName;
+            myOpportunity.OpportunityTitle = opportunity.Title;
+            myOpportunity.OrganizationId = opportunity.OrganizationId;
+            myOpportunity.ZltoReward = opportunity.ZltoReward;
+            myOpportunity.YomaReward = opportunity.YomaReward;
+
             //sent to youth
             await SendEmail(myOpportunity, EmailType.Opportunity_Verification_Pending);
 
