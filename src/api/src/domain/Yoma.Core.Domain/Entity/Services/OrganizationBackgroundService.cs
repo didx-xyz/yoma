@@ -111,7 +111,7 @@ namespace Yoma.Core.Domain.Entity.Services
                                     Name = org.Name,
                                     Comment = org.CommentApproval,
                                     URL = _emailURLFactory.OrganizationApprovalItemURL(emailType, org.Id)
-                                }); 
+                                });
                             }
 
                             _emailProviderClient.Send(emailType, recipients, data).Wait();
