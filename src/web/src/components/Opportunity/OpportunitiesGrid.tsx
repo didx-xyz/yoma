@@ -9,14 +9,14 @@ interface InputProps {
   viewAllUrl?: string;
 }
 
-export const OpportunityRow: React.FC<InputProps> = ({
+export const OpportunitiesGrid: React.FC<InputProps> = ({
   id,
   title,
   data,
   viewAllUrl,
 }) => {
   return (
-    <div key={`OpportunityRow_${id}`}>
+    <div key={`OpportunitiesGrid_${id}`}>
       {(data?.items?.length ?? 0) > 0 && (
         <div className="flex flex-col gap-6">
           <div className="flex flex-row">

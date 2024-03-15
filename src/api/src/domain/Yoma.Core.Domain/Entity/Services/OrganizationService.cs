@@ -15,7 +15,6 @@ using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.EmailProvider.Interfaces;
 using Yoma.Core.Domain.EmailProvider.Models;
 using Microsoft.Extensions.Options;
-using Flurl;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.IdentityProvider.Helpers;
 using Microsoft.Extensions.Logging;
@@ -37,6 +36,7 @@ namespace Yoma.Core.Domain.Entity.Services
         private readonly IOrganizationProviderTypeService _providerTypeService;
         private readonly IBlobService _blobService;
         private readonly ISSITenantService _ssiTenantService;
+        private readonly IEmailURLFactory _emailURLFactory;
         private readonly IEmailProviderClient _emailProviderClient;
         private readonly OrganizationRequestValidatorCreate _organizationCreateRequestValidator;
         private readonly OrganizationRequestValidatorUpdate _organizationUpdateRequestValidator;
@@ -65,6 +65,7 @@ namespace Yoma.Core.Domain.Entity.Services
             IOrganizationProviderTypeService providerTypeService,
             IBlobService blobService,
             ISSITenantService ssiTenantService,
+            IEmailURLFactory emailURLFactory,
             IEmailProviderClientFactory emailProviderClientFactory,
             OrganizationRequestValidatorCreate organizationCreateRequestValidator,
             OrganizationRequestValidatorUpdate organizationUpdateRequestValidator,
@@ -85,6 +86,7 @@ namespace Yoma.Core.Domain.Entity.Services
             _providerTypeService = providerTypeService;
             _blobService = blobService;
             _ssiTenantService = ssiTenantService;
+            _emailURLFactory = emailURLFactory;
             _emailProviderClient = emailProviderClientFactory.CreateClient();
             _organizationCreateRequestValidator = organizationCreateRequestValidator;
             _organizationUpdateRequestValidator = organizationUpdateRequestValidator;
@@ -1172,7 +1174,7 @@ namespace Yoma.Core.Domain.Entity.Services
                         recipients = superAdmins?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.ToDisplayName() }).ToList();
 
                         dataOrg.Comment = organization.CommentApproval;
-                        dataOrg.URL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(organization.Id).AppendPathSegment("verify").ToUri().ToString();
+                        dataOrg.URL = _emailURLFactory.OrganizationApprovalItemURL(type, organization.Id);
                         break;
 
                     case EmailProvider.EmailType.Organization_Approval_Approved:
@@ -1181,7 +1183,7 @@ namespace Yoma.Core.Domain.Entity.Services
                         recipients = organization.Administrators?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList();
 
                         dataOrg.Comment = organization.CommentApproval;
-                        dataOrg.URL = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(organization.Id).ToUri().ToString();
+                        dataOrg.URL = _emailURLFactory.OrganizationApprovalItemURL(type, organization.Id);
                         break;
 
                     default:

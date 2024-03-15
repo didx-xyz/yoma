@@ -13,33 +13,33 @@ import { RoundedImage } from "~/components/RoundedImage";
 import { THEME_ORANGE } from "~/lib/constants";
 import Image from "next/image";
 
-import imageWoman from "public/images/home/bg-woman.png";
-import imageCardID from "public/images/home/card-id.png";
-import imageLogoGoodwall from "public/images/home/logo-goodwall.png";
-import imageLogoAppStore from "public/images/home/logo-appstore.png";
-import imageLogoPlayStore from "public/images/home/logo-playstore.png";
+import imageWoman from "public/images/home/bg-woman.webp";
+import imageCardID from "public/images/home/card-id.webp";
+import imageLogoGoodwall from "public/images/home/logo-goodwall.webp";
+import imageLogoAppStore from "public/images/home/logo-appstore.webp";
+import imageLogoPlayStore from "public/images/home/logo-playstore.webp";
 import imageLogoYoma from "public/images/logo-dark.webp";
-import imageLogoWhatsapp from "public/images/home/logo-whatsapp.png";
-import imageLogoAtingi from "public/images/home/logo-atingi.png";
-import imageLogoUCT from "public/images/home/logo-UCT.png";
-import imageLogoCartedo from "public/images/home/logo-cartedo.png";
-import imageImpact from "public/images/home/impact.png";
-import imageThrive from "public/images/home/thrive.png";
-import imageLogoZltoBig from "public/images/home/logo-zlto-big.png";
-import iconGreenCheck from "public/images/home/icon-green-check.png";
-import iconBlueUpload from "public/images/home/icon-blue-upload.png";
-import iconOrangeZlto from "public/images/home/icon-orange-zlto.png";
-import iconSap from "public/images/home/logo-sap.png";
-import iconAccenture from "public/images/home/logo-accenture.png";
-import iconUmuzi from "public/images/home/logo-umuzi.png";
-import iconFoundationBotnar from "public/images/home/logo-foundation-botnar.png";
-import iconRlabs from "public/images/home/logo-rlabs.png";
-import iconGiz from "public/images/home/logo-giz.png";
-import iconUnlimitedGeneration from "public/images/home/logo-unlimitedgeneration.png";
-import iconDidx from "public/images/home/logo-didx.png";
-import imageLogoDelta from "public/images/home/logo-delta.png";
-import imageLogoJobberman from "public/images/home/logo-jobberman.png";
-import iconUnicef from "public/images/home/logo-unicef.png";
+import imageLogoWhatsapp from "public/images/home/logo-whatsapp.webp";
+import imageLogoAtingi from "public/images/home/logo-atingi.webp";
+import imageLogoUCT from "public/images/home/logo-UCT.webp";
+import imageLogoCartedo from "public/images/home/logo-cartedo.webp";
+import imageImpact from "public/images/home/impact.webp";
+import imageThrive from "public/images/home/thrive.webp";
+import imageLogoZltoBig from "public/images/home/logo-zlto-big.webp";
+import iconGreenCheck from "public/images/home/icon-green-check.webp";
+import iconBlueUpload from "public/images/home/icon-blue-upload.webp";
+import iconOrangeZlto from "public/images/home/icon-orange-zlto.webp";
+import iconSap from "public/images/home/logo-sap.webp";
+import iconAccenture from "public/images/home/logo-accenture.webp";
+import iconUmuzi from "public/images/home/logo-umuzi.webp";
+import iconFoundationBotnar from "public/images/home/logo-foundation-botnar.webp";
+import iconRlabs from "public/images/home/logo-rlabs.webp";
+import iconGiz from "public/images/home/logo-giz.webp";
+import iconUnlimitedGeneration from "public/images/home/logo-unlimitedgeneration.webp";
+import iconDidx from "public/images/home/logo-didx.webp";
+import imageLogoDelta from "public/images/home/logo-delta.webp";
+import imageLogoJobberman from "public/images/home/logo-jobberman.webp";
+import iconUnicef from "public/images/home/logo-unicef.webp";
 
 import OpportunityCard from "~/components/Home/OpportunityCard";
 import { IoMdCheckmark } from "react-icons/io";
@@ -233,7 +233,7 @@ const Home: NextPageWithLayout<{
         </div>
 
         {/* GREEN BACKGROUND */}
-        <div className="mt-10 flex h-96 w-full items-center justify-center bg-green bg-[url('/images/world-map.png')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
+        <div className="mt-10 flex h-96 w-full items-center justify-center bg-green bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
           <div className="mt-36 flex max-w-5xl flex-col">
             {/* ID CARD, LEARN MORE */}
             <div className="flex flex-col md:flex-row">
@@ -481,7 +481,7 @@ const Home: NextPageWithLayout<{
         </div>
 
         {/* FIND JOB OPPORTUNITIES */}
-        <div className="mt-10 flex h-96 w-full items-center justify-center bg-gray bg-[url('/images/world-map.png')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
+        <div className="mt-10 flex h-96 w-full items-center justify-center bg-gray bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
           <div className="-mt-52 grid max-w-5xl grid-cols-1 md:grid-cols-2">
             <div className="flex flex-col items-center justify-center">
               <div className="relative flex flex-col">
@@ -535,7 +535,7 @@ const Home: NextPageWithLayout<{
         </div>
 
         {/* WHITE BACKGROUND */}
-        <div className="flex h-80 w-full items-center justify-center bg-white bg-[url('/images/world-map.png')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
+        <div className="flex h-80 w-full items-center justify-center bg-white bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
           {/* OUR PARTNERS */}
           <div className=" flex flex-col items-center justify-center gap-4">
             <h2 className="text-2xl font-semibold text-black">Our partners</h2>
@@ -623,7 +623,7 @@ const Home: NextPageWithLayout<{
         </div>
 
         {/* PURPLE BACKGROUND */}
-        <div className="flex h-80 w-full items-center justify-center bg-purple bg-[url('/images/world-map.png')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
+        <div className="flex h-80 w-full items-center justify-center bg-purple bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
           {/* JOIN THE YOMA COMMUNITY */}
           <div className="flex max-w-5xl flex-col gap-10 lg:flex-row">
             <div className="flex w-[510px] flex-col">

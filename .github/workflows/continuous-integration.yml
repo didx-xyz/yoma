@@ -322,7 +322,7 @@ jobs:
         if: steps.filter.outputs.api == 'true' || steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch'
       - name: SOPS Binary Installer
         if: steps.filter.outputs.api == 'true' || steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch'
-        uses: mdgreenwald/mozilla-sops-action@v1.5.0
+        uses: mdgreenwald/mozilla-sops-action@v1.6.0
       - uses: aws-actions/configure-aws-credentials@v4
         if: steps.filter.outputs.api == 'true' || steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch'
         with:

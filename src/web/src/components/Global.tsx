@@ -17,7 +17,7 @@ import {
   currentOrganisationIdAtom,
   currentOrganisationInactiveAtom,
   currentOrganisationLogoAtom,
-  smallDisplayAtom,
+  screenWidthAtom,
   userProfileAtom,
 } from "~/lib/store";
 import ReactModal from "react-modal";
@@ -47,7 +47,7 @@ export const Global: React.FC = () => {
   const setCurrentOrganisationInactiveAtom = useSetAtom(
     currentOrganisationInactiveAtom,
   );
-  const setSmallDisplay = useSetAtom(smallDisplayAtom);
+  const setScreenWidthAtom = useSetAtom(screenWidthAtom);
 
   const [onboardingDialogVisible, setOnboardingDialogVisible] = useState(false);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
@@ -106,19 +106,18 @@ export const Global: React.FC = () => {
     }
   }, [session, userProfile, setUserProfile, setOnboardingDialogVisible]);
 
-  // 🔔 SMALL DISPLAY
+  // 🔔 VIEWPORT DETECTION
   // track the screen size for responsive elements
   useEffect(() => {
     function onResize() {
-      const small = window.innerWidth < 768;
-      setSmallDisplay(small);
+      setScreenWidthAtom(window.innerWidth);
     }
     onResize();
     window.addEventListener("resize", onResize);
 
     // 👇️ remove the event listener when component unmounts
     return () => window.removeEventListener("resize", onResize);
-  }, [setSmallDisplay]);
+  }, [setScreenWidthAtom]);
 
   // 🔔 ROUTE CHANGE HANDLER
   useEffect(() => {
