@@ -1,6 +1,7 @@
 import Head from "next/head";
 import type { ReactElement } from "react";
 import { Footer } from "../Footer/Footer";
+import { Feedback } from "../Feedback";
 
 export type LayoutProps = ({
   children,
@@ -20,7 +21,8 @@ const MainLayout: LayoutProps = ({ children }) => {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex min-h-screen justify-center bg-gray-light">
+      <main className="relative flex min-h-screen justify-center bg-gray-light">
+        <Feedback />
         {children}
       </main>
       <Footer />

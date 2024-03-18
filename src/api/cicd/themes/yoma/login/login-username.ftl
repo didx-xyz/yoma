@@ -1,7 +1,7 @@
 <#import "template.ftl" as layout>
   <@layout.registrationLayout displayMessage=!messagesPerField.existsError('username') displayInfo=(realm.password && realm.registrationAllowed && !registrationDisabled??); section>
     <#if section="header">
-      ${msg("loginAccountTitle")}
+      <h1>${msg("loginAccountTitle")}</h1>
       <label id="kc-register-form" for="username" class="centered-label">
         ${msg("loginSubTitle")}
       </label>
@@ -27,7 +27,8 @@
                       aria-invalid="<#if messagesPerField.existsError('username')>true</#if>"
                       class="${properties.kcInputClass!}" name="username"
                       value="${(login.username!'')}"
-                      type="text" autofocus autocomplete="off" />
+       type="text" autofocus autocomplete="off"
+       placeholder="${msg(properties.kcInputPlaceholder!'Your email address')}" />
                     <#if messagesPerField.existsError('username')>
                       <span id="input-error-username" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
                         ${kcSanitize(messagesPerField.get('username'))?no_esc}
@@ -56,35 +57,34 @@
                 </div>
                 <div id="kc-form-buttons" class="${properties.kcFormGroupClass!}">
                 </div>
-                <hr class="grey-hr">
               </form>
             </#if>
           </div>
         </div>
         <#elseif section="info">
           <#if realm.password && realm.registrationAllowed && !registrationDisabled??>
+
             <div id="kc-registration">
-              <span tabindex="6" onclick="window.location='${url.registrationUrl}'" class="white-link">
+              <button tabindex="6" onclick="window.location='${url.registrationUrl}'">
                 <!-- ${msg("doRegister")} -->
-              </span>
+              </button>
             </div>
           </#if>
           <#elseif section="socialProviders">
             <#if realm.password && social.providers??>
               <div id="kc-social-providers" class="${properties.kcFormSocialAccountSectionClass!}">
-                <hr />
                 <h4>
                   ${msg("identity-provider-login-label")}
                 </h4>
                 <ul class="${properties.kcFormSocialAccountListClass!}
-<#if social.providers?size gt 3>
-${properties.kcFormSocialAccountListGridClass!}
-</#if>">
+                <#if social.providers?size gt 3>
+                ${properties.kcFormSocialAccountListGridClass!}
+                </#if>">
                   <#list social.providers as p>
                     <a id="social-${p.alias}" class="${properties.kcFormSocialAccountListButtonClass!}
-<#if social.providers?size gt 3>
-${properties.kcFormSocialAccountGridItem!}
-</#if>"
+                <#if social.providers?size gt 3>
+                ${properties.kcFormSocialAccountGridItem!}
+                </#if>"
                       type="button" href="${p.loginUrl}">
                       <#if p.iconClasses?has_content>
                         <i class="${properties.kcCommonLogoIdP!} ${p.iconClasses!}" aria-hidden="true"></i>

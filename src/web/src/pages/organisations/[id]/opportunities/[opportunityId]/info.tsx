@@ -171,7 +171,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
       <PageBackground />
 
-      <div className="container z-10 mt-20 max-w-5xl px-2 py-4">
+      <div className="container z-10 mt-20 max-w-7xl px-2 py-4">
         <div className="flex flex-col gap-2 py-4 sm:flex-row">
           {/* BREADCRUMB */}
           <div className="inline flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
@@ -300,7 +300,7 @@ const OpportunityDetails: NextPageWithLayout<{
           <div className="flex flex-col gap-4">
             <div className="relative flex flex-grow flex-row gap-1 rounded-lg bg-white p-6 shadow-lg">
               <div className="flex flex-grow flex-col gap-1">
-                <h4 className="text-2xl font-semibold text-black">
+                <h4 className="text-2xl font-semibold text-black md:max-w-[1125px]">
                   {opportunity.title}
                 </h4>
 

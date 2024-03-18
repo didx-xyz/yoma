@@ -24,7 +24,7 @@ import {
   IoMdCheckmark,
   IoMdClose,
   IoMdFingerPrint,
-  IoIosArrowBack,
+  IoMdArrowRoundBack,
   IoMdPause,
   IoMdPlay,
   IoMdBookmark,
@@ -360,10 +360,10 @@ const OpportunityDetails: NextPageWithLayout<{
                   <ul>
                     <li className="inline">
                       <button
-                        className="text-white hover:text-gray"
+                        className="inline text-white hover:text-gray"
                         onClick={() => router.back()}
                       >
-                        <IoIosArrowBack className="mr-3 inline-block h-6 w-6 rounded-full bg-purple-shade pr-[2px]" />
+                        <IoMdArrowRoundBack className="mr-1 inline h-4 w-4" />
                         Opportunities
                       </button>
                     </li>
@@ -688,7 +688,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     <div className="flex flex-grow flex-col gap-1">
                       <div className="flex flex-grow flex-col">
                         <div className="relative flex justify-start">
-                          <h4 className="text-2xl font-semibold text-black">
+                          <h4 className="text-2xl font-semibold text-black md:max-w-[1125px]">
                             {opportunity.title}
                           </h4>
                           <div className="absolute right-0 top-0">

@@ -26,7 +26,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
             <h1 className="h-[32px] max-w-[200px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark">
               {data.organizationName}
             </h1>
-            <h2 className="line-clamp-3 h-[70px] max-w-[220px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight">
+            <h2 className="line-clamp-3 h-[70px] max-w-[210px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight">
               {data.title}
             </h2>
           </div>
@@ -34,7 +34,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
             <AvatarImage
               icon={data?.organizationLogoURL ?? null}
               alt="Company Logo"
-              size={60}
+              size={50}
             />
           </div>
         </div>

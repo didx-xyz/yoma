@@ -6,7 +6,6 @@ import { useCallback, useState, type ReactElement } from "react";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 import { DATETIME_FORMAT_SYSTEM, PAGE_SIZE } from "~/lib/constants";
-import Image from "next/image";
 import {
   getCredentialById,
   searchCredentials,
@@ -18,7 +17,6 @@ import type {
 } from "~/api/models/credential";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
-import { toBase64, shimmer } from "~/lib/image";
 import Moment from "react-moment";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import ReactModal from "react-modal";
@@ -28,6 +26,7 @@ import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import YoIDTabbed from "~/components/Layout/YoIDTabbed";
 import { toast } from "react-toastify";
 import { config } from "~/lib/react-query-config";
+import { AvatarImage } from "~/components/AvatarImage";
 
 interface IParams extends ParsedUrlQuery {
   query?: string;
@@ -163,26 +162,11 @@ const MyCredentials: NextPageWithLayout<{
             {activeCredential && (
               <div className="flex flex-col items-center justify-center gap-4">
                 {activeCredential?.issuerLogoURL && (
-                  <div className="relative -mt-8 overflow-hidden rounded-full bg-white shadow">
-                    <Image
-                      src={activeCredential?.issuerLogoURL}
-                      alt={`${activeCredential?.issuer} Logo`}
-                      width={60}
-                      height={60}
-                      sizes="(max-width: 60px) 30vw, 50vw"
-                      priority={true}
-                      placeholder="blur"
-                      blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                        shimmer(44, 44),
-                      )}`}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        maxWidth: "60px",
-                        maxHeight: "60px",
-                      }}
-                    />
-                  </div>
+                  <AvatarImage
+                    icon={activeCredential?.issuerLogoURL}
+                    alt={`${activeCredential?.issuer} Logo`}
+                    size={60}
+                  />
                 )}
 
                 <div className="flex flex-grow flex-col gap-4 overflow-x-hidden overflow-y-scroll p-4 pt-0 md:max-h-[480px] md:min-h-[350px]">
@@ -319,26 +303,11 @@ const MyCredentials: NextPageWithLayout<{
                         </div>
                       </div>
                       <div className="flex flex-row items-start">
-                        <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-full shadow">
-                          <Image
-                            src={item.issuerLogoURL}
-                            alt={`${item.issuer} Logo`}
-                            width={60}
-                            height={60}
-                            sizes="(max-width: 60px) 30vw, 50vw"
-                            priority={true}
-                            placeholder="blur"
-                            blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                              shimmer(44, 44),
-                            )}`}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              maxWidth: "60px",
-                              maxHeight: "60px",
-                            }}
-                          />
-                        </div>
+                        <AvatarImage
+                          icon={item.issuerLogoURL}
+                          alt={`${item.issuer} Logo`}
+                          size={60}
+                        />
                       </div>
                     </div>
                     <div className="flex flex-row items-center justify-center">

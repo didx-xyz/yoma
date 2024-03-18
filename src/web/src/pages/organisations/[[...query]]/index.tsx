@@ -31,6 +31,7 @@ import { type NextPageWithLayout } from "~/pages/_app";
 import { type User, authOptions } from "~/server/auth";
 import { config } from "~/lib/react-query-config";
 import { AvatarImage } from "~/components/AvatarImage";
+import { PageBackground } from "~/components/PageBackground";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -123,7 +124,7 @@ export const OrganisationCardComponent: React.FC<{
     <Link href={link} id={`lnkOrganisation_${props.item.name}`}>
       <div
         key={`$orgCard_{props.key}`}
-        className="flex flex-col rounded-xl bg-white shadow-custom transition hover:scale-[1.01] dark:bg-neutral-700 md:max-w-xl md:flex-row"
+        className="flex flex-col rounded-xl bg-white shadow-custom transition duration-300 hover:scale-[1.01] dark:bg-neutral-700 md:max-w-7xl md:flex-row"
       >
         <div className="flex w-1/4 items-center justify-center p-2">
           <div className="flex h-28 w-28 items-center justify-center">
@@ -247,11 +248,14 @@ const Opportunities: NextPageWithLayout<{
         <title>Yoma | Organisations</title>
       </Head>
 
-      <div className="bg-theme absolute left-0 top-0 z-0 h-[228px] w-full"></div>
+      {/* <div className="bg-theme absolute left-0 top-0 z-0 h-[228px] w-full"></div> */}
+      <PageBackground height={18} />
 
-      <div className="container z-10 max-w-5xl px-2 py-8">
+      <div className="container z-10 max-w-7xl px-2 py-8">
         <div className="relative flex flex-col gap-2 py-20 sm:flex-row">
-          <h2 className="flex flex-grow font-bold text-white">Organisations</h2>
+          <h2 className="flex flex-grow font-semibold text-white">
+            Organisations
+          </h2>
 
           <div className="flex gap-2 sm:justify-end">
             <Link
@@ -266,7 +270,7 @@ const Opportunities: NextPageWithLayout<{
 
         {/* TABS */}
 
-        <div role="tablist" className="tabs tabs-bordered relative -mt-8">
+        <div role="tablist" className="tabs tabs-bordered relative mt-7">
           {/* PENDING COUNT BADGE */}
           <span className="absolute left-[270px] top-[7px] rounded bg-yellow px-1 text-xs text-white">
             {organisationsInactive?.items?.length}

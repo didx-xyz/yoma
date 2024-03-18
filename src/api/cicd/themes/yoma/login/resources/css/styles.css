@@ -1,41 +1,36 @@
-.realm-display-name {
-}
-
-
-
 
 
 #kc-locale {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
 }
 
 #kc-locale-dropdown {
-  text-align: right;
+    text-align: right;
 }
 
 #kc-current-locale-link {
-  color: red;
-  text-decoration: none;
-  font-size: 14px;
-  padding: 5px 10px;
-  background-color: white;
-  border-radius: 5px;
+    color: red;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 5px 10px;
+    background-color: white;
+    border-radius: 5px;
 }
 
 .pf-c-dropdown__menu {
-  right: 0;
+    right: 0;
 }
 
 #kc-header-wrapper {
-  display: none;
-  color: red;
+    display: none;
+    color: red;
 }
 
 .page-footer {
-  background-color: white;
-  color: black;
+    background-color: white;
+    color: black;
 }
 
 .login-pf,
@@ -52,26 +47,93 @@ h1#kc-page-title {
     font-weight: 600;
     line-height: 1.2;
     padding: 0 20px;
+    margin-top: 20px;
 }
 
 .form-group:has(> div > input#terms_and_conditions) {
     display: none;
 }
 
-.kc-locale-wrapper {
-  margin-top: -80px;
-  color: red
+#password-instructions {
+  width: 85%;
+  color: #cccccc;
+  margin-inline: auto;
+  padding-left: 2px;
 }
 
-.login-pf-page .login-pf-page-header::before {
-    content: "";
-    display: inline-block;
-    background-image: url('https://app.yoma.world/static/media/logo.b5904244acf3d691fa2399e21a926ff4.svg');
-    width: 88px;
-    height: 42px;
-    margin-right: 10px;
-    vertical-align: middle;
-    overflow: hidden;
+.alert-warning{
+  display: none;
+}
+
+#terms-label {
+  margin-block: auto;
+  margin-top: 5px;
+}
+
+#terms {
+  height: 20px;
+  width: 20px;
+}
+
+#terms-prefix {
+  color: #495057;
+  font-size: 14px;
+  margin-left: 5px;
+}
+
+#terms-text {
+  display: inline;
+}
+
+#email-icon {
+  margin-top: 1rem;
+  height: 150px;
+  width: 150px;
+}
+
+#email-verify-text {
+  font-size: 20px;
+  text-align: center;
+  margin-top: -1.5rem;
+}
+
+#user-email {
+  color: #020304;
+  font-size: 20px;
+  text-align: center;
+  margin-top: -0.5rem;
+}
+
+#email-verify-link {
+  color: #461d4d;
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+  font-size: 16px;
+}
+
+.verify-instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  align-items: center;
+  justify-content: center;
+}
+
+#forget-password-text {
+  margin-inline: 35px;
+}
+
+#update-email-text{
+  text-align: center;
+}
+
+#reset-password-btn {
+  margin-top: 1rem;
+}
+
+.kc-locale-wrapper {
+    margin-top: -80px;
+    color: red;
 }
 
 .login-pf-page .login-pf-page-header {
@@ -88,7 +150,6 @@ h1#kc-page-title {
     overflow: hidden;
 }
 
-
 .login-pf-page .card-pf {
     padding: 20px 30px 30px 30px;
     background-color: white;
@@ -97,38 +158,94 @@ h1#kc-page-title {
     box-shadow: none;
 }
 
+.card-pf {
+  margin-bottom: 100px !important;
+}
+
 #kc-info {
-    margin: auto;
+  margin: auto;
 }
 
 #kc-info-wrapper {
-    background-color: white;
-    padding: 15px 35px;
-    border-radius: 50px;
+    padding: 15px 0;
     font-size: 16px;
     width: 95%;
-    margin: 10px auto 0;
+    margin: 10px auto 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: none;
+    border: none;
+    height: fit-content;
 }
 
 .pf-c-button.pf-m-primary {
     font-size: 13px;
     background-color: #461d4d;
     color: white;
+    /* border-radius: 10px !important; */
     border-radius: 50px;
     cursor: pointer;
     font-size: 16px;
     height: 48px;
-    width: 90%;
+    width: 85%;
     margin: 0 auto;
     display: block;
 }
 
-.login-pf-page .login-pf-signup a {
-    margin: 0 0 0 0;
+#register-btn {
+  width: 95%;
+  border-radius: 50px;
 }
 
-.login-pf-signup {
+#back-to-login-btn {
+  width: 95%;
+  background: white;
+  color: #461d4d;
+  border: 2px solid #461d4d;
+  border-radius: 50px;
+}
 
+
+#kc-registration {
+    background: white;
+    border: 2px solid #461d4d;
+    border-radius: 50px;
+    height: 48px;
+    margin: 0 auto;
+    width: 90%;
+    position: relative;
+    line-height: 1.8;
+}
+
+#kc-registration a {
+    color: #461d4d;
+    font-size: 16px;
+    margin-top: 8px;
+    outline: none !important;
+}
+
+/* Hack to add divider above the register button, there is a DOM ghost stealing the hr element */
+#kc-registration::before {
+  content: "";
+  position: absolute;
+  top: -1.5rem;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #cccccc;
+}
+
+#kc-registration:hover {
+    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#kc-registration:hover a {
+    text-decoration: none;
+}
+
+.login-pf-page .login-pf-signup a {
+    margin: 0 0 0 0;
 }
 
 .pf-c-button.pf-m-primary:hover {
@@ -145,17 +262,15 @@ h1#kc-page-title {
 
 .pf-c-form-control:not(textarea) {
     font-size: 13px;
-    background-color: #e6e8eb;
+    background-color: white;
     color: #495057;
-    border-radius: 50px;
+    border-radius: 5px;
     font-size: 14px;
     height: 48px;
     width: 85%;
     margin: 0 auto;
     display: block;
-    border-color: white;
-    border: solid;
-    border: 1px;
+    border: 2px solid #e6e8eb !important;
     padding: 0 16px;
     /* Add padding for the text */
 }
@@ -178,13 +293,20 @@ a {
 
 .grey-hr {
     border: none;
-    border-top: 1px solid #ccc;
-    margin: 22px 0 22px 0;
+    border-top: 1px solid #cccccc;
+    margin: 22px auto 22px auto;
+    width: 85%;
 }
 
 #kc-register-form div {
     text-align: left;
-    /* margin-left: 10px; */
+}
+
+#kc-form-login {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 30px;
 }
 
 .login-pf body {
@@ -228,7 +350,12 @@ a {
 }
 
 .centered-checkbox {
-    /* margin-top: 10px; */
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding-inline: 2rem;
+    gap: 10px;
 }
 
 .page-footer {
@@ -247,7 +374,7 @@ a {
 .white-link {
     color: white;
     /* Add any additional styling for the link if needed */
-  }
+}
 
 .password-container,
 .password-confirm-container {
@@ -263,19 +390,42 @@ a {
 }
 
 .fa-eye-slash::before {
-font-size: 15px;
+    font-size: 15px;
 }
 
 .fa-eye::before {
-font-size: 15px;
+    font-size: 15px;
 }
 
 .page-footer {
-  text-align: center;
-  background-color: #461d4d;
-  color: white;
-  padding: 20px;
-  position: absolute;
-  bottom: 0;
-  width: 100%;
+    text-align: center;
+    background-color: #461d4d;
+    color: white;
+    padding: 20px;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+
+@media screen and (max-width: 767px) {
+  body {
+    padding: 0 0 !important;
+    margin: 0 auto !important;
+    width: 97% !important;
+  }
+  .card-pf {
+    margin: 10px 10px !important;
+    padding: 25px 0 100px 0 !important;
+    border-radius: 0;
+  }
+
+
+  #terms-prefix {
+    margin-left: 0;
+  }
+
+  #password-instructions {
+    padding-left: 7px;
+  }
+
 }
