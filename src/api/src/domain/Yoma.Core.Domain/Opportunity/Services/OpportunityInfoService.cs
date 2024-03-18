@@ -140,19 +140,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var cc = new CsvConfiguration(System.Globalization.CultureInfo.CurrentCulture);
 
-            using (var stream = new MemoryStream())
+            using var stream = new MemoryStream();
+            using (var sw = new StreamWriter(stream: stream, encoding: System.Text.Encoding.UTF8))
             {
-                using (var sw = new StreamWriter(stream: stream, encoding: System.Text.Encoding.UTF8))
-                {
-                    using (var cw = new CsvWriter(sw, cc))
-                    {
-                        cw.WriteRecords(result.Items);
-                    }
-                }
-
-                var fileName = $"Transactions_{DateTime.Now:yyyy-dd-M--HH-mm-ss}.csv";
-                return (fileName, stream.ToArray());
+                using var cw = new CsvWriter(sw, cc);
+                cw.WriteRecords(result.Items);
             }
+
+            var fileName = $"Transactions_{DateTime.Now:yyyy-dd-M--HH-mm-ss}.csv";
+            return (fileName, stream.ToArray());
         }
         #endregion
 

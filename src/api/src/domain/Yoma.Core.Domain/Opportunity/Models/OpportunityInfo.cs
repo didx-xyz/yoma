@@ -1,4 +1,5 @@
 using CsvHelper.Configuration.Attributes;
+using Newtonsoft.Json;
 using Yoma.Core.Domain.Lookups.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Models
@@ -8,13 +9,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
         [Ignore]
         public Guid Id { get; set; }
 
-        [Name("Opportunity Title")]
         public string Title { get; set; }
 
-        [Name("Opportunity Description")]
         public string Description { get; set; }
 
-        [Name("Opportunity Type")]
         public string Type { get; set; }
 
         [Ignore]
@@ -33,7 +31,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
         [Name("Zlto Reward")]
         public decimal? ZltoReward { get; set; }
 
-        [Name("Yoma Reward")]
+        [Ignore] //reserved for future use
         public decimal? YomaReward { get; set; }
 
         [Name("Verification Enabled")]
@@ -41,18 +39,18 @@ namespace Yoma.Core.Domain.Opportunity.Models
         [BooleanTrueValues("Yes")]
         public bool VerificationEnabled { get; set; }
 
-        [Name("Verification Enabled")]
+        [Name("Verification Method")]
         public VerificationMethod? VerificationMethod { get; set; }
 
         public string Difficulty { get; set; }
 
-        [Name("Commitment Interval")]
+        [Ignore]
         public string CommitmentInterval { get; set; }
 
-        [Name("Commitment Interval Count")]
+        [Ignore]
         public short CommitmentIntervalCount { get; set; }
 
-        [Name("Commitment Interval Description")]
+        [Name("Commitment Interval")]
         public string CommitmentIntervalDescription { get; set; }
 
         [Name("Participant Limit")]
@@ -67,31 +65,66 @@ namespace Yoma.Core.Domain.Opportunity.Models
         [Name("Participant Count Total")]
         public int ParticipantCountTotal { get; set; }
 
+        [Name("Participant Limit Reached")]
+        [BooleanFalseValues("No")]
+        [BooleanTrueValues("Yes")]
+        public bool ParticipantLimitReached { get; set; }
+
+        [Ignore]
         public Guid StatusId { get; set; }
-        [Name("Status")]
 
         public Status Status { get; set; }
-        [Name("Keywords")]
 
+        [Ignore]
         public List<string>? Keywords { get; set; }
+
+        [JsonIgnore]
+        [Name("Keywords")]
+        public string? KeywordsFlattened => Keywords == null || !Keywords.Any() ? null : string.Join(", ", Keywords);
+
         [Name("Start Date")]
-
         public DateTimeOffset DateStart { get; set; }
-        [Name("End Date")]
 
+        [Name("End Date")]
         public DateTimeOffset? DateEnd { get; set; }
 
+        [BooleanFalseValues("No")]
+        [BooleanTrueValues("Yes")]
         public bool Published { get; set; }
 
+        [Ignore]
         public List<Lookups.OpportunityCategory>? Categories { get; set; }
 
+        [JsonIgnore]
+        [Name("Categories")]
+        public string? CategoriesFlattened => Categories == null || !Categories.Any() ? null : string.Join(", ", Categories.Select(o => o.Name));
+
+        [Ignore]
         public List<Country>? Countries { get; set; }
 
+        [JsonIgnore]
+        [Name("Countries")]
+        public string? CountriesFlattened => Countries == null || !Countries.Any() ? null : string.Join(", ", Countries.Select(o => o.Name));
+
+        [Ignore]
         public List<Language>? Languages { get; set; }
 
+        [JsonIgnore]
+        [Name("Languages")]
+        public string? LanguagesFlattened => Languages == null || !Languages.Any() ? null : string.Join(", ", Languages.Select(o => o.Name));
+
+        [Ignore]
         public List<Skill>? Skills { get; set; }
 
-        [Name("Verification Types")]
+        [JsonIgnore]
+        [Name("Skills")]
+        public string? SkillsFlattened => Skills == null || !Skills.Any() ? null : string.Join(", ", Skills.Select(o => o.Name));
+
+        [Ignore]
         public List<Lookups.OpportunityVerificationType>? VerificationTypes { get; set; }
+
+        [JsonIgnore]
+        [Name("Verification Types")]
+        public string? VerificationTypesFlattened => VerificationTypes == null || !VerificationTypes.Any() ? null : string.Join(", ", VerificationTypes.Select(o => o.Description));
     }
 }
