@@ -426,17 +426,15 @@ const Opportunities: NextPageWithLayout<{
             {/* GRID */}
             {organisationsInactive &&
               organisationsInactive.items.length > 0 && (
-                <>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-4">
-                    {organisationsInactive.items.map((item) => (
-                      <OrganisationCardComponent
-                        key={item.id}
-                        item={item}
-                        user={user}
-                      />
-                    ))}
-                  </div>
-                </>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-4">
+                  {organisationsInactive.items.map((item) => (
+                    <OrganisationCardComponent
+                      key={item.id}
+                      item={item}
+                      user={user}
+                    />
+                  ))}
+                </div>
               )}
           </div>
         </div>

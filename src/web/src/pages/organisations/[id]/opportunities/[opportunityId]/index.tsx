@@ -16,6 +16,7 @@ import {
   useState,
   type ReactElement,
   useEffect,
+  useRef,
 } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -75,9 +76,14 @@ import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
 import Moment from "react-moment";
 import moment from "moment";
-import { getThemeFromRole, debounce } from "~/lib/utils";
+import { getThemeFromRole } from "~/lib/utils";
 import Async from "react-select/async";
 import { useRouter } from "next/router";
+import { debounce } from "lodash";
+import ReactModal from "react-modal";
+import Image from "next/image";
+import iconBell from "public/images/icon-bell.webp";
+import { IoMdClose } from "react-icons/io";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -106,59 +112,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient(config);
 
   await Promise.all([
-    // ⚠ disabled due to proxy header buffer size limit (UND_HEADER_OVERFLOW)
-    // await queryClient.prefetchQuery({
-    //   queryKey: ["categories"],
-    //   queryFn: async () =>
-    //     (await getCategories(context)).map((c) => ({
-    //       value: c.id,
-    //       label: c.name,
-    //     })),
-    // }),
-    // await queryClient.prefetchQuery({
-    //   queryKey: ["countries"],
-    //   queryFn: async () =>
-    //     (await getCountries(context)).map((c) => ({
-    //       value: c.id,
-    //       label: c.name,
-    //     })),
-    // }),
-    // await queryClient.prefetchQuery({
-    //   queryKey: ["languages"],
-    //   queryFn: async () =>
-    //     (await getLanguages(context)).map((c) => ({
-    //       value: c.id,
-    //       label: c.name,
-    //     })),
-    // }),
-    // await queryClient.prefetchQuery({
-    //   queryKey: ["opportunityTypes"],
-    //   queryFn: async () =>
-    //     (await getTypes(context)).map((c) => ({
-    //       value: c.id,
-    //       label: c.name,
-    //     })),
-    // }),
-    // await queryClient.prefetchQuery({
-    //   queryKey: ["verificationTypes"],
-    //   queryFn: async () => await getVerificationTypes(context),
-    // }),
-    // await queryClient.prefetchQuery({
-    //   queryKey: ["difficulties"],
-    //   queryFn: async () =>
-    //     (await getDifficulties(context)).map((c) => ({
-    //       value: c.id,
-    //       label: c.name,
-    //     })),
-    // }),
-    // await queryClient.prefetchQuery({
-    //   queryKey: ["timeIntervals"],
-    //   queryFn: async () =>
-    //     (await getTimeIntervals(context)).map((c) => ({
-    //       value: c.id,
-    //       label: c.name,
-    //     })),
-    // }),
     opportunityId !== "create"
       ? await queryClient.prefetchQuery({
           queryKey: ["opportunity", opportunityId],
@@ -192,6 +145,19 @@ const OpportunityDetails: NextPageWithLayout<{
   const router = useRouter();
   const { returnUrl } = router.query;
   const queryClient = useQueryClient();
+
+  const formRef1 = useRef<HTMLFormElement>(null);
+  const formRef2 = useRef<HTMLFormElement>(null);
+  const formRef3 = useRef<HTMLFormElement>(null);
+  const formRef4 = useRef<HTMLFormElement>(null);
+  const formRef5 = useRef<HTMLFormElement>(null);
+  const formRef6 = useRef<HTMLFormElement>(null);
+  const formRef7 = useRef<HTMLFormElement>(null);
+
+  const [saveChangesDialogVisible, setSaveChangesDialogVisible] =
+    useState(false);
+  const [lastStepBeforeSaveChangesDialog, setLastStepBeforeSaveChangesDialog] =
+    useState<number | null>(null);
 
   // 👇 use prefetched queries from server
   const { data: categories } = useQuery<SelectOption[]>({
@@ -320,111 +286,6 @@ const OpportunityDetails: NextPageWithLayout<{
     instructions: opportunity?.instructions ?? "",
   });
 
-  const onSubmit = useCallback(
-    async (data: OpportunityRequestBase) => {
-      setIsLoading(true);
-
-      try {
-        let message = "";
-
-        // dismiss all toasts
-        toast.dismiss();
-
-        //  convert dates to string in format "YYYY-MM-DD"
-        data.dateStart = data.dateStart
-          ? moment(data.dateStart).format(DATE_FORMAT_SYSTEM)
-          : null;
-        data.dateEnd = data.dateEnd
-          ? moment(data.dateEnd).format(DATE_FORMAT_SYSTEM)
-          : null;
-
-        // update api
-        if (opportunity) {
-          await updateOpportunity(data);
-          message = "Opportunity updated";
-        } else {
-          await createOpportunity(data);
-          message = "Opportunity created";
-        }
-        toast(message, {
-          type: "success",
-          toastId: "opportunity",
-        });
-        console.log(message); // e2e
-
-        // invalidate queries
-        await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-        await queryClient.invalidateQueries({
-          queryKey: ["opportunities", id],
-        });
-        await queryClient.invalidateQueries({
-          queryKey: ["opportunity", opportunityId],
-        });
-      } catch (error) {
-        toast(<ApiErrors error={error as AxiosError} />, {
-          type: "error",
-          toastId: "opportunity",
-          autoClose: false,
-          icon: false,
-        });
-
-        captureException(error);
-        setIsLoading(false);
-
-        return;
-      }
-
-      setIsLoading(false);
-
-      // redirect to list after create
-      if (opportunityId === "create")
-        void router.push(`/organisations/${id}/opportunities`);
-    },
-    [setIsLoading, id, opportunityId, opportunity, queryClient, router],
-  );
-
-  // form submission handler
-  const onSubmitStep = useCallback(
-    async (step: number, data: FieldValues) => {
-      // set form data
-      const model = {
-        ...formData,
-        ...(data as OpportunityRequestBase),
-      };
-
-      setFormData(model);
-
-      if (opportunityId === "create") {
-        // submit on last page when creating new opportunity
-        if (step === 8) {
-          await onSubmit(model);
-
-          // 📊 GOOGLE ANALYTICS: track event
-          trackGAEvent(
-            GA_CATEGORY_OPPORTUNITY,
-            GA_ACTION_OPPORTUNITY_CREATE,
-            `Created Opportunity: ${model.title}`,
-          );
-
-          return;
-        }
-      } else {
-        // submit on each page when updating opportunity
-        await onSubmit(model);
-
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY,
-          GA_ACTION_OPPORTUNITY_UPDATE,
-          `Updated Opportunity: ${model.title}`,
-        );
-        return;
-      }
-      setStep(step);
-    },
-    [opportunityId, setStep, formData, setFormData, onSubmit],
-  );
-
   const schemaStep1 = z.object({
     title: z
       .string()
@@ -493,8 +354,7 @@ const OpportunityDetails: NextPageWithLayout<{
   });
 
   const schemaStep4 = z.object({
-    //keywords: z.array(z.string()).optional(),
-    keywords: z.array(z.string()).length(1, "At least 1 keyword is required."),
+    keywords: z.array(z.string()).min(1, "At least 1 keyword is required."),
   });
 
   const schemaStep5 = z
@@ -584,56 +444,61 @@ const OpportunityDetails: NextPageWithLayout<{
   const {
     register: registerStep1,
     handleSubmit: handleSubmitStep1,
-    setValue: setValueStep1,
-    formState: { errors: errorsStep1, isValid: isValidStep1 },
+    formState: formStateStep1,
     control: controlStep1,
     reset: resetStep1,
   } = useForm({
     resolver: zodResolver(schemaStep1),
+    defaultValues: formData,
   });
 
   const {
     register: registerStep2,
     handleSubmit: handleSubmitStep2,
-    formState: { errors: errorsStep2, isValid: isValidStep2 },
+    formState: formStateStep2,
     control: controlStep2,
     getValues: getValuesStep2,
     reset: resetStep2,
   } = useForm({
     resolver: zodResolver(schemaStep2),
+    defaultValues: formData,
   });
 
   const {
     register: registerStep3,
     handleSubmit: handleSubmitStep3,
-    formState: { errors: errorsStep3, isValid: isValidStep3 },
+    formState: formStateStep3,
     control: controlStep3,
     getValues: getValuesStep3,
     setValue: setValueStep3,
     reset: resetStep3,
   } = useForm({
     resolver: zodResolver(schemaStep3),
+    defaultValues: formData,
   });
 
   const {
     handleSubmit: handleSubmitStep4,
-    formState: { errors: errorsStep4, isValid: isValidStep4 },
-    control: controlStep4,
+    formState: formStateStep4,
+
     reset: resetStep4,
+    control: controlStep4,
   } = useForm({
     resolver: zodResolver(schemaStep4),
+    defaultValues: formData,
   });
 
   const {
     handleSubmit: handleSubmitStep5,
     getValues: getValuesStep5,
     setValue: setValueStep5,
-    formState: { errors: errorsStep5, isValid: isValidStep5 },
+    formState: formStateStep5,
     control: controlStep5,
     watch: watchStep5,
     reset: resetStep5,
   } = useForm({
     resolver: zodResolver(schemaStep5),
+    defaultValues: formData,
   });
   const watchVerificationEnabled = watchStep5("verificationEnabled");
   const watchVerificationMethod = watchStep5("verificationMethod");
@@ -646,12 +511,13 @@ const OpportunityDetails: NextPageWithLayout<{
   const {
     register: registerStep6,
     handleSubmit: handleSubmitStep6,
-    formState: { errors: errorsStep6, isValid: isValidStep6 },
+    formState: formStateStep6,
     control: controlStep6,
     watch: watchStep6,
     reset: resetStep6,
   } = useForm({
     resolver: zodResolver(schemaStep6),
+    defaultValues: formData,
   });
   const watchCredentialIssuanceEnabled = watchStep6(
     "credentialIssuanceEnabled",
@@ -661,10 +527,11 @@ const OpportunityDetails: NextPageWithLayout<{
   const {
     register: registerStep7,
     handleSubmit: handleSubmitStep7,
-    formState: { errors: errorsStep7, isValid: isValidStep7 },
+    formState: formStateStep7,
     reset: resetStep7,
   } = useForm({
     resolver: zodResolver(schemaStep7),
+    defaultValues: formData,
   });
 
   // scroll to top on step change
@@ -679,43 +546,36 @@ const OpportunityDetails: NextPageWithLayout<{
     }
   }, [schemas, watcSSISchemaName]);
 
-  // set default values
-  useEffect(() => {
-    // reset form
-    // setTimeout is needed to prevent the form from being reset before the default values are set
-    setTimeout(() => {
-      resetStep1({
-        ...formData,
-      });
-      resetStep2({
-        ...formData,
-      });
-      resetStep3({
-        ...formData,
-      });
-      resetStep4({
-        ...formData,
-      });
-      resetStep5({
-        ...formData,
-      });
-      resetStep6({
-        ...formData,
-      });
-      resetStep7({
-        ...formData,
-      });
-    }, 500);
-  }, [
-    resetStep1,
-    resetStep2,
-    resetStep3,
-    resetStep4,
-    resetStep5,
-    resetStep6,
-    resetStep7,
-    formData,
-  ]);
+  // memo for dirty fields
+  // because the "isDirty" property on useForm is not working as expected
+  const isDirtyStep1 = useMemo(
+    () => Object.keys(formStateStep1.dirtyFields).length > 0,
+    [formStateStep1],
+  );
+  const isDirtyStep2 = useMemo(
+    () => Object.keys(formStateStep2.dirtyFields).length > 0,
+    [formStateStep2],
+  );
+  const isDirtyStep3 = useMemo(
+    () => Object.keys(formStateStep3.dirtyFields).length > 0,
+    [formStateStep3],
+  );
+  const isDirtyStep4 = useMemo(
+    () => Object.keys(formStateStep4.dirtyFields).length > 0,
+    [formStateStep4],
+  );
+  const isDirtyStep5 = useMemo(
+    () => Object.keys(formStateStep5.dirtyFields).length > 0,
+    [formStateStep5],
+  );
+  const isDirtyStep6 = useMemo(
+    () => Object.keys(formStateStep6.dirtyFields).length > 0,
+    [formStateStep6],
+  );
+  const isDirtyStep7 = useMemo(
+    () => Object.keys(formStateStep7.dirtyFields).length > 0,
+    [formStateStep7],
+  );
 
   //* SKILLS
   // cache skills for name lookups
@@ -753,6 +613,243 @@ const OpportunityDetails: NextPageWithLayout<{
     1000,
   );
 
+  //* SAVE CHANGE DIALOG
+  const onClick_Menu = useCallback(
+    (nextStep: number) => {
+      let isDirtyStep = false;
+      if (step === 1 && isDirtyStep1) isDirtyStep = true;
+      else if (step === 2 && isDirtyStep2) isDirtyStep = true;
+      else if (step === 3 && isDirtyStep3) isDirtyStep = true;
+      else if (step === 4 && isDirtyStep4) isDirtyStep = true;
+      else if (step === 5 && isDirtyStep5) isDirtyStep = true;
+      else if (step === 6 && isDirtyStep6) isDirtyStep = true;
+      else if (step === 7 && isDirtyStep7) isDirtyStep = true;
+
+      if (isDirtyStep) {
+        setLastStepBeforeSaveChangesDialog(nextStep);
+        setSaveChangesDialogVisible(true);
+        return;
+      }
+
+      setStep(nextStep);
+    },
+    [
+      isDirtyStep1,
+      isDirtyStep2,
+      isDirtyStep3,
+      isDirtyStep4,
+      isDirtyStep5,
+      isDirtyStep6,
+      isDirtyStep7,
+      step,
+      setStep,
+      setSaveChangesDialogVisible,
+      setLastStepBeforeSaveChangesDialog,
+    ],
+  );
+
+  const onClickContinueWithoutSaving = useCallback(() => {
+    resetStep1(formData);
+    resetStep2(formData);
+    resetStep3(formData);
+    resetStep4(formData);
+    resetStep5(formData);
+    resetStep6(formData);
+    resetStep7(formData);
+    setSaveChangesDialogVisible(false);
+    lastStepBeforeSaveChangesDialog && setStep(lastStepBeforeSaveChangesDialog);
+    setLastStepBeforeSaveChangesDialog(null);
+  }, [
+    resetStep1,
+    formData,
+    resetStep2,
+    resetStep3,
+    resetStep4,
+    resetStep5,
+    resetStep6,
+    resetStep7,
+    setSaveChangesDialogVisible,
+    lastStepBeforeSaveChangesDialog,
+    setLastStepBeforeSaveChangesDialog,
+    setStep,
+  ]);
+
+  const onClickSaveAndContinue = useCallback(() => {
+    setSaveChangesDialogVisible(false);
+
+    if (step == 1) {
+      formRef1?.current?.dispatchEvent(
+        new Event("submit", { cancelable: true, bubbles: true }),
+      );
+    } else if (step == 2) {
+      formRef2?.current?.dispatchEvent(
+        new Event("submit", { cancelable: true, bubbles: true }),
+      );
+    } else if (step == 3) {
+      formRef3?.current?.dispatchEvent(
+        new Event("submit", { cancelable: true, bubbles: true }),
+      );
+    } else if (step == 4) {
+      formRef4?.current?.dispatchEvent(
+        new Event("submit", { cancelable: true, bubbles: true }),
+      );
+    } else if (step == 5) {
+      formRef5?.current?.dispatchEvent(
+        new Event("submit", { cancelable: true, bubbles: true }),
+      );
+    } else if (step == 6) {
+      formRef6?.current?.dispatchEvent(
+        new Event("submit", { cancelable: true, bubbles: true }),
+      );
+    } else if (step == 7) {
+      formRef7?.current?.dispatchEvent(
+        new Event("submit", { cancelable: true, bubbles: true }),
+      );
+    }
+  }, [
+    formRef1,
+    formRef2,
+    formRef3,
+    formRef4,
+    formRef5,
+    formRef6,
+    formRef7,
+    setSaveChangesDialogVisible,
+    step,
+  ]);
+
+  const onSubmit = useCallback(
+    async (data: OpportunityRequestBase) => {
+      setIsLoading(true);
+
+      try {
+        let message = "";
+
+        // dismiss all toasts
+        toast.dismiss();
+
+        //  convert dates to string in format "YYYY-MM-DD"
+        data.dateStart = data.dateStart
+          ? moment(data.dateStart).format(DATE_FORMAT_SYSTEM)
+          : null;
+        data.dateEnd = data.dateEnd
+          ? moment(data.dateEnd).format(DATE_FORMAT_SYSTEM)
+          : null;
+
+        // update api
+        if (opportunity) {
+          await updateOpportunity(data);
+          message = "Opportunity updated";
+        } else {
+          await createOpportunity(data);
+          message = "Opportunity created";
+        }
+        toast(message, {
+          type: "success",
+          toastId: "opportunity",
+        });
+        console.log(message); // e2e
+
+        // invalidate queries
+        await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+        await queryClient.invalidateQueries({
+          queryKey: ["opportunities", id],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ["opportunity", opportunityId],
+        });
+      } catch (error) {
+        toast(<ApiErrors error={error as AxiosError} />, {
+          type: "error",
+          toastId: "opportunity",
+          autoClose: false,
+          icon: false,
+        });
+
+        captureException(error);
+        setIsLoading(false);
+
+        return;
+      }
+
+      setIsLoading(false);
+
+      // redirect to list after create
+      if (opportunityId === "create")
+        void router.push(`/organisations/${id}/opportunities`);
+    },
+    [setIsLoading, id, opportunityId, opportunity, queryClient, router],
+  );
+
+  // form submission handler
+  const onSubmitStep = useCallback(
+    async (step: number, data: FieldValues) => {
+      // set form data
+      const model = {
+        ...formData,
+        ...(data as OpportunityRequestBase),
+      };
+
+      setFormData(model);
+
+      if (opportunityId === "create") {
+        // submit on last page when creating new opportunity
+        if (step === 8) {
+          await onSubmit(model);
+
+          // 📊 GOOGLE ANALYTICS: track event
+          trackGAEvent(
+            GA_CATEGORY_OPPORTUNITY,
+            GA_ACTION_OPPORTUNITY_CREATE,
+            `Created Opportunity: ${model.title}`,
+          );
+        }
+        // move to next step
+        else setStep(step);
+      } else {
+        // submit on each page when updating opportunity
+        await onSubmit(model);
+
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_OPPORTUNITY,
+          GA_ACTION_OPPORTUNITY_UPDATE,
+          `Updated Opportunity: ${model.title}`,
+        );
+      }
+
+      resetStep1(model);
+      resetStep2(model);
+      resetStep3(model);
+      resetStep4(model);
+      resetStep5(model);
+      resetStep6(model);
+      resetStep7(model);
+
+      // go to last step before save changes dialog
+      if (lastStepBeforeSaveChangesDialog)
+        setStep(lastStepBeforeSaveChangesDialog);
+
+      setLastStepBeforeSaveChangesDialog(null);
+    },
+    [
+      opportunityId,
+      setStep,
+      formData,
+      setFormData,
+      onSubmit,
+      lastStepBeforeSaveChangesDialog,
+      setLastStepBeforeSaveChangesDialog,
+      resetStep1,
+      resetStep2,
+      resetStep3,
+      resetStep4,
+      resetStep5,
+      resetStep6,
+      resetStep7,
+    ],
+  );
+
   if (error) return <Unauthorized />;
 
   return (
@@ -760,6 +857,80 @@ const OpportunityDetails: NextPageWithLayout<{
       {isLoading && <Loading />}
 
       <PageBackground />
+
+      {/* SAVE CHANGES DIALOG */}
+      <ReactModal
+        isOpen={saveChangesDialogVisible}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setSaveChangesDialogVisible(false);
+        }}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[310px] md:w-[450px] md:rounded-3xl`}
+        portalClassName={"fixed z-40"}
+        overlayClassName="fixed inset-0 bg-overlay"
+      >
+        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
+          <div className="flex flex-row bg-green p-4 shadow-lg">
+            <h1 className="flex-grow"></h1>
+            <button
+              type="button"
+              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+              onClick={() => {
+                setSaveChangesDialogVisible(false);
+              }}
+            >
+              <IoMdClose className="h-6 w-6"></IoMdClose>
+            </button>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+              <Image
+                src={iconBell}
+                alt="Icon Bell"
+                width={28}
+                height={28}
+                sizes="100vw"
+                priority={true}
+                style={{ width: "28px", height: "28px" }}
+              />
+            </div>
+
+            <p className="w-80 text-center text-base">
+              Your recent changes have not been saved. Please make sure to save
+              your changes to prevent any loss of data.
+            </p>
+
+            <div className="mt-4 flex flex-grow gap-4">
+              <button
+                type="button"
+                className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
+                onClick={onClickContinueWithoutSaving}
+                // onClick={() => {
+                //   resetStep1(formData);
+                //   resetStep2(formData);
+                //   resetStep3(formData);
+                //   resetStep4(formData);
+                //   resetStep5(formData);
+                //   resetStep6(formData);
+                //   resetStep7(formData);
+                //   setSaveChangesDialogVisible(false);
+                //   setStep(lastStepBeforeSaveChangesDialog);
+                // }}
+              >
+                <span className="ml-1">Continue without saving</span>
+              </button>
+
+              <button
+                type="button"
+                className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light md:w-[150px]"
+                onClick={onClickSaveAndContinue}
+              >
+                <p className="text-white">Save and continue</p>
+              </button>
+            </div>
+          </div>
+        </div>
+      </ReactModal>
 
       <div className="container z-10 mt-20 max-w-5xl px-2 py-4">
         {/* BREADCRUMB */}
@@ -803,7 +974,7 @@ const OpportunityDetails: NextPageWithLayout<{
         <div className="flex flex-col gap-4 md:flex-row">
           {/* LEFT VERTICAL MENU */}
           <ul className="menu hidden h-[420px] flex-none gap-3 rounded-lg bg-white p-4 font-semibold shadow-xl md:flex md:justify-center">
-            <li onClick={() => setStep(1)}>
+            <li onClick={() => onClick_Menu(1)}>
               <a
                 className={`${
                   step === 1
@@ -813,7 +984,7 @@ const OpportunityDetails: NextPageWithLayout<{
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    isValidStep1 ? "bg-green" : "bg-gray-dark"
+                    formStateStep1.isValid ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   1
@@ -821,7 +992,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 Opportunity information
               </a>
             </li>
-            <li onClick={() => setStep(2)}>
+            <li onClick={() => onClick_Menu(2)}>
               <a
                 className={`${
                   step === 2
@@ -831,7 +1002,7 @@ const OpportunityDetails: NextPageWithLayout<{
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    isValidStep2 ? "bg-green" : "bg-gray-dark"
+                    formStateStep2.isValid ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   2
@@ -839,7 +1010,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 Opportunity details
               </a>
             </li>
-            <li onClick={() => setStep(3)}>
+            <li onClick={() => onClick_Menu(3)}>
               <a
                 className={`${
                   step === 3
@@ -849,7 +1020,7 @@ const OpportunityDetails: NextPageWithLayout<{
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    isValidStep3 ? "bg-green" : "bg-gray-dark"
+                    formStateStep3.isValid ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   3
@@ -857,7 +1028,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 Rewards
               </a>
             </li>
-            <li onClick={() => setStep(4)}>
+            <li onClick={() => onClick_Menu(4)}>
               <a
                 className={`${
                   step === 4
@@ -867,7 +1038,7 @@ const OpportunityDetails: NextPageWithLayout<{
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    isValidStep4 ? "bg-green" : "bg-gray-dark"
+                    formStateStep4.isValid ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   4
@@ -875,7 +1046,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 Keywords
               </a>
             </li>
-            <li onClick={() => setStep(5)}>
+            <li onClick={() => onClick_Menu(5)}>
               <a
                 className={`${
                   step === 5
@@ -885,7 +1056,7 @@ const OpportunityDetails: NextPageWithLayout<{
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    isValidStep5 ? "bg-green" : "bg-gray-dark"
+                    formStateStep5.isValid ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   5
@@ -893,7 +1064,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 Verification type
               </a>
             </li>
-            <li onClick={() => setStep(6)}>
+            <li onClick={() => onClick_Menu(6)}>
               <a
                 className={`${
                   step === 6
@@ -903,7 +1074,7 @@ const OpportunityDetails: NextPageWithLayout<{
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    isValidStep6 ? "bg-green" : "bg-gray-dark"
+                    formStateStep6.isValid ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   6
@@ -913,7 +1084,7 @@ const OpportunityDetails: NextPageWithLayout<{
             </li>
             {/* only show preview when creating new opportunity */}
             {opportunityId === "create" && (
-              <li onClick={() => setStep(7)}>
+              <li onClick={() => onClick_Menu(7)}>
                 <a
                   className={`${
                     step === 7
@@ -923,13 +1094,13 @@ const OpportunityDetails: NextPageWithLayout<{
                 >
                   <span
                     className={`mr-2 rounded-full bg-gray-dark px-1.5 py-0.5 text-xs font-medium text-white ${
-                      isValidStep1 &&
-                      isValidStep2 &&
-                      isValidStep3 &&
-                      isValidStep4 &&
-                      isValidStep5 &&
-                      isValidStep6 &&
-                      isValidStep7
+                      formStateStep1.isValid &&
+                      formStateStep2.isValid &&
+                      formStateStep3.isValid &&
+                      formStateStep4.isValid &&
+                      formStateStep5.isValid &&
+                      formStateStep6.isValid &&
+                      formStateStep7.isValid
                         ? "bg-green"
                         : "bg-gray-dark"
                     }`}
@@ -948,28 +1119,28 @@ const OpportunityDetails: NextPageWithLayout<{
             onChange={(e) => {
               switch (e.target.value) {
                 case "Opportunity information":
-                  setStep(1);
+                  onClick_Menu(1);
                   break;
                 case "Opportunity details":
-                  setStep(2);
+                  onClick_Menu(2);
                   break;
                 case "Rewards":
-                  setStep(3);
+                  onClick_Menu(3);
                   break;
                 case "Keywords":
-                  setStep(4);
+                  onClick_Menu(4);
                   break;
                 case "Verification type":
-                  setStep(5);
+                  onClick_Menu(5);
                   break;
                 case "Credential":
-                  setStep(6);
+                  onClick_Menu(6);
                   break;
                 case "Preview opportunity":
-                  setStep(7);
+                  onClick_Menu(7);
                   break;
                 default:
-                  setStep(1);
+                  onClick_Menu(1);
                   break;
               }
             }}
@@ -997,6 +1168,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
 
                   <form
+                    ref={formRef1}
                     className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep1((data) =>
                       onSubmitStep(2, data),
@@ -1015,10 +1187,10 @@ const OpportunityDetails: NextPageWithLayout<{
                         {...registerStep1("title")}
                         contentEditable
                       />
-                      {errorsStep1.title && (
+                      {formStateStep1.errors.title && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep1.title.message}`}
+                            {`${formStateStep1.errors.title.message}`}
                           </span>
                         </label>
                       )}
@@ -1055,10 +1227,10 @@ const OpportunityDetails: NextPageWithLayout<{
                         )}
                       />
 
-                      {errorsStep1.typeId && (
+                      {formStateStep1.errors.typeId && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep1.typeId.message}`}
+                            {`${formStateStep1.errors.typeId.message}`}
                           </span>
                         </label>
                       )}
@@ -1098,10 +1270,10 @@ const OpportunityDetails: NextPageWithLayout<{
                         )}
                       />
 
-                      {errorsStep1.categories && (
+                      {formStateStep1.errors.categories && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep1.categories.message}`}
+                            {`${formStateStep1.errors.categories.message}`}
                           </span>
                         </label>
                       )}
@@ -1121,10 +1293,10 @@ const OpportunityDetails: NextPageWithLayout<{
                         {...registerStep1("uRL")}
                         contentEditable
                       />
-                      {errorsStep1.uRL && (
+                      {formStateStep1.errors.uRL && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep1.uRL.message}`}
+                            {`${formStateStep1.errors.uRL.message}`}
                           </span>
                         </label>
                       )}
@@ -1140,14 +1312,11 @@ const OpportunityDetails: NextPageWithLayout<{
                         className="input textarea textarea-bordered h-32 rounded-md border-gray focus:border-gray focus:outline-none"
                         // placeholder="Description"
                         {...registerStep1("description")}
-                        onChange={(e) =>
-                          setValueStep1("description", e.target.value)
-                        }
                       />
-                      {errorsStep1.description && (
+                      {formStateStep1.errors.description && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep1.description.message}`}
+                            {`${formStateStep1.errors.description.message}`}
                           </span>
                         </label>
                       )}
@@ -1184,6 +1353,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
 
                   <form
+                    ref={formRef2}
                     className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep2((data) =>
                       onSubmitStep(3, data),
@@ -1221,10 +1391,10 @@ const OpportunityDetails: NextPageWithLayout<{
                         )}
                       />
 
-                      {errorsStep2.languages && (
+                      {formStateStep2.errors.languages && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.languages.message}`}
+                            {`${formStateStep2.errors.languages.message}`}
                           </span>
                         </label>
                       )}
@@ -1264,10 +1434,10 @@ const OpportunityDetails: NextPageWithLayout<{
                         )}
                       />
 
-                      {errorsStep2.countries && (
+                      {formStateStep2.errors.countries && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.countries.message}`}
+                            {`${formStateStep2.errors.countries.message}`}
                           </span>
                         </label>
                       )}
@@ -1303,10 +1473,10 @@ const OpportunityDetails: NextPageWithLayout<{
                         )}
                       />
 
-                      {errorsStep2.difficultyId && (
+                      {formStateStep2.errors.difficultyId && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.difficultyId.message}`}
+                            {`${formStateStep2.errors.difficultyId.message}`}
                           </span>
                         </label>
                       )}
@@ -1325,10 +1495,10 @@ const OpportunityDetails: NextPageWithLayout<{
                             valueAsNumber: true,
                           })}
                         />
-                        {errorsStep2.commitmentIntervalCount && (
+                        {formStateStep2.errors.commitmentIntervalCount && (
                           <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
-                              {`${errorsStep2.commitmentIntervalCount.message}`}
+                              {`${formStateStep2.errors.commitmentIntervalCount.message}`}
                             </span>
                           </label>
                         )}
@@ -1363,10 +1533,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           )}
                         />
 
-                        {errorsStep2.commitmentIntervalId && (
+                        {formStateStep2.errors.commitmentIntervalId && (
                           <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
-                              {`${errorsStep2.commitmentIntervalId.message}`}
+                              {`${formStateStep2.errors.commitmentIntervalId.message}`}
                             </span>
                           </label>
                         )}
@@ -1393,10 +1563,10 @@ const OpportunityDetails: NextPageWithLayout<{
                             />
                           )}
                         />
-                        {errorsStep2.dateStart && (
+                        {formStateStep2.errors.dateStart && (
                           <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
-                              {`${errorsStep2.dateStart.message}`}
+                              {`${formStateStep2.errors.dateStart.message}`}
                             </span>
                           </label>
                         )}
@@ -1423,10 +1593,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           )}
                         />
 
-                        {errorsStep2.dateEnd && (
+                        {formStateStep2.errors.dateEnd && (
                           <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
-                              {`${errorsStep2.dateEnd.message}`}
+                              {`${formStateStep2.errors.dateEnd.message}`}
                             </span>
                           </label>
                         )}
@@ -1479,10 +1649,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           }}
                         />
                       </div>
-                      {errorsStep2.participantLimit && (
+                      {formStateStep2.errors.participantLimit && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.participantLimit.message}`}
+                            {`${formStateStep2.errors.participantLimit.message}`}
                           </span>
                         </label>
                       )}
@@ -1522,6 +1692,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
 
                   <form
+                    ref={formRef3}
                     className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep3((data) =>
                       onSubmitStep(4, data),
@@ -1557,10 +1728,10 @@ const OpportunityDetails: NextPageWithLayout<{
                             }
                           }}
                         />
-                        {errorsStep3.yomaReward && (
+                        {formStateStep3.errors.yomaReward && (
                           <label className="label">
                             <span className="label-text-alt italic text-red-500">
-                              {`${errorsStep3.yomaReward.message}`}
+                              {`${formStateStep3.errors.yomaReward.message}`}
                             </span>
                           </label>
                         )}
@@ -1603,10 +1774,10 @@ const OpportunityDetails: NextPageWithLayout<{
                             }
                           }}
                         />
-                        {errorsStep3.yomaRewardPool && (
+                        {formStateStep3.errors.yomaRewardPool && (
                           <label className="label">
                             <span className="label-text-alt italic text-red-500">
-                              {`${errorsStep3.yomaRewardPool.message}`}
+                              {`${formStateStep3.errors.yomaRewardPool.message}`}
                             </span>
                           </label>
                         )}
@@ -1643,10 +1814,10 @@ const OpportunityDetails: NextPageWithLayout<{
                             }
                           }}
                         />
-                        {errorsStep3.zltoReward && (
+                        {formStateStep3.errors.zltoReward && (
                           <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
-                              {`${errorsStep3.zltoReward.message}`}
+                              {`${formStateStep3.errors.zltoReward.message}`}
                             </span>
                           </label>
                         )}
@@ -1691,10 +1862,10 @@ const OpportunityDetails: NextPageWithLayout<{
                             }
                           }}
                         />
-                        {errorsStep3.zltoRewardPool && (
+                        {formStateStep3.errors.zltoRewardPool && (
                           <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
-                              {`${errorsStep3.zltoRewardPool.message}`}
+                              {`${formStateStep3.errors.zltoRewardPool.message}`}
                             </span>
                           </label>
                         )}
@@ -1739,14 +1910,15 @@ const OpportunityDetails: NextPageWithLayout<{
                           </>
                         )}
                       />
-                      {errorsStep3.skills && (
+                      {formStateStep3.errors.skills && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep3.skills.message}`}
+                            {`${formStateStep3.errors.skills.message}`}
                           </span>
                         </label>
                       )}
                     </div>
+
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       {opportunityId === "create" && (
@@ -1781,6 +1953,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
 
                   <form
+                    ref={formRef4}
                     className="flex h-full flex-col gap-4"
                     onSubmit={handleSubmitStep4((data) =>
                       onSubmitStep(5, data),
@@ -1821,10 +1994,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           </>
                         )}
                       />
-                      {errorsStep4.keywords && (
+                      {formStateStep4.errors.keywords && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep4.keywords.message}`}
+                            {`${formStateStep4.errors.keywords.message}`}
                           </span>
                         </label>
                       )}
@@ -1863,6 +2036,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
 
                   <form
+                    ref={formRef5}
                     className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep5((data) =>
                       onSubmitStep(6, data),
@@ -1955,17 +2129,17 @@ const OpportunityDetails: NextPageWithLayout<{
                           </>
                         )}
                       />
-                      {errorsStep5.verificationEnabled && (
+                      {formStateStep5.errors.verificationEnabled && (
                         <label className="label -mb-5 font-bold">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep5.verificationEnabled.message}`}
+                            {`${formStateStep5.errors.verificationEnabled.message}`}
                           </span>
                         </label>
                       )}
-                      {errorsStep5.verificationMethod && (
+                      {formStateStep5.errors.verificationMethod && (
                         <label className="label -mb-5 font-bold">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep5.verificationMethod.message}`}
+                            {`${formStateStep5.errors.verificationMethod.message}`}
                           </span>
                         </label>
                       )}
@@ -2068,10 +2242,10 @@ const OpportunityDetails: NextPageWithLayout<{
                               </div>
                             ))}
                           </div>
-                          {errorsStep5.verificationTypes && (
+                          {formStateStep5.errors.verificationTypes && (
                             <label className="label -mb-5 font-bold">
                               <span className="label-text-alt italic text-red-500">
-                                {`${errorsStep5.verificationTypes.message}`}
+                                {`${formStateStep5.errors.verificationTypes.message}`}
                               </span>
                             </label>
                           )}
@@ -2112,6 +2286,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
 
                   <form
+                    ref={formRef6}
                     className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep6((data) =>
                       onSubmitStep(7, data),
@@ -2141,10 +2316,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           is supported (previous step).
                         </div>
                       )}
-                      {errorsStep6.credentialIssuanceEnabled && (
+                      {formStateStep6.errors.credentialIssuanceEnabled && (
                         <label className="label -mb-5 font-bold">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep6.credentialIssuanceEnabled.message}`}
+                            {`${formStateStep6.errors.credentialIssuanceEnabled.message}`}
                           </span>
                         </label>
                       )}
@@ -2182,10 +2357,10 @@ const OpportunityDetails: NextPageWithLayout<{
                               />
                             )}
                           />
-                          {errorsStep6.ssiSchemaName && (
+                          {formStateStep6.errors.ssiSchemaName && (
                             <label className="label -mb-5">
                               <span className="label-text-alt italic text-red-500">
-                                {`${errorsStep6.ssiSchemaName.message}`}
+                                {`${formStateStep6.errors.ssiSchemaName.message}`}
                               </span>
                             </label>
                           )}
@@ -2260,6 +2435,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
 
                   <form
+                    ref={formRef7}
                     className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep7((data) =>
                       onSubmitStep(8, data),
@@ -2274,10 +2450,10 @@ const OpportunityDetails: NextPageWithLayout<{
                       <label className="label label-text pt-0 text-sm">
                         {formData.title}
                       </label>
-                      {errorsStep1.title && (
+                      {formStateStep1.errors.title && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep1.title.message}`}
+                            {`${formStateStep1.errors.title.message}`}
                           </span>
                         </label>
                       )}
@@ -2291,10 +2467,10 @@ const OpportunityDetails: NextPageWithLayout<{
                       <label className="label label-text pt-0 text-sm ">
                         {formData.description}
                       </label>
-                      {errorsStep1.description && (
+                      {formStateStep1.errors.description && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep1.description.message}`}
+                            {`${formStateStep1.errors.description.message}`}
                           </span>
                         </label>
                       )}
@@ -2313,10 +2489,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           )?.label
                         }
                       </label>
-                      {errorsStep1.typeId && (
+                      {formStateStep1.errors.typeId && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep1.typeId.message}`}
+                            {`${formStateStep1.errors.typeId.message}`}
                           </span>
                         </label>
                       )}
@@ -2331,10 +2507,10 @@ const OpportunityDetails: NextPageWithLayout<{
                       <label className="label label-text pt-0 text-sm ">
                         {formData.keywords?.join(", ")}
                       </label>
-                      {errorsStep1.keywords && (
+                      {formStateStep1.errors.keywords && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep1.keywords.message}`}
+                            {`${formStateStep1.errors.keywords.message}`}
                           </span>
                         </label>
                       )}
@@ -2355,10 +2531,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           {formData.uRL}
                         </Link>
                       </label>
-                      {errorsStep1.uRL && (
+                      {formStateStep1.errors.uRL && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep1.uRL.message}`}
+                            {`${formStateStep1.errors.uRL.message}`}
                           </span>
                         </label>
                       )}
@@ -2377,10 +2553,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           )?.label
                         }
                       </label>
-                      {errorsStep2.difficultyId && (
+                      {formStateStep2.errors.difficultyId && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.difficultyId.message}`}
+                            {`${formStateStep2.errors.difficultyId.message}`}
                           </span>
                         </label>
                       )}
@@ -2397,10 +2573,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           )
                           .join(", ")}
                       </label>
-                      {errorsStep2.languages && (
+                      {formStateStep2.errors.languages && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.languages.message}`}
+                            {`${formStateStep2.errors.languages.message}`}
                           </span>
                         </label>
                       )}
@@ -2417,10 +2593,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           )
                           .join(", ")}
                       </label>
-                      {errorsStep2.countries && (
+                      {formStateStep2.errors.countries && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.countries.message}`}
+                            {`${formStateStep2.errors.countries.message}`}
                           </span>
                         </label>
                       )}
@@ -2439,17 +2615,17 @@ const OpportunityDetails: NextPageWithLayout<{
                             )?.label
                           }
                         </label>
-                        {errorsStep2.commitmentIntervalCount && (
+                        {formStateStep2.errors.commitmentIntervalCount && (
                           <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
-                              {`${errorsStep2.commitmentIntervalCount.message}`}
+                              {`${formStateStep2.errors.commitmentIntervalCount.message}`}
                             </span>
                           </label>
                         )}
-                        {errorsStep2.commitmentIntervalId && (
+                        {formStateStep2.errors.commitmentIntervalId && (
                           <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
-                              {`${errorsStep2.commitmentIntervalId.message}`}
+                              {`${formStateStep2.errors.commitmentIntervalId.message}`}
                             </span>
                           </label>
                         )}
@@ -2467,10 +2643,10 @@ const OpportunityDetails: NextPageWithLayout<{
                               {formData.dateStart!}
                             </Moment>
                           </label>
-                          {errorsStep2.dateStart && (
+                          {formStateStep2.errors.dateStart && (
                             <label className="label -mb-5">
                               <span className="label-text-alt italic text-red-500">
-                                {`${errorsStep2.dateStart.message}`}
+                                {`${formStateStep2.errors.dateStart.message}`}
                               </span>
                             </label>
                           )}
@@ -2486,10 +2662,10 @@ const OpportunityDetails: NextPageWithLayout<{
                               {formData.dateEnd!}
                             </Moment>
                           </label>
-                          {errorsStep2.dateEnd && (
+                          {formStateStep2.errors.dateEnd && (
                             <label className="label -mb-5">
                               <span className="label-text-alt italic text-red-500">
-                                {`${errorsStep2.dateEnd.message}`}
+                                {`${formStateStep2.errors.dateEnd.message}`}
                               </span>
                             </label>
                           )}
@@ -2506,10 +2682,10 @@ const OpportunityDetails: NextPageWithLayout<{
                       <label className="label label-text text-sm pt-0 ">
                         {formData.yomaReward}
                       </label>
-                      {errorsStep2.yomaReward && (
+                      {formStateStep2.errors.yomaReward && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.yomaReward.message}`}
+                            {`${formStateStep2.errors.yomaReward.message}`}
                           </span>
                         </label>
                       )}
@@ -2524,10 +2700,10 @@ const OpportunityDetails: NextPageWithLayout<{
                       <label className="label label-text text-sm pt-0 ">
                         {formData.yomaRewardPool}
                       </label>
-                      {errorsStep2.yomaRewardPool && (
+                      {formStateStep2.errors.yomaRewardPool && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.yomaRewardPool.message}`}
+                            {`${formStateStep2.errors.yomaRewardPool.message}`}
                           </span>
                         </label>
                       )}
@@ -2540,10 +2716,10 @@ const OpportunityDetails: NextPageWithLayout<{
                       <label className="label label-text pt-0 text-sm ">
                         {formData.participantLimit}
                       </label>
-                      {errorsStep2.participantLimit && (
+                      {formStateStep2.errors.participantLimit && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep2.participantLimit.message}`}
+                            {`${formStateStep2.errors.participantLimit.message}`}
                           </span>
                         </label>
                       )}
@@ -2561,10 +2737,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           <label className="label label-text text-sm ">
                             {formData.zltoReward}
                           </label>
-                          {errorsStep2.zltoReward && (
+                          {formStateStep2.errors.zltoReward && (
                             <label className="label -mb-5">
                               <span className="label-text-alt italic text-red-500">
-                                {`${errorsStep2.zltoReward.message}`}
+                                {`${formStateStep2.errors.zltoReward.message}`}
                               </span>
                             </label>
                           )}
@@ -2578,10 +2754,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           <label className="label label-text text-sm ">
                             {formData.zltoRewardPool}
                           </label>
-                          {errorsStep2.zltoRewardPool && (
+                          {formStateStep2.errors.zltoRewardPool && (
                             <label className="label -mb-5">
                               <span className="label-text-alt italic text-red-500">
-                                {`${errorsStep2.zltoRewardPool.message}`}
+                                {`${formStateStep2.errors.zltoRewardPool.message}`}
                               </span>
                             </label>
                           )}
@@ -2598,10 +2774,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           ? "Youth should upload proof of completion"
                           : "No verification is required"}
                       </label>
-                      {errorsStep3.verificationEnabled && (
+                      {formStateStep3.errors.verificationEnabled && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep3.verificationEnabled.message}`}
+                            {`${formStateStep3.errors.verificationEnabled.message}`}
                           </span>
                         </label>
                       )}
@@ -2622,10 +2798,10 @@ const OpportunityDetails: NextPageWithLayout<{
                             .filter((x) => x !== undefined)
                             .join(", ")}
                         </label>
-                        {errorsStep3.verificationTypes && (
+                        {formStateStep3.errors.verificationTypes && (
                           <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
-                              {`${errorsStep3.verificationTypes.message}`}
+                              {`${formStateStep3.errors.verificationTypes.message}`}
                             </span>
                           </label>
                         )}
@@ -2641,10 +2817,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           ? "I want to issue a credential upon completionn"
                           : "No credential is required"}
                       </label>
-                      {errorsStep6.credentialIssuanceEnabled && (
+                      {formStateStep6.errors.credentialIssuanceEnabled && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep6.credentialIssuanceEnabled.message}`}
+                            {`${formStateStep6.errors.credentialIssuanceEnabled.message}`}
                           </span>
                         </label>
                       )}
@@ -2657,10 +2833,10 @@ const OpportunityDetails: NextPageWithLayout<{
                       <label className="label label-text pt-0 text-sm ">
                         {formData.ssiSchemaName}
                       </label>
-                      {errorsStep6.ssiSchemaName && (
+                      {formStateStep6.errors.ssiSchemaName && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep6.ssiSchemaName.message}`}
+                            {`${formStateStep6.errors.ssiSchemaName.message}`}
                           </span>
                         </label>
                       )}
@@ -2715,10 +2891,10 @@ const OpportunityDetails: NextPageWithLayout<{
                         </span>
                       </label>
 
-                      {errorsStep7.postAsActive && (
+                      {formStateStep7.errors.postAsActive && (
                         <label className="label -mb-5 font-bold">
                           <span className="label-text-alt italic text-red-500">
-                            {`${errorsStep7.postAsActive.message}`}
+                            {`${formStateStep7.errors.postAsActive.message}`}
                           </span>
                         </label>
                       )}
@@ -2740,13 +2916,13 @@ const OpportunityDetails: NextPageWithLayout<{
                         className="btn btn-success flex-grow disabled:bg-gray-light md:w-1/3 md:flex-grow-0"
                         disabled={
                           !(
-                            isValidStep1 &&
-                            isValidStep2 &&
-                            isValidStep3 &&
-                            isValidStep4 &&
-                            isValidStep5 &&
-                            isValidStep6 &&
-                            isValidStep7
+                            formStateStep1.isValid &&
+                            formStateStep2.isValid &&
+                            formStateStep3.isValid &&
+                            formStateStep4.isValid &&
+                            formStateStep5.isValid &&
+                            formStateStep6.isValid &&
+                            formStateStep7.isValid
                           )
                         }
                       >
