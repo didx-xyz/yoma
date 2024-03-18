@@ -415,7 +415,8 @@ a {
   }
   .card-pf {
     margin: 10px 10px !important;
-    padding: 25px 0 !important;
+    padding: 25px 0 100px 0 !important;
+    border-radius: 0;
   }
 
 
