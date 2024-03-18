@@ -841,7 +841,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 //send for reapproval irrespective of status with type additions
                 if (updated)
                 {
-                    var commentApproval = $"Roles Assigned: {typesAssignedNames}";
+                    var commentApproval = $"Assigned roles '{typesAssignedNames}'";
                     await SendForReapproval(organization, reapprovalAction, null, commentApproval);
                 }
 
