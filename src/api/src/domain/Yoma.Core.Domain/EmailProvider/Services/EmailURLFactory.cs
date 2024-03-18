@@ -2,7 +2,6 @@ using Flurl;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.EmailProvider.Interfaces;
-using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.EmailProvider.Services
 {
@@ -33,7 +32,7 @@ namespace Yoma.Core.Domain.EmailProvider.Services
                     break;
 
                 case EmailType.Organization_Approval_Approved:
-                    //no additional segments
+                    result = result.AppendPathSegment("opportunities").ToString();
                     break;
 
                 case EmailType.Organization_Approval_Declined:
