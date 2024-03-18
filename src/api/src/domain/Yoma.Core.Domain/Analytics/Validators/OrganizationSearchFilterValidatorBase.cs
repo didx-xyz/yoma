@@ -16,7 +16,7 @@ namespace Yoma.Core.Domain.Analytics.Validators
         {
             _organizationService = organizationService;
 
-            RuleFor(x => x.Organization).NotEmpty().Must(Organizationxists).WithMessage($"Specified organization is invalid / does not exist.");
+            RuleFor(x => x.Organization).NotEmpty().Must(OrganizationExists).WithMessage($"Specified organization is invalid / does not exist.");
             RuleFor(x => x)
                 .Custom((model, context) =>
                 {
@@ -35,8 +35,9 @@ namespace Yoma.Core.Domain.Analytics.Validators
         #endregion
 
         #region Private Members
-        private bool Organizationxists(Guid id)
+        private bool OrganizationExists(Guid id)
         {
+            if (id == Guid.Empty) return false;
             return _organizationService.GetByIdOrNull(id, false, false, false) != null;
         }
         #endregion

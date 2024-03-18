@@ -19,14 +19,15 @@ namespace Yoma.Core.Domain.SSI.Validators
             _ssiSchemaEntityService = ssiSchemaEntityService;
 
             RuleFor(x => x.Name).NotEmpty().WithMessage("{PropertyName} is required.");
-            RuleFor(x => x.Attributes).Must(x => x.Any() && x.All(attrib => !string.IsNullOrWhiteSpace(attrib) && AttributeExist(attrib)))
+            RuleFor(x => x.Attributes).Must(x => x.Any() && x.All(attrib => !string.IsNullOrWhiteSpace(attrib) && AttributeExists(attrib)))
                 .WithMessage($"{{PropertyName}} is required, cannot contain empty or non-existent value(s) cannot start with an {SSISchemaService.SchemaAttribute_Internal_Prefix}.");
         }
         #endregion
 
         #region Private Members
-        private bool AttributeExist(string attrib)
+        private bool AttributeExists(string attrib)
         {
+            if (string.IsNullOrWhiteSpace(attrib)) return false;
             return _ssiSchemaEntityService.GetByAttributeNameOrNull(attrib) != null;
         }
         #endregion

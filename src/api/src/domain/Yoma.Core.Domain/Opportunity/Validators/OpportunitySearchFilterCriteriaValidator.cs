@@ -27,6 +27,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         #region Private Members
         private bool OrganizationExists(Guid id)
         {
+            if (id == Guid.Empty) return false;
             return _organizationService.GetByIdOrNull(id, false, false, false) != null;
         }
         #endregion

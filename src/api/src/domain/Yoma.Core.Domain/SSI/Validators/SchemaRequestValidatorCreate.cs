@@ -26,9 +26,10 @@ namespace Yoma.Core.Domain.SSI.Validators
         #endregion
 
         #region Private Members
-        private bool TypeExists(Guid typeId)
+        private bool TypeExists(Guid id)
         {
-            return _ssiSchemaTypeService.GetById(typeId) != null;
+            if (id == Guid.Empty) return false;
+            return _ssiSchemaTypeService.GetById(id) != null;
         }
         #endregion
     }

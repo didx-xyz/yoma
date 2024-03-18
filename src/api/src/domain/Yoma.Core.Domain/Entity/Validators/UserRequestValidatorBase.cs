@@ -41,22 +41,25 @@ namespace Yoma.Core.Domain.Entity.Validators
             return date <= DateTimeOffset.UtcNow;
         }
 
-        private bool CountryExists(Guid? countryId)
+        private bool CountryExists(Guid? id)
         {
-            if (!countryId.HasValue) return true;
-            return _countryService.GetByIdOrNull(countryId.Value) != null;
+            if (!id.HasValue) return true;
+            if (id.Value == Guid.Empty) return false;
+            return _countryService.GetByIdOrNull(id.Value) != null;
         }
 
-        private bool EducationExists(Guid? educationId)
+        private bool EducationExists(Guid? id)
         {
-            if (!educationId.HasValue) return true;
-            return _educationService.GetByIdOrNull(educationId.Value) != null;
+            if (!id.HasValue) return true;
+            if (id.Value == Guid.Empty) return false;
+            return _educationService.GetByIdOrNull(id.Value) != null;
         }
 
-        private bool GenderExists(Guid? genderId)
+        private bool GenderExists(Guid? id)
         {
-            if (!genderId.HasValue) return true;
-            return _genderService.GetByIdOrNull(genderId.Value) != null;
+            if (!id.HasValue) return true;
+            if (id.Value == Guid.Empty) return false;
+            return _genderService.GetByIdOrNull(id.Value) != null;
         }
         #endregion
     }

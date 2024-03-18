@@ -20,22 +20,24 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
             _userService = userService;
             _opportunityService = opportunityService;
 
-            RuleFor(x => x.OpportunityId).NotEmpty().Must(OpportunityExist).WithMessage($"Specified opportunity does not exist.");
-            RuleFor(x => x.UserId).NotEmpty().Must(UserExist).WithMessage($"Specified user does not exist.");
+            RuleFor(x => x.OpportunityId).NotEmpty().Must(OpportunityExists).WithMessage($"Specified opportunity does not exist.");
+            RuleFor(x => x.UserId).NotEmpty().Must(UserExists).WithMessage($"Specified user does not exist.");
             RuleFor(x => x.Status).Must(x => Statuses_Finalize.Contains(x)).WithMessage($"{{PropertyName}} must be '{string.Join(" / ", Statuses_Finalize)}'.");
             RuleFor(x => x.Comment).NotEmpty().When(x => x.Status == VerificationStatus.Rejected).WithMessage($"{{PropertyName}} required when '{VerificationStatus.Rejected}'.");
         }
         #endregion
 
         #region Private Members
-        private bool UserExist(Guid userId)
+        private bool UserExists(Guid id)
         {
-            return _userService.GetByIdOrNull(userId, false, false) != null;
+            if (id == Guid.Empty) return false;
+            return _userService.GetByIdOrNull(id, false, false) != null;
         }
 
-        private bool OpportunityExist(Guid userId)
+        private bool OpportunityExists(Guid id)
         {
-            return _opportunityService.GetByIdOrNull(userId, false, false, false) != null;
+            if (id == Guid.Empty) return false;
+            return _opportunityService.GetByIdOrNull(id, false, false, false) != null;
         }
         #endregion
     }

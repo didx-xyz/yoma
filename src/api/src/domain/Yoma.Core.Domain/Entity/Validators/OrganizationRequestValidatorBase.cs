@@ -37,7 +37,7 @@ namespace Yoma.Core.Domain.Entity.Validators
             RuleFor(x => x.Tagline).Length(1, 160).When(x => !string.IsNullOrEmpty(x.Tagline));
             RuleFor(x => x.Biography).Length(1, 480).When(x => !string.IsNullOrEmpty(x.Biography));
             RuleFor(x => x.Logo).Must(file => file == null || file.Length > 0).WithMessage("Logo is optional, but if specified, can not be empty.");
-            RuleFor(x => x.ProviderTypes).Must(providerTypes => providerTypes != null && providerTypes.Any() && providerTypes.All(id => id != Guid.Empty && ProviderTypeExist(id)))
+            RuleFor(x => x.ProviderTypes).Must(providerTypes => providerTypes != null && providerTypes.Any() && providerTypes.All(id => id != Guid.Empty && ProviderTypeExists(id)))
                 .WithMessage("Provider types are required and must exist.");
             RuleFor(x => x.RegistrationDocuments)
                 .ForEach(doc => doc.Must(file => file != null && file.Length > 0)
@@ -53,7 +53,7 @@ namespace Yoma.Core.Domain.Entity.Validators
                .When(x => x.BusinessDocuments != null && x.BusinessDocuments.Any());
             RuleFor(x => x.AdminEmails).Must(emails => emails != null && emails.Any()).When(x => !x.AddCurrentUserAsAdmin)
                 .WithMessage("Additional administrative emails are required provided not adding the current user as an admin.");
-            RuleFor(x => x.AdminEmails).Must(emails => emails != null && emails.All(email => !string.IsNullOrEmpty(email) && new EmailAddressAttribute().IsValid(email)))
+            RuleFor(x => x.AdminEmails).Must(emails => emails != null && emails.All(email => !string.IsNullOrWhiteSpace(email) && new EmailAddressAttribute().IsValid(email)))
                 .WithMessage("Additional administrative emails contain invalid addresses.")
                 .When(x => x.AdminEmails != null && x.AdminEmails.Any());
         }
@@ -66,15 +66,17 @@ namespace Yoma.Core.Domain.Entity.Validators
             return Uri.IsWellFormedUriString(url, UriKind.Absolute);
         }
 
-        private bool CountryExists(Guid? countryId)
-        {
-            if (!countryId.HasValue) return true;
-            return _countryService.GetByIdOrNull(countryId.Value) != null;
-        }
-
-        private bool ProviderTypeExist(Guid? id)
+        private bool CountryExists(Guid? id)
         {
             if (!id.HasValue) return true;
+            if (id.Value == Guid.Empty) return false;
+            return _countryService.GetByIdOrNull(id.Value) != null;
+        }
+
+        private bool ProviderTypeExists(Guid? id)
+        {
+            if (!id.HasValue) return true;
+            if (id.Value == Guid.Empty) return false;
             return _organizationProviderTypeService.GetByIdOrNull(id.Value) != null;
         }
         #endregion

@@ -201,13 +201,26 @@ namespace Yoma.Core.Domain.Analytics.Services
 
             result.Opportunities.Completion = new OpportunityCompletion { Legend = "Average time (days)", AverageTimeInDays = (int)Math.Round(averageCompletionTimeInDays) };
 
-            //converstion rate
+            //average converstion rate
+            var items = SearchOrganizationOpportunitiesQueryBase(new OrganizationSearchFilterOpportunity
+            {
+                Organization = filter.Organization,
+                Opportunities = filter.Opportunities,
+                Categories = filter.Categories,
+                StartDate = filter.StartDate,
+                EndDate = filter.EndDate
+
+            }).ToList();
+
             result.Opportunities.ConversionRate = new OpportunityConversionRatio
             {
-                Legend = "Conversion rate",
+                Legend = "Conversion rate (average)",
                 ViewedCount = viewedCount,
                 CompletedCount = completedCount,
-                Percentage = viewedCount > 0 ? Math.Min(100M, Math.Round((decimal)completedCount / viewedCount * 100, 2)) : 0
+                //calculate average percentage based on individual opportunity conversion ratio rather than global counts (more accurate)
+                Percentage = items.Any()
+                    ? Math.Min(100M, Math.Round(items.Sum(o => o.ConversionRatioPercentage) / items.Count))
+                    : 0M
             };
 
             //zlto rewards
@@ -319,27 +332,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
             _organizationSearchFilterOpportunityValidator.ValidateAndThrow(filter);
 
-            var query = OpportunityQueryBase(filter)
-                .Select(opportunity => new
-                {
-                    opportunity,
-                    Opportunity = opportunity,
-                    ViewedCount = _myOpportunityRepository.Query()
-                        .Count(mo => mo.OpportunityId == opportunity.Id && mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Viewed.ToString()).Id),
-                    CompletedCount = _myOpportunityRepository.Query()
-                        .Count(mo => mo.OpportunityId == opportunity.Id && mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id &&
-                                     mo.VerificationStatusId == _myOpportunityVerificationStatusService.GetByName(MyOpportunity.VerificationStatus.Completed.ToString()).Id)
-                })
-                .Select(result => new OpportunityInfoAnalytics
-                {
-                    Id = result.Opportunity.Id,
-                    Title = result.Opportunity.Title,
-                    Status = result.opportunity.Status,
-                    OrganizationLogoId = result.Opportunity.OrganizationLogoId,
-                    ViewedCount = result.ViewedCount,
-                    CompletedCount = result.CompletedCount,
-                    ConversionRatioPercentage = (result.ViewedCount > 0) ? Math.Min(100, Math.Round((decimal)result.CompletedCount / result.ViewedCount * 100, 2)) : 0
-                });
+            var query = SearchOrganizationOpportunitiesQueryBase(filter);
 
             query = query.OrderByDescending(o => o.ConversionRatioPercentage).ThenBy(o => o.Title);
 
@@ -356,6 +349,30 @@ namespace Yoma.Core.Domain.Analytics.Services
 
             result.DateStamp = DateTimeOffset.UtcNow;
             return result;
+        }
+
+        private IQueryable<OpportunityInfoAnalytics> SearchOrganizationOpportunitiesQueryBase(OrganizationSearchFilterOpportunity filter)
+        {
+            return OpportunityQueryBase(filter)
+                .Select(opportunity => new
+                {
+                    Opportunity = opportunity,
+                    ViewedCount = _myOpportunityRepository.Query()
+                        .Count(mo => mo.OpportunityId == opportunity.Id && mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Viewed.ToString()).Id),
+                    CompletedCount = _myOpportunityRepository.Query()
+                        .Count(mo => mo.OpportunityId == opportunity.Id && mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id &&
+                                     mo.VerificationStatusId == _myOpportunityVerificationStatusService.GetByName(MyOpportunity.VerificationStatus.Completed.ToString()).Id)
+                })
+                .Select(result => new OpportunityInfoAnalytics
+                {
+                    Id = result.Opportunity.Id,
+                    Title = result.Opportunity.Title,
+                    Status = result.Opportunity.Status,
+                    OrganizationLogoId = result.Opportunity.OrganizationLogoId,
+                    ViewedCount = result.ViewedCount,
+                    CompletedCount = result.CompletedCount,
+                    ConversionRatioPercentage = (result.ViewedCount > 0) ? Math.Min(100, Math.Round((decimal)result.CompletedCount / result.ViewedCount * 100, 2)) : 0
+                });
         }
 
         private OrganizationSearchResultsYouth SearchOrganizationYouthInternal(OrganizationSearchFilterYouth filter)

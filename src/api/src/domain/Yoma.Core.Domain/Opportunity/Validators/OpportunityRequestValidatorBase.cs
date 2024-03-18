@@ -88,13 +88,13 @@ namespace Yoma.Core.Domain.Opportunity.Validators
                 .Must(SSISchemaExistsAndOfTypeOpportunity)
                 .When(x => !string.IsNullOrEmpty(x.SSISchemaName))
                 .WithMessage("SSI schema does not exist.");
-            RuleFor(x => x.Categories).Must(categories => categories != null && categories.Any() && categories.All(id => id != Guid.Empty && CategoryExist(id)))
+            RuleFor(x => x.Categories).Must(categories => categories != null && categories.Any() && categories.All(id => id != Guid.Empty && CategoryExists(id)))
               .WithMessage("Categories are required and must exist.");
-            RuleFor(x => x.Countries).Must(countries => countries != null && countries.Any() && countries.All(id => id != Guid.Empty && CountryExist(id)))
+            RuleFor(x => x.Countries).Must(countries => countries != null && countries.Any() && countries.All(id => id != Guid.Empty && CountryExists(id)))
                 .WithMessage("Countries are required and must exist.");
-            RuleFor(x => x.Languages).Must(languages => languages != null && languages.Any() && languages.All(id => id != Guid.Empty && LanguageExist(id)))
+            RuleFor(x => x.Languages).Must(languages => languages != null && languages.Any() && languages.All(id => id != Guid.Empty && LanguageExists(id)))
                 .WithMessage("Languages are required and must exist.");
-            RuleFor(x => x.Skills).Must(skills => skills != null && skills.All(id => id != Guid.Empty && SkillExist(id)))
+            RuleFor(x => x.Skills).Must(skills => skills != null && skills.All(id => id != Guid.Empty && SkillExists(id)))
                 .WithMessage("Skills are optional, but must exist if specified.")
                 .When(x => x.Skills != null && x.Skills.Any());
             RuleFor(x => x.VerificationTypes)
@@ -102,29 +102,33 @@ namespace Yoma.Core.Domain.Opportunity.Validators
                 .When(x => x.VerificationMethod != null && x.VerificationMethod == VerificationMethod.Manual)
                 .WithMessage("With manual verification, one or more verification types are required.");
             RuleFor(x => x.VerificationTypes)
-                .Must(types => types == null || types.All(type => VerificationTypeExist(type.Type)))
+                .Must(types => types == null || types.All(type => VerificationTypeExists(type.Type)))
                 .WithMessage("Verification types must exist if specified.");
         }
         #endregion
 
         #region Private Members
-        private bool TypeExists(Guid typeId)
+        private bool TypeExists(Guid id)
         {
-            return _opportunityTypeService.GetByIdOrNull(typeId) != null;
+            if (id == Guid.Empty) return false;
+            return _opportunityTypeService.GetByIdOrNull(id) != null;
         }
 
-        private bool DifficultyExists(Guid typeId)
+        private bool DifficultyExists(Guid id)
         {
-            return _opportunityDifficultyService.GetByIdOrNull(typeId) != null;
+            if (id == Guid.Empty) return false;
+            return _opportunityDifficultyService.GetByIdOrNull(id) != null;
         }
 
-        private bool TimeIntervalExists(Guid typeId)
+        private bool TimeIntervalExists(Guid id)
         {
-            return _timeIntervalService.GetByIdOrNull(typeId) != null;
+            if (id == Guid.Empty) return false;
+            return _timeIntervalService.GetByIdOrNull(id) != null;
         }
 
         private bool OrganizationUpdatable(Guid organizationId)
         {
+            if (organizationId == Guid.Empty) return false;
             return _organizationService.Updatable(organizationId, false);
         }
 
@@ -141,31 +145,35 @@ namespace Yoma.Core.Domain.Opportunity.Validators
             return string.Join(OpportunityService.Keywords_Separator, list).Length;
         }
 
-        private bool CategoryExist(Guid? id)
+        private bool CategoryExists(Guid? id)
         {
             if (!id.HasValue) return true;
+            if (id.Value == Guid.Empty) return false;
             return _opportunityCategoryService.GetByIdOrNull(id.Value) != null;
         }
 
-        private bool CountryExist(Guid? id)
+        private bool CountryExists(Guid? id)
         {
             if (!id.HasValue) return true;
+            if (id.Value == Guid.Empty) return false;
             return _countryService.GetByIdOrNull(id.Value) != null;
         }
 
-        private bool LanguageExist(Guid? id)
+        private bool LanguageExists(Guid? id)
         {
             if (!id.HasValue) return true;
+            if (id.Value == Guid.Empty) return false;
             return _languageService.GetByIdOrNull(id.Value) != null;
         }
 
-        private bool SkillExist(Guid? id)
+        private bool SkillExists(Guid? id)
         {
             if (!id.HasValue) return true;
+            if (id.Value == Guid.Empty) return false;
             return _skillService.GetByIdOrNull(id.Value) != null;
         }
 
-        private bool VerificationTypeExist(VerificationType type)
+        private bool VerificationTypeExists(VerificationType type)
         {
             return _opportunityVerificationTypeService.GetByTypeOrNull(type) != null;
         }

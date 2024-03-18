@@ -16,16 +16,17 @@ namespace Yoma.Core.Domain.Marketplace.Validators
         {
             _countryService = countryService;
 
-            RuleFor(x => x.CountryCodeAlpha2).Must(code => !string.IsNullOrEmpty(code) && CountryExist(code)).WithMessage("{PropertyName} is required and must exist.");
+            RuleFor(x => x.CountryCodeAlpha2).Must(code => !string.IsNullOrEmpty(code) && CountryExists(code)).WithMessage("{PropertyName} is required and must exist.");
             //categoryId optional
             //pagination optional
         }
         #endregion
 
         #region Private Members
-        private bool CountryExist(string countryCodeAplha2)
+        private bool CountryExists(string codeAplha2)
         {
-            return _countryService.GetByCodeAplha2OrNull(countryCodeAplha2) != null;
+            if (string.IsNullOrEmpty(codeAplha2)) return false;
+            return _countryService.GetByCodeAplha2OrNull(codeAplha2) != null;
         }
         #endregion
     }
