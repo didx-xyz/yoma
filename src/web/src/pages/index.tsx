@@ -617,7 +617,7 @@ const Home: NextPageWithLayout<{
               href="/organisations/register"
               className="btn mt-8 w-[260px] rounded-xl border-none bg-green normal-case text-white hover:bg-green hover:text-white hover:brightness-110"
             >
-              Sign up as a partmer
+              Sign up as a partner
             </Link>
           </div>
         </div>

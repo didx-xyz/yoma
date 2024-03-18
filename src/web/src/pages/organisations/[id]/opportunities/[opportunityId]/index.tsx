@@ -195,7 +195,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
   // 👇 use prefetched queries from server
   const { data: categories } = useQuery<SelectOption[]>({
-    queryKey: ["categories"],
+    queryKey: ["categories", "selectOptions"],
     queryFn: async () =>
       (await getCategories()).map((c) => ({
         value: c.id,
@@ -204,7 +204,7 @@ const OpportunityDetails: NextPageWithLayout<{
     enabled: !error,
   });
   const { data: countries } = useQuery<SelectOption[]>({
-    queryKey: ["countries"],
+    queryKey: ["countries", "selectOptions"],
     queryFn: async () =>
       (await getCountries()).map((c) => ({
         value: c.id,
@@ -213,7 +213,7 @@ const OpportunityDetails: NextPageWithLayout<{
     enabled: !error,
   });
   const { data: languages } = useQuery<SelectOption[]>({
-    queryKey: ["languages"],
+    queryKey: ["languages", "selectOptions"],
     queryFn: async () =>
       (await getLanguages()).map((c) => ({
         value: c.id,
@@ -222,7 +222,7 @@ const OpportunityDetails: NextPageWithLayout<{
     enabled: !error,
   });
   const { data: opportunityTypes } = useQuery<SelectOption[]>({
-    queryKey: ["opportunityTypes"],
+    queryKey: ["opportunityTypes", "selectOptions"],
     queryFn: async () =>
       (await getTypes()).map((c) => ({
         value: c.id,
@@ -231,12 +231,12 @@ const OpportunityDetails: NextPageWithLayout<{
     enabled: !error,
   });
   const { data: verificationTypes } = useQuery<OpportunityVerificationType[]>({
-    queryKey: ["verificationTypes"],
+    queryKey: ["verificationTypes", "selectOptions"],
     queryFn: async () => await getVerificationTypes(),
     enabled: !error,
   });
   const { data: difficulties } = useQuery<SelectOption[]>({
-    queryKey: ["difficulties"],
+    queryKey: ["difficulties", "selectOptions"],
     queryFn: async () =>
       (await getDifficulties()).map((c) => ({
         value: c.id,
@@ -245,7 +245,7 @@ const OpportunityDetails: NextPageWithLayout<{
     enabled: !error,
   });
   const { data: timeIntervals } = useQuery<SelectOption[]>({
-    queryKey: ["timeIntervals"],
+    queryKey: ["timeIntervals", "selectOptions"],
     queryFn: async () =>
       (await getTimeIntervals()).map((c) => ({
         value: c.id,
@@ -471,13 +471,13 @@ const OpportunityDetails: NextPageWithLayout<{
   const schemaStep3 = z.object({
     zltoReward: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
       // eslint-disable-next-line
-      return val === null || Number.isNaN(val as any) ? undefined : val;
+      return val === null || Number.isNaN(val as any) ? null : val;
     }),
     zltoRewardPool: z
       .union([z.nan(), z.null(), z.number()])
       .transform((val) => {
         // eslint-disable-next-line
-        return val === null || Number.isNaN(val as any) ? undefined : val;
+        return val === null || Number.isNaN(val as any) ? null : val;
       }),
     // yomaReward: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
     //   // eslint-disable-next-line
@@ -493,7 +493,8 @@ const OpportunityDetails: NextPageWithLayout<{
   });
 
   const schemaStep4 = z.object({
-    keywords: z.array(z.string()).optional(),
+    //keywords: z.array(z.string()).optional(),
+    keywords: z.array(z.string()).length(1, "At least 1 keyword is required."),
   });
 
   const schemaStep5 = z
@@ -679,7 +680,6 @@ const OpportunityDetails: NextPageWithLayout<{
   }, [schemas, watcSSISchemaName]);
 
   // set default values
-  // FIX (safari/brave issue): give the form (country dropdowns) time to load before setting default values
   useEffect(() => {
     // reset form
     // setTimeout is needed to prevent the form from being reset before the default values are set
@@ -705,7 +705,7 @@ const OpportunityDetails: NextPageWithLayout<{
       resetStep7({
         ...formData,
       });
-    }, 2000);
+    }, 500);
   }, [
     resetStep1,
     resetStep2,
@@ -813,7 +813,7 @@ const OpportunityDetails: NextPageWithLayout<{
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    isValidStep1 ? "bg- bg-green" : "bg-gray-dark"
+                    isValidStep1 ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   1
@@ -831,7 +831,7 @@ const OpportunityDetails: NextPageWithLayout<{
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    isValidStep2 ? "bg- bg-green" : "bg-gray-dark"
+                    isValidStep2 ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   2
@@ -849,7 +849,7 @@ const OpportunityDetails: NextPageWithLayout<{
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    isValidStep3 ? "bg- bg-green" : "bg-gray-dark"
+                    isValidStep3 ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   3
@@ -867,7 +867,7 @@ const OpportunityDetails: NextPageWithLayout<{
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    isValidStep4 ? "bg- bg-green" : "bg-gray-dark"
+                    isValidStep4 ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   4
@@ -885,7 +885,7 @@ const OpportunityDetails: NextPageWithLayout<{
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    isValidStep5 ? "bg- bg-green" : "bg-gray-dark"
+                    isValidStep5 ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   5
@@ -1377,7 +1377,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       <div className="form-control">
                         <label className="label font-bold">
                           <span className="label-text">
-                            Opportunity start date:
+                            Opportunity start date
                           </span>
                         </label>
                         <Controller
@@ -1405,7 +1405,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       <div className="form-control">
                         <label className="label font-bold">
                           <span className="label-text">
-                            Opportunity end date:
+                            Opportunity end date
                           </span>
                         </label>
 
@@ -2203,11 +2203,9 @@ const OpportunityDetails: NextPageWithLayout<{
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {schemaAttributes?.map((attribute) => (
-                                    <div
-                                      key={`schemaAttributes_${attribute.id}`}
-                                    >
-                                      {attribute.properties?.map(
+                                  {schemaAttributes?.map(
+                                    (attribute) =>
+                                      attribute.properties?.map(
                                         (property, index) => (
                                           <tr
                                             key={`schemaAttributes_${attribute.id}_${index}_${property.id}`}
@@ -2217,9 +2215,8 @@ const OpportunityDetails: NextPageWithLayout<{
                                             <td>{property.nameDisplay}</td>
                                           </tr>
                                         ),
-                                      )}
-                                    </div>
-                                  ))}
+                                      ),
+                                  )}
                                 </tbody>
                               </table>
                             </div>
@@ -2681,11 +2678,9 @@ const OpportunityDetails: NextPageWithLayout<{
                               </tr>
                             </thead>
                             <tbody>
-                              {schemaAttributes?.map((attribute) => (
-                                <div
-                                  key={`schemaAttributesPreview_${attribute.id}`}
-                                >
-                                  {attribute.properties?.map(
+                              {schemaAttributes?.map(
+                                (attribute) =>
+                                  attribute.properties?.map(
                                     (property, index) => (
                                       <tr
                                         key={`schemaAttributesPreview_${attribute.id}_${index}_${property.id}`}
@@ -2695,9 +2690,8 @@ const OpportunityDetails: NextPageWithLayout<{
                                         <td>{property.nameDisplay}</td>
                                       </tr>
                                     ),
-                                  )}
-                                </div>
-                              ))}
+                                  ),
+                              )}
                             </tbody>
                           </table>
                         </div>

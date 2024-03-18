@@ -259,7 +259,6 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                     <option
                       value={tabItem.url}
                       key={`DropdownNavigation_${index}`}
-                      selected={tabItem.selected}
                     >
                       {tabItem.title}
                     </option>
