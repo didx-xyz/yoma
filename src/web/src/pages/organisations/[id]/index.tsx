@@ -20,12 +20,7 @@ import type { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { PageBackground } from "~/components/PageBackground";
-import {
-  IoMdCompass,
-  IoMdDocument,
-  IoMdHourglass,
-  IoMdPerson,
-} from "react-icons/io";
+import { IoMdCompass, IoMdDocument, IoMdHourglass } from "react-icons/io";
 import { useRouter } from "next/router";
 import {
   searchOrganizationEngagement,
@@ -583,7 +578,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                             searchResults.opportunities.conversionRate
                               .percentage ?? 0
                           } %`}
-                          colors={["#387F6A", "#F9AB3E"]} // green and yellow
+                          colors={CHART_COLORS}
                           data={[
                             ["Completed", "Viewed"],
                             [
@@ -638,33 +633,16 @@ const OrganisationDashboard: NextPageWithLayout<{
                   className="overflow-hidden rounded-lg bg-white  shadow"
                   style={{ minWidth: "291px", height: "160px" }}
                 >
-                  <div className="h-40 min-w-[288px] flex-col rounded-lg bg-white p-4 shadow">
-                    <div className="flex flex-row items-center gap-2">
-                      <IoMdPerson className="text-green" />
-                      <div className="whitespace-nowrap text-sm font-semibold">
-                        Total unique skills
-                      </div>
-                    </div>
-                    <div className="flex flex-grow flex-col">
-                      <div className="flex-grow text-2xl font-bold">
-                        {searchResults?.skills?.items?.count ?? 0}
-                      </div>
-                    </div>
-                  </div>
+                  <LineChart
+                    id="totalUniqueSkills"
+                    data={searchResults?.skills?.items}
+                    width={291}
+                    height={160}
+                    chartWidth={291}
+                    chartHeight={100}
+                    hideAxisesAndGridLines={true}
+                  />
                 </div>
-
-                {searchResults?.skills?.items &&
-                  searchResults?.skills?.items.data.length > 1 && (
-                    <LineChart
-                      id="totalUniqueSkills"
-                      data={searchResults?.skills?.items}
-                      width={291}
-                      height={160}
-                      chartWidth={291}
-                      chartHeight={100}
-                      hideAxisesAndGridLines={true}
-                    />
-                  )}
 
                 {/* MOST COMPLETED SKILLS */}
                 {searchResults?.skills?.topCompleted && (

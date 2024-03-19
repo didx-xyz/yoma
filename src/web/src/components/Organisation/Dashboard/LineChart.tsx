@@ -89,11 +89,15 @@ export const LineChart: React.FC<{
       ];
 
     const mappedData = data.data.map((x) => {
-      const date = new Date(x.date);
-      const formattedDate = `${date.getFullYear()}-${String(
-        date.getMonth() + 1,
-      ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      return [formattedDate, ...x.values] as (string | number)[];
+      if (x.date) {
+        const date = new Date(x.date);
+        x.date = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+          2,
+          "0",
+        )}-${String(date.getDate()).padStart(2, "0")}`;
+      }
+
+      return [x.date, ...x.values] as (string | number)[];
     });
 
     const labels = data.legend.map((x, i) => `${x} (Total: ${data.count[i]})`);
@@ -103,6 +107,7 @@ export const LineChart: React.FC<{
 
   useEffect(() => {
     if (!data || !localData) return;
+
     // Update the custom legend when the chart is ready (ready event does not always fire)
     updateCustomLegendLineChart(`legend_div_${id}`, data, undefined);
   }, [id, localData, data]);
