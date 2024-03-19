@@ -376,7 +376,8 @@ jobs:
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: |
             https://github.com/databus23/helm-diff,
-            https://github.com/jkroepke/helm-secrets
+            https://github.com/jkroepke/helm-secrets,
+            https://github.com/aslafy-z/helm-git
       - name: Helmfile Apply/Diff Web
         if: steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch'
         uses: helmfile/helmfile-action@v1.8.0
@@ -390,4 +391,5 @@ jobs:
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: |
             https://github.com/databus23/helm-diff,
-            https://github.com/jkroepke/helm-secrets
+            https://github.com/jkroepke/helm-secrets,
+            https://github.com/aslafy-z/helm-git
