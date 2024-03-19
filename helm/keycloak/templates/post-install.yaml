@@ -21,7 +21,7 @@ spec:
       restartPolicy: Never
       {{- if .Values.postInstallHook.initContainers }}
       initContainers:
-        {{- toYaml .Values.postInstallHook.initContainers | nindent 8 }}
+        {{- tpl (toYaml .Values.postInstallHook.initContainers) . | nindent 8 }}
       {{- end }}
       containers:
       - name: post-install-job

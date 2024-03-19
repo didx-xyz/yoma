@@ -28,6 +28,10 @@ repositories:
   - name: ingress-nginx
     url: https://kubernetes.github.io/ingress-nginx
 {{ end }}
+  - name: codecentric
+    url: https://codecentric.github.io/helm-charts
+  - name: didx-xyz-config-cli
+    url: git+https://github.com/didx-xyz/keycloak-config-cli@contrib/charts?ref=init-containers&sparse=0
   - name: simcube
     url: https://simcubeltd.github.io/simcube-helm-charts/
 ---
