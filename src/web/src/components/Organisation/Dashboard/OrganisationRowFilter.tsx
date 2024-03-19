@@ -143,10 +143,9 @@ export const OrganisationRowFilter: React.FC<{
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
         className="flex flex-col gap-2"
       >
-        <div className="flex flex-grow flex-row items-center gap-2">
-          <div className="mr-4 text-sm font-bold text-white">Filter by:</div>
-
-          <div className="flex flex-grow flex-row gap-2">
+        <div className="flex flex-col gap-2 lg:flex-row">
+          <div className="flex flex-grow flex-row items-center gap-2">
+            <div className="mr-4 text-sm font-bold text-white">Filter by:</div>
             {/* OPPORTUNITIES */}
             <>
               <Controller
@@ -191,61 +190,63 @@ export const OrganisationRowFilter: React.FC<{
               )}
             </>
 
-            <div className="flex items-center text-xs text-white">OR</div>
+            <div className="flex flex-grow flex-row gap-2">
+              <div className="flex items-center text-xs text-white">OR</div>
 
-            {/* CATEGORIES */}
-            {lookups_categories && (
-              <>
-                <Controller
-                  name="categories"
-                  control={form.control}
-                  defaultValue={searchFilter?.categories}
-                  render={({ field: { onChange, value } }) => (
-                    <Select
-                      instanceId="categories"
-                      classNames={{
-                        control: () => "input input-xs h-fit !border-gray",
-                      }}
-                      isMulti={true}
-                      options={lookups_categories.map((c) => ({
-                        value: c.name,
-                        label: c.name,
-                      }))}
-                      // fix menu z-index issue
-                      menuPortalTarget={htmlRef}
-                      styles={{
-                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                      }}
-                      onChange={(val) => {
-                        // clear opportunities
-                        setValue("opportunities", []);
+              {/* CATEGORIES */}
+              {lookups_categories && (
+                <>
+                  <Controller
+                    name="categories"
+                    control={form.control}
+                    defaultValue={searchFilter?.categories}
+                    render={({ field: { onChange, value } }) => (
+                      <Select
+                        instanceId="categories"
+                        classNames={{
+                          control: () => "input input-xs h-fit !border-gray",
+                        }}
+                        isMulti={true}
+                        options={lookups_categories.map((c) => ({
+                          value: c.name,
+                          label: c.name,
+                        }))}
+                        // fix menu z-index issue
+                        menuPortalTarget={htmlRef}
+                        styles={{
+                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                        }}
+                        onChange={(val) => {
+                          // clear opportunities
+                          setValue("opportunities", []);
 
-                        onChange(val.map((c) => c.value));
-                        void handleSubmit(onSubmitHandler)();
-                      }}
-                      value={lookups_categories
-                        .filter((c) => value?.includes(c.name))
-                        .map((c) => ({ value: c.name, label: c.name }))}
-                      placeholder="Category"
-                      components={{
-                        ValueContainer,
-                      }}
-                    />
+                          onChange(val.map((c) => c.value));
+                          void handleSubmit(onSubmitHandler)();
+                        }}
+                        value={lookups_categories
+                          .filter((c) => value?.includes(c.name))
+                          .map((c) => ({ value: c.name, label: c.name }))}
+                        placeholder="Category"
+                        components={{
+                          ValueContainer,
+                        }}
+                      />
+                    )}
+                  />
+
+                  {formState.errors.categories && (
+                    <label className="label font-bold">
+                      <span className="label-text-alt italic text-red-500">
+                        {`${formState.errors.categories.message}`}
+                      </span>
+                    </label>
                   )}
-                />
-
-                {formState.errors.categories && (
-                  <label className="label font-bold">
-                    <span className="label-text-alt italic text-red-500">
-                      {`${formState.errors.categories.message}`}
-                    </span>
-                  </label>
-                )}
-              </>
-            )}
+                </>
+              )}
+            </div>
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex gap-2 lg:justify-end">
             {/* DATE START */}
             <>
               <Controller

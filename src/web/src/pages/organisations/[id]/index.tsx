@@ -436,14 +436,14 @@ const OrganisationDashboard: NextPageWithLayout<{
         <title>Yoma | Organisation Dashboard</title>
       </Head>
 
-      <PageBackground height={28} />
+      <PageBackground className="h-[358px] lg:h-[300px]" />
 
       {isSearchPerformed && isLoading && <Loading />}
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
-      <div className="container z-10 mt-20 max-w-7xl px-4 py-1 md:py-4">
+      <div className="container z-10 mt-20 max-w-5xl px-4 py-1 md:py-4">
         <div className="flex flex-col gap-4">
           {/* HEADER */}
           <div className="flex flex-col">
@@ -456,7 +456,7 @@ const OrganisationDashboard: NextPageWithLayout<{
               <LimitedFunctionalityBadge />
             </div>
             {/* DESCRIPTION */}
-            <div className="flex flex-row gap-1">
+            <div className="flex flex-col gap-1 lg:flex-row">
               <span>Your dashboard progress so far.</span>
 
               {searchResults?.dateStamp && (
@@ -473,7 +473,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           </div>
 
           {/* FILTERS */}
-          <div className="mb-4 mt-10 hidden md:flex">
+          <div className="mb-4 flex">
             {!lookups_categories && <div>Loading...</div>}
             {lookups_categories && (
               <div className="flex flex-grow flex-col gap-3">
@@ -517,7 +517,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           </div>
 
           {/* SUMMARY */}
-          <div className="flex flex-col gap-4 ">
+          <div className="flex flex-col gap-4">
             {/* ENGAGEMENT */}
             <div className="flex flex-col gap-2">
               <div className="text-xl font-semibold">Engagement</div>
@@ -528,14 +528,14 @@ const OrganisationDashboard: NextPageWithLayout<{
                   <LineChart
                     id="viewedCompleted"
                     data={searchResults.opportunities.viewedCompleted}
-                    width={602}
+                    width={402}
                     height={328}
                   />
                 )}
 
                 <div className="flex flex-col gap-2">
                   {/* OPPORTUNITIES SELECTED */}
-                  <div className="flex h-40 w-72 flex-col rounded-lg bg-white p-4 shadow">
+                  <div className="flex h-40 w-full flex-col rounded-lg bg-white p-4 shadow md:w-64">
                     <div className="flex flex-row items-center gap-2">
                       <IoMdDocument className="text-green" />
                       <div className="text-sm font-semibold">
@@ -551,9 +551,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <div className="flex flex-row gap-2">
+                    <div className="flex flex-col gap-2 md:flex-row">
                       {/* AVERAGE TIME */}
-                      <div className="flex h-40 w-72 flex-col rounded-lg bg-white p-4 shadow">
+                      <div className="flex h-40 w-full flex-col rounded-lg bg-white p-4 shadow md:w-64">
                         <div className="flex flex-row items-center gap-2">
                           <IoMdHourglass className="text-green" />
                           <div className="text-sm font-semibold">
@@ -573,7 +573,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                       {searchResults?.opportunities?.conversionRate && (
                         <PieChart
                           id="conversionRate"
-                          title="Conversion rate"
+                          title={
+                            searchResults.opportunities.conversionRate.legend
+                          }
                           subTitle={`${
                             searchResults.opportunities.conversionRate
                               .percentage ?? 0
@@ -592,6 +594,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                                 .viewedCount,
                             ],
                           ]}
+                          className="w-full md:w-60 lg:w-80"
                         />
                       )}
                     </div>
@@ -606,7 +609,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
               <div className="flex flex-col gap-2 md:flex-row">
                 {/* ZLTO AMOUNT AWARDED */}
-                <div className="h-40 min-w-[288px] flex-col rounded-lg bg-white p-4 shadow">
+                <div className="h-40 w-full flex-col rounded-lg bg-white p-4 shadow md:w-[420px]">
                   <div className="flex flex-row items-center gap-2">
                     <Image
                       src={iconZlto}
@@ -630,15 +633,15 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 {/* TOTAL UNIQUE SKILLS */}
                 <div
-                  className="overflow-hidden rounded-lg bg-white  shadow"
-                  style={{ minWidth: "291px", height: "160px" }}
+                  className="overflow-hidden rounded-lg bg-white shadow"
+                  style={{ minWidth: "288px", height: "160px" }}
                 >
                   <LineChart
                     id="totalUniqueSkills"
                     data={searchResults?.skills?.items}
-                    width={291}
+                    width={288}
                     height={160}
-                    chartWidth={291}
+                    chartWidth={288}
                     chartHeight={100}
                     hideAxisesAndGridLines={true}
                   />
@@ -647,14 +650,14 @@ const OrganisationDashboard: NextPageWithLayout<{
                 {/* MOST COMPLETED SKILLS */}
                 {searchResults?.skills?.topCompleted && (
                   <>
-                    <div className="flex h-[160px] w-[576px] flex-col rounded-lg bg-white p-4 shadow">
+                    <div className="flex h-[160px] w-full flex-col rounded-lg bg-white p-4 shadow">
                       <div className="flex flex-row items-center gap-2">
                         <IoMdCompass className="text-green" />
                         <div className="text-sm font-semibold">
                           {searchResults?.skills.topCompleted.legend}
                         </div>
                       </div>
-                      <div className="mt-2 flex flex-grow flex-wrap gap-1 overflow-hidden">
+                      <div className="mt-2 flex h-[100px] flex-grow flex-wrap gap-1 overflow-y-scroll">
                         {searchResults?.skills.topCompleted.topCompleted.map(
                           (x) => (
                             <div
@@ -676,7 +679,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             <div className="flex flex-col gap-2">
               <div className="text-xl font-semibold">Demographics</div>
 
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              <div className="flex flex-col gap-2 md:flex-row">
                 {/* COUNTRIES */}
                 {searchResults?.demographics?.countries?.items && (
                   <PieChart
@@ -690,6 +693,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                         searchResults?.demographics?.countries?.items || {},
                       ),
                     ]}
+                    className="h-40 w-full md:w-72"
                   />
                 )}
 
@@ -706,6 +710,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                         searchResults?.demographics?.genders?.items || {},
                       ),
                     ]}
+                    className="h-40 w-full md:w-72"
                   />
                 )}
 
@@ -722,6 +727,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                         searchResults?.demographics?.ages?.items || {},
                       ),
                     ]}
+                    className="h-40 w-full md:w-64 lg:w-72"
                   />
                 )}
               </div>

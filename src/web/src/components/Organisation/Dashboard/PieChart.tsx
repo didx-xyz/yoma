@@ -9,11 +9,12 @@ export const PieChart: React.FC<{
   subTitle: string;
   data: GoogleChartData;
   colors?: string[];
-}> = ({ id, title, subTitle, data, colors }) => {
+  className?: string;
+}> = ({ id, title, subTitle, data, colors, className = "h-40 w-full" }) => {
   return (
     <div
       key={id}
-      className="flex h-40 w-72 flex-col gap-0 rounded-lg bg-white p-4 shadow"
+      className={`flex h-40 w-72 flex-col gap-0 rounded-lg bg-white p-4 shadow ${className}`}
     >
       <div className="flex flex-row items-center gap-2">
         <IoMdHourglass className="text-green" />
