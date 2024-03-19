@@ -8,7 +8,7 @@ ingress:
     rules:
       - host: v3auth.stage.yoma.world
   external:
-    enabled: true
+    enabled: false
     annotations:
       nginx.ingress.kubernetes.io/configuration-snippet: |-
         more_clear_headers "Content-Security-Policy";

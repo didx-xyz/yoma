@@ -16,7 +16,7 @@ ingress:
     rules:
       - host: v3api.stage.yoma.world
   external:
-    enabled: true
+    enabled: false
     className: nginx-external
     annotations:
       nginx.ingress.kubernetes.io/enable-cors: "true"

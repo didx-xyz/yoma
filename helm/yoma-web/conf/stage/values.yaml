@@ -17,7 +17,7 @@ ingress:
     rules:
       - host: v3app.stage.yoma.world
   external:
-    enabled: true
+    enabled: false
     annotations:
       nginx.ingress.kubernetes.io/proxy-buffer-size: 32k
     rules:
