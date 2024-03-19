@@ -1,3 +1,5 @@
+replicaCount: 2
+
 image:
   repository: ghcr.io/didx-xyz/yoma-web
   pullPolicy: Always
@@ -23,9 +25,9 @@ env:
   NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER: keycloak
 
 livenessProbe:
-  enabled: false
+  enabled: true
 readinessProbe:
-  enabled: false
+  enabled: true
 
 service:
   port: 3000

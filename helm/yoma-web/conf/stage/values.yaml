@@ -1,5 +1,3 @@
-replicaCount: 2
-
 image:
   repository: ghcr.io/didx-xyz/yoma-web
   pullPolicy: Always
