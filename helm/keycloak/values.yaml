@@ -119,7 +119,7 @@ postInstallHook:
             --header="Authorization: token ${GITHUB_PAT}"\
             --header="Accept:application/vnd.github.v3.raw" \
             https://api.github.com/repos/didx-xyz/yoma/tarball/master | tar xz
-          cp -v ./didx-xyz-yoma-*/src/api/cicd/scripts/keycloak/users.sh /scripts/
+          cp -v ./didx-xyz-yoma-*/src/keycloak/scripts/keycloak/users.sh /scripts/
           rm -rf ./didx-xyz-yoma-*
       env:
         - name: GITHUB_PAT
@@ -206,7 +206,7 @@ keycloak:
             --header="Authorization: token ${GITHUB_PAT}" \
             --header="Accept:application/vnd.github.v3.raw" \
             https://api.github.com/repos/didx-xyz/yoma/tarball/{{ .Values.themes.ref }} | tar xz
-          cp -R ./didx-xyz-yoma-*/src/api/cicd/themes/yoma /themes
+          cp -R ./didx-xyz-yoma-*/src/keycloak/themes/yoma /themes
           rm -rf ./didx-xyz-yoma-*
       env:
         - name: GITHUB_PAT

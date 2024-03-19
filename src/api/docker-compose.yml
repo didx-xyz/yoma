@@ -104,7 +104,7 @@ services:
         condition: service_healthy
     volumes:
       - keycloak:/opt/keycloak/providers
-      - ./cicd/themes:/opt/keycloak/themes
+      - ../keycloak/themes:/opt/keycloak/themes
 
   keycloak-health: # Wait for Keycloak to be ready before running keycloak-config service
     image: curlimages/curl
@@ -144,7 +144,7 @@ services:
       SA_YOMA_API_PASSWORD: &KCAdminPassword superSecretYomaApiServiceAccountPassword
       SMTP_PASSWORD: superSecretSmtpPassword
     volumes:
-      - ./cicd/scripts/keycloak:/config
+      - ../keycloak/exports:/config
       - ./cicd/secrets:/secrets
     depends_on:
       keycloak-health:
