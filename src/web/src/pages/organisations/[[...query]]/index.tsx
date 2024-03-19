@@ -248,8 +248,7 @@ const Opportunities: NextPageWithLayout<{
         <title>Yoma | Organisations</title>
       </Head>
 
-      {/* <div className="bg-theme absolute left-0 top-0 z-0 h-[228px] w-full"></div> */}
-      <PageBackground height={18} />
+      <PageBackground className="h-[315px] lg:h-[288px]" />
 
       <div className="container z-10 max-w-7xl px-2 py-8">
         <div className="relative flex flex-col gap-2 py-20 sm:flex-row">

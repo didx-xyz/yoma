@@ -48,7 +48,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
           <title>Yoma | Marketplace</title>
         </Head>
 
-        <PageBackground height={20} />
+        <PageBackground />
 
         {/* WHAT IS ZLTO DIALOG */}
         <ReactModal
