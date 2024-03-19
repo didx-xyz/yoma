@@ -61,9 +61,9 @@ namespace Yoma.Core.Domain.EmailProvider.Services
                 case EmailType.Opportunity_Verification_Pending_Admin:
                     if (!organizationId.HasValue || organizationId.Value == Guid.Empty)
                         throw new ArgumentNullException(nameof(organizationId));
-
+                    
                     result = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(organizationId)
-                            .AppendPathSegment("opportunities").AppendPathSegment(opportunityId).ToString();
+                            .AppendPathSegment("opportunities").AppendPathSegment(opportunityId).AppendPathSegment("info").ToString();
                     break;
 
                 default:
