@@ -19,6 +19,7 @@
 												<label for="password" class="${properties.kcLabelClass!}">
 													${msg("password")}
 												</label> *
+                         <p id="password-instructions"> ${msg("passwordInstructions")}</p>
 											</div>
 											<div class="${properties.kcInputWrapperClass!}">
 												<div class="password-container">
@@ -67,9 +68,9 @@
 										name="user.attributes.terms_and_conditions"
 										value="Yes"
 										required />
-									<label for="terms">
-										<a href="https://app.yoma.world/terms-and-conditions" target="_blank">
-											I agree to Yoma’s privacy policy and terms of service
+									<label for="terms" id="terms-label"><span id="terms-prefix">${msg("termsText1")}</span>
+										<a href="https://app.yoma.world/terms-and-conditions" target="_blank" id="terms-text">
+											${msg("termsText2")}
 										</a>
 									</label>
 								</div>
@@ -82,7 +83,7 @@
 								</div>
 							</#if>
 							<div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
-								<input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg("doRegister")}" />
+								<input id="register-btn" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg("doRegisterBtn")}" />
 							</div>
 							<div class="${properties.kcFormGroupClass!}">
 								<div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
@@ -90,7 +91,7 @@
 										<hr class="grey-hr">
 										<div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
 											<a href="${url.loginUrl}" style="text-decoration: none;">
-												<input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" value="${msg("verifiedAccount")} ${kcSanitize(msg("backToLogin"))?no_esc}" />
+												<input id="back-to-login-btn" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" value="${msg("backToLoginBtn")} ${kcSanitize(msg(""))?no_esc}" />
 											</a>
 										</div>
 										<!-- <span>

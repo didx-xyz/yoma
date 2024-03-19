@@ -92,7 +92,7 @@ const MarketplaceSearchStores: NextPageWithLayout<{
   });
 
   return (
-    <div className="flex w-full max-w-5xl flex-col items-start gap-4">
+    <div className="flex w-full max-w-7xl flex-col items-start gap-4">
       {/* BREADCRUMB */}
       <Breadcrumb
         items={[

@@ -702,11 +702,11 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       <div ref={myRef} />
 
       {/* TITLE & SEARCH INPUT */}
-      <div className="container z-10 mt-20 max-w-7xl px-2 py-8">
+      <div className="container z-10 mt-16 max-w-7xl px-2 py-8">
         <div className="flex flex-col gap-2 py-4 sm:flex-row">
-          <h3 className="flex flex-grow items-center text-white">
+          <h2 className="mb-4 flex flex-grow items-center font-semibold text-white">
             Opportunities
-          </h3>
+          </h2>
 
           <div className="flex gap-2 sm:justify-end">
             <SearchInput

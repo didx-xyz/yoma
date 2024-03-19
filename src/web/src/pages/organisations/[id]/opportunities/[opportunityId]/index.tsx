@@ -931,7 +931,7 @@ const OpportunityDetails: NextPageWithLayout<{
         </div>
       </ReactModal>
 
-      <div className="container z-10 mt-20 max-w-5xl px-2 py-4">
+      <div className="container z-10 mt-20 max-w-7xl px-2 py-4">
         {/* BREADCRUMB */}
         <div className="inline flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
           <ul className="inline">
@@ -2886,7 +2886,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           className="checkbox-primary checkbox"
                         />
                         <span className="label-text ml-4">
-                          I want to this opportunity to be visible to youth
+                          Make this opportunity active
                         </span>
                       </label>
 

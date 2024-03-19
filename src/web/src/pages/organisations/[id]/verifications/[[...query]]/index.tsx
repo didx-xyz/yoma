@@ -782,14 +782,13 @@ const OpportunityVerifications: NextPageWithLayout<{
 
       {/* PAGE */}
 
-      <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
-        <h3 className="flex flex-grow items-center py-4 font-bold text-white">
-          Verifications <LimitedFunctionalityBadge />
-        </h3>
-
-        <div className="rounded-lg bg-gray-light p-4">
-          <div className="mb-4 flex flex-row">
-            <div className="flex flex-grow gap-2">
+      <div className="container z-10 mt-20 max-w-7xl px-2 py-8">
+        <div>
+          <div className="mt-1 flex flex-row items-center">
+            <h3 className="flex flex-grow items-center py-4 font-semibold text-white">
+              Verifications <LimitedFunctionalityBadge />
+            </h3>
+            <div className="mb-2 flex gap-4 sm:justify-end">
               {/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */}
               <Select
                 classNames={{
@@ -804,9 +803,6 @@ const OpportunityVerifications: NextPageWithLayout<{
                 placeholder="Opportunities"
                 isClearable={true}
               />
-              {/* eslint-enable @typescript-eslint/no-non-null-asserted-optional-chain */}
-            </div>
-            <div className="flex gap-2 sm:justify-end">
               {/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */}
               <Select
                 classNames={{
@@ -822,11 +818,7 @@ const OpportunityVerifications: NextPageWithLayout<{
               />
               {/* eslint-enable @typescript-eslint/no-non-null-asserted-optional-chain */}
 
-              <SearchInput
-                defaultValue={query}
-                onSearch={onSearch}
-                heightOverride="!h-[38px]"
-              />
+              <SearchInput defaultValue={query} onSearch={onSearch} />
             </div>
           </div>
           {/* NO ROWS */}
@@ -847,8 +839,8 @@ const OpportunityVerifications: NextPageWithLayout<{
 
           {/* GRID */}
           {data && data.items?.length > 0 && (
-            <div className="overflow-x-auto rounded-lg border border-gray shadow-lg">
-              <table className="table">
+            <div className="overflow-x-auto rounded-lg shadow-custom">
+              <table className="table rounded-lg bg-white">
                 <thead className="text-sm">
                   <tr className="border-gray text-gray-dark">
                     <th className="w-[35px] pr-4 pt-4">

@@ -87,7 +87,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   }, [dataCountry]);
 
   return (
-    <div className="flex w-full max-w-5xl flex-col items-start gap-4">
+    <div className="flex w-full max-w-7xl flex-col items-start gap-4">
       {/* FILTER: COUNTRY */}
       <div className="flex flex-row items-center justify-center gap-4">
         <div className="text-sm font-semibold text-gray-dark">Filter by:</div>

@@ -49,7 +49,7 @@ export const SearchInput: React.FC<InputProps> = ({
       <div className="join">
         <input
           type="search"
-          className={`input join-item input-sm w-full border-0 focus:outline-0 ${heightOverride}`}
+          className={`input join-item input-xs !h-[38px] w-full border-0 !pl-4 placeholder-[#858585] focus:outline-0 ${heightOverride}`}
           placeholder={placeholder ?? "Search..."}
           autoComplete="off"
           value={searchInputValue ?? ""}
@@ -61,7 +61,7 @@ export const SearchInput: React.FC<InputProps> = ({
         <button
           type="submit"
           aria-label="Search"
-          className={`btn-search bg-theme btn join-item btn-sm !rounded-r-md border-0 brightness-105 hover:brightness-110 ${heightOverride} ${className}`}
+          className={`btn-search bg-theme btn join-item btn-sm !h-[38px] !rounded-r-lg border-0 text-sm brightness-105 hover:brightness-110 ${heightOverride} ${className}`}
         >
           <IoMdSearch className="icon-search h-6 w-6 text-white" />
         </button>
