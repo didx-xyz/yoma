@@ -20,12 +20,7 @@ import type { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { PageBackground } from "~/components/PageBackground";
-import {
-  IoMdCompass,
-  IoMdDocument,
-  IoMdHourglass,
-  IoMdPerson,
-} from "react-icons/io";
+import { IoMdCompass, IoMdDocument, IoMdHourglass } from "react-icons/io";
 import { useRouter } from "next/router";
 import {
   searchOrganizationEngagement,
