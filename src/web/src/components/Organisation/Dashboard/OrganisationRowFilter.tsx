@@ -13,7 +13,7 @@ import { searchCriteriaOpportunities } from "~/api/services/opportunities";
 import Select, { components, type ValueContainerProps } from "react-select";
 import Async from "react-select/async";
 import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
-import { debounce } from "lodash";
+import { debounce } from "~/lib/utils";
 
 const ValueContainer = ({
   children,
