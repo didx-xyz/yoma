@@ -204,7 +204,8 @@ namespace Yoma.Core.Api.Controllers
         {
             _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
 
-            var result = _opportunityInfoService.GetById(id, true);
+            //by default, all users possess the user role. Therefore, organizational authorization checks are omitted here, allowing org admins to access information for all opportunities without restriction.
+            var result = _opportunityInfoService.GetById(id, false);
 
             _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
 

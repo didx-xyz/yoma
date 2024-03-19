@@ -1,8 +1,6 @@
 using CsvHelper;
 using CsvHelper.Configuration;
-using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Core.Exceptions;
-using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
@@ -14,30 +12,22 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public class OpportunityInfoService : IOpportunityInfoService
     {
         #region Class Variables
-        private readonly IHttpContextAccessor _httpContextAccessor;
-
         private readonly IOpportunityService _opportunityService;
         private readonly IMyOpportunityService _myOpportunityService;
         #endregion
 
         #region Constructor
-        public OpportunityInfoService(IHttpContextAccessor httpContextAccessor,
-            IOpportunityService opportunityService,
+        public OpportunityInfoService(IOpportunityService opportunityService,
             IMyOpportunityService myOpportunityService)
         {
-            _httpContextAccessor = httpContextAccessor;
             _opportunityService = opportunityService;
             _myOpportunityService = myOpportunityService;
         }
         #endregion
 
         #region Public Members
-        //authorized access from controller (any role)
         public OpportunityInfo GetById(Guid id, bool ensureOrganizationAuthorization)
         {
-            //ensure ensureOrganizationAuthorization of false for "User" role, bypassing org authorization, even if they also have admin or org admin roles
-            ensureOrganizationAuthorization = ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsUserRole(_httpContextAccessor);
-
             var opportunity = _opportunityService.GetById(id, true, true, ensureOrganizationAuthorization);
 
             var result = opportunity.ToOpportunityInfo();
