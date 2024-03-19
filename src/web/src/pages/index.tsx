@@ -68,27 +68,29 @@ const Home: NextPageWithLayout<{
     alert("TODO: API - " + email);
   }, [email]);
 
-  const onSearchInputSubmit = useCallback((query: string) => {
-    if (query && query.length > 2) {
-      // uri encode the search value
-      const searchValueEncoded = encodeURIComponent(query);
-      query = searchValueEncoded;
-    } else {
-      return;
-    }
+  const onSearchInputSubmit = useCallback(
+    (query: string) => {
+      if (query && query.length > 2) {
+        // uri encode the search value
+        const searchValueEncoded = encodeURIComponent(query);
+        query = searchValueEncoded;
+      } else {
+        return;
+      }
 
-    let url = "/opportunities";
-    // construct querystring parameters from filter
-    const params = new URLSearchParams();
+      let url = "/opportunities";
+      const params = new URLSearchParams();
 
-    params.append("query", query);
+      params.append("query", query);
 
-    if (params != null && params.size > 0)
-      url = `/opportunities?${params.toString()}`;
+      if (params != null && params.size > 0)
+        url = `/opportunities?${params.toString()}`;
 
-    if (url != router.asPath)
-      void router.push(url, undefined, { scroll: false });
-  }, []);
+      if (url != router.asPath)
+        void router.push(url, undefined, { scroll: false });
+    },
+    [router],
+  );
 
   return (
     <>
