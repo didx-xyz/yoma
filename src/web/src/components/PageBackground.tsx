@@ -1,11 +1,12 @@
 import Image from "next/image";
-export const PageBackground: React.FC<{ height?: number }> = ({
-  height = 23,
-}) => {
+export const PageBackground: React.FC<{
+  height?: number;
+  className?: string;
+}> = ({ height = 23, className = "h-80" }) => {
   return (
     <div
-      style={{ height: `${height}rem` }}
-      className="bg-theme absolute left-0 top-0 z-0 flex h-32 w-full items-center justify-center"
+      //style={{ height: `${height}rem` }}
+      className={`bg-theme h-80x absolute left-0 top-0 z-0 flex w-full items-center justify-center ${className}`}
     >
       <Image
         src={"/images/world-map.webp"}

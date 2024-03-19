@@ -768,7 +768,7 @@ const Opportunities: NextPageWithLayout<{
         <title>Yoma | Opportunities</title>
       </Head>
 
-      <PageBackground />
+      <PageBackground className="h-[280px] lg:h-[392px]" />
 
       {isSearchPerformed && isLoading && <Loading />}
 

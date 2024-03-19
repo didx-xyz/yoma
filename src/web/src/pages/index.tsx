@@ -12,7 +12,6 @@ import { PageBackground } from "~/components/PageBackground";
 import { RoundedImage } from "~/components/RoundedImage";
 import { THEME_ORANGE } from "~/lib/constants";
 import Image from "next/image";
-
 import imageWoman from "public/images/home/bg-woman.webp";
 import imageCardID from "public/images/home/card-id.webp";
 import imageLogoGoodwall from "public/images/home/logo-goodwall.webp";
@@ -40,9 +39,10 @@ import iconDidx from "public/images/home/logo-didx.webp";
 import imageLogoDelta from "public/images/home/logo-delta.webp";
 import imageLogoJobberman from "public/images/home/logo-jobberman.webp";
 import iconUnicef from "public/images/home/logo-unicef.webp";
-
 import OpportunityCard from "~/components/Home/OpportunityCard";
 import { IoMdCheckmark } from "react-icons/io";
+import { SearchInputLarge } from "~/components/SearchInputLarge";
+import { useRouter } from "next/router";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient(config);
@@ -60,21 +60,45 @@ const Home: NextPageWithLayout<{
   id: string;
   user: User;
 }> = () => {
+  const router = useRouter();
   const [email, setEmail] = useState("");
 
+  // 🔔 CHANGE EVENTS
   const onSubscribe = useCallback(() => {
     alert("TODO: API - " + email);
   }, [email]);
 
+  const onSearchInputSubmit = useCallback((query: string) => {
+    if (query && query.length > 2) {
+      // uri encode the search value
+      const searchValueEncoded = encodeURIComponent(query);
+      query = searchValueEncoded;
+    } else {
+      return;
+    }
+
+    let url = "/opportunities";
+    // construct querystring parameters from filter
+    const params = new URLSearchParams();
+
+    params.append("query", query);
+
+    if (params != null && params.size > 0)
+      url = `/opportunities?${params.toString()}`;
+
+    if (url != router.asPath)
+      void router.push(url, undefined, { scroll: false });
+  }, []);
+
   return (
     <>
-      <PageBackground />
+      <PageBackground className="h-[300px] lg:h-[392px]" />
 
-      <div className="z-10 mt-20 flex flex-grow flex-col items-center justify-center py-8">
-        <div className="grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="z-10 mt-4 flex flex-grow flex-col items-center justify-center py-8 lg:mt-20">
+        <div className="grid max-w-5xl grid-cols-1 gap-6 lg:grid-cols-2">
           {/* LEFT: HEADERS AND TEXT */}
-          <div className="flex flex-col text-white">
-            <h6 className="text-xs uppercase tracking-wider">
+          <div className="flex max-w-lg flex-col p-8 text-white">
+            <h6 className="text-xs uppercase tracking-widest">
               Welcome to Yoma
             </h6>
             <h1 className="text-3xl font-bold tracking-wide">
@@ -85,37 +109,48 @@ const Home: NextPageWithLayout<{
               the freshest opportunities to keep your skills sharp and stay in
               the loop with what&apos;s happening in the working world.
             </p>
+            <div className="my-4">
+              <div className="flex flex-row gap-2">
+                <SearchInputLarge
+                  onSearch={onSearchInputSubmit}
+                  placeholder="What are you looking for?"
+                  maxWidth={300}
+                />
+              </div>
+            </div>
           </div>
 
           {/* RIGHT: TWO CARDS AND WOMAN IMAGES */}
-          <div className="relative h-96">
-            <div className="z-0 opacity-70">
-              <OpportunityCard
-                title="Foundations of Food & Beverage Business"
-                organisation="University of Cape Town"
-                description="This self-paced course will introduce you to the world of Food and Beverage. You will learn about the various types of F&amp;B businesses, the importance of..."
-                hours={4}
-                ongoing={true}
-                reward={11}
-                students={1}
-                image={imageLogoUCT}
-                // width={250}
-                // height={200}
-              />
-            </div>
-            <div className="absolute left-24 top-28 z-10">
-              <OpportunityCard
-                title="A Career in Tourism"
-                organisation="Atingi"
-                description="This self-paced course will help you explore tourism as an industry and see the job opportunities it can offer."
-                hours={4}
-                ongoing={true}
-                reward={11}
-                students={1}
-                image={imageLogoAtingi}
-                // width={250}
-                // height={200}
-              />
+          <div className="hidden h-96 lg:flex">
+            <div className="relative">
+              <div className="z-0 opacity-70">
+                <OpportunityCard
+                  title="Foundations of Food & Beverage Business"
+                  organisation="University of Cape Town"
+                  description="This self-paced course will introduce you to the world of Food and Beverage. You will learn about the various types of F&amp;B businesses, the importance of..."
+                  hours={4}
+                  ongoing={true}
+                  reward={11}
+                  students={1}
+                  image={imageLogoUCT}
+                  // width={250}
+                  // height={200}
+                />
+              </div>
+              <div className="absolute left-24 top-28 z-10">
+                <OpportunityCard
+                  title="A Career in Tourism"
+                  organisation="Atingi"
+                  description="This self-paced course will help you explore tourism as an industry and see the job opportunities it can offer."
+                  hours={4}
+                  ongoing={true}
+                  reward={11}
+                  students={1}
+                  image={imageLogoAtingi}
+                  // width={250}
+                  // height={200}
+                />
+              </div>
             </div>
             <Image
               src={imageWoman}
@@ -125,11 +160,8 @@ const Home: NextPageWithLayout<{
               sizes="100vw"
               priority={true}
               style={{
-                width: "240px",
+                width: "251px",
                 height: "280px",
-                position: "absolute",
-                top: -24,
-                left: 280,
                 zIndex: 0,
               }}
             />
@@ -137,11 +169,11 @@ const Home: NextPageWithLayout<{
         </div>
 
         {/* CENTER: OUR MISSION HEADER AND PARAGRAPH */}
-        <div className="mt-36x flex flex-col items-center">
+        <div className="flex flex-col items-center gap-2">
           <h2 className="text-2xl font-semibold tracking-wide text-black">
             Our mission
           </h2>
-          <p className="text-sm text-gray-dark">
+          <p className="w-60 text-center text-sm text-gray-dark lg:w-full">
             We&apos;re here to help you grow, make a positive difference, and
             thrive.
           </p>
@@ -150,7 +182,7 @@ const Home: NextPageWithLayout<{
         {/* ROW OF 3 IMAGES */}
         <div className="my-10 grid max-w-5xl grid-cols-1 gap-4 lg:grid-cols-3">
           {/* CARTEDEO */}
-          <div className="z-1 mx-auto max-w-[380px] rounded-xl bg-white shadow-lg">
+          <div className="z-1x mx-auto max-w-[380px] rounded-xl bg-white shadow-lg">
             {/* GRADIENT CARD */}
             <div className="relative">
               <div className="absolute left-10 top-[-10px] mx-4 w-56 rounded-lg bg-gradient-to-b from-gray to-white p-4 shadow-xl">
@@ -177,7 +209,7 @@ const Home: NextPageWithLayout<{
                   Verified
                 </span>
 
-                <p className="text-gray.dark ml-16 mt-12 text-xs">
+                <p className="ml-16 mt-12 text-xs text-gray-dark">
                   2024-03-12 07:14:49
                 </p>
               </div>
@@ -193,15 +225,16 @@ const Home: NextPageWithLayout<{
             </div>
           </div>
 
-          <div className="z-1 relative mx-auto max-w-[380px] overflow-hidden rounded-xl bg-white shadow-lg">
+          {/* IMPACT */}
+          <div className="z-1x relative mx-auto max-w-[380px] overflow-hidden rounded-xl bg-white shadow-lg">
             <Image
               src={imageImpact}
               layout="fill"
               objectFit="cover"
               alt="Background Image"
-              className="z-0"
             />
-            <div className="relative z-10 mt-32 p-8 text-white">
+
+            <div className="relativex z-10 mt-32 p-8 text-white">
               <h3 className="font-semibold">Impact</h3>
               <p className="text-white">
                 Make a difference in your community, and build your profile by
@@ -210,19 +243,22 @@ const Home: NextPageWithLayout<{
             </div>
           </div>
 
-          <div className="z-1 relative mx-auto max-w-[380px] rounded-xl bg-white shadow-lg">
-            <div className="absolute left-0 top-[-40px]">
-              <Image
-                src={imageThrive}
-                alt="People sitting at table"
-                width={300}
-                height={189}
-                sizes="100vw"
-                style={{ width: "300px", height: "189px" }}
-              />
+          {/* THRIVE */}
+          <div className="z-1x relativex mx-auto max-w-[380px] rounded-xl bg-white shadow-lg">
+            <div className="relative">
+              <div className="absolute left-0 top-[-40px]">
+                <Image
+                  src={imageThrive}
+                  alt="People sitting at table"
+                  width={300}
+                  height={189}
+                  sizes="100vw"
+                  style={{ width: "300px", height: "189px" }}
+                />
+              </div>
             </div>
 
-            <div className="relative z-10 mt-32 p-8">
+            <div className="relativex z-10 mt-32 p-8">
               <h3 className="font-semibold">Thrive</h3>
               <p className="text-gray-dark">
                 Track your progress on Yoma YoID and unlock new skills by
@@ -233,12 +269,12 @@ const Home: NextPageWithLayout<{
         </div>
 
         {/* GREEN BACKGROUND */}
-        <div className="mt-10 flex h-96 w-full items-center justify-center bg-green bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
-          <div className="mt-36 flex max-w-5xl flex-col">
-            {/* ID CARD, LEARN MORE */}
-            <div className="flex flex-col md:flex-row">
-              {/* LEFT: ID CARD AND LEARN MORE BUTTON */}
-              <div className="flex w-[448px] flex-col items-center">
+        <div className="mt-10 flex h-96 w-full justify-center bg-green bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
+          <div className="flex max-w-5xl flex-col">
+            {/* ID CARD & SIGN IN BUTTON */}
+            <div className="flex flex-col lg:flex-row">
+              {/* LEFT: ID CARD  */}
+              <div className="-mt-14 flex w-[448px] flex-col items-center">
                 <Image
                   src={imageCardID}
                   alt="ID Card"
@@ -252,19 +288,13 @@ const Home: NextPageWithLayout<{
                     zIndex: 1,
                   }}
                 />
-
-                {/* LEARN MORE BUTTON */}
-                <Link
-                  href="/about"
-                  className="btn z-10 -ml-16 mt-4 w-[260px] rounded-xl border-none bg-purple normal-case text-white hover:bg-purple hover:text-white hover:brightness-110"
-                >
-                  Learn more
-                </Link>
               </div>
 
               {/* RIGHT: HEADERS AND TEXT */}
-              <div className="z-10 mt-40 flex w-[448px] flex-col gap-2 text-white">
-                <h6 className="text-xs uppercase tracking-wider">Your YoID</h6>
+              <div className="z-10 flex w-[448px] flex-col gap-2 text-white lg:mt-40">
+                <h6 className="text-xs font-bold uppercase tracking-wider">
+                  Your YoID
+                </h6>
                 <h1 className="text-xl font-bold tracking-wide">
                   All connected with one profile
                 </h1>
@@ -275,125 +305,124 @@ const Home: NextPageWithLayout<{
                 </p>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* ROW OF 3 CARDS */}
-            <div className="mt-16 grid grid-cols-1 gap-4 lg:grid-cols-3">
-              {/* GOODWALL */}
-              <div className="z-10 flex h-[270px] w-[298px] flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
-                <Image
-                  src={imageLogoGoodwall}
-                  alt="Logo Goodwall"
-                  width={170}
-                  height={40}
-                  sizes="100vw"
-                  style={{
-                    width: "170px",
-                    height: "40px",
-                    zIndex: 1,
-                  }}
-                />
+        {/* ROW OF 3 CARDS */}
+        <div className="-mt-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {/* GOODWALL */}
+          <div className="z-10x flex h-[270px] w-[298px] flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
+            <Image
+              src={imageLogoGoodwall}
+              alt="Logo Goodwall"
+              width={170}
+              height={40}
+              sizes="100vw"
+              style={{
+                width: "170px",
+                height: "40px",
+                zIndex: 1,
+              }}
+            />
 
-                <h1 className="text-center text-base font-semibold">
-                  Passionate about youth empowerment?
-                </h1>
-                <p className="flex-grow text-center text-sm text-gray-dark">
-                  Collaborate with your community, find and complete
-                  opportunities, win prizes!
-                </p>
-                <div className="flex flex-row gap-2">
-                  <Image
-                    src={imageLogoAppStore}
-                    alt="Logo App Store"
-                    width={100}
-                    height={40}
-                    sizes="120vw"
-                    style={{
-                      width: "120px",
-                      height: "40px",
-                      zIndex: 1,
-                    }}
-                  />
-                  <Image
-                    src={imageLogoPlayStore}
-                    alt="Logo Play Store"
-                    width={120}
-                    height={40}
-                    sizes="100vw"
-                    style={{
-                      width: "120px",
-                      height: "40px",
-                      zIndex: 1,
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* YOMA */}
-              <div className="z-10 flex h-[270px] w-[298px] flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
-                <Image
-                  src={imageLogoYoma}
-                  alt="Logo Yoma"
-                  width={120}
-                  height={40}
-                  sizes="100vw"
-                  style={{
-                    width: "120px",
-                    height: "40px",
-                    zIndex: 1,
-                  }}
-                />
-
-                <h1 className="text-center text-base font-semibold">
-                  Looking for a more simple experience?
-                </h1>
-                <p className="flex-grow text-center text-sm text-gray-dark">
-                  Less features, less data. Find and complete opportunities, and
-                  redeem for reward on the marketplace.
-                </p>
-                <div className="flex flex-row gap-2">
-                  {/* CONTINUE BUTTON */}
-                  <Link
-                    href="/about"
-                    className="btn z-10 w-[220px] border-none bg-purple normal-case text-white hover:bg-purple hover:text-white hover:brightness-110"
-                  >
-                    Continue
-                  </Link>
-                </div>
-              </div>
-
-              {/* WHATSAPP */}
-              <div className="z-10 flex h-[270px] w-[298px] flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
-                <Image
-                  src={imageLogoWhatsapp}
-                  alt="Logo Whatsapp"
-                  width={170}
-                  height={50}
-                  sizes="100vw"
-                  style={{
-                    width: "170px",
-                    height: "50px",
-                    zIndex: 1,
-                  }}
-                />
-
-                <h1 className="-mt-2 text-center text-base font-semibold">
-                  Want to just chat with Yoma?
-                </h1>
-                <div className="flex rounded-full bg-orange px-6 py-2 text-xs font-semibold uppercase text-white">
-                  Coming soon
-                </div>
-                <p className="flex-grow pt-4 text-center text-sm text-gray-dark">
-                  Our AI chatbot will let you into the system with almost no
-                  data!
-                </p>
-              </div>
+            <h1 className="text-center text-base font-semibold">
+              Passionate about youth empowerment?
+            </h1>
+            <p className="flex-grow text-center text-sm text-gray-dark">
+              Collaborate with your community, find and complete opportunities,
+              win prizes!
+            </p>
+            <div className="flex flex-row gap-2">
+              <Image
+                src={imageLogoAppStore}
+                alt="Logo App Store"
+                width={100}
+                height={40}
+                sizes="120vw"
+                style={{
+                  width: "120px",
+                  height: "40px",
+                  zIndex: 1,
+                }}
+              />
+              <Image
+                src={imageLogoPlayStore}
+                alt="Logo Play Store"
+                width={120}
+                height={40}
+                sizes="100vw"
+                style={{
+                  width: "120px",
+                  height: "40px",
+                  zIndex: 1,
+                }}
+              />
             </div>
+          </div>
+
+          {/* YOMA */}
+          <div className="z-10x flex h-[270px] w-[298px] flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
+            <Image
+              src={imageLogoYoma}
+              alt="Logo Yoma"
+              width={120}
+              height={40}
+              sizes="100vw"
+              style={{
+                width: "120px",
+                height: "40px",
+                zIndex: 1,
+              }}
+            />
+
+            <h1 className="text-center text-base font-semibold">
+              Looking for a more simple experience?
+            </h1>
+            <p className="flex-grow text-center text-sm text-gray-dark">
+              Less features, less data. Find and complete opportunities, and
+              redeem for reward on the marketplace.
+            </p>
+            <div className="flex flex-row gap-2">
+              {/* CONTINUE BUTTON */}
+              <Link
+                href="/about"
+                className="btn z-10 w-[220px] border-none bg-purple normal-case text-white hover:bg-purple hover:text-white hover:brightness-110"
+              >
+                Continue
+              </Link>
+            </div>
+          </div>
+
+          {/* WHATSAPP */}
+          <div className="z-10x flex h-[270px] w-[298px] flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
+            <Image
+              src={imageLogoWhatsapp}
+              alt="Logo Whatsapp"
+              width={170}
+              height={50}
+              sizes="100vw"
+              style={{
+                width: "170px",
+                height: "50px",
+                zIndex: 1,
+              }}
+            />
+
+            <h1 className="-mt-2 text-center text-base font-semibold">
+              Want to just chat with Yoma?
+            </h1>
+            <div className="flex rounded-full bg-orange px-6 py-2 text-xs font-semibold uppercase text-white">
+              Coming soon
+            </div>
+            <p className="flex-grow pt-4 text-center text-sm text-gray-dark">
+              Our AI chatbot will let you into the system with almost no data!
+            </p>
           </div>
         </div>
 
         {/* HOW DO I EARN REWARDS? */}
-        <div className="mt-60 flex max-w-5xl flex-col gap-10 lg:flex-row">
-          <div className="flex w-[510px] flex-col">
+        <div className="mt-10 flex max-w-5xl flex-col gap-10 p-8 lg:flex-row">
+          <div className="flex flex-col lg:w-[510px]">
             <div className="flex flex-col gap-4">
               <h2 className="text-2xl font-semibold text-black">
                 How do I earn rewards?
@@ -407,7 +436,7 @@ const Home: NextPageWithLayout<{
               <div className="flex flex-row"></div>
             </div>
 
-            <div className="flex flex-row items-center justify-center gap-8">
+            <div className="flex flex-col items-center justify-center gap-8 lg:flex-row">
               <Image
                 src={imageLogoZltoBig}
                 alt="Logo Zlto"
@@ -480,11 +509,11 @@ const Home: NextPageWithLayout<{
           </div>
         </div>
 
-        {/* FIND JOB OPPORTUNITIES */}
-        <div className="mt-10 flex h-96 w-full items-center justify-center bg-gray bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
-          <div className="-mt-52 grid max-w-5xl grid-cols-1 md:grid-cols-2">
+        {/* GRAY BACKGROUND */}
+        <div className="mt-10 flex h-[560px] w-full justify-center bg-gray bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat lg:mt-8 lg:h-[460px]">
+          <div className="flex max-w-5xl flex-col lg:flex-row">
             <div className="flex flex-col items-center justify-center">
-              <div className="relative flex flex-col">
+              <div className="relative -mt-14 flex flex-col lg:-mt-80">
                 <OpportunityCard
                   title="General Manager (projects/contracting)"
                   organisation="The Delta"
@@ -506,18 +535,16 @@ const Home: NextPageWithLayout<{
                     reward={11}
                     students={1}
                     image={imageLogoJobberman}
-                    // width={250}
-                    // height={200}
                   />
                 </div>
               </div>
             </div>
-            <div className="mt-56 flex flex-col items-center justify-center">
+            <div className="mt-36 flex flex-col items-center justify-center p-8 lg:ml-28 lg:mt-20 lg:w-[448px]">
               <div className="flex flex-col gap-4">
                 <h2 className="text-2xl font-semibold text-black">
                   Find job opportunities
                 </h2>
-                <p className="text-sm text-gray-dark">
+                <p className="w-60 text-sm text-gray-dark">
                   On Yoma, you can search through thousands of specially curated
                   Job opportunities made available by our amazing partners.
                 </p>
@@ -535,12 +562,12 @@ const Home: NextPageWithLayout<{
         </div>
 
         {/* WHITE BACKGROUND */}
-        <div className="flex h-80 w-full items-center justify-center bg-white bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
+        <div className="mt-0 flex h-80 w-full justify-center bg-white bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat lg:-mt-10">
           {/* OUR PARTNERS */}
-          <div className=" flex flex-col items-center justify-center gap-4">
+          <div className="flex flex-col items-center justify-center gap-4">
             <h2 className="text-2xl font-semibold text-black">Our partners</h2>
             {/* PARTNER LOGOS */}
-            <div className="flex flex-col items-center justify-center gap-4 md:flex-row">
+            <div className="flex-colx flex flex-row items-center justify-center gap-4 overflow-hidden">
               <Image
                 src={iconUnicef}
                 alt="UNICEF"
@@ -623,12 +650,12 @@ const Home: NextPageWithLayout<{
         </div>
 
         {/* PURPLE BACKGROUND */}
-        <div className="flex h-80 w-full items-center justify-center bg-purple bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat">
+        <div className="flex h-80 w-full items-center justify-center bg-purple">
           {/* JOIN THE YOMA COMMUNITY */}
-          <div className="flex max-w-5xl flex-col gap-10 lg:flex-row">
-            <div className="flex w-[510px] flex-col">
+          <div className="flex max-w-5xl flex-col gap-10 p-8 lg:flex-row">
+            <div className="w-[510px]x flex flex-col">
               <div className="flex flex-col gap-4">
-                <h1 className="text-4xl font-semibold text-white">
+                <h1 className="font-semibold text-white lg:text-4xl">
                   Join the Yoma community
                 </h1>
               </div>
@@ -653,7 +680,7 @@ const Home: NextPageWithLayout<{
 
                   {/* SUBMIT BUTTON */}
                   <button
-                    className="btn w-[100px] rounded-md border-none bg-green normal-case text-white hover:bg-green hover:text-white hover:brightness-110"
+                    className="btnx w-[100px] rounded-md border-none bg-green normal-case text-white hover:bg-green hover:text-white hover:brightness-110"
                     onClick={onSubscribe}
                   >
                     Submit

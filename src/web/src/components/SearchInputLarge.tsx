@@ -1,19 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { IoMdOptions } from "react-icons/io";
 
-interface InputProps {
+export const SearchInputLarge: React.FC<{
   defaultValue?: string | null;
   placeholder?: string | null;
   onSearch?: (query: string) => void;
   openFilter?: (filterFullWindowVisible: boolean) => void;
-}
-
-export const SearchInputLarge: React.FC<InputProps> = ({
-  defaultValue,
-  placeholder,
-  onSearch,
-  openFilter,
-}) => {
+  maxWidth?: number;
+}> = ({ defaultValue, placeholder, onSearch, openFilter, maxWidth = 600 }) => {
   const [searchInputValue, setSearchInputValue] = useState(defaultValue);
 
   const handleSubmit = useCallback(
@@ -51,26 +45,29 @@ export const SearchInputLarge: React.FC<InputProps> = ({
   return (
     <form onSubmit={handleSubmit}>
       <div className="join my-4 md:my-0">
-        <button
-          type="button"
-          className="btn btn-primary join-item inline-flex rounded-l-full md:hidden"
-          onClick={() => openFilter && openFilter(true)}
-        >
-          <IoMdOptions className="h-5 w-5" />
-        </button>
+        {openFilter && (
+          <button
+            type="button"
+            className="bg-theme btn join-item inline-flex rounded-l-full border-0 brightness-90 hover:brightness-95 md:hidden"
+            onClick={() => openFilter(true)}
+          >
+            <IoMdOptions className="h-5 w-5" />
+          </button>
+        )}
 
         <input
           type="search"
           placeholder={placeholder ?? "Search..."}
-          className="input-md min-w-[250px] bg-[#653A72] py-5 text-sm text-white placeholder-white focus:outline-0 md:w-[600px] md:rounded-bl-full md:rounded-tl-full md:!pl-8"
+          className={`bg-theme md:w-[${maxWidth}px] input-md min-w-[250px] py-5 text-sm text-white placeholder-white brightness-90 focus:outline-0 md:rounded-bl-full md:rounded-tl-full md:!pl-8 ${
+            openFilter ? "" : "rounded-bl-3xl rounded-tl-3xl"
+          }`}
           value={searchInputValue ?? ""}
           onChange={handleChange}
           onFocus={(e) => (e.target.placeholder = "")}
           onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
-          //onInput={handleInput}
         />
         <button
-          className="btn btn-primary join-item inline-flex rounded-r-full brightness-90"
+          className="bg-theme btn btn-primary join-item inline-flex rounded-r-full border-0 brightness-90 hover:brightness-95"
           onClick={() => onSearch}
         >
           <svg

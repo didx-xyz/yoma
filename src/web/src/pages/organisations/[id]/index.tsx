@@ -520,7 +520,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           <div className="flex flex-col gap-4 ">
             {/* ENGAGEMENT */}
             <div className="flex flex-col gap-2">
-              <div className="text-xl font-semibold text-white">Engagement</div>
+              <div className="text-xl font-semibold">Engagement</div>
 
               <div className="flex flex-col gap-2 md:flex-row">
                 {/* VIEWED COMPLETED */}
