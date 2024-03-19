@@ -355,7 +355,8 @@ jobs:
               --environment ${{ vars.ENVIRONMENT }} \
               --selector app=keycloak \
               --set config-cli.init.ref=${{ github.sha }} \
-              --set keycloak.themes.ref=${{ github.sha }}
+              --set keycloak.themes.ref=${{ github.sha }} \
+              --set postInstallHook.git.ref=${{ github.sha }}
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: |

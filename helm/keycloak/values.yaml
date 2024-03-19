@@ -23,17 +23,24 @@ ingress:
 
 postInstallHook:
   enabled: false
+
+  git:
+    ref: master
+
   image:
     repository: curlimages/curl
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: latest
+
   command:
     - /bin/sh
     - -c
     - /sbin/apk add jq && /bin/sh /scripts/users.sh
+
   securityContext:
     runAsUser: 0
+
   env:
     - name: KC_BASE_URL
       value: http://keycloak-http:80
@@ -118,8 +125,8 @@ postInstallHook:
           wget -O - \
             --header="Authorization: token ${GITHUB_PAT}"\
             --header="Accept:application/vnd.github.v3.raw" \
-            https://api.github.com/repos/didx-xyz/yoma/tarball/master | tar xz
-          cp -v ./didx-xyz-yoma-*/src/keycloak/scripts/keycloak/users.sh /scripts/
+            https://api.github.com/repos/didx-xyz/yoma/tarball/{{ .Values.postInstallHook.git.ref }} | tar xz
+          cp -v ./didx-xyz-yoma-*/src/keycloak/scripts/users.sh /scripts/
           rm -rf ./didx-xyz-yoma-*
       env:
         - name: GITHUB_PAT
