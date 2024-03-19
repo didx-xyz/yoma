@@ -190,7 +190,7 @@ namespace Yoma.Core.Api.Controllers
                     try
                     {
                         //add newly registered user to the default "User" role
-                        await _identityProviderClient.EnsureRoles(kcUser.Id, new List<string> { Constants.Role_User });
+                        await _identityProviderClient.EnsureRoles(kcUser.Id, [Constants.Role_User]);
                     }
                     catch (Exception ex)
                     {

@@ -1,7 +1,7 @@
 # https://github.com/jdx/mise
 [tools]
 node = "18"
-dotnet = "7.0"
+dotnet = "8.0"
 tilt = "latest"
 
 [env]

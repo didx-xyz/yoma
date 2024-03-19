@@ -1,5 +1,5 @@
 # Use multi-stage builds to keep the final image clean and small
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /build
 COPY ./src ./src
@@ -14,7 +14,7 @@ RUN dotnet restore
 RUN dotnet publish --output /api/ --configuration Release
 #
 ## Second stage
-FROM mcr.microsoft.com/dotnet/aspnet:7.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 #
 ## Install Chromium dependencies for Puppeteer
 ## clean up the apt cache by removing /var/lib/apt/lists reduces the image size

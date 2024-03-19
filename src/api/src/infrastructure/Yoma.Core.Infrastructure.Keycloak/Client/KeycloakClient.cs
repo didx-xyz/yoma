@@ -14,6 +14,7 @@ using Yoma.Core.Infrastructure.Keycloak.Extensions;
 using FS.Keycloak.RestApiClient.Authentication.ClientFactory;
 using FS.Keycloak.RestApiClient.Authentication.Flow;
 using FS.Keycloak.RestApiClient.Authentication.Client;
+using Microsoft.Extensions.Primitives;
 
 namespace Yoma.Core.Infrastructure.Keycloak.Client
 {
@@ -23,6 +24,8 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         private readonly KeycloakAdminOptions _keycloakAdminOptions;
         private readonly KeycloakAuthenticationOptions _keycloakAuthenticationOptions;
         private readonly AuthenticationHttpClient _httpClient;
+
+        private const string Authentication_Scheme_Basic = "Basic";
         #endregion
 
         #region Constructor
@@ -51,13 +54,19 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
                 throw new ArgumentNullException(nameof(httpContext), $"{nameof(httpContext)} is null");
 
             // basic authentication
-            var authHeader = AuthenticationHeaderValue.Parse(httpContext.Request.Headers["Authorization"]);
-
-            if (authHeader.Parameter == null)
+            var headerValue = httpContext.Request.Headers.Authorization;
+            if (StringValues.IsNullOrEmpty(headerValue))
                 throw new ArgumentNullException(nameof(httpContext), $"{nameof(httpContext.Request.Headers)}.Authorization is null");
+
+            var authHeader = AuthenticationHeaderValue.Parse(headerValue!);
+
+            if (authHeader.Parameter == null || authHeader.Scheme != Authentication_Scheme_Basic)
+                throw new ArgumentException($"{nameof(httpContext.Request.Headers)}.Authorization is null or not of scheme '{Authentication_Scheme_Basic}'", nameof(httpContext));
 
             var credentialBytes = Convert.FromBase64String(authHeader.Parameter);
             var credentials = Encoding.UTF8.GetString(credentialBytes).Split(':', 2);
+            if (credentials.Length != 2)
+                throw new ArgumentException($"{nameof(httpContext.Request.Headers)}.Authorization: Invalid credentials format", nameof(httpContext));
             var username = credentials[0];
             var password = credentials[1];
 
@@ -99,7 +108,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
                 Id = user.Id.ToString(),
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                Attributes = new Dictionary<string, List<string>>(),
+                Attributes = [],
                 Username = user.Email,
                 Email = user.Email,
                 EmailVerified = user.EmailVerified
@@ -131,7 +140,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
                 // send forgot password email
                 if (resetPassword)
-                    await userApi.PutUsersExecuteActionsEmailByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: new List<string> { "UPDATE_PASSWORD" });
+                    await userApi.PutUsersExecuteActionsEmailByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]);
             }
             catch (Exception ex)
             {

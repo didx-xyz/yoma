@@ -664,7 +664,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             return _blobService.GetURL(id.Value);
         }
 
-        private string PerformActionNotPossibleValidationMessage(Opportunity.Models.Opportunity opportunity, string description)
+        private static string PerformActionNotPossibleValidationMessage(Opportunity.Models.Opportunity opportunity, string description)
         {
             var reasons = new List<string>();
 
