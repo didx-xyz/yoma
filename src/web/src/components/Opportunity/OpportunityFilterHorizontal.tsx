@@ -197,7 +197,7 @@ export const OpportunityFilterHorizontal: React.FC<{
           filterOptions?.includes(
             OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
           )) && (
-          <div className="flex-col items-center justify-center gap-2 pb-8">
+          <div className="mt-10 hidden flex-col items-center justify-center gap-2 pb-8 md:flex">
             <div className="flex justify-center gap-2">
               {/* CATEGORIES */}
               {filterOptions?.includes(OpportunityFilterOptions.CATEGORIES) && (
@@ -224,10 +224,8 @@ export const OpportunityFilterHorizontal: React.FC<{
           filter !== OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
       ) && (
         <form
-          onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
-          // className={`
-          // ${filterOptions ? "flex flex-col gap-2" : "hidden"} `}
-          className="flex flex-col gap-2"
+          onSubmit={handleSubmit(onSubmitHandler)}
+          className="hidden flex-col gap-2 md:flex"
         >
           <div className="flex flex-col gap-2">
             <div className="mr-4 flex text-sm font-bold text-gray-dark">
@@ -718,11 +716,12 @@ export const OpportunityFilterHorizontal: React.FC<{
           </div>
         </form>
       )}
+
       <div>
-        <div className="mt-6 flex h-fit flex-col md:max-w-[1300px]">
+        <div className="mt-4 flex h-fit flex-col md:mt-6">
           <div className="flex items-center justify-between">
             {/* COUNT RESULT TEXT */}
-            <div className="whitespace-nowrap text-xl font-semibold text-black">
+            <div className="h-10 whitespace-nowrap text-xl font-semibold text-black">
               {countText && totalCount && totalCount > 0 ? (
                 <span>{countText}</span>
               ) : null}
@@ -742,7 +741,7 @@ export const OpportunityFilterHorizontal: React.FC<{
           </div>
 
           {/* FILTER BADGES */}
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-1">
             {opportunitySearchFilter &&
               Object.entries(opportunitySearchFilter).map(([key, value]) =>
                 key !== "pageNumber" &&

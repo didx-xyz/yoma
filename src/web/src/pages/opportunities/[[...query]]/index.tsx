@@ -768,7 +768,7 @@ const Opportunities: NextPageWithLayout<{
         <title>Yoma | Opportunities</title>
       </Head>
 
-      <PageBackground className="h-[280px] lg:h-[392px]" />
+      <PageBackground className="h-[300px] lg:h-[392px]" />
 
       {isSearchPerformed && isLoading && <Loading />}
 
@@ -817,16 +817,16 @@ const Opportunities: NextPageWithLayout<{
       </ReactModal>
 
       <div className="container z-10 mt-20 max-w-7xl px-2 py-1 md:py-4">
-        <div className="flex flex-col gap-2 pb-2 pt-8 text-white">
-          <h3 className="-mb-1 flex flex-grow flex-wrap items-center justify-center text-xl font-semibold">
+        <div className="flex flex-col items-center justify-center gap-2 pt-8 text-white ">
+          <h3 className="w-[300px] flex-grow flex-wrap text-center text-xl font-semibold md:w-full">
             Find <span className="mx-2 text-orange">opportunities</span> to
             <span className="mx-2 text-orange">unlock</span> your future.
           </h3>
-          <h6 className="text-center text-[14px] font-normal text-purple-soft">
+          <h6 className="w-[300px] text-center text-[14px] font-normal text-purple-soft md:w-full">
             A learning opportunity is a self-paced online course that you can
             finish at your convenience.
           </h6>
-          <div className="my-4 md:items-center md:justify-center">
+          <div className="md:items-center md:justify-center">
             <div className="flex flex-row items-center justify-center gap-2">
               <SearchInputLarge
                 onSearch={onSearchInputSubmit}
@@ -841,42 +841,40 @@ const Opportunities: NextPageWithLayout<{
         </div>
 
         {/* FILTER ROW: CATEGORIES DROPDOWN FILTERS (SELECT) FOR COUNTRIES, LANGUAGES, TYPE, ORGANISATIONS ETC  */}
-        <div className="mb-4 mt-10 hidden md:flex">
-          <OpportunityFilterHorizontal
-            htmlRef={myRef.current!}
-            opportunitySearchFilter={opportunitySearchFilter}
-            lookups_categories={lookups_categories}
-            lookups_countries={lookups_countries}
-            lookups_languages={lookups_languages}
-            lookups_types={lookups_types}
-            lookups_organisations={lookups_organisations}
-            lookups_commitmentIntervals={lookups_commitmentIntervals}
-            lookups_zltoRewardRanges={lookups_zltoRewardRanges}
-            lookups_publishedStates={lookups_publishedStates}
-            lookups_statuses={[]}
-            clearButtonText="Clear"
-            onClear={onClearFilter}
-            onSubmit={(e) => onSubmitFilter(e)}
-            onOpenFilterFullWindow={() => {
-              setFilterFullWindowVisible(!filterFullWindowVisible);
-            }}
-            filterOptions={[
-              OpportunityFilterOptions.CATEGORIES,
-              OpportunityFilterOptions.TYPES,
-              OpportunityFilterOptions.COUNTRIES,
-              OpportunityFilterOptions.LANGUAGES,
-              OpportunityFilterOptions.COMMITMENTINTERVALS,
-              OpportunityFilterOptions.ZLTOREWARDRANGES,
-              OpportunityFilterOptions.ORGANIZATIONS,
-              OpportunityFilterOptions.PUBLISHEDSTATES,
-            ]}
-            totalCount={searchResults?.totalCount ?? 0}
-          />
-        </div>
+        <OpportunityFilterHorizontal
+          htmlRef={myRef.current!}
+          opportunitySearchFilter={opportunitySearchFilter}
+          lookups_categories={lookups_categories}
+          lookups_countries={lookups_countries}
+          lookups_languages={lookups_languages}
+          lookups_types={lookups_types}
+          lookups_organisations={lookups_organisations}
+          lookups_commitmentIntervals={lookups_commitmentIntervals}
+          lookups_zltoRewardRanges={lookups_zltoRewardRanges}
+          lookups_publishedStates={lookups_publishedStates}
+          lookups_statuses={[]}
+          clearButtonText="Clear"
+          onClear={onClearFilter}
+          onSubmit={(e) => onSubmitFilter(e)}
+          onOpenFilterFullWindow={() => {
+            setFilterFullWindowVisible(!filterFullWindowVisible);
+          }}
+          filterOptions={[
+            OpportunityFilterOptions.CATEGORIES,
+            OpportunityFilterOptions.TYPES,
+            OpportunityFilterOptions.COUNTRIES,
+            OpportunityFilterOptions.LANGUAGES,
+            OpportunityFilterOptions.COMMITMENTINTERVALS,
+            OpportunityFilterOptions.ZLTOREWARDRANGES,
+            OpportunityFilterOptions.ORGANIZATIONS,
+            OpportunityFilterOptions.PUBLISHEDSTATES,
+          ]}
+          totalCount={searchResults?.totalCount ?? 0}
+        />
 
         {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
         {!isSearchPerformed && (
-          <div className="flex flex-col gap-6">
+          <div className="-mt-4 flex flex-col gap-6 px-2 pb-4 md:p-0 md:pb-0">
             {/* TRENDING */}
             {(opportunities_trending?.totalCount ?? 0) > 0 && (
               <OpportunitiesCarousel

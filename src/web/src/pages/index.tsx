@@ -182,7 +182,7 @@ const Home: NextPageWithLayout<{
         {/* ROW OF 3 IMAGES */}
         <div className="my-10 grid max-w-5xl grid-cols-1 gap-4 lg:grid-cols-3">
           {/* CARTEDEO */}
-          <div className="z-1x mx-auto max-w-[380px] rounded-xl bg-white shadow-lg">
+          <div className="mx-auto max-w-[380px] rounded-xl bg-white shadow-lg">
             {/* GRADIENT CARD */}
             <div className="relative">
               <div className="absolute left-10 top-[-10px] mx-4 w-56 rounded-lg bg-gradient-to-b from-gray to-white p-4 shadow-xl">
@@ -226,7 +226,7 @@ const Home: NextPageWithLayout<{
           </div>
 
           {/* IMPACT */}
-          <div className="z-1x relative mx-auto max-w-[380px] overflow-hidden rounded-xl bg-white shadow-lg">
+          <div className="relative mx-auto max-w-[380px] overflow-hidden rounded-xl bg-white shadow-lg">
             <Image
               src={imageImpact}
               layout="fill"
@@ -234,7 +234,7 @@ const Home: NextPageWithLayout<{
               alt="Background Image"
             />
 
-            <div className="relativex z-10 mt-32 p-8 text-white">
+            <div className="z-10 mt-32 p-8 text-white">
               <h3 className="font-semibold">Impact</h3>
               <p className="text-white">
                 Make a difference in your community, and build your profile by
@@ -244,7 +244,7 @@ const Home: NextPageWithLayout<{
           </div>
 
           {/* THRIVE */}
-          <div className="z-1x relativex mx-auto max-w-[380px] rounded-xl bg-white shadow-lg">
+          <div className="mx-auto max-w-[380px] rounded-xl bg-white shadow-lg">
             <div className="relative">
               <div className="absolute left-0 top-[-40px]">
                 <Image
@@ -258,7 +258,7 @@ const Home: NextPageWithLayout<{
               </div>
             </div>
 
-            <div className="relativex z-10 mt-32 p-8">
+            <div className="z-10 mt-32 p-8">
               <h3 className="font-semibold">Thrive</h3>
               <p className="text-gray-dark">
                 Track your progress on Yoma YoID and unlock new skills by
@@ -311,7 +311,7 @@ const Home: NextPageWithLayout<{
         {/* ROW OF 3 CARDS */}
         <div className="-mt-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
           {/* GOODWALL */}
-          <div className="z-10x flex h-[270px] w-[298px] flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
+          <div className="flex h-[270px] w-[298px] flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
             <Image
               src={imageLogoGoodwall}
               alt="Logo Goodwall"
@@ -361,7 +361,7 @@ const Home: NextPageWithLayout<{
           </div>
 
           {/* YOMA */}
-          <div className="z-10x flex h-[270px] w-[298px] flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
+          <div className="flex h-[270px] w-[298px] flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
             <Image
               src={imageLogoYoma}
               alt="Logo Yoma"
@@ -394,7 +394,7 @@ const Home: NextPageWithLayout<{
           </div>
 
           {/* WHATSAPP */}
-          <div className="z-10x flex h-[270px] w-[298px] flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
+          <div className="flex h-[270px] w-[298px] flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
             <Image
               src={imageLogoWhatsapp}
               alt="Logo Whatsapp"
