@@ -794,15 +794,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           Opportunities =
             [
                 new()
-                        {
-                            Title = myOpportunity.OpportunityTitle,
-                            DateStart = myOpportunity.DateStart,
-                            DateEnd = myOpportunity.DateEnd,
-                            Comment = myOpportunity.CommentVerification,
-                            URL = _emailURLFactory.OpportunityVerificationItemURL(type, myOpportunity.OpportunityId, myOpportunity.OrganizationId),
-                            ZltoReward = myOpportunity.ZltoReward,
-                            YomaReward = myOpportunity.YomaReward
-                        }
+                {
+                  Title = myOpportunity.OpportunityTitle,
+                  DateStart = myOpportunity.DateStart,
+                  DateEnd = myOpportunity.DateEnd,
+                  Comment = myOpportunity.CommentVerification,
+                  URL = _emailURLFactory.OpportunityVerificationItemURL(type, myOpportunity.OpportunityId, myOpportunity.OrganizationId),
+                  ZltoReward = myOpportunity.ZltoReward,
+                  YomaReward = myOpportunity.YomaReward
+                }
             ]
         };
 
