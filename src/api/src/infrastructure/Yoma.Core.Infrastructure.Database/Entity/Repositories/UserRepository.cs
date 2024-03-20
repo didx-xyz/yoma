@@ -76,8 +76,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 
     public async Task<Domain.Entity.Models.User> Create(Domain.Entity.Models.User item)
     {
-      if (item == null)
-        throw new ArgumentNullException(nameof(item));
+      ArgumentNullException.ThrowIfNull(item);
 
       item.DateYoIDOnboarded = !item.YoIDOnboarded.HasValue || !item.YoIDOnboarded.Value ? null : DateTimeOffset.UtcNow;
       item.DateCreated = DateTimeOffset.UtcNow;

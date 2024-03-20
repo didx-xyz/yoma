@@ -63,7 +63,7 @@ namespace Yoma.Core.Domain.Reward.Services
         while (executeUntil > DateTime.Now)
         {
           var items = _walletService.ListPendingCreationSchedule(_scheduleJobOptions.RewardWalletCreationScheduleBatchSize, itemIdsToSkip);
-          if (items.Count == 0) break;
+          if (!items.Any()) break;
 
           foreach (var item in items)
           {
@@ -118,7 +118,7 @@ namespace Yoma.Core.Domain.Reward.Services
         while (executeUntil > DateTime.Now)
         {
           var items = _rewardService.ListPendingTransactionSchedule(_scheduleJobOptions.RewardTransactionScheduleBatchSize, itemIdsToSkip);
-          if (items.Count == 0) break;
+          if (!items.Any()) break;
 
           foreach (var item in items)
           {

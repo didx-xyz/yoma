@@ -88,17 +88,17 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Must(SSISchemaExistsAndOfTypeOpportunity)
           .When(x => !string.IsNullOrEmpty(x.SSISchemaName))
           .WithMessage("SSI schema does not exist.");
-      RuleFor(x => x.Categories).Must(categories => categories != null && categories.Count != 0 && categories.All(id => id != Guid.Empty && CategoryExists(id)))
+      RuleFor(x => x.Categories).Must(categories => categories != null && categories.Any() && categories.All(id => id != Guid.Empty && CategoryExists(id)))
         .WithMessage("Categories are required and must exist.");
-      RuleFor(x => x.Countries).Must(countries => countries != null && countries.Count != 0 && countries.All(id => id != Guid.Empty && CountryExists(id)))
+      RuleFor(x => x.Countries).Must(countries => countries != null && countries.Any() && countries.All(id => id != Guid.Empty && CountryExists(id)))
           .WithMessage("Countries are required and must exist.");
-      RuleFor(x => x.Languages).Must(languages => languages != null && languages.Count != 0 && languages.All(id => id != Guid.Empty && LanguageExists(id)))
+      RuleFor(x => x.Languages).Must(languages => languages != null && languages.Any() && languages.All(id => id != Guid.Empty && LanguageExists(id)))
           .WithMessage("Languages are required and must exist.");
       RuleFor(x => x.Skills).Must(skills => skills != null && skills.All(id => id != Guid.Empty && SkillExists(id)))
           .WithMessage("Skills are optional, but must exist if specified.")
-          .When(x => x.Skills != null && x.Skills.Count != 0);
+          .When(x => x.Skills != null && x.Skills.Any());
       RuleFor(x => x.VerificationTypes)
-          .Must(types => types != null && types.Count != 0)
+          .Must(types => types != null && types.Any())
           .When(x => x.VerificationMethod != null && x.VerificationMethod == VerificationMethod.Manual)
           .WithMessage("With manual verification, one or more verification types are required.");
       RuleFor(x => x.VerificationTypes)

@@ -59,7 +59,7 @@ namespace Yoma.Core.Domain.Lookups.Services
     public List<Education> List()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return _educationRepository.Query().OrderBy(o => o.Name).ToList();
+        return [.. _educationRepository.Query().OrderBy(o => o.Name)];
 
       var result = _memoryCache.GetOrCreate(nameof(Education), entry =>
       {

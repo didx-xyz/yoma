@@ -58,7 +58,7 @@ namespace Yoma.Core.Domain.Reward.Services.Lookups
     public List<Models.Lookups.WalletCreationStatus> List()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return _walletCreationStatusRepository.Query().OrderBy(o => o.Name).ToList();
+        return [.. _walletCreationStatusRepository.Query().OrderBy(o => o.Name)];
 
       var result = _memoryCache.GetOrCreate(nameof(Models.Lookups.WalletCreationStatus), entry =>
       {

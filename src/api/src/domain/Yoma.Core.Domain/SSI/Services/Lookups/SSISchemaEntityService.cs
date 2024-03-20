@@ -58,8 +58,8 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         throw new ArgumentNullException(nameof(attributeName));
       attributeName = attributeName.Trim();
 
-      var result = List(null).SelectMany(o => o.Properties?.Where(p => string.Equals(p.AttributeName, attributeName, StringComparison.InvariantCultureIgnoreCase)) ?? Enumerable.Empty<SSISchemaEntityProperty>()).ToList();
-      if (result == null || result.Count == 0)
+      var result = List(null).SelectMany(o => o.Properties?.Where(p => string.Equals(p.AttributeName, attributeName, StringComparison.InvariantCultureIgnoreCase)) ?? []).ToList();
+      if (result == null || !result.Any())
         throw new ArgumentException($"{nameof(SSISchemaEntityProperty)} not found with attribute name '{attributeName}'", nameof(attributeName));
 
       if (result.Count > 1)
@@ -73,9 +73,9 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
       List<SSISchemaEntity> results;
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
       {
-        results = _ssiSchemaEntityRepository.Query(true).ToList();
+        results = [.. _ssiSchemaEntityRepository.Query(true)];
         ReflectEntityTypeInformation(results);
-        results = results.OrderBy(o => o.Name).ToList();
+        results = [.. results.OrderBy(o => o.Name)];
         results.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.AttributeName).ToList());
       }
       else
@@ -86,7 +86,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
           entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
           var entities = _ssiSchemaEntityRepository.Query(true).ToList();
           ReflectEntityTypeInformation(entities);
-          entities = entities.OrderBy(o => o.Name).ToList();
+          entities = [.. entities.OrderBy(o => o.Name)];
           entities.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.NameDisplay).ToList());
           return entities;
         }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(SSISchemaEntity)}s'");
@@ -103,7 +103,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
     #region Private Members
     private static void ReflectEntityTypeInformation(List<SSISchemaEntity>? entities)
     {
-      if (entities == null || entities.Count == 0) return;
+      if (entities == null || !entities.Any()) return;
 
       foreach (var entity in entities)
       {

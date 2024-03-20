@@ -75,7 +75,7 @@ namespace Yoma.Core.Domain.Lookups.Services
     public List<Country> List()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return _countryRepository.Query().OrderBy(o => o.CodeAlpha2 != Core.Country.Worldwide.ToDescription()).ThenBy(o => o.Name).ToList(); //esnure Worldwide appears first
+        return [.. _countryRepository.Query().OrderBy(o => o.CodeAlpha2 != Core.Country.Worldwide.ToDescription()).ThenBy(o => o.Name)]; //esnure Worldwide appears first
 
       var result = _memoryCache.GetOrCreate(nameof(Country), entry =>
       {

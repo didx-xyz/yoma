@@ -58,7 +58,7 @@ namespace Yoma.Core.Domain.Marketplace.Services.Lookups
     public List<Models.Lookups.TransactionStatus> List()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return _transactionStatusRepository.Query().OrderBy(o => o.Name).ToList();
+        return [.. _transactionStatusRepository.Query().OrderBy(o => o.Name)];
 
       var result = _memoryCache.GetOrCreate(nameof(Models.Lookups.TransactionStatus), entry =>
       {

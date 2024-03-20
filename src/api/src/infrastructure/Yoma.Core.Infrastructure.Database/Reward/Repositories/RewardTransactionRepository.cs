@@ -61,7 +61,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
 
     public async Task<List<RewardTransaction>> Create(List<RewardTransaction> items)
     {
-      if (items == null || items.Count == 0)
+      if (items == null || !items.Any())
         throw new ArgumentNullException(nameof(items));
 
       var entities = items.Select(item =>
@@ -114,7 +114,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
 
     public async Task<List<RewardTransaction>> Update(List<RewardTransaction> items)
     {
-      if (items == null || items.Count == 0)
+      if (items == null || !items.Any())
         throw new ArgumentNullException(nameof(items));
 
       var itemIds = items.Select(o => o.Id).ToList();

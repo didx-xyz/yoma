@@ -67,10 +67,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public const string Keywords_Separator = ",";
     public const int Keywords_CombinedMaxLength = 500;
-    private static readonly Status[] Statuses_Updatable = { Status.Active, Status.Inactive };
-    private static readonly Status[] Statuses_Activatable = { Status.Inactive };
-    private static readonly Status[] Statuses_CanDelete = { Status.Active, Status.Inactive };
-    private static readonly Status[] Statuses_DeActivatable = { Status.Active, Status.Expired };
+    private static readonly Status[] Statuses_Updatable = [Status.Active, Status.Inactive];
+    private static readonly Status[] Statuses_Activatable = [Status.Inactive];
+    private static readonly Status[] Statuses_CanDelete = [Status.Active, Status.Inactive];
+    private static readonly Status[] Statuses_DeActivatable = [Status.Active, Status.Expired];
     #endregion
 
     #region Constructor
@@ -211,8 +211,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public OpportunitySearchResultsCriteria SearchCriteriaOpportunities(OpportunitySearchFilterCriteria filter, bool ensureOrganizationAuthorization)
     {
-      if (filter == null)
-        throw new ArgumentNullException(nameof(filter));
+      ArgumentNullException.ThrowIfNull(filter);
 
       _opportunitySearchFilterCriteriaValidator.ValidateAndThrow(filter);
 
@@ -264,8 +263,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         var filter = new OpportunitySearchFilterAdmin
         {
-          Organizations = org == null ? null : new List<Guid> { org.Id },
-          Categories = new List<Guid> { item.Id },
+          Organizations = org == null ? null : [org.Id],
+          Categories = [item.Id],
           TotalCountOnly = true
         };
 
@@ -277,8 +276,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategories(List<PublishedState>? publishedStates)
     {
-      publishedStates = publishedStates == null || publishedStates.Count == 0 ?
-            new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : publishedStates;
+      publishedStates = publishedStates == null || !publishedStates.Any() ?
+            [PublishedState.NotStarted, PublishedState.Active] : publishedStates;
 
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var query = _opportunityCategoryRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
@@ -316,7 +315,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         var filter = new OpportunitySearchFilterAdmin
         {
-          Categories = new List<Guid> { item.Id },
+          Categories = [item.Id],
           PublishedStates = publishedStates,
           TotalCountOnly = true
         };
@@ -338,14 +337,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var countryIds = query.Select(o => o.CountryId).Distinct().ToList();
 
-      return _countryService.List().Where(o => countryIds.Contains(o.Id))
-          .OrderBy(o => o.CodeAlpha2 != Country.Worldwide.ToDescription()).ThenBy(o => o.Name).ToList(); //esnure Worldwide appears first
+      return [.. _countryService.List().Where(o => countryIds.Contains(o.Id))
+                .OrderBy(o => o.CodeAlpha2 != Country.Worldwide.ToDescription()).ThenBy(o => o.Name)]; //esnure Worldwide appears first
     }
 
     public List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountries(List<PublishedState>? publishedStates)
     {
-      publishedStates = publishedStates == null || publishedStates.Count == 0 ?
-              new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : publishedStates;
+      publishedStates = publishedStates == null || !publishedStates.Any() ?
+              [PublishedState.NotStarted, PublishedState.Active] : publishedStates;
 
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var query = _opportunityCountryRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
@@ -377,8 +376,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var countryIds = query.Select(o => o.CountryId).Distinct().ToList();
 
-      return _countryService.List().Where(o => countryIds.Contains(o.Id))
-          .OrderBy(o => o.CodeAlpha2 != Country.Worldwide.ToDescription()).ThenBy(o => o.Name).ToList(); //esnure Worldwide appears first
+      return [.. _countryService.List().Where(o => countryIds.Contains(o.Id))
+                .OrderBy(o => o.CodeAlpha2 != Country.Worldwide.ToDescription()).ThenBy(o => o.Name)]; //esnure Worldwide appears first
     }
 
     public List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguagesAdmin(Guid? organizationId, bool ensureOrganizationAuthorization)
@@ -392,13 +391,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var languageIds = query.Select(o => o.LanguageId).Distinct().ToList();
 
-      return _languageService.List().Where(o => languageIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
+      return [.. _languageService.List().Where(o => languageIds.Contains(o.Id)).OrderBy(o => o.Name)];
     }
 
     public List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(List<PublishedState>? publishedStates)
     {
-      publishedStates = publishedStates == null || publishedStates.Count == 0 ?
-             new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : publishedStates;
+      publishedStates = publishedStates == null || !publishedStates.Any() ?
+             [PublishedState.NotStarted, PublishedState.Active] : publishedStates;
 
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var query = _opportunityLanguageRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
@@ -430,7 +429,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var languageIds = query.Select(o => o.LanguageId).Distinct().ToList();
 
-      return _languageService.List().Where(o => languageIds.Contains(o.Id)).OrderBy(o => o.Name).ToList();
+      return [.. _languageService.List().Where(o => languageIds.Contains(o.Id)).OrderBy(o => o.Name)];
     }
 
     public List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizationsAdmin()
@@ -448,8 +447,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizations(List<PublishedState>? publishedStates)
     {
-      publishedStates = publishedStates == null || publishedStates.Count == 0 ?
-          new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : publishedStates;
+      publishedStates = publishedStates == null || !publishedStates.Any() ?
+          [PublishedState.NotStarted, PublishedState.Active] : publishedStates;
 
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var query = _opportunityRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
@@ -484,7 +483,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var filter = new OrganizationSearchFilter
       {
         Organizations = organizationIds,
-        Statuses = new List<Status> { Status.Active },
+        Statuses = [Status.Active],
         InternalUse = true
       };
 
@@ -493,8 +492,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public List<OpportunitySearchCriteriaCommitmentInterval> ListOpportunitySearchCriteriaCommitmentInterval(List<PublishedState>? publishedStates)
     {
-      publishedStates = publishedStates == null || publishedStates.Count == 0 ?
-         new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : publishedStates;
+      publishedStates = publishedStates == null || !publishedStates.Any() ?
+         [PublishedState.NotStarted, PublishedState.Active] : publishedStates;
 
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var query = _opportunityRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
@@ -533,13 +532,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
           .Distinct()
           .ToList();
 
-      return results.OrderBy(o => o.Name).ToList();
+      return [.. results.OrderBy(o => o.Name)];
     }
 
     public List<OpportunitySearchCriteriaZltoReward> ListOpportunitySearchCriteriaZltoReward(List<PublishedState>? publishedStates)
     {
-      publishedStates = publishedStates == null || publishedStates.Count == 0 ?
-          new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : publishedStates;
+      publishedStates = publishedStates == null || !publishedStates.Any() ?
+          [PublishedState.NotStarted, PublishedState.Active] : publishedStates;
 
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var query = _opportunityRepository.Query().Where(o => o.ZltoReward.HasValue && o.OrganizationStatusId == organizationStatusActiveId);
@@ -596,8 +595,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
-      if (filter == null)
-        throw new ArgumentNullException(nameof(filter));
+      ArgumentNullException.ThrowIfNull(filter);
 
       ParseOpportunitySearchFilterCommitmentIntervals(filter);
       ParseOpportunitySearchFilterZltoRewardRanges(filter);
@@ -622,7 +620,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //organization (explicitly specified)
       if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
       {
-        if (filter.Organizations != null && filter.Organizations.Count != 0)
+        if (filter.Organizations != null && filter.Organizations.Any())
         {
           filter.Organizations = filter.Organizations.Distinct().ToList();
           _organizationService.IsAdminsOf(filter.Organizations, true);
@@ -631,18 +629,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
           filter.Organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
       }
 
-      if (filter.Organizations != null && filter.Organizations.Count != 0)
+      if (filter.Organizations != null && filter.Organizations.Any())
         query = query.Where(o => filter.Organizations.Contains(o.OrganizationId));
 
       //types (explicitly specified)
-      if (filter.Types != null && filter.Types.Count != 0)
+      if (filter.Types != null && filter.Types.Any())
       {
         filter.Types = filter.Types.Distinct().ToList();
         query = query.Where(o => filter.Types.Contains(o.TypeId));
       }
 
       //categories (explicitly specified)
-      if (filter.Categories != null && filter.Categories.Count != 0)
+      if (filter.Categories != null && filter.Categories.Any())
       {
         filter.Categories = filter.Categories.Distinct().ToList();
         query = query.Where(opportunity => _opportunityCategoryRepository.Query().Any(
@@ -650,7 +648,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       //languages
-      if (filter.Languages != null && filter.Languages.Count != 0)
+      if (filter.Languages != null && filter.Languages.Any())
       {
         filter.Languages = filter.Languages.Distinct().ToList();
         query = query.Where(opportunity => _opportunityLanguageRepository.Query().Any(
@@ -658,7 +656,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       //countries
-      if (filter.Countries != null && filter.Countries.Count != 0)
+      if (filter.Countries != null && filter.Countries.Any())
       {
         filter.Countries = filter.Countries.Distinct().ToList();
         query = query.Where(opportunity => _opportunityCountryRepository.Query().Any(
@@ -697,7 +695,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       //statuses
-      if (filter.Statuses != null && filter.Statuses.Count != 0)
+      if (filter.Statuses != null && filter.Statuses.Any())
       {
         filter.Statuses = filter.Statuses.Distinct().ToList();
         var statusIds = filter.Statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
@@ -712,7 +710,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       //commitmentIntervals
-      if (filter.CommitmentIntervalsParsed != null && filter.CommitmentIntervalsParsed.Count != 0)
+      if (filter.CommitmentIntervalsParsed != null && filter.CommitmentIntervalsParsed.Any())
       {
         var intervalIds = filter.CommitmentIntervalsParsed.Select(item => item.Id).Distinct().ToList();
         var intervalCounts = filter.CommitmentIntervalsParsed.Select(item => item.Count).Distinct().ToList();
@@ -720,7 +718,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       //zltoRewardRanges
-      if (filter.ZltoRewardRangesParsed != null && filter.ZltoRewardRangesParsed.Count != 0)
+      if (filter.ZltoRewardRangesParsed != null && filter.ZltoRewardRangesParsed.Any())
       {
         var distinctItems = filter.ZltoRewardRangesParsed
             .Select(item => new { item.From, item.To })
@@ -773,7 +771,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         return result;
       }
 
-      if (filter.OrderInstructions == null || filter.OrderInstructions.Count == 0)
+      if (filter.OrderInstructions == null || !filter.OrderInstructions.Any())
         throw new ArgumentOutOfRangeException(nameof(filter), $"{filter.OrderInstructions} are required");
       query = query.ApplyFiltersAndOrdering(filter.OrderInstructions);
 
@@ -784,7 +782,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
       }
 
-      result.Items = query.ToList();
+      result.Items = [.. query];
       result.Items.ForEach(o =>
       {
         o.SetPublished();
@@ -796,8 +794,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization)
     {
-      if (request == null)
-        throw new ArgumentNullException(nameof(request));
+      ArgumentNullException.ThrowIfNull(request);
 
       request.URL = request.URL?.EnsureHttpsScheme();
 
@@ -897,8 +894,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public async Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization)
     {
-      if (request == null)
-        throw new ArgumentNullException(nameof(request));
+      ArgumentNullException.ThrowIfNull(request);
 
       request.URL = request.URL?.EnsureHttpsScheme();
 
@@ -985,7 +981,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result = await AssignSkills(result, request.Skills);
 
         // verification types (optional)
-        result = await RemoveVerificationTypes(result, result.VerificationTypes?.Select(o => o.Type).Except(request.VerificationTypes?.Select(o => o.Type) ?? Enumerable.Empty<VerificationType>()).ToList());
+        result = await RemoveVerificationTypes(result, result.VerificationTypes?.Select(o => o.Type).Except(request.VerificationTypes?.Select(o => o.Type) ?? []).ToList());
         result = await AssignVerificationTypes(result, request.VerificationTypes);
 
         scope.Complete();
@@ -1142,7 +1138,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      if (categoryIds == null || categoryIds.Count == 0)
+      if (categoryIds == null || !categoryIds.Any())
         throw new ArgumentNullException(nameof(categoryIds));
 
       ValidateUpdatable(result);
@@ -1185,7 +1181,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      if (countryIds == null || countryIds.Count == 0)
+      if (countryIds == null || !countryIds.Any())
         throw new ArgumentNullException(nameof(countryIds));
 
       ValidateUpdatable(result);
@@ -1219,7 +1215,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      if (languageIds == null || languageIds.Count == 0)
+      if (languageIds == null || !languageIds.Any())
         throw new ArgumentNullException(nameof(languageIds));
 
       ValidateUpdatable(result);
@@ -1242,7 +1238,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      if (skillIds == null || skillIds.Count == 0)
+      if (skillIds == null || !skillIds.Any())
         throw new ArgumentNullException(nameof(skillIds));
 
       ValidateUpdatable(result);
@@ -1265,7 +1261,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      if (skillIds == null || skillIds.Count == 0)
+      if (skillIds == null || !skillIds.Any())
         throw new ArgumentNullException(nameof(skillIds));
 
       ValidateUpdatable(result);
@@ -1288,7 +1284,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      if (verificationTypes == null || verificationTypes.Count == 0)
+      if (verificationTypes == null || !verificationTypes.Any())
         throw new ArgumentNullException(nameof(verificationTypes));
 
       ValidateUpdatable(result);
@@ -1311,7 +1307,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      if (verificationTypes == null || verificationTypes.Count == 0)
+      if (verificationTypes == null || !verificationTypes.Any())
         throw new ArgumentNullException(nameof(verificationTypes));
 
       ValidateUpdatable(result);
@@ -1352,13 +1348,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
             throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
         }
 
-        if (recipients == null || recipients.Count == 0) return;
+        if (recipients == null || !recipients.Any()) return;
 
         var data = new EmailOpportunityPosted
         {
-          Opportunities = new List<EmailOpportunityPostedItem>
-                    {
-                        new()
+          Opportunities =
+            [
+                new()
                         {
                             Title = opportunity.Title,
                             DateStart = opportunity.DateStart,
@@ -1367,7 +1363,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                             ZltoReward = opportunity.ZltoReward,
                             YomaReward = opportunity.YomaReward
                         }
-                    }
+            ]
         };
 
         await _emailProviderClient.Send(type, recipients, data);
@@ -1398,11 +1394,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private static void ParseOpportunitySearchFilterCommitmentIntervals(OpportunitySearchFilterAdmin filter)
     {
-      if (filter.CommitmentIntervals == null || filter.CommitmentIntervals.Count == 0)
+      if (filter.CommitmentIntervals == null || !filter.CommitmentIntervals.Any())
         return;
       filter.CommitmentIntervals = filter.CommitmentIntervals.Distinct().ToList();
 
-      filter.CommitmentIntervalsParsed = new List<OpportunitySearchFilterCommitmentInterval>();
+      filter.CommitmentIntervalsParsed = [];
 
       foreach (var item in filter.CommitmentIntervals)
       {
@@ -1416,11 +1412,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private static void ParseOpportunitySearchFilterZltoRewardRanges(OpportunitySearchFilterAdmin filter)
     {
-      if (filter.ZltoRewardRanges == null || filter.ZltoRewardRanges.Count == 0)
+      if (filter.ZltoRewardRanges == null || !filter.ZltoRewardRanges.Any())
         return;
       filter.ZltoRewardRanges = filter.ZltoRewardRanges.Distinct().ToList();
 
-      filter.ZltoRewardRangesParsed = new List<OpportunitySearchFilterZltoReward>();
+      filter.ZltoRewardRangesParsed = [];
 
       foreach (var item in filter.ZltoRewardRanges)
       {
@@ -1440,7 +1436,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private async Task<Models.Opportunity> AssignCountries(Models.Opportunity opportunity, List<Guid> countryIds)
     {
-      if (countryIds == null || countryIds.Count == 0)
+      if (countryIds == null || !countryIds.Any())
         throw new ArgumentNullException(nameof(countryIds));
 
       countryIds = countryIds.Distinct().ToList();
@@ -1466,7 +1462,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           await _opportunityCountryRepository.Create(item);
 
-          opportunity.Countries ??= new List<Domain.Lookups.Models.Country>();
+          opportunity.Countries ??= [];
           opportunity.Countries.Add(new Domain.Lookups.Models.Country { Id = country.Id, Name = country.Name, CodeAlpha2 = country.CodeAlpha2, CodeAlpha3 = country.CodeAlpha3, CodeNumeric = country.CodeNumeric });
         }
 
@@ -1478,7 +1474,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private async Task<Models.Opportunity> RemoveCountries(Models.Opportunity opportunity, List<Guid>? countryIds)
     {
-      if (countryIds == null || countryIds.Count == 0) return opportunity;
+      if (countryIds == null || !countryIds.Any()) return opportunity;
 
       countryIds = countryIds.Distinct().ToList();
 
@@ -1505,7 +1501,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private async Task<Models.Opportunity> AssignCategories(Models.Opportunity opportunity, List<Guid> categoryIds)
     {
-      if (categoryIds == null || categoryIds.Count == 0)
+      if (categoryIds == null || !categoryIds.Any())
         throw new ArgumentNullException(nameof(categoryIds));
 
       categoryIds = categoryIds.Distinct().ToList();
@@ -1528,7 +1524,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           await _opportunityCategoryRepository.Create(item);
 
-          opportunity.Categories ??= new List<Models.Lookups.OpportunityCategory>();
+          opportunity.Categories ??= [];
           opportunity.Categories.Add(new Models.Lookups.OpportunityCategory { Id = category.Id, Name = category.Name, ImageURL = category.ImageURL });
         }
 
@@ -1540,7 +1536,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private async Task<Models.Opportunity> RemoveCategories(Models.Opportunity opportunity, List<Guid>? categoryIds)
     {
-      if (categoryIds == null || categoryIds.Count == 0) return opportunity;
+      if (categoryIds == null || !categoryIds.Any()) return opportunity;
 
       categoryIds = categoryIds.Distinct().ToList();
 
@@ -1567,7 +1563,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private async Task<Models.Opportunity> AssignLanguages(Models.Opportunity opportunity, List<Guid> languageIds)
     {
-      if (languageIds == null || languageIds.Count == 0)
+      if (languageIds == null || !languageIds.Any())
         throw new ArgumentNullException(nameof(languageIds));
 
       languageIds = languageIds.Distinct().ToList();
@@ -1593,7 +1589,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           await _opportunityLanguageRepository.Create(item);
 
-          opportunity.Languages ??= new List<Domain.Lookups.Models.Language>();
+          opportunity.Languages ??= [];
           opportunity.Languages.Add(new Domain.Lookups.Models.Language { Id = language.Id, Name = language.Name, CodeAlpha2 = language.CodeAlpha2 });
         }
 
@@ -1605,7 +1601,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private async Task<Models.Opportunity> RemoveLanguages(Models.Opportunity opportunity, List<Guid>? languageIds)
     {
-      if (languageIds == null || languageIds.Count == 0) return opportunity;
+      if (languageIds == null || !languageIds.Any()) return opportunity;
 
       languageIds = languageIds.Distinct().ToList();
 
@@ -1632,7 +1628,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private async Task<Models.Opportunity> AssignSkills(Models.Opportunity opportunity, List<Guid>? skillIds)
     {
-      if (skillIds == null || skillIds.Count == 0) return opportunity; //skills are optional
+      if (skillIds == null || !skillIds.Any()) return opportunity; //skills are optional
 
       skillIds = skillIds.Distinct().ToList();
 
@@ -1654,7 +1650,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           await _opportunitySkillRepository.Create(item);
 
-          opportunity.Skills ??= new List<Domain.Lookups.Models.Skill>();
+          opportunity.Skills ??= [];
           opportunity.Skills.Add(new Domain.Lookups.Models.Skill { Id = skill.Id, Name = skill.Name, InfoURL = skill.InfoURL });
         }
 
@@ -1666,7 +1662,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private async Task<Models.Opportunity> RemoveSkills(Models.Opportunity opportunity, List<Guid>? skillIds)
     {
-      if (skillIds == null || skillIds.Count == 0) return opportunity;
+      if (skillIds == null || !skillIds.Any()) return opportunity;
 
       skillIds = skillIds.Distinct().ToList();
 
@@ -1693,7 +1689,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private async Task<Models.Opportunity> AssignVerificationTypes(Models.Opportunity opportunity, List<OpportunityRequestVerificationType>? verificationTypes)
     {
-      if (verificationTypes == null || verificationTypes.Count == 0) return opportunity; //verification types is optional
+      if (verificationTypes == null || !verificationTypes.Any()) return opportunity; //verification types is optional
 
       var results = new List<Models.Lookups.OpportunityVerificationType>();
 
@@ -1727,7 +1723,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           await _opportunityVerificationTypeRepository.Create(item);
 
-          opportunity.VerificationTypes ??= new List<Models.Lookups.OpportunityVerificationType>();
+          opportunity.VerificationTypes ??= [];
           opportunity.VerificationTypes.Add(new Models.Lookups.OpportunityVerificationType
           {
             Id = verificationType.Id,
@@ -1745,7 +1741,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private async Task<Models.Opportunity> RemoveVerificationTypes(Models.Opportunity opportunity, List<VerificationType>? verificationTypes)
     {
-      if (verificationTypes == null || verificationTypes.Count == 0) return opportunity;
+      if (verificationTypes == null || !verificationTypes.Any()) return opportunity;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {

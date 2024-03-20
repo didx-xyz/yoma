@@ -70,14 +70,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public OpportunitySearchResultsInfo Search(OpportunitySearchFilter filter)
     {
-      if (filter == null)
-        throw new ArgumentNullException(nameof(filter));
+      ArgumentNullException.ThrowIfNull(filter);
 
       //filter validated by OpportunityService.Search
       var filterInternal = new OpportunitySearchFilterAdmin
       {
-        PublishedStates = filter.PublishedStates == null || filter.PublishedStates.Count == 0 ?
-              new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : filter.PublishedStates,
+        PublishedStates = filter.PublishedStates == null || !filter.PublishedStates.Any() ?
+                    [PublishedState.NotStarted, PublishedState.Active] : filter.PublishedStates,
         Types = filter.Types,
         Categories = filter.Categories,
         Languages = filter.Languages,
@@ -88,12 +87,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ValueContains = filter.ValueContains,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize,
-        OrderInstructions = new List<Core.Models.FilterOrdering<Models.Opportunity>>
-                {
+        OrderInstructions =
+                [
                     new() { OrderBy = e => e.DateStart, SortOrder = Core.FilterSortOrder.Descending },
                     new() { OrderBy = e => e.DateEnd ?? DateTimeOffset.MaxValue, SortOrder = Core.FilterSortOrder.Descending },
                     new() { OrderBy = e => e.Title, SortOrder = Core.FilterSortOrder.Ascending },
-                }
+                ]
       };
 
       var mostViewed = filter.MostViewed.HasValue && filter.MostViewed.Value;
@@ -101,15 +100,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (mostViewed)
       {
         aggregatedByViewed = _myOpportunityService.ListAggregatedOpportunityByViewed(filter, filterInternal.PublishedStates.Contains(PublishedState.Expired));
-        filterInternal.Opportunities = aggregatedByViewed?.Keys.ToList() ?? new List<Guid>();
+        filterInternal.Opportunities = aggregatedByViewed?.Keys.ToList() ?? [];
       }
 
       var searchResult = _opportunityService.Search(filterInternal, false);
 
       if (mostViewed)
-        searchResult.Items = searchResult.Items
-            .OrderBy(opportunity => aggregatedByViewed?.Keys.ToList().IndexOf(opportunity.Id)) //preserver order of aggregatedByViewed, which is ordered by count and then by last viewed date
-            .ToList();
+        searchResult.Items = [.. searchResult.Items.OrderBy(opportunity => aggregatedByViewed?.Keys.ToList().IndexOf(opportunity.Id))];
 
       var results = new OpportunitySearchResultsInfo
       {
@@ -123,8 +120,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public (string fileName, byte[] bytes) ExportToCSVOpportunitySearch(OpportunitySearchFilterAdmin filter)
     {
-      if (filter == null)
-        throw new ArgumentNullException(nameof(filter));
+      ArgumentNullException.ThrowIfNull(filter);
 
       var result = Search(filter, true);
 
@@ -150,7 +146,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         TotalCountOnly = true,
         Opportunity = result.Id,
         Action = MyOpportunity.Action.Verification,
-        VerificationStatuses = new List<MyOpportunity.VerificationStatus> { MyOpportunity.VerificationStatus.Pending }
+        VerificationStatuses = [MyOpportunity.VerificationStatus.Pending]
       };
 
       var searchResult = _myOpportunityService.Search(filter, false);

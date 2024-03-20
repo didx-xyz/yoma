@@ -31,7 +31,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
 
-    private static readonly VerificationStatus[] Statuses_Rejectable = { VerificationStatus.Pending };
+    private static readonly VerificationStatus[] Statuses_Rejectable = [VerificationStatus.Pending];
 
     private static readonly object _lock_Object = new();
     #endregion
@@ -80,7 +80,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           var items = _myOpportunityRepository.Query().Where(o => o.VerificationStatusId.HasValue && statusRejectableIds.Contains(o.VerificationStatusId.Value) &&
             o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.MyOpportunityRejectionIntervalInDays))
             .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
-          if (items.Count == 0) break;
+          if (!items.Any()) break;
 
           foreach (var item in items)
           {
@@ -106,7 +106,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               var data = new EmailOpportunityVerification
               {
                 YoIDURL = _emailURLFactory.OpportunityVerificationYoIDURL(emailType),
-                Opportunities = new List<EmailOpportunityVerificationItem>()
+                Opportunities = []
               };
 
               foreach (var myOp in group)
@@ -168,14 +168,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #region Private Members
     private void SeedPendingVerifications(List<Models.MyOpportunity> items)
     {
-      if (items.Count == 0) return;
+      if (!items.Any()) return;
 
       foreach (var item in items)
       {
         try
         {
           var opportunity = _opportunityService.GetById(item.OpportunityId, true, true, false);
-          if (opportunity.VerificationTypes == null || opportunity.VerificationTypes.Count == 0) continue;
+          if (opportunity.VerificationTypes == null || !opportunity.VerificationTypes.Any()) continue;
 
           var request = new MyOpportunityRequestVerify
           {
@@ -260,7 +260,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 request.Geometry = new Geometry
                 {
                   Type = Core.SpatialType.Point,
-                  Coordinates = new List<double[]> { new[] { -0.09394821166991196, 51.50525376803295, 0 } }
+                  Coordinates = [[-0.09394821166991196, 51.50525376803295, 0]]
                 };
                 break;
 

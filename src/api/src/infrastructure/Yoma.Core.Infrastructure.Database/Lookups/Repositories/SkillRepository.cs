@@ -44,8 +44,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 
     public async Task<Domain.Lookups.Models.Skill> Create(Domain.Lookups.Models.Skill item)
     {
-      if (item == null)
-        throw new ArgumentNullException(nameof(item));
+      ArgumentNullException.ThrowIfNull(item);
 
       item.DateCreated = DateTimeOffset.UtcNow;
       item.DateModified = DateTimeOffset.UtcNow;
@@ -69,7 +68,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 
     public async Task<List<Domain.Lookups.Models.Skill>> Create(List<Domain.Lookups.Models.Skill> items)
     {
-      if (items == null || items.Count == 0)
+      if (items == null || !items.Any())
         throw new ArgumentNullException(nameof(items));
 
       var entities = items.Select(item =>
@@ -114,7 +113,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 
     public async Task<List<Domain.Lookups.Models.Skill>> Update(List<Domain.Lookups.Models.Skill> items)
     {
-      if (items == null || items.Count == 0)
+      if (items == null || !items.Any())
         throw new ArgumentNullException(nameof(items));
 
       var itemIds = items.Select(o => o.Id).ToList();

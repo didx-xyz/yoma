@@ -74,7 +74,7 @@ namespace Yoma.Core.Domain.Lookups.Services
     public List<Language> List()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return _languageRepository.Query().OrderBy(o => o.Name).ToList();
+        return [.. _languageRepository.Query().OrderBy(o => o.Name)];
 
       var result = _memoryCache.GetOrCreate(nameof(Language), entry =>
       {

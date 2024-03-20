@@ -6,8 +6,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
   {
     public static OrganizationInfo ToInfo(this Organization value)
     {
-      if (value == null)
-        throw new ArgumentNullException(nameof(value));
+      ArgumentNullException.ThrowIfNull(value);
 
       return new OrganizationInfo
       {

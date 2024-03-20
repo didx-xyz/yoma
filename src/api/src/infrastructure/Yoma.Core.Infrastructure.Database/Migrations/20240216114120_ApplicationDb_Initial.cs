@@ -1246,7 +1246,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Blob_StorageType_FileType_ParentId",
           schema: "Object",
           table: "Blob",
-          columns: new[] { "StorageType", "FileType", "ParentId" });
+          columns: ["StorageType", "FileType", "ParentId"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_Country_CodeAlpha2",
@@ -1292,14 +1292,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_CredentialIssuance_SchemaName_UserId_OrganizationId_MyOppor~",
           schema: "SSI",
           table: "CredentialIssuance",
-          columns: new[] { "SchemaName", "UserId", "OrganizationId", "MyOpportunityId" },
+          columns: ["SchemaName", "UserId", "OrganizationId", "MyOpportunityId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_CredentialIssuance_SchemaTypeId_ArtifactType_SchemaName_Sta~",
           schema: "SSI",
           table: "CredentialIssuance",
-          columns: new[] { "SchemaTypeId", "ArtifactType", "SchemaName", "StatusId", "DateCreated", "DateModified" });
+          columns: ["SchemaTypeId", "ArtifactType", "SchemaName", "StatusId", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_CredentialIssuance_StatusId",
@@ -1364,14 +1364,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_MyOpportunity_UserId_OpportunityId_ActionId",
           schema: "Opportunity",
           table: "MyOpportunity",
-          columns: new[] { "UserId", "OpportunityId", "ActionId" },
+          columns: ["UserId", "OpportunityId", "ActionId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_MyOpportunity_VerificationStatusId_DateCompleted_ZltoReward~",
           schema: "Opportunity",
           table: "MyOpportunity",
-          columns: new[] { "VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified" });
+          columns: ["VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_MyOpportunityAction_Name",
@@ -1390,7 +1390,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_MyOpportunityVerifications_MyOpportunityId_VerificationType~",
           schema: "Opportunity",
           table: "MyOpportunityVerifications",
-          columns: new[] { "MyOpportunityId", "VerificationTypeId" },
+          columns: ["MyOpportunityId", "VerificationTypeId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -1461,7 +1461,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Opportunity_TypeId_OrganizationId_ZltoReward_DifficultyId_C~",
           schema: "Opportunity",
           table: "Opportunity",
-          columns: new[] { "TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId" });
+          columns: ["TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_OpportunityCategories_CategoryId",
@@ -1473,7 +1473,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_OpportunityCategories_OpportunityId_CategoryId",
           schema: "Opportunity",
           table: "OpportunityCategories",
-          columns: new[] { "OpportunityId", "CategoryId" },
+          columns: ["OpportunityId", "CategoryId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -1493,7 +1493,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_OpportunityCountries_OpportunityId_CountryId",
           schema: "Opportunity",
           table: "OpportunityCountries",
-          columns: new[] { "OpportunityId", "CountryId" },
+          columns: ["OpportunityId", "CountryId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -1513,14 +1513,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_OpportunityLanguages_OpportunityId_LanguageId",
           schema: "Opportunity",
           table: "OpportunityLanguages",
-          columns: new[] { "OpportunityId", "LanguageId" },
+          columns: ["OpportunityId", "LanguageId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_OpportunitySkills_OpportunityId_SkillId",
           schema: "Opportunity",
           table: "OpportunitySkills",
-          columns: new[] { "OpportunityId", "SkillId" },
+          columns: ["OpportunityId", "SkillId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -1554,7 +1554,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_OpportunityVerificationTypes_OpportunityId_VerificationType~",
           schema: "Opportunity",
           table: "OpportunityVerificationTypes",
-          columns: new[] { "OpportunityId", "VerificationTypeId" },
+          columns: ["OpportunityId", "VerificationTypeId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -1605,7 +1605,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Organization_StatusId_DateStatusModified_DateCreated_Create~",
           schema: "Entity",
           table: "Organization",
-          columns: new[] { "StatusId", "DateStatusModified", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId" });
+          columns: ["StatusId", "DateStatusModified", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_OrganizationDocuments_FileId",
@@ -1618,7 +1618,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_OrganizationDocuments_OrganizationId_Type_DateCreated",
           schema: "Entity",
           table: "OrganizationDocuments",
-          columns: new[] { "OrganizationId", "Type", "DateCreated" });
+          columns: ["OrganizationId", "Type", "DateCreated"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_OrganizationProviderType_Name",
@@ -1631,7 +1631,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_OrganizationProviderTypes_OrganizationId_ProviderTypeId",
           schema: "Entity",
           table: "OrganizationProviderTypes",
-          columns: new[] { "OrganizationId", "ProviderTypeId" },
+          columns: ["OrganizationId", "ProviderTypeId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -1651,7 +1651,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_OrganizationUsers_OrganizationId_UserId",
           schema: "Entity",
           table: "OrganizationUsers",
-          columns: new[] { "OrganizationId", "UserId" },
+          columns: ["OrganizationId", "UserId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -1671,14 +1671,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_SchemaEntityProperty_SSISchemaEntityId_Name",
           schema: "SSI",
           table: "SchemaEntityProperty",
-          columns: new[] { "SSISchemaEntityId", "Name" },
+          columns: ["SSISchemaEntityId", "Name"],
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_SchemaEntityType_SSISchemaEntityId_SSISchemaTypeId",
           schema: "SSI",
           table: "SchemaEntityType",
-          columns: new[] { "SSISchemaEntityId", "SSISchemaTypeId" },
+          columns: ["SSISchemaEntityId", "SSISchemaTypeId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -1712,7 +1712,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_TenantCreation_EntityType_UserId_OrganizationId",
           schema: "SSI",
           table: "TenantCreation",
-          columns: new[] { "EntityType", "UserId", "OrganizationId" },
+          columns: ["EntityType", "UserId", "OrganizationId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -1725,7 +1725,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_TenantCreation_StatusId_DateCreated_DateModified",
           schema: "SSI",
           table: "TenantCreation",
-          columns: new[] { "StatusId", "DateCreated", "DateModified" });
+          columns: ["StatusId", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_TenantCreation_UserId",
@@ -1757,13 +1757,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Transaction_StatusId_DateCreated_DateModified",
           schema: "Reward",
           table: "Transaction",
-          columns: new[] { "StatusId", "DateCreated", "DateModified" });
+          columns: ["StatusId", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_Transaction_UserId_SourceEntityType_MyOpportunityId",
           schema: "Reward",
           table: "Transaction",
-          columns: new[] { "UserId", "SourceEntityType", "MyOpportunityId" },
+          columns: ["UserId", "SourceEntityType", "MyOpportunityId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -1776,7 +1776,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_TransactionLog_UserId_ItemCategoryId_ItemId_StatusId_DateCr~",
           schema: "Marketplace",
           table: "TransactionLog",
-          columns: new[] { "UserId", "ItemCategoryId", "ItemId", "StatusId", "DateCreated", "DateModified" });
+          columns: ["UserId", "ItemCategoryId", "ItemId", "StatusId", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_TransactionStatus_Name",
@@ -1815,7 +1815,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_ExternalI~",
           schema: "Entity",
           table: "User",
-          columns: new[] { "FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified" });
+          columns: ["FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_User_GenderId",
@@ -1839,7 +1839,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_UserSkillOrganizations_UserSkillId_OrganizationId",
           schema: "Entity",
           table: "UserSkillOrganizations",
-          columns: new[] { "UserSkillId", "OrganizationId" },
+          columns: ["UserSkillId", "OrganizationId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -1852,14 +1852,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_UserSkills_UserId_SkillId",
           schema: "Entity",
           table: "UserSkills",
-          columns: new[] { "UserId", "SkillId" },
+          columns: ["UserId", "SkillId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_WalletCreation_StatusId_DateCreated_DateModified",
           schema: "Reward",
           table: "WalletCreation",
-          columns: new[] { "StatusId", "DateCreated", "DateModified" });
+          columns: ["StatusId", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_WalletCreation_UserId",

@@ -7,8 +7,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
   {
     public static int TimeIntervalToHours(this Models.Opportunity opportunity)
     {
-      if (opportunity == null)
-        throw new ArgumentNullException(nameof(opportunity));
+      ArgumentNullException.ThrowIfNull(opportunity);
 
       if (!Enum.TryParse<TimeInterval>(opportunity.CommitmentInterval, true, out var interval))
         throw new ArgumentOutOfRangeException(nameof(opportunity), $"{nameof(opportunity.CommitmentInterval)} of '{opportunity.CommitmentInterval}' is not supported");
@@ -28,16 +27,14 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
 
     public static void SetPublished(this Models.Opportunity opportunity)
     {
-      if (opportunity == null)
-        throw new ArgumentNullException(nameof(opportunity));
+      ArgumentNullException.ThrowIfNull(opportunity);
 
       opportunity.Published = opportunity.Status == Status.Active && opportunity.OrganizationStatus == Entity.OrganizationStatus.Active;
     }
 
     public static OpportunitySearchCriteriaItem ToOpportunitySearchCriteria(this Models.Opportunity value)
     {
-      if (value == null)
-        throw new ArgumentNullException(nameof(value));
+      ArgumentNullException.ThrowIfNull(value);
 
       return new OpportunitySearchCriteriaItem
       {
@@ -48,8 +45,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
 
     public static OpportunityInfo ToOpportunityInfo(this Models.Opportunity value)
     {
-      if (value == null)
-        throw new ArgumentNullException(nameof(value));
+      ArgumentNullException.ThrowIfNull(value);
 
       return new OpportunityInfo
       {

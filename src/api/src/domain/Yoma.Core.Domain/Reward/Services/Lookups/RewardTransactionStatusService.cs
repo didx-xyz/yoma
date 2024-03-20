@@ -58,7 +58,7 @@ namespace Yoma.Core.Domain.Reward.Services.Lookups
     public List<Models.Lookups.RewardTransactionStatus> List()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return _rewardTransactionStatusRepository.Query().OrderBy(o => o.Name).ToList();
+        return [.. _rewardTransactionStatusRepository.Query().OrderBy(o => o.Name)];
 
       var result = _memoryCache.GetOrCreate(nameof(Models.Lookups.RewardTransactionStatus), entry =>
       {

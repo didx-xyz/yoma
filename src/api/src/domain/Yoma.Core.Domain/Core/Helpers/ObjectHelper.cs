@@ -7,8 +7,7 @@ namespace Yoma.Core.Domain.Core.Helpers
     public static T DeepCopy<T>(T obj)
         where T : class
     {
-      if (obj == null)
-        throw new ArgumentNullException(nameof(obj));
+      ArgumentNullException.ThrowIfNull(obj);
 
       var json = JsonConvert.SerializeObject(obj);
       var result = JsonConvert.DeserializeObject<T>(json);

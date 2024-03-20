@@ -59,7 +59,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
     public List<SSICredentialIssuanceStatus> List()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return _ssiCredentialIssuanceStatusRepository.Query().OrderBy(o => o.Name).ToList();
+        return [.. _ssiCredentialIssuanceStatusRepository.Query().OrderBy(o => o.Name)];
 
       var result = _memoryCache.GetOrCreate(nameof(SSICredentialIssuanceStatus), entry =>
       {

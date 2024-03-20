@@ -10,7 +10,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       #region Entity
       migrationBuilder.InsertData(
       table: "OrganizationStatus",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"88D1F51E-C0E4-4547-9EEE-6923C009980F","Inactive",DateTimeOffset.UtcNow}
@@ -25,7 +25,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "OrganizationProviderType",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"A3BCAA03-B31C-4830-AAE8-06BBA701D3F0","Education",DateTimeOffset.UtcNow}
@@ -40,7 +40,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "User",
-      columns: new[] { "Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "DateCreated", "DateModified" },
+      columns: ["Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "DateCreated", "DateModified"],
       values: new object[,]
       {
                     {"8929632E-2911-42FF-9A44-055DEF231B87",HttpContextAccessorHelper.GetUsernameSystem,true,"Yoma","System","Yoma System",DateTimeOffset.UtcNow,DateTimeOffset.UtcNow}
@@ -52,7 +52,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       #region Lookups
       migrationBuilder.InsertData(
       table: "Country",
-      columns: new[] { "Id", "Name", "CodeAlpha2", "CodeAlpha3", "CodeNumeric", "DateCreated" },
+      columns: ["Id", "Name", "CodeAlpha2", "CodeAlpha3", "CodeNumeric", "DateCreated"],
       values: new object[,]
       {
                     {"a0d029b2-49ca-4e89-81aa-8d06be5d2241","Afghanistan","AF","AFG","4",DateTimeOffset.UtcNow}
@@ -560,7 +560,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "Education",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"BEEBEA3B-381E-4BD8-91D8-319089AB14DA","Primary",DateTimeOffset.UtcNow}
@@ -576,7 +576,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "Gender",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"6DBD31E9-5196-49CA-8D3B-8354A9BFF996","Male",DateTimeOffset.UtcNow}
@@ -589,7 +589,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "Language",
-      columns: new[] { "Id", "Name", "CodeAlpha2", "DateCreated" },
+      columns: ["Id", "Name", "CodeAlpha2", "DateCreated"],
       values: new object[,]
       {
                     {"86FA3FF2-F3C7-43CE-B6A2-22C46EA22112" ,"Abkhazian" ,"AB", DateTimeOffset.UtcNow}
@@ -962,7 +962,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "TimeInterval",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"82AE49D5-26E0-4B58-BE48-A8ECBC3E01BD","Hour",DateTimeOffset.UtcNow}
@@ -979,7 +979,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       #region Opportunity
       migrationBuilder.InsertData(
       table: "OpportunityCategory",
-      columns: new[] { "Id", "Name", "ImageURL", "DateCreated" },
+      columns: ["Id", "Name", "ImageURL", "DateCreated"],
       values: new object[,]
       {
                     {"2CCBACF7-1ED9-4E20-BB7C-43EDFDB3F950","Agriculture","https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/opportunity/category/Agriculture.svg",DateTimeOffset.UtcNow}
@@ -998,7 +998,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "OpportunityDifficulty",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"E33AE372-C63F-459D-983F-4527355FD0C4","Beginner",DateTimeOffset.UtcNow}
@@ -1013,7 +1013,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "OpportunityStatus",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"B99D26D7-A4B0-4A38-B35D-AE2D379A414E","Active",DateTimeOffset.UtcNow}
@@ -1028,7 +1028,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "OpportunityType",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"25F5A835-C3F7-43CA-9840-D372A1D26694","Learning",DateTimeOffset.UtcNow}
@@ -1039,7 +1039,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "OpportunityVerificationType",
-      columns: new[] { "Id", "Name", "DisplayName", "Description", "DateCreated" },
+      columns: ["Id", "Name", "DisplayName", "Description", "DateCreated"],
       values: new object[,]
       {
                     {"AE4B5CA3-20CE-451A-944E-67EF24E455B6","FileUpload","File Upload","A file of your completion certificate in PDF format",DateTimeOffset.UtcNow}
@@ -1054,7 +1054,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "MyOpportunityAction",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"7C57B803-6EAD-445E-B27B-19A79B72D0F2","Viewed",DateTimeOffset.UtcNow}
@@ -1067,7 +1067,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "MyOpportunityVerificationStatus",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"B57ED2D6-04B6-4C2C-BED9-A1C0BD98F468","Pending",DateTimeOffset.UtcNow}
@@ -1082,7 +1082,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       #region SSI
       migrationBuilder.InsertData(
       table: "SchemaType",
-      columns: new[] { "Id", "Name", "Description", "SupportMultiple", "DateCreated" },
+      columns: ["Id", "Name", "Description", "SupportMultiple", "DateCreated"],
       values: new object[,]
       {
                     {"7818B5C3-3D57-4264-B90B-DF53EAA9F749","Opportunity","Opportunity",true,DateTimeOffset.UtcNow}
@@ -1093,7 +1093,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "SchemaEntity",
-      columns: new[] { "Id", "TypeName", "DateCreated" },
+      columns: ["Id", "TypeName", "DateCreated"],
       values: new object[,]
       {
                     {"AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","Yoma.Core.Domain.Entity.Models.User",DateTimeOffset.UtcNow}
@@ -1108,7 +1108,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "SchemaEntityType",
-      columns: new[] { "Id", "SSISchemaEntityId", "SSISchemaTypeId", "DateCreated" },
+      columns: ["Id", "SSISchemaEntityId", "SSISchemaTypeId", "DateCreated"],
       values: new object[,]
       {
                     {Guid.NewGuid(),"AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","EC978798-AAC0-4577-846E-1B5B2E6663CE",DateTimeOffset.UtcNow}
@@ -1123,7 +1123,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "SchemaEntityProperty",
-      columns: new[] { "Id", "SSISchemaEntityId", "Name", "NameDisplay", "Description", "Required", "SystemType", "Format", "DateCreated" },
+      columns: ["Id", "SSISchemaEntityId", "Name", "NameDisplay", "Description", "Required", "SystemType", "Format", "DateCreated"],
       values: new object?[,]
       {
                     {"32447353-1698-467C-8B5D-AD85E89235B0","AC5C06AC-6EAD-4B47-8E11-4B182DAAC8CC","Email","Email","Email",true,null,null,DateTimeOffset.UtcNow}
@@ -1176,7 +1176,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "CredentialIssuanceStatus",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"952603D2-0661-4A11-9D3D-AAD07338120B","Pending",DateTimeOffset.UtcNow}
@@ -1189,7 +1189,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "TenantCreationStatus",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"39562CB1-15F9-4B2A-9CE9-9CE875D7C253","Pending",DateTimeOffset.UtcNow}
@@ -1202,7 +1202,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "WalletCreationStatus",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"494B9DBC-3299-42D2-8F2D-8DEC6A583231","Pending",DateTimeOffset.UtcNow}
@@ -1215,7 +1215,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "TransactionStatus",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"708C3350-F49C-4324-8F43-76E8E8761845","Pending",DateTimeOffset.UtcNow}
@@ -1230,7 +1230,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "TransactionStatus",
-      columns: new[] { "Id", "Name", "DateCreated" },
+      columns: ["Id", "Name", "DateCreated"],
       values: new object[,]
       {
                     {"262E8AD0-868A-4969-A7B7-2A04FBCCD881","Reserved",DateTimeOffset.UtcNow}

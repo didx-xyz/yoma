@@ -77,7 +77,7 @@ namespace Yoma.Core.Domain.SSI.Services
       var query = _ssiCredentialIssuanceRepository.Query().Where(o => o.StatusId == credentialIssuanceStatusPendingId);
 
       // skipped if tenants were not created (see SSIBackgroundService)
-      if (idsToSkip != null && idsToSkip.Count != 0)
+      if (idsToSkip != null && idsToSkip.Any())
         query = query.Where(o => !idsToSkip.Contains(o.Id));
 
       var results = query.OrderBy(o => o.DateModified).Take(batchSize).ToList();
@@ -87,8 +87,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
     public async Task UpdateScheduleIssuance(SSICredentialIssuance item)
     {
-      if (item == null)
-        throw new ArgumentNullException(nameof(item));
+      ArgumentNullException.ThrowIfNull(item);
 
       item.CredentialId = item.CredentialId?.Trim();
 

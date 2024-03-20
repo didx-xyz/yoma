@@ -80,7 +80,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     [JsonIgnore]
     [Name("Keywords")]
-    public string? KeywordsFlattened => Keywords == null || Keywords.Count == 0 ? null : string.Join(", ", Keywords);
+    public string? KeywordsFlattened => Keywords == null || !Keywords.Any() ? null : string.Join(", ", Keywords);
 
     [Name("Start Date")]
     public DateTimeOffset DateStart { get; set; }
@@ -97,34 +97,34 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     [JsonIgnore]
     [Name("Categories")]
-    public string? CategoriesFlattened => Categories == null || Categories.Count == 0 ? null : string.Join(", ", Categories.Select(o => o.Name));
+    public string? CategoriesFlattened => Categories == null || !Categories.Any() ? null : string.Join(", ", Categories.Select(o => o.Name));
 
     [Ignore]
     public List<Country>? Countries { get; set; }
 
     [JsonIgnore]
     [Name("Countries")]
-    public string? CountriesFlattened => Countries == null || Countries.Count == 0 ? null : string.Join(", ", Countries.Select(o => o.Name));
+    public string? CountriesFlattened => Countries == null || !Countries.Any() ? null : string.Join(", ", Countries.Select(o => o.Name));
 
     [Ignore]
     public List<Language>? Languages { get; set; }
 
     [JsonIgnore]
     [Name("Languages")]
-    public string? LanguagesFlattened => Languages == null || Languages.Count == 0 ? null : string.Join(", ", Languages.Select(o => o.Name));
+    public string? LanguagesFlattened => Languages == null || !Languages.Any() ? null : string.Join(", ", Languages.Select(o => o.Name));
 
     [Ignore]
     public List<Skill>? Skills { get; set; }
 
     [JsonIgnore]
     [Name("Skills")]
-    public string? SkillsFlattened => Skills == null || Skills.Count == 0 ? null : string.Join(", ", Skills.Select(o => o.Name));
+    public string? SkillsFlattened => Skills == null || !Skills.Any() ? null : string.Join(", ", Skills.Select(o => o.Name));
 
     [Ignore]
     public List<Lookups.OpportunityVerificationType>? VerificationTypes { get; set; }
 
     [JsonIgnore]
     [Name("Verification Types")]
-    public string? VerificationTypesFlattened => VerificationTypes == null || VerificationTypes.Count == 0 ? null : string.Join(", ", VerificationTypes.Select(o => o.Description));
+    public string? VerificationTypesFlattened => VerificationTypes == null || !VerificationTypes.Any() ? null : string.Join(", ", VerificationTypes.Select(o => o.Description));
   }
 }

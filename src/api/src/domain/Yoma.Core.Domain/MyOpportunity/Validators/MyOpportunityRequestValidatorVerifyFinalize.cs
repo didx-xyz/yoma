@@ -11,7 +11,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
     private readonly IUserService _userService;
     private readonly IOpportunityService _opportunityService;
 
-    private readonly static VerificationStatus[] Statuses_Finalize = { VerificationStatus.Completed, VerificationStatus.Rejected };
+    private readonly static VerificationStatus[] Statuses_Finalize = [VerificationStatus.Completed, VerificationStatus.Rejected];
     #endregion
 
     #region Constructor

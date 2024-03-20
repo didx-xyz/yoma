@@ -10,7 +10,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
     #region Public Members
     public static List<Domain.SSI.Models.Provider.Schema>? ToSchema(this ICollection<CredentialSchema> schemas, bool latestVersion)
     {
-      if (schemas.Count == 0) return null;
+      if (!schemas.Any()) return null;
 
       var results = schemas.Select(ToSchema).ToList();
 
@@ -33,7 +33,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
 
     public static List<Domain.SSI.Models.Provider.Schema>? ToSchema(this ICollection<Models.CredentialSchema> schemas, bool latestVersion)
     {
-      if (schemas.Count == 0) return null;
+      if (!schemas.Any()) return null;
 
       var results = schemas.Select(ToSchema).ToList();
 
@@ -50,7 +50,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
         Name = o.Name,
         Version = Version.Parse(o.Version).ToMajorMinor(),
         ArtifactType = o.ArtifactType,
-        AttributeNames = JsonConvert.DeserializeObject<ICollection<string>>(o.AttributeNames) ?? new List<string>(),
+        AttributeNames = JsonConvert.DeserializeObject<ICollection<string>>(o.AttributeNames) ?? [],
       };
     }
 
@@ -71,7 +71,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
       {
         Id = o.Id.ToString(),
         SchemaId = o.SchemaId,
-        Attributes = JsonConvert.DeserializeObject<Dictionary<string, string>>(o.Attributes) ?? new Dictionary<string, string>()
+        Attributes = JsonConvert.DeserializeObject<Dictionary<string, string>>(o.Attributes) ?? []
       };
     }
     #endregion

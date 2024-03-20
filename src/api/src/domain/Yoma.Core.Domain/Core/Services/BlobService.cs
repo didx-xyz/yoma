@@ -47,8 +47,7 @@ namespace Yoma.Core.Domain.Core.Services
     {
       var result = GetById(id);
 
-      if (file == null)
-        throw new ArgumentNullException(nameof(file));
+      ArgumentNullException.ThrowIfNull(file);
 
       new FileValidator(result.FileType).Validate(file);
 
@@ -61,8 +60,7 @@ namespace Yoma.Core.Domain.Core.Services
 
     public async Task<BlobObject> Create(IFormFile file, FileType type)
     {
-      if (file == null)
-        throw new ArgumentNullException(nameof(file));
+      ArgumentNullException.ThrowIfNull(file);
 
       new FileValidator(type).Validate(file);
 
@@ -135,8 +133,7 @@ namespace Yoma.Core.Domain.Core.Services
     // Delete the blob object only; used for rollbacks
     public async Task Delete(BlobObject blobObject)
     {
-      if (blobObject == null)
-        throw new ArgumentNullException(nameof(blobObject));
+      ArgumentNullException.ThrowIfNull(blobObject);
 
       var client = _blobProviderClientFactory.CreateClient(blobObject.StorageType);
 
@@ -147,8 +144,7 @@ namespace Yoma.Core.Domain.Core.Services
     {
       var item = GetById(id);
 
-      if (blobObjectReplacement == null)
-        throw new ArgumentNullException(nameof(blobObjectReplacement));
+      ArgumentNullException.ThrowIfNull(blobObjectReplacement);
 
       item.ParentId = blobObjectReplacement.Id;
       await _blobObjectRepository.Update(item);

@@ -59,7 +59,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
     public List<SSITenantCreationStatus> List()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return _ssiTenantCreationStatusRepository.Query().OrderBy(o => o.Name).ToList();
+        return [.. _ssiTenantCreationStatusRepository.Query().OrderBy(o => o.Name)];
 
       var result = _memoryCache.GetOrCreate(nameof(SSITenantCreationStatus), entry =>
       {

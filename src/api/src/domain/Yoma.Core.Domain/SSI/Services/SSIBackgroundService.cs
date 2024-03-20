@@ -74,12 +74,12 @@ namespace Yoma.Core.Domain.SSI.Services
 
         SeedSchema(ArtifactType.JWS,
              SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
-             new List<string> { "Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Skills", "Opportunity_Summary", "Opportunity_Type",
-                        "MyOpportunity_UserDisplayName", "MyOpportunity_UserDateOfBirth", "MyOpportunity_DateCompleted" }).Wait();
+             [ "Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Skills", "Opportunity_Summary", "Opportunity_Type",
+                        "MyOpportunity_UserDisplayName", "MyOpportunity_UserDateOfBirth", "MyOpportunity_DateCompleted" ]).Wait();
 
         SeedSchema(ArtifactType.Indy,
             _appSettings.SSISchemaFullNameYoID,
-            new List<string> { "Organization_Name", "Organization_LogoURL", "User_DisplayName", "User_FirstName", "User_Surname", "User_DateOfBirth", "User_Email", "User_Gender", "User_Education", "User_Country" }).Wait();
+            ["Organization_Name", "Organization_LogoURL", "User_DisplayName", "User_FirstName", "User_Surname", "User_DateOfBirth", "User_Email", "User_Gender", "User_Education", "User_Country"]).Wait();
 
         _logger.LogInformation("Processed SSI default schema seeding");
       }
@@ -121,7 +121,7 @@ namespace Yoma.Core.Domain.SSI.Services
                     Referent = user.Id.ToString(),
                     Name = user.DisplayName.RemoveSpecialCharacters(),
                     ImageUrl = user.PhotoURL,
-                    Roles = new List<Role> { Role.Holder }
+                    Roles = [Role.Holder]
                   };
                   break;
 
@@ -137,7 +137,7 @@ namespace Yoma.Core.Domain.SSI.Services
                     Referent = org.NameHashValue, //use hash value of name instead if id as dev and stage can be reset with deployments
                     Name = org.Name.RemoveSpecialCharacters(),
                     ImageUrl = org.LogoURL,
-                    Roles = new List<Role> { Role.Holder, Role.Issuer, Role.Verifier }
+                    Roles = [Role.Holder, Role.Issuer, Role.Verifier]
                   };
                   break;
 
@@ -388,7 +388,7 @@ namespace Yoma.Core.Domain.SSI.Services
       foreach (var prop in schemaEntity.Properties)
       {
         var propNameParts = prop.Name.Split('.');
-        if (!propNameParts.Any() || propNameParts.Length > 2)
+        if (propNameParts.Length == 0 || propNameParts.Length > 2)
           throw new InvalidOperationException($"Entity '{schemaEntity.Name}' has an property with no name or a multi-part property are more than one level deep");
 
         var multiPart = propNameParts.Length > 1;

@@ -49,6 +49,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     [JsonIgnore]
     internal List<FilterOrdering<Opportunity>>? OrderInstructions { get; set; }
-        = new List<FilterOrdering<Opportunity>> { new() { OrderBy = e => e.DateCreated, SortOrder = Core.FilterSortOrder.Descending } };
+        = [new() { OrderBy = e => e.DateCreated, SortOrder = Core.FilterSortOrder.Descending }];
   }
 }

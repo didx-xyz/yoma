@@ -17,22 +17,22 @@ namespace Yoma.Core.Domain.Core.Validators
       switch (type)
       {
         case FileType.Photos:
-          extensions = new[] { ".png", ".jpg", ".jpeg", ".svg", ".webp" };
+          extensions = [".png", ".jpg", ".jpeg", ".svg", ".webp"];
           maxSizeBytes = 5000000;
           break;
 
         case FileType.Certificates:
-          extensions = new[] { ".pdf" };
+          extensions = [".pdf"];
           maxSizeBytes = 10000000;
           break;
 
         case FileType.Documents:
-          extensions = new[] { ".pdf", ".doc", ".docx", ".pptx" };
+          extensions = [".pdf", ".doc", ".docx", ".pptx"];
           maxSizeBytes = 10000000;
           break;
 
         case FileType.VoiceNotes:
-          extensions = new[] { ".wav", ".mp3", ".m4a", ".amr", ".ogg", ".3gp" };
+          extensions = [".wav", ".mp3", ".m4a", ".amr", ".ogg", ".3gp"];
           maxSizeBytes = 5000000;
           break;
 
@@ -43,8 +43,7 @@ namespace Yoma.Core.Domain.Core.Validators
 
     public void Validate(IFormFile file)
     {
-      if (file == null)
-        throw new ArgumentNullException(nameof(file));
+      ArgumentNullException.ThrowIfNull(file);
 
       if (!extensions.Contains(file.GetExtension(), StringComparer.InvariantCultureIgnoreCase))
         throw new BusinessException($"Only supports file formats '{string.Join(",", extensions)}'");

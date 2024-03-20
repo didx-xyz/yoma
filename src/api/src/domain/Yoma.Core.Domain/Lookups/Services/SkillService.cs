@@ -75,13 +75,12 @@ namespace Yoma.Core.Domain.Lookups.Services
         throw new ArgumentNullException(nameof(value));
       value = value.Trim();
 
-      return _skillRepository.Contains(_skillRepository.Query(), value).ToList();
+      return [.. _skillRepository.Contains(_skillRepository.Query(), value)];
     }
 
     public SkillSearchResults Search(SkillSearchFilter filter)
     {
-      if (filter == null)
-        throw new ArgumentNullException(nameof(filter));
+      ArgumentNullException.ThrowIfNull(filter);
 
       _searchFilterValidator.ValidateAndThrow(filter);
 
@@ -97,7 +96,7 @@ namespace Yoma.Core.Domain.Lookups.Services
         results.TotalCount = query.Count();
         query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
       }
-      results.Items = query.ToList();
+      results.Items = [.. query];
 
       return results;
     }
@@ -109,7 +108,7 @@ namespace Yoma.Core.Domain.Lookups.Services
         try
         {
           var incomingResults = _laborMarketProviderClient.ListSkills().Result;
-          if (incomingResults == null || incomingResults.Count == 0) return;
+          if (incomingResults == null || !incomingResults.Any()) return;
 
           int batchSize = _scheduleJobOptions.SeedSkillsBatchSize;
           int pageIndex = 0;
@@ -138,8 +137,8 @@ namespace Yoma.Core.Domain.Lookups.Services
               }
             }
 
-            if (newItems.Count != 0) _skillRepository.Create(newItems).Wait();
-            if (existingItems.Count != 0) _skillRepository.Update(existingItems).Wait();
+            if (newItems.Any()) _skillRepository.Create(newItems).Wait();
+            if (existingItems.Any()) _skillRepository.Update(existingItems).Wait();
 
             pageIndex++;
           }

@@ -188,16 +188,15 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       //}
       var jwsCredentials = query.ToList();
 
-      var results = (indyCredentials?.Results?.Select(o => o.ToCredential()) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Credential>())
-          .Concat(jwsCredentials?.Select(o => o.ToCredential()) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Credential>()).ToList();
+      var results = (indyCredentials?.Results?.Select(o => o.ToCredential()) ?? [])
+          .Concat(jwsCredentials?.Select(o => o.ToCredential()) ?? []).ToList();
 
       return results;
     }
 
     public async Task<Domain.SSI.Models.Provider.Schema> UpsertSchema(SchemaRequest request)
     {
-      if (request == null)
-        throw new ArgumentNullException(nameof(request));
+      ArgumentNullException.ThrowIfNull(request);
 
       if (request.Attributes != null) request.Attributes = request.Attributes.Distinct().ToList();
       if (request.Attributes == null || request.Attributes.Count == 0)
@@ -252,8 +251,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
     public async Task<string> EnsureTenant(TenantRequest request)
     {
-      if (request == null)
-        throw new ArgumentNullException(nameof(request));
+      ArgumentNullException.ThrowIfNull(request);
 
       if (string.IsNullOrWhiteSpace(request.Referent))
         throw new ArgumentException($"'{nameof(request.Referent)}' is required", nameof(request));
@@ -305,8 +303,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
     public async Task<string?> IssueCredential(CredentialIssuanceRequest request)
     {
-      if (request == null)
-        throw new ArgumentNullException(nameof(request));
+      ArgumentNullException.ThrowIfNull(request);
 
       request.ClientReferent = new KeyValuePair<string, string>(request.ClientReferent.Key?.Trim() ?? string.Empty, request.ClientReferent.Value?.Trim() ?? string.Empty);
       if (string.IsNullOrEmpty(request.ClientReferent.Key) && string.IsNullOrEmpty(request.ClientReferent.Value))
@@ -389,8 +386,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             {
               Credential = new Aries.CloudAPI.DotnetSDK.AspCore.Clients.Models.Credential
               {
-                Context = new List<string> { "https://www.w3.org/2018/credentials/v1" }, //TODO: Client (Yoma) hosted context based on schema i.e. https://w3id.org/citizenship/v1
-                Type = new List<string> { "VerifiableCredential", request.SchemaType },
+                Context = ["https://www.w3.org/2018/credentials/v1"], //TODO: Client (Yoma) hosted context based on schema i.e. https://w3id.org/citizenship/v1
+                Type = ["VerifiableCredential", request.SchemaType],
                 IssuanceDate = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd"),
                 Issuer = did.Did,
                 CredentialSubject = JsonConvert.SerializeObject(credentialSubject),
@@ -552,8 +549,10 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     private async Task<Models.Connection> EnsureConnectionCI(Tenant tenantIssuer, ITenantClient clientIssuer, Tenant tenantHolder, ITenantClient clientHolder)
     {
       //try and find an existing connection
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       var result = _connectionRepository.Query().SingleOrDefault(o =>
           o.SourceTenantId == tenantIssuer.Wallet_id && o.TargetTenantId == tenantHolder.Wallet_id && o.Protocol.ToLower() == Connection_protocol.Connections_1_0.ToString().ToLower());
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
 
       Connection? connectionAries = null;
       if (result != null)

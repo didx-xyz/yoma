@@ -89,8 +89,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     public async Task<StoreItemCategorySearchResults> SearchStoreItemCategories(StoreItemCategorySearchFilter filter)
     {
-      if (filter == null)
-        throw new ArgumentNullException(nameof(filter));
+      ArgumentNullException.ThrowIfNull(filter);
 
       await _storeItemCategorySearchFilterValidator.ValidateAndThrowAsync(filter);
 
@@ -106,8 +105,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     public async Task<StoreSearchResults> SearchStores(StoreSearchFilter filter)
     {
-      if (filter == null)
-        throw new ArgumentNullException(nameof(filter));
+      ArgumentNullException.ThrowIfNull(filter);
 
       await _storeSearchFilterValidator.ValidateAndThrowAsync(filter);
 
@@ -123,8 +121,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     public async Task<StoreItemSearchResults> SearchStoreItems(StoreItemSearchFilter filter)
     {
-      if (filter == null)
-        throw new ArgumentNullException(nameof(filter));
+      ArgumentNullException.ThrowIfNull(filter);
 
       await _storeItemSearchFilterValidator.ValidateAndThrowAsync(filter);
 
@@ -150,7 +147,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      var (userEmail, walletId) = _walletService.GetWalletIdOrNull(user.Id);
+      var (_, walletId) = _walletService.GetWalletIdOrNull(user.Id);
       if (string.IsNullOrEmpty(walletId))
         throw new ValidationException($"The wallet creation for the user with email '{user.Email}' is currently pending. Please try again later or contact technical support for assistance");
 

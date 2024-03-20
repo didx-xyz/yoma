@@ -60,7 +60,7 @@ namespace Yoma.Core.Domain.Entity.Services
     #region Private Members
     private void SeedPhotos(List<User> items)
     {
-      if (items.Count == 0) return;
+      if (!items.Any()) return;
 
       var resourcePath = "Yoma.Core.Domain.Entity.SampleBlobs.sample_photo.png";
       var assembly = Assembly.GetExecutingAssembly();

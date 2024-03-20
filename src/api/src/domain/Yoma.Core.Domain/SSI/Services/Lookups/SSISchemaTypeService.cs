@@ -59,7 +59,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
     public List<SSISchemaType> List()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return _schemaTypeRepository.Query().OrderBy(o => o.Name).ToList();
+        return [.. _schemaTypeRepository.Query().OrderBy(o => o.Name)];
 
       var result = _memoryCache.GetOrCreate(nameof(SSISchemaType), entry =>
       {

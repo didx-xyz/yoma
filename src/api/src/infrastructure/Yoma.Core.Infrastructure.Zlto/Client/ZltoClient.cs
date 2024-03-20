@@ -41,8 +41,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
     #region IRewardProviderClient
     public async Task<(Domain.Reward.Models.Wallet wallet, WalletCreationStatus status)> CreateWallet(Domain.Reward.Models.Provider.WalletRequestCreate request)
     {
-      if (request == null)
-        throw new ArgumentNullException(nameof(request));
+      ArgumentNullException.ThrowIfNull(request);
 
       //check if wallet already exists
       var existing = await GetWalletByUsername(request.Username);
@@ -138,8 +137,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
     public async Task<string> RewardEarn(RewardAwardRequest request)
     {
-      if (request == null)
-        throw new ArgumentNullException(nameof(request));
+      ArgumentNullException.ThrowIfNull(request);
 
       var httpRequest = new RewardEarnRequest
       {
@@ -217,15 +215,15 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
     {
       var response = await ListStoresInternal(ResolveCountryCode(countryCodeAlpha2), categoryId, limit, offset);
 
-      var result = new StoreSearchResults { Items = new List<Domain.Marketplace.Models.Store>() };
+      var result = new StoreSearchResults { Items = [] };
 
-      return response.Items.Select(o => new Domain.Marketplace.Models.Store
+      return [.. response.Items.Select(o => new Domain.Marketplace.Models.Store
       {
         Id = o.StoreId,
         Name = o.StoreName,
         Description = o.StoreDescription,
         ImageURL = string.Equals(o.StoreLogo, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? null : o.StoreLogo
-      }).OrderBy(o => o.Name).ToList();
+      }).OrderBy(o => o.Name)];
     }
 
     public async Task<List<Domain.Marketplace.Models.StoreItemCategory>> ListStoreItemCategories(string storeId, int? limit, int? offset)
@@ -295,7 +293,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
       var response = await httpResponse.GetJsonAsync<StoreResponseSearchItem>();
 
-      return response.Items.Select(o => new Domain.Marketplace.Models.StoreItem
+      return [.. response.Items.Select(o => new Domain.Marketplace.Models.StoreItem
       {
         Id = o.ItemId.ToString(),
         Name = o.ItemName,
@@ -306,7 +304,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
           : string.Equals(o.ItemLogo, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? null : o.ItemLogo,
         Amount = o.ItemZlto
 
-      }).OrderBy(o => o.Name).ToList();
+      }).OrderBy(o => o.Name)];
     }
 
     public async Task<string> ItemReserve(string walletId, string username, string itemId)
@@ -404,11 +402,11 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
     #region Private Members
     private async Task<Dictionary<string, string>> GetAuthHeaders()
     {
-      var authHeaders = new Dictionary<string, string>(new[]
-      {
-                GetAuthHeaderApiKey(),
-                await GetAuthHeaderToken()
-            });
+      var authHeaders = new Dictionary<string, string>(
+        [
+        GetAuthHeaderApiKey(),
+        await GetAuthHeaderToken()
+        ]);
 
       return authHeaders;
     }
@@ -515,10 +513,10 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                           .OrderBy(o => o.StoreName)
                           .Select(o => o.StoreLogo)
                           .Take(4)
-                          .ToList() ?? new List<string>()
+                          .ToList() ?? []
                       };
           })
-          .OrderBy(o => o.Name).ToList() ?? new List<Domain.Marketplace.Models.StoreCategory>();
+          .OrderBy(o => o.Name).ToList() ?? [];
 
       return results;
     }

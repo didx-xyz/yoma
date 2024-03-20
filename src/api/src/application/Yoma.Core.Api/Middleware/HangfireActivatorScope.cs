@@ -8,10 +8,7 @@ namespace Yoma.Core.Api.Middleware
 
     public HangfireActivatorScope(IServiceScope serviceScope)
     {
-      if (serviceScope == null)
-      {
-        throw new ArgumentNullException(nameof(serviceScope));
-      }
+      ArgumentNullException.ThrowIfNull(serviceScope);
 
       _serviceScope = serviceScope;
     }

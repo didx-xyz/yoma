@@ -7,7 +7,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
   {
     public static List<Roles> ToAriesRoles(this List<Role> roles)
     {
-      if (roles == null || roles.Count == 0)
+      if (roles == null || !roles.Any())
         throw new ArgumentNullException(nameof(roles));
 
       //holder implicitly assigned to a tenant; all tenants are holders
@@ -27,7 +27,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
 
     public static List<Role> ToSSIRoles(this ICollection<Roles> roles)
     {
-      if (roles == null || roles.Count == 0)
+      if (roles == null || !roles.Any())
         throw new ArgumentNullException(nameof(roles));
 
       return roles

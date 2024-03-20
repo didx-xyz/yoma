@@ -65,10 +65,10 @@ namespace Yoma.Core.Api.Middleware
           break;
       }
 
-      errorResponse = new List<ErrorResponseItem>()
-            {
-                new() { Type = ex.GetType().Name, Message =ex.Message }
-            };
+      errorResponse =
+      [
+          new() { Type = ex.GetType().Name, Message =ex.Message }
+      ];
 
       return context.Response.WriteAsJsonAsync(errorResponse);
     }

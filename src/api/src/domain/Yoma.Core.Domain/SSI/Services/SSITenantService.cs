@@ -101,14 +101,13 @@ namespace Yoma.Core.Domain.SSI.Services
 
     public List<SSITenantCreation> ListPendingCreationSchedule(int batchSize, List<Guid> idsToSkip)
     {
-      if (batchSize <= default(int))
-        throw new ArgumentOutOfRangeException(nameof(batchSize));
+      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(batchSize, default(int));
 
       var statusPendingId = _ssiTenantCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
 
       var query = _ssiTenantCreationRepository.Query().Where(o => o.StatusId == statusPendingId);
 
-      if (idsToSkip != null && idsToSkip.Count != 0)
+      if (idsToSkip != null && idsToSkip.Any())
         query = query.Where(o => !idsToSkip.Contains(o.Id));
 
       var results = query.OrderBy(o => o.DateModified).Take(batchSize).ToList();
@@ -118,8 +117,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
     public async Task UpdateScheduleCreation(SSITenantCreation item)
     {
-      if (item == null)
-        throw new ArgumentNullException(nameof(item));
+      ArgumentNullException.ThrowIfNull(item);
 
       item.TenantId = item.TenantId?.Trim();
 

@@ -6,8 +6,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
   {
     public static void SetDisplayName(this User user)
     {
-      if (user == null)
-        throw new ArgumentNullException(nameof(user));
+      ArgumentNullException.ThrowIfNull(user);
 
       if (!string.IsNullOrEmpty(user.DisplayName)) return;
       user.DisplayName = string.Join(' ', new[] { user.FirstName, user.Surname }.Where(o => !string.IsNullOrEmpty(o)));
@@ -15,8 +14,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
 
     public static void SetDisplayName(this UserRequest user)
     {
-      if (user == null)
-        throw new ArgumentNullException(nameof(user));
+      ArgumentNullException.ThrowIfNull(user);
 
       if (!string.IsNullOrEmpty(user.DisplayName)) return;
       user.DisplayName = string.Join(' ', new[] { user.FirstName, user.Surname }.Where(o => !string.IsNullOrEmpty(o)));
@@ -24,8 +22,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
 
     public static UserRequest ToUserRequest(this User user)
     {
-      if (user == null)
-        throw new ArgumentNullException(nameof(user));
+      ArgumentNullException.ThrowIfNull(user);
 
       return new UserRequest
       {
@@ -47,8 +44,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
 
     public static UserInfo ToInfo(this User value)
     {
-      if (value == null)
-        throw new ArgumentNullException(nameof(value));
+      ArgumentNullException.ThrowIfNull(value);
 
       return new UserInfo
       {
@@ -62,8 +58,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
 
     public static UserProfile ToProfile(this User value)
     {
-      if (value == null)
-        throw new ArgumentNullException(nameof(value));
+      ArgumentNullException.ThrowIfNull(value);
 
       return new UserProfile
       {

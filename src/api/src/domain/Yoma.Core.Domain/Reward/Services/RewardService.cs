@@ -40,8 +40,7 @@ namespace Yoma.Core.Domain.Reward.Services
       if (entityId == Guid.Empty) //used internally by other services which validates the entity id prior to invocation
         throw new ArgumentNullException(nameof(entityId));
 
-      if (amount <= default(decimal))
-        throw new ArgumentOutOfRangeException(nameof(amount));
+      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(amount, default);
 
       var statusPendingId = _rewardTransactionStatusService.GetByName(RewardTransactionStatus.Pending.ToString()).Id;
 
@@ -51,7 +50,9 @@ namespace Yoma.Core.Domain.Reward.Services
       switch (entityType)
       {
         case RewardTransactionEntityType.MyOpportunity:
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
           existingItem = _rewardTransactionRepository.Query().SingleOrDefault(o => o.SourceEntityType.ToLower() == entityType.ToString().ToLower() && o.MyOpportunityId == entityId);
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
           item.MyOpportunityId = entityId;
           break;
 
@@ -82,8 +83,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
     public List<RewardTransaction> ListPendingTransactionSchedule(int batchSize, List<Guid> idsToSkip)
     {
-      if (batchSize <= default(int))
-        throw new ArgumentOutOfRangeException(nameof(batchSize));
+      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(batchSize, default);
 
       var statusPendingId = _rewardTransactionStatusService.GetByName(RewardTransactionStatus.Pending.ToString()).Id;
 
@@ -109,8 +109,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
     public async Task UpdateTransaction(RewardTransaction item)
     {
-      if (item == null)
-        throw new ArgumentNullException(nameof(item));
+      ArgumentNullException.ThrowIfNull(item);
 
       UpdateTransactionProcess(item);
 

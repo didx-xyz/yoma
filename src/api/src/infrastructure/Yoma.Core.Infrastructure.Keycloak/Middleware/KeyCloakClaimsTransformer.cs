@@ -10,8 +10,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Middleware
 
     public Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
     {
-      if (principal == null)
-        throw new ArgumentNullException(nameof(principal));
+      ArgumentNullException.ThrowIfNull(principal);
 
       var claimsIdentity = principal.Identity as ClaimsIdentity ?? throw new ArgumentNullException($"{nameof(principal)}.{principal.Identity}");
 

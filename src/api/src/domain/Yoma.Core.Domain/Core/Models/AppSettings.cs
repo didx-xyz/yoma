@@ -37,7 +37,7 @@ namespace Yoma.Core.Domain.Core.Models
 
         var types = CacheEnabledByCacheItemTypes?.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
-        if (types == null || !types.Any()) return result;
+        if (types == null || types.Length == 0) return result;
         foreach (var type in types)
         {
           if (!Enum.TryParse<CacheItemType>(type, true, out var parsedValue))
@@ -100,7 +100,7 @@ namespace Yoma.Core.Domain.Core.Models
 
       var environments = input?.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
-      if (environments == null || !environments.Any()) return result;
+      if (environments == null || environments.Length == 0) return result;
       foreach (var environment in environments)
       {
         if (!Enum.TryParse<Environment>(environment, true, out var parsedValue))

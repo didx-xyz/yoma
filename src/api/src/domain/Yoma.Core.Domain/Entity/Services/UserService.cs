@@ -147,8 +147,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public UserSearchResults Search(UserSearchFilter filter)
     {
-      if (filter == null)
-        throw new ArgumentNullException(nameof(filter));
+      ArgumentNullException.ThrowIfNull(filter);
 
       _userSearchFilterValidator.ValidateAndThrow(filter);
 
@@ -175,8 +174,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public async Task<User> Upsert(UserRequest request)
     {
-      if (request == null)
-        throw new ArgumentNullException(nameof(request));
+      ArgumentNullException.ThrowIfNull(request);
 
       await _userRequestValidator.ValidateAndThrowAsync(request);
 
@@ -219,8 +217,7 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       var result = GetByEmail(email, true, false);
 
-      if (file == null)
-        throw new ArgumentNullException(nameof(file));
+      ArgumentNullException.ThrowIfNull(file);
 
       var currentPhotoId = result.PhotoId;
 
@@ -256,14 +253,12 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public async Task AssignSkills(User user, Opportunity.Models.Opportunity opportunity)
     {
-      if (user == null)
-        throw new ArgumentNullException(nameof(user));
+      ArgumentNullException.ThrowIfNull(user);
 
-      if (opportunity == null)
-        throw new ArgumentNullException(nameof(opportunity));
+      ArgumentNullException.ThrowIfNull(opportunity);
 
       var skillIds = opportunity.Skills?.Select(o => o.Id).ToList();
-      if (skillIds == null || skillIds.Count == 0) return;
+      if (skillIds == null || !skillIds.Any()) return;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {

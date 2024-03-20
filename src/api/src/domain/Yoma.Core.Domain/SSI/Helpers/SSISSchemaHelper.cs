@@ -7,7 +7,7 @@ namespace Yoma.Core.Domain.SSI.Helpers
   {
     public static string ToFullName(SchemaType type, string name)
     {
-      var systemCharacters = SSISchemaService.SchemaName_SystemCharacters.Union(new[] { SSISchemaService.SchemaName_TypeDelimiter });
+      var systemCharacters = SSISchemaService.SchemaName_SystemCharacters.Union([SSISchemaService.SchemaName_TypeDelimiter]);
 
       if (systemCharacters.Any(name.Contains))
         throw new ArgumentException($"Contains system characters '{string.Join(' ', systemCharacters)}'", nameof(name)); //i.e. Opportunity|Learning

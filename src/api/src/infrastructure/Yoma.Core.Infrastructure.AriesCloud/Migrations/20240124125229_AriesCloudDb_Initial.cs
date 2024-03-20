@@ -52,14 +52,14 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
           name: "IX_Connection_SourceTenantId_TargetTenantId_Protocol",
           schema: "AriesCloud",
           table: "Connection",
-          columns: new[] { "SourceTenantId", "TargetTenantId", "Protocol" },
+          columns: ["SourceTenantId", "TargetTenantId", "Protocol"],
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_CredentialSchema_Name_ArtifactType",
           schema: "AriesCloud",
           table: "CredentialSchema",
-          columns: new[] { "Name", "ArtifactType" });
+          columns: ["Name", "ArtifactType"]);
     }
 
     /// <inheritdoc />

@@ -39,7 +39,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
           name: "IX_CredentialSchema_Name_Version_ArtifactType",
           schema: "AriesCloud",
           table: "CredentialSchema",
-          columns: new[] { "Name", "Version", "ArtifactType" });
+          columns: ["Name", "Version", "ArtifactType"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_Credential_ClientReferent",
@@ -52,7 +52,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
           name: "IX_Credential_SourceTenantId_TargetTenantId_ArtifactType",
           schema: "AriesCloud",
           table: "Credential",
-          columns: new[] { "SourceTenantId", "TargetTenantId", "ArtifactType" });
+          columns: ["SourceTenantId", "TargetTenantId", "ArtifactType"]);
     }
 
     /// <inheritdoc />
@@ -71,7 +71,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Migrations
           name: "IX_CredentialSchema_Name_ArtifactType",
           schema: "AriesCloud",
           table: "CredentialSchema",
-          columns: new[] { "Name", "ArtifactType" });
+          columns: ["Name", "ArtifactType"]);
     }
   }
 }

@@ -8,8 +8,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
   {
     public static MyOpportunityInfo ToInfo(this Models.MyOpportunity value)
     {
-      if (value == null)
-        throw new ArgumentNullException(nameof(value));
+      ArgumentNullException.ThrowIfNull(value);
 
       var result = new MyOpportunityInfo
       {
