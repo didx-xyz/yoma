@@ -76,7 +76,7 @@ import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
 import Moment from "react-moment";
 import moment from "moment";
-import { getThemeFromRole, debounce } from "~/lib/utils";
+import { getThemeFromRole, debounce, getSafeUrl } from "~/lib/utils";
 import Async from "react-select/async";
 import { useRouter } from "next/router";
 import ReactModal from "react-modal";
@@ -925,7 +925,10 @@ const OpportunityDetails: NextPageWithLayout<{
         <div className="flex flex-row items-center text-xs text-white">
           <Link
             className="font-bold hover:text-gray"
-            href={returnUrl?.toString() ?? `/organisations/${id}/opportunities`}
+            href={getSafeUrl(
+              returnUrl?.toString(),
+              `/organisations/${id}/opportunities`,
+            )}
           >
             <IoMdArrowRoundBack className="bg-theme mr-2 inline-block h-6 w-6 rounded-full p-1 brightness-105" />
             Opportunities
