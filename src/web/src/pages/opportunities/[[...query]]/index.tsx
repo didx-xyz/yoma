@@ -20,6 +20,7 @@ import {
   type OpportunitySearchFilterCombined,
   type OpportunitySearchResultsInfo,
   type OpportunityType,
+  OpportunitySearchFilter,
 } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import {
@@ -46,7 +47,7 @@ import {
   PAGE_SIZE_MINIMUM,
   VIEWPORT_SIZE,
 } from "~/lib/constants";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { OpportunityFilterHorizontal } from "~/components/Opportunity/OpportunityFilterHorizontal";
 import { Loading } from "~/components/Status/Loading";
@@ -54,6 +55,7 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import { useSession } from "next-auth/react";
 import { OpportunityFilterOptions } from "~/api/models/opportunity";
 import { OpportunitiesCarousel } from "~/components/Opportunity/OpportunitiesCarousel";
+import { json } from "stream/consumers";
 
 // 👇 SSG
 // This function gets called at build time on server-side.
@@ -195,6 +197,7 @@ const Opportunities: NextPageWithLayout<{
   const myRef = useRef<HTMLDivElement>(null);
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
   const screenWidth = useAtomValue(screenWidthAtom);
+  const queryClient = useQueryClient();
 
   const lookups_publishedStates: SelectOption[] = [
     { value: "0", label: "Not started" },
@@ -597,29 +600,41 @@ const Opportunities: NextPageWithLayout<{
     void router.push("/opportunities", undefined, { scroll: true });
   }, [router]);
 
-  //
+  // 🎠 CAROUSEL: data fetching
+  const fetchDataAndUpdateCache = useCallback(
+    async (
+      queryKey: string[],
+      filter: OpportunitySearchFilter,
+    ): Promise<OpportunitySearchResultsInfo> => {
+      const cachedData =
+        queryClient.getQueryData<OpportunitySearchResultsInfo>(queryKey);
+
+      if (cachedData) {
+        return cachedData;
+      }
+
+      const data = await searchOpportunities(filter);
+
+      queryClient.setQueryData(queryKey, data);
+
+      return data;
+    },
+    [],
+  );
 
   const loadDataTrending = useCallback(
     async (startRow: number) => {
-      console.warn("Trending: startRow: ", startRow);
-      console.warn(
-        "Trending: pageNumber: " +
-          Math.ceil((startRow + 1) / PAGE_SIZE_MINIMUM),
-      );
-
       if (startRow >= (opportunities_trending?.totalCount ?? 0)) {
-        console.warn(
-          "Trending: returning... TotalCount: ",
-          opportunities_trending?.totalCount,
-        );
         return {
           items: [],
           totalCount: 0,
         };
       }
 
-      const data = await searchOpportunities({
-        pageNumber: Math.ceil(startRow / PAGE_SIZE_MINIMUM),
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache(["trending", pageNumber.toString()], {
+        pageNumber: pageNumber,
         pageSize: PAGE_SIZE_MINIMUM,
         categories: null,
         countries: null,
@@ -632,35 +647,23 @@ const Opportunities: NextPageWithLayout<{
         zltoRewardRanges: null,
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       });
-
-      console.warn("Trending: data: ", opportunities_trending);
-
-      return data;
     },
     [opportunities_trending],
   );
 
   const loadDataLearning = useCallback(
     async (startRow: number) => {
-      console.warn("Learning: startRow: ", startRow);
-      console.warn(
-        "Learning: pageNumber: " +
-          Math.ceil((startRow + 1) / PAGE_SIZE_MINIMUM),
-      );
-
       if (startRow >= (opportunities_learning?.totalCount ?? 0)) {
-        console.warn(
-          "Learning: returning... TotalCount: ",
-          opportunities_learning?.totalCount,
-        );
         return {
           items: [],
           totalCount: 0,
         };
       }
 
-      const data = await searchOpportunities({
-        pageNumber: Math.ceil(startRow / PAGE_SIZE_MINIMUM),
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache(["learning", pageNumber.toString()], {
+        pageNumber: pageNumber,
         pageSize: PAGE_SIZE_MINIMUM,
         categories: null,
         countries: null,
@@ -673,34 +676,23 @@ const Opportunities: NextPageWithLayout<{
         zltoRewardRanges: null,
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       });
-
-      console.warn("Learning: data: ", data);
-
-      return data;
     },
     [opportunities_learning],
   );
 
   const loadDataTasks = useCallback(
     async (startRow: number) => {
-      console.warn("Tasks: startRow: ", startRow);
-      console.warn(
-        "Tasks: pageNumber: " + Math.ceil((startRow + 1) / PAGE_SIZE_MINIMUM),
-      );
-
       if (startRow >= (opportunities_tasks?.totalCount ?? 0)) {
-        console.warn(
-          "Tasks: returning... TotalCount: ",
-          opportunities_tasks?.totalCount,
-        );
         return {
           items: [],
           totalCount: 0,
         };
       }
 
-      const data = await searchOpportunities({
-        pageNumber: Math.ceil((startRow + 1) / PAGE_SIZE_MINIMUM),
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache(["tasks", pageNumber.toString()], {
+        pageNumber: pageNumber,
         pageSize: PAGE_SIZE_MINIMUM,
         categories: null,
         countries: null,
@@ -713,51 +705,38 @@ const Opportunities: NextPageWithLayout<{
         zltoRewardRanges: null,
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       });
-
-      console.warn("Tasks: data: ", data);
-
-      return data;
     },
     [opportunities_tasks],
   );
 
   const loadDataOpportunities = useCallback(
     async (startRow: number) => {
-      console.warn("Opportunities: startRow: ", startRow);
-      console.warn(
-        "Opportunities: pageNumber: " +
-          Math.ceil((startRow + 1) / PAGE_SIZE_MINIMUM),
-      );
-
       if (startRow >= (opportunities_allOpportunities?.totalCount ?? 0)) {
-        console.warn(
-          "Trending: returning... TotalCount: ",
-          opportunities_allOpportunities?.totalCount,
-        );
         return {
           items: [],
           totalCount: 0,
         };
       }
 
-      const data = await searchOpportunities({
-        pageNumber: Math.ceil((startRow + 1) / PAGE_SIZE_MINIMUM),
-        pageSize: PAGE_SIZE_MINIMUM,
-        categories: null,
-        countries: null,
-        languages: null,
-        types: null,
-        valueContains: null,
-        commitmentIntervals: null,
-        mostViewed: null,
-        organizations: null,
-        zltoRewardRanges: null,
-        publishedStates: [PublishedState.Active, PublishedState.NotStarted],
-      });
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
 
-      console.warn("Opportunities: data: ", data);
-
-      return data;
+      return fetchDataAndUpdateCache(
+        ["allOpportunities", pageNumber.toString()],
+        {
+          pageNumber: pageNumber,
+          pageSize: PAGE_SIZE_MINIMUM,
+          categories: null,
+          countries: null,
+          languages: null,
+          types: null,
+          valueContains: null,
+          commitmentIntervals: null,
+          mostViewed: null,
+          organizations: null,
+          zltoRewardRanges: null,
+          publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+        },
+      );
     },
     [opportunities_allOpportunities],
   );
