@@ -190,7 +190,7 @@ services:
       - -c
       - /sbin/apk add jq && /bin/sh /scripts/users.sh
     volumes:
-      - ./cicd/scripts/keycloak/users.sh:/scripts/users.sh
+      - ../keycloak/scripts/users.sh:/scripts/users.sh
     depends_on:
       keycloak-config:
         condition: service_completed_successfully
