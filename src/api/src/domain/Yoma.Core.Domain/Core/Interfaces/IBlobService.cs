@@ -3,28 +3,28 @@ using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Core.Interfaces
 {
-    public interface IBlobService
-    {
-        BlobObject GetById(Guid id);
+  public interface IBlobService
+  {
+    BlobObject GetById(Guid id);
 
-        Task<BlobObject> Create(IFormFile file, FileType type);
+    Task<BlobObject> Create(IFormFile file, FileType type);
 
-        /// <summary>
-        /// Create the blob object only, preserving the tracking record; used for rollbacks
-        /// </summary>
-        Task<BlobObject> Create(Guid id, IFormFile file);
+    /// <summary>
+    /// Create the blob object only, preserving the tracking record; used for rollbacks
+    /// </summary>
+    Task<BlobObject> Create(Guid id, IFormFile file);
 
-        Task<IFormFile> Download(Guid id);
+    Task<IFormFile> Download(Guid id);
 
-        string GetURL(Guid id);
+    string GetURL(Guid id);
 
-        Task Delete(Guid id);
+    Task Delete(Guid id);
 
-        /// <summary>
-        /// Delete the blob object only; used for rollbacks
-        /// </summary>
-        Task Delete(BlobObject blobObject);
+    /// <summary>
+    /// Delete the blob object only; used for rollbacks
+    /// </summary>
+    Task Delete(BlobObject blobObject);
 
-        Task Archive(Guid id, BlobObject blobObjectReplacement);
-    }
+    Task Archive(Guid id, BlobObject blobObjectReplacement);
+  }
 }

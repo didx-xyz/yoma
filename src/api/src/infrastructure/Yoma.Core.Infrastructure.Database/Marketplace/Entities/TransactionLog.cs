@@ -7,39 +7,39 @@ using Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups;
 
 namespace Yoma.Core.Infrastructure.Database.Marketplace.Entities
 {
-    [Table("TransactionLog", Schema = "Marketplace")]
-    [Index(nameof(UserId), nameof(ItemCategoryId), nameof(ItemId), nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
-    public class TransactionLog : BaseEntity<Guid>
-    {
-        [ForeignKey("UserId")]
-        public Guid UserId { get; set; }
-        public User User { get; set; }
+  [Table("TransactionLog", Schema = "Marketplace")]
+  [Index(nameof(UserId), nameof(ItemCategoryId), nameof(ItemId), nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
+  public class TransactionLog : BaseEntity<Guid>
+  {
+    [ForeignKey("UserId")]
+    public Guid UserId { get; set; }
+    public User User { get; set; }
 
-        [Required]
-        [Column(TypeName = "varchar(50)")]
-        public string ItemCategoryId { get; set; }
+    [Required]
+    [Column(TypeName = "varchar(50)")]
+    public string ItemCategoryId { get; set; }
 
-        [Required]
-        [Column(TypeName = "varchar(50)")]
-        public string ItemId { get; set; }
+    [Required]
+    [Column(TypeName = "varchar(50)")]
+    public string ItemId { get; set; }
 
-        [Required]
-        [ForeignKey("StatusId")]
-        public Guid StatusId { get; set; }
-        public TransactionStatus Status { get; set; }
+    [Required]
+    [ForeignKey("StatusId")]
+    public Guid StatusId { get; set; }
+    public TransactionStatus Status { get; set; }
 
-        [Required]
-        [Column(TypeName = "decimal(8,2)")]
-        public decimal Amount { get; set; }
+    [Required]
+    [Column(TypeName = "decimal(8,2)")]
+    public decimal Amount { get; set; }
 
-        [Required]
-        [Column(TypeName = "varchar(50)")]
-        public string TransactionId { get; set; }
+    [Required]
+    [Column(TypeName = "varchar(50)")]
+    public string TransactionId { get; set; }
 
-        [Required]
-        public DateTimeOffset DateCreated { get; set; }
+    [Required]
+    public DateTimeOffset DateCreated { get; set; }
 
-        [Required]
-        public DateTimeOffset DateModified { get; set; }
-    }
+    [Required]
+    public DateTimeOffset DateModified { get; set; }
+  }
 }

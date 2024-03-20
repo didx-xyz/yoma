@@ -1,9 +1,9 @@
 namespace Yoma.Core.Domain.Reward.Interfaces
 {
-    public interface IRewardBackgrounService
-    {
-        void ProcessWalletCreation();
+  public interface IRewardBackgrounService
+  {
+    void ProcessWalletCreation();
 
-        void ProcessRewardTransactions();
-    }
+    void ProcessRewardTransactions();
+  }
 }

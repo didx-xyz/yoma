@@ -2,16 +2,16 @@ using Yoma.Core.Domain.Opportunity.Models.Lookups;
 
 namespace Yoma.Core.Domain.Opportunity.Interfaces.Lookups
 {
-    public interface IOpportunityDifficultyService
-    {
-        OpportunityDifficulty GetByName(string name);
+  public interface IOpportunityDifficultyService
+  {
+    OpportunityDifficulty GetByName(string name);
 
-        OpportunityDifficulty? GetByNameOrNull(string name);
+    OpportunityDifficulty? GetByNameOrNull(string name);
 
-        OpportunityDifficulty GetById(Guid id);
+    OpportunityDifficulty GetById(Guid id);
 
-        OpportunityDifficulty? GetByIdOrNull(Guid id);
+    OpportunityDifficulty? GetByIdOrNull(Guid id);
 
-        List<OpportunityDifficulty> List();
-    }
+    List<OpportunityDifficulty> List();
+  }
 }

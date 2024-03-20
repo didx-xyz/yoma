@@ -2,30 +2,30 @@ using Newtonsoft.Json;
 
 namespace Yoma.Core.Domain.Core.Converters
 {
-    public class StringTrimmingConverter : JsonConverter
+  public class StringTrimmingConverter : JsonConverter
+  {
+    #region Public Properties
+    public override bool CanRead => true;
+    public override bool CanWrite => false;
+    #endregion
+
+    #region Public Members
+    public override bool CanConvert(Type objectType) => objectType == typeof(string);
+
+    public override object? ReadJson(JsonReader reader, Type objectType,
+                                    object? existingValue, JsonSerializer serializer)
     {
-        #region Public Properties
-        public override bool CanRead => true;
-        public override bool CanWrite => false;
-        #endregion
+      if (reader.Value == null) return null;
 
-        #region Public Members
-        public override bool CanConvert(Type objectType) => objectType == typeof(string);
+      var result = ((string)reader.Value).Trim();
 
-        public override object? ReadJson(JsonReader reader, Type objectType,
-                                        object? existingValue, JsonSerializer serializer)
-        {
-            if (reader.Value == null) return null;
-
-            var result = ((string)reader.Value).Trim();
-
-            return string.IsNullOrEmpty(result) ? null : result;
-        }
-
-        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
-        {
-            throw new NotImplementedException();
-        }
-        #endregion
+      return string.IsNullOrEmpty(result) ? null : result;
     }
+
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+    {
+      throw new NotImplementedException();
+    }
+    #endregion
+  }
 }

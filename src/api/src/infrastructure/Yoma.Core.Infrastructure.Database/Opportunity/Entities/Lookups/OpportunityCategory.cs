@@ -5,19 +5,19 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups
 {
-    [Table("OpportunityCategory", Schema = "Opportunity")]
-    [Index(nameof(Name), IsUnique = true)]
-    public class OpportunityCategory : BaseEntity<Guid>
-    {
-        [Required]
-        [Column(TypeName = "varchar(125)")]
-        public string Name { get; set; }
+  [Table("OpportunityCategory", Schema = "Opportunity")]
+  [Index(nameof(Name), IsUnique = true)]
+  public class OpportunityCategory : BaseEntity<Guid>
+  {
+    [Required]
+    [Column(TypeName = "varchar(125)")]
+    public string Name { get; set; }
 
-        [Required]
-        [Column(TypeName = "varchar(2048)")]
-        public string ImageURL { get; set; }
+    [Required]
+    [Column(TypeName = "varchar(2048)")]
+    public string ImageURL { get; set; }
 
-        [Required]
-        public DateTimeOffset DateCreated { get; set; }
-    }
+    [Required]
+    public DateTimeOffset DateCreated { get; set; }
+  }
 }

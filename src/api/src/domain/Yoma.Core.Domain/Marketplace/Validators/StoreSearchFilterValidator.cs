@@ -5,29 +5,29 @@ using Yoma.Core.Domain.Marketplace.Models;
 
 namespace Yoma.Core.Domain.Marketplace.Validators
 {
-    public class StoreSearchFilterValidator : PaginationFilterValidator<StoreSearchFilter>
+  public class StoreSearchFilterValidator : PaginationFilterValidator<StoreSearchFilter>
+  {
+    #region Class Variables
+    private readonly ICountryService _countryService;
+    #endregion
+
+    #region Constructor
+    public StoreSearchFilterValidator(ICountryService countryService)
     {
-        #region Class Variables
-        private readonly ICountryService _countryService;
-        #endregion
+      _countryService = countryService;
 
-        #region Constructor
-        public StoreSearchFilterValidator(ICountryService countryService)
-        {
-            _countryService = countryService;
-
-            RuleFor(x => x.CountryCodeAlpha2).Must(code => !string.IsNullOrEmpty(code) && CountryExists(code)).WithMessage("{PropertyName} is required and must exist.");
-            //categoryId optional
-            //pagination optional
-        }
-        #endregion
-
-        #region Private Members
-        private bool CountryExists(string codeAplha2)
-        {
-            if (string.IsNullOrEmpty(codeAplha2)) return false;
-            return _countryService.GetByCodeAplha2OrNull(codeAplha2) != null;
-        }
-        #endregion
+      RuleFor(x => x.CountryCodeAlpha2).Must(code => !string.IsNullOrEmpty(code) && CountryExists(code)).WithMessage("{PropertyName} is required and must exist.");
+      //categoryId optional
+      //pagination optional
     }
+    #endregion
+
+    #region Private Members
+    private bool CountryExists(string codeAplha2)
+    {
+      if (string.IsNullOrEmpty(codeAplha2)) return false;
+      return _countryService.GetByCodeAplha2OrNull(codeAplha2) != null;
+    }
+    #endregion
+  }
 }

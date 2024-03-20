@@ -4,14 +4,14 @@ using Yoma.Core.Domain.Entity.Models;
 
 namespace Yoma.Core.Domain.Entity.Validators
 {
-    public class UserSearchFilterValidator : PaginationFilterValidator<UserSearchFilter>
+  public class UserSearchFilterValidator : PaginationFilterValidator<UserSearchFilter>
+  {
+    #region Constructor
+    public UserSearchFilterValidator()
     {
-        #region Constructor
-        public UserSearchFilterValidator()
-        {
-            RuleFor(x => x.ValueContains).Length(3, 50).When(x => !string.IsNullOrEmpty(x.ValueContains));
-            RuleFor(x => x.PaginationEnabled).Equal(true).WithMessage("Pagination is required.");
-        }
-        #endregion
+      RuleFor(x => x.ValueContains).Length(3, 50).When(x => !string.IsNullOrEmpty(x.ValueContains));
+      RuleFor(x => x.PaginationEnabled).Equal(true).WithMessage("Pagination is required.");
     }
+    #endregion
+  }
 }

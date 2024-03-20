@@ -3,14 +3,14 @@ using Yoma.Core.Domain.Opportunity;
 
 namespace Yoma.Core.Domain.MyOpportunity.Models
 {
-    public class MyOpportunityInfoVerification
-    {
-        public VerificationType VerificationType { get; set; }
+  public class MyOpportunityInfoVerification
+  {
+    public VerificationType VerificationType { get; set; }
 
-        public Geometry? Geometry { get; set; }
+    public Geometry? Geometry { get; set; }
 
-        public Guid? FileId { get; set; }
+    public Guid? FileId { get; set; }
 
-        public string? FileURL { get; set; }
-    }
+    public string? FileURL { get; set; }
+  }
 }

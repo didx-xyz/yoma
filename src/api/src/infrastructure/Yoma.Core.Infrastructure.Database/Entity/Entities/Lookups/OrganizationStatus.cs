@@ -5,15 +5,15 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups
 {
-    [Table("OrganizationStatus", Schema = "Entity")]
-    [Index(nameof(Name), IsUnique = true)]
-    public class OrganizationStatus : BaseEntity<Guid>
-    {
-        [Required]
-        [Column(TypeName = "varchar(255)")]
-        public string Name { get; set; }
+  [Table("OrganizationStatus", Schema = "Entity")]
+  [Index(nameof(Name), IsUnique = true)]
+  public class OrganizationStatus : BaseEntity<Guid>
+  {
+    [Required]
+    [Column(TypeName = "varchar(255)")]
+    public string Name { get; set; }
 
-        [Required]
-        public DateTimeOffset DateCreated { get; set; }
-    }
+    [Required]
+    public DateTimeOffset DateCreated { get; set; }
+  }
 }

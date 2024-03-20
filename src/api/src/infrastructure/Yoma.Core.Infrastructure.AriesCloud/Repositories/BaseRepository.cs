@@ -4,20 +4,20 @@ using Yoma.Core.Infrastructure.AriesCloud.Entities;
 
 namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
 {
-    public abstract class BaseRepository<TEntity, TKey>
+  public abstract class BaseRepository<TEntity, TKey>
         where TEntity : BaseEntity<TKey>
-    {
-        #region Class Variables
-        protected readonly AriesCloudDbContext _context;
-        protected readonly DbSet<TEntity> _entitySet;
-        #endregion
+  {
+    #region Class Variables
+    protected readonly AriesCloudDbContext _context;
+    protected readonly DbSet<TEntity> _entitySet;
+    #endregion
 
-        #region Constructors
-        public BaseRepository(AriesCloudDbContext context)
-        {
-            _context = context;
-            _entitySet = context.Set<TEntity>();
-        }
-        #endregion
+    #region Constructors
+    public BaseRepository(AriesCloudDbContext context)
+    {
+      _context = context;
+      _entitySet = context.Set<TEntity>();
     }
+    #endregion
+  }
 }
