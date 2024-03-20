@@ -49,6 +49,9 @@ namespace Yoma.Core.Domain.Core.Helpers
 
     public static void UpdateUsername(IHttpContextAccessor? httpContextAccessor, string newEmail)
     {
+      ArgumentException.ThrowIfNullOrWhiteSpace(newEmail);
+      newEmail = newEmail.Trim();
+
       var claimsPrincipal = httpContextAccessor?.HttpContext?.User;
       ArgumentNullException.ThrowIfNull(claimsPrincipal);
 
