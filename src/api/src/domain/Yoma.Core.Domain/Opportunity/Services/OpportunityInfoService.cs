@@ -99,7 +99,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       Dictionary<Guid, int>? aggregatedByViewed = null;
       if (mostViewed)
       {
-        aggregatedByViewed = _myOpportunityService.ListAggregatedOpportunityByViewed(filter, filterInternal.PublishedStates.Contains(PublishedState.Expired));
+        aggregatedByViewed = _myOpportunityService.ListAggregatedOpportunityByViewed(filterInternal.PublishedStates.Contains(PublishedState.Expired));
         filterInternal.Opportunities = aggregatedByViewed?.Keys.ToList() ?? [];
       }
 

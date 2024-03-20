@@ -608,7 +608,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       await SendEmail(item, emailType.Value);
     }
 
-    public Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(PaginationFilter filter, bool includeExpired)
+    public Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(bool includeExpired)
     {
       var actionId = _myOpportunityActionService.GetByName(Action.Viewed.ToString()).Id;
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
@@ -631,9 +631,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         MaxDateModified = group.Max(o => o.DateModified) //max last viewed date
       });
       queryGrouped = queryGrouped.OrderByDescending(result => result.Count).ThenByDescending(result => result.MaxDateModified); //ordered by count and then by max last viewed date
-
-      if (filter.PaginationEnabled)
-        queryGrouped = queryGrouped.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
 
       return queryGrouped.ToDictionary(o => o.OpportunityId, o => o.Count);
     }
