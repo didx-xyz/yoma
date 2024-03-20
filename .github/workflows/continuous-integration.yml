@@ -124,10 +124,12 @@ jobs:
         include:
           - image: yoma-api
             context: ./src/api
+            helm: ./helm/yoma-api
             file: ./src/api/Dockerfile
             buildArgs: ""
           - image: yoma-web
             context: ./src/web
+            helm: ./helm/yoma-web
             file: ./src/web/Dockerfile
             buildArgs: |-
               NEXT_PUBLIC_ENVIRONMENT=production
@@ -141,6 +143,7 @@ jobs:
           filters: |-
             changes:
               - '${{ matrix.context }}/**'
+              - '${{ matrix.helm }}/**'
       - uses: docker/setup-buildx-action@v3
         if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
       - uses: docker/login-action@v3
@@ -170,7 +173,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=build-${{ matrix.image }}
+          cache-from: |
+            type=gha,scope=build-${{ matrix.image }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ matrix.image }}:latest
           cache-to: type=gha,mode=max,scope=build-${{ matrix.image }}
           build-args: ${{ matrix.buildArgs }}
 
@@ -399,7 +404,7 @@ jobs:
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
               --environment ${{ vars.ENVIRONMENT }} \
               --selector app=yoma-api \
-              --state-values-set gitref=${{env.GIT_REF}}
+              --state-values-set gitref=${{ env.GIT_REF }}
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: |
