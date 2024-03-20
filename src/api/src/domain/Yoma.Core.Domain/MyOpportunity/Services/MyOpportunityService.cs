@@ -793,7 +793,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     VerificationURL = _emailURLFactory.OpportunityVerificationURL(type, myOpportunity.OrganizationId),
                     Opportunities =
                     [
-                        new() {
+                        new()
+                        {
                             Title = myOpportunity.OpportunityTitle,
                             DateStart = myOpportunity.DateStart,
                             DateEnd = myOpportunity.DateEnd,
