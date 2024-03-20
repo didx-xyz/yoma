@@ -74,7 +74,7 @@ namespace Yoma.Core.Domain.Entity.Services
           var items = _organizationRepository.Query(true).Where(o => statusDeclinationIds.Contains(o.StatusId) &&
               o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OrganizationDeclinationIntervalInDays))
               .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeclinationBatchSize).ToList();
-          if (!items.Any()) break;
+          if (items.Count == 0) break;
 
           var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
@@ -142,7 +142,7 @@ namespace Yoma.Core.Domain.Entity.Services
           var items = _organizationRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
               o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OrganizationDeletionIntervalInDays))
               .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeletionBatchSize).ToList();
-          if (!items.Any()) break;
+          if (items.Count == 0) break;
 
           var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
@@ -185,7 +185,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private void SeedLogo()
     {
       var items = _organizationRepository.Query(true).Where(o => !o.LogoId.HasValue).ToList();
-      if (!items.Any()) return;
+      if (items.Count == 0) return;
 
       var resourcePath = "Yoma.Core.Domain.Entity.SampleBlobs.sample_logo.png";
       var assembly = Assembly.GetExecutingAssembly();
@@ -209,7 +209,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private void SeedDocuments()
     {
       var items = _organizationRepository.Query(true).Where(o => !_organizationDocumentRepository.Query().Any(od => od.OrganizationId == o.Id)).ToList();
-      if (!items.Any()) return;
+      if (items.Count == 0) return;
 
       var myItemsEducation = items.Where(
           o => o.ProviderTypes != null

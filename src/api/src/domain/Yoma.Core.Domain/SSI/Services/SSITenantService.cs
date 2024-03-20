@@ -107,7 +107,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
       var query = _ssiTenantCreationRepository.Query().Where(o => o.StatusId == statusPendingId);
 
-      if (idsToSkip != null && idsToSkip.Any())
+      if (idsToSkip != null && idsToSkip.Count != 0)
         query = query.Where(o => !idsToSkip.Contains(o.Id));
 
       var results = query.OrderBy(o => o.DateModified).Take(batchSize).ToList();

@@ -216,7 +216,7 @@ namespace Yoma.Core.Domain.Analytics.Services
         ViewedCount = viewedCount,
         CompletedCount = completedCount,
         //calculate average percentage based on individual opportunity conversion ratio rather than global counts (more accurate)
-        Percentage = items.Any()
+        Percentage = items.Count != 0
               ? Math.Min(100M, Math.Round(items.Sum(o => o.ConversionRatioPercentage) / items.Count))
               : 0M
       };
@@ -415,14 +415,14 @@ namespace Yoma.Core.Domain.Analytics.Services
       var result = _myOpportunityRepository.Query(true).Where(o => o.OrganizationId == filter.Organization);
 
       //opportunities
-      if (filter.Opportunities != null && filter.Opportunities.Any())
+      if (filter.Opportunities != null && filter.Opportunities.Count != 0)
       {
         filter.Opportunities = filter.Opportunities.Distinct().ToList();
         result = result.Where(o => filter.Opportunities.Contains(o.OpportunityId));
       }
 
       //categories
-      if (filter.Categories != null && filter.Categories.Any())
+      if (filter.Categories != null && filter.Categories.Count != 0)
       {
         filter.Categories = filter.Categories.Distinct().ToList();
         result = result.Where(opportunity => _opportunityCategoryRepository.Query().Any(
@@ -473,14 +473,14 @@ namespace Yoma.Core.Domain.Analytics.Services
       var result = _opportunityRepository.Query(true).Where(o => o.OrganizationId == filter.Organization);
 
       //opportunities
-      if (filter.Opportunities != null && filter.Opportunities.Any())
+      if (filter.Opportunities != null && filter.Opportunities.Count != 0)
       {
         filter.Opportunities = filter.Opportunities.Distinct().ToList();
         result = result.Where(o => filter.Opportunities.Contains(o.Id));
       }
 
       //categories
-      if (filter.Categories != null && filter.Categories.Any())
+      if (filter.Categories != null && filter.Categories.Count != 0)
       {
         filter.Categories = filter.Categories.Distinct().ToList();
         result = result.Where(opportunity => _opportunityCategoryRepository.Query().Any(

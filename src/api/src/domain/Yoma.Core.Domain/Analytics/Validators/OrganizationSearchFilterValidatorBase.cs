@@ -28,8 +28,8 @@ namespace Yoma.Core.Domain.Analytics.Validators
               context.AddFailure("Either opportunities or categories may be specified, but not both.");
             }
           });
-      RuleFor(x => x.Opportunities).Must(x => x == null || !x.Any() || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
-      RuleFor(x => x.Categories).Must(x => x == null || !x.Any() || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
+      RuleFor(x => x.Opportunities).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
+      RuleFor(x => x.Categories).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
       RuleFor(x => x.EndDate).GreaterThanOrEqualTo(x => x.StartDate).When(x => x.EndDate.HasValue && x.StartDate.HasValue).WithMessage("{PropertyName} is earlier than the Start Date.");
     }
     #endregion

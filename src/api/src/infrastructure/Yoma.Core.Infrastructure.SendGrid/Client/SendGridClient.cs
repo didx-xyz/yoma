@@ -50,7 +50,7 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
         return;
       }
 
-      if (recipients == null || !recipients.Any())
+      if (recipients == null || recipients.Count == 0)
         throw new ArgumentNullException(nameof(recipients));
 
       ArgumentNullException.ThrowIfNull(data);

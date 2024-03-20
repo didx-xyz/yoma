@@ -80,7 +80,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           var items = _myOpportunityRepository.Query().Where(o => o.VerificationStatusId.HasValue && statusRejectableIds.Contains(o.VerificationStatusId.Value) &&
             o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.MyOpportunityRejectionIntervalInDays))
             .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
-          if (!items.Any()) break;
+          if (items.Count == 0) break;
 
           foreach (var item in items)
           {
@@ -168,14 +168,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #region Private Members
     private void SeedPendingVerifications(List<Models.MyOpportunity> items)
     {
-      if (!items.Any()) return;
+      if (items.Count == 0) return;
 
       foreach (var item in items)
       {
         try
         {
           var opportunity = _opportunityService.GetById(item.OpportunityId, true, true, false);
-          if (opportunity.VerificationTypes == null || !opportunity.VerificationTypes.Any()) continue;
+          if (opportunity.VerificationTypes == null || opportunity.VerificationTypes.Count == 0) continue;
 
           var request = new MyOpportunityRequestVerify
           {

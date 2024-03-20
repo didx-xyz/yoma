@@ -143,22 +143,19 @@ namespace Yoma.Core.Api
         * https://github.com/aws/aws-ssm-data-protection-provider-for-aspnet
         */
         IgnoreAntiforgeryToken = true, //replicas >=2 will cause antiforgery token issues
-        Authorization = [
-          new BasicAuthAuthorizationFilter(
-            new BasicAuthAuthorizationFilterOptions
-            {
-              RequireSsl = false, //handled by AWS
-              SslRedirect = false, //handled by AWS
-              LoginCaseSensitive = true,
-              Users = [
-                new BasicAuthAuthorizationUser
-                {
-                  Login = _appSettings.Hangfire.Username,
-                  PasswordClear = _appSettings.Hangfire.Password
-                }
-                ]
-            })
+        Authorization = [ new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
+        {
+          RequireSsl = false, //handled by AWS
+          SslRedirect = false, //handled by AWS
+          LoginCaseSensitive = true,
+          Users = [ new BasicAuthAuthorizationUser
+          {
+            Login = _appSettings.Hangfire.Username,
+            PasswordClear = _appSettings.Hangfire.Password
+          }
           ]
+        })
+        ]
       });
 
       app.UseSSIProvider();
@@ -205,19 +202,15 @@ namespace Yoma.Core.Api
 
     private void ConfigureAuthorization(IServiceCollection services, IConfiguration configuration)
     {
-      services.AddAuthorization(options =>
-      {
-        // Authorization policy for Authorization Code flow
-        options.AddPolicy(Constants.Authorization_Policy, policy =>
+      services.AddAuthorizationBuilder()
+          .AddPolicy(Constants.Authorization_Policy, policy =>
               {
                 policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
                 policy.RequireAuthenticatedUser();
                 policy.Requirements.Add(new RequireAudienceClaimRequirement(_appSettings.AuthorizationPolicyAudience));
                 policy.Requirements.Add(new RequireScopeAuthorizationRequirement(_appSettings.AuthorizationPolicyScope));
-              });
-
-        // Authorization policy for Client Credentials flow
-        options.AddPolicy(Constants.Authorization_Policy_External_Partner, policy =>
+              })
+          .AddPolicy(Constants.Authorization_Policy_External_Partner, policy =>
               {
                 policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
                 policy.RequireAuthenticatedUser();
@@ -225,7 +218,6 @@ namespace Yoma.Core.Api
                 policy.Requirements.Add(new RequireClientIdClaimRequirement());
                 policy.Requirements.Add(new RequireScopeAuthorizationRequirement(_appSettings.AuthorizationPolicyScope));
               });
-      });
       services.AddSingleton<IAuthorizationHandler, RequireAudienceClaimHandler>();
       services.AddSingleton<IAuthorizationHandler, RequireClientIdClaimHandler>();
       services.AddSingleton<IAuthorizationHandler, RequireScopeAuthorizationHandler>();

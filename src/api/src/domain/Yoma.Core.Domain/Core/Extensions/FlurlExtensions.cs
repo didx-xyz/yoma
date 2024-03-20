@@ -29,7 +29,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     /// <exception cref="ArgumentNullException"></exception>
     public static IFlurlRequest WithAuthHeaders(this Url url, Dictionary<string, string> authHeaders)
     {
-      if (authHeaders == null || !authHeaders.Any())
+      if (authHeaders == null || authHeaders.Count == 0)
         throw new ArgumentNullException(nameof(authHeaders));
 
       return new FlurlRequest(url).WithHeaders(authHeaders);

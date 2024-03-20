@@ -88,7 +88,7 @@ namespace Yoma.Core.Domain.SSI.Services
       //    start = filter.PageNumber == 1 ? 0 : (filter.PageNumber - 1) * filter.PageSize;
 
       var items = await _ssiProviderClient.ListCredentials(tenantId);
-      if (items == null || !items.Any()) return result;
+      if (items == null || items.Count == 0) return result;
 
       foreach (var item in items)
         result.Items.Add(await ParseCredential<SSICredentialInfo>(item));
@@ -130,7 +130,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
       var systemPropertiesMismatch = systemPropertiesSchema.Except(systemProperties).ToList();
 
-      if (systemPropertiesMismatch.Any())
+      if (systemPropertiesMismatch.Count != 0)
         throw new InvalidOperationException($"System properties mismatch detected for credential with id '{item.Id}' and schema '{schema.Name}': " +
             $"Expected based on schema '{string.Join(",", systemPropertiesSchema.Select(o => o.AttributeName)).ToList()}' " +
             $"vs. Credential attributes  '{string.Join(",", systemProperties.Select(o => o.AttributeName)).ToList()}'");
