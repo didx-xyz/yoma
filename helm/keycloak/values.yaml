@@ -266,7 +266,7 @@ keycloak:
     - name: WEBHOOK_HTTP_BASE_PATH
       value: http://yoma-api:5000/api/v3/keycloak
     - name: WEBHOOK_EVENTS_TAKEN
-      value: LOGIN,REGISTER,LOGOUT,UPDATE_PROFILE
+      value: LOGIN,REGISTER,UPDATE_PROFILE
     - name: DD_LOGS_INJECTION
       value: "true"
     - name: DD_PROFILING_ENABLED
