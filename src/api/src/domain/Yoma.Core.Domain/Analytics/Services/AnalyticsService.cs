@@ -42,9 +42,7 @@ namespace Yoma.Core.Domain.Analytics.Services
         #endregion
 
         #region Constructor
-#pragma warning disable IDE0290 // Use primary constructor
         public AnalyticsService(IOptions<AppSettings> appSettings,
-#pragma warning restore IDE0290 // Use primary constructor
             IMemoryCache memoryCache,
             IOrganizationService organizationService,
             IMyOpportunityActionService myOpportunityActionService,
