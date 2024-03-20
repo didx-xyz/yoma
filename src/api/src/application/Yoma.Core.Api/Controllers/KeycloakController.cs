@@ -74,7 +74,7 @@ namespace Yoma.Core.Api.Controllers
             return;
           }
 
-          var sType = payload.type;
+          var sType = payload.Type;
           _logger.LogInformation("{sType} event received", sType);
 
           Enum.TryParse<WebhookRequestEventType>(sType, true, out var type);
@@ -110,17 +110,17 @@ namespace Yoma.Core.Api.Controllers
     #region Private Members
     private async Task UpdateUserProfile(WebhookRequestEventType type, KeycloakWebhookRequest payload)
     {
-      if (string.IsNullOrEmpty(payload?.details?.username))
+      if (string.IsNullOrEmpty(payload?.Details?.Username))
       {
         _logger.LogError("Webhook payload contains no associated Keycloak username");
         return;
       }
 
-      _logger.LogInformation("Trying to find the Keycloak user with username '{username}'", payload?.details?.username);
-      var kcUser = await _identityProviderClient.GetUser(payload?.details?.username);
+      _logger.LogInformation("Trying to find the Keycloak user with username '{username}'", payload?.Details?.Username);
+      var kcUser = await _identityProviderClient.GetUser(payload?.Details?.Username);
       if (kcUser == null)
       {
-        _logger.LogError("Failed to retrieve the Keycloak user with username '{username}'", payload?.details.username);
+        _logger.LogError("Failed to retrieve the Keycloak user with username '{username}'", payload?.Details.Username);
         return;
       }
 

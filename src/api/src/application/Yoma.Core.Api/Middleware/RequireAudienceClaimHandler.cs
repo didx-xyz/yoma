@@ -1,17 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Options;
-using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Api.Middleware
 {
   public class RequireAudienceClaimHandler : AuthorizationHandler<RequireAudienceClaimRequirement>
   {
-    private readonly AppSettings _appSettings;
-
-    public RequireAudienceClaimHandler(IOptions<AppSettings> appSettings)
-    {
-      _appSettings = appSettings.Value;
-    }
+    public RequireAudienceClaimHandler() { }
 
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, RequireAudienceClaimRequirement requirement)
     {

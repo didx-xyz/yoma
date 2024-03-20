@@ -82,7 +82,7 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
     #endregion
 
     #region Private Members
-    private List<Personalization> ProcessRecipients<T>(List<EmailRecipient> recipients, T data)
+    private static List<Personalization> ProcessRecipients<T>(List<EmailRecipient> recipients, T data)
         where T : EmailBase
     {
       var result = new List<Personalization>();

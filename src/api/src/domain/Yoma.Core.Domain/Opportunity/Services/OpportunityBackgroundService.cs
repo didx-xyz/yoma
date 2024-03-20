@@ -16,7 +16,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
   {
     #region Class Variables
     private readonly ILogger<OpportunityBackgroundService> _logger;
-    private readonly AppSettings _appSettings;
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IOpportunityStatusService _opportunityStatusService;
     private readonly IOrganizationService _organizationService;
@@ -32,7 +31,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     #region Constructor
     public OpportunityBackgroundService(ILogger<OpportunityBackgroundService> logger,
-        IOptions<AppSettings> appSettings,
         IOptions<ScheduleJobOptions> scheduleJobOptions,
         IOpportunityStatusService opportunityStatusService,
         IOrganizationService organizationService,
@@ -42,7 +40,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository)
     {
       _logger = logger;
-      _appSettings = appSettings.Value;
       _scheduleJobOptions = scheduleJobOptions.Value;
       _opportunityStatusService = opportunityStatusService;
       _organizationService = organizationService;

@@ -17,16 +17,11 @@ namespace Yoma.Core.Infrastructure.Keycloak.Extensions
         Email = kcUser.Email.Trim(),
         FirstName = kcUser.FirstName.Trim(),
         LastName = kcUser.LastName.Trim(),
-        Country = kcUser.Attributes.Keys.Contains(CustomAttributes.Country.ToDescription())
-                  ? kcUser.Attributes[CustomAttributes.Country.ToDescription()].FirstOrDefault()?.Trim() : null,
-        DateOfBirth = kcUser.Attributes.Keys.Contains(CustomAttributes.DateOfBirth.ToDescription())
-                  ? kcUser.Attributes[CustomAttributes.DateOfBirth.ToDescription()].FirstOrDefault()?.Trim() : null,
-        Education = kcUser.Attributes.Keys.Contains(CustomAttributes.Education.ToDescription())
-                  ? kcUser.Attributes[CustomAttributes.Education.ToDescription()].FirstOrDefault()?.Trim() : null,
-        Gender = kcUser.Attributes.Keys.Contains(CustomAttributes.Gender.ToDescription())
-                  ? kcUser.Attributes[CustomAttributes.Gender.ToDescription()].FirstOrDefault()?.Trim() : null,
-        PhoneNumber = kcUser.Attributes.Keys.Contains(CustomAttributes.PhoneNumber.ToDescription())
-                  ? kcUser.Attributes[CustomAttributes.PhoneNumber.ToDescription()].FirstOrDefault()?.Trim() : null,
+        Country = kcUser.Attributes.ContainsKey(CustomAttributes.Country.ToDescription()) ? kcUser.Attributes[CustomAttributes.Country.ToDescription()].FirstOrDefault()?.Trim() : null,
+        DateOfBirth = kcUser.Attributes.ContainsKey(CustomAttributes.DateOfBirth.ToDescription()) ? kcUser.Attributes[CustomAttributes.DateOfBirth.ToDescription()].FirstOrDefault()?.Trim() : null,
+        Education = kcUser.Attributes.ContainsKey(CustomAttributes.Education.ToDescription()) ? kcUser.Attributes[CustomAttributes.Education.ToDescription()].FirstOrDefault()?.Trim() : null,
+        Gender = kcUser.Attributes.ContainsKey(CustomAttributes.Gender.ToDescription()) ? kcUser.Attributes[CustomAttributes.Gender.ToDescription()].FirstOrDefault()?.Trim() : null,
+        PhoneNumber = kcUser.Attributes.ContainsKey(CustomAttributes.PhoneNumber.ToDescription()) ? kcUser.Attributes[CustomAttributes.PhoneNumber.ToDescription()].FirstOrDefault()?.Trim() : null,
         EmailVerified = kcUser.EmailVerified.HasValue && kcUser.EmailVerified.Value
       };
 

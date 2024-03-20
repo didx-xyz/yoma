@@ -235,7 +235,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
     public List<WalletCreation> ListPendingCreationSchedule(int batchSize, List<Guid> idsToSkip)
     {
-      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(batchSize, default(int));
+      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(batchSize, default);
 
       var statusPendingId = _walletCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
 

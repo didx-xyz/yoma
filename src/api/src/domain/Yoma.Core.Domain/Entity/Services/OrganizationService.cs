@@ -145,7 +145,9 @@ namespace Yoma.Core.Domain.Entity.Services
         throw new ArgumentNullException(nameof(name));
       name = name.Trim();
 
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       var result = _organizationRepository.Query(includeChildItems).SingleOrDefault(o => o.Name.ToLower() == name.ToLower());
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       if (result == null) return null;
 
       if (includeComputed)

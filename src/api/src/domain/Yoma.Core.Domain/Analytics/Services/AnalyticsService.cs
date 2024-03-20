@@ -257,6 +257,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
       //demogrpahics
       var currentDate = DateTimeOffset.UtcNow;
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       result.Demographics = new OrganizationDemographic
       {
         //countries
@@ -318,6 +319,7 @@ namespace Yoma.Core.Domain.Analytics.Services
               .ToDictionary(age => age.AgeBracket, age => age.Count)
         }
       };
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
 
       result.DateStamp = DateTimeOffset.UtcNow;
       return result;

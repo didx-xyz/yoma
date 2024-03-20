@@ -179,7 +179,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
         throw new ArgumentNullException(nameof(title));
       title = title.Trim();
 
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       var result = _opportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.Title.ToLower() == title.ToLower());
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       if (result == null) return null;
 
       if (includeComputed)

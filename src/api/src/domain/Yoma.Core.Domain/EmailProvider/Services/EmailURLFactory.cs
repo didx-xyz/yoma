@@ -25,24 +25,13 @@ namespace Yoma.Core.Domain.EmailProvider.Services
         throw new ArgumentNullException(nameof(organizationId));
 
       var result = _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(organizationId).ToString();
-      switch (emailType)
+      result = emailType switch
       {
-        case EmailType.Organization_Approval_Requested:
-          result = result.AppendPathSegment("verify").ToString();
-          break;
-
-        case EmailType.Organization_Approval_Approved:
-          result = result.AppendPathSegment("opportunities").ToString();
-          break;
-
-        case EmailType.Organization_Approval_Declined:
-          result = result.AppendPathSegment("edit").ToString();
-          break;
-
-        default:
-          throw new ArgumentOutOfRangeException(nameof(emailType), $"Type of '{emailType}' not supported");
-      }
-
+        EmailType.Organization_Approval_Requested => result.AppendPathSegment("verify").ToString(),
+        EmailType.Organization_Approval_Approved => result.AppendPathSegment("opportunities").ToString(),
+        EmailType.Organization_Approval_Declined => result.AppendPathSegment("edit").ToString(),
+        _ => throw new ArgumentOutOfRangeException(nameof(emailType), $"Type of '{emailType}' not supported"),
+      };
       return result;
     }
 
