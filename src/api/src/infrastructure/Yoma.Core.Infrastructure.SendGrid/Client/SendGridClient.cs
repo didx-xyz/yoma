@@ -50,11 +50,10 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
                 return;
             }
 
-            if (recipients == null || !recipients.Any())
+            if (recipients == null || recipients.Count == 0)
                 throw new ArgumentNullException(nameof(recipients));
 
-            if (data == null)
-                throw new ArgumentNullException(nameof(data));
+            ArgumentNullException.ThrowIfNull(data);
 
             if (!_options.Templates.ContainsKey(type.ToString()))
                 throw new ArgumentException($"Email template id for type '{type}' not configured", nameof(type));
@@ -83,7 +82,7 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
         #endregion
 
         #region Private Members
-        private List<Personalization> ProcessRecipients<T>(List<EmailRecipient> recipients, T data)
+        private static List<Personalization> ProcessRecipients<T>(List<EmailRecipient> recipients, T data)
             where T : EmailBase
         {
             var result = new List<Personalization>();
@@ -95,7 +94,7 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
 
                 var item = new Personalization
                 {
-                    Tos = new List<EmailAddress>(),
+                    Tos = [],
                     TemplateData = dataCopy
                 };
 

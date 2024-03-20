@@ -114,7 +114,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
 
         public async Task<List<Domain.MyOpportunity.Models.MyOpportunity>> Create(List<Domain.MyOpportunity.Models.MyOpportunity> items)
         {
-            if (items == null || !items.Any())
+            if (items == null || items.Count == 0)
                 throw new ArgumentNullException(nameof(items));
 
             var entities = items.Select(item =>
@@ -173,7 +173,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
 
         public async Task<List<Domain.MyOpportunity.Models.MyOpportunity>> Update(List<Domain.MyOpportunity.Models.MyOpportunity> items)
         {
-            if (items == null || !items.Any())
+            if (items == null || items.Count == 0)
                 throw new ArgumentNullException(nameof(items));
 
             var itemIds = items.Select(o => o.Id).ToList();

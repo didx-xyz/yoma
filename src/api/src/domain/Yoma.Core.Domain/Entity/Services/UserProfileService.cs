@@ -87,8 +87,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         public async Task<UserProfile> Update(UserRequestProfile request)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             await _userProfileRequestValidator.ValidateAndThrowAsync(request);
 
@@ -171,13 +170,13 @@ namespace Yoma.Core.Domain.Entity.Services
             result.OpportunityCountSaved = _myOpportunityService.Search(filter).TotalCount ?? default;
 
             filter.Action = MyOpportunity.Action.Verification;
-            filter.VerificationStatuses = new List<VerificationStatus> { VerificationStatus.Pending };
+            filter.VerificationStatuses = [VerificationStatus.Pending];
             result.OpportunityCountPending = _myOpportunityService.Search(filter).TotalCount ?? default;
 
-            filter.VerificationStatuses = new List<VerificationStatus> { VerificationStatus.Completed };
+            filter.VerificationStatuses = [VerificationStatus.Completed];
             result.OpportunityCountCompleted = _myOpportunityService.Search(filter).TotalCount ?? default;
 
-            filter.VerificationStatuses = new List<VerificationStatus> { VerificationStatus.Rejected };
+            filter.VerificationStatuses = [VerificationStatus.Rejected];
             result.OpportunityCountRejected = _myOpportunityService.Search(filter).TotalCount ?? default;
 
             return result;

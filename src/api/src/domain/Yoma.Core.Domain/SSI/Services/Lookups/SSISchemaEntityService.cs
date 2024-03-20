@@ -59,7 +59,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
             attributeName = attributeName.Trim();
 
             var result = List(null).SelectMany(o => o.Properties?.Where(p => string.Equals(p.AttributeName, attributeName, StringComparison.InvariantCultureIgnoreCase)) ?? Enumerable.Empty<SSISchemaEntityProperty>()).ToList();
-            if (result == null || !result.Any())
+            if (result == null || result.Count == 0)
                 throw new ArgumentException($"{nameof(SSISchemaEntityProperty)} not found with attribute name '{attributeName}'", nameof(attributeName));
 
             if (result.Count > 1)
@@ -103,7 +103,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         #region Private Members
         private static void ReflectEntityTypeInformation(List<SSISchemaEntity>? entities)
         {
-            if (entities == null || !entities.Any()) return;
+            if (entities == null || entities.Count == 0) return;
 
             foreach (var entity in entities)
             {

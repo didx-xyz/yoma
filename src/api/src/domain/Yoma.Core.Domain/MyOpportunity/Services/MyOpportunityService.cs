@@ -138,7 +138,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
             {
                 //ensure the organization admin is the admin of the specified organizations
-                if (organizations != null && organizations.Any())
+                if (organizations != null && organizations.Count != 0)
                 {
                     organizations = organizations.Distinct().ToList();
                     _organizationService.IsAdminsOf(organizations, true);
@@ -148,10 +148,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
             }
 
-            if (organizations != null && organizations.Any())
+            if (organizations != null && organizations.Count != 0)
                 query = query.Where(o => organizations.Contains(o.OrganizationId));
 
-            if (verificationStatuses != null && verificationStatuses.Any())
+            if (verificationStatuses != null && verificationStatuses.Count != 0)
             {
                 verificationStatuses = verificationStatuses.Distinct().ToList();
                 var verificationStatusIds = new List<Guid>();
@@ -189,8 +189,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter)
         {
-            if (filter == null)
-                throw new ArgumentNullException(nameof(filter));
+            ArgumentNullException.ThrowIfNull(filter);
 
             //filter validated by SearchAdmin
 
@@ -211,8 +210,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public MyOpportunitySearchResults Search(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
         {
-            if (filter == null)
-                throw new ArgumentNullException(nameof(filter));
+            ArgumentNullException.ThrowIfNull(filter);
 
             _myOpportunitySearchFilterValidator.ValidateAndThrow(filter);
 
@@ -227,7 +225,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
             {
                 //ensure the organization admin is the admin of the specified organizations
-                if (filter.Organizations != null && filter.Organizations.Any())
+                if (filter.Organizations != null && filter.Organizations.Count != 0)
                 {
                     filter.Organizations = filter.Organizations.Distinct().ToList();
                     _organizationService.IsAdminsOf(filter.Organizations, true);
@@ -237,7 +235,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     filter.Organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
             }
 
-            if (filter.Organizations != null && filter.Organizations.Any())
+            if (filter.Organizations != null && filter.Organizations.Count != 0)
                 query = query.Where(o => filter.Organizations.Contains(o.OrganizationId));
 
             //action (required)
@@ -276,7 +274,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     break;
 
                 case Action.Verification:
-                    if (filter.VerificationStatuses == null || !filter.VerificationStatuses.Any())
+                    if (filter.VerificationStatuses == null || filter.VerificationStatuses.Count == 0)
                         throw new ArgumentNullException(nameof(filter), "One or more verification status(es) required");
                     filter.VerificationStatuses = filter.VerificationStatuses.Distinct().ToList();
 
@@ -505,8 +503,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         public async Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalizeBatch request)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             if (request.Items == null)
                 throw new ArgumentNullException(nameof(request), "No items specified");
@@ -534,8 +531,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         //supported statuses: Rejected or Completed
         public async Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalize request)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             await _myOpportunityRequestValidatorVerifyFinalize.ValidateAndThrowAsync(request);
 
@@ -651,7 +647,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 TotalCountOnly = true,
                 Opportunity = result.OpportunityId,
                 Action = Action.Verification,
-                VerificationStatuses = new List<VerificationStatus> { VerificationStatus.Pending }
+                VerificationStatuses = [VerificationStatus.Pending]
             };
 
             var searchResult = Search(filter, false);
@@ -684,8 +680,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         private async Task PerformActionSendForVerificationManual(User user, Guid opportunityId, MyOpportunityRequestVerify request, bool overridePending)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             await _myOpportunityRequestValidatorVerify.ValidateAndThrowAsync(request);
 
@@ -705,7 +700,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (opportunity.VerificationMethod == null || opportunity.VerificationMethod != VerificationMethod.Manual)
                 throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / requires verification method manual");
 
-            if (opportunity.VerificationTypes == null || !opportunity.VerificationTypes.Any())
+            if (opportunity.VerificationTypes == null || opportunity.VerificationTypes.Count == 0)
                 throw new DataInconsistencyException("Manual verification enabled but opportunity has no mapped verification types");
 
             if (request.DateStart.HasValue && request.DateStart.Value < opportunity.DateStart)
@@ -781,34 +776,23 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             try
             {
                 List<EmailRecipient>? recipients = null;
-                switch (type)
+                recipients = type switch
                 {
-                    case EmailType.Opportunity_Verification_Rejected:
-                    case EmailType.Opportunity_Verification_Completed:
-                    case EmailType.Opportunity_Verification_Pending:
-                        recipients = new List<EmailRecipient>
-                        {
-                            new() { Email = myOpportunity.UserEmail, DisplayName = myOpportunity.UserDisplayName }
-                        };
-                        break;
-
-                    case EmailType.Opportunity_Verification_Pending_Admin:
-                        recipients = _organizationService.ListAdmins(myOpportunity.OrganizationId, false, false)
-                            .Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList();
-                        break;
-
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
-                }
-
-                if (recipients == null || !recipients.Any()) return;
+                    EmailType.Opportunity_Verification_Rejected or EmailType.Opportunity_Verification_Completed or EmailType.Opportunity_Verification_Pending => [
+                                                new() { Email = myOpportunity.UserEmail, DisplayName = myOpportunity.UserDisplayName }
+                                            ],
+                    EmailType.Opportunity_Verification_Pending_Admin => _organizationService.ListAdmins(myOpportunity.OrganizationId, false, false)
+                                                .Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList(),
+                    _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported"),
+                };
+                if (recipients == null || recipients.Count == 0) return;
 
                 var data = new EmailOpportunityVerification
                 {
                     YoIDURL = _emailURLFactory.OpportunityVerificationYoIDURL(type),
                     VerificationURL = _emailURLFactory.OpportunityVerificationURL(type, myOpportunity.OrganizationId),
-                    Opportunities = new List<EmailOpportunityVerificationItem>()
-                    {
+                    Opportunities =
+                    [
                         new() {
                             Title = myOpportunity.OpportunityTitle,
                             DateStart = myOpportunity.DateStart,
@@ -818,7 +802,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                             ZltoReward = myOpportunity.ZltoReward,
                             YomaReward = myOpportunity.YomaReward
                         }
-                    }
+                    ]
                 };
 
                 await _emailProviderClient.Send(type, recipients, data);

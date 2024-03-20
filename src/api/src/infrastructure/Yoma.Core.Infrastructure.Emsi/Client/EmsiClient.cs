@@ -111,7 +111,7 @@ namespace Yoma.Core.Infrastructure.Emsi.Client
             }
 
             var result = JsonConvert.DeserializeObject<List<Domain.LaborMarketProvider.Models.Skill>>(jsonContent);
-            if (result == null || !result.Any())
+            if (result == null || result.Count == 0)
                 throw new InvalidOperationException($"Embedded resource '{resourcePath}' could not be deserialized or contains no data");
 
             result.ForEach(o => o.Id = HashHelper.ComputeSHA256Hash(o.Name));

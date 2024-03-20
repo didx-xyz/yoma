@@ -263,7 +263,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 throw new ArgumentNullException(nameof(opportunity));
 
             var skillIds = opportunity.Skills?.Select(o => o.Id).ToList();
-            if (skillIds == null || !skillIds.Any()) return;
+            if (skillIds == null || skillIds.Count == 0) return;
 
             await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {

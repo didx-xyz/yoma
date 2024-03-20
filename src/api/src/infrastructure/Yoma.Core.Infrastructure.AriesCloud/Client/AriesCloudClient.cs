@@ -55,7 +55,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
             var results = (schemasAries.ToSchema(latestVersion)
                 ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).Concat(schemasLocal.ToSchema(latestVersion) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).ToList();
-            if (results == null || !results.Any()) return null;
+            if (results == null || results.Count == 0) return null;
 
             if (latestVersion)
             {
@@ -87,7 +87,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             var schemasLocal = _credentialSchemaRepository.Query().Where(o => o.Name == name).ToList();
 
             var results = (schemasAries.ToSchema(true) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).Concat(schemasLocal.ToSchema(true) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).ToList();
-            if (results == null || !results.Any()) return null;
+            if (results == null || results.Count == 0) return null;
 
             //return the latest version; schema can exist in both "local" and Aries; latest version reflects the active version
             var result = results.OrderByDescending(o => o.Version).First();
@@ -123,7 +123,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             }
 
             var results = (schemasAries.ToSchema(false) ?? Enumerable.Empty<Domain.SSI.Models.Provider.Schema>()).ToList();
-            if (results == null || !results.Any()) return null;
+            if (results == null || results.Count == 0) return null;
 
             if (results.Count > 1)
                 throw new DataInconsistencyException($"More than one schema found with id '{id}' (specific version): {string.Join(", ", results.Select(o => $"{o.Name}:{o.ArtifactType}"))}");
@@ -200,7 +200,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 throw new ArgumentNullException(nameof(request));
 
             if (request.Attributes != null) request.Attributes = request.Attributes.Distinct().ToList();
-            if (request.Attributes == null || !request.Attributes.Any())
+            if (request.Attributes == null || request.Attributes.Count == 0)
                 throw new ArgumentException($"'{nameof(request.Attributes)}' is required", nameof(request));
 
             var schemaExisting = await GetSchemaByNameOrNull(request.Name);
@@ -264,7 +264,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             request.Name = request.Name.Trim();
 
             if (request.Roles != null) request.Roles = request.Roles.Distinct().ToList();
-            if (request.Roles == null || !request.Roles.Any())
+            if (request.Roles == null || request.Roles.Count == 0)
                 throw new ArgumentException($"'{nameof(request.Roles)}' is required", nameof(request));
 
             request.ImageUrl = request.ImageUrl?.Trim();
@@ -296,7 +296,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             if (actor != null) existingRoles.AddRange(actor.Roles.ToSSIRoles());
 
             var diffs = request.Roles.Except(existingRoles).ToList();
-            if (diffs.Any())
+            if (diffs.Count != 0)
                 throw new DataInconsistencyException(
                     $"Role mismatched detected for tenant with label {tenant.Wallet_label} and id '{tenant.Wallet_id}'. Updating of tenant are not supported");
 
@@ -330,7 +330,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
             if (request.Attributes != null)
                 request.Attributes = request.Attributes.Where(pair => !string.IsNullOrEmpty(pair.Value)).ToDictionary(pair => pair.Key, pair => pair.Value);
-            if (request.Attributes == null || !request.Attributes.Any())
+            if (request.Attributes == null || request.Attributes.Count == 0)
                 throw new ArgumentException($"'{nameof(request.Attributes)}' is required", nameof(request));
 
             var schema = await GetSchemaByName(request.SchemaName);

@@ -69,7 +69,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 
         public async Task<List<Domain.Lookups.Models.Skill>> Create(List<Domain.Lookups.Models.Skill> items)
         {
-            if (items == null || !items.Any())
+            if (items == null || items.Count == 0)
                 throw new ArgumentNullException(nameof(items));
 
             var entities = items.Select(item =>
@@ -114,7 +114,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 
         public async Task<List<Domain.Lookups.Models.Skill>> Update(List<Domain.Lookups.Models.Skill> items)
         {
-            if (items == null || !items.Any())
+            if (items == null || items.Count == 0)
                 throw new ArgumentNullException(nameof(items));
 
             var itemIds = items.Select(o => o.Id).ToList();

@@ -109,7 +109,7 @@ namespace Yoma.Core.Domain.Lookups.Services
                 try
                 {
                     var incomingResults = _laborMarketProviderClient.ListSkills().Result;
-                    if (incomingResults == null || !incomingResults.Any()) return;
+                    if (incomingResults == null || incomingResults.Count == 0) return;
 
                     int batchSize = _scheduleJobOptions.SeedSkillsBatchSize;
                     int pageIndex = 0;
@@ -138,8 +138,8 @@ namespace Yoma.Core.Domain.Lookups.Services
                             }
                         }
 
-                        if (newItems.Any()) _skillRepository.Create(newItems).Wait();
-                        if (existingItems.Any()) _skillRepository.Update(existingItems).Wait();
+                        if (newItems.Count != 0) _skillRepository.Create(newItems).Wait();
+                        if (existingItems.Count != 0) _skillRepository.Update(existingItems).Wait();
 
                         pageIndex++;
                     }

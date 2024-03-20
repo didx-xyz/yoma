@@ -76,7 +76,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             //filter validated by OpportunityService.Search
             var filterInternal = new OpportunitySearchFilterAdmin
             {
-                PublishedStates = filter.PublishedStates == null || !filter.PublishedStates.Any() ?
+                PublishedStates = filter.PublishedStates == null || filter.PublishedStates.Count == 0 ?
                     new List<PublishedState> { PublishedState.NotStarted, PublishedState.Active } : filter.PublishedStates,
                 Types = filter.Types,
                 Categories = filter.Categories,

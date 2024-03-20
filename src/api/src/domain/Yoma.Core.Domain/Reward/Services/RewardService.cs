@@ -90,7 +90,7 @@ namespace Yoma.Core.Domain.Reward.Services
             var query = _rewardTransactionRepository.Query().Where(o => o.StatusId == statusPendingId);
 
             // skipped if wallets were not created (see RewardsBackgroundService)
-            if (idsToSkip != null && idsToSkip.Any())
+            if (idsToSkip != null && idsToSkip.Count != 0)
                 query = query.Where(o => !idsToSkip.Contains(o.Id));
 
             var results = query.OrderBy(o => o.DateModified).Take(batchSize).ToList();
@@ -100,7 +100,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
         public async Task UpdateTransactions(List<RewardTransaction> items)
         {
-            if (items == null || !items.Any()) return;
+            if (items == null || items.Count == 0) return;
 
             items.ForEach(o => UpdateTransactionProcess(o));
 

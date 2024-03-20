@@ -42,7 +42,9 @@ namespace Yoma.Core.Domain.Analytics.Services
         #endregion
 
         #region Constructor
+#pragma warning disable IDE0290 // Use primary constructor
         public AnalyticsService(IOptions<AppSettings> appSettings,
+#pragma warning restore IDE0290 // Use primary constructor
             IMemoryCache memoryCache,
             IOrganizationService organizationService,
             IMyOpportunityActionService myOpportunityActionService,
@@ -120,8 +122,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
         private OrganizationSearchResultsEngagement SearchOrganizationEngagementInternal(OrganizationSearchFilterEngagement filter)
         {
-            if (filter == null)
-                throw new ArgumentNullException(nameof(filter));
+            ArgumentNullException.ThrowIfNull(filter);
 
             _organizationSearchFilterEngagementValidator.ValidateAndThrow(filter);
 
@@ -183,7 +184,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             //engagement
             //'my' opportunities: viewed & completed verifications
             result.Opportunities.ViewedCompleted = new TimeIntervalSummary()
-            { Legend = new[] { "Viewed", "Completions" }, Data = resultsViewedCompleted, Count = new[] { viewedCount, completedCount } };
+            { Legend = ["Viewed", "Completions"], Data = resultsViewedCompleted, Count = [viewedCount, completedCount] };
 
             //opportunities selected
             result.Opportunities.Selected = new OpportunitySelected { Legend = "Opportunities selected", Count = OpportunityQueryBase(filter).Count() };
@@ -218,7 +219,7 @@ namespace Yoma.Core.Domain.Analytics.Services
                 ViewedCount = viewedCount,
                 CompletedCount = completedCount,
                 //calculate average percentage based on individual opportunity conversion ratio rather than global counts (more accurate)
-                Percentage = items.Any()
+                Percentage = items.Count != 0
                     ? Math.Min(100M, Math.Round(items.Sum(o => o.ConversionRatioPercentage) / items.Count))
                     : 0M
             };
@@ -231,14 +232,14 @@ namespace Yoma.Core.Domain.Analytics.Services
             var skills = queryCompleted.Select(o => new { o.DateModified, o.Skills }).ToList();
 
             var flattenedSkills = skills
-                 .SelectMany(o => o.Skills ?? new List<Skill>())
+                 .SelectMany(o => o.Skills ?? [])
                  .GroupBy(skill => skill.Id)
                  .Select(g => new { Skill = g.First(), Count = g.Count() })
                  .OrderByDescending(g => g.Count)
                  .ToList();
 
             var itemSkills = skills
-                .SelectMany(o => (o.Skills ?? new List<Skill>()).Select(skill => new { o.DateModified, SkillId = skill.Id }))
+                .SelectMany(o => (o.Skills ?? []).Select(skill => new { o.DateModified, SkillId = skill.Id }))
                 .GroupBy(x => x.DateModified.AddDays(-(int)x.DateModified.DayOfWeek).AddDays(7).Date)
                 .Select(group => new
                 {
@@ -252,13 +253,14 @@ namespace Yoma.Core.Domain.Analytics.Services
             itemSkills.ForEach(o => { resultsSkills.Add(new TimeValueEntry(o.WeekEnding, o.Count)); });
             result.Skills = new OrganizationOpportunitySkill
             {
-                TopCompleted = new OpportunitySkillTopCompleted { Legend = "Most completed skills", TopCompleted = flattenedSkills.Take(Skill_Count).Select(g => g.Skill).OrderBy(s => s.Name).ToList() },
+                TopCompleted = new OpportunitySkillTopCompleted { Legend = "Most completed skills", TopCompleted = [.. flattenedSkills.Take(Skill_Count).Select(g => g.Skill).OrderBy(s => s.Name)] },
                 Items = new TimeIntervalSummary()
-                { Legend = new[] { "Total unique skills", }, Data = resultsSkills, Count = new[] { flattenedSkills.Count } }
+                { Legend = ["Total unique skills",], Data = resultsSkills, Count = [flattenedSkills.Count] }
             };
 
             //demogrpahics
             var currentDate = DateTimeOffset.UtcNow;
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons; Projections fail
             result.Demographics = new OrganizationDemographic
             {
                 //countries
@@ -320,6 +322,7 @@ namespace Yoma.Core.Domain.Analytics.Services
                     .ToDictionary(age => age.AgeBracket, age => age.Count)
                 }
             };
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons; Projections fail
 
             result.DateStamp = DateTimeOffset.UtcNow;
             return result;
@@ -327,10 +330,11 @@ namespace Yoma.Core.Domain.Analytics.Services
 
         private OrganizationSearchResultsOpportunity SearchOrganizationOpportunitiesInternal(OrganizationSearchFilterOpportunity filter)
         {
-            if (filter == null)
-                throw new ArgumentNullException(nameof(filter));
+            ArgumentNullException.ThrowIfNull(filter);
 
             _organizationSearchFilterOpportunityValidator.ValidateAndThrow(filter);
+
+            _organizationService.IsAdmin(filter.Organization, true);
 
             var query = SearchOrganizationOpportunitiesQueryBase(filter);
 
@@ -344,7 +348,7 @@ namespace Yoma.Core.Domain.Analytics.Services
                 query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
             }
 
-            result.Items = query.ToList();
+            result.Items = [.. query];
             result.Items.ForEach(o => o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoId));
 
             result.DateStamp = DateTimeOffset.UtcNow;
@@ -377,10 +381,11 @@ namespace Yoma.Core.Domain.Analytics.Services
 
         private OrganizationSearchResultsYouth SearchOrganizationYouthInternal(OrganizationSearchFilterYouth filter)
         {
-            if (filter == null)
-                throw new ArgumentNullException(nameof(filter));
+            ArgumentNullException.ThrowIfNull(filter);
 
             _organizationSearchFilterYouthValidator.ValidateAndThrow(filter);
+
+            _organizationService.IsAdmin(filter.Organization, true);
 
             var query = MyOpportunityQueryCompleted(MyOpportunityQueryBase(filter))
                 .Select(o => new YouthInfo
@@ -406,7 +411,7 @@ namespace Yoma.Core.Domain.Analytics.Services
                 query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
             }
 
-            result.Items = query.ToList();
+            result.Items = [.. query];
             result.Items.ForEach(o => o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoId));
 
             result.DateStamp = DateTimeOffset.UtcNow;
@@ -419,14 +424,14 @@ namespace Yoma.Core.Domain.Analytics.Services
             var result = _myOpportunityRepository.Query(true).Where(o => o.OrganizationId == filter.Organization);
 
             //opportunities
-            if (filter.Opportunities != null && filter.Opportunities.Any())
+            if (filter.Opportunities != null && filter.Opportunities.Count != 0)
             {
                 filter.Opportunities = filter.Opportunities.Distinct().ToList();
                 result = result.Where(o => filter.Opportunities.Contains(o.OpportunityId));
             }
 
             //categories
-            if (filter.Categories != null && filter.Categories.Any())
+            if (filter.Categories != null && filter.Categories.Count != 0)
             {
                 filter.Categories = filter.Categories.Distinct().ToList();
                 result = result.Where(opportunity => _opportunityCategoryRepository.Query().Any(
@@ -477,14 +482,14 @@ namespace Yoma.Core.Domain.Analytics.Services
             var result = _opportunityRepository.Query(true).Where(o => o.OrganizationId == filter.Organization);
 
             //opportunities
-            if (filter.Opportunities != null && filter.Opportunities.Any())
+            if (filter.Opportunities != null && filter.Opportunities.Count != 0)
             {
                 filter.Opportunities = filter.Opportunities.Distinct().ToList();
                 result = result.Where(o => filter.Opportunities.Contains(o.Id));
             }
 
             //categories
-            if (filter.Categories != null && filter.Categories.Any())
+            if (filter.Categories != null && filter.Categories.Count != 0)
             {
                 filter.Categories = filter.Categories.Distinct().ToList();
                 result = result.Where(opportunity => _opportunityCategoryRepository.Query().Any(

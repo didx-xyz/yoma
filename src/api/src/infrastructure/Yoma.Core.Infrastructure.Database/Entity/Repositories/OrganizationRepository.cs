@@ -134,7 +134,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 
         public async Task<List<Domain.Entity.Models.Organization>> Create(List<Domain.Entity.Models.Organization> items)
         {
-            if (items == null || !items.Any())
+            if (items == null || items.Count == 0)
                 throw new ArgumentNullException(nameof(items));
 
             var entities = items.Select(item =>
@@ -218,7 +218,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 
         public async Task<List<Domain.Entity.Models.Organization>> Update(List<Domain.Entity.Models.Organization> items)
         {
-            if (items == null || !items.Any())
+            if (items == null || items.Count == 0)
                 throw new ArgumentNullException(nameof(items));
 
             var itemIds = items.Select(o => o.Id).ToList();

@@ -153,7 +153,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
 
-            if (roles == null || !roles.Any())
+            if (roles == null || roles.Count == 0)
                 throw new ArgumentNullException(nameof(roles));
 
             var rolesInvalid = roles.Except(Constants.Roles_Supported);
@@ -174,7 +174,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
             if (id == Guid.Empty)
                 throw new ArgumentNullException(nameof(id));
 
-            if (roles == null || !roles.Any())
+            if (roles == null || roles.Count == 0)
                 throw new ArgumentNullException(nameof(roles));
 
             var rolesInvalid = roles.Except(Constants.Roles_Supported);

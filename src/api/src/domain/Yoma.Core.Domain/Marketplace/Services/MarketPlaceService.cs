@@ -164,7 +164,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
             {
                 //find the 1st available item for the specified store and item category
                 var storeItems = _marketplaceProviderClient.ListStoreItems(storeId, itemCategoryId, 1, 0).Result;
-                if (!storeItems.Any())
+                if (storeItems.Count == 0)
                     throw new ValidationException($"Items for the specified store and category has been sold out");
                 var storeItem = storeItems.Single();
 

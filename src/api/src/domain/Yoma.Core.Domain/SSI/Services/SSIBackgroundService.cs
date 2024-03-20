@@ -97,7 +97,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 while (executeUntil > DateTime.Now)
                 {
                     var items = _ssiTenantService.ListPendingCreationSchedule(_scheduleJobOptions.SSITenantCreationScheduleBatchSize, itemIdsToSkip);
-                    if (!items.Any()) break;
+                    if (items.Count == 0) break;
 
                     foreach (var item in items)
                     {
@@ -182,7 +182,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 while (executeUntil > DateTime.Now)
                 {
                     var items = _ssiCredentialService.ListPendingIssuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize, itemIdsToSkip);
-                    if (!items.Any()) break;
+                    if (items.Count == 0) break;
 
                     foreach (var item in items)
                     {
@@ -369,7 +369,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 throw new InvalidOperationException($"Artifact type mismatch detected for existing schema '{schemaFullName}': Requested '{artifactType}' vs. Existing '{schema.ArtifactType}'");
 
             var misMatchesAttributes = attributes.Where(attr => !schema.Entities.Any(entity => entity.Properties?.Any(property => property.AttributeName == attr) == true)).ToList();
-            if (misMatchesAttributes == null || !misMatchesAttributes.Any()) return;
+            if (misMatchesAttributes == null || misMatchesAttributes.Count == 0) return;
 
             await _ssiSchemaService.Update(new SSISchemaRequestUpdate
             {

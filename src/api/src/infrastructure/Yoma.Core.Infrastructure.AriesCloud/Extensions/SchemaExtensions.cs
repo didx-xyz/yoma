@@ -10,7 +10,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
         #region Public Members
         public static List<Domain.SSI.Models.Provider.Schema>? ToSchema(this ICollection<CredentialSchema> schemas, bool latestVersion)
         {
-            if (!schemas.Any()) return null;
+            if (schemas.Count == 0) return null;
 
             var results = schemas.Select(ToSchema).ToList();
 
@@ -33,7 +33,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
 
         public static List<Domain.SSI.Models.Provider.Schema>? ToSchema(this ICollection<Models.CredentialSchema> schemas, bool latestVersion)
         {
-            if (!schemas.Any()) return null;
+            if (schemas.Count == 0) return null;
 
             var results = schemas.Select(ToSchema).ToList();
 

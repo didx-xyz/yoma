@@ -784,9 +784,9 @@ SELECT
     NULL::varchar(500) AS "Keywords",
     start_of_day(o.startdate) AT TIME ZONE 'UTC' AS "DateStart",
     CASE
-	    WHEN o.enddate IS NULL THEN NULL
-		WHEN o.enddate::date = '3850-01-02' THEN NULL
-    	ELSE end_of_day(o.enddate) AT TIME ZONE 'UTC'
+      WHEN o.enddate IS NULL THEN NULL
+      WHEN (o.enddate AT TIME ZONE 'UTC')::date >= '3849-12-31' THEN NULL
+      ELSE end_of_day(o.enddate) AT TIME ZONE 'UTC'
     END AS "DateEnd",
     true AS "CredentialIssuanceEnabled",
     'Opportunity|Default' AS "SSISchemaName",
@@ -973,11 +973,11 @@ WITH Inserted AS (
         END AS "CommentVerification",
         start_of_day(C.startdate) AT TIME ZONE 'UTC' AS "DateStart",
         CASE
-		    WHEN C.enddate IS NULL AND (C.verifiedat IS NOT NULL AND C.approved = TRUE) THEN end_of_day(C.verifiedat) AT TIME ZONE 'UTC'
-		    WHEN C.enddate::date = '3850-01-02' AND (C.verifiedat IS NOT NULL AND C.approved = TRUE) THEN end_of_day(C.verifiedat) AT TIME ZONE 'UTC'
-		    WHEN C.enddate IS NULL OR C.enddate::date = '3850-01-02' THEN NULL
-		    ELSE end_of_day(C.enddate) AT TIME ZONE 'UTC'
-		END AS "DateEnd",
+  			  WHEN C.enddate IS NULL AND (C.verifiedat IS NOT NULL AND C.approved = TRUE) THEN end_of_day(C.verifiedat) AT TIME ZONE 'UTC'
+  			  WHEN (C.enddate AT TIME ZONE 'UTC')::date >= '3849-12-31' AND (C.verifiedat IS NOT NULL AND C.approved = TRUE) THEN end_of_day(C.verifiedat) AT TIME ZONE 'UTC'
+  			  WHEN C.enddate IS NULL OR (C.enddate AT TIME ZONE 'UTC')::date >= '3849-12-31' THEN NULL
+  			  ELSE end_of_day(C.enddate) AT TIME ZONE 'UTC'
+		    END AS "DateEnd",
         C.verifiedat AS "DateCompleted",
         CASE
             WHEN C.verifiedat IS NOT NULL AND C.approved = TRUE AND ABS(C.zltoreward) > 0 THEN CAST(ABS(C.zltoreward) AS numeric(8,2))
