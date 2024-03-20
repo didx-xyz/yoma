@@ -316,20 +316,23 @@ jobs:
           filters: |-
             api:
               - './src/api/**'
+              - './helm/yoma-api/**'
             web:
               - './src/web/**'
+              - './helm/yoma-web/**'
             keycloak:
               - './src/keycloak/**'
+              - './helm/keycloak/**'
       - uses: unfor19/install-aws-cli-action@v1
         if: (
-            steps.filter.outputs.api == 'true' || 
+            steps.filter.outputs.api == 'true' ||
             steps.filter.outputs.web == 'true' ||
             steps.filter.outputs.keycloak == 'true' ||
             github.event_name == 'workflow_dispatch'
           )
       - name: SOPS Binary Installer
         if: (
-            steps.filter.outputs.api == 'true' || 
+            steps.filter.outputs.api == 'true' ||
             steps.filter.outputs.web == 'true' ||
             steps.filter.outputs.keycloak == 'true' ||
             github.event_name == 'workflow_dispatch'
@@ -337,7 +340,7 @@ jobs:
         uses: mdgreenwald/mozilla-sops-action@v1.6.0
       - uses: aws-actions/configure-aws-credentials@v4
         if: (
-            steps.filter.outputs.api == 'true' || 
+            steps.filter.outputs.api == 'true' ||
             steps.filter.outputs.web == 'true' ||
             steps.filter.outputs.keycloak == 'true' ||
             github.event_name == 'workflow_dispatch'
@@ -348,14 +351,14 @@ jobs:
           role-session-name: github-cicd
       - run: aws eks update-kubeconfig --name ${{ secrets.CLUSTER }}
         if: (
-            steps.filter.outputs.api == 'true' || 
+            steps.filter.outputs.api == 'true' ||
             steps.filter.outputs.web == 'true' ||
             steps.filter.outputs.keycloak == 'true' ||
             github.event_name == 'workflow_dispatch'
           )
       - uses: tailscale/github-action@main
         if: (
-            steps.filter.outputs.api == 'true' || 
+            steps.filter.outputs.api == 'true' ||
             steps.filter.outputs.web == 'true' ||
             steps.filter.outputs.keycloak == 'true' ||
             github.event_name == 'workflow_dispatch'
