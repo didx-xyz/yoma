@@ -335,30 +335,40 @@ const Home: NextPageWithLayout<{
               win prizes!
             </p>
             <div className="flex flex-row gap-2">
-              <Image
-                src={imageLogoAppStore}
-                alt="Logo App Store"
-                width={100}
-                height={40}
-                sizes="120vw"
-                style={{
-                  width: "120px",
-                  height: "40px",
-                  zIndex: 1,
-                }}
-              />
-              <Image
-                src={imageLogoPlayStore}
-                alt="Logo Play Store"
-                width={120}
-                height={40}
-                sizes="100vw"
-                style={{
-                  width: "120px",
-                  height: "40px",
-                  zIndex: 1,
-                }}
-              />
+              <Link
+                href="https://apps.apple.com/us/app/goodwall-level-up-a-skill/id857868585"
+                target="_blank"
+              >
+                <Image
+                  src={imageLogoAppStore}
+                  alt="Logo App Store"
+                  width={100}
+                  height={40}
+                  sizes="120vw"
+                  style={{
+                    width: "120px",
+                    height: "40px",
+                    zIndex: 1,
+                  }}
+                />
+              </Link>{" "}
+              <Link
+                href="https://play.google.com/store/apps/details?id=org.goodwall.app&hl=en&gl=US&pli=1"
+                target="_blank"
+              >
+                <Image
+                  src={imageLogoPlayStore}
+                  alt="Logo Play Store"
+                  width={120}
+                  height={40}
+                  sizes="100vw"
+                  style={{
+                    width: "120px",
+                    height: "40px",
+                    zIndex: 1,
+                  }}
+                />
+              </Link>
             </div>
           </div>
 
@@ -552,13 +562,13 @@ const Home: NextPageWithLayout<{
                 </p>
               </div>
 
-              {/* OPPORTUNITIES BUTTON */}
-              <Link
-                href="/opportunities"
-                className="btn mt-8 w-[260px] rounded-xl border-none bg-purple normal-case text-white hover:bg-purple hover:text-white hover:brightness-110"
+              {/* JOBS BUTTON */}
+              <button
+                className="btn mt-8 w-[260px] rounded-xl border-none bg-purple normal-case text-white hover:bg-purple hover:text-white hover:brightness-110 disabled:bg-purple disabled:text-white"
+                disabled={true}
               >
-                Find a job near you
-              </Link>
+                Coming soon!
+              </button>
             </div>
           </div>
         </div>
