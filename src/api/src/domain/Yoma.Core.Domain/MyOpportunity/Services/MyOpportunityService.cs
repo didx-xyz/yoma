@@ -802,9 +802,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
           YoIDURL = _emailURLFactory.OpportunityVerificationYoIDURL(type),
           VerificationURL = _emailURLFactory.OpportunityVerificationURL(type, myOpportunity.OrganizationId),
-          Opportunities =
-          [
-            new() {
+          Opportunities = [
+            new()
+            {
               Title = myOpportunity.OpportunityTitle,
               DateStart = myOpportunity.DateStart,
               DateEnd = myOpportunity.DateEnd,
