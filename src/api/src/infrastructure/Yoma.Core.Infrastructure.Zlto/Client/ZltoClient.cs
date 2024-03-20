@@ -402,11 +402,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
     #region Private Members
     private async Task<Dictionary<string, string>> GetAuthHeaders()
     {
-      var authHeaders = new Dictionary<string, string>(
-        [
-        GetAuthHeaderApiKey(),
-        await GetAuthHeaderToken()
-        ]);
+      var authHeaders = new Dictionary<string, string>([GetAuthHeaderApiKey(), await GetAuthHeaderToken()]);
 
       return authHeaders;
     }

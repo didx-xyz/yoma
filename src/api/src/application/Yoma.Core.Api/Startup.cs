@@ -143,13 +143,13 @@ namespace Yoma.Core.Api
         * https://github.com/aws/aws-ssm-data-protection-provider-for-aspnet
         */
         IgnoreAntiforgeryToken = true, //replicas >=2 will cause antiforgery token issues
-        Authorization = [ new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
+        Authorization = [new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
         {
           RequireSsl = false, //handled by AWS
           SslRedirect = false, //handled by AWS
           LoginCaseSensitive = true,
-          Users = [ new BasicAuthAuthorizationUser { Login = _appSettings.Hangfire.Username, PasswordClear = _appSettings.Hangfire.Password }]
-        }) ]
+          Users = [new BasicAuthAuthorizationUser { Login = _appSettings.Hangfire.Username, PasswordClear = _appSettings.Hangfire.Password }]
+        })]
       });
 
       app.UseSSIProvider();
