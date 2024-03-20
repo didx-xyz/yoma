@@ -20,7 +20,7 @@ import {
   type OpportunitySearchFilterCombined,
   type OpportunitySearchResultsInfo,
   type OpportunityType,
-  OpportunitySearchFilter,
+  type OpportunitySearchFilter,
 } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import {
@@ -55,7 +55,6 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import { useSession } from "next-auth/react";
 import { OpportunityFilterOptions } from "~/api/models/opportunity";
 import { OpportunitiesCarousel } from "~/components/Opportunity/OpportunitiesCarousel";
-import { json } from "stream/consumers";
 
 // 👇 SSG
 // This function gets called at build time on server-side.
@@ -619,7 +618,7 @@ const Opportunities: NextPageWithLayout<{
 
       return data;
     },
-    [],
+    [queryClient],
   );
 
   const loadDataTrending = useCallback(
@@ -648,7 +647,7 @@ const Opportunities: NextPageWithLayout<{
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       });
     },
-    [opportunities_trending],
+    [opportunities_trending, fetchDataAndUpdateCache],
   );
 
   const loadDataLearning = useCallback(
@@ -677,7 +676,7 @@ const Opportunities: NextPageWithLayout<{
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       });
     },
-    [opportunities_learning],
+    [opportunities_learning, fetchDataAndUpdateCache],
   );
 
   const loadDataTasks = useCallback(
@@ -706,7 +705,7 @@ const Opportunities: NextPageWithLayout<{
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       });
     },
-    [opportunities_tasks],
+    [opportunities_tasks, fetchDataAndUpdateCache],
   );
 
   const loadDataOpportunities = useCallback(
@@ -738,7 +737,7 @@ const Opportunities: NextPageWithLayout<{
         },
       );
     },
-    [opportunities_allOpportunities],
+    [opportunities_allOpportunities, fetchDataAndUpdateCache],
   );
 
   return (
