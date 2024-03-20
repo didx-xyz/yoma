@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 using Yoma.Core.Domain.Exceptions;
 
 namespace Yoma.Core.Domain.Core.Helpers
@@ -44,6 +45,26 @@ namespace Yoma.Core.Domain.Core.Helpers
       if (claimsPrincipal.IsInRole(Constants.Role_Admin)) return false;
       if (claimsPrincipal.IsInRole(Constants.Role_OrganizationAdmin)) return false;
       return claimsPrincipal.IsInRole(Constants.Role_User);
+    }
+
+    public static void UpdateUsername(IHttpContextAccessor? httpContextAccessor, string newEmail)
+    {
+      var claimsPrincipal = httpContextAccessor?.HttpContext?.User;
+      ArgumentNullException.ThrowIfNull(claimsPrincipal);
+
+      var identity = claimsPrincipal.Identity as ClaimsIdentity;
+      ArgumentNullException.ThrowIfNull(identity);
+
+      var existingPreferredUsernameClaim = identity.FindFirst("preferred_username");
+      if (existingPreferredUsernameClaim != null)
+        identity.RemoveClaim(existingPreferredUsernameClaim);
+
+      var existingEmailClaim = identity.FindFirst(ClaimTypes.Email);
+      if (existingEmailClaim != null)
+        identity.RemoveClaim(existingEmailClaim);
+
+      identity.AddClaim(new Claim("preferred_username", newEmail));
+      identity.AddClaim(new Claim(ClaimTypes.Email, newEmail));
     }
   }
 }

@@ -141,6 +141,8 @@ namespace Yoma.Core.Domain.Entity.Services
         scope.Complete();
       });
 
+      HttpContextAccessorHelper.UpdateUsername(_httpContextAccessor, user.Email);
+
       return await ToProfile(user);
     }
     #endregion
