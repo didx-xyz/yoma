@@ -3,13 +3,13 @@ using Yoma.Core.Domain.SSI.Models;
 
 namespace Yoma.Core.Domain.SSI.Validators
 {
-    public class SSIWalletFilterValidator : PaginationFilterValidator<SSIWalletFilter>
+  public class SSIWalletFilterValidator : PaginationFilterValidator<SSIWalletFilter>
+  {
+    #region Constructor
+    public SSIWalletFilterValidator()
     {
-        #region Constructor
-        public SSIWalletFilterValidator()
-        {
-            //pagination optional
-        }
-        #endregion
+      //pagination optional
     }
+    #endregion
+  }
 }

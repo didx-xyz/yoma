@@ -3,14 +3,14 @@ using Yoma.Core.Domain.Entity.Models;
 
 namespace Yoma.Core.Domain.Entity.Interfaces
 {
-    public interface IUserProfileService
-    {
-        UserProfile Get();
+  public interface IUserProfileService
+  {
+    UserProfile Get();
 
-        Task<UserProfile> UpsertPhoto(IFormFile file);
+    Task<UserProfile> UpsertPhoto(IFormFile file);
 
-        Task<UserProfile> Update(UserRequestProfile request);
+    Task<UserProfile> Update(UserRequestProfile request);
 
-        Task<UserProfile> YoIDOnboard();
-    }
+    Task<UserProfile> YoIDOnboard();
+  }
 }

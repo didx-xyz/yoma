@@ -4,56 +4,56 @@ using System.Runtime.Serialization;
 
 namespace Yoma.Core.Domain.Core.Extensions
 {
-    public static class EnumExtensions
+  public static class EnumExtensions
+  {
+    public static string ToEnumMemberValue(this Enum value)
     {
-        public static string ToEnumMemberValue(this Enum value)
-        {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
+      if (value == null)
+        throw new ArgumentNullException(nameof(value));
 
-            var type = value.GetType();
+      var type = value.GetType();
 
-            var fieldInfo = (type?.GetField(value.ToString())) ?? throw new InvalidOperationException($"Failed to reflect the {nameof(value)} field info");
-            var attrib = fieldInfo
-                .GetCustomAttributes(false)
-                .SingleOrDefault(attr => attr.GetType() == typeof(EnumMemberAttribute)) as EnumMemberAttribute;
+      var fieldInfo = (type?.GetField(value.ToString())) ?? throw new InvalidOperationException($"Failed to reflect the {nameof(value)} field info");
+      var attrib = fieldInfo
+          .GetCustomAttributes(false)
+          .SingleOrDefault(attr => attr.GetType() == typeof(EnumMemberAttribute)) as EnumMemberAttribute;
 
-            // return description
-            return attrib?.Value ?? value.ToString();
-        }
-
-        public static string ToDescription(this Enum value)
-        {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
-
-            var type = value.GetType();
-
-            var fieldInfo = (type?.GetField(value.ToString())) ?? throw new InvalidOperationException($"Failed to reflect the {nameof(value)} field info");
-            var attrib = fieldInfo
-                .GetCustomAttributes(false)
-                .SingleOrDefault(attr => attr.GetType() == typeof(DescriptionAttribute)) as DescriptionAttribute;
-
-            return attrib?.Description ?? value.ToString();
-        }
-
-        public static string? GetValueFromEnumMemberValue<T>(string value)
-            where T : Enum
-        {
-            var type = typeof(T);
-            if (type.GetTypeInfo().IsEnum)
-            {
-                foreach (var name in Enum.GetNames(type))
-                {
-                    var attr = type.GetRuntimeField(name)?.GetCustomAttribute<EnumMemberAttribute>(true);
-                    if (attr != null && attr.Value == value)
-                        return Enum.Parse(type, name).ToString();
-                }
-
-                return null;
-            }
-
-            throw new InvalidOperationException("Not Enum");
-        }
+      // return description
+      return attrib?.Value ?? value.ToString();
     }
+
+    public static string ToDescription(this Enum value)
+    {
+      if (value == null)
+        throw new ArgumentNullException(nameof(value));
+
+      var type = value.GetType();
+
+      var fieldInfo = (type?.GetField(value.ToString())) ?? throw new InvalidOperationException($"Failed to reflect the {nameof(value)} field info");
+      var attrib = fieldInfo
+          .GetCustomAttributes(false)
+          .SingleOrDefault(attr => attr.GetType() == typeof(DescriptionAttribute)) as DescriptionAttribute;
+
+      return attrib?.Description ?? value.ToString();
+    }
+
+    public static string? GetValueFromEnumMemberValue<T>(string value)
+        where T : Enum
+    {
+      var type = typeof(T);
+      if (type.GetTypeInfo().IsEnum)
+      {
+        foreach (var name in Enum.GetNames(type))
+        {
+          var attr = type.GetRuntimeField(name)?.GetCustomAttribute<EnumMemberAttribute>(true);
+          if (attr != null && attr.Value == value)
+            return Enum.Parse(type, name).ToString();
+        }
+
+        return null;
+      }
+
+      throw new InvalidOperationException("Not Enum");
+    }
+  }
 }

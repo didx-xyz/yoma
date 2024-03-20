@@ -3,14 +3,14 @@ using Yoma.Core.Domain.Reward.Models;
 
 namespace Yoma.Core.Domain.Reward.Validators
 {
-    public class WalletVoucherSearchFilterValidator : PaginationFilterValidator<WalletVoucherSearchFilter>
+  public class WalletVoucherSearchFilterValidator : PaginationFilterValidator<WalletVoucherSearchFilter>
+  {
+    #region Constructor
+    public WalletVoucherSearchFilterValidator()
     {
-        #region Constructor
-        public WalletVoucherSearchFilterValidator()
-        {
-            //pagination optional
-            //categoryId optional
-        }
-        #endregion
+      //pagination optional
+      //categoryId optional
     }
+    #endregion
+  }
 }

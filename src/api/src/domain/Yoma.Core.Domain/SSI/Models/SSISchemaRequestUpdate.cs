@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.SSI.Models.Lookups
 {
-    public class SSISchemaRequestUpdate : SSISchemaRequestBase
-    {
-    }
+  public class SSISchemaRequestUpdate : SSISchemaRequestBase
+  {
+  }
 }

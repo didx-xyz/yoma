@@ -2,16 +2,16 @@ using Yoma.Core.Domain.Reward.Models;
 
 namespace Yoma.Core.Domain.Reward.Interfaces
 {
-    public interface IRewardService
-    {
-        Task ScheduleRewardTransaction(Guid userId, RewardTransactionEntityType entityType, Guid entityId, decimal amount);
+  public interface IRewardService
+  {
+    Task ScheduleRewardTransaction(Guid userId, RewardTransactionEntityType entityType, Guid entityId, decimal amount);
 
-        List<RewardTransaction> ListPendingTransactionSchedule(Guid userId);
+    List<RewardTransaction> ListPendingTransactionSchedule(Guid userId);
 
-        List<RewardTransaction> ListPendingTransactionSchedule(int batchSize, List<Guid> idsToSkip);
+    List<RewardTransaction> ListPendingTransactionSchedule(int batchSize, List<Guid> idsToSkip);
 
-        Task UpdateTransaction(RewardTransaction item);
+    Task UpdateTransaction(RewardTransaction item);
 
-        Task UpdateTransactions(List<RewardTransaction> items);
-    }
+    Task UpdateTransactions(List<RewardTransaction> items);
+  }
 }

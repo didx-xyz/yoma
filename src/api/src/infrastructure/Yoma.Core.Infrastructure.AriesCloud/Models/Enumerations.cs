@@ -1,7 +1,7 @@
 namespace Yoma.Core.Infrastructure.AriesCloud.Models
 {
-    public enum ConnectionState
-    {
-        Completed
-    }
+  public enum ConnectionState
+  {
+    Completed
+  }
 }

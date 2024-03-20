@@ -1,29 +1,29 @@
 namespace Yoma.Core.Domain.Reward
 {
-    public enum WalletCreationStatus
-    {
-        Unscheduled,
-        Pending,
-        Created,
-        Error
-    }
+  public enum WalletCreationStatus
+  {
+    Unscheduled,
+    Pending,
+    Created,
+    Error
+  }
 
-    public enum RewardTransactionEntityType
-    {
-        MyOpportunity
-    }
+  public enum RewardTransactionEntityType
+  {
+    MyOpportunity
+  }
 
-    public enum RewardTransactionStatus
-    {
-        Pending,
-        Processed,
-        ProcessedInitialBalance,
-        Error
-    }
+  public enum RewardTransactionStatus
+  {
+    Pending,
+    Processed,
+    ProcessedInitialBalance,
+    Error
+  }
 
-    public enum VoucherStatus
-    {
-        New,
-        Viewed
-    }
+  public enum VoucherStatus
+  {
+    New,
+    Viewed
+  }
 }

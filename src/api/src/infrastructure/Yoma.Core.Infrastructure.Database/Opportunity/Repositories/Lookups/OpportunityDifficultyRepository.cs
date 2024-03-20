@@ -5,37 +5,37 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories.Lookups
 {
-    public class OpportunityDifficultyRepository : BaseRepository<Entities.Lookups.OpportunityDifficulty, Guid>, IRepository<OpportunityDifficulty>
+  public class OpportunityDifficultyRepository : BaseRepository<Entities.Lookups.OpportunityDifficulty, Guid>, IRepository<OpportunityDifficulty>
+  {
+    #region Constructor
+    public OpportunityDifficultyRepository(ApplicationDbContext context) : base(context)
     {
-        #region Constructor
-        public OpportunityDifficultyRepository(ApplicationDbContext context) : base(context)
-        {
-        }
-        #endregion
-
-        #region Public Members
-        public IQueryable<OpportunityDifficulty> Query()
-        {
-            return _context.OpportunityDifficulty.Select(entity => new OpportunityDifficulty
-            {
-                Id = entity.Id,
-                Name = entity.Name
-            });
-        }
-
-        public Task<OpportunityDifficulty> Create(OpportunityDifficulty item)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<OpportunityDifficulty> Update(OpportunityDifficulty item)
-        {
-            throw new NotImplementedException();
-        }
-        public Task Delete(OpportunityDifficulty item)
-        {
-            throw new NotImplementedException();
-        }
-        #endregion
     }
+    #endregion
+
+    #region Public Members
+    public IQueryable<OpportunityDifficulty> Query()
+    {
+      return _context.OpportunityDifficulty.Select(entity => new OpportunityDifficulty
+      {
+        Id = entity.Id,
+        Name = entity.Name
+      });
+    }
+
+    public Task<OpportunityDifficulty> Create(OpportunityDifficulty item)
+    {
+      throw new NotImplementedException();
+    }
+
+    public Task<OpportunityDifficulty> Update(OpportunityDifficulty item)
+    {
+      throw new NotImplementedException();
+    }
+    public Task Delete(OpportunityDifficulty item)
+    {
+      throw new NotImplementedException();
+    }
+    #endregion
+  }
 }

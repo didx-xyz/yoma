@@ -1,11 +1,11 @@
 namespace Yoma.Core.Domain.Entity.Interfaces
 {
-    public interface IOrganizationBackgroundService
-    {
-        void ProcessDeclination();
+  public interface IOrganizationBackgroundService
+  {
+    void ProcessDeclination();
 
-        void ProcessDeletion();
+    void ProcessDeletion();
 
-        void SeedLogoAndDocuments();
-    }
+    void SeedLogoAndDocuments();
+  }
 }

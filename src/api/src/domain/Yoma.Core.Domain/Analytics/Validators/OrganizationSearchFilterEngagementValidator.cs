@@ -3,12 +3,12 @@ using Yoma.Core.Domain.Entity.Interfaces;
 
 namespace Yoma.Core.Domain.Analytics.Validators
 {
-    public class OrganizationSearchFilterEngagementValidator : OrganizationSearchFilterValidatorBase<OrganizationSearchFilterEngagement>
+  public class OrganizationSearchFilterEngagementValidator : OrganizationSearchFilterValidatorBase<OrganizationSearchFilterEngagement>
+  {
+    #region Constructor
+    public OrganizationSearchFilterEngagementValidator(IOrganizationService organizationService) : base(organizationService)
     {
-        #region Constructor
-        public OrganizationSearchFilterEngagementValidator(IOrganizationService organizationService) : base(organizationService)
-        {
-        }
-        #endregion
     }
+    #endregion
+  }
 }

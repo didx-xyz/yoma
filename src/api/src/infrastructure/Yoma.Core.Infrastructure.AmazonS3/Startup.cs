@@ -6,16 +6,16 @@ using Yoma.Core.Infrastructure.AmazonS3.Models;
 
 namespace Yoma.Core.Infrastructure.AmazonS3
 {
-    public static class Startup
+  public static class Startup
+  {
+    public static void ConfigureServices_BlobProvider(this IServiceCollection services, IConfiguration configuration)
     {
-        public static void ConfigureServices_BlobProvider(this IServiceCollection services, IConfiguration configuration)
-        {
-            services.Configure<AWSS3Options>(options => configuration.GetSection(AWSS3Options.Section).Bind(options));
-        }
-
-        public static void ConfigureServices_InfrastructureBlobProvider(this IServiceCollection services)
-        {
-            services.AddScoped<IBlobProviderClientFactory, AmazonS3ClientFactory>();
-        }
+      services.Configure<AWSS3Options>(options => configuration.GetSection(AWSS3Options.Section).Bind(options));
     }
+
+    public static void ConfigureServices_InfrastructureBlobProvider(this IServiceCollection services)
+    {
+      services.AddScoped<IBlobProviderClientFactory, AmazonS3ClientFactory>();
+    }
+  }
 }

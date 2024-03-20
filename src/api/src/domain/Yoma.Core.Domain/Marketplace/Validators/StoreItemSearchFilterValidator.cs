@@ -4,15 +4,15 @@ using Yoma.Core.Domain.Marketplace.Models;
 
 namespace Yoma.Core.Domain.Marketplace.Validators
 {
-    public class StoreItemSearchFilterValidator : PaginationFilterValidator<StoreItemSearchFilter>
+  public class StoreItemSearchFilterValidator : PaginationFilterValidator<StoreItemSearchFilter>
+  {
+    #region Constructor
+    public StoreItemSearchFilterValidator()
     {
-        #region Constructor
-        public StoreItemSearchFilterValidator()
-        {
-            //pagination optional
-            RuleFor(x => x.StoreId).NotEmpty().WithMessage("{PropertyName} is required");
-            RuleFor(x => x.ItemCategoryId).NotEmpty().WithMessage("{PropertyName} is required");
-        }
-        #endregion
+      //pagination optional
+      RuleFor(x => x.StoreId).NotEmpty().WithMessage("{PropertyName} is required");
+      RuleFor(x => x.ItemCategoryId).NotEmpty().WithMessage("{PropertyName} is required");
     }
+    #endregion
+  }
 }
