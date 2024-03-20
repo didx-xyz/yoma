@@ -88,11 +88,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize,
         OrderInstructions =
-                [
-                    new() { OrderBy = e => e.DateStart, SortOrder = Core.FilterSortOrder.Descending },
-                    new() { OrderBy = e => e.DateEnd ?? DateTimeOffset.MaxValue, SortOrder = Core.FilterSortOrder.Descending },
-                    new() { OrderBy = e => e.Title, SortOrder = Core.FilterSortOrder.Ascending },
-                ]
+        [
+          new() { OrderBy = e => e.DateStart, SortOrder = Core.FilterSortOrder.Descending },
+          new() { OrderBy = e => e.DateEnd ?? DateTimeOffset.MaxValue, SortOrder = Core.FilterSortOrder.Descending },
+          new() { OrderBy = e => e.Title, SortOrder = Core.FilterSortOrder.Ascending },
+        ]
       };
 
       var mostViewed = filter.MostViewed.HasValue && filter.MostViewed.Value;

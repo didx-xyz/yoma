@@ -24,8 +24,6 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
     private readonly KeycloakAdminOptions _keycloakAdminOptions;
     private readonly KeycloakAuthenticationOptions _keycloakAuthenticationOptions;
     private readonly AuthenticationHttpClient _httpClient;
-
-    private const string Authentication_Scheme_Basic = "Basic";
     #endregion
 
     #region Constructor
@@ -60,8 +58,8 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
       var authHeader = AuthenticationHeaderValue.Parse(headerValue!);
 
-      if (authHeader.Parameter == null || authHeader.Scheme != Authentication_Scheme_Basic)
-        throw new ArgumentException($"{nameof(httpContext.Request.Headers)}.Authorization is null or not of scheme '{Authentication_Scheme_Basic}'", nameof(httpContext));
+      if (authHeader.Parameter == null)
+        throw new ArgumentException($"{nameof(httpContext.Request.Headers)}.Authorization is null", nameof(httpContext));
 
       var credentialBytes = Convert.FromBase64String(authHeader.Parameter);
       var credentials = Encoding.UTF8.GetString(credentialBytes).Split(':', 2);

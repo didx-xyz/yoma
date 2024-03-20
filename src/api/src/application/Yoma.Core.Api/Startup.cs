@@ -146,21 +146,21 @@ namespace Yoma.Core.Api
         Authorization =
           [
               new BasicAuthAuthorizationFilter(
-                        new BasicAuthAuthorizationFilterOptions
-                        {
-                            RequireSsl = false, //handled by AWS
-                            SslRedirect = false, //handled by AWS
-                            LoginCaseSensitive = true,
-                            Users =
-                            [
-                                new BasicAuthAuthorizationUser
-                                {
-                                    Login = _appSettings.Hangfire.Username,
-                                    PasswordClear = _appSettings.Hangfire.Password
-                                }
-                            ]
-                        })
-          ]
+                new BasicAuthAuthorizationFilterOptions
+                {
+                  RequireSsl = false, //handled by AWS
+                  SslRedirect = false, //handled by AWS
+                  LoginCaseSensitive = true,
+                  Users =
+                  [
+                    new BasicAuthAuthorizationUser
+                    {
+                      Login = _appSettings.Hangfire.Username,
+                      PasswordClear = _appSettings.Hangfire.Password
+                    }
+                    ]
+                })
+              ]
       });
 
       app.UseSSIProvider();
