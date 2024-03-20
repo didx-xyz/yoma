@@ -77,7 +77,7 @@ services:
     image: quay.io/keycloak/keycloak:22.0.1
     container_name: keycloak
     environment:
-      WEBHOOK_EVENTS_TAKEN: "LOGIN,REGISTER,LOGOUT,UPDATE_PROFILE"
+      WEBHOOK_EVENTS_TAKEN: "LOGIN,REGISTER,UPDATE_PROFILE"
       WEBHOOK_HTTP_BASE_PATH: "http://yoma-api:5000/api/v3/keycloak"
       WEBHOOK_HTTP_AUTH_USERNAME: whAdmin
       WEBHOOK_HTTP_AUTH_PASSWORD: password
