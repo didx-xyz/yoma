@@ -130,9 +130,14 @@ namespace Yoma.Core.Domain.Analytics.Services
       //'my' opportunities: viewed
       var queryViewed = MyOpportunityQueryViewed(queryBase);
 
-      var itemsViewed = queryViewed.GroupBy(opportunity =>
-           opportunity.DateModified.AddDays(-(int)opportunity.DateModified.DayOfWeek).AddDays(7).Date
-          )
+      var itemsViewed = queryViewed
+          .Select(opportunity => new { opportunity.DateModified })
+          .ToList() //transition to client-side processing avoiding translation issue : function pg_catalog.timezone(unknown, interval) does not exist
+          .Select(item => new
+          {
+            WeekEnding = item.DateModified.AddDays(-(int)item.DateModified.DayOfWeek).AddDays(7).Date
+          })
+          .GroupBy(x => x.WeekEnding)
           .Select(group => new
           {
             WeekEnding = group.Key,
@@ -147,16 +152,21 @@ namespace Yoma.Core.Domain.Analytics.Services
       //'my' opportunities: completed
       var queryCompleted = MyOpportunityQueryCompleted(queryBase);
 
-      var itemsCompleted = queryCompleted.GroupBy(opportunity =>
-           opportunity.DateModified.AddDays(-(int)opportunity.DateModified.DayOfWeek).AddDays(7).Date
-           )
-           .Select(group => new
-           {
-             WeekEnding = group.Key,
-             Count = group.Count()
-           })
-           .OrderBy(result => result.WeekEnding)
-           .ToList();
+      var itemsCompleted = queryCompleted
+        .Select(opportunity => new { opportunity.DateModified })
+        .ToList() //transition to client-side processing avoiding translation issue : function pg_catalog.timezone(unknown, interval) does not exist
+        .Select(item => new
+        {
+          WeekEnding = item.DateModified.AddDays(-(int)item.DateModified.DayOfWeek).AddDays(7).Date
+        })
+        .GroupBy(x => x.WeekEnding)
+        .Select(group => new
+        {
+          WeekEnding = group.Key,
+          Count = group.Count()
+        })
+        .OrderBy(result => result.WeekEnding)
+        .ToList();
 
       var resultsCompleted = new List<TimeValueEntry>();
       itemsCompleted.ForEach(o => { resultsCompleted.Add(new TimeValueEntry(o.WeekEnding, default(int), o.Count)); });
