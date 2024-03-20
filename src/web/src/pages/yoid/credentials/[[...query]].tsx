@@ -274,7 +274,7 @@ const MyCredentials: NextPageWithLayout<{
             <NoRowsMessage
               title={"No results found"}
               description={
-                "Credentials that you receive by completing opportunities will be diplayed here."
+                "Credentials that you receive by completing opportunities will be displayed here."
               }
             />
           </div>
