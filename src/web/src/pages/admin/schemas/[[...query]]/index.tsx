@@ -69,8 +69,8 @@ const Schemas: NextPageWithLayout<{
       <PageBackground />
 
       <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
-        <div className="flex flex-col gap-2 py-4 sm:flex-row">
-          <h3 className="flex flex-grow text-white">Schemas</h3>
+        <div className="flex flex-row gap-2 py-4">
+          <h2 className="flex flex-grow font-semibold text-white">Schemas</h2>
 
           <div className="flex gap-2 sm:justify-end">
             <Link

@@ -247,7 +247,7 @@ const OrganisationUpdate: NextPageWithLayout<{
             <div className="mx-2">/</div>
 
             <Link
-              className="font-bold hover:text-gray"
+              className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap font-bold hover:text-gray md:max-w-[400px] lg:max-w-[800px]"
               href={`/organisations/${id}`}
             >
               {organisation?.name}

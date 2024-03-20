@@ -904,17 +904,6 @@ const OpportunityDetails: NextPageWithLayout<{
                 type="button"
                 className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
                 onClick={onClickContinueWithoutSaving}
-                // onClick={() => {
-                //   resetStep1(formData);
-                //   resetStep2(formData);
-                //   resetStep3(formData);
-                //   resetStep4(formData);
-                //   resetStep5(formData);
-                //   resetStep6(formData);
-                //   resetStep7(formData);
-                //   setSaveChangesDialogVisible(false);
-                //   setStep(lastStepBeforeSaveChangesDialog);
-                // }}
               >
                 <span className="ml-1">Continue without saving</span>
               </button>
@@ -933,37 +922,35 @@ const OpportunityDetails: NextPageWithLayout<{
 
       <div className="container z-10 mt-20 max-w-7xl px-2 py-4">
         {/* BREADCRUMB */}
-        <div className="inline flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
-          <ul className="inline">
-            <li className="inline">
+        <div className="flex flex-row items-center text-xs text-white">
+          <Link
+            className="font-bold hover:text-gray"
+            href={returnUrl?.toString() ?? `/organisations/${id}/opportunities`}
+          >
+            <IoMdArrowRoundBack className="bg-theme mr-2 inline-block h-6 w-6 rounded-full p-1 brightness-105" />
+            Opportunities
+          </Link>
+
+          <div className="mx-2">|</div>
+
+          {opportunityId == "create" ? (
+            "Create"
+          ) : (
+            <>
               <Link
-                className="inline text-white hover:text-gray"
-                href={
-                  returnUrl?.toString() ?? `/organisations/${id}/opportunities`
-                }
+                className="font-boldx mt-0 max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap hover:text-gray md:max-w-[400px] lg:max-w-[800px]"
+                href={`/organisations/${id}/opportunities/${opportunityId}/info${
+                  returnUrl ? `?returnUrl=${returnUrl}` : ""
+                }`}
               >
-                <IoMdArrowRoundBack className="bg-theme mr-2 inline-block h-6 w-6 rounded-full p-1 brightness-105" />
-                Opportunities
+                {opportunity?.title}
               </Link>
-            </li>
-            <li className="mx-2 inline font-bold text-white">|</li>
-            <li className="inline">
-              <div className="inline max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
-                {opportunityId == "create" ? (
-                  "Create"
-                ) : (
-                  <Link
-                    className="inline text-white hover:text-gray"
-                    href={`/organisations/${id}/opportunities/${opportunityId}/info${
-                      returnUrl ? `?returnUrl=${returnUrl}` : ""
-                    }`}
-                  >
-                    {opportunity?.title}
-                  </Link>
-                )}
+              <div className="mx-2">|</div>
+              <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
+                Edit
               </div>
-            </li>
-          </ul>
+            </>
+          )}
         </div>
 
         <h3 className="mb-6 mt-2 pl-8 font-bold text-white">
