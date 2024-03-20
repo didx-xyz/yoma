@@ -9,13 +9,12 @@ using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
-using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.Analytics.Services
 {
-    public class AnalyticsService : IAnalyticsService
+  public class AnalyticsService : IAnalyticsService
     {
         #region Class Variables
         private readonly AppSettings _appSettings;
