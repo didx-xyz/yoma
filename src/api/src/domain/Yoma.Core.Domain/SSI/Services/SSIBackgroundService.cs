@@ -74,8 +74,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
         SeedSchema(ArtifactType.JWS,
              SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
-             [ "Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Skills", "Opportunity_Summary", "Opportunity_Type",
-                        "MyOpportunity_UserDisplayName", "MyOpportunity_UserDateOfBirth", "MyOpportunity_DateCompleted" ]).Wait();
+             ["Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Skills", "Opportunity_Summary", "Opportunity_Type", "MyOpportunity_UserDisplayName", "MyOpportunity_UserDateOfBirth", "MyOpportunity_DateCompleted"]).Wait();
 
         SeedSchema(ArtifactType.Indy,
             _appSettings.SSISchemaFullNameYoID,

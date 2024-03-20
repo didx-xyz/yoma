@@ -1354,18 +1354,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         var data = new EmailOpportunityPosted
         {
-          Opportunities =
-            [
-                new()
-                        {
-                            Title = opportunity.Title,
-                            DateStart = opportunity.DateStart,
-                            DateEnd = opportunity.DateEnd,
-                            URL = _emailURLFactory.OpportunityPostedItemURL(type, opportunity.Id, opportunity.OrganizationId),
-                            ZltoReward = opportunity.ZltoReward,
-                            YomaReward = opportunity.YomaReward
-                        }
-            ]
+          Opportunities = [ new()
+          {
+            Title = opportunity.Title,
+            DateStart = opportunity.DateStart,
+            DateEnd = opportunity.DateEnd,
+            URL = _emailURLFactory.OpportunityPostedItemURL(type, opportunity.Id, opportunity.OrganizationId),
+            ZltoReward = opportunity.ZltoReward,
+            YomaReward = opportunity.YomaReward
+          } ]
         };
 
         await _emailProviderClient.Send(type, recipients, data);
