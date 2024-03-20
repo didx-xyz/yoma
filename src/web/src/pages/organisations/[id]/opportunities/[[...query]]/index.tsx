@@ -176,8 +176,8 @@ const Opportunities: NextPageWithLayout<{
 
       <PageBackground />
 
-      <div className="container z-10 mt-20 max-w-7xl px-2 py-8">
-        <div className="flex flex-col py-4 sm:flex-row">
+      <div className="container z-10 mt-10 max-w-7xl px-2 py-8 md:mt-20">
+        <div className="flex flex-col gap-4 py-4 sm:flex-row">
           <h3 className="flex flex-grow items-center font-semibold text-white">
             Opportunities <LimitedFunctionalityBadge />
           </h3>

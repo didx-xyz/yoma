@@ -436,7 +436,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         <title>Yoma | Organisation Dashboard</title>
       </Head>
 
-      <PageBackground className="h-[358px] lg:h-[300px]" />
+      <PageBackground className="h-[340px] lg:h-[275px]" />
 
       {isSearchPerformed && isLoading && <Loading />}
 

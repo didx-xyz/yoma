@@ -124,7 +124,7 @@ export const OrganisationCardComponent: React.FC<{
     <Link href={link} id={`lnkOrganisation_${props.item.name}`}>
       <div
         key={`$orgCard_{props.key}`}
-        className="flex flex-col rounded-xl bg-white shadow-custom transition duration-300 hover:scale-[1.01] dark:bg-neutral-700 md:max-w-7xl md:flex-row"
+        className="flex flex-row rounded-xl bg-white shadow-custom transition duration-300 hover:scale-[1.01] dark:bg-neutral-700 md:max-w-7xl"
       >
         <div className="flex w-1/4 items-center justify-center p-2">
           <div className="flex h-28 w-28 items-center justify-center">
@@ -144,7 +144,7 @@ export const OrganisationCardComponent: React.FC<{
           >
             {props.item.name}
           </h5>
-          <p className="truncate overflow-ellipsis whitespace-nowrap text-sm">
+          <p className="h-[40px] overflow-hidden text-ellipsis text-sm">
             {props.item.tagline}
           </p>
           {props.item.status && props.item.status === "Inactive" && (
@@ -248,10 +248,10 @@ const Opportunities: NextPageWithLayout<{
         <title>Yoma | Organisations</title>
       </Head>
 
-      <PageBackground className="h-[315px] lg:h-[288px]" />
+      <PageBackground className="h-[260px] lg:h-[268px]" />
 
       <div className="container z-10 max-w-7xl px-2 py-8">
-        <div className="relative flex flex-col gap-2 py-20 sm:flex-row">
+        <div className="relative flex flex-row gap-2 py-20">
           <h2 className="flex flex-grow font-semibold text-white">
             Organisations
           </h2>
@@ -269,7 +269,7 @@ const Opportunities: NextPageWithLayout<{
 
         {/* TABS */}
 
-        <div role="tablist" className="tabs tabs-bordered relative mt-7">
+        <div role="tablist" className="tabs tabs-bordered relative mt-2">
           {/* PENDING COUNT BADGE */}
           <span className="absolute left-[270px] top-[7px] rounded bg-yellow px-1 text-xs text-white">
             {organisationsInactive?.items?.length}
