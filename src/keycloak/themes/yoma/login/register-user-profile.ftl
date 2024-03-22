@@ -26,7 +26,7 @@
                           <i class="fa fa-eye-slash" id="toggle-password" onclick="togglePassword()"></i>
 													<input type="password" id="register-password" class="${properties.kcInputClass!}" name="password"
 													autocomplete="new-password"
-													aria-invalid="<#if messagesPerField.existsError('password','password-confirm')>true</#if>" />
+													aria-invalid="<#if messagesPerField.existsError('password','register-password-confirm')>true</#if>" />
 
 												</div>
 												<#if messagesPerField.existsError('password')>
@@ -38,7 +38,7 @@
 										</div>
 										<div class="${properties.kcFormGroupClass!}">
 											<div class="${properties.kcLabelWrapperClass!}">
-												<label for="password-confirm"
+												<label for="register-password-confirm"
 													class="${properties.kcLabelClass!}">
 													${msg("passwordConfirm")}
 												</label> *
@@ -46,12 +46,12 @@
 											<div class="${properties.kcInputWrapperClass!}">
 												<div class="password-confirm-container">
                           <i class="fa fa-eye-slash" id="toggle-password-confirm" onclick="togglePasswordConfirm()"></i>
-													<input type="password" id="password-confirm" class="${properties.kcInputClass!}"
-													name="password-confirm"
-													aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>" />
+													<input type="password" id="register-password-confirm" class="${properties.kcInputClass!}"
+													name="register-password-confirm"
+													aria-invalid="<#if messagesPerField.existsError('register-password-confirm')>true</#if>" />
 
 												</div>
-												<#if messagesPerField.existsError('password-confirm')>
+												<#if messagesPerField.existsError('register-password-confirm')>
 													<span id="input-error-password-confirm" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
 														${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}
 													</span>

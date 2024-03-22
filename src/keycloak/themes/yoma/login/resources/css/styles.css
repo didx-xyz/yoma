@@ -424,8 +424,10 @@ a {
 }
 
 #logout-sessions {
-  margin-inline: auto !important;
-  margin-block: 25px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
 }
 
 @media screen and (max-width: 767px) {
