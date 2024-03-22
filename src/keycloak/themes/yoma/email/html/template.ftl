@@ -87,6 +87,7 @@
       text-align: center;
       margin-bottom: 10px;
       padding-top: 50px;
+      padding-bottom: 25px;
     }
 
     .nested-content a {

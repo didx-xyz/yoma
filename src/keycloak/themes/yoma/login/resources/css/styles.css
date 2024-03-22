@@ -62,10 +62,6 @@ h1#kc-page-title {
     display: none;
 }
 
-.form-group {
-  height: fit-content;
-}
-
 #password-instructions {
   width: 85%;
   color: #cccccc;
@@ -426,12 +422,18 @@ a {
   font-size: 1rem;
 }
 
-#logout-sessions {
+.checkbox-update-password {
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  margin: 25px auto;
+  gap: 10px;
+  margin-block: 25px;
+}
+
+#logout-sessions {
+  height: 20px;
+  width: 20px;
 }
 
 @media screen and (max-width: 767px) {
