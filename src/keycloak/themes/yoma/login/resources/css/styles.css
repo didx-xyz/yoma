@@ -1,22 +1,32 @@
+.kc-locale-wrapper {
+  margin-top: -80px;
 
+}
 
 #kc-locale {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 15px;
+    right: 20px;
 }
 
 #kc-locale-dropdown {
-    text-align: right;
+    /* text-align: right; */
 }
 
 #kc-current-locale-link {
-    color: red;
     text-decoration: none;
     font-size: 14px;
-    padding: 5px 10px;
+    padding: 10px 25px;
     background-color: white;
     border-radius: 5px;
+}
+
+#kc-current-locale-link::after {
+  content: "▶" !important;
+  color: #461d4d;
+  font-size: 14px;
+  display: inline-block;
+  transform: rotate(90deg) !important;
 }
 
 .pf-c-dropdown__menu {
@@ -25,7 +35,6 @@
 
 #kc-header-wrapper {
     display: none;
-    color: red;
 }
 
 .page-footer {
@@ -59,6 +68,36 @@ h1#kc-page-title {
   color: #cccccc;
   margin-inline: auto;
   padding-left: 2px;
+}
+
+#toggle-password, #toggle-password-confirm {
+  margin-right: 15px !important;
+  /* margin-left: calc(1px + 1%); */
+}
+
+#password, #password-confirm {
+  padding-left: calc(1px + 10%);
+}
+
+.password-container,
+.password-confirm-container {
+    position: relative;
+}
+.password-container i,
+.password-confirm-container i {
+    position: absolute;
+    top: 50%;
+    left: 50px;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
+
+.fa-eye-slash::before {
+    font-size: 15px;
+}
+
+.fa-eye::before {
+    font-size: 15px;
 }
 
 .alert-warning{
@@ -131,11 +170,6 @@ h1#kc-page-title {
   margin-top: 1rem;
 }
 
-.kc-locale-wrapper {
-    margin-top: -80px;
-    color: red;
-}
-
 .login-pf-page .login-pf-page-header {
     margin-bottom: 20px;
     text-align: left;
@@ -158,9 +192,9 @@ h1#kc-page-title {
     box-shadow: none;
 }
 
-.card-pf {
+/* .card-pf {
   margin-bottom: 100px !important;
-}
+} */
 
 #kc-info {
   margin: auto;
@@ -183,7 +217,6 @@ h1#kc-page-title {
     font-size: 13px;
     background-color: #461d4d;
     color: white;
-    /* border-radius: 10px !important; */
     border-radius: 50px;
     cursor: pointer;
     font-size: 16px;
@@ -206,7 +239,6 @@ h1#kc-page-title {
   border-radius: 50px;
 }
 
-
 #kc-registration {
     background: white;
     border: 2px solid #461d4d;
@@ -223,6 +255,11 @@ h1#kc-page-title {
     font-size: 16px;
     margin-top: 8px;
     outline: none !important;
+}
+
+p {
+  text-align: center;
+  font-size: 1rem;
 }
 
 /* Hack to add divider above the register button, there is a DOM ghost stealing the hr element */
@@ -272,15 +309,11 @@ h1#kc-page-title {
     display: block;
     border: 2px solid #e6e8eb !important;
     padding: 0 16px;
-    /* Add padding for the text */
 }
 
-/* Add styles for the placeholder text */
 .pf-c-form-control:not(textarea)::placeholder {
     color: #a0a0a0;
-    /* Placeholder text color */
     font-size: 16px;
-    /* Placeholder text font size */
 }
 
 a {
@@ -373,28 +406,6 @@ a {
 
 .white-link {
     color: white;
-    /* Add any additional styling for the link if needed */
-}
-
-.password-container,
-.password-confirm-container {
-    position: relative;
-}
-.password-container i,
-.password-confirm-container i {
-    position: absolute;
-    top: 50%;
-    right: 50px;
-    transform: translateY(-50%);
-    cursor: pointer;
-}
-
-.fa-eye-slash::before {
-    font-size: 15px;
-}
-
-.fa-eye::before {
-    font-size: 15px;
 }
 
 .page-footer {
@@ -407,18 +418,27 @@ a {
     width: 100%;
 }
 
+#back-to-yoma-link {
+  margin-block: 1rem;
+  font-size: 1rem;
+}
+
+#logout-sessions {
+  margin-inline: auto !important;
+  margin-block: 25px;
+}
+
 @media screen and (max-width: 767px) {
   body {
     padding: 0 0 !important;
     margin: 0 auto !important;
-    width: 97% !important;
+    width: 96% !important;
   }
   .card-pf {
-    margin: 10px 10px !important;
-    padding: 25px 0 100px 0 !important;
+    margin: 30px 10px !important;
+    padding: 25px 0 25px 0 !important;
     border-radius: 0;
   }
-
 
   #terms-prefix {
     margin-left: 0;
@@ -426,6 +446,8 @@ a {
 
   #password-instructions {
     padding-left: 7px;
+    text-align: left !important;
+    display: block;
   }
 
 }

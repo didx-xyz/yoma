@@ -19,14 +19,15 @@
 												<label for="password" class="${properties.kcLabelClass!}">
 													${msg("password")}
 												</label> *
-                         <p id="password-instructions"> ${msg("passwordInstructions")}</p>
+                         <div id="password-instructions"> ${msg("passwordInstructions")}</div>
 											</div>
 											<div class="${properties.kcInputWrapperClass!}">
 												<div class="password-container">
+                          <i class="fa fa-eye-slash" id="toggle-password" onclick="togglePassword()"></i>
 													<input type="password" id="password" class="${properties.kcInputClass!}" name="password"
 													autocomplete="new-password"
 													aria-invalid="<#if messagesPerField.existsError('password','password-confirm')>true</#if>" />
-													<i class="fa fa-eye-slash" id="toggle-password" onclick="togglePassword()"></i>
+
 												</div>
 												<#if messagesPerField.existsError('password')>
 													<span id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
@@ -44,10 +45,11 @@
 											</div>
 											<div class="${properties.kcInputWrapperClass!}">
 												<div class="password-confirm-container">
+                          <i class="fa fa-eye-slash" id="toggle-password-confirm" onclick="togglePasswordConfirm()"></i>
 													<input type="password" id="password-confirm" class="${properties.kcInputClass!}"
 													name="password-confirm"
 													aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>" />
-													<i class="fa fa-eye-slash" id="toggle-password-confirm" onclick="togglePasswordConfirm()"></i>
+
 												</div>
 												<#if messagesPerField.existsError('password-confirm')>
 													<span id="input-error-password-confirm" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
