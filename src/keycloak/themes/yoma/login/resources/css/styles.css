@@ -429,6 +429,7 @@ a {
   align-items: center;
   gap: 10px;
   margin-block: 25px;
+  width: 85%;
 }
 
 #logout-sessions {
