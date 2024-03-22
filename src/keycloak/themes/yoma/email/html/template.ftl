@@ -86,7 +86,7 @@
     .nested-content {
       text-align: center;
       margin-bottom: 10px;
-      margin-top: 25px;
+      margin-top: 50px !import;
     }
 
     .nested-content a {

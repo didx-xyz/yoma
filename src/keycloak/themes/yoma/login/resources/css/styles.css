@@ -9,9 +9,8 @@
     right: 20px;
 }
 
-#kc-locale-dropdown {
-    /* text-align: right; */
-}
+/* #kc-locale-dropdown {
+} */
 
 #kc-current-locale-link {
     text-decoration: none;
@@ -75,7 +74,7 @@ h1#kc-page-title {
   /* margin-left: calc(1px + 1%); */
 }
 
-#register-password, #password-confirm {
+#register-password, #register-password-confirm {
   padding-left: calc(1px + 10%);
 }
 
@@ -428,6 +427,7 @@ a {
   flex-direction: row;
   justify-content: center;
   align-items: center;
+  margin: 25px auto;
 }
 
 @media screen and (max-width: 767px) {
