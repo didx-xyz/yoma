@@ -422,7 +422,7 @@ a {
   font-size: 1rem;
 }
 
-.checkbox-update-password {
+.checkbox-update-password-container {
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -430,6 +430,12 @@ a {
   gap: 10px;
   margin-block: 25px;
   width: 85%;
+}
+.checkbox-update-password-label {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
 }
 
 #logout-sessions {

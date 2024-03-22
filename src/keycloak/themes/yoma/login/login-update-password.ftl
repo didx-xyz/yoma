@@ -46,8 +46,8 @@
                 </div>
             </div>
 
-            <div class="checkbox-update-password">
-              <label><input type="checkbox" id="logout-sessions" name="logout-sessions" value="on" checked> ${msg("logoutOtherSessions")}</label>
+            <div class="checkbox-update-password-container">
+              <label class="checkbox-update-password-label"><input type="checkbox" id="logout-sessions" name="logout-sessions" value="on" checked> ${msg("logoutOtherSessions")}</label>
             </div>
 
                 <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
