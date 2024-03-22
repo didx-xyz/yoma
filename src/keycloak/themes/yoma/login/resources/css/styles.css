@@ -62,6 +62,10 @@ h1#kc-page-title {
     display: none;
 }
 
+.form-group {
+  height: fit-content;
+}
+
 #password-instructions {
   width: 85%;
   color: #cccccc;
