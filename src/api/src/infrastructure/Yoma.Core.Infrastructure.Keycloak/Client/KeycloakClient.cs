@@ -134,11 +134,11 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
         // send verify email
         if (!user.EmailVerified)
-          await userApi.PutUsersSendVerifyEmailByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString());
+          await userApi.PutUsersSendVerifyEmailByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString()); //admin initiated email (executeActions); same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
 
         // send forgot password email
         if (resetPassword)
-          await userApi.PutUsersExecuteActionsEmailByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]);
+          await userApi.PutUsersExecuteActionsEmailByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]); //admin initiated email (executeActions)
       }
       catch (Exception ex)
       {
