@@ -99,10 +99,12 @@ namespace Yoma.Core.Domain.Entity.Services
         throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
       var externalId = user.ExternalId.Value;
 
-      var emailUpdated = !string.Equals(user.Email, request.Email, StringComparison.CurrentCultureIgnoreCase);
+      var emailUpdated = !string.Equals(user.Email, request.Email, StringComparison.InvariantCultureIgnoreCase);
       if (emailUpdated)
-        if (_userService.GetByEmailOrNull(request.Email, false, false) != null)
-          throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
+        //email address updates: pending ZLTO integration and ability to update wallet email address 
+        throw new ValidationException("Email address updates are currently restricted. Please contact support for assistance");
+      //if (_userService.GetByEmailOrNull(request.Email, false, false) != null)
+      //  throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
 
       user.Email = request.Email.ToLower();
       if (emailUpdated) user.EmailConfirmed = false;
