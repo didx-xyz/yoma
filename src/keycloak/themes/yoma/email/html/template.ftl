@@ -13,7 +13,7 @@
       font-size: 16px;
       padding: 20px;
       text-align: right;
-      margin-bottom: 20px;
+      margin-bottom: 50px;
       line-height: 0.6;
     }
 
@@ -138,10 +138,6 @@
       color: white;
     }
 
-    .header-row {
-      margin-bottom: 50px;
-    }
-
     @media screen and (max-width: 1000px) {
       .banner-container {
         width: 100%;
@@ -152,7 +148,7 @@
 
 <body>
   <table width="100%" cellpadding="0" cellspacing="0">
-    <tr class="header-row">
+    <tr>
       <td align="right" class="email-header">
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>

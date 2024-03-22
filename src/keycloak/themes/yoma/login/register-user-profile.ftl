@@ -24,7 +24,7 @@
 											<div class="${properties.kcInputWrapperClass!}">
 												<div class="password-container">
                           <i class="fa fa-eye-slash" id="toggle-password" onclick="togglePassword()"></i>
-													<input type="password" id="password" class="${properties.kcInputClass!}" name="password"
+													<input type="password" id="register-password" class="${properties.kcInputClass!}" name="password"
 													autocomplete="new-password"
 													aria-invalid="<#if messagesPerField.existsError('password','password-confirm')>true</#if>" />
 

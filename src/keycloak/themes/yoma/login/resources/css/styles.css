@@ -75,7 +75,7 @@ h1#kc-page-title {
   /* margin-left: calc(1px + 1%); */
 }
 
-#password, #password-confirm {
+#register-password, #password-confirm {
   padding-left: calc(1px + 10%);
 }
 
