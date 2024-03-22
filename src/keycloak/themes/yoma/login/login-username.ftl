@@ -66,7 +66,7 @@
 
             <div id="kc-registration">
               <button tabindex="6" onclick="window.location='${url.registrationUrl}'">
-                <!-- ${msg("doRegister")} -->
+                 ${msg("doRegister")}
               </button>
             </div>
           </#if>

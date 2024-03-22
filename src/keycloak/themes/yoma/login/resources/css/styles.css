@@ -427,15 +427,16 @@ a {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  margin-block: 25px;
   width: 85%;
+  margin: 25px auto;
 }
 .checkbox-update-password-label {
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
+  margin: 0 auto;
+  gap: 10px;
 }
 
 #logout-sessions {
