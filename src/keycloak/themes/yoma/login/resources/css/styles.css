@@ -191,9 +191,9 @@ h1#kc-page-title {
     box-shadow: none;
 }
 
-/* .card-pf {
-  margin-bottom: 100px !important;
-} */
+.card-pf {
+  min-height: min-content;
+}
 
 #kc-info {
   margin: auto;
@@ -439,9 +439,18 @@ a {
   gap: 10px;
 }
 
-#logout-sessions {
+/* #logout-sessions {
   height: 20px;
   width: 20px;
+} */
+
+input[type="checkbox"] {
+  height: 20px;
+  width: 20px;
+}
+
+input[type="checkbox"]:checked {
+  background-color: #461d4d;
 }
 
 @media screen and (max-width: 767px) {
