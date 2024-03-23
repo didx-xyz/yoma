@@ -196,7 +196,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                           className="btn absolute left-10 border-none p-0 shadow-none hover:scale-110 md:left-auto md:right-0"
                           onClick={() => setZltoModalVisible(true)}
                         >
-                          <IoIosInformationCircleOutline className="h-6 w-6 md:h-5 md:w-5" />
+                          <IoIosInformationCircleOutline className="h-6 w-6 transform-gpu duration-500 ease-linear group-hover:scale-110 md:h-5 md:w-5" />
                         </span>
                       </div>
                     </div>
