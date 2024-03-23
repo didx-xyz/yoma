@@ -240,10 +240,10 @@ const Settings: NextPageWithLayout<{
     <>
       {isLoading && <Loading />}
 
-      <div className="w-full max-w-2xl px-2 py-4">
-        <h2 className="pb-8">User Settings</h2>
-        <div className="flex flex-col items-center justify-start">
-          <div className="flex w-full flex-col rounded-lg bg-white p-8">
+      <div className="mb-8 mr-auto mt-2 w-full max-w-2xl px-4">
+        <h5 className="mb-4 font-bold tracking-wider">User Settings</h5>
+        <div className="flex flex-col items-center">
+          <div className="flex w-full flex-col rounded-lg bg-white p-4 md:p-8">
             <form
               onSubmit={handleSubmit(onSubmit)} // eslint-disable-line @typescript-eslint/no-misused-promises
               className="flex flex-col gap-4"

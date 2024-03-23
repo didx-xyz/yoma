@@ -141,7 +141,7 @@ const MyCredentials: NextPageWithLayout<{
         onRequestClose={() => {
           setCredentialDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[600px] md:overflow-y-clip md:rounded-3xl`}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[650px] md:w-[600px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
@@ -241,7 +241,7 @@ const MyCredentials: NextPageWithLayout<{
                   <div className="mt-4 flex flex-grow items-center justify-center gap-4 pb-14">
                     <button
                       type="button"
-                      className="btn w-1/2 rounded-full border-purple bg-white normal-case text-purple md:w-[300px]"
+                      className="btn btn-outline btn-primary w-1/2 rounded-full border-purple bg-white normal-case text-purple md:w-[300px]"
                       onClick={() => {
                         setCredentialDialogVisible(false);
                       }}
@@ -256,7 +256,8 @@ const MyCredentials: NextPageWithLayout<{
         </div>
       </ReactModal>
 
-      <div className="flex w-full flex-col gap-4">
+      <div className="mb-8 mt-2 flex w-full flex-col gap-4 px-4">
+        <h5 className="font-bold tracking-wider">My Wallet</h5>
         {/* ERRROR */}
         {dataError && <ApiErrors error={dataError} />}
         {/* LOADING */}
@@ -284,20 +285,20 @@ const MyCredentials: NextPageWithLayout<{
           <div className="flex flex-col items-center gap-4">
             {/* GRID */}
             {data && data.items?.length > 0 && (
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {data.items.map((item, index) => (
                   <div
                     key={index}
-                    className="flex h-[180px] cursor-pointer flex-col rounded-lg bg-white p-2"
+                    className="flex h-[180px] transform-gpu cursor-pointer flex-col rounded-lg bg-white p-4 shadow-custom duration-300 hover:scale-[1.01] hover:shadow-lg"
                     onClick={() => handleOnClickCredential(item)}
                   >
                     <div className="flex h-full flex-row">
                       <div className="flex flex-grow flex-row items-start justify-start">
-                        <div className="flex flex-col items-start justify-start gap-2">
-                          <p className="max-h-[35px] overflow-hidden text-ellipsis text-sm font-semibold text-gray-dark">
+                        <div className="flex flex-col items-start justify-start gap-1">
+                          <p className="line-clamp-2 max-h-[35px] overflow-hidden text-ellipsis pr-2 text-xs font-medium text-gray-dark">
                             {item.issuer}
                           </p>
-                          <p className="max-h-[80px] overflow-hidden text-ellipsis text-sm font-bold">
+                          <p className="max-h-[80px] overflow-hidden text-ellipsis pr-2 text-sm font-bold">
                             {item.title}
                           </p>
                         </div>
@@ -306,12 +307,12 @@ const MyCredentials: NextPageWithLayout<{
                         <AvatarImage
                           icon={item.issuerLogoURL}
                           alt={`${item.issuer} Logo`}
-                          size={60}
+                          size={50}
                         />
                       </div>
                     </div>
                     <div className="flex flex-row items-center justify-center">
-                      <div className="flex flex-grow text-xs tracking-widest">
+                      <div className="flex flex-grow text-xs tracking-widest text-gray-dark">
                         <Moment format={DATETIME_FORMAT_SYSTEM} utc={true}>
                           {item.dateIssued!}
                         </Moment>

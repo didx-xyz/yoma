@@ -494,14 +494,14 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               <div className="mt-4 flex flex-grow gap-4">
                 <button
                   type="button"
-                  className="btn w-1/2 rounded-full border-purple bg-white normal-case text-purple"
+                  className="btn btn-outline btn-primary w-1/2 rounded-full border-purple bg-white normal-case text-purple"
                   onClick={onClose}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn w-1/2 rounded-full bg-purple normal-case text-white md:w-[250px]"
+                  className="btn btn-primary w-1/2 rounded-full bg-purple normal-case text-white md:w-[250px]"
                 >
                   Submit
                 </button>

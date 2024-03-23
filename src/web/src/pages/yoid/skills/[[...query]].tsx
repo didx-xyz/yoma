@@ -229,7 +229,7 @@ const MyCredentials: NextPageWithLayout<{
         </div>
       </ReactModal> */}
 
-      <div className="flex w-full flex-col gap-4">
+      <div className="mb-8 mt-2 flex w-full flex-col gap-4">
         {/* ERRROR */}
         {/* {dataError && <ApiErrors error={dataError} />} */}
 
@@ -257,13 +257,14 @@ const MyCredentials: NextPageWithLayout<{
         {userProfile?.skills !== null &&
           userProfile?.skills !== undefined &&
           userProfile?.skills.length > 0 && (
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col gap-4 px-4 md:px-0">
+              <h5 className="font-bold tracking-wider">My Skills</h5>
               {/* GRID */}
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {userProfile?.skills.map((item, index) => (
                   <div
                     key={`${item.id}_${index}`}
-                    className="flex h-[180px] flex-col rounded-lg bg-white p-2"
+                    className="flex h-[160px] flex-col rounded-lg bg-white p-4 shadow-custom"
                     // onClick={() => handleOnClickCredential(item)}
                   >
                     <div className="flex h-full flex-col gap-2">
@@ -286,8 +287,9 @@ const MyCredentials: NextPageWithLayout<{
                         </div>
                       </div>
 
-                      <div className="flex flex-row text-gray-dark">
-                        Across {item.organizations.length} partner
+                      <div className="flex flex-row text-xs text-gray-dark">
+                        <b>{userProfile.skills?.length}</b>&nbsp;experiences
+                        across {item.organizations.length} partner
                         {item.organizations.length > 1 ? "s" : ""}
                       </div>
 

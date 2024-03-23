@@ -23,9 +23,9 @@ const OpportunityListItem: React.FC<{
   return (
     <div
       onClick={handleClick}
-      className="flex cursor-pointer flex-col gap-1 rounded-lg border-[1px] border-gray bg-white p-4"
+      className="flex cursor-pointer flex-col gap-1 rounded-lg border-none border-gray bg-white p-4 shadow-custom duration-300 hover:scale-[1.005] hover:shadow-lg"
     >
-      <div className="flex flex-row gap-2">
+      <div className="mb-2 flex flex-row gap-2">
         <AvatarImage
           icon={data.organizationLogoURL ? data.organizationLogoURL : null}
           alt="Organization Logo"
@@ -36,7 +36,7 @@ const OpportunityListItem: React.FC<{
           <h1 className="line-clamp-1 text-xs font-medium text-gray-dark">
             {data.organizationName}
           </h1>
-          <h2 className="line-clamp-3 text-[18px] font-semibold leading-tight md:line-clamp-1">
+          <h2 className="line-clamp-2 text-[18px] font-semibold leading-tight md:line-clamp-1">
             {data.opportunityTitle}
           </h2>
         </div>

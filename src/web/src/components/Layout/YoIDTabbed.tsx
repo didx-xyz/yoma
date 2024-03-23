@@ -119,7 +119,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         <div className="container z-10 mt-24 py-4">
           {/* USER CARD */}
           <div className="flex items-center justify-center">
-            <div className="group relative mx-4 flex h-[200px] w-full flex-col items-center justify-center rounded-lg bg-orange shadow-lg before:absolute before:left-0 before:top-0 before:-z-10 before:h-[200px] before:w-full before:rotate-[3deg] before:rounded-lg before:bg-orange before:brightness-75 before:transition-transform before:duration-300 before:content-[''] md:mx-0 md:h-[200px] md:w-[410px] md:before:h-[200px] md:before:w-[410px] md:hover:before:rotate-0">
+            <div className="group relative mx-4 flex h-[200px] w-full flex-col items-center justify-center rounded-lg bg-orange shadow-lg before:absolute before:left-0 before:top-0 before:-z-10 before:h-[200px] before:w-full before:rotate-[3deg] before:rounded-lg before:bg-orange before:brightness-75 before:transition-transform before:duration-300 before:ease-linear before:content-[''] md:mx-0 md:h-[200px] md:w-[410px] md:before:h-[200px] md:before:w-[410px] md:hover:before:rotate-0">
               <div className="grid w-full grid-cols-3 gap-4 p-2 md:grid-cols-4 md:p-6">
                 <div className="col-span-1 mx-auto my-auto scale-95 md:scale-100">
                   <AvatarImage
@@ -135,7 +135,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                         MY YoID
                       </p>
                       <Link href="/yoid/credentials">
-                        <IoMdArrowForward className="h-8 w-8 cursor-pointer rounded-full p-1 text-white duration-300 hover:shadow group-hover:scale-105 group-hover:bg-orange-light group-hover:text-orange md:h-6 md:w-6" />
+                        <IoMdArrowForward className="h-8 w-8 cursor-pointer rounded-full p-1 text-white transition-all duration-500 ease-in hover:shadow group-hover:scale-105 group-hover:bg-orange-light group-hover:text-orange md:h-6 md:w-6" />
                       </Link>
                     </div>
 
@@ -257,9 +257,9 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
             {/* MAIN CONTENT */}
             <div className="flex flex-grow flex-col">
               {/* DROPDOWN NAVIGATION: SMALL DISPLAY */}
-              <div className="visible flex flex-none items-center justify-center pb-4 md:hidden">
+              <div className="visible flex w-full items-center justify-center px-4 pb-4 md:hidden">
                 <select
-                  className="select max-w-lg"
+                  className="select w-full"
                   onChange={handleChange}
                   value={router.asPath}
                   title="Select a page"
