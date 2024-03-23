@@ -125,8 +125,10 @@ const MyOpportunitiesSubmitted: NextPageWithLayout<{
       {dataMyOpportunities && dataMyOpportunities.totalCount === 0 && (
         <div className="flex justify-center rounded-lg bg-white p-8">
           <NoRowsMessage
-            title={"No results found"}
-            description={"Please try refining your search query."}
+            title={"You haven't submitted any opportunities yet."}
+            description={
+              "Once you've successfully submitted an opportunity, it will be displayed here for your reference. Start exploring the available opportunities now!"
+            }
           />
         </div>
       )}

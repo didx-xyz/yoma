@@ -109,14 +109,14 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
           <title>Yoma | YoID</title>
         </Head>
 
-        <PageBackground className="h-[22rem]" />
+        <PageBackground className="h-[23rem]" />
 
         <ZltoModal
           isOpen={zltoModalVisible}
           onClose={() => setZltoModalVisible(false)}
         />
 
-        <div className="container z-10 mt-20 py-4">
+        <div className="container z-10 mt-24 py-4">
           {/* USER CARD */}
           <div className="flex items-center justify-center">
             <div className="group relative mx-4 flex h-[200px] w-full flex-col items-center justify-center rounded-lg bg-orange shadow-lg before:absolute before:left-0 before:top-0 before:-z-10 before:h-[200px] before:w-full before:rotate-[3deg] before:rounded-lg before:bg-orange before:brightness-75 before:transition-transform before:duration-300 before:content-[''] md:mx-0 md:h-[200px] md:w-[410px] md:before:h-[200px] md:before:w-[410px] md:hover:before:rotate-0">
@@ -182,7 +182,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
 
                       <div className="relative flex flex-row items-center">
                         <p className="w-28 text-xs tracking-widest">Total:</p>
-                        <div className="badge -ml-2 !rounded-full bg-white py-2 text-xs !font-semibold text-black">
+                        <div className="badge -ml-2 !rounded-full bg-white px-2 py-2 text-xs !font-semibold text-black">
                           <Image
                             src={iconZltoColor}
                             className="mr-2"
@@ -206,7 +206,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
             </div>
           </div>
 
-          <div className="mt-12 flex flex-col gap-5 md:flex-row">
+          <div className="mt-[5rem] flex flex-col gap-5 md:flex-row">
             {/* TABBED NAVIGATION: MEDIUM DISPLAY */}
             <div className="hidden md:block">
               <ul className="menu w-64 gap-2 rounded-lg bg-gray-light">
@@ -276,9 +276,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
               </div>
 
               {/* CHILDREN */}
-              <div className="flex flex-grow items-center justify-center">
-                {children}
-              </div>
+              <div className="flex items-center justify-center">{children}</div>
             </div>
           </div>
         </div>

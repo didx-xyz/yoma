@@ -246,7 +246,7 @@ const MyCredentials: NextPageWithLayout<{
           userProfile?.skills.length === 0) && (
           <div className="flex justify-center rounded-lg bg-white p-8">
             <NoRowsMessage
-              title={"No results found"}
+              title={"No completed skills found"}
               description={
                 "Skills that you receive by completing opportunities will be diplayed here."
               }

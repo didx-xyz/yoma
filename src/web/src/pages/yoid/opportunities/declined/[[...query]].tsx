@@ -123,8 +123,8 @@ const MyOpportunitiesDeclined: NextPageWithLayout<{
       {dataMyOpportunities && dataMyOpportunities.totalCount === 0 && (
         <div className="flex justify-center rounded-lg bg-white p-8">
           <NoRowsMessage
-            title={"No results found"}
-            description={"Please try refining your search query."}
+            title={"No declined opportunites found"}
+            description={"Declined opportunities will be displayed here."}
           />
         </div>
       )}

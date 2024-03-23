@@ -121,8 +121,10 @@ const MyOpportunitiesSaved: NextPageWithLayout<{
       {dataMyOpportunities && dataMyOpportunities.totalCount === 0 && (
         <div className="flex justify-center rounded-lg bg-white p-8">
           <NoRowsMessage
-            title={"No results found"}
-            description={"Please try refining your search query."}
+            title={"You don't have any saved opportunities."}
+            description={
+              "Opportunities you have saved will be listed here for easy access and reference. To save an opportunity, simply click the 'Save' button when viewing the opportunity details. This way, you can quickly find and return to the opportunities that interest you most."
+            }
           />
         </div>
       )}

@@ -272,7 +272,7 @@ const MyCredentials: NextPageWithLayout<{
         {data && data.items.length === 0 && (
           <div className="flex justify-center rounded-lg bg-white p-8">
             <NoRowsMessage
-              title={"No results found"}
+              title={"No credentials found"}
               description={
                 "Credentials that you receive by completing opportunities will be displayed here."
               }
