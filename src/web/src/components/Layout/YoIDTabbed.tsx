@@ -13,11 +13,11 @@ import iconZlto from "public/images/icon-zlto.svg";
 import iconCheckmark from "public/images/icon-checkmark.png";
 import iconTools from "public/images/icon-tools.png";
 import iconCredential from "public/images/icon-credential.png";
-import iconSmiley from "public/images/icon-smiley.png";
-import iconShare from "public/images/icon-share.png";
+import iconCog from "public/images/icon-cog.webp";
 import type { TabItem } from "~/api/models/common";
 import Head from "next/head";
 import { AvatarImage } from "../AvatarImage";
+// import iconShare from "public/images/icon-share.png";
 
 export type TabProps = ({
   children,
@@ -63,21 +63,21 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         iconImage: iconCredential,
       },
       {
-        title: "Personal Info",
+        title: "User Settings",
         description: "My personal data",
         url: "/yoid/settings",
         badgeCount: null,
         selected: router.asPath.startsWith("/yoid/settings"),
-        iconImage: iconSmiley,
+        iconImage: iconCog,
       },
-      {
-        title: "Open Digital CV",
-        description: "My opportunities submitted for verification",
-        url: "/yoid/cv",
-        badgeCount: null,
-        selected: router.asPath.startsWith("/yoid/cv"),
-        iconImage: iconShare,
-      },
+      // {
+      //   title: "Open Digital CV",
+      //   description: "My opportunities submitted for verification",
+      //   url: "/yoid/cv",
+      //   badgeCount: null,
+      //   selected: router.asPath.startsWith("/yoid/cv"),
+      //   iconImage: iconShare,
+      // },
     ]);
   }, [router.asPath, setTabItems]);
 
