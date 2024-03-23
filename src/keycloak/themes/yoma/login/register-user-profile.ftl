@@ -47,7 +47,7 @@
 												<div class="password-confirm-container">
                           <i class="fa fa-eye-slash" id="toggle-password-confirm" onclick="togglePasswordConfirm()"></i>
 													<input type="password" id="register-password-confirm" class="${properties.kcInputClass!}"
-													name="register-password-confirm"
+													name="password-confirm"
 													aria-invalid="<#if messagesPerField.existsError('register-password-confirm')>true</#if>" />
 
 												</div>
@@ -111,7 +111,7 @@
 
 		<script>
 			function togglePassword() {
-				var password = document.getElementById("password");
+				var password = document.getElementById("register-password");
 				var toggle = document.getElementById("toggle-password");
 				if (password.type === "password") {
 					password.type = "text";
@@ -122,7 +122,7 @@
 				}
 			}
 			function togglePasswordConfirm() {
-				var passwordConfirm = document.getElementById("password-confirm");
+				var passwordConfirm = document.getElementById("register-password-confirm");
 				var toggle = document.getElementById("toggle-password-confirm");
 				if (passwordConfirm.type === "password") {
 					passwordConfirm.type = "text";

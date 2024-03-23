@@ -14,9 +14,6 @@
             ${msg("emailVerifyInstruction2")}
         </p>
         <p id="instruction">${msg("emailVerifyInstruction3")}</p>
-        <p id="instruction">
-         Link expires in ${msg("emailVerifyLinkExpirationTime", linkExpirationFormatter(linkExpiration))}
-        </p>
     </div>
          <a id="email-verify-link" href="${url.loginAction}">${msg("resendEmailVerificationBtn")}</a>
     </#if>
