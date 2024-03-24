@@ -309,7 +309,7 @@ export const Global: React.FC = () => {
 
             <div className="flex flex-col gap-2">
               <h5 className="text-sm font-semibold tracking-widest">
-                EXITING UPDATE
+                EXCITING UPDATE
               </h5>
               <h4 className="text-2xl font-semibold tracking-wide">
                 Introducing YoID
