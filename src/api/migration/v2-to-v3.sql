@@ -727,10 +727,13 @@ SELECT
     	    WHEN lower(o.type) = 'taskopportunity' THEN 'Task'
 	    END
 	) AS "TypeId",
-    o.organisationid AS "OrganizationId",
-    NULL::varchar(500) AS "Summary",
-    remove_double_spacing(o.instructions) AS "Instructions",
-    ensure_valid_http_url(opportunityurl) AS "URL",
+  o.organisationid AS "OrganizationId",
+  NULL::varchar(500) AS "Summary",
+  CASE
+      WHEN remove_double_spacing(o.instructions) = '..' THEN NULL
+      ELSE remove_double_spacing(o.instructions)
+  END AS "Instructions",
+  ensure_valid_http_url(opportunityurl) AS "URL",
 	CASE
     	WHEN o.zltoreward IS NULL THEN NULL
     	WHEN ABS(o.zltoreward) = 0 THEN NULL
@@ -740,7 +743,7 @@ SELECT
     	WHEN o.zltoreward IS NULL OR ABS(o.zltoreward) = 0 THEN NULL
     	WHEN o.zltorewardpool IS NULL OR ABS(o.zltorewardpool) = 0 THEN NULL
 	    ELSE CAST(ABS(o.zltorewardpool) AS numeric(12,2))
-		END AS "ZltoRewardPool",
+	END AS "ZltoRewardPool",
 	NULL::numeric(12,2) as "ZltoRewardCumulative", --set below (see 'My' Opportunities section)
 	NULL::numeric(8,2) AS "YomaReward",
 	NULL::numeric(12,2) AS "YomaRewardPool",

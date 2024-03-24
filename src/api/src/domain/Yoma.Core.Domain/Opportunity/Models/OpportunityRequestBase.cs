@@ -16,6 +16,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Required]
     public Guid OrganizationId { get; set; }
 
+    public string? Summary { get; set; }
+
     public string? Instructions { get; set; }
 
     public string? URL { get; set; }

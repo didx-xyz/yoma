@@ -24,6 +24,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Ignore]
     public string? OrganizationLogoURL { get; set; }
 
+    public string? Summary { get; set; }
+
     public string? Instructions { get; set; }
 
     public string? URL { get; set; }

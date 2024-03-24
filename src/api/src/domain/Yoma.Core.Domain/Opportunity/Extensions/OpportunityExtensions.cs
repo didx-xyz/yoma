@@ -56,6 +56,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         OrganizationId = value.OrganizationId,
         OrganizationName = value.OrganizationName,
         OrganizationLogoURL = value.OrganizationLogoURL,
+        Summary = value.Summary,
         Instructions = value.Instructions,
         URL = value.URL,
         ZltoReward = value.ZltoReward,

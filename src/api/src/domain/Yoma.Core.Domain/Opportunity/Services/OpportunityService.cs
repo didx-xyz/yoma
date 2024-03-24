@@ -837,6 +837,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OrganizationName = organization.Name,
         OrganizationLogoId = organization.LogoId,
         OrganizationLogoURL = organization.LogoURL,
+        Summary = request.Summary,
         Instructions = request.Instructions,
         URL = request.URL,
         ZltoReward = request.ZltoReward,
@@ -938,6 +939,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.OrganizationName = organization.Name;
       result.OrganizationLogoId = organization.LogoId;
       result.OrganizationLogoURL = organization.LogoURL;
+      result.Summary = request.Summary;
       result.Instructions = request.Instructions;
       result.URL = request.URL;
       result.ZltoReward = request.ZltoReward;
