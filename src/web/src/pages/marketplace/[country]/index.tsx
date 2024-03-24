@@ -63,12 +63,15 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   // get store items for above categories
   for (const category of lookups_categories) {
-    const stores = await searchStores({
-      pageNumber: null,
-      pageSize: null,
-      countryCodeAlpha2: country,
-      categoryId: category.id ?? null,
-    });
+    const stores = await searchStores(
+      {
+        pageNumber: null,
+        pageSize: null,
+        countryCodeAlpha2: country,
+        categoryId: category.id ?? null,
+      },
+      context,
+    );
 
     const storeItems = [];
 
@@ -98,12 +101,15 @@ export const getStaticProps: GetStaticProps = async (context) => {
     const lookups_categoriesWW = await listStoreCategories(COUNTRY_WW, context);
 
     for (const category of lookups_categoriesWW) {
-      const stores = await searchStores({
-        pageNumber: null,
-        pageSize: null,
-        countryCodeAlpha2: COUNTRY_WW,
-        categoryId: category.id ?? null,
-      });
+      const stores = await searchStores(
+        {
+          pageNumber: null,
+          pageSize: null,
+          countryCodeAlpha2: COUNTRY_WW,
+          categoryId: category.id ?? null,
+        },
+        context,
+      );
 
       const storeItems = [];
 
@@ -139,8 +145,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
   };
 };
 
-export const getStaticPaths: GetStaticPaths = async () => {
-  const lookups_countries = await listSearchCriteriaCountries();
+export const getStaticPaths: GetStaticPaths = async (context) => {
+  const lookups_countries = await listSearchCriteriaCountries(context);
 
   const paths = lookups_countries.map((country) => ({
     params: { country: country.codeAlpha2 },
