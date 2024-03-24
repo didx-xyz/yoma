@@ -30,6 +30,7 @@ import { ApiErrors } from "./Status/ApiErrors";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { fetchClientEnv } from "~/lib/utils";
 import Link from "next/link";
+import stamps from "public/images/stamps.svg";
 
 // * GLOBAL APP CONCERNS
 // * needs to be done here as jotai atoms are not available in _app.tsx
@@ -282,7 +283,7 @@ export const Global: React.FC = () => {
         overlayClassName="fixed inset-0 bg-overlay"
       >
         <div className="flex flex-col gap-2">
-          <div className="flex h-32 flex-row bg-green p-4">
+          <div className="relative flex h-32 flex-row bg-green p-4">
             <h1 className="flex-grow"></h1>
             <button
               type="button"
@@ -293,10 +294,19 @@ export const Global: React.FC = () => {
             >
               <IoMdClose className="h-6 w-6"></IoMdClose>
             </button>
+            <Image
+              src={stamps}
+              alt="Stamps"
+              height={300}
+              width={400}
+              sizes="100vw"
+              priority={true}
+              className="absolute -bottom-5 z-0 -rotate-3 opacity-70 mix-blend-plus-lighter md:left-[10%]"
+            />
           </div>
 
           <div className="flex flex-col items-center justify-center gap-8 px-12 text-center">
-            <div className="-mb-6 -mr-4 -mt-24 flex items-center justify-center">
+            <div className="z-30 -mb-6 -mr-4 -mt-24 flex items-center justify-center">
               <Image
                 src={YoIDCard}
                 alt="YoID Card"
