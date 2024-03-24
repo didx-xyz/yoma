@@ -562,8 +562,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
           //ensure connected (active)
           connectionAries = await clientIssuer.GetConnectionByIdAsync(result.SourceConnectionId);
 
-          if (connectionAries != null
-              && string.Equals(connectionAries.State, Models.ConnectionState.Completed.ToString(), StringComparison.InvariantCultureIgnoreCase)) return result;
+          if (connectionAries != null && string.Equals(connectionAries.State, ConnectionState.Completed.ToEnumMemberValue(), StringComparison.InvariantCultureIgnoreCase)) return result;
 
           await _connectionRepository.Delete(result);
         }
