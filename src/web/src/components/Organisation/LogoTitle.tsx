@@ -12,7 +12,7 @@ export const LogoTitle: React.FC<InputProps> = ({ logoUrl, title }) => {
       {/* LOGO */}
       <div className="flex h-20 min-w-max items-center justify-center">
         {/* NO IMAGE */}
-        {!logoUrl && <IoMdImage className="text-gray-400 h-10 w-10" />}
+        {!logoUrl && <IoMdImage className="h-10 w-10 text-white" />}
 
         {/* EXISTING IMAGE */}
         {logoUrl && (

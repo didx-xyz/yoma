@@ -42,7 +42,7 @@ import {
 } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getCountries } from "~/api/services/lookups";
-import { IoMdWarning } from "react-icons/io";
+import { IoMdArrowRoundBack, IoMdWarning } from "react-icons/io";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { getThemeFromRole } from "~/lib/utils";
 
@@ -234,26 +234,30 @@ const OrganisationUpdate: NextPageWithLayout<{
 
       <PageBackground />
 
-      <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
+      <div className="container z-10 mt-16 max-w-7xl px-2 py-8">
         {isLoading && <Loading />}
 
         {/* BREADCRUMB */}
         {activeRoleView !== RoleView.User && (
           <div className="flex flex-row text-xs text-white">
-            <Link className="font-bold hover:text-gray" href={"/organisations"}>
+            <Link
+              className="flex items-center justify-center font-bold hover:text-gray"
+              href={"/organisations"}
+            >
+              <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4" />
               Organisations
             </Link>
 
-            <div className="mx-2">/</div>
+            <div className="mx-2 font-bold">|</div>
 
             <Link
-              className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap font-bold hover:text-gray md:max-w-[400px] lg:max-w-[800px]"
+              className="flex max-w-[300px] items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap font-bold hover:text-gray md:max-w-[400px] lg:max-w-[800px]"
               href={`/organisations/${id}`}
             >
               {organisation?.name}
             </Link>
 
-            <div className="mx-2">/</div>
+            <div className="mx-2 font-bold">|</div>
             <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
               Edit
             </div>
@@ -264,47 +268,85 @@ const OrganisationUpdate: NextPageWithLayout<{
         <LogoTitle logoUrl={organisation?.logoURL} title={organisation?.name} />
 
         {/* CONTENT */}
-        <div className="flex flex-col justify-center gap-2 md:flex-row">
-          <ul className="menu menu-horizontal h-40 w-full gap-2 rounded-lg bg-white p-4 md:menu-vertical md:max-w-[300px]">
+        <div className="flex flex-col justify-center gap-4 md:flex-row">
+          {/* MENU */}
+          <ul className="menu-horizontal hidden h-max w-full items-center justify-center gap-4 rounded-lg bg-white p-4 font-semibold shadow-custom md:menu md:menu-vertical md:max-w-[265px]">
             <li
-              className={`w-full rounded ${
+              className={`w-full rounded-lg p-1 ${
                 step === 1
-                  ? "bg-emerald-100 font-bold text-green"
-                  : "bg-gray-light"
+                  ? "bg-green-light font-bold text-green"
+                  : "bg-gray-light text-gray-dark"
               }`}
             >
               <a onClick={() => setStep(1)} id="lnkOrganisationDetails">
+                <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
+                  1
+                </span>
                 Organisation details
               </a>
             </li>
             <li
-              className={`w-full rounded ${
+              className={`w-full rounded-lg p-1 ${
                 step === 2
-                  ? "bg-emerald-100 font-bold text-green"
-                  : "bg-gray-light"
+                  ? "bg-green-light font-bold text-green"
+                  : "bg-gray-light text-gray-dark"
               }`}
             >
               <a onClick={() => setStep(2)} id="lnkOrganisationRoles">
+                <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
+                  2
+                </span>
                 Organisation roles
               </a>
             </li>
             <li
-              className={`w-full rounded ${
+              className={`w-full rounded-lg p-1 ${
                 step === 3
-                  ? "bg-emerald-100 font-bold text-green"
-                  : "bg-gray-light"
+                  ? "bg-green-light font-bold text-green"
+                  : "bg-gray-light text-gray-dark"
               }`}
             >
               <a onClick={() => setStep(3)} id="lnkOrganisationAdmins">
+                <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
+                  3
+                </span>
                 Organisation admins
               </a>
             </li>
           </ul>
-          <div className="flex w-full flex-col rounded-lg bg-white p-8">
+
+          {/* DROPDOWN MENU */}
+          <select
+            className="select select-md focus:border-none focus:outline-none md:hidden"
+            onChange={(e) => {
+              switch (e.target.value) {
+                case "Organisation detail":
+                  setStep(1);
+                  break;
+                case "Organisation roles":
+                  setStep(2);
+                  break;
+                case "Organisation admins":
+                  setStep(3);
+                  break;
+                default:
+                  setStep(1);
+                  break;
+              }
+            }}
+          >
+            <option>Organisation details</option>
+            <option>Organisation roles</option>
+            <option>Organisation admins</option>
+          </select>
+
+          <div className="flex w-full flex-col rounded-lg bg-white p-4 md:p-8">
             {step == 1 && (
               <>
-                <div className="flex flex-col text-center">
-                  <h2>Organisation details</h2>
+                <div className="flex flex-col text-left">
+                  <h5 className="mb-6 font-bold tracking-wider">
+                    Organisation details
+                  </h5>
                 </div>
                 <OrgInfoEdit
                   formData={OrganizationRequestBase}
@@ -315,8 +357,10 @@ const OrganisationUpdate: NextPageWithLayout<{
             )}
             {step == 2 && (
               <>
-                <div className="flex flex-col text-center">
-                  <h2>Organisation roles</h2>
+                <div className="flex flex-col text-left">
+                  <h5 className="mb-6 font-bold tracking-wider">
+                    Organisation roles
+                  </h5>
                 </div>
 
                 <p className="my-2 flex flex-row border-2 border-dotted border-warning p-2 text-warning">
@@ -336,8 +380,10 @@ const OrganisationUpdate: NextPageWithLayout<{
             )}
             {step == 3 && (
               <>
-                <div className="flex flex-col text-center">
-                  <h2>Organisation admins</h2>
+                <div className="flex flex-col text-left">
+                  <h5 className="mb-6 font-bold tracking-wider">
+                    Organisation admins
+                  </h5>
                 </div>
 
                 <OrgAdminsEdit
