@@ -1,12 +1,9 @@
 import { atom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
 import type { UserProfile } from "~/api/models/user";
 
 // user profile atom
 const userProfileAtom = atom<UserProfile | null>(null);
-// const userProfileAtom = atomWithStorage<UserProfile | null>(
-//   "userProfile",
-//   null,
-// );
 
 // tracks the current screen width for mobile detection
 const screenWidthAtom = atom(0);
@@ -29,6 +26,14 @@ const currentOrganisationInactiveAtom = atom(false);
 // atom for the current language
 const currentLanguageAtom = atom<string>("en");
 
+// user country selection atom
+// the user selects this if no country on the user profile (marketplace)
+// persisted across browser sessions
+const userCountrySelectionAtom = atomWithStorage<string | null>(
+  "userCountrySelection",
+  null,
+);
+
 export {
   userProfileAtom,
   screenWidthAtom,
@@ -37,4 +42,5 @@ export {
   currentOrganisationLogoAtom,
   currentOrganisationInactiveAtom,
   currentLanguageAtom,
+  userCountrySelectionAtom,
 };

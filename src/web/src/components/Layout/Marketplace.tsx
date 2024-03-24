@@ -208,7 +208,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
             </div>
           )}
           {/* MAIN CONTENT */}
-          <div className="mt-20 flex flex-grow items-center justify-center p-4">
+          <div className="flex-growx mt-20 flex items-center justify-center p-4">
             {children}
           </div>
         </div>

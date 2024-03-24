@@ -1,77 +1,53 @@
-import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
-import React, { useCallback, type ReactElement } from "react";
+import type { GetStaticProps } from "next";
+import Image from "next/image";
+import React, {
+  useCallback,
+  type ReactElement,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
 import { type NextPageWithLayout } from "~/pages/_app";
-import NoRowsMessage from "~/components/NoRowsMessage";
-import {
-  listStoreCategories,
-  listSearchCriteriaCountries,
-} from "~/api/services/marketplace";
-import { authOptions } from "~/server/auth";
-import { config } from "~/lib/react-query-config";
-import type { StoreCategory } from "~/api/models/marketplace";
-import { ApiErrors } from "~/components/Status/ApiErrors";
-import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
+import { listSearchCriteriaCountries } from "~/api/services/marketplace";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
-import { THEME_BLUE } from "~/lib/constants";
-import { CategoryCardComponent } from "~/components/Marketplace/CategoryCard";
+import { COUNTRY_WW, THEME_BLUE } from "~/lib/constants";
 import type { Country } from "~/api/models/lookups";
 import Select from "react-select";
 import { useRouter } from "next/router";
+import ReactModal from "react-modal";
+import { LoadingInline } from "~/components/Status/LoadingInline";
+import { userCountrySelectionAtom, userProfileAtom } from "~/lib/store";
+import { useAtom, useSetAtom } from "jotai";
+import iconLocation from "public/images/icon-location.svg";
 
-const defaultCountry = "WW";
-
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
-  // get country from query params
-  const { countryId } = context.query;
-
-  const queryClient = new QueryClient(config);
-
-  // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: ["StoreCountries"],
-    queryFn: () => listSearchCriteriaCountries(context),
-  });
-  await queryClient.prefetchQuery({
-    queryKey: ["StoreCategories"],
-    queryFn: () =>
-      listStoreCategories(countryId?.toString() ?? defaultCountry, context),
-  });
+// This page is statically generated at build time on server-side
+// so that the initial data needed for the countries dropdown is immediately available when the page loads
+// after that, the page is redirected to /marketplace/{country} based on the user's country selection or userProfile.countryId
+export const getStaticProps: GetStaticProps = async (context) => {
+  const lookups_countries = await listSearchCriteriaCountries(context);
 
   return {
-    props: {
-      dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null,
-      countryId: countryId ?? null,
-    },
+    props: { lookups_countries },
+
+    // Next.js will attempt to re-generate the page:
+    // - When a request comes in
+    // - At most once every 300 seconds
+    revalidate: 300,
   };
-}
+};
 
-const MarketplaceStoreCategories: NextPageWithLayout<{
-  countryId?: string;
-}> = ({ countryId }) => {
+const Marketplace: NextPageWithLayout<{
+  lookups_countries: Country[];
+}> = ({ lookups_countries }) => {
   const router = useRouter();
+  const [userProfile] = useAtom(userProfileAtom);
 
-  // 👇 use prefetched queries from server
-  const { data: dataCountry } = useQuery<Country[]>({
-    queryKey: ["StoreCountries"],
-    queryFn: () => listSearchCriteriaCountries(),
-  });
-
-  const {
-    data: data,
-    error: dataError,
-    isLoading: dataIsLoading,
-  } = useQuery<StoreCategory[]>({
-    queryKey: ["StoreCategories"],
-    queryFn: () => listStoreCategories(countryId ?? defaultCountry),
-  });
+  const [userCountrySelection] = useAtom(userCountrySelectionAtom);
+  const setUserCountrySelection = useSetAtom(userCountrySelectionAtom);
 
   const onFilterCountry = useCallback(
     (value: string) => {
-      if (value) router.push(`/marketplace?countryId=${value}`);
+      if (value) router.push(`/marketplace/${value}`);
       else router.push(`/marketplace`);
     },
     [router],
@@ -79,77 +55,126 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
 
   // memo for countries
   const countryOptions = React.useMemo(() => {
-    if (!dataCountry) return [];
-    return dataCountry.map((c) => ({
+    if (!lookups_countries) return [];
+    return lookups_countries.map((c) => ({
       value: c.codeAlpha2,
       label: c.name,
     }));
-  }, [dataCountry]);
+  }, [lookups_countries]);
+
+  const [countrySelectorDialogVisible, setCountrySelectorDialogVisible] =
+    useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>();
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    if (lookups_countries && userProfile?.countryId) {
+      const country = lookups_countries.find(
+        (x) => x.id == userProfile.countryId,
+      );
+      const codeAlpha2 = country ? country.codeAlpha2 : COUNTRY_WW; // if not found, default to WW
+      onFilterCountry(codeAlpha2);
+    } else if (userCountrySelection) {
+      onFilterCountry(userCountrySelection);
+    } else {
+      timeoutId = setTimeout(() => setCountrySelectorDialogVisible(true), 500); // delay to allow atoms to load
+    }
+
+    // Cleanup function
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [
+    userProfile?.countryId,
+    setCountrySelectorDialogVisible,
+    onFilterCountry,
+    userCountrySelection,
+    lookups_countries,
+  ]);
+  const myRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="flex w-full max-w-7xl flex-col items-start gap-4">
-      {/* FILTER: COUNTRY */}
-      <div className="flex flex-row items-center justify-center gap-4">
-        <div className="text-sm font-semibold text-gray-dark">Filter by:</div>
-        <Select
-          classNames={{
-            control: () => "input input-xs w-[200px]",
-          }}
-          options={countryOptions}
-          onChange={(val) => onFilterCountry(val?.value ?? "")}
-          value={countryOptions?.find(
-            (c) => c.value === (countryId?.toString() ?? defaultCountry),
-          )}
-          placeholder="Country"
-        />
-      </div>
+    <div className="flex w-full max-w-7xl flex-col gap-4">
+      {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
+      <div ref={myRef} />
 
-      {/* ERRROR */}
-      {dataError && <ApiErrors error={dataError} />}
+      {countrySelectorDialogVisible && (
+        <>
+          <ReactModal
+            isOpen={countrySelectorDialogVisible}
+            shouldCloseOnOverlayClick={false}
+            className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:max-w-[600px] md:rounded-3xl`}
+            portalClassName={"fixed z-40"}
+            overlayClassName="fixed inset-0 bg-overlay"
+          >
+            <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
+              <div className="mt-20 flex flex-col items-center justify-center gap-4 p-4 md:p-0">
+                <div className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                  <Image
+                    src={iconLocation}
+                    alt="Icon Location"
+                    width={40}
+                    height={40}
+                    sizes="100vw"
+                    priority={true}
+                    style={{ width: "40px", height: "40px" }}
+                  />
+                </div>
+                <h3>What is your Country?</h3>
+                <p className="rounded-lg bg-gray-light p-4 text-center md:w-[450px]">
+                  Select your country to view the available stores and items
+                </p>
 
-      {/* LOADING */}
-      {dataIsLoading && (
-        <div className="flex justify-center rounded-lg bg-white p-8">
-          <LoadingSkeleton />
-        </div>
+                <Select
+                  instanceId={"country"}
+                  classNames={{
+                    control: () => "input input-xs w-[200px]",
+                  }}
+                  options={countryOptions}
+                  onChange={(val) => setSelectedCountry(val?.value ?? "")}
+                  value={countryOptions?.find(
+                    (c) => c.value === selectedCountry,
+                  )}
+                  placeholder="Country"
+                  // fix menu z-index issue
+                  // menuPortalTarget={myRef.current!}
+                  // styles={{
+                  //   menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                  // }}
+                />
+
+                <div className="mt-4 flex w-full flex-grow justify-center gap-4">
+                  <button
+                    type="button"
+                    className="btn w-3/4 max-w-[300px] rounded-full border-purple bg-purple normal-case text-white hover:bg-purple disabled:bg-gray disabled:text-gray-dark disabled:brightness-90"
+                    onClick={() => {
+                      setUserCountrySelection(selectedCountry ?? "");
+                      setCountrySelectorDialogVisible(false);
+                      onFilterCountry(selectedCountry ?? "");
+                    }}
+                    disabled={!selectedCountry}
+                  >
+                    Let&apos;s go!
+                  </button>
+                </div>
+              </div>
+            </div>
+          </ReactModal>
+        </>
       )}
-
-      {/* NO ROWS */}
-      {data && data.length === 0 && (
-        <div className="flex w-full justify-center rounded-lg bg-white p-8">
-          <NoRowsMessage
-            title={"No items found"}
-            description={"Please refine your search criteria."}
-          />
-        </div>
-      )}
-
-      {/* GRID */}
-      {data && data.length > 0 && (
-        <div className="flex flex-row flex-wrap gap-4">
-          {data.map((item, index) => (
-            <CategoryCardComponent
-              key={`card_${index}`}
-              id={`card_${index}`}
-              name={item.name}
-              imageURLs={item.storeImageURLs}
-              href={`/marketplace/${item.name}?countryId=${
-                countryId?.toString() ?? defaultCountry
-              }&categoryId=${item.id}`}
-            />
-          ))}
-        </div>
-      )}
+      {!countrySelectorDialogVisible && <LoadingInline />}
     </div>
   );
 };
 
-MarketplaceStoreCategories.getLayout = function getLayout(page: ReactElement) {
+Marketplace.getLayout = function getLayout(page: ReactElement) {
   return <MarketplaceLayout>{page}</MarketplaceLayout>;
 };
 
-MarketplaceStoreCategories.theme = function getTheme() {
+Marketplace.theme = function getTheme() {
   return THEME_BLUE;
 };
 
-export default MarketplaceStoreCategories;
+export default Marketplace;

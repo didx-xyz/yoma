@@ -57,9 +57,10 @@ import { OpportunityFilterOptions } from "~/api/models/opportunity";
 import { OpportunitiesCarousel } from "~/components/Opportunity/OpportunitiesCarousel";
 
 // 👇 SSG
-// This function gets called at build time on server-side.
-// It may be called again, on a serverless function, if
-// revalidation is enabled and a new request comes in
+// This page is statically generated at build time on server-side
+// so that the initial data needed for the filter options and carousels (first 4 items) are immediately available when the page loads
+// after that, client side queries are executed & cached via the queryClient, whenever a search is performed (selecting a filter, clicked most viewed link etc)
+// or when more data is requested in the carousels (paging)
 export const getStaticProps: GetStaticProps = async (context) => {
   const opportunities_trending = await searchOpportunities(
     {

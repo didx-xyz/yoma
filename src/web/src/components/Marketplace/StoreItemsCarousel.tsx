@@ -1,5 +1,3 @@
-import { OpportunityPublicSmallComponent } from "./OpportunityPublicSmall";
-import type { OpportunitySearchResultsInfo } from "~/api/models/opportunity";
 import Link from "next/link";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
@@ -9,14 +7,17 @@ import { screenWidthAtom } from "~/lib/store";
 import { useAtomValue } from "jotai";
 import { VIEWPORT_SIZE } from "~/lib/constants";
 import { LoadingSkeleton } from "../Status/LoadingSkeleton";
+import type { StoreItemCategorySearchResults } from "~/api/models/marketplace";
+import { ItemCardComponent } from "./ItemCard";
 
-export const OpportunitiesCarousel: React.FC<{
+export const StoreItemsCarousel: React.FC<{
   [id: string]: any;
   title?: string;
-  data: OpportunitySearchResultsInfo;
+  data: StoreItemCategorySearchResults;
   viewAllUrl?: string;
-  loadData: (startRow: number) => Promise<OpportunitySearchResultsInfo>;
-}> = ({ id, title, data, viewAllUrl, loadData }) => {
+  loadData: (startRow: number) => Promise<StoreItemCategorySearchResults>;
+  onClick: (item: any) => void;
+}> = ({ id, title, data, viewAllUrl, loadData, onClick }) => {
   const screenWidth = useAtomValue(screenWidthAtom);
   const [cache, setCache] = useState(data?.items);
   const isLoadingDataRef = useRef(false);
@@ -28,12 +29,12 @@ export const OpportunitiesCarousel: React.FC<{
   useEffect(() => {
     setViewportSize(
       screenWidth < VIEWPORT_SIZE.SM
-        ? 100
+        ? 100 // 1 column
         : screenWidth < VIEWPORT_SIZE.LG
-          ? 50
+          ? 50 // 2 columns
           : screenWidth < VIEWPORT_SIZE.XL
-            ? 25
-            : 25,
+            ? 33 // 3 columns
+            : 33,
     );
     // reset to first item when resizing (UX fix with changing of carousel column)
     setSelectedItem(0);
@@ -95,7 +96,7 @@ export const OpportunitiesCarousel: React.FC<{
   );
 
   return (
-    <div key={`OpportunitiesCarousel${id}`}>
+    <div key={`StoreItemCategoriesCarousel_${id}`}>
       {(data?.items?.length ?? 0) > 0 && (
         <div className="flex flex-col gap-6">
           <div className="flex flex-row">
@@ -167,14 +168,21 @@ export const OpportunitiesCarousel: React.FC<{
                 )
               }
             >
-              {cache.map((item: any) => (
+              {cache.map((item: any, index: number) => (
                 <div
                   className="flex items-center justify-center"
-                  key={`${id}_${item.id}`}
+                  key={`${id}_${item.id}_${index}`}
                 >
-                  <OpportunityPublicSmallComponent
-                    key={`${id}_${item.id}_component`}
-                    data={item}
+                  <ItemCardComponent
+                    key={`storeCategoryItem_${index}`}
+                    id={`storeCategoryItem__${index}`}
+                    company={item.name}
+                    name={item.name}
+                    imageURL={item.imageURL}
+                    summary={item.summary}
+                    amount={item.amount}
+                    count={item.count}
+                    onClick={() => onClick(item)}
                   />
                 </div>
               ))}

@@ -1,4 +1,7 @@
-import { type GetServerSidePropsContext } from "next";
+import {
+  type GetStaticPropsContext,
+  type GetServerSidePropsContext,
+} from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type {
@@ -17,7 +20,7 @@ import type {
 import type { Country } from "../models/lookups";
 
 export const listSearchCriteriaCountries = async (
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Country[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<Country[]>(
@@ -28,7 +31,7 @@ export const listSearchCriteriaCountries = async (
 
 export const listStoreCategories = async (
   countryCodeAlpha2: string,
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<StoreCategory[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<StoreCategory[]>(
@@ -40,7 +43,7 @@ export const listStoreCategories = async (
 //NB: paging doesn't work (zlto issue)
 export const searchStores = async (
   filter: StoreSearchFilter,
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<StoreSearchResults> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -53,7 +56,7 @@ export const searchStores = async (
 
 export const searchStoreItemCategories = async (
   filter: StoreItemCategorySearchFilter,
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<StoreItemCategorySearchResults> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.post<StoreItemCategorySearchResults>(
@@ -61,11 +64,31 @@ export const searchStoreItemCategories = async (
     filter,
   );
   return data;
+
+  // TODO: remove
+  // return hardcoded data based on the filter.pageNumber
+  // const { pageNumber } = filter;
+  // const items = Array.from({ length: 4 }, (_, index) => {
+  //   return {
+  //     id: `id-${pageNumber}-${index}`,
+  //     name: `Item ${pageNumber}-${index}`,
+  //     description: `Description ${pageNumber}-${index}`,
+  //     amount: 100,
+  //     count: 100,
+  //     imageURL:
+  //       "https://s3-eu-west-1.amazonaws.com/media.zlto.cloud/store/store_front/50a0338879e04c619ade3d989b727e9f_sfd/Electricity.png",
+  //     storeId: filter.storeId,
+  //     summary: `summary ${pageNumber}-${index}`,
+  //   };
+  // });
+  // return {
+  //   items: items,
+  // };
 };
 
 export const searchStoreItems = async (
   filter: StoreItemSearchFilter,
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<StoreItemSearchResults> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -78,7 +101,7 @@ export const searchStoreItems = async (
 
 export const searchVouchers = async (
   filter: WalletVoucherSearchFilter,
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<WalletVoucherSearchResults> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
@@ -92,7 +115,7 @@ export const searchVouchers = async (
 export const buyItem = async (
   storeId: string,
   itemCategoryId: string,
-  context?: GetServerSidePropsContext,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<void> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   await instance.post(

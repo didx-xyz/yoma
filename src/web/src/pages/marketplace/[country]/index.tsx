@@ -1,92 +1,167 @@
-import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import type { GetStaticProps, GetStaticPaths } from "next";
+import { useQueryClient } from "@tanstack/react-query";
 import React, { useCallback, type ReactElement, useState } from "react";
 import { type NextPageWithLayout } from "~/pages/_app";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { buyItem, searchStoreItemCategories } from "~/api/services/marketplace";
-import { authOptions } from "~/server/auth";
-import { type ParsedUrlQuery } from "querystring";
-import { config } from "~/lib/react-query-config";
+import {
+  listStoreCategories,
+  listSearchCriteriaCountries,
+  searchStoreItemCategories,
+  searchStores,
+  buyItem,
+} from "~/api/services/marketplace";
 import type {
+  Store,
+  StoreCategory,
   StoreItemCategory,
+  StoreItemCategorySearchFilter,
   StoreItemCategorySearchResults,
 } from "~/api/models/marketplace";
-import { ApiErrors } from "~/components/Status/ApiErrors";
-import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
 import {
-  GA_ACTION_MARKETPLACE_ITEM_BUY as GA_ACTION_MARKETPLACE_ITEM_PURCHASE,
+  COUNTRY_WW,
+  GA_ACTION_MARKETPLACE_ITEM_BUY,
   GA_CATEGORY_OPPORTUNITY,
-  PAGE_SIZE,
+  PAGE_SIZE_MINIMUM,
   THEME_BLUE,
 } from "~/lib/constants";
-import { ItemCardComponent } from "~/components/Marketplace/ItemCard";
-import { IoMdArrowRoundBack, IoMdClose, IoMdFingerPrint } from "react-icons/io";
-import Breadcrumb from "~/components/Breadcrumb";
+import type { Country } from "~/api/models/lookups";
+import Select from "react-select";
 import { useRouter } from "next/router";
-import { PaginationButtons } from "~/components/PaginationButtons";
+import { StoreItemsCarousel } from "~/components/Marketplace/StoreItemsCarousel";
+import type { ParsedUrlQuery } from "querystring";
+import { AvatarImage } from "~/components/AvatarImage";
+import { IoMdClose, IoMdFingerPrint } from "react-icons/io";
 import ReactModal from "react-modal";
-import Image from "next/image";
-import { signIn, useSession } from "next-auth/react";
-import iconBell from "public/images/icon-bell.webp";
-import { fetchClientEnv } from "~/lib/utils";
-import type { ErrorResponseItem } from "~/api/models/common";
-import { trackGAEvent } from "~/lib/google-analytics";
-import { userProfileAtom } from "~/lib/store";
-import { getUserProfile } from "~/api/services/user";
 import { useSetAtom } from "jotai";
+import { signIn, useSession } from "next-auth/react";
+import type { ErrorResponseItem } from "~/api/models/common";
+import { userProfileAtom } from "~/lib/store";
+import iconBell from "public/images/icon-bell.webp";
+import Image from "next/image";
+import { getUserProfile } from "~/api/services/user";
+import { trackGAEvent } from "~/lib/google-analytics";
+import { fetchClientEnv } from "~/lib/utils";
 
 interface IParams extends ParsedUrlQuery {
-  category: string;
-  store: string;
-  page?: string;
+  country: string;
 }
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+// This page is statically generated at build time on server-side
+// so that the initial data needed for the filter options and carousels (first 4 items) are immediately available when the page loads
+// after that, client side queries are executed & cached via the queryClient, whenever a search is performed (selecting a filter)
+// or when more data is requested in the carousels (paging)
+export const getStaticProps: GetStaticProps = async (context) => {
+  const { country } = context.params as IParams;
 
-  const queryClient = new QueryClient(config);
-  const { category, store } = context.params as IParams;
-  const { countryId, categoryId, storeId, page } = context.query;
+  const lookups_countries = await listSearchCriteriaCountries(context);
+  const lookups_categories = await listStoreCategories(
+    country ?? COUNTRY_WW,
+    context,
+  );
+  const data_storeItems = [];
 
-  // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: [`StoreCategoryItems_${category}_${store}_${page}`],
-    queryFn: () =>
-      searchStoreItemCategories(
+  // get store items for above categories
+  for (const category of lookups_categories) {
+    const stores = await searchStores({
+      pageNumber: null,
+      pageSize: null,
+      countryCodeAlpha2: country,
+      categoryId: category.id ?? null,
+    });
+
+    const storeItems = [];
+
+    for (const store of stores.items) {
+      const items = await searchStoreItemCategories(
         {
-          pageNumber: page ? parseInt(page.toString()) : 1,
-          pageSize: PAGE_SIZE,
-          storeId: storeId?.toString() ?? "",
+          pageNumber: 1,
+          pageSize: PAGE_SIZE_MINIMUM,
+          storeId: store.id?.toString() ?? "",
         },
         context,
-      ),
-  });
+      );
+      // only add to storeItems if items is not empty
+      if (items && items.items.length > 0) {
+        storeItems.push({ store, items });
+      }
+    }
+
+    // only add to data_storeItems if storeItems is not empty
+    if (storeItems.length > 0) {
+      data_storeItems.push({ category, storeItems });
+    }
+  }
+
+  // if country not WW, then include some WW items
+  if (country !== COUNTRY_WW) {
+    const lookups_categoriesWW = await listStoreCategories(COUNTRY_WW, context);
+
+    for (const category of lookups_categoriesWW) {
+      const stores = await searchStores({
+        pageNumber: null,
+        pageSize: null,
+        countryCodeAlpha2: COUNTRY_WW,
+        categoryId: category.id ?? null,
+      });
+
+      const storeItems = [];
+
+      for (const store of stores.items) {
+        const items = await searchStoreItemCategories(
+          {
+            pageNumber: 1,
+            pageSize: PAGE_SIZE_MINIMUM,
+            storeId: store.id?.toString() ?? "",
+          },
+          context,
+        );
+        // only add to storeItems if items is not empty
+        if (items && items.items.length > 0) {
+          storeItems.push({ store, items });
+        }
+      }
+
+      // only add to data_storeItems if storeItems is not empty
+      if (storeItems.length > 0) {
+        data_storeItems.push({ category, storeItems });
+      }
+    }
+  }
 
   return {
-    props: {
-      dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null,
-      countryId: countryId ?? null,
-      category: category ?? null,
-      categoryId: categoryId ?? null,
-      store: store ?? null,
-      storeId: storeId ?? null,
-      page: page ?? "1",
-    },
-  };
-}
+    props: { country, lookups_countries, data_storeItems },
 
-const MarketplaceStoreItemCategories: NextPageWithLayout<{
-  countryId: string;
-  category: string;
-  categoryId: string;
-  store: string;
-  storeId: string;
-  page?: string;
-}> = ({ category, categoryId, store, storeId, countryId, page }) => {
+    // Next.js will attempt to re-generate the page:
+    // - When a request comes in
+    // - At most once every 300 seconds
+    revalidate: 300,
+  };
+};
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const lookups_countries = await listSearchCriteriaCountries();
+
+  const paths = lookups_countries.map((country) => ({
+    params: { country: country.codeAlpha2 },
+  }));
+
+  return {
+    paths,
+    fallback: "blocking",
+  };
+};
+
+const MarketplaceStoreCategories: NextPageWithLayout<{
+  country: string;
+  lookups_countries: Country[];
+  data_storeItems: {
+    category: StoreCategory;
+    storeItems: { store: Store; items: StoreItemCategorySearchResults }[];
+  }[];
+}> = ({ country, lookups_countries, data_storeItems }) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [buyDialogVisible, setBuyDialogVisible] = useState(false);
   const [buyDialogConfirmationVisible, setBuyDialogConfirmationVisible] =
     useState(false);
@@ -101,38 +176,72 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
   const { data: session } = useSession();
   const setUserProfile = useSetAtom(userProfileAtom);
 
-  // 👇 use prefetched queries from server
-  const {
-    data: data,
-    error: dataError,
-    isLoading: dataIsLoading,
-  } = useQuery<StoreItemCategorySearchResults>({
-    queryKey: [`StoreCategoryItems_${category}_${store}_${page}`],
-    queryFn: () =>
-      searchStoreItemCategories({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        storeId: storeId?.toString() ?? "",
-      }),
-  });
-
-  // 🔔 pager change event
-  const handlePagerChange = useCallback(
-    (value: number) => {
-      // redirect
-      void router.push({
-        pathname: `/marketplace/${category}/${store}`,
-        query: {
-          categoryId: categoryId,
-          storeId: storeId,
-          page: value,
-        },
-      });
-
-      // reset scroll position
-      window.scrollTo(0, 0);
+  const onFilterCountry = useCallback(
+    (value: string) => {
+      if (value) router.push(`/marketplace/${value}`);
+      else router.push(`/marketplace`);
     },
-    [category, categoryId, store, storeId, router],
+    [router],
+  );
+
+  // memo for countries
+  const countryOptions = React.useMemo(() => {
+    if (!lookups_countries) return [];
+    return lookups_countries.map((c) => ({
+      value: c.codeAlpha2,
+      label: c.name,
+    }));
+  }, [lookups_countries]);
+
+  // 🎠 CAROUSEL: data fetching
+  const fetchDataAndUpdateCache = useCallback(
+    async (
+      queryKey: string[],
+      filter: StoreItemCategorySearchFilter,
+    ): Promise<StoreItemCategorySearchResults> => {
+      const cachedData =
+        queryClient.getQueryData<StoreItemCategorySearchResults>(queryKey);
+
+      if (cachedData) {
+        console.warn(
+          `fetchDataAndUpdateCache: queryKey=${queryKey} returning cached data: ${cachedData.items.length}`,
+        );
+        return cachedData;
+      }
+
+      const data = await searchStoreItemCategories(filter);
+
+      queryClient.setQueryData(queryKey, data);
+
+      console.warn(
+        `fetchDataAndUpdateCache: queryKey=${queryKey} filter=${JSON.stringify(
+          filter,
+        )} data: ${data.items.length}`,
+      );
+
+      return data;
+    },
+    [queryClient],
+  );
+
+  const loadData = useCallback(
+    (startRow: number, storeId: string) => {
+      // if (startRow >= (opportunities_trending?.totalCount ?? 0)) {
+      //   return {
+      //     items: [],
+      //     totalCount: 0,
+      //   };
+      // }
+
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache([storeId, pageNumber.toString()], {
+        pageNumber: pageNumber,
+        pageSize: PAGE_SIZE_MINIMUM,
+        storeId: storeId,
+      });
+    },
+    [fetchDataAndUpdateCache],
   );
 
   const [isButtonLoading, setIsButtonLoading] = useState(false);
@@ -164,13 +273,13 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
       setBuyDialogVisible(false);
 
       // update api
-      buyItem(storeId, item.id)
+      buyItem(item.storeId, item.id)
         .then(() => {
           // 📊 GOOGLE ANALYTICS: track event
           trackGAEvent(
             GA_CATEGORY_OPPORTUNITY,
-            GA_ACTION_MARKETPLACE_ITEM_PURCHASE,
-            `Marketplace Item Purchased. Store: ${store}, Item: ${item.name}`,
+            GA_ACTION_MARKETPLACE_ITEM_BUY,
+            `Marketplace Item Purchased. Store: ${item.storeId}, Item: ${item.name}`,
           );
 
           // show confirmation dialog
@@ -188,8 +297,6 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
         });
     },
     [
-      store,
-      storeId,
       setBuyDialogVisible,
       setBuyDialogConfirmationVisible,
       setBuyDialogErrorVisible,
@@ -199,7 +306,7 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
   );
 
   return (
-    <>
+    <div className="flex w-full max-w-7xl flex-col gap-4">
       {/* LOGIN DIALOG */}
       <ReactModal
         isOpen={loginDialogVisible}
@@ -459,89 +566,87 @@ const MarketplaceStoreItemCategories: NextPageWithLayout<{
         </div>
       </ReactModal>
 
-      <div className="flex w-full max-w-7xl flex-col items-start gap-4">
-        {/* BREADCRUMB */}
-        <Breadcrumb
-          items={[
-            {
-              title: "Marketplace",
-              url: `/marketplace?countryId=${countryId}`,
-              iconElement: (
-                <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
-              ),
-            },
-            {
-              title: category,
-              url: `/marketplace/${category}?countryId=${countryId}&categoryId=${categoryId}`,
-            },
-            {
-              title: store,
-              url: "",
-            },
-          ]}
-        />
-
-        {/* ERRROR */}
-        {dataError && <ApiErrors error={dataError} />}
-
-        {/* LOADING */}
-        {dataIsLoading && (
-          <div className="flex justify-center rounded-lg bg-white p-8">
-            <LoadingSkeleton />
-          </div>
-        )}
-
-        {/* NO ROWS */}
-        {data?.items && data.items.length === 0 && (
-          <div className="flex w-full justify-center rounded-lg bg-white p-8">
-            <NoRowsMessage
-              title={"No items found"}
-              description={"Please refine your search criteria."}
-            />
-          </div>
-        )}
-
-        {/* GRID */}
-        {data?.items && data.items.length > 0 && (
-          <div className="flex flex-row flex-wrap gap-4">
-            {data.items.map((item, index) => (
-              <ItemCardComponent
-                key={`card_${index}`}
-                id={`card_${index}`}
-                company={store}
-                name={item.name}
-                imageURL={item.imageURL}
-                summary={item.summary}
-                amount={item.amount}
-                count={item.count}
-                onClick={() => onBuyClick(item)}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* PAGINATION BUTTONS */}
-        <PaginationButtons
-          currentPage={page ? parseInt(page) : 1}
-          //NB: there is no totalCount from the api, so we set it to a high number
-          totalItems={data?.items && data?.items.length > 0 ? 999 : null}
-          pageSize={PAGE_SIZE}
-          onClick={handlePagerChange}
-          showPages={false}
+      {/* FILTER: COUNTRY */}
+      <div className="flex flex-row items-center justify-start gap-4">
+        <div className="text-sm font-semibold text-gray-dark">Filter by:</div>
+        <Select
+          instanceId={"country"}
+          classNames={{
+            control: () => "input input-xs w-[200px]",
+          }}
+          options={countryOptions}
+          onChange={(val) => onFilterCountry(val?.value ?? "")}
+          value={countryOptions?.find(
+            (c) => c.value === (country?.toString() ?? COUNTRY_WW),
+          )}
+          placeholder="Country"
         />
       </div>
-    </>
+      <div className=" flex flex-col gap-6 px-2 pb-4 md:p-0 md:pb-0">
+        {data_storeItems.length == 0 && (
+          <NoRowsMessage title="No items found" />
+        )}
+
+        {data_storeItems?.map((category_storeItems, index) => (
+          <div key={`category_${category_storeItems.category.id}_${index}`}>
+            {/* CATEGORY NAME AND IMAGES */}
+            <div className="flex flex-row gap-4 pb-4">
+              <h1>{category_storeItems.category.name}</h1>
+
+              <div className="flex flex-grow flex-row items-start overflow-hidden">
+                {category_storeItems.category.storeImageURLs.map(
+                  (storeImage, index2) => (
+                    <div
+                      className="relative -mr-4 overflow-hidden rounded-full shadow"
+                      style={{
+                        zIndex:
+                          category_storeItems.category.storeImageURLs.length -
+                          index,
+                      }}
+                      key={`storeItems_${category_storeItems.category.id}_${index}_${index2}`}
+                    >
+                      <>
+                        <AvatarImage
+                          icon={storeImage ?? null}
+                          alt={`Store Image Logo ${index2}`}
+                          size={40}
+                        />
+                      </>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+
+            {category_storeItems?.storeItems?.map((storeItem, index2) => (
+              <div
+                key={`category_${category_storeItems.category.id}_${index}_${index2}`}
+              >
+                <StoreItemsCarousel
+                  id={`storeItem_${category_storeItems.category.id}_${index}_${index2}`}
+                  title={storeItem.store?.name}
+                  data={storeItem.items}
+                  viewAllUrl=""
+                  loadData={(startRow) =>
+                    loadData(startRow, storeItem.store.id)
+                  }
+                  onClick={onBuyClick}
+                />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 
-MarketplaceStoreItemCategories.getLayout = function getLayout(
-  page: ReactElement,
-) {
+MarketplaceStoreCategories.getLayout = function getLayout(page: ReactElement) {
   return <MarketplaceLayout>{page}</MarketplaceLayout>;
 };
 
-MarketplaceStoreItemCategories.theme = function getTheme() {
+MarketplaceStoreCategories.theme = function getTheme() {
   return THEME_BLUE;
 };
 
-export default MarketplaceStoreItemCategories;
+export default MarketplaceStoreCategories;

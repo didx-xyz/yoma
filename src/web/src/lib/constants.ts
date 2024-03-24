@@ -93,3 +93,5 @@ export const VIEWPORT_SIZE = {
   XL: 1280,
   "2XL": 1536,
 };
+
+export const COUNTRY_WW = "WW";
