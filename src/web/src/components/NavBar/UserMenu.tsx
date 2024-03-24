@@ -3,12 +3,11 @@ import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import {
-  IoMdAdd,
-  IoMdCheckmark,
-  IoMdClose,
+  // IoMdAdd,
   IoMdPower,
   IoMdSearch,
   IoMdSettings,
+  IoIosCheckmarkCircle,
 } from "react-icons/io";
 import ReactModal from "react-modal";
 import { type OrganizationInfo } from "~/api/models/user";
@@ -54,7 +53,7 @@ export const UserMenu: React.FC = () => {
     return (
       <li
         key={`userMenu_orgs_${organisation.id}`}
-        className="flex flex-row flex-nowrap hover:bg-gray-light"
+        className="flex flex-shrink flex-grow-0 flex-row flex-nowrap p-0 py-2"
       >
         {/* ORGANISATION LINK */}
         <Link
@@ -64,7 +63,7 @@ export const UserMenu: React.FC = () => {
               ? `/organisations/${organisation.id}`
               : `/organisations/${organisation.id}/edit`
           }
-          className="text-gray-dark"
+          className="w-full text-gray-dark"
           onClick={() => setUserMenuVisible(false)}
           id={`userMenu_orgs_${organisation.name}`} // e2e
         >
@@ -74,29 +73,27 @@ export const UserMenu: React.FC = () => {
             size={44}
           />
 
-          <div className="flex flex-col gap-1">
-            <div className="w-[325px] overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[150px]">
+          <div className="ml-2 flex flex-col gap-1">
+            <div className="w-[230px] overflow-hidden text-ellipsis whitespace-nowrap text-black md:max-w-[230px]">
               {organisation.name}
             </div>
             <div className="flex flex-row items-center">
               {organisation.status == "Active" && (
                 <>
-                  <IoMdCheckmark className="h-4 w-4 text-info" />
-                  <div className="text-xs text-info">{organisation.status}</div>
+                  <span className="mr-2 h-2 w-2 rounded-full bg-success"></span>
+                  <div className="text-xs">{organisation.status}</div>
                 </>
               )}
               {organisation.status == "Inactive" && (
                 <>
-                  <IoMdClose className="h-4 w-4 text-warning" />
-                  <div className="text-xs text-warning">Pending</div>
+                  <span className="mr-2 h-2 w-2 rounded-full bg-warning"></span>
+                  <div className="text-xs">Pending</div>
                 </>
               )}
               {organisation.status == "Declined" && (
                 <>
-                  <IoMdClose className="h-4 w-4 text-error" />
-                  <div className="text-xs text-error">
-                    {organisation.status}
-                  </div>
+                  <span className="mr-2 h-2 w-2 rounded-full bg-error"></span>
+                  <div className="text-xs">{organisation.status}</div>
                 </>
               )}
             </div>
@@ -108,10 +105,10 @@ export const UserMenu: React.FC = () => {
           <Link
             key={organisation.id}
             href={`/organisations/${organisation.id}/edit`}
-            className="rounded-full p-1 text-gray-dark shadow hover:bg-gray-dark hover:text-gray-light"
+            className="rounded-full bg-white p-1 text-gray-dark shadow duration-300 hover:bg-gray-dark hover:text-gray-light"
             onClick={() => setUserMenuVisible(false)}
           >
-            <IoMdSettings className="h-6 w-6" />
+            <IoMdSettings className="h-4 w-4" />
           </Link>
         </div>
       </li>
@@ -163,19 +160,19 @@ export const UserMenu: React.FC = () => {
         onRequestClose={() => {
           setUserMenuVisible(false);
         }}
-        className={`fixed left-0 right-0 top-16 flex-grow rounded-lg bg-white animate-in fade-in md:left-auto md:right-2 md:top-[66px] md:w-80`}
+        className={`fixed left-0 right-0 top-16 -mt-1 flex-grow rounded-lg bg-white shadow-lg animate-in fade-in md:left-auto md:right-2 md:top-[60px] md:-mt-0 md:w-96`}
         portalClassName={"fixed z-50"}
         overlayClassName="fixed inset-0"
       >
-        <ul className="menu rounded-box">
+        <ul className="menu items-center rounded-box p-0">
           {/* USER (YOID) */}
-          <li className="md:max-w-[300px]">
+          <li className="z-30 w-full rounded-t-lg bg-white py-2 shadow-custom">
             <Link
               href="/yoid/opportunities/completed"
-              className="text-gray-dark hover:bg-gray-light"
+              className="!rounded-t-lg rounded-b-none text-gray-dark"
               onClick={() => setUserMenuVisible(false)}
             >
-              <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full shadow">
+              <div className="relative mr-2 h-11 w-11 cursor-pointer overflow-hidden rounded-full shadow">
                 <AvatarImage
                   icon={userProfile?.photoURL}
                   alt="User logo"
@@ -183,46 +180,50 @@ export const UserMenu: React.FC = () => {
                 />
               </div>
 
-              <div className="flex h-10 items-center overflow-hidden text-ellipsis">
+              <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
                 {session?.user?.name ?? "Settings"}
+                <div className="text-xs text-gray-dark">View profile</div>
               </div>
+              {userProfile?.emailConfirmed && userProfile?.yoIDOnboarded && (
+                <span>
+                  <IoIosCheckmarkCircle className="h-6 w-6 text-success" />
+                </span>
+              )}
             </Link>
           </li>
 
           {/* ORGANISATIONS */}
           {(userProfile?.adminsOf?.length ?? 0) > 0 && (
             <>
-              <div className="flex items-center py-2 pl-4 text-base font-semibold text-gray-dark">
-                My organisations
-              </div>
-
               <div
-                className="max-h-[200px] overflow-y-scroll"
+                className="max-h-[200px] w-full overflow-x-hidden overflow-y-scroll bg-white-shade p-0"
                 id="organisations"
               >
                 {userProfile?.adminsOf?.map((organisation) =>
                   renderOrganisationMenuItem(organisation),
                 )}
               </div>
-              <div className="divider m-0" />
 
-              <li>
+              <li className="w-full rounded-none bg-white-shade py-2 shadow-[0_-2px_15px_-3px_rgba(0,0,0,0.07),0_-10px_20px_-2px_rgba(0,0,0,0.04)]">
                 <Link
                   href="/organisations"
-                  className="text-gray-dark hover:bg-gray-light"
+                  className="hover:white w-full rounded-none bg-white-shade text-gray-dark"
                   onClick={() => setUserMenuVisible(false)}
                 >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
+                  <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
                     <IoMdSearch className="h-6 w-6 text-gray-dark" />
                   </div>
                   View all organisations
                 </Link>
               </li>
+              <div className="z-20 w-full bg-white-shade">
+                <div className="divider m-0 mx-4 !bg-gray" />
+              </div>
 
-              <li>
+              {/* <li>
                 <Link
                   href="/organisations/register"
-                  className="text-gray-dark hover:bg-gray-light"
+                  className="text-gray-dark hover:bg-white-shade"
                   onClick={() => setUserMenuVisible(false)}
                 >
                   <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
@@ -230,39 +231,40 @@ export const UserMenu: React.FC = () => {
                   </div>
                   Create new organisation
                 </Link>
-              </li>
+              </li> */}
             </>
           )}
           {(activeRoleView == RoleView.Admin || isAdmin) && (
-            <>
-              <div className="divider m-0" />
-              <li className="md:max-w-[300px]">
+            <div className="z-20 w-full bg-white-shade">
+              <li className="w-full bg-white-shade py-2">
                 <Link
                   href="/organisations"
-                  className="text-gray-dark hover:bg-gray-light"
+                  className="bg-white-shade text-gray-dark"
                   onClick={() => setUserMenuVisible(false)}
                   id={`userMenu_admin`}
                 >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
+                  <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
                     <IoMdSettings className="h-6 w-6 text-gray-dark" />
                   </div>
                   Admin
                 </Link>
               </li>
-            </>
+              <div className="divider m-0 mx-4 !bg-gray" />
+            </div>
           )}
-          <div className="divider m-0" />
-          <li className="md:max-w-[300px]">
-            <button
-              className="text-left text-gray-dark hover:bg-gray-light"
-              onClick={handleLogout}
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
-                <IoMdPower className="h-6 w-6 text-gray-dark" />
-              </div>
-              Sign out
-            </button>
-          </li>
+          <div className="z-20 w-full !rounded-b-lg !bg-white-shade">
+            <li className="w-full rounded-b-lg bg-white-shade py-2">
+              <button
+                className="text-left text-gray-dark"
+                onClick={handleLogout}
+              >
+                <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
+                  <IoMdPower className="h-6 w-6 text-gray-dark" />
+                </div>
+                Sign out
+              </button>
+            </li>
+          </div>
         </ul>
       </ReactModal>
     </>
