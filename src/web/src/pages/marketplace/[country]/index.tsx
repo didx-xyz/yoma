@@ -1,4 +1,4 @@
-import type { GetStaticProps, GetStaticPaths } from "next";
+import type { GetServerSidePropsContext } from "next";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { useCallback, type ReactElement, useState } from "react";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -36,7 +36,7 @@ import ReactModal from "react-modal";
 import { useSetAtom } from "jotai";
 import { signIn, useSession } from "next-auth/react";
 import type { ErrorResponseItem } from "~/api/models/common";
-import { userProfileAtom } from "~/lib/store";
+import { userCountrySelectionAtom, userProfileAtom } from "~/lib/store";
 import iconBell from "public/images/icon-bell.webp";
 import Image from "next/image";
 import { getUserProfile } from "~/api/services/user";
@@ -47,11 +47,120 @@ interface IParams extends ParsedUrlQuery {
   country: string;
 }
 
+// TODO: this page should be statically generated but build process is failing with the axios errors... so for now, we'll use SSR
 // This page is statically generated at build time on server-side
 // so that the initial data needed for the filter options and carousels (first 4 items) are immediately available when the page loads
 // after that, client side queries are executed & cached via the queryClient, whenever a search is performed (selecting a filter)
 // or when more data is requested in the carousels (paging)
-export const getStaticProps: GetStaticProps = async (context) => {
+// export const getStaticProps: GetStaticProps = async (context) => {
+//   const { country } = context.params as IParams;
+
+//   const lookups_countries = await listSearchCriteriaCountries(context);
+//   const lookups_categories = await listStoreCategories(
+//     country ?? COUNTRY_WW,
+//     context,
+//   );
+//   const data_storeItems = [];
+
+//   // get store items for above categories
+//   for (const category of lookups_categories) {
+//     const stores = await searchStores(
+//       {
+//         pageNumber: null,
+//         pageSize: null,
+//         countryCodeAlpha2: country,
+//         categoryId: category.id ?? null,
+//       },
+//       context,
+//     );
+
+//     const storeItems = [];
+
+//     for (const store of stores.items) {
+//       const items = await searchStoreItemCategories(
+//         {
+//           pageNumber: 1,
+//           pageSize: PAGE_SIZE_MINIMUM,
+//           storeId: store.id?.toString() ?? "",
+//         },
+//         context,
+//       );
+//       // only add to storeItems if items is not empty
+//       if (items && items.items.length > 0) {
+//         storeItems.push({ store, items });
+//       }
+//     }
+
+//     // only add to data_storeItems if storeItems is not empty
+//     if (storeItems.length > 0) {
+//       data_storeItems.push({ category, storeItems });
+//     }
+//   }
+
+//   // if country not WW, then include some WW items
+//   if (country !== COUNTRY_WW) {
+//     const lookups_categoriesWW = await listStoreCategories(COUNTRY_WW, context);
+
+//     for (const category of lookups_categoriesWW) {
+//       const stores = await searchStores(
+//         {
+//           pageNumber: null,
+//           pageSize: null,
+//           countryCodeAlpha2: COUNTRY_WW,
+//           categoryId: category.id ?? null,
+//         },
+//         context,
+//       );
+
+//       const storeItems = [];
+
+//       for (const store of stores.items) {
+//         const items = await searchStoreItemCategories(
+//           {
+//             pageNumber: 1,
+//             pageSize: PAGE_SIZE_MINIMUM,
+//             storeId: store.id?.toString() ?? "",
+//           },
+//           context,
+//         );
+//         // only add to storeItems if items is not empty
+//         if (items && items.items.length > 0) {
+//           storeItems.push({ store, items });
+//         }
+//       }
+
+//       // only add to data_storeItems if storeItems is not empty
+//       if (storeItems.length > 0) {
+//         data_storeItems.push({ category, storeItems });
+//       }
+//     }
+//   }
+
+//   return {
+//     props: { country, lookups_countries, data_storeItems },
+
+//     // Next.js will attempt to re-generate the page:
+//     // - When a request comes in
+//     // - At most once every 300 seconds
+//     revalidate: 300,
+//   };
+// };
+
+// export const getStaticPaths: GetStaticPaths = async (context) => {
+//   const lookups_countries = await listSearchCriteriaCountries();
+
+//   const paths = lookups_countries.map((country) => ({
+//     params: { country: country.codeAlpha2 },
+//   }));
+
+//   return {
+//     paths,
+//     fallback: "blocking",
+//   };
+// };
+
+// ⚠️ SSR
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { country } = context.params as IParams;
 
   const lookups_countries = await listSearchCriteriaCountries(context);
@@ -137,26 +246,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   return {
     props: { country, lookups_countries, data_storeItems },
-
-    // Next.js will attempt to re-generate the page:
-    // - When a request comes in
-    // - At most once every 300 seconds
-    revalidate: 300,
   };
-};
-
-export const getStaticPaths: GetStaticPaths = async (context) => {
-  const lookups_countries = await listSearchCriteriaCountries(context);
-
-  const paths = lookups_countries.map((country) => ({
-    params: { country: country.codeAlpha2 },
-  }));
-
-  return {
-    paths,
-    fallback: "blocking",
-  };
-};
+}
 
 const MarketplaceStoreCategories: NextPageWithLayout<{
   country: string;
@@ -181,13 +272,15 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const { data: session } = useSession();
   const setUserProfile = useSetAtom(userProfileAtom);
+  const setUserCountrySelection = useSetAtom(userCountrySelectionAtom);
 
   const onFilterCountry = useCallback(
     (value: string) => {
+      setUserCountrySelection(value);
       if (value) router.push(`/marketplace/${value}`);
       else router.push(`/marketplace`);
     },
-    [router],
+    [router, setUserCountrySelection],
   );
 
   // memo for countries
