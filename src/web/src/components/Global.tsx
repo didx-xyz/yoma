@@ -21,13 +21,16 @@ import {
   userProfileAtom,
 } from "~/lib/store";
 import ReactModal from "react-modal";
-import { IoMdFingerPrint, IoMdThumbsUp } from "react-icons/io";
+import { IoMdFingerPrint, IoMdClose } from "react-icons/io";
 import iconBell from "public/images/icon-bell.webp";
+import YoIDCard from "public/images/YoID-modal-card.webp";
 import Image from "next/image";
 import { toast } from "react-toastify";
 import { ApiErrors } from "./Status/ApiErrors";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { fetchClientEnv } from "~/lib/utils";
+import Link from "next/link";
+import stamps from "public/images/stamps.svg";
 
 // * GLOBAL APP CONCERNS
 // * needs to be done here as jotai atoms are not available in _app.tsx
@@ -52,6 +55,7 @@ export const Global: React.FC = () => {
   const [onboardingDialogVisible, setOnboardingDialogVisible] = useState(false);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [isButtonLoading, setIsButtonLoading] = useState(false);
+  const [isYoIDOnboardingLoading, setIsYoIDOnboardingLoading] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
 
   // SESSION
@@ -217,6 +221,7 @@ export const Global: React.FC = () => {
   // 🔔 CLICK HANDLER: ONBOARDING DIALOG CONFIRMATION
   const onClickYoIDOnboardingConfirm = useCallback(async () => {
     try {
+      setIsYoIDOnboardingLoading(true);
       toast.dismiss();
 
       // update API
@@ -234,8 +239,10 @@ export const Global: React.FC = () => {
 
       // hide popup
       setOnboardingDialogVisible(false);
+      setIsYoIDOnboardingLoading(false);
     } catch (error) {
       console.error(error);
+      setIsYoIDOnboardingLoading(false);
       toast(<ApiErrors error={error} />, {
         type: "error",
         autoClose: false,
@@ -264,46 +271,87 @@ export const Global: React.FC = () => {
 
   return (
     <>
-      {/* ONBOARDING DIALOG */}
+      {/* YoID ONBOARDING DIALOG */}
       <ReactModal
         isOpen={onboardingDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setOnboardingDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[600px] md:rounded-3xl`}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[500px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
         <div className="flex flex-col gap-2">
-          <div className="flex h-20 flex-row bg-green p-4 shadow-lg"></div>
-          <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+          <div className="relative flex h-32 flex-row bg-green p-4">
+            <h1 className="flex-grow"></h1>
+            <button
+              type="button"
+              className="btn rounded-full border-0 bg-green-tint p-3 text-white hover:bg-white hover:text-green"
+              onClick={() => {
+                setOnboardingDialogVisible(false);
+              }}
+            >
+              <IoMdClose className="h-6 w-6"></IoMdClose>
+            </button>
+            <Image
+              src={stamps}
+              alt="Stamps"
+              height={300}
+              width={400}
+              sizes="100vw"
+              priority={true}
+              className="absolute -bottom-5 z-0 -rotate-3 opacity-70 mix-blend-plus-lighter md:left-[10%]"
+            />
+          </div>
+
+          <div className="flex flex-col items-center justify-center gap-8 px-12 text-center">
+            <div className="z-30 -mb-6 -mr-4 -mt-24 flex items-center justify-center">
               <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                height={28}
+                src={YoIDCard}
+                alt="YoID Card"
+                width={300}
+                height={300}
                 sizes="100vw"
                 priority={true}
-                style={{ width: "28px", height: "28px" }}
               />
             </div>
 
-            <h4>You have not been onboarded for YoID. </h4>
-            <h5>Click the button to continue.</h5>
+            <div className="flex flex-col gap-2">
+              <h5 className="text-sm font-semibold tracking-widest">
+                EXCITING UPDATE
+              </h5>
+              <h4 className="text-2xl font-semibold tracking-wide">
+                Introducing YoID
+              </h4>
+            </div>
 
-            <div className="mt-4 flex flex-grow gap-4">
+            <p className="-mt-4 text-gray-dark">Learning Identity Passport </p>
+            <p className="text-gray-dark">
+              Use your YolD to access opportunities and keep a record of skills
+              and experience in one place.
+            </p>
+
+            <div className="mt-4 flex flex-grow flex-col items-center gap-6">
               <button
                 type="button"
-                className="btn rounded-full bg-green normal-case text-white hover:bg-green-dark md:w-[250px]"
-                //className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[300px]"
+                className="btn btn-primary btn-wide rounded-full normal-case text-white"
                 onClick={onClickYoIDOnboardingConfirm}
+                disabled={isYoIDOnboardingLoading}
               >
-                <IoMdThumbsUp className="h-5 w-5 text-white" />
-
-                <p className="text-white">I understand</p>
+                {isYoIDOnboardingLoading && isYoIDOnboardingLoading ? (
+                  <span className="loading loading-spinner">loading</span>
+                ) : (
+                  <span>Activate your YoID</span>
+                )}
               </button>
+              <Link
+                href="https://docs.yoma.world/technology/what-is-yoid"
+                target="_blank"
+                className="text-purple hover:underline"
+              >
+                Find out more
+              </Link>
             </div>
           </div>
         </div>
