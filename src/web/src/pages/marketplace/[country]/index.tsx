@@ -31,9 +31,9 @@ import { useRouter } from "next/router";
 import { StoreItemsCarousel } from "~/components/Marketplace/StoreItemsCarousel";
 import type { ParsedUrlQuery } from "querystring";
 import { AvatarImage } from "~/components/AvatarImage";
-import { IoMdClose, IoMdFingerPrint } from "react-icons/io";
+import { IoMdClose, IoMdFingerPrint, IoMdWarning } from "react-icons/io";
 import ReactModal from "react-modal";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { signIn, useSession } from "next-auth/react";
 import type { ErrorResponseItem } from "~/api/models/common";
 import { userCountrySelectionAtom, userProfileAtom } from "~/lib/store";
@@ -42,6 +42,7 @@ import Image from "next/image";
 import { getUserProfile } from "~/api/services/user";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { fetchClientEnv } from "~/lib/utils";
+import { useConfirmationModalContext } from "src/context/modalConfirmationContext";
 
 interface IParams extends ParsedUrlQuery {
   country: string;
@@ -85,6 +86,10 @@ interface IParams extends ParsedUrlQuery {
 //         },
 //         context,
 //       );
+//
+//      // filter available items
+//      items.items = items.items.filter((item) => item.count > 0);
+//
 //       // only add to storeItems if items is not empty
 //       if (items && items.items.length > 0) {
 //         storeItems.push({ store, items });
@@ -123,6 +128,10 @@ interface IParams extends ParsedUrlQuery {
 //           },
 //           context,
 //         );
+//
+//      // filter available items
+//      items.items = items.items.filter((item) => item.count > 0);
+//
 //         // only add to storeItems if items is not empty
 //         if (items && items.items.length > 0) {
 //           storeItems.push({ store, items });
@@ -193,6 +202,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         },
         context,
       );
+
+      // filter available items
+      items.items = items.items.filter((item) => item.count > 0);
+
       // only add to storeItems if items is not empty
       if (items && items.items.length > 0) {
         storeItems.push({ store, items });
@@ -231,6 +244,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           },
           context,
         );
+
+        // filter available items
+        items.items = items.items.filter((item) => item.count > 0);
+
         // only add to storeItems if items is not empty
         if (items && items.items.length > 0) {
           storeItems.push({ store, items });
@@ -271,8 +288,10 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   );
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const { data: session } = useSession();
+  const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
   const setUserCountrySelection = useSetAtom(userCountrySelectionAtom);
+  const modalContext = useConfirmationModalContext();
 
   const onFilterCountry = useCallback(
     (value: string) => {
@@ -355,16 +374,78 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   }, [setIsButtonLoading]);
 
   const onBuyClick = useCallback(
-    (item: StoreItemCategory) => {
-      if (!session) {
+    async (item: StoreItemCategory) => {
+      if (!session || !userProfile) {
         setBuyDialogVisible(false);
         setLoginDialogVisible(true);
         return;
       }
+
+      // check availability
+      if (item.count <= 0) {
+        // show confirm dialog
+        await modalContext.showConfirmation(
+          "",
+          <div
+            key="confirm-dialog-content"
+            className="text-gray-500 flex h-full flex-col space-y-2"
+          >
+            <div className="flex flex-row space-x-2">
+              <IoMdWarning className="gl-icon-yellow h-6 w-6" />
+              <p className="text-lg">Unavailable</p>
+            </div>
+
+            <div>
+              <p className="text-sm leading-6">
+                This item is currently not available. Please try again later.
+              </p>
+            </div>
+          </div>,
+          false,
+          true,
+        );
+
+        return;
+      }
+
+      // check price
+      if (userProfile.zlto.available < item.amount) {
+        // show confirm dialog
+        await modalContext.showConfirmation(
+          "",
+          <div
+            key="confirm-dialog-content"
+            className="text-gray-500 flex h-full flex-col space-y-2"
+          >
+            <div className="flex flex-row space-x-2">
+              <IoMdWarning className="gl-icon-yellow h-6 w-6" />
+              <p className="text-lg">Insufficient funds</p>
+            </div>
+
+            <div>
+              <p className="text-sm leading-6">
+                You do not have sufficient Zlto to purchase this item.
+              </p>
+            </div>
+          </div>,
+          false,
+          true,
+        );
+
+        return;
+      }
+
       setCurrentItem(item);
       setBuyDialogVisible(true);
     },
-    [session, setCurrentItem, setBuyDialogVisible, setLoginDialogVisible],
+    [
+      session,
+      setCurrentItem,
+      setBuyDialogVisible,
+      setLoginDialogVisible,
+      userProfile,
+      modalContext,
+    ],
   );
 
   const onBuyConfirm = useCallback(
@@ -564,7 +645,9 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                 type="button"
                 className="btn rounded-full border-0 bg-gray p-3 text-gray-dark hover:bg-gray-light"
                 onClick={() => {
-                  setBuyDialogConfirmationVisible(false);
+                  //setBuyDialogConfirmationVisible(false);
+                  // reload the page to refresh the data
+                  router.reload();
                 }}
               >
                 <IoMdClose className="h-6 w-6"></IoMdClose>
@@ -602,7 +685,9 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                   type="button"
                   className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
                   onClick={() => {
-                    setBuyDialogConfirmationVisible(false);
+                    //setBuyDialogConfirmationVisible(false);
+                    // reload the page to refresh the data
+                    router.reload();
                   }}
                 >
                   Close

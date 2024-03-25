@@ -85,7 +85,7 @@ import iconBell from "public/images/icon-bell.webp";
 import { IoMdClose, IoMdImage } from "react-icons/io";
 import { AvatarImage } from "~/components/AvatarImage";
 import { updateOpportunityStatus } from "~/api/services/opportunities";
-import { type OpportunityInfo, Status } from "~/api/models/opportunity";
+import { Status } from "~/api/models/opportunity";
 
 interface IParams extends ParsedUrlQuery {
   id: string;

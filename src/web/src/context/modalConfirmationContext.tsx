@@ -25,6 +25,8 @@ interface ModalContextType {
   showConfirmation: (
     title: string,
     message: string | JSX.Element,
+    showCancelButton?: boolean,
+    showOkButton?: boolean,
   ) => Promise<boolean>;
 }
 
@@ -43,16 +45,25 @@ const ConfirmationModalContextProvider: React.FC<
   const [content, setContent] = useState<{
     title: string;
     message: string | JSX.Element;
+    showCancelButton?: boolean;
+    showOkButton?: boolean;
   } | null>();
   //eslint-disable-next-line @typescript-eslint/ban-types
   const resolver = useRef<Function>();
 
   const handleShow = useMemo(
     () =>
-      (title: string, message: string | JSX.Element): Promise<boolean> => {
+      (
+        title: string,
+        message: string | JSX.Element,
+        showCancelButton?: boolean,
+        showOkButton?: boolean,
+      ): Promise<boolean> => {
         setContent({
           title,
           message,
+          showCancelButton,
+          showOkButton,
         });
         setShow(true);
         return new Promise(function (resolve) {
@@ -102,12 +113,21 @@ const ConfirmationModalContextProvider: React.FC<
 
             {/* BUTTONS */}
             <div className="mt-10 flex h-full flex-row place-items-center justify-center space-x-2">
-              <button className="btn-default btn btn-sm" onClick={handleCancel}>
-                Cancel
-              </button>
-              <button className="btn btn-primary btn-sm" onClick={handleOk}>
-                OK
-              </button>
+              {(content.showCancelButton == null ||
+                content.showCancelButton == true) && (
+                <button
+                  className="btn-default btn btn-sm"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </button>
+              )}
+              {(content.showOkButton == null ||
+                content.showOkButton == true) && (
+                <button className="btn btn-primary btn-sm" onClick={handleOk}>
+                  OK
+                </button>
+              )}
             </div>
           </div>
         </ReactModal>
