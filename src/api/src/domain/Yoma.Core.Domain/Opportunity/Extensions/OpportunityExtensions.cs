@@ -25,6 +25,26 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       return hours;
     }
 
+    public static int TimeIntervalToDays(this Models.Opportunity opportunity)
+    {
+      ArgumentNullException.ThrowIfNull(opportunity);
+
+      if (!Enum.TryParse<TimeInterval>(opportunity.CommitmentInterval, true, out var interval))
+        throw new ArgumentOutOfRangeException(nameof(opportunity), $"{nameof(opportunity.CommitmentInterval)} of '{opportunity.CommitmentInterval}' is not supported");
+
+      var days = 0;
+      days = interval switch
+      {
+        TimeInterval.Hour => (int)Math.Ceiling((double)opportunity.CommitmentIntervalCount / 24),
+        TimeInterval.Day => opportunity.CommitmentIntervalCount,
+        TimeInterval.Week => opportunity.CommitmentIntervalCount * 7,
+        TimeInterval.Month => opportunity.CommitmentIntervalCount * 30,
+        _ => throw new InvalidOperationException($"{nameof(TimeInterval)} of '{interval}' not supported"),
+      };
+
+      return days;
+    }
+
     public static void SetPublished(this Models.Opportunity opportunity)
     {
       ArgumentNullException.ThrowIfNull(opportunity);

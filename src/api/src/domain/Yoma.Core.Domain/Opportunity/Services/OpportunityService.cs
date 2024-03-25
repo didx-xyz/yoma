@@ -865,6 +865,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ModifiedByUserId = user.Id
       };
 
+      if (result.DateEnd.HasValue)
+      {
+        var commitmentIntervalInDays = result.TimeIntervalToDays();
+        var dateEndMin = result.DateStart.AddDays(commitmentIntervalInDays);
+        if (dateEndMin > result.DateEnd.Value)
+          throw new ValidationException($"The end date for the opportunity must be on or after {dateEndMin.Date}, based on the specified start date and commitment interval");
+      }
+
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
@@ -962,6 +970,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.CredentialIssuanceEnabled = request.CredentialIssuanceEnabled;
       result.SSISchemaName = request.SSISchemaName;
       result.ModifiedByUserId = user.Id;
+
+      if (result.DateEnd.HasValue)
+      {
+        var commitmentIntervalInDays = result.TimeIntervalToDays();
+        var dateEndMin = result.DateStart.AddDays(commitmentIntervalInDays);
+        if (dateEndMin > result.DateEnd.Value)
+          throw new ValidationException($"The end date for the opportunity must be on or after {dateEndMin.Date}, based on the specified start date and commitment interval");
+      }
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
