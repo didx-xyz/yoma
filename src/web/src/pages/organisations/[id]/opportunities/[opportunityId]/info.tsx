@@ -55,6 +55,9 @@ import Moment from "react-moment";
 import { useRouter } from "next/router";
 import { getThemeFromRole } from "~/lib/utils";
 import { AvatarImage } from "~/components/AvatarImage";
+import axios from "axios";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -66,12 +69,14 @@ interface IParams extends ParsedUrlQuery {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id, opportunityId } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
+  const queryClient = new QueryClient(config);
+  let errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
     return {
       props: {
-        error: "Unauthorized",
+        error: 401,
       },
     };
   }
@@ -79,13 +84,27 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
-  // 👇 prefetch queries on server
-  const queryClient = new QueryClient(config);
-  await queryClient.prefetchQuery({
-    queryKey: ["opportunityInfo", opportunityId],
-    queryFn: () =>
-      getOpportunityInfoByIdAdminOrgAdminOrUser(opportunityId, context),
-  });
+  try {
+    // 👇 prefetch queries on server
+    const dataOpportunityInfo = await getOpportunityInfoByIdAdminOrgAdminOrUser(
+      opportunityId,
+      context,
+    );
+
+    await queryClient.prefetchQuery({
+      queryKey: ["opportunityInfo", opportunityId],
+      queryFn: () => dataOpportunityInfo,
+    });
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+          props: { theme: theme },
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
 
   return {
     props: {
@@ -94,6 +113,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       id: id,
       opportunityId: opportunityId,
       theme: theme,
+      error: errorCode,
     },
   };
 }
@@ -105,8 +125,8 @@ const OpportunityDetails: NextPageWithLayout<{
   id: string;
   opportunityId: string;
   user: User;
-  error: string;
   theme: string;
+  error?: number;
 }> = ({ id, opportunityId, user, error }) => {
   const router = useRouter();
   const { returnUrl } = router.query;
@@ -163,7 +183,11 @@ const OpportunityDetails: NextPageWithLayout<{
     [opportunityId, queryClient],
   );
 
-  if (error) return <Unauthorized />;
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>

@@ -86,6 +86,9 @@ import { IoMdClose, IoMdImage } from "react-icons/io";
 import { AvatarImage } from "~/components/AvatarImage";
 import { updateOpportunityStatus } from "~/api/services/opportunities";
 import { Status } from "~/api/models/opportunity";
+import axios from "axios";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -97,12 +100,14 @@ interface IParams extends ParsedUrlQuery {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id, opportunityId } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
+  const queryClient = new QueryClient(config);
+  let errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
     return {
       props: {
-        error: "Unauthorized",
+        error: 401,
       },
     };
   }
@@ -110,17 +115,26 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
-  // 👇 prefetch queries on server
-  const queryClient = new QueryClient(config);
+  try {
+    // 👇 prefetch queries on server
+    if (opportunityId !== "create") {
+      const data = await getOpportunityById(opportunityId, context);
 
-  await Promise.all([
-    opportunityId !== "create"
-      ? await queryClient.prefetchQuery({
-          queryKey: ["opportunity", opportunityId],
-          queryFn: () => getOpportunityById(opportunityId, context),
-        })
-      : null,
-  ]);
+      await queryClient.prefetchQuery({
+        queryKey: ["opportunity", opportunityId],
+        queryFn: () => data,
+      });
+    }
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+          props: { theme: theme },
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
 
   return {
     props: {
@@ -129,6 +143,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       id: id,
       opportunityId: opportunityId,
       theme: theme,
+      error: errorCode,
     },
   };
 }
@@ -142,7 +157,7 @@ const OpportunityDetails: NextPageWithLayout<{
   opportunityId: string;
   user: User;
   theme: string;
-  error: string;
+  error?: number;
 }> = ({ id, opportunityId, error }) => {
   const router = useRouter();
   const { returnUrl } = router.query;
@@ -898,14 +913,17 @@ const OpportunityDetails: NextPageWithLayout<{
     [opportunityId, queryClient],
   );
 
-  if (error) return <Unauthorized />;
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>
       {isLoading && <Loading />}
-
       <PageBackground />
-
+      error: {JSON.stringify(error)}
       {/* OPPORTUNITY EXPIRED MODAL */}
       <ReactModal
         isOpen={oppExpiredModalVisible}
@@ -972,7 +990,6 @@ const OpportunityDetails: NextPageWithLayout<{
           </div>
         </div>
       </ReactModal>
-
       {/* SAVE CHANGES DIALOG */}
       <ReactModal
         isOpen={saveChangesDialogVisible}
@@ -1035,7 +1052,6 @@ const OpportunityDetails: NextPageWithLayout<{
           </div>
         </div>
       </ReactModal>
-
       <div className="container z-10 mt-20 max-w-7xl px-2 py-4">
         {/* BREADCRUMB */}
         <div className="flex flex-row items-center text-xs text-white">

@@ -43,6 +43,12 @@ import { getUserProfile } from "~/api/services/user";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { fetchClientEnv } from "~/lib/utils";
 import { useConfirmationModalContext } from "src/context/modalConfirmationContext";
+import { getServerSession } from "next-auth";
+import { authOptions } from "~/server/auth";
+import axios from "axios";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 
 interface IParams extends ParsedUrlQuery {
   country: string;
@@ -171,63 +177,27 @@ interface IParams extends ParsedUrlQuery {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { country } = context.params as IParams;
-
-  const lookups_countries = await listSearchCriteriaCountries(context);
-  const lookups_categories = await listStoreCategories(
-    country ?? COUNTRY_WW,
-    context,
-  );
   const data_storeItems = [];
+  let errorCode = null;
+  let lookups_countries = null;
+  let lookups_categories = null;
 
-  // get store items for above categories
-  for (const category of lookups_categories) {
-    const stores = await searchStores(
-      {
-        pageNumber: null,
-        pageSize: null,
-        countryCodeAlpha2: country,
-        categoryId: category.id ?? null,
-      },
+  await getServerSession(context.req, context.res, authOptions); // refresh the auth token on the server
+
+  try {
+    lookups_countries = await listSearchCriteriaCountries(context);
+    lookups_categories = await listStoreCategories(
+      country ?? COUNTRY_WW,
       context,
     );
 
-    const storeItems = [];
-
-    for (const store of stores.items) {
-      const items = await searchStoreItemCategories(
-        {
-          pageNumber: 1,
-          pageSize: PAGE_SIZE_MINIMUM,
-          storeId: store.id?.toString() ?? "",
-        },
-        context,
-      );
-
-      // filter available items
-      items.items = items.items.filter((item) => item.count > 0);
-
-      // only add to storeItems if items is not empty
-      if (items && items.items.length > 0) {
-        storeItems.push({ store, items });
-      }
-    }
-
-    // only add to data_storeItems if storeItems is not empty
-    if (storeItems.length > 0) {
-      data_storeItems.push({ category, storeItems });
-    }
-  }
-
-  // if country not WW, then include some WW items
-  if (country !== COUNTRY_WW) {
-    const lookups_categoriesWW = await listStoreCategories(COUNTRY_WW, context);
-
-    for (const category of lookups_categoriesWW) {
+    // get store items for above categories
+    for (const category of lookups_categories) {
       const stores = await searchStores(
         {
           pageNumber: null,
           pageSize: null,
-          countryCodeAlpha2: COUNTRY_WW,
+          countryCodeAlpha2: country,
           categoryId: category.id ?? null,
         },
         context,
@@ -259,10 +229,64 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         data_storeItems.push({ category, storeItems });
       }
     }
+
+    // if country not WW, then include some WW items
+    if (country !== COUNTRY_WW) {
+      const lookups_categoriesWW = await listStoreCategories(
+        COUNTRY_WW,
+        context,
+      );
+
+      for (const category of lookups_categoriesWW) {
+        const stores = await searchStores(
+          {
+            pageNumber: null,
+            pageSize: null,
+            countryCodeAlpha2: COUNTRY_WW,
+            categoryId: category.id ?? null,
+          },
+          context,
+        );
+
+        const storeItems = [];
+
+        for (const store of stores.items) {
+          const items = await searchStoreItemCategories(
+            {
+              pageNumber: 1,
+              pageSize: PAGE_SIZE_MINIMUM,
+              storeId: store.id?.toString() ?? "",
+            },
+            context,
+          );
+
+          // filter available items
+          items.items = items.items.filter((item) => item.count > 0);
+
+          // only add to storeItems if items is not empty
+          if (items && items.items.length > 0) {
+            storeItems.push({ store, items });
+          }
+        }
+
+        // only add to data_storeItems if storeItems is not empty
+        if (storeItems.length > 0) {
+          data_storeItems.push({ category, storeItems });
+        }
+      }
+    }
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
   }
 
   return {
-    props: { country, lookups_countries, data_storeItems },
+    props: { country, lookups_countries, data_storeItems, error: errorCode },
   };
 }
 
@@ -273,7 +297,8 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
     category: StoreCategory;
     storeItems: { store: Store; items: StoreItemCategorySearchResults }[];
   }[];
-}> = ({ country, lookups_countries, data_storeItems }) => {
+  error?: number;
+}> = ({ country, lookups_countries, data_storeItems, error }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [buyDialogVisible, setBuyDialogVisible] = useState(false);
@@ -484,6 +509,12 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       setUserProfile,
     ],
   );
+
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <div className="flex w-full max-w-7xl flex-col gap-4">

@@ -81,6 +81,8 @@ import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { AvatarImage } from "~/components/AvatarImage";
 import { useRouter } from "next/router";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -91,12 +93,13 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { opportunityId } = context.params as IParams;
   const queryClient = new QueryClient(config);
   const session = await getServerSession(context.req, context.res, authOptions);
-
-  let dataOpportunityInfo: OpportunityInfo | null = null;
-  let dataVerificationStatus: MyOpportunityResponseVerify | null = null;
+  let errorCode = null;
 
   try {
     // 👇 prefetch queries on server
+    let dataOpportunityInfo: OpportunityInfo | null = null;
+    let dataVerificationStatus: MyOpportunityResponseVerify | null = null;
+
     if (session) {
       // authenticated user (user may be an admin, orgDamin or the user has completed the opportunitiy)
       dataOpportunityInfo = await getOpportunityInfoByIdAdminOrgAdminOrUser(
@@ -132,40 +135,31 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     // 👇 perform viewed action
     if (dataOpportunityInfo.published)
       await performActionViewed(opportunityId, context);
-
-    return {
-      props: {
-        dehydratedState: dehydrate(queryClient),
-        user: session?.user ?? null,
-        opportunityId: opportunityId,
-      },
-    };
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 404) {
-        // Return a 404 page if the status code is 404
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
         return {
           notFound: true,
-          props: {}, // you can pass your error message here
         };
-      }
-      // other server errors will be thrown by the client queries
-    }
-
-    return {
-      props: {
-        dehydratedState: dehydrate(queryClient),
-        user: session?.user ?? null,
-        opportunityId: opportunityId,
-      },
-    };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
   }
+
+  return {
+    props: {
+      dehydratedState: dehydrate(queryClient),
+      user: session?.user ?? null,
+      opportunityId: opportunityId,
+      error: errorCode,
+    },
+  };
 }
 
 const OpportunityDetails: NextPageWithLayout<{
   opportunityId: string;
   user: User;
-}> = ({ opportunityId, user }) => {
+  error?: number;
+}> = ({ opportunityId, user, error }) => {
   const queryClient = useQueryClient();
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [gotoOpportunityDialogVisible, setGotoOpportunityDialogVisible] =
@@ -329,6 +323,12 @@ const OpportunityDetails: NextPageWithLayout<{
 
     setCancelOpportunityDialogVisible(false);
   }, [opportunityId, queryClient]);
+
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>

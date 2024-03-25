@@ -18,6 +18,9 @@ import type { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
 import { useRouter } from "next/router";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
+import axios from "axios";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -27,24 +30,39 @@ interface IParams extends ParsedUrlQuery {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
+  const queryClient = new QueryClient(config);
+  let errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
     return {
       props: {
-        error: "Unauthorized",
+        error: 401,
       },
     };
   }
+
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
-  // 👇 prefetch queries on server
-  const queryClient = new QueryClient(config);
-  await queryClient.prefetchQuery({
-    queryKey: ["organisation", id],
-    queryFn: () => getOrganisationById(id, context),
-  });
+  try {
+    // 👇 prefetch queries on server
+    const data = await getOrganisationById(id, context);
+
+    await queryClient.prefetchQuery({
+      queryKey: ["organisation", id],
+      queryFn: () => data,
+    });
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+          props: { theme: theme },
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
 
   return {
     props: {
@@ -52,6 +70,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       user: session?.user ?? null,
       id: id,
       theme: theme,
+      error: errorCode,
     },
   };
 }
@@ -59,8 +78,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const OrganisationOverview: NextPageWithLayout<{
   id: string;
   user: User;
-  error: string;
   theme: string;
+  error?: number;
 }> = ({ id, error }) => {
   const router = useRouter();
   const { returnUrl } = router.query;
@@ -71,7 +90,11 @@ const OrganisationOverview: NextPageWithLayout<{
     enabled: !error,
   });
 
-  if (error) return <Unauthorized />;
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>

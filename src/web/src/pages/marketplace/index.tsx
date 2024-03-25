@@ -19,6 +19,10 @@ import { LoadingInline } from "~/components/Status/LoadingInline";
 import { userCountrySelectionAtom, userProfileAtom } from "~/lib/store";
 import { useAtom, useSetAtom } from "jotai";
 import iconLocation from "public/images/icon-location.svg";
+import axios from "axios";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 
 // TODO: this page should be statically generated but build process is failing with the axios errors... so for now, we'll use SSR
 // This page is statically generated at build time on server-side
@@ -39,16 +43,29 @@ import iconLocation from "public/images/icon-location.svg";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const lookups_countries = await listSearchCriteriaCountries(context);
+  let errorCode = null;
+  let lookups_countries = null;
+  try {
+    lookups_countries = await listSearchCriteriaCountries(context);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
 
   return {
-    props: { lookups_countries },
+    props: { lookups_countries, error: errorCode },
   };
 }
 
 const Marketplace: NextPageWithLayout<{
   lookups_countries: Country[];
-}> = ({ lookups_countries }) => {
+  error?: number;
+}> = ({ lookups_countries, error }) => {
   const router = useRouter();
   const [userProfile] = useAtom(userProfileAtom);
 
@@ -104,6 +121,12 @@ const Marketplace: NextPageWithLayout<{
     lookups_countries,
   ]);
   const myRef = useRef<HTMLDivElement>(null);
+
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <div className="flex w-full max-w-7xl flex-col gap-4">

@@ -15,26 +15,41 @@ import type { SSISchema } from "~/api/models/credential";
 import { THEME_BLUE } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
+import axios from "axios";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
+  const { query, page } = context.query;
+  const queryClient = new QueryClient(config);
+  let errorCode = null;
 
   if (!session) {
     return {
       props: {
-        error: "Unauthorized",
+        error: 401,
       },
     };
   }
 
-  const { query, page } = context.query;
-  const queryClient = new QueryClient(config);
+  try {
+    // 👇 prefetch queries on server
+    const data = await getSchemas(undefined, context);
 
-  // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: [`Schemas_${query?.toString()}_${page?.toString()}`],
-    queryFn: () => getSchemas(undefined, context),
-  });
+    await queryClient.prefetchQuery({
+      queryKey: [`Schemas_${query?.toString()}_${page?.toString()}`],
+      queryFn: () => data,
+    });
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
 
   return {
     props: {
@@ -42,6 +57,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       user: session?.user ?? null,
       query: query ?? null,
       page: page ?? null,
+      error: errorCode,
     },
   };
 }
@@ -49,7 +65,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const Schemas: NextPageWithLayout<{
   query?: string;
   page?: string;
-  error: string;
+  error?: number;
 }> = ({ query, page, error }) => {
   // 👇 use prefetched queries from server
   const { data: schemas } = useQuery<SSISchema[]>({
@@ -58,7 +74,11 @@ const Schemas: NextPageWithLayout<{
     enabled: !error,
   });
 
-  if (error) return <Unauthorized />;
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>

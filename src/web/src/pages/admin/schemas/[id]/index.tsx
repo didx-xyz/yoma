@@ -32,6 +32,7 @@ import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
+import axios from "axios";
 import {
   createSchema,
   updateSchema,
@@ -55,6 +56,8 @@ import {
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -62,40 +65,52 @@ interface IParams extends ParsedUrlQuery {
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
+  const { id } = context.params as IParams;
+  const queryClient = new QueryClient(config);
+  let errorCode = null;
 
   if (!session) {
     return {
       props: {
-        error: "Unauthorized",
+        error: 401,
       },
     };
   }
 
-  const { id } = context.params as IParams;
-  const queryClient = new QueryClient(config);
+  try {
+    const dataSchemaTypes = (await getSchemaTypes()).map((c) => ({
+      value: c.id,
+      label: c.name,
+    }));
 
-  await Promise.all([
     await queryClient.prefetchQuery({
       queryKey: ["schemaTypes"],
-      queryFn: async () =>
-        (await getSchemaTypes()).map((c) => ({
-          value: c.id,
-          label: c.name,
-        })),
-    }),
-    id !== "create"
-      ? await queryClient.prefetchQuery({
-          queryKey: ["schema", id],
-          queryFn: () => getSchemaByName(id, context),
-        })
-      : null,
-  ]);
+      queryFn: () => dataSchemaTypes,
+    });
+
+    if (id !== "create") {
+      const data = await getSchemaByName(id, context);
+      await queryClient.prefetchQuery({
+        queryKey: ["schema", id],
+        queryFn: () => data,
+      });
+    }
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       id: id,
+      error: errorCode,
     },
   };
 }
@@ -103,7 +118,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const SchemaCreateEdit: NextPageWithLayout<{
   id: string;
   user: User;
-  error: string;
+  error?: number;
 }> = ({ id, error }) => {
   const queryClient = useQueryClient();
 
@@ -316,7 +331,11 @@ const SchemaCreateEdit: NextPageWithLayout<{
     [schemaEntities],
   );
 
-  if (error) return <Unauthorized />;
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>

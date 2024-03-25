@@ -45,6 +45,9 @@ import { getCountries } from "~/api/services/lookups";
 import { IoMdArrowRoundBack, IoMdWarning } from "react-icons/io";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { getThemeFromRole } from "~/lib/utils";
+import axios from "axios";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -54,12 +57,14 @@ interface IParams extends ParsedUrlQuery {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
+  const queryClient = new QueryClient(config);
+  let errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
     return {
       props: {
-        error: "Unauthorized",
+        error: 401,
       },
     };
   }
@@ -67,22 +72,37 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
-  // 👇 prefetch queries on server
-  const queryClient = new QueryClient(config);
-  await Promise.all([
-    await queryClient.prefetchQuery({
-      queryKey: ["organisationProviderTypes"],
-      queryFn: () => getOrganisationProviderTypes(context),
-    }),
-    await queryClient.prefetchQuery({
-      queryKey: ["countries"],
-      queryFn: async () => await getCountries(context),
-    }),
-    await queryClient.prefetchQuery({
-      queryKey: ["organisation", id],
-      queryFn: () => getOrganisationById(id, context),
-    }),
-  ]);
+  try {
+    // 👇 prefetch queries on server
+    const dataOrganisationProviderTypes =
+      await getOrganisationProviderTypes(context);
+    const dataCountries = await getCountries(context);
+    const dataOrganisation = await getOrganisationById(id, context);
+
+    await Promise.all([
+      await queryClient.prefetchQuery({
+        queryKey: ["organisationProviderTypes"],
+        queryFn: () => dataOrganisationProviderTypes,
+      }),
+      await queryClient.prefetchQuery({
+        queryKey: ["countries"],
+        queryFn: () => dataCountries,
+      }),
+      await queryClient.prefetchQuery({
+        queryKey: ["organisation", id],
+        queryFn: () => dataOrganisation,
+      }),
+    ]);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+          props: { theme: theme },
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
 
   return {
     props: {
@@ -90,6 +110,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       user: session?.user ?? null,
       id: id,
       theme: theme,
+      error: errorCode,
     },
   };
 }
@@ -97,8 +118,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const OrganisationUpdate: NextPageWithLayout<{
   id: string;
   user: User | null;
-  error: string;
   theme: string;
+  error?: number;
 }> = ({ id, user, error }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
@@ -224,7 +245,11 @@ const OrganisationUpdate: NextPageWithLayout<{
     [OrganizationRequestBase, onSubmit],
   );
 
-  if (error) return <Unauthorized />;
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>

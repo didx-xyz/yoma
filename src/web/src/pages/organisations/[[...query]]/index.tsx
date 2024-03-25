@@ -32,16 +32,20 @@ import { type User, authOptions } from "~/server/auth";
 import { config } from "~/lib/react-query-config";
 import { AvatarImage } from "~/components/AvatarImage";
 import { PageBackground } from "~/components/PageBackground";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import axios from "axios";
+import { InternalServerError } from "~/components/Status/InternalServerError";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
+  let errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
     return {
       props: {
-        error: "Unauthorized",
+        error: 401,
       },
     };
   }
@@ -56,7 +60,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   } else {
     return {
       props: {
-        error: "Unauthorized",
+        error: 401,
       },
     };
   }
@@ -65,44 +69,58 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient(config);
 
   // 👇 prefetch queries on server
-  await Promise.all([
-    await queryClient.prefetchQuery({
-      queryKey: [
-        `OrganisationsActive_${query?.toString()}_${page?.toString()}`,
-      ],
-      queryFn: () =>
-        getOrganisations(
-          {
-            pageNumber: page ? parseInt(page.toString()) : 1,
-            pageSize: 20,
-            valueContains: query?.toString() ?? null,
-            statuses: [Status.Active],
-          },
-          context,
-        ),
-    }),
-    await queryClient.prefetchQuery({
-      queryKey: [
-        `OrganisationsInactive_${query?.toString()}_${page?.toString()}`,
-      ],
-      queryFn: () =>
-        getOrganisations(
-          {
-            pageNumber: page ? parseInt(page.toString()) : 1,
-            pageSize: 20,
-            valueContains: query?.toString() ?? null,
-            statuses: [Status.Inactive],
-          },
-          context,
-        ),
-    }),
-  ]);
+  try {
+    const organisationsActive = await getOrganisations(
+      {
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: 20,
+        valueContains: query?.toString() ?? null,
+        statuses: [Status.Active],
+      },
+      context,
+    );
+
+    const organisationsInactive = await getOrganisations(
+      {
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: 20,
+        valueContains: query?.toString() ?? null,
+        statuses: [Status.Inactive],
+      },
+      context,
+    );
+
+    await Promise.all([
+      await queryClient.prefetchQuery({
+        queryKey: [
+          `OrganisationsActive_${query?.toString()}_${page?.toString()}`,
+        ],
+        queryFn: () => organisationsActive,
+      }),
+      await queryClient.prefetchQuery({
+        queryKey: [
+          `OrganisationsInactive_${query?.toString()}_${page?.toString()}`,
+        ],
+        queryFn: () => organisationsInactive,
+      }),
+    ]);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+          props: { theme: theme },
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       theme: theme,
+      error: errorCode,
     },
   };
 }
@@ -159,10 +177,10 @@ export const OrganisationCardComponent: React.FC<{
 };
 
 const Opportunities: NextPageWithLayout<{
-  error: string;
   user: User;
   theme: string;
-}> = ({ error, user }) => {
+  error?: number;
+}> = ({ user, error }) => {
   const router = useRouter();
   const [showAll, setShowAll] = useState(true);
   const [showPending, setShowPending] = useState(false);
@@ -240,7 +258,11 @@ const Opportunities: NextPageWithLayout<{
     [router],
   );
 
-  if (error) return <Unauthorized />;
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>

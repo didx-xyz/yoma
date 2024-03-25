@@ -5,7 +5,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { type AxiosError } from "axios";
+import axios, { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -49,6 +49,8 @@ import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { IoIosCheckmark } from "react-icons/io";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -58,6 +60,8 @@ interface IParams extends ParsedUrlQuery {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
+  const queryClient = new QueryClient(config);
+  let errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
@@ -71,19 +75,31 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
-  const queryClient = new QueryClient(config);
+  try {
+    // 👇 prefetch queries on server
+    const dataOrganisation = await getOrganisationById(id, context);
+    const dataAdmins = await getOrganisationAdminsById(id, context);
 
-  // 👇 prefetch queries on server
-  await Promise.all([
-    await queryClient.prefetchQuery({
-      queryKey: ["organisation", id],
-      queryFn: () => getOrganisationById(id, context),
-    }),
-    await queryClient.prefetchQuery({
-      queryKey: ["organisationAdmins", id],
-      queryFn: () => getOrganisationAdminsById(id, context),
-    }),
-  ]);
+    await Promise.all([
+      await queryClient.prefetchQuery({
+        queryKey: ["organisation", id],
+        queryFn: () => dataOrganisation,
+      }),
+      await queryClient.prefetchQuery({
+        queryKey: ["organisationAdmins", id],
+        queryFn: () => dataAdmins,
+      }),
+    ]);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+          props: { theme: theme },
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
 
   return {
     props: {
@@ -91,6 +107,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       user: session?.user ?? null,
       id: id,
       theme: theme,
+      error: errorCode,
     },
   };
 }
@@ -98,8 +115,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const OrganisationDetails: NextPageWithLayout<{
   id: string;
   user: User;
-  error: string;
   theme: string;
+  error?: number;
 }> = ({ id, error }) => {
   const router = useRouter();
   const { returnUrl } = router.query;
@@ -170,6 +187,12 @@ const OrganisationDetails: NextPageWithLayout<{
 
     setIsLoading(false);
   }, [setIsLoading, id, queryClient, verifyActionApprove, verifyComments]);
+
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   let content = <></>;
 
@@ -252,8 +275,6 @@ const OrganisationDetails: NextPageWithLayout<{
       </div>
     );
   }
-
-  if (error) return <Unauthorized />;
 
   return (
     <>

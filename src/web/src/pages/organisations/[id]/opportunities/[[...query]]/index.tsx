@@ -26,6 +26,9 @@ import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { useAtomValue } from "jotai";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { getThemeFromRole } from "~/lib/utils";
+import axios from "axios";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -36,13 +39,16 @@ interface IParams extends ParsedUrlQuery {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
+  const { query, page } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
+  const queryClient = new QueryClient(config);
+  let errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
     return {
       props: {
-        error: "Unauthorized",
+        error: 401,
       },
     };
   }
@@ -50,45 +56,56 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
-  // 👇 prefetch queries on server
-  const { query, page } = context.query;
-  const queryClient = new QueryClient(config);
-  await queryClient.prefetchQuery({
-    queryKey: [
-      `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`,
-    ],
-    queryFn: () =>
-      getOpportunitiesAdmin(
-        {
-          organizations: [id],
-          pageNumber: page ? parseInt(page.toString()) : 1,
-          pageSize: PAGE_SIZE,
-          startDate: null,
-          endDate: null,
-          // admins can see deleted opportunities, org admins can see Active, Expired & Inactive
-          statuses: session?.user?.roles.some((x) => x === ROLE_ADMIN)
-            ? null
-            : [Status.Active, Status.Expired, Status.Inactive],
-          types: null,
-          categories: null,
-          languages: null,
-          countries: null,
-          valueContains: query?.toString() ?? null,
-          commitmentIntervals: null,
-          zltoRewardRanges: null,
-        },
-        context,
-      ),
-  });
+  try {
+    // 👇 prefetch queries on server
+    const data = await getOpportunitiesAdmin(
+      {
+        organizations: [id],
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: PAGE_SIZE,
+        startDate: null,
+        endDate: null,
+        // admins can see deleted opportunities, org admins can see Active, Expired & Inactive
+        statuses: session?.user?.roles.some((x) => x === ROLE_ADMIN)
+          ? null
+          : [Status.Active, Status.Expired, Status.Inactive],
+        types: null,
+        categories: null,
+        languages: null,
+        countries: null,
+        valueContains: query?.toString() ?? null,
+        commitmentIntervals: null,
+        zltoRewardRanges: null,
+      },
+      context,
+    );
+
+    await queryClient.prefetchQuery({
+      queryKey: [
+        `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`,
+      ],
+      queryFn: () => data,
+    });
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+          props: { theme: theme },
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null,
-      id: id ?? null,
+      id: id,
       query: query ?? null,
       page: page ?? null,
       theme: theme,
+      user: session?.user ?? null,
+      error: errorCode,
     },
   };
 }
@@ -97,15 +114,14 @@ const Opportunities: NextPageWithLayout<{
   id: string;
   query?: string;
   page?: string;
-  user?: User;
-  error: string;
   theme: string;
-}> = ({ id, query, page, user, error }) => {
+  user?: User;
+  error?: number;
+}> = ({ user, id, query, page, error }) => {
+  const router = useRouter();
   const currentOrganisationInactive = useAtomValue(
     currentOrganisationInactiveAtom,
   );
-
-  const router = useRouter();
 
   // 👇 use prefetched queries from server
   const { data: opportunities } = useQuery<OpportunitySearchResults>({
@@ -166,14 +182,17 @@ const Opportunities: NextPageWithLayout<{
     [query, id, router],
   );
 
-  if (error) return <Unauthorized />;
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>
       <Head>
         <title>Yoma | Opportunities</title>
       </Head>
-
       <PageBackground />
 
       <div className="container z-10 mt-10 max-w-7xl px-2 py-8 md:mt-20">

@@ -20,6 +20,10 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import { useRouter } from "next/router";
 import { IoMdClose, IoMdCopy } from "react-icons/io";
 import ReactModal from "react-modal";
+import axios from "axios";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 
 // type GroupedData = {
 //   [key: number]: WalletVoucher[];
@@ -33,32 +37,46 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
   const queryClient = new QueryClient(config);
   const { page } = context.query;
+  let errorCode = null;
 
-  // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: ["Vouchers"],
-    queryFn: () =>
-      searchVouchers(
-        {
-          pageNumber: page ? parseInt(page.toString()) : 1,
-          pageSize: PAGE_SIZE,
-        },
-        context,
-      ),
-  });
+  try {
+    // 👇 prefetch queries on server
+    const data = await searchVouchers(
+      {
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: PAGE_SIZE,
+      },
+      context,
+    );
+
+    await queryClient.prefetchQuery({
+      queryKey: ["Vouchers"],
+      queryFn: () => data,
+    });
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       page: page ?? "1",
+      error: errorCode,
     },
   };
 }
 
 const MarketplaceTransactions: NextPageWithLayout<{
   page?: string;
-}> = ({ page }) => {
+  error?: number;
+}> = ({ page, error }) => {
   const router = useRouter();
   const [currentItem, setCurrentItem] = useState<WalletVoucher | null>(null);
   const [itemDialogVisible, setItemDialogVisible] = useState(false);
@@ -75,6 +93,7 @@ const MarketplaceTransactions: NextPageWithLayout<{
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
       }),
+    enabled: !error,
   });
 
   // 🔔 pager change event
@@ -135,6 +154,12 @@ const MarketplaceTransactions: NextPageWithLayout<{
       alert("Error copying to clipboard: " + error?.toString());
     }
   };
+
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>

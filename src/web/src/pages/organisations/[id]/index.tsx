@@ -56,6 +56,9 @@ import moment from "moment";
 import { getCategoriesAdmin } from "~/api/services/opportunities";
 import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
 import { PieChart } from "~/components/Organisation/Dashboard/PieChart";
+import axios from "axios";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 
 interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
@@ -75,12 +78,13 @@ interface IParams extends ParsedUrlQuery {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
+  let errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
     return {
       props: {
-        error: "Unauthorized",
+        error: 401,
       },
     };
   }
@@ -89,17 +93,31 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const queryClient = new QueryClient(config);
 
-  // 👇 prefetch queries on server
-  await Promise.all([
-    await queryClient.prefetchQuery({
-      queryKey: ["OrganisationDashboardCategories", id],
-      queryFn: () => getCategoriesAdmin(id, context),
-    }),
-    await queryClient.prefetchQuery({
-      queryKey: ["organisation", id],
-      queryFn: () => getOrganisationById(id, context),
-    }),
-  ]);
+  try {
+    const dataCategories = await getCategoriesAdmin(id, context);
+    const dataOrganisation = await getOrganisationById(id, context);
+
+    // 👇 prefetch queries on server
+    await Promise.all([
+      await queryClient.prefetchQuery({
+        queryKey: ["OrganisationDashboardCategories", id],
+        queryFn: () => dataCategories,
+      }),
+      await queryClient.prefetchQuery({
+        queryKey: ["organisation", id],
+        queryFn: () => dataOrganisation,
+      }),
+    ]);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+          props: { theme: theme },
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
 
   return {
     props: {
@@ -107,6 +125,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       user: session?.user ?? null,
       theme: theme,
       id,
+      error: errorCode,
     },
   };
 }
@@ -114,7 +133,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 // OrgAdmin dashboard page
 const OrganisationDashboard: NextPageWithLayout<{
   id: string;
-  error: string;
+  error?: number;
 }> = ({ id, error }) => {
   const router = useRouter();
   const myRef = useRef<HTMLDivElement>(null);
@@ -428,7 +447,11 @@ const OrganisationDashboard: NextPageWithLayout<{
     [searchFilter, redirectWithSearchFilterParams],
   );
 
-  if (error) return <Unauthorized />;
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>

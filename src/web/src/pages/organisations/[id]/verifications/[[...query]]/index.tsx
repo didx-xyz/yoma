@@ -59,6 +59,9 @@ import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityB
 import { IoIosCheckmark } from "react-icons/io";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { getThemeFromRole } from "~/lib/utils";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import axios from "axios";
+import { InternalServerError } from "~/components/Status/InternalServerError";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -71,13 +74,16 @@ interface IParams extends ParsedUrlQuery {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
+  const { query, opportunity, page } = context.query;
+  const queryClient = new QueryClient(config);
   const session = await getServerSession(context.req, context.res, authOptions);
+  let errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
     return {
       props: {
-        error: "Unauthorized",
+        error: 401,
       },
     };
   }
@@ -85,44 +91,54 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
-  // 👇 prefetch queries on server
-  const { query, opportunity, page } = context.query;
-  const queryClient = new QueryClient(config);
-  await Promise.all([
-    await queryClient.prefetchQuery({
-      queryKey: [
-        `Verifications_${id}_${query?.toString()}_${opportunity}_${page?.toString()}`,
-      ],
-      queryFn: () =>
-        searchMyOpportunitiesAdmin(
-          {
-            organizations: [id],
-            pageNumber: page ? parseInt(page.toString()) : 1,
-            pageSize: PAGE_SIZE,
-            opportunity: opportunity?.toString() ?? null,
-            userId: null,
-            valueContains: query?.toString() ?? null,
-            action: Action.Verification,
-            verificationStatuses: [
-              VerificationStatus.Pending,
-              VerificationStatus.Completed,
-              VerificationStatus.Rejected,
-            ],
-          },
-          context,
-        ),
-    }),
-    await queryClient.prefetchQuery({
-      queryKey: ["OpportunitiesForVerification", id],
-      queryFn: async () =>
-        (await getOpportunitiesForVerification([id], undefined, context)).map(
-          (x) => ({
-            value: x.id,
-            label: x.title,
-          }),
-        ),
-    }),
-  ]);
+  try {
+    // 👇 prefetch queries on server
+    const dataVerifications = await searchMyOpportunitiesAdmin(
+      {
+        organizations: [id],
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: PAGE_SIZE,
+        opportunity: opportunity?.toString() ?? null,
+        userId: null,
+        valueContains: query?.toString() ?? null,
+        action: Action.Verification,
+        verificationStatuses: [
+          VerificationStatus.Pending,
+          VerificationStatus.Completed,
+          VerificationStatus.Rejected,
+        ],
+      },
+      context,
+    );
+    const dataOpportunitiesForVerification = (
+      await getOpportunitiesForVerification([id], undefined, context)
+    ).map((x) => ({
+      value: x.id,
+      label: x.title,
+    }));
+
+    await Promise.all([
+      await queryClient.prefetchQuery({
+        queryKey: [
+          `Verifications_${id}_${query?.toString()}_${opportunity}_${page?.toString()}`,
+        ],
+        queryFn: () => dataVerifications,
+      }),
+      await queryClient.prefetchQuery({
+        queryKey: ["OpportunitiesForVerification", id],
+        queryFn: () => dataOpportunitiesForVerification,
+      }),
+    ]);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+          props: { theme: theme },
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
 
   return {
     props: {
@@ -133,6 +149,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       opportunity: opportunity ?? null,
       page: page ?? "1",
       theme: theme,
+      error: errorCode,
     },
   };
 }
@@ -145,8 +162,8 @@ const OpportunityVerifications: NextPageWithLayout<{
   query?: string;
   opportunity?: string;
   page?: string;
-  error: string;
   theme: string;
+  error?: number;
 }> = ({ id, query, opportunity, page, error }) => {
   const router = useRouter();
   const { returnUrl } = router.query;
@@ -486,7 +503,11 @@ const OpportunityVerifications: NextPageWithLayout<{
     setApproved(false);
   };
 
-  if (error) return <Unauthorized />;
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>
