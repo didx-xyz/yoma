@@ -217,7 +217,7 @@ const OpportunityDetails: NextPageWithLayout<{
             onRequestClose={() => {
               setManageOpportunityMenuVisible(false);
             }}
-            className={`fixed left-2 right-2 top-[175px] flex-grow rounded-lg bg-gray-light animate-in fade-in md:left-[80%] md:right-[5%] md:top-[140px] md:w-44 xl:left-[67%] xl:right-[23%]`}
+            className={`fixed left-2 right-2 top-[175px] flex-grow rounded-lg bg-gray-light animate-in fade-in md:left-[80%] md:right-[5%] md:top-[145px] md:w-44 xl:left-[76.7%] xl:right-[23%]`}
             portalClassName={"fixed z-50"}
             overlayClassName="fixed inset-0"
           >
@@ -298,7 +298,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
         {opportunity && (
           <div className="flex flex-col gap-4">
-            <div className="relative flex flex-grow flex-row gap-1 rounded-lg bg-white p-6 shadow-lg">
+            <div className="relative flex flex-grow flex-row gap-1 rounded-lg bg-white p-6 shadow-custom">
               <div className="flex flex-grow flex-col gap-1">
                 <h4 className="text-2xl font-semibold text-black md:max-w-[1125px]">
                   {opportunity.title}

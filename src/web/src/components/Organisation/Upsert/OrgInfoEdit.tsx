@@ -128,7 +128,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
   return (
     <form
       onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
-      className="flex flex-col gap-2"
+      className="flex flex-col gap-4"
     >
       <div className="form-control">
         <label className="label font-bold">
@@ -155,7 +155,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           <span className="label-text">Physical address</span>
         </label>
         <textarea
-          className="textarea textarea-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+          className="textarea textarea-bordered rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
           placeholder="Your organisation's physical address"
           {...register("streetAddress")}
           data-autocomplete="street-address"
@@ -216,6 +216,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         <select
           className="select select-bordered border-gray focus:border-gray focus:outline-none"
           {...register("countryId")}
+          style={{ fontSize: "1rem" }}
         >
           <option value="">Please select</option>
           {countries?.map((country) => (
@@ -332,7 +333,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           <span className="label-text">Organisation biography</span>
         </label>
         <textarea
-          className="textarea textarea-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+          className="textarea textarea-bordered rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
           placeholder="Your organisation biography"
           {...register("biography")}
         />
@@ -350,7 +351,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         {onCancel && (
           <button
             type="button"
-            className="btn btn-warning w-1/2 flex-shrink normal-case"
+            className="btn btn-warning w-1/2 flex-shrink normal-case md:btn-wide"
             onClick={onCancel}
           >
             {cancelButtonText}
@@ -359,7 +360,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         {onSubmit && (
           <button
             type="submit"
-            className="btn btn-success w-1/2 flex-shrink normal-case"
+            className="btn btn-success w-1/2 flex-shrink normal-case md:btn-wide"
           >
             {submitButtonText}
           </button>

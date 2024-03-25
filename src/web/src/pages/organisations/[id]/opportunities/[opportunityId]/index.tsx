@@ -82,7 +82,10 @@ import { useRouter } from "next/router";
 import ReactModal from "react-modal";
 import Image from "next/image";
 import iconBell from "public/images/icon-bell.webp";
-import { IoMdClose } from "react-icons/io";
+import { IoMdClose, IoMdImage } from "react-icons/io";
+import { AvatarImage } from "~/components/AvatarImage";
+import { updateOpportunityStatus } from "~/api/services/opportunities";
+import { type OpportunityInfo, Status } from "~/api/models/opportunity";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -157,6 +160,8 @@ const OpportunityDetails: NextPageWithLayout<{
     useState(false);
   const [lastStepBeforeSaveChangesDialog, setLastStepBeforeSaveChangesDialog] =
     useState<number | null>(null);
+  const [oppExpiredModalVisible, setOppExpiredModalVisible] = useState(false);
+  const [loadingUpdateInactive, setLoadingUpdateInactive] = useState(false);
 
   // 👇 use prefetched queries from server
   const { data: categories } = useQuery<SelectOption[]>({
@@ -849,6 +854,50 @@ const OpportunityDetails: NextPageWithLayout<{
     ],
   );
 
+  useEffect(() => {
+    if ((opportunity?.status as any) == "Expired") {
+      setOppExpiredModalVisible(true);
+    }
+  }, [opportunity?.status, setOppExpiredModalVisible]);
+
+  const updateStatus = useCallback(
+    async (status: Status) => {
+      setLoadingUpdateInactive(true);
+
+      try {
+        // call api
+        await updateOpportunityStatus(opportunityId, status);
+
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_OPPORTUNITY,
+          GA_ACTION_OPPORTUNITY_UPDATE,
+          `Opportunity Status Changed to ${status} for Opportunity ID: ${opportunityId}`,
+        );
+
+        // invalidate queries
+        await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+        await queryClient.invalidateQueries({
+          queryKey: ["opportunity", opportunityId],
+        });
+
+        toast.success("Opportunity status updated");
+        setOppExpiredModalVisible(false);
+      } catch (error) {
+        toast(<ApiErrors error={error as AxiosError} />, {
+          type: "error",
+          toastId: "opportunity",
+          autoClose: false,
+          icon: false,
+        });
+      }
+      setLoadingUpdateInactive(false);
+
+      return;
+    },
+    [opportunityId, queryClient],
+  );
+
   if (error) return <Unauthorized />;
 
   return (
@@ -856,6 +905,73 @@ const OpportunityDetails: NextPageWithLayout<{
       {isLoading && <Loading />}
 
       <PageBackground />
+
+      {/* OPPORTUNITY EXPIRED MODAL */}
+      <ReactModal
+        isOpen={oppExpiredModalVisible}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setOppExpiredModalVisible(false);
+        }}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[380px] md:w-[450px] md:rounded-3xl`}
+        portalClassName={"fixed z-40"}
+        overlayClassName="fixed inset-0 bg-overlay"
+      >
+        <div className="flex h-full flex-col gap-4 overflow-y-auto pb-8">
+          <div className="flex flex-row bg-green p-4 shadow-lg">
+            <h1 className="flex-grow"></h1>
+            <button
+              type="button"
+              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+              onClick={() => {
+                setOppExpiredModalVisible(false);
+              }}
+            >
+              <IoMdClose className="h-6 w-6"></IoMdClose>
+            </button>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+              <Image
+                src={iconBell}
+                alt="Icon Bell"
+                width={28}
+                height={28}
+                sizes="100vw"
+                priority={true}
+                style={{ width: "28px", height: "28px" }}
+              />
+            </div>
+
+            <p className="w-80 text-center text-base">
+              Opportunity expired, please inactivate your opportunity before
+              editing.
+            </p>
+
+            <p className="w-80 text-center text-base">
+              Once you’re happy with the opportunity changes, you can set it to
+              active.
+            </p>
+
+            <div className="mt-4 flex flex-grow gap-4">
+              <button
+                type="button"
+                className="btn btn-primary btn-wide rounded-full normal-case"
+                onClick={() => updateStatus(Status.Inactive)}
+                disabled={loadingUpdateInactive}
+              >
+                {loadingUpdateInactive ? (
+                  <>
+                    <span className="loading loading-spinner"></span>
+                  </>
+                ) : (
+                  <p className="text-white">Inactivate opportunity</p>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </ReactModal>
 
       {/* SAVE CHANGES DIALOG */}
       <ReactModal
@@ -924,31 +1040,31 @@ const OpportunityDetails: NextPageWithLayout<{
         {/* BREADCRUMB */}
         <div className="flex flex-row items-center text-xs text-white">
           <Link
-            className="font-bold hover:text-gray"
+            className="flex items-center justify-center font-bold hover:text-gray"
             href={getSafeUrl(
               returnUrl?.toString(),
               `/organisations/${id}/opportunities`,
             )}
           >
-            <IoMdArrowRoundBack className="bg-theme mr-2 inline-block h-6 w-6 rounded-full p-1 brightness-105" />
+            <IoMdArrowRoundBack className="bg-theme mr-2 inline-block h-4 w-4" />
             Opportunities
           </Link>
 
-          <div className="mx-2">|</div>
+          <div className="mx-2 font-bold">|</div>
 
           {opportunityId == "create" ? (
             "Create"
           ) : (
             <>
               <Link
-                className="font-boldx mt-0 max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap hover:text-gray md:max-w-[400px] lg:max-w-[800px]"
+                className="mt-0 max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap font-bold hover:text-gray md:max-w-[400px] lg:max-w-[800px]"
                 href={`/organisations/${id}/opportunities/${opportunityId}/info${
                   returnUrl ? `?returnUrl=${returnUrl}` : ""
                 }`}
               >
                 {opportunity?.title}
               </Link>
-              <div className="mx-2">|</div>
+              <div className="mx-2 font-bold">|</div>
               <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
                 Edit
               </div>
@@ -956,13 +1072,39 @@ const OpportunityDetails: NextPageWithLayout<{
           )}
         </div>
 
-        <h3 className="mb-6 mt-2 pl-8 font-bold text-white">
-          {opportunityId == "create" ? "New opportunity" : opportunity?.title}
-        </h3>
+        {opportunityId == "create" ? (
+          <h3 className="mb-6 mt-2 pl-8 font-bold text-white">
+            New opportunity
+          </h3>
+        ) : (
+          <div className="flex flex-row items-center">
+            {/* LOGO */}
+            <div className="flex h-20 min-w-max items-center justify-center">
+              {/* NO IMAGE */}
+              {!opportunity?.organizationLogoURL && (
+                <IoMdImage className="h-10 w-10 text-white" />
+              )}
+              {/* EXISTING IMAGE */}
+              {opportunity?.organizationLogoURL && (
+                <div className="mr-4 h-fit">
+                  <AvatarImage
+                    alt="company logo"
+                    size={40}
+                    icon={opportunity?.organizationLogoURL}
+                  />
+                </div>
+              )}
+            </div>
+            {/* TITLE */}
+            <h3 className="overflow-hidden text-ellipsis whitespace-nowrap font-bold text-white">
+              {opportunity?.title}
+            </h3>
+          </div>
+        )}
 
         <div className="flex flex-col gap-4 md:flex-row">
           {/* LEFT VERTICAL MENU */}
-          <ul className="menu hidden h-[420px] flex-none gap-3 rounded-lg bg-white p-4 font-semibold shadow-xl md:flex md:justify-center">
+          <ul className="menu hidden h-max flex-none gap-3 rounded-lg bg-white p-4 font-semibold shadow-custom md:flex md:justify-center">
             <li onClick={() => onClick_Menu(1)}>
               <a
                 className={`${
@@ -1104,7 +1246,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
           {/* DROPDOWN MENU */}
           <select
-            className="select select-bordered select-sm md:hidden"
+            className="select select-md focus:border-none focus:outline-none md:hidden"
             onChange={(e) => {
               switch (e.target.value) {
                 case "Opportunity information":
@@ -1144,12 +1286,14 @@ const OpportunityDetails: NextPageWithLayout<{
           </select>
 
           {/* FORMS */}
-          <div className="flex flex-grow flex-col items-center rounded-lg bg-white shadow-xl">
-            <div className="flex w-full max-w-2xl flex-col p-8">
+          <div className="flex flex-grow flex-col items-center rounded-lg bg-white shadow-custom">
+            <div className="flex w-full flex-col p-4 md:p-8">
               {step === 1 && (
                 <>
                   <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold">Opportunity information</h5>
+                    <h5 className="font-bold tracking-wider">
+                      Opportunity information
+                    </h5>
                     <p className="my-2 text-sm">
                       Information about the opportunity that young people can
                       explore
@@ -1298,7 +1442,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         </span>
                       </label>
                       <textarea
-                        className="input textarea textarea-bordered h-32 rounded-md border-gray focus:border-gray focus:outline-none"
+                        className="input textarea textarea-bordered h-32 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
                         // placeholder="Description"
                         {...registerStep1("description")}
                       />
@@ -1335,7 +1479,9 @@ const OpportunityDetails: NextPageWithLayout<{
               {step === 2 && (
                 <>
                   <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold">Opportunity detail</h5>
+                    <h5 className="font-bold tracking-wider">
+                      Opportunity detail
+                    </h5>
                     <p className="my-2 text-sm">
                       Detailed particulars about the opportunity
                     </p>
@@ -1673,7 +1819,7 @@ const OpportunityDetails: NextPageWithLayout<{
               {step === 3 && (
                 <>
                   <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold">Rewards</h5>
+                    <h5 className="font-bold tracking-wider">Rewards</h5>
                     <p className="my-2 text-sm">
                       Choose the reward that young participants will earn after
                       successfully completing the opportunity
@@ -1877,7 +2023,7 @@ const OpportunityDetails: NextPageWithLayout<{
                               instanceId="skills"
                               classNames={{
                                 control: () =>
-                                  "input input-xs h-fit !border-gray",
+                                  "input input-xs text-[1rem] h-fit !border-gray",
                               }}
                               isMulti={true}
                               defaultOptions={true} // calls loadSkills for initial results when clicking on the dropdown
@@ -1934,7 +2080,7 @@ const OpportunityDetails: NextPageWithLayout<{
               {step === 4 && (
                 <>
                   <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold">Keywords</h5>
+                    <h5 className="font-bold tracking-wider">Keywords</h5>
                     <p className="my-2 text-sm">
                       Boost your chances of being found in searches by adding
                       keywords to your opportunity
@@ -2018,7 +2164,7 @@ const OpportunityDetails: NextPageWithLayout<{
               {step === 5 && (
                 <>
                   <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold">Verification</h5>
+                    <h5 className="font-bold tracking-wider">Verification</h5>
                     <p className="my-2 text-sm">
                       How can young participants confirm their involvement?
                     </p>
@@ -2267,7 +2413,7 @@ const OpportunityDetails: NextPageWithLayout<{
               {step === 6 && (
                 <>
                   <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold">Credential</h5>
+                    <h5 className="font-bold tracking-wider">Credential</h5>
                     <p className="my-2 text-sm">
                       Information about the credential that Youth will receive
                       upon completion of this opportunity
