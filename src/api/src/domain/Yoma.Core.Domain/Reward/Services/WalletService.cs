@@ -107,6 +107,8 @@ namespace Yoma.Core.Domain.Reward.Services
           if (string.IsNullOrEmpty(item.WalletId))
             throw new DataInconsistencyException($"Wallet id expected with wallet creation status of 'Created' for item with id '{item.Id}'");
 
+          balance.WalletId = item.WalletId;
+
           try
           {
             var wallet = await _rewardProviderClient.GetWallet(item.WalletId);

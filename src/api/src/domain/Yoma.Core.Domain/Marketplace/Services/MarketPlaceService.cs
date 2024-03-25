@@ -147,9 +147,13 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      var (_, walletId) = _walletService.GetWalletIdOrNull(user.Id);
-      if (string.IsNullOrEmpty(walletId))
+      var (walletStatus, walletBalance) = _walletService.GetWalletStatusAndBalance(user.Id).Result;
+
+      if (walletStatus != Reward.WalletCreationStatus.Created)
         throw new ValidationException($"The wallet creation for the user with email '{user.Email}' is currently pending. Please try again later or contact technical support for assistance");
+
+      if (string.IsNullOrEmpty(walletBalance.WalletId))
+        throw new InvalidOperationException($"Wallet id expected with status '{walletStatus}'");
 
       var statusReleasedId = _transactionStatusService.GetByName(TransactionStatus.Released.ToString()).Id;
       var statusReservedId = _transactionStatusService.GetByName(TransactionStatus.Reserved.ToString()).Id;
@@ -165,6 +169,9 @@ namespace Yoma.Core.Domain.Marketplace.Services
           throw new ValidationException($"Items for the specified store and category has been sold out");
         var storeItem = storeItems.Single();
 
+        if (walletBalance.Available < storeItem.Amount)
+          throw new ValidationException($"Insufficient funds to purchase the item. Current avaliable balance '{walletBalance.Available:N2}'");
+
         var item = new TransactionLog
         {
           UserId = user.Id,
@@ -174,7 +181,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
         };
 
         //reserve item and track transaction
-        var transactionId = _marketplaceProviderClient.ItemReserve(walletId, user.Email, storeItem.Id).Result;
+        var transactionId = _marketplaceProviderClient.ItemReserve(walletBalance.WalletId, user.Email, storeItem.Id).Result;
         item.Status = TransactionStatus.Reserved;
         item.StatusId = statusReservedId;
         item.TransactionId = transactionId;
@@ -195,7 +202,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
         try
         {
           //mark item as sold and track transaction   
-          _marketplaceProviderClient.ItemSold(walletId, user.Email, storeItem.Id, transactionId).Wait();
+          _marketplaceProviderClient.ItemSold(walletBalance.WalletId, user.Email, storeItem.Id, transactionId).Wait();
           item.Status = TransactionStatus.Sold;
           item.StatusId = statusSoldId;
           _transactionLogRepository.Create(item).Wait();
