@@ -159,6 +159,19 @@ export const getStaticProps: GetStaticProps = async (context) => {
   };
 };
 
+// export const getStaticPaths: GetStaticPaths = async (context) => {
+//   const lookups_countries = await listSearchCriteriaCountries();
+
+//   const paths = lookups_countries.map((country) => ({
+//     params: { country: country.codeAlpha2 },
+//   }));
+
+//   return {
+//     paths,
+//     fallback: "blocking",
+//   };
+// };
+
 export const getStaticPaths: GetStaticPaths = async (context) => {
   const lookups_countries = await listSearchCriteriaCountries(context);
 
@@ -170,6 +183,32 @@ export const getStaticPaths: GetStaticPaths = async (context) => {
     paths,
     fallback: "blocking",
   };
+
+  // return {
+  //   paths: [
+  //     {
+  //       params: {
+  //         country: "WW",
+  //       },
+  //     },
+  //     {
+  //       params: {
+  //         country: "KE",
+  //       },
+  //     },
+  //     {
+  //       params: {
+  //         country: "NG",
+  //       },
+  //     },
+  //     {
+  //       params: {
+  //         country: "ZA",
+  //       },
+  //     },
+  //   ],
+  //   fallback: "blocking",
+  // };
 };
 
 // ⚠️ SSR
