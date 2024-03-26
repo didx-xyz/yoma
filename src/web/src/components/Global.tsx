@@ -322,14 +322,13 @@ export const Global: React.FC = () => {
                 EXCITING UPDATE
               </h5>
               <h4 className="text-2xl font-semibold tracking-wide">
-                Introducing YoID
+                Connected with one profile!
               </h4>
             </div>
 
-            <p className="-mt-4 text-gray-dark">Learning Identity Passport </p>
             <p className="text-gray-dark">
-              Use your YolD to access opportunities and keep a record of skills
-              and experience in one place.
+              Introducing YoID, your Learning Identity Passport. Log in easily
+              across all Yoma Partners while we keep your info safe and secure.
             </p>
 
             <div className="mt-4 flex flex-grow flex-col items-center gap-6">

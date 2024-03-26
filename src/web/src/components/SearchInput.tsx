@@ -45,8 +45,8 @@ export const SearchInput: React.FC<InputProps> = ({
   );
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="join">
+    <form onSubmit={handleSubmit} className="w-full md:w-auto">
+      <div className="join w-full md:w-auto">
         <input
           type="search"
           className={`input join-item input-xs !h-[38px] w-full border-0 !pl-4 placeholder-[#858585] focus:outline-0 ${heightOverride}`}

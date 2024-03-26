@@ -323,15 +323,25 @@ const OpportunityDetails: NextPageWithLayout<{
         {opportunity && (
           <div className="flex flex-col gap-4">
             <div className="relative flex flex-grow flex-row gap-1 rounded-lg bg-white p-6 shadow-custom">
-              <div className="flex flex-grow flex-col gap-1">
-                <h4 className="text-2xl font-semibold text-black md:max-w-[1125px]">
-                  {opportunity.title}
-                </h4>
+              <div className="flex flex-col gap-2 md:flex-grow">
+                <div className="relative">
+                  <h4 className="line-clamp-2 max-w-[80%] flex-grow text-xl font-semibold text-black md:text-2xl ">
+                    {opportunity.title}
+                  </h4>
+                  <span className="absolute right-0 top-0">
+                    {/* COMPANY LOGO */}
+                    <AvatarImage
+                      icon={opportunity?.organizationLogoURL ?? null}
+                      alt="Company Logo"
+                      size={60}
+                    />
+                  </span>
+                </div>
 
-                <h6 className="text-sm text-gray-dark">
+                <h6 className="line-clamp-2 text-sm text-gray-dark">
                   By {opportunity.organizationName}
                 </h6>
-                <div className="flex flex-row gap-1 border-none font-bold text-green-dark">
+                <div className="flex flex-row flex-wrap gap-2 border-none font-bold text-green-dark">
                   <div className="badge h-6 rounded-md border-none bg-green-light text-xs text-green">
                     <Image
                       src={iconClock}
@@ -449,13 +459,6 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
                 </div>
               </div>
-
-              {/* COMPANY LOGO */}
-              <AvatarImage
-                icon={opportunity?.organizationLogoURL ?? null}
-                alt="Company Logo"
-                size={60}
-              />
             </div>
 
             <div className="flex flex-col gap-2 md:flex-row">
@@ -512,7 +515,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                       <span className="ml-1">Skills you will learn</span>
                     </div>
-                    <div className="my-2 flex flex-wrap gap-1">
+                    <div className="my-2 flex flex-wrap gap-2">
                       {opportunity?.skills?.map((item) => (
                         <div
                           key={item.id}
@@ -567,7 +570,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                       <span className="ml-1">Topics</span>
                     </div>
-                    <div className="my-2 flex flex-wrap gap-1">
+                    <div className="my-2 flex flex-wrap gap-2">
                       {opportunity?.categories?.map((item) => (
                         <div
                           key={item.id}
@@ -593,7 +596,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                       <span className="ml-1">Languages</span>
                     </div>
-                    <div className="my-2 flex flex-wrap gap-1">
+                    <div className="my-2 flex flex-wrap gap-2">
                       {opportunity?.languages?.map((item) => (
                         <div
                           key={item.id}
@@ -636,7 +639,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                       <span className="ml-1">Countries</span>
                     </div>
-                    <div className="my-2 flex flex-wrap gap-1">
+                    <div className="my-2 flex flex-wrap gap-2">
                       {opportunity?.countries?.map((country) => (
                         <div
                           key={country.id}

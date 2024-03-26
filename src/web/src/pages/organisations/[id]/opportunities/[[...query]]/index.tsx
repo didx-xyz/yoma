@@ -15,7 +15,7 @@ import { type NextPageWithLayout } from "~/pages/_app";
 import { type ParsedUrlQuery } from "querystring";
 import Link from "next/link";
 import { PageBackground } from "~/components/PageBackground";
-import { IoIosAdd } from "react-icons/io";
+import { IoIosAdd, IoMdPerson, IoIosLink } from "react-icons/io";
 import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PAGE_SIZE, ROLE_ADMIN } from "~/lib/constants";
@@ -29,17 +29,20 @@ import { getThemeFromRole } from "~/lib/utils";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import iconZlto from "public/images/icon-zlto.svg";
+import Image from "next/image";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
   query?: string;
   page?: string;
+  status?: string;
 }
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
-  const { query, page } = context.query;
+  const { query, page, status } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
   const queryClient = new QueryClient(config);
   let errorCode = null;
@@ -65,10 +68,19 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         pageSize: PAGE_SIZE,
         startDate: null,
         endDate: null,
-        // admins can see deleted opportunities, org admins can see Active, Expired & Inactive
-        statuses: session?.user?.roles.some((x) => x === ROLE_ADMIN)
-          ? null
-          : [Status.Active, Status.Expired, Status.Inactive],
+        statuses:
+          status === "active"
+            ? [Status.Active]
+            : status === "inactive"
+              ? [Status.Inactive]
+              : status === "expired"
+                ? [Status.Expired]
+                : status === "deleted" &&
+                    session?.user?.roles.some((x) => x === ROLE_ADMIN)
+                  ? [Status.Deleted]
+                  : session?.user?.roles.some((x) => x === ROLE_ADMIN)
+                    ? null
+                    : [Status.Active, Status.Expired, Status.Inactive],
         types: null,
         categories: null,
         languages: null,
@@ -82,7 +94,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
     await queryClient.prefetchQuery({
       queryKey: [
-        `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`,
+        `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}_${status?.toString()}`,
       ],
       queryFn: () => data,
     });
@@ -103,6 +115,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       id: id,
       query: query ?? null,
       page: page ?? null,
+      status: status ?? null,
       theme: theme,
       user: session?.user ?? null,
       error: errorCode,
@@ -117,7 +130,8 @@ const Opportunities: NextPageWithLayout<{
   theme: string;
   user?: User;
   error?: number;
-}> = ({ user, id, query, page, error }) => {
+  status?: string;
+}> = ({ user, id, query, page, status, error }) => {
   const router = useRouter();
   const currentOrganisationInactive = useAtomValue(
     currentOrganisationInactiveAtom,
@@ -126,7 +140,7 @@ const Opportunities: NextPageWithLayout<{
   // 👇 use prefetched queries from server
   const { data: opportunities } = useQuery<OpportunitySearchResults>({
     queryKey: [
-      `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}`,
+      `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}_${status?.toString()}`,
     ],
     queryFn: () =>
       getOpportunitiesAdmin({
@@ -135,10 +149,20 @@ const Opportunities: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         startDate: null,
         endDate: null,
-        // admins can see deleted opportunities, org admins can see Active, Expired & Inactive
-        statuses: user?.roles.some((x) => x === ROLE_ADMIN)
-          ? null
-          : [Status.Active, Status.Expired, Status.Inactive],
+        statuses:
+          status === "active"
+            ? [Status.Active]
+            : status === "inactive"
+              ? [Status.Inactive]
+              : status === "expired"
+                ? [Status.Expired]
+                : status === "deleted"
+                  ? user?.roles.some((x) => x === ROLE_ADMIN)
+                    ? [Status.Deleted]
+                    : null
+                  : user?.roles.some((x) => x === ROLE_ADMIN)
+                    ? null
+                    : [Status.Active, Status.Expired, Status.Inactive],
         types: null,
         categories: null,
         languages: null,
@@ -158,13 +182,19 @@ const Opportunities: NextPageWithLayout<{
 
         // redirect to the search page
         void router.push(
-          `/organisations/${id}/opportunities?query=${queryEncoded}`,
+          `/organisations/${id}/opportunities?query=${queryEncoded}${
+            status ? `&status=${status}` : ""
+          }`,
         );
       } else {
-        void router.push(`/organisations/${id}/opportunities`);
+        void router.push(
+          `/organisations/${id}/opportunities${
+            status ? `?status=${status}` : ""
+          }`,
+        );
       }
     },
-    [router, id],
+    [router, id, status],
   );
 
   // 🔔 pager change event
@@ -173,13 +203,13 @@ const Opportunities: NextPageWithLayout<{
       // redirect
       void router.push({
         pathname: `/organisations/${id}/opportunities`,
-        query: { query: query, page: value },
+        query: { query: query, page: value, status: status },
       });
 
       // reset scroll position
       window.scrollTo(0, 0);
     },
-    [query, id, router],
+    [query, id, router, status],
   );
 
   if (error) {
@@ -193,15 +223,99 @@ const Opportunities: NextPageWithLayout<{
       <Head>
         <title>Yoma | Opportunities</title>
       </Head>
-      <PageBackground />
+      <PageBackground className="h-[14.5rem] md:h-[18rem]" />
 
-      <div className="container z-10 mt-10 max-w-7xl px-2 py-8 md:mt-20">
-        <div className="flex flex-col gap-4 py-4 sm:flex-row">
-          <h3 className="flex flex-grow items-center font-semibold text-white">
+      <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
+        <div className="flex flex-col gap-4 py-4">
+          <h3 className="mb-6 mt-3 flex items-center text-3xl font-semibold tracking-normal text-white md:mb-9 md:mt-0">
             Opportunities <LimitedFunctionalityBadge />
           </h3>
 
-          <div className="flex gap-4 sm:justify-end">
+          {/* TABBED NAVIGATION */}
+          <div className="z-10 flex justify-center md:justify-start">
+            <div className="flex w-full gap-2">
+              {/* TABS */}
+              <div
+                className="tabs tabs-bordered w-full gap-2 overflow-x-scroll md:overflow-hidden"
+                role="tablist"
+              >
+                <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
+                  <ul className="gap-auto overflow-x-hiddem -mb-px flex w-full justify-between md:justify-start md:gap-6">
+                    <li className="">
+                      <Link
+                        href={`/organisations/${id}/opportunities`}
+                        className={`inline-block rounded-t-lg border-b-4 px-2 py-2 text-white duration-300 md:px-8 ${
+                          !status
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        All
+                      </Link>
+                    </li>
+                    <li className="">
+                      <Link
+                        href={`/organisations/${id}/opportunities?status=active`}
+                        className={`inline-block rounded-t-lg border-b-4 px-2 py-2 text-white duration-300 md:px-8 ${
+                          status === "active"
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        Active
+                      </Link>
+                    </li>
+                    <li className="">
+                      <Link
+                        href={`/organisations/${id}/opportunities?status=inactive`}
+                        className={`inline-block rounded-t-lg border-b-4 px-2 py-2 text-white duration-300 md:px-8 ${
+                          status === "inactive"
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        Inactive
+                      </Link>
+                    </li>
+                    <li className="">
+                      <Link
+                        href={`/organisations/${id}/opportunities?status=expired`}
+                        className={`inline-block rounded-t-lg border-b-4 px-2 py-2 text-white duration-300 md:px-8 ${
+                          status === "expired"
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        Expired
+                      </Link>
+                    </li>
+                    {user?.roles.some((x) => x === ROLE_ADMIN) && (
+                      <li className="">
+                        <Link
+                          href={`/organisations/${id}/opportunities?status=deleted`}
+                          className={`inline-block rounded-t-lg border-b-4 px-4 py-2 text-white duration-300 md:px-8 ${
+                            status === "deleted"
+                              ? "active border-orange"
+                              : "border-transparent hover:border-gray hover:text-gray"
+                          }`}
+                          role="tab"
+                        >
+                          Deleted
+                        </Link>
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SEARCH INPUT */}
+          <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
             <SearchInput defaultValue={query} onSearch={onSearch} />
 
             {currentOrganisationInactive ? (
@@ -211,20 +325,20 @@ const Opportunities: NextPageWithLayout<{
             ) : (
               <Link
                 href={`/organisations/${id}/opportunities/create`}
-                className="bg-theme flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 hover:brightness-110"
+                className="bg-theme btn btn-circle btn-secondary btn-sm h-fit w-fit whitespace-nowrap p-1 text-xs text-white shadow-custom brightness-105 md:p-2 md:px-4"
                 id="btnCreateOpportunity" // e2e
               >
-                <IoIosAdd className="mr-1 h-5 w-5" />
-                Add opportunity
+                <IoIosAdd className="h-7 w-7 md:h-5 md:w-5" />
+                <span className="hidden md:inline">Add opportunity</span>
               </Link>
             )}
           </div>
         </div>
 
-        <div className="rounded-lg bg-white p-4 shadow-custom">
+        <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
           {/* NO ROWS */}
           {opportunities && opportunities.items?.length === 0 && !query && (
-            <div className="flex flex-col place-items-center py-52">
+            <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
               <NoRowsMessage
                 title={"You will find your active opportunities here"}
                 description={
@@ -232,13 +346,13 @@ const Opportunities: NextPageWithLayout<{
                 }
               />
               {currentOrganisationInactive ? (
-                <span className="btn btn-primary btn-sm mt-10 rounded-3xl bg-purple px-16 brightness-75">
+                <span className="btn btn-primary rounded-3xl bg-purple px-16 brightness-75">
                   Add opportunity (disabled)
                 </span>
               ) : (
                 <Link
                   href={`/organisations/${id}/opportunities/create`}
-                  className="bg-theme btn btn-primary btn-sm mt-10 rounded-3xl border-0 px-16 brightness-105 hover:brightness-110"
+                  className="bg-theme btn btn-primary rounded-3xl border-0 px-16 brightness-105 hover:brightness-110"
                   id="btnCreateOpportunity" // e2e
                 >
                   <IoIosAdd className="mr-1 h-5 w-5" />
@@ -248,7 +362,7 @@ const Opportunities: NextPageWithLayout<{
             </div>
           )}
           {opportunities && opportunities.items?.length === 0 && query && (
-            <div className="flex flex-col place-items-center py-52">
+            <div className="flex flex-col place-items-center py-32">
               <NoRowsMessage
                 title={"No opportunities found"}
                 description={"Please try refining your search query."}
@@ -258,31 +372,108 @@ const Opportunities: NextPageWithLayout<{
 
           {/* GRID */}
           {opportunities && opportunities.items?.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="table">
+            <div className="md:overflow-x-auto">
+              {/* MOBIlE */}
+              <div className="flex flex-col gap-4 md:hidden">
+                {opportunities.items.map((opportunity) => (
+                  <Link
+                    href={`/organisations/${id}/opportunities/${opportunity.id}/info`}
+                    className="rounded-lg bg-white p-2 shadow-custom"
+                    key={opportunity.id}
+                  >
+                    <div className="flex flex-col py-4">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-semibold text-gray-dark">
+                            Opportunity title
+                          </span>
+                          <span className="line-clamp-2 text-gray-dark">
+                            {opportunity.title}
+                          </span>
+                        </div>
+
+                        {/* BADGES */}
+                        <div className="flex flex-wrap gap-2">
+                          {opportunity.zltoReward && (
+                            <span className="badge bg-orange-light text-orange">
+                              <Image
+                                src={iconZlto}
+                                alt="Zlto icon"
+                                width={16}
+                                height={16}
+                              />
+                              <span className="ml-1 text-xs">
+                                {opportunity?.zltoReward}
+                              </span>
+                            </span>
+                          )}
+                          {opportunity.yomaReward && (
+                            <span className="badge bg-orange-light text-orange">
+                              <span className="ml-1 text-xs">
+                                {opportunity.yomaReward} Yoma
+                              </span>
+                            </span>
+                          )}
+
+                          <span className="badge bg-blue-light text-blue">
+                            <IoMdPerson className="h-4 w-4" />
+                            <span className="ml-1 text-xs">
+                              {opportunity.participantCountTotal}
+                            </span>
+                          </span>
+                          <span
+                            // href={opportunity?.url ?? ""}
+                            className="badge bg-green-light text-green"
+                          >
+                            <IoIosLink className="h-4 w-4" />
+                            <span className="ml-1 text-xs">
+                              {opportunity?.url}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              {/* DEKSTOP */}
+              <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table">
                 <thead>
                   <tr className="border-gray text-gray-dark">
-                    <th>Opportunity title</th>
-                    <th>Reward</th>
-                    <th>Url</th>
-                    <th>Participants</th>
+                    <th className="border-b-2 border-gray-light !py-4">
+                      Opportunity title
+                    </th>
+                    <th className="border-b-2 border-gray-light">Reward</th>
+                    <th className="border-b-2 border-gray-light">Url</th>
+                    <th className="border-b-2 border-gray-light">
+                      Participants
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {opportunities.items.map((opportunity) => (
-                    <tr key={opportunity.id} className="border-gray">
-                      <td>
+                    <tr key={opportunity.id} className="">
+                      <td className="max-w-[600px] truncate border-b-2 border-gray-light !py-4">
                         <Link
                           href={`/organisations/${id}/opportunities/${opportunity.id}/info`}
                         >
                           {opportunity.title}
                         </Link>
                       </td>
-                      <td className="w-28">
+                      <td className="w-28 border-b-2 border-gray-light">
                         <div className="flex flex-col">
                           {opportunity.zltoReward && (
-                            <span className="text-xs">
-                              {opportunity.zltoReward} Zlto
+                            <span className="badge bg-orange-light text-orange">
+                              <Image
+                                src={iconZlto}
+                                alt="Zlto icon"
+                                width={16}
+                                height={16}
+                              />
+                              <span className="ml-1 text-xs">
+                                {opportunity?.zltoReward}
+                              </span>
                             </span>
                           )}
                           {opportunity.yomaReward && (
@@ -292,8 +483,25 @@ const Opportunities: NextPageWithLayout<{
                           )}
                         </div>
                       </td>
-                      <td>{opportunity.url}</td>
-                      <td>{opportunity.participantCountTotal}</td>
+                      <td className="border-b-2 border-gray-light">
+                        <Link
+                          href={opportunity?.url ?? ""}
+                          className="badge bg-green-light text-green"
+                        >
+                          <IoIosLink className="h-4 w-4" />
+                          <span className="ml-1 text-xs">
+                            {opportunity?.url}
+                          </span>
+                        </Link>
+                      </td>
+                      <td className="border-b-2 border-gray-light">
+                        <span className="badge bg-green-light text-green">
+                          <IoMdPerson className="h-4 w-4" />
+                          <span className="ml-1 text-xs">
+                            {opportunity.participantCountTotal}
+                          </span>
+                        </span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

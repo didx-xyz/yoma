@@ -254,7 +254,8 @@ const Settings: NextPageWithLayout<{
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                  className="input input-bordered w-full rounded-md !border-gray !bg-gray-light focus:border-gray focus:outline-none"
+                  disabled
                   {...register("email")}
                 />
                 {errors.email && (
