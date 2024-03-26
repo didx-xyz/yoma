@@ -46,7 +46,8 @@ import { useConfirmationModalContext } from "src/context/modalConfirmationContex
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { env } from "~/env.mjs";
+// import { env } from "~/env.mjs";
+import { env } from "process";
 
 interface IParams extends ParsedUrlQuery {
   country: string;
@@ -175,6 +176,14 @@ export const getStaticProps: GetStaticProps = async (context) => {
 // };
 
 export const getStaticPaths: GetStaticPaths = async (context) => {
+  if (env.CI) {
+    console.warn(`********* getStaticPaths: env.CI = (${env.CI}) *********`);
+    return {
+      paths: [],
+      fallback: "blocking",
+    };
+  }
+
   console.warn(
     `********* getStaticPaths: env.API_BASE_URL = (${env.API_BASE_URL}) *********`,
   );
