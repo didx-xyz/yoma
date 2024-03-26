@@ -59,6 +59,8 @@ interface IParams extends ParsedUrlQuery {
 export const getStaticProps: GetStaticProps = async (context) => {
   const { country } = context.params as IParams;
 
+  console.warn("*********getStaticProps (" + country + ") *********");
+
   const lookups_countries = await listSearchCriteriaCountries(context);
   const lookups_categories = await listStoreCategories(
     country ?? COUNTRY_WW,
@@ -172,6 +174,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 // };
 
 export const getStaticPaths: GetStaticPaths = async (context) => {
+  console.warn("*********getStaticPaths*********");
   const lookups_countries = await listSearchCriteriaCountries(context);
 
   const paths = lookups_countries.map((country) => ({
