@@ -176,7 +176,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
 export const getStaticPaths: GetStaticPaths = async (context) => {
   console.warn(
-    `********* getStaticPaths: context = (${context}) env.API_BASE_URL = (${env.API_BASE_URL}) *********`,
+    `********* getStaticPaths: env.API_BASE_URL = (${env.API_BASE_URL}) *********`,
   );
 
   const lookups_countries = await listSearchCriteriaCountries(context);
