@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Entity.Extensions;
@@ -54,7 +53,7 @@ namespace Yoma.Core.Api.Controllers
     public IActionResult ReceiveKeyCloakEvent([FromBody] JObject request)
     {
       // TODO: Remove (for debugging purposes only)
-      _logger.LogInformation("Raw request: {request}", request == null ? "Empty" : request.ToString());
+      _logger.LogDebug("Raw request: {request}", request == null ? "Empty" : request.ToString());
 
       var authorized = false;
       try
