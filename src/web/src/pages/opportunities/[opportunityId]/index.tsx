@@ -218,12 +218,22 @@ const OpportunityDetails: NextPageWithLayout<{
   }, [opportunity]);
 
   useEffect(() => {
-    if (user) {
-      isOpportunitySaved(opportunityId).then((res) => {
-        setIsOppSaved(!!res);
-      });
-    }
-  }, [user, isOppSaved, opportunityId]);
+    if (!user) return;
+
+    // ensure opportunity is published, status is not 'Inactive' and it has not yet started (avoid API 400 error)
+    if (
+      !(
+        opportunity?.published &&
+        opportunity?.status != "Inactive" &&
+        new Date(opportunity?.dateStart) > new Date()
+      )
+    )
+      return;
+
+    isOpportunitySaved(opportunity.id).then((res) => {
+      setIsOppSaved(!!res);
+    });
+  }, [user, isOppSaved, opportunity]);
 
   // CLICK HANDLERS
   const onUpdateSavedOpportunity = useCallback(() => {
@@ -515,6 +525,15 @@ const OpportunityDetails: NextPageWithLayout<{
                           }`
                         }
                         onClick={onUpdateSavedOpportunity}
+                        // ensure user is logged in and opportunity is published and active
+                        disabled={
+                          !user ||
+                          !(
+                            opportunity?.published &&
+                            opportunity?.status != "Inactive" &&
+                            new Date(opportunity?.dateStart) > new Date()
+                          )
+                        }
                       >
                         <IoMdBookmark
                           style={{ width: "20px", height: "20px" }}
@@ -823,25 +842,27 @@ const OpportunityDetails: NextPageWithLayout<{
                         {/* BUTTONS */}
                         <div className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-2">
                           <div className="flex flex-grow gap-4">
-                            <button
-                              type="button"
-                              className="btn btn-xs rounded-full bg-green normal-case text-white md:btn-sm hover:bg-green-dark md:h-10 md:w-[250px]"
-                              onClick={() =>
-                                setGotoOpportunityDialogVisible(true)
-                              }
-                            >
-                              <Image
-                                src={iconOpen}
-                                alt="Icon Open"
-                                width={20}
-                                height={20}
-                                sizes="100vw"
-                                priority={true}
-                                style={{ width: "20px", height: "20px" }}
-                              />
+                            {opportunity.url && (
+                              <button
+                                type="button"
+                                className="btn btn-xs rounded-full bg-green normal-case text-white md:btn-sm hover:bg-green-dark md:h-10 md:w-[250px]"
+                                onClick={() =>
+                                  setGotoOpportunityDialogVisible(true)
+                                }
+                              >
+                                <Image
+                                  src={iconOpen}
+                                  alt="Icon Open"
+                                  width={20}
+                                  height={20}
+                                  sizes="100vw"
+                                  priority={true}
+                                  style={{ width: "20px", height: "20px" }}
+                                />
 
-                              <span className="ml-1">Go to opportunity</span>
-                            </button>
+                                <span className="ml-1">Go to opportunity</span>
+                              </button>
+                            )}
 
                             {/* only show upload button if verification is enabled and method is manual */}
                             {opportunity.verificationEnabled &&
@@ -937,6 +958,15 @@ const OpportunityDetails: NextPageWithLayout<{
                                 }`
                               }
                               onClick={onUpdateSavedOpportunity}
+                              // ensure user is logged in and opportunity is published and active
+                              disabled={
+                                !user ||
+                                !(
+                                  opportunity?.published &&
+                                  opportunity?.status != "Inactive" &&
+                                  new Date(opportunity?.dateStart) > new Date()
+                                )
+                              }
                             >
                               <IoMdBookmark
                                 style={{ width: "20px", height: "20px" }}
@@ -950,6 +980,15 @@ const OpportunityDetails: NextPageWithLayout<{
                             <button
                               type="button"
                               className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10"
+                              // ensure user is logged in and opportunity is published and active
+                              disabled={
+                                !user ||
+                                !(
+                                  opportunity?.published &&
+                                  opportunity?.status != "Inactive" &&
+                                  new Date(opportunity?.dateStart) > new Date()
+                                )
+                              }
                             >
                               <Image
                                 src={iconShare}

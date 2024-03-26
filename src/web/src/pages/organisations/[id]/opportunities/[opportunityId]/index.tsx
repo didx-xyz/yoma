@@ -317,10 +317,9 @@ const OpportunityDetails: NextPageWithLayout<{
       .min(1, "Category is required."),
     uRL: z
       .string()
-      .min(1, "Opportunity URL is required.")
-      .max(2048, "Opportunity URL cannot exceed 2048 characters.")
-      .regex(
-        REGEX_URL_VALIDATION,
+      .optional()
+      .refine(
+        (value) => (value ?? "") === "" || REGEX_URL_VALIDATION.test(value!),
         "Please enter a valid URL - example.com | www.example.com | https://www.example.com",
       ),
   });
