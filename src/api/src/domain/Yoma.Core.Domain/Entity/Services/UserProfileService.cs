@@ -138,7 +138,7 @@ namespace Yoma.Core.Domain.Entity.Services
           DateOfBirth = user.DateOfBirth.HasValue ? user.DateOfBirth.Value.ToString("yyyy/MM/dd") : null
         };
 
-        await _identityProviderClient.UpdateUser(userIdentityProvider, request.ResetPassword);
+        await _identityProviderClient.UpdateUser(userIdentityProvider, request.ResetPassword, emailUpdated);
 
         scope.Complete();
       });

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -49,8 +51,11 @@ namespace Yoma.Core.Api.Controllers
 
     #region Public Members
     [HttpPost("webhook")]
-    public IActionResult ReceiveKeyCloakEvent([FromBody] KeycloakWebhookRequest payload)
+    public IActionResult ReceiveKeyCloakEvent([FromBody] JObject request)
     {
+      // TODO: Remove (for debugging purposes only)
+      _logger.LogInformation("Raw request: {request}", request == null ? "Empty" : request.ToString());
+
       var authorized = false;
       try
       {
@@ -58,49 +63,62 @@ namespace Yoma.Core.Api.Controllers
 
         return authorized ? StatusCode(StatusCodes.Status200OK) : StatusCode(StatusCodes.Status403Forbidden);
       }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "An error occurred during authentication");
+        return StatusCode(StatusCodes.Status500InternalServerError);
+      }
       finally
       {
         Response.OnCompleted(async () =>
         {
-          if (!authorized)
+          try
           {
-            _logger.LogInformation("Authorization failed");
-            return;
-          }
-
-          if (payload == null)
-          {
-            _logger.LogError("Webhook payload is empty. Processing skipped");
-            return;
-          }
-
-          var sType = payload.Type;
-          _logger.LogInformation("{sType} event received", sType);
-
-          Enum.TryParse<WebhookRequestEventType>(sType, true, out var type);
-
-          switch (type)
-          {
-            case WebhookRequestEventType.Register:
-            case WebhookRequestEventType.UpdateProfile:
-              _logger.LogInformation("{type} event processing", type);
-
-              await UpdateUserProfile(type, payload);
-
-              _logger.LogInformation("{type} event processed", type);
-              break;
-
-            case WebhookRequestEventType.Login:
-              _logger.LogInformation("{type} event processing", type);
-
-              await UpdateUserProfile(type, payload);
-
-              _logger.LogInformation("{type} event processed", type);
-              break;
-
-            default:
-              _logger.LogInformation("Unknown event type of '{sType}' receive. Processing skipped", sType);
+            if (!authorized)
+            {
+              _logger.LogError("Authorization failed");
               return;
+            }
+
+            if (request == null)
+            {
+              _logger.LogError("Webhook payload is empty. Processing skipped");
+              return;
+            }
+
+            var payload = request.ToObject<KeycloakWebhookRequest>();
+            if (payload == null)
+            {
+              _logger.LogError("Failed to deserialize payload. Processing skipped");
+              return;
+            }
+
+            var sType = payload.Type;
+            _logger.LogInformation("{sType} event received", sType);
+
+            Enum.TryParse<WebhookRequestEventType>(sType, true, out var type);
+
+            switch (type)
+            {
+              case WebhookRequestEventType.Register:
+              case WebhookRequestEventType.UpdateProfile:
+              case WebhookRequestEventType.Login:
+                _logger.LogInformation("{type} event processing", type);
+
+                await UpdateUserProfile(type, payload);
+
+                _logger.LogInformation("{type} event processed", type);
+                break;
+
+              default:
+                _logger.LogInformation("Unknown event type of '{sType}' receive. Processing skipped", sType);
+                return;
+            }
+          }
+          catch (Exception ex)
+          {
+            _logger.LogError(ex, "An error occurred during event processing");
+            return;
           }
         });
       }

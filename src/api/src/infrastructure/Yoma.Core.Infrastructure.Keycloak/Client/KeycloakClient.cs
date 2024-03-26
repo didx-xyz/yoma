@@ -97,7 +97,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       return kcUser.ToUser();
     }
 
-    public async Task UpdateUser(User user, bool resetPassword)
+    public async Task UpdateUser(User user, bool resetPassword, bool sendVerifyEmail)
     {
       using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UserApi>(_httpClient);
 
@@ -133,7 +133,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         await userApi.PutUsersByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), request);
 
         // send verify email
-        if (!user.EmailVerified)
+        if (sendVerifyEmail)
           await userApi.PutUsersSendVerifyEmailByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString()); //admin initiated email (executeActions); same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
 
         // send reset password email
