@@ -22,11 +22,7 @@ export default function Document() {
           src="//translate.google.com/translate_a/element.js?cb=TranslateInit"
           strategy="afterInteractive"
         />
-
-        {/* <!-- Help Scout --> */}
         <Script src="/scripts/help-scout.js" strategy="afterInteractive" />
-
-        {/* <!-- GLEAC - Bot --> */}
         <Script
           id="hs-script-loader"
           src="//js.hs-scripts.com/20355202.js"
