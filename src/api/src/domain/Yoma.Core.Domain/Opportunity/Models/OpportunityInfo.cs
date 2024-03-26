@@ -95,6 +95,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public bool Published { get; set; }
 
     [Ignore]
+    public string YomaInfoURL { get; set; }
+
+    [Ignore]
     public List<Lookups.OpportunityCategory>? Categories { get; set; }
 
     [JsonIgnore]

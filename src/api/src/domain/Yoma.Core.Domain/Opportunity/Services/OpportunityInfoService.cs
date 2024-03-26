@@ -1,6 +1,8 @@
 using CsvHelper;
 using CsvHelper.Configuration;
+using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
@@ -12,14 +14,17 @@ namespace Yoma.Core.Domain.Opportunity.Services
   public class OpportunityInfoService : IOpportunityInfoService
   {
     #region Class Variables
+    private readonly AppSettings _appSettings;
     private readonly IOpportunityService _opportunityService;
     private readonly IMyOpportunityService _myOpportunityService;
     #endregion
 
     #region Constructor
-    public OpportunityInfoService(IOpportunityService opportunityService,
-        IMyOpportunityService myOpportunityService)
+    public OpportunityInfoService(IOptions<AppSettings> appSettings,
+      IOpportunityService opportunityService,
+      IMyOpportunityService myOpportunityService)
     {
+      _appSettings = appSettings.Value;
       _opportunityService = opportunityService;
       _myOpportunityService = myOpportunityService;
     }
@@ -30,7 +35,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var opportunity = _opportunityService.GetById(id, true, true, ensureOrganizationAuthorization);
 
-      var result = opportunity.ToOpportunityInfo();
+      var result = opportunity.ToOpportunityInfo(_appSettings.AppBaseURL);
       SetParticipantCounts(result);
       return result;
     }
@@ -49,7 +54,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (!statuses.Contains(opportunity.Status))
         throw new EntityNotFoundException($"Opportunity with id '{id}' has an invalid status. Expected status(es): '{string.Join(", ", statuses)}'");
 
-      var result = opportunity.ToOpportunityInfo();
+      var result = opportunity.ToOpportunityInfo(_appSettings.AppBaseURL);
       SetParticipantCounts(result);
       return result;
     }
@@ -61,7 +66,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var results = new OpportunitySearchResultsInfo
       {
         TotalCount = searchResult.TotalCount,
-        Items = searchResult.Items.Select(o => o.ToOpportunityInfo()).ToList(),
+        Items = searchResult.Items.Select(o => o.ToOpportunityInfo(_appSettings.AppBaseURL)).ToList(),
       };
 
       results.Items.ForEach(SetParticipantCounts);
@@ -111,7 +116,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var results = new OpportunitySearchResultsInfo
       {
         TotalCount = searchResult.TotalCount,
-        Items = searchResult.Items.Select(o => o.ToOpportunityInfo()).ToList(),
+        Items = searchResult.Items.Select(o => o.ToOpportunityInfo(_appSettings.AppBaseURL)).ToList(),
       };
 
       results.Items.ForEach(SetParticipantCounts);

@@ -1,3 +1,4 @@
+using Flurl;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Opportunity.Models;
 
@@ -63,9 +64,12 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       };
     }
 
-    public static OpportunityInfo ToOpportunityInfo(this Models.Opportunity value)
+    public static OpportunityInfo ToOpportunityInfo(this Models.Opportunity value, string appBaseURL)
     {
       ArgumentNullException.ThrowIfNull(value);
+
+      ArgumentException.ThrowIfNullOrWhiteSpace(appBaseURL);
+      appBaseURL = appBaseURL.Trim();
 
       return new OpportunityInfo
       {
@@ -96,6 +100,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         DateStart = value.DateStart,
         DateEnd = value.DateEnd,
         Published = value.Published,
+        YomaInfoURL = appBaseURL.AppendPathSegment("opportunities").AppendPathSegment(value.Id).ToString(),
         Categories = value.Categories,
         Countries = value.Countries,
         Languages = value.Languages,

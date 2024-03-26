@@ -46,13 +46,13 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       _opportunityVerificationTypeService = opportunityVerificationTypeService;
       _ssiSchemaService = ssiSchemaService;
 
-      RuleFor(x => x.Title).NotEmpty().Length(1, 255);
+      RuleFor(x => x.Title).NotEmpty().Length(1, 255).WithMessage("'{PropertyName}' is required and must be between 1 and 255 characters long.");
       RuleFor(x => x.Description).NotEmpty();
       RuleFor(x => x.TypeId).NotEmpty().Must(TypeExists).WithMessage($"Specified type is invalid / does not exist.");
       RuleFor(x => x.OrganizationId).NotEmpty().Must(OrganizationUpdatable).WithMessage($"Specified organization has been declined / deleted or does not exist.");
       RuleFor(x => x.Summary).Length(1, 500).When(x => !string.IsNullOrEmpty(x.Summary)).WithMessage("'{PropertyName}' must be between 1 and 500 characters.");
       //instructions (varchar(max); auto trimmed
-      RuleFor(x => x.URL).Length(1, 2048).Must(ValidURL).When(x => !string.IsNullOrEmpty(x.URL)).WithMessage("'{PropertyName}' is invalid.");
+      RuleFor(x => x.URL).Length(1, 2048).Must(ValidURL).When(x => !string.IsNullOrEmpty(x.URL)).WithMessage("'{PropertyName}' must be between 1 and 2048 characters long and be a valid URL if specified.");
       RuleFor(x => x.ZltoReward)
           .GreaterThan(0).When(x => x.ZltoReward.HasValue).WithMessage("{PropertyName} must be greater than 0")
           .Must(zltoReward => zltoReward % 1 == 0).When(x => x.ZltoReward.HasValue).WithMessage("{PropertyName} does not support decimal points");
