@@ -22,7 +22,7 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV CI=true
 
-# Server environment variables don't appear to be needed at build time
+# Client environment variables are needed at build time
 ARG NEXT_PUBLIC_ENVIRONMENT
 ENV NEXT_PUBLIC_ENVIRONMENT=${NEXT_PUBLIC_ENVIRONMENT}
 ARG NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
@@ -31,6 +31,10 @@ ARG NEXT_PUBLIC_GA_MEASUREMENT_ID
 ENV NEXT_PUBLIC_GA_MEASUREMENT_ID=${NEXT_PUBLIC_GA_MEASUREMENT_ID}
 ARG SENTRY_AUTH_TOKEN
 ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
+
+# Server environment variables are needed at build time for static site generation
+ARG API_BASE_URL
+ENV API_BASE_URL=${API_BASE_URL}
 
 RUN \
  if [ -f yarn.lock ]; then SKIP_ENV_VALIDATION=1 yarn build; \

@@ -55,8 +55,7 @@ interface IParams extends ParsedUrlQuery {
 // This process ensures that the initial data required for the filter options
 // and the first four items in the carousels are readily available upon page load.
 // Subsequent client-side queries are executed and cached using the queryClient
-// whenever a search action occurs (such as selecting a filter) or when additional data
-// is requested in the carousels (during paging).
+// whenever additional data is requested in the carousels (during paging).
 export const getStaticProps: GetStaticProps = async (context) => {
   const { country } = context.params as IParams;
 
