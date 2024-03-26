@@ -330,25 +330,25 @@ jobs:
               - './helm/keycloak/**'
       - uses: unfor19/install-aws-cli-action@v1
         if: (
-            steps.filter.outputs.api == 'true' ||
-            steps.filter.outputs.web == 'true' ||
-            steps.filter.outputs.keycloak == 'true' ||
-            github.event_name == 'workflow_dispatch'
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
           )
       - name: SOPS Binary Installer
         if: (
-            steps.filter.outputs.api == 'true' ||
-            steps.filter.outputs.web == 'true' ||
-            steps.filter.outputs.keycloak == 'true' ||
-            github.event_name == 'workflow_dispatch'
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
           )
         uses: mdgreenwald/mozilla-sops-action@v1.6.0
       - uses: aws-actions/configure-aws-credentials@v4
         if: (
-            steps.filter.outputs.api == 'true' ||
-            steps.filter.outputs.web == 'true' ||
-            steps.filter.outputs.keycloak == 'true' ||
-            github.event_name == 'workflow_dispatch'
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
           )
         with:
           aws-region: ${{ secrets.AWS_REGION }}
@@ -356,17 +356,17 @@ jobs:
           role-session-name: github-cicd
       - run: aws eks update-kubeconfig --name ${{ secrets.CLUSTER }}
         if: (
-            steps.filter.outputs.api == 'true' ||
-            steps.filter.outputs.web == 'true' ||
-            steps.filter.outputs.keycloak == 'true' ||
-            github.event_name == 'workflow_dispatch'
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
           )
       - uses: tailscale/github-action@main
         if: (
-            steps.filter.outputs.api == 'true' ||
-            steps.filter.outputs.web == 'true' ||
-            steps.filter.outputs.keycloak == 'true' ||
-            github.event_name == 'workflow_dispatch'
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
           )
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}

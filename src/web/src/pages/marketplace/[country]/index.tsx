@@ -46,14 +46,15 @@ import { useConfirmationModalContext } from "src/context/modalConfirmationContex
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-// import { env } from "~/env.mjs";
 import { env } from "process";
 
 interface IParams extends ParsedUrlQuery {
   country: string;
 }
 
-// This page undergoes static generation at build time on the server-side.
+// 👇 SSG
+// This page undergoes static generation at run time on the server-side.
+// The build-time SSG has been disabled due to missing API url configuration in the CI pipeline (see getStaticPaths below).
 // This process ensures that the initial data required for the filter options
 // and the first four items in the carousels are readily available upon page load.
 // Subsequent client-side queries are executed and cached using the queryClient
@@ -162,32 +163,20 @@ export const getStaticProps: GetStaticProps = async (context) => {
   };
 };
 
-// export const getStaticPaths: GetStaticPaths = async (context) => {
-//   const lookups_countries = await listSearchCriteriaCountries();
-
-//   const paths = lookups_countries.map((country) => ({
-//     params: { country: country.codeAlpha2 },
-//   }));
-
-//   return {
-//     paths,
-//     fallback: "blocking",
-//   };
-// };
-
 export const getStaticPaths: GetStaticPaths = async (context) => {
+  // disable build-time SSG in CI environment
+  // reason: the CI environment does not have the URL to the API
+  // because that would require different docker images per environment
   if (env.CI) {
-    console.warn(`********* getStaticPaths: env.CI = (${env.CI}) *********`);
     return {
       paths: [],
       fallback: "blocking",
     };
   }
 
-  console.warn(
-    `********* getStaticPaths: env.API_BASE_URL = (${env.API_BASE_URL}) *********`,
-  );
+  console.warn("*********getStaticPaths*********");
 
+  // generate paths for all countries (runtime)
   const lookups_countries = await listSearchCriteriaCountries(context);
 
   const paths = lookups_countries.map((country) => ({
@@ -198,149 +187,7 @@ export const getStaticPaths: GetStaticPaths = async (context) => {
     paths,
     fallback: "blocking",
   };
-
-  // return {
-  //   paths: [
-  //     {
-  //       params: {
-  //         country: "WW",
-  //       },
-  //     },
-  //     {
-  //       params: {
-  //         country: "KE",
-  //       },
-  //     },
-  //     {
-  //       params: {
-  //         country: "NG",
-  //       },
-  //     },
-  //     {
-  //       params: {
-  //         country: "ZA",
-  //       },
-  //     },
-  //   ],
-  //   fallback: "blocking",
-  // };
 };
-
-// ⚠️ SSR
-// export async function getServerSideProps(context: GetServerSidePropsContext) {
-//   const { country } = context.params as IParams;
-//   const data_storeItems = [];
-//   let errorCode = null;
-//   let lookups_countries = null;
-//   let lookups_categories = null;
-
-//   await getServerSession(context.req, context.res, authOptions); // refresh the auth token on the server
-
-//   try {
-//     lookups_countries = await listSearchCriteriaCountries(context);
-//     lookups_categories = await listStoreCategories(
-//       country ?? COUNTRY_WW,
-//       context,
-//     );
-
-//     // get store items for above categories
-//     for (const category of lookups_categories) {
-//       const stores = await searchStores(
-//         {
-//           pageNumber: null,
-//           pageSize: null,
-//           countryCodeAlpha2: country,
-//           categoryId: category.id ?? null,
-//         },
-//         context,
-//       );
-
-//       const storeItems = [];
-
-//       for (const store of stores.items) {
-//         const items = await searchStoreItemCategories(
-//           {
-//             pageNumber: 1,
-//             pageSize: PAGE_SIZE_MINIMUM,
-//             storeId: store.id?.toString() ?? "",
-//           },
-//           context,
-//         );
-
-//         // filter available items
-//         items.items = items.items.filter((item) => item.count > 0);
-
-//         // only add to storeItems if items is not empty
-//         if (items && items.items.length > 0) {
-//           storeItems.push({ store, items });
-//         }
-//       }
-
-//       // only add to data_storeItems if storeItems is not empty
-//       if (storeItems.length > 0) {
-//         data_storeItems.push({ category, storeItems });
-//       }
-//     }
-
-//     // if country not WW, then include some WW items
-//     if (country !== COUNTRY_WW) {
-//       const lookups_categoriesWW = await listStoreCategories(
-//         COUNTRY_WW,
-//         context,
-//       );
-
-//       for (const category of lookups_categoriesWW) {
-//         const stores = await searchStores(
-//           {
-//             pageNumber: null,
-//             pageSize: null,
-//             countryCodeAlpha2: COUNTRY_WW,
-//             categoryId: category.id ?? null,
-//           },
-//           context,
-//         );
-
-//         const storeItems = [];
-
-//         for (const store of stores.items) {
-//           const items = await searchStoreItemCategories(
-//             {
-//               pageNumber: 1,
-//               pageSize: PAGE_SIZE_MINIMUM,
-//               storeId: store.id?.toString() ?? "",
-//             },
-//             context,
-//           );
-
-//           // filter available items
-//           items.items = items.items.filter((item) => item.count > 0);
-
-//           // only add to storeItems if items is not empty
-//           if (items && items.items.length > 0) {
-//             storeItems.push({ store, items });
-//           }
-//         }
-
-//         // only add to data_storeItems if storeItems is not empty
-//         if (storeItems.length > 0) {
-//           data_storeItems.push({ category, storeItems });
-//         }
-//       }
-//     }
-//   } catch (error) {
-//     if (axios.isAxiosError(error) && error.response?.status) {
-//       if (error.response.status === 404) {
-//         return {
-//           notFound: true,
-//         };
-//       } else errorCode = error.response.status;
-//     } else errorCode = 500;
-//   }
-
-//   return {
-//     props: { country, lookups_countries, data_storeItems, error: errorCode },
-//   };
-// }
 
 const MarketplaceStoreCategories: NextPageWithLayout<{
   country: string;

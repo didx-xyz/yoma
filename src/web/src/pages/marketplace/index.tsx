@@ -1,4 +1,4 @@
-import type { GetServerSidePropsContext } from "next";
+import type { GetStaticProps } from "next";
 import Image from "next/image";
 import React, {
   useCallback,
@@ -19,48 +19,48 @@ import { LoadingInline } from "~/components/Status/LoadingInline";
 import { userCountrySelectionAtom, userProfileAtom } from "~/lib/store";
 import { useAtom, useSetAtom } from "jotai";
 import iconLocation from "public/images/icon-location.svg";
-import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 
+// 👇 SSG
 // TODO: this page should be statically generated but build process is failing with the axios errors... so for now, we'll use SSR
 // This page is statically generated at build time on server-side
 // so that the initial data needed for the countries dropdown is immediately available when the page loads
 // after that, the page is redirected to /marketplace/{country} based on the user's country selection or userProfile.countryId
-// export const getStaticProps: GetStaticProps = async (context) => {
-//   const lookups_countries = await listSearchCriteriaCountries(context);
-
-//   return {
-//     props: { lookups_countries },
-
-//     // Next.js will attempt to re-generate the page:
-//     // - When a request comes in
-//     // - At most once every 300 seconds
-//     revalidate: 300,
-//   };
-// };
-
-// ⚠️ SSR
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  let errorCode = null;
-  let lookups_countries = null;
-  try {
-    lookups_countries = await listSearchCriteriaCountries(context);
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status) {
-      if (error.response.status === 404) {
-        return {
-          notFound: true,
-        };
-      } else errorCode = error.response.status;
-    } else errorCode = 500;
-  }
+export const getStaticProps: GetStaticProps = async (context) => {
+  const lookups_countries = await listSearchCriteriaCountries(context);
 
   return {
-    props: { lookups_countries, error: errorCode },
+    props: { lookups_countries },
+
+    // Next.js will attempt to re-generate the page:
+    // - When a request comes in
+    // - At most once every 300 seconds
+    revalidate: 300,
   };
-}
+};
+
+// ⚠️ SSR
+// export async function getServerSideProps(context: GetServerSidePropsContext) {
+//   let errorCode = null;
+//   let lookups_countries = null;
+//   try {
+//     lookups_countries = await listSearchCriteriaCountries(context);
+//   } catch (error) {
+//     if (axios.isAxiosError(error) && error.response?.status) {
+//       if (error.response.status === 404) {
+//         return {
+//           notFound: true,
+//         };
+//       } else errorCode = error.response.status;
+//     } else errorCode = 500;
+//   }
+
+//   return {
+//     props: { lookups_countries, error: errorCode },
+//   };
+// }
 
 const Marketplace: NextPageWithLayout<{
   lookups_countries: Country[];
