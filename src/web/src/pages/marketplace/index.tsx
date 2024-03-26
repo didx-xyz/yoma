@@ -1,4 +1,4 @@
-import type { GetStaticProps } from "next";
+import type { GetStaticPaths, GetStaticProps } from "next";
 import Image from "next/image";
 import React, {
   useCallback,
@@ -22,6 +22,7 @@ import iconLocation from "public/images/icon-location.svg";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { env } from "process";
 
 // 👇 SSG
 // TODO: this page should be statically generated but build process is failing with the axios errors... so for now, we'll use SSR
@@ -29,6 +30,20 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 // so that the initial data needed for the countries dropdown is immediately available when the page loads
 // after that, the page is redirected to /marketplace/{country} based on the user's country selection or userProfile.countryId
 export const getStaticProps: GetStaticProps = async (context) => {
+  // disable build-time SSG in CI environment
+  // reason: the CI environment does not have the URL to the API
+  // because that would require different docker images per environment
+  if (env.CI) {
+    return {
+      props: { lookups_countries: null },
+
+      // Next.js will attempt to re-generate the page:
+      // - When a request comes in
+      // - At most once every 300 seconds
+      revalidate: 300,
+    };
+  }
+
   const lookups_countries = await listSearchCriteriaCountries(context);
 
   return {
