@@ -68,6 +68,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         pageSize: PAGE_SIZE,
         startDate: null,
         endDate: null,
+        // admins can see deleted opportunities, org admins can see Active, Expired & Inactive
         statuses:
           status === "active"
             ? [Status.Active]
