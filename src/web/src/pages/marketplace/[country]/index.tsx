@@ -175,42 +175,42 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
 export const getStaticPaths: GetStaticPaths = async (context) => {
   console.warn("*********getStaticPaths*********");
-  const lookups_countries = await listSearchCriteriaCountries(context);
+  // const lookups_countries = await listSearchCriteriaCountries(context);
 
-  const paths = lookups_countries.map((country) => ({
-    params: { country: country.codeAlpha2 },
-  }));
-
-  return {
-    paths,
-    fallback: "blocking",
-  };
+  // const paths = lookups_countries.map((country) => ({
+  //   params: { country: country.codeAlpha2 },
+  // }));
 
   // return {
-  //   paths: [
-  //     {
-  //       params: {
-  //         country: "WW",
-  //       },
-  //     },
-  //     {
-  //       params: {
-  //         country: "KE",
-  //       },
-  //     },
-  //     {
-  //       params: {
-  //         country: "NG",
-  //       },
-  //     },
-  //     {
-  //       params: {
-  //         country: "ZA",
-  //       },
-  //     },
-  //   ],
+  //   paths,
   //   fallback: "blocking",
   // };
+
+  return {
+    paths: [
+      {
+        params: {
+          country: "WW",
+        },
+      },
+      {
+        params: {
+          country: "KE",
+        },
+      },
+      {
+        params: {
+          country: "NG",
+        },
+      },
+      {
+        params: {
+          country: "ZA",
+        },
+      },
+    ],
+    fallback: "blocking",
+  };
 };
 
 // ⚠️ SSR
