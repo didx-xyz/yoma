@@ -173,7 +173,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 //   };
 // };
 
-export const getStaticPaths: GetStaticPaths = async (context) => {
+export const getStaticPaths: GetStaticPaths = (context) => {
   console.warn("*********getStaticPaths*********");
   // const lookups_countries = await listSearchCriteriaCountries(context);
 
