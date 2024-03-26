@@ -52,7 +52,7 @@ namespace Yoma.Core.Api.Controllers
     [HttpPost("webhook")]
     public IActionResult ReceiveKeyCloakEvent([FromBody] JObject request)
     {
-      //only logged when logging level is set to Debug
+      //only logged when logging level is set to debug
       _logger.LogDebug("Raw request: {request}", request == null ? "Empty" : request.ToString());
 
       var authorized = false;
