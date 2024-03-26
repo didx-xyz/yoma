@@ -35,6 +35,7 @@ ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
 # Server environment variables are needed at build time for static site generation
 ARG API_BASE_URL
 ENV API_BASE_URL=${API_BASE_URL}
+RUN echo $API_BASE_URL
 
 RUN \
  if [ -f yarn.lock ]; then SKIP_ENV_VALIDATION=1 yarn build; \
