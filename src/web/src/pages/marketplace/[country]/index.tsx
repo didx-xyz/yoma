@@ -61,9 +61,6 @@ interface IParams extends ParsedUrlQuery {
 // whenever additional data is requested in the carousels (during paging).
 export const getStaticProps: GetStaticProps = async (context) => {
   const { country } = context.params as IParams;
-
-  console.warn("*********getStaticProps (" + country + ") *********");
-
   const lookups_countries = await listSearchCriteriaCountries(context);
   const lookups_categories = await listStoreCategories(
     country ?? COUNTRY_WW,
@@ -165,16 +162,12 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
 export const getStaticPaths: GetStaticPaths = async (context) => {
   // disable build-time SSG in CI environment
-  // reason: the CI environment does not have the URL to the API
-  // because that would require different docker images per environment
   if (env.CI) {
     return {
       paths: [],
       fallback: "blocking",
     };
   }
-
-  console.warn("*********getStaticPaths*********");
 
   // generate paths for all countries (runtime)
   const lookups_countries = await listSearchCriteriaCountries(context);

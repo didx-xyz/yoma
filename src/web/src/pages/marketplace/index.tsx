@@ -1,4 +1,4 @@
-import type { GetStaticPaths, GetStaticProps } from "next";
+import type { GetStaticProps } from "next";
 import Image from "next/image";
 import React, {
   useCallback,
@@ -25,14 +25,12 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import { env } from "process";
 
 // 👇 SSG
-// TODO: this page should be statically generated but build process is failing with the axios errors... so for now, we'll use SSR
-// This page is statically generated at build time on server-side
-// so that the initial data needed for the countries dropdown is immediately available when the page loads
-// after that, the page is redirected to /marketplace/{country} based on the user's country selection or userProfile.countryId
+// This page undergoes static generation at run time on the server-side.
+// The build-time SSG has been disabled due to missing API url configuration in the CI pipeline (see getStaticPaths below).
+// This process ensures that the initial data required for the filter options are readily available upon page load.
+// After that, the page is redirected to /marketplace/{country} based on the country selection or the user's country (userProfile.countryId)
 export const getStaticProps: GetStaticProps = async (context) => {
   // disable build-time SSG in CI environment
-  // reason: the CI environment does not have the URL to the API
-  // because that would require different docker images per environment
   if (env.CI) {
     return {
       props: { lookups_countries: null },
@@ -55,27 +53,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
     revalidate: 300,
   };
 };
-
-// ⚠️ SSR
-// export async function getServerSideProps(context: GetServerSidePropsContext) {
-//   let errorCode = null;
-//   let lookups_countries = null;
-//   try {
-//     lookups_countries = await listSearchCriteriaCountries(context);
-//   } catch (error) {
-//     if (axios.isAxiosError(error) && error.response?.status) {
-//       if (error.response.status === 404) {
-//         return {
-//           notFound: true,
-//         };
-//       } else errorCode = error.response.status;
-//     } else errorCode = 500;
-//   }
-
-//   return {
-//     props: { lookups_countries, error: errorCode },
-//   };
-// }
 
 const Marketplace: NextPageWithLayout<{
   lookups_countries: Country[];
