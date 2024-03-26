@@ -46,6 +46,7 @@ import { useConfirmationModalContext } from "src/context/modalConfirmationContex
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { env } from "~/env.mjs";
 
 interface IParams extends ParsedUrlQuery {
   country: string;
@@ -173,44 +174,47 @@ export const getStaticProps: GetStaticProps = async (context) => {
 //   };
 // };
 
-export const getStaticPaths: GetStaticPaths = (context) => {
-  console.warn("*********getStaticPaths*********");
-  // const lookups_countries = await listSearchCriteriaCountries(context);
+export const getStaticPaths: GetStaticPaths = async (context) => {
+  console.warn(
+    `********* getStaticPaths: context = (${context}) env.API_BASE_URL = (${env.API_BASE_URL}) *********`,
+  );
 
-  // const paths = lookups_countries.map((country) => ({
-  //   params: { country: country.codeAlpha2 },
-  // }));
+  const lookups_countries = await listSearchCriteriaCountries(context);
 
-  // return {
-  //   paths,
-  //   fallback: "blocking",
-  // };
+  const paths = lookups_countries.map((country) => ({
+    params: { country: country.codeAlpha2 },
+  }));
 
   return {
-    paths: [
-      {
-        params: {
-          country: "WW",
-        },
-      },
-      {
-        params: {
-          country: "KE",
-        },
-      },
-      {
-        params: {
-          country: "NG",
-        },
-      },
-      {
-        params: {
-          country: "ZA",
-        },
-      },
-    ],
+    paths,
     fallback: "blocking",
   };
+
+  // return {
+  //   paths: [
+  //     {
+  //       params: {
+  //         country: "WW",
+  //       },
+  //     },
+  //     {
+  //       params: {
+  //         country: "KE",
+  //       },
+  //     },
+  //     {
+  //       params: {
+  //         country: "NG",
+  //       },
+  //     },
+  //     {
+  //       params: {
+  //         country: "ZA",
+  //       },
+  //     },
+  //   ],
+  //   fallback: "blocking",
+  // };
 };
 
 // ⚠️ SSR
