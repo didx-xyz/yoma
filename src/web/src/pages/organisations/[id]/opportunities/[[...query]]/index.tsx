@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import { useCallback, type ReactElement } from "react";
 import { getOpportunitiesAdmin } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
-import { type authOptions } from "~/server/auth";
+import { authOptions } from "~/server/auth";
 import {
   Status,
   type OpportunitySearchResults,
@@ -119,7 +119,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       page: page ?? null,
       status: status ?? null,
       theme: theme,
-      user: session?.user ?? null,
       error: errorCode,
     },
   };
@@ -130,10 +129,9 @@ const Opportunities: NextPageWithLayout<{
   query?: string;
   page?: string;
   theme: string;
-  user?: User;
   error?: number;
   status?: string;
-}> = ({ user, id, query, page, status, error }) => {
+}> = ({ id, query, page, status, error }) => {
   const router = useRouter();
   const currentOrganisationInactive = useAtomValue(
     currentOrganisationInactiveAtom,
