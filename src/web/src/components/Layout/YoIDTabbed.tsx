@@ -123,7 +123,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
             <Image
               src={stamps}
               alt="Stamps"
-              height="auto"
+              height={400}
               width={700}
               sizes="100vw"
               priority={true}
