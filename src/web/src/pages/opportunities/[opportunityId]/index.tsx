@@ -526,14 +526,14 @@ const OpportunityDetails: NextPageWithLayout<{
                         }
                         onClick={onUpdateSavedOpportunity}
                         // ensure user is logged in and opportunity is published and active
-                        disabled={
-                          !user ||
-                          !(
-                            opportunity?.published &&
-                            opportunity?.status != "Inactive" &&
-                            new Date(opportunity?.dateStart) > new Date()
-                          )
-                        }
+                        // disabled={
+                        //   !user ||
+                        //   !(
+                        //     opportunity?.published &&
+                        //     opportunity?.status != "Inactive" &&
+                        //     new Date(opportunity?.dateStart) > new Date()
+                        //   )
+                        // }
                       >
                         <IoMdBookmark
                           style={{ width: "20px", height: "20px" }}
@@ -959,14 +959,14 @@ const OpportunityDetails: NextPageWithLayout<{
                               }
                               onClick={onUpdateSavedOpportunity}
                               // ensure user is logged in and opportunity is published and active
-                              disabled={
-                                !user ||
-                                !(
-                                  opportunity?.published &&
-                                  opportunity?.status != "Inactive" &&
-                                  new Date(opportunity?.dateStart) > new Date()
-                                )
-                              }
+                              // disabled={
+                              //   !user ||
+                              //   !(
+                              //     opportunity?.published &&
+                              //     opportunity?.status != "Inactive" &&
+                              //     new Date(opportunity?.dateStart) > new Date()
+                              //   )
+                              // }
                             >
                               <IoMdBookmark
                                 style={{ width: "20px", height: "20px" }}
@@ -981,14 +981,14 @@ const OpportunityDetails: NextPageWithLayout<{
                               type="button"
                               className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10"
                               // ensure user is logged in and opportunity is published and active
-                              disabled={
-                                !user ||
-                                !(
-                                  opportunity?.published &&
-                                  opportunity?.status != "Inactive" &&
-                                  new Date(opportunity?.dateStart) > new Date()
-                                )
-                              }
+                              // disabled={
+                              //   !user ||
+                              //   !(
+                              //     opportunity?.published &&
+                              //     opportunity?.status != "Inactive" &&
+                              //     new Date(opportunity?.dateStart) > new Date()
+                              //   )
+                              // }
                             >
                               <Image
                                 src={iconShare}
