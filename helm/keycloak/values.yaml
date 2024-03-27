@@ -24,8 +24,7 @@ ingress:
 postInstallHook:
   enabled: false
 
-  git:
-    ref: master
+  ref: master
 
   image:
     repository: curlimages/curl
@@ -125,7 +124,7 @@ postInstallHook:
           wget -O - \
             --header="Authorization: token ${GITHUB_PAT}"\
             --header="Accept:application/vnd.github.v3.raw" \
-            https://api.github.com/repos/didx-xyz/yoma/tarball/{{ .Values.postInstallHook.git.ref }} | tar xz
+            https://api.github.com/repos/didx-xyz/yoma/tarball/{{ .Values.postInstallHook.ref }} | tar xz
           cp -v ./didx-xyz-yoma-*/src/keycloak/scripts/users.sh /scripts/
           rm -rf ./didx-xyz-yoma-*
       env:
