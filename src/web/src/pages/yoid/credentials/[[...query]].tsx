@@ -22,11 +22,12 @@ import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import ReactModal from "react-modal";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
+// import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import YoIDTabbed from "~/components/Layout/YoIDTabbed";
 import { toast } from "react-toastify";
 import { config } from "~/lib/react-query-config";
 import { AvatarImage } from "~/components/AvatarImage";
+import { Loading } from "~/components/Status/Loading";
 
 interface IParams extends ParsedUrlQuery {
   query?: string;
@@ -257,15 +258,11 @@ const MyCredentials: NextPageWithLayout<{
       </ReactModal>
 
       <div className="mb-8 mt-2 flex w-full flex-col gap-4 px-4">
-        <h5 className="font-bold tracking-wider">My Wallet</h5>
+        <h5 className="font-bold tracking-wider">My Passport</h5>
         {/* ERRROR */}
         {dataError && <ApiErrors error={dataError} />}
         {/* LOADING */}
-        {dataIsLoading && (
-          <div className="flex justify-center rounded-lg bg-white p-8">
-            <LoadingSkeleton />
-          </div>
-        )}
+        {dataIsLoading && <Loading />}
 
         {/* NO ROWS */}
         {/* TODO:data.totalCount not populated by API */}
@@ -275,7 +272,7 @@ const MyCredentials: NextPageWithLayout<{
             <NoRowsMessage
               title={"No credentials found"}
               description={
-                "Credentials that you receive by completing opportunities will be displayed here."
+                "Credentials that you receive by completing opportunities will be displayed here. Please be aware credentials will take 24 hours to reflect."
               }
             />
           </div>

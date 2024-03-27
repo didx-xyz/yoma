@@ -19,6 +19,7 @@ import Head from "next/head";
 import { AvatarImage } from "../AvatarImage";
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import { ZltoModal } from "../Modals/ZltoModal";
+import stamps from "public/images/stamps.svg";
 // import iconShare from "public/images/icon-share.png";
 
 export type TabProps = ({
@@ -58,7 +59,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         iconImage: iconTools,
       },
       {
-        title: "Wallet",
+        title: "Passport",
         description: "Digital credentials",
         url: "/yoid/credentials",
         badgeCount: null,
@@ -118,7 +119,16 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
 
         <div className="container z-10 mt-24 py-4">
           {/* USER CARD */}
-          <div className="flex items-center justify-center">
+          <div className="relative flex items-center justify-center">
+            <Image
+              src={stamps}
+              alt="Stamps"
+              height={500}
+              width={700}
+              sizes="100vw"
+              priority={true}
+              className="absolute -bottom-2 z-0 opacity-25 brightness-200 grayscale md:left-[23.5%]"
+            />
             <div className="group relative mx-4 flex h-[200px] w-full flex-col items-center justify-center rounded-lg bg-orange shadow-lg before:absolute before:left-0 before:top-0 before:-z-10 before:h-[200px] before:w-full before:rotate-[3deg] before:rounded-lg before:bg-orange before:brightness-75 before:transition-transform before:duration-300 before:ease-linear before:content-[''] md:mx-0 md:h-[200px] md:w-[410px] md:before:h-[200px] md:before:w-[410px] md:hover:before:rotate-0">
               <div className="grid w-full grid-cols-3 gap-4 p-2 md:grid-cols-4 md:p-6">
                 <div className="col-span-1 mx-auto my-auto scale-95 md:scale-100">

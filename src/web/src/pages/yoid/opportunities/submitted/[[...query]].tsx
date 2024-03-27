@@ -123,7 +123,7 @@ const MyOpportunitiesSubmitted: NextPageWithLayout<{
 
       {/* NO ROWS */}
       {dataMyOpportunities && dataMyOpportunities.totalCount === 0 && (
-        <div className="flex justify-center rounded-lg bg-white p-8">
+        <div className="flex justify-center rounded-lg bg-white text-center md:p-8">
           <NoRowsMessage
             title={"You haven't submitted any opportunities yet."}
             description={

@@ -237,6 +237,9 @@ export const Global: React.FC = () => {
       // update ATOM
       setUserProfile(userProfile);
 
+      //toast
+      toast.success("YoID activated successfully", { autoClose: 5000 });
+
       // hide popup
       setOnboardingDialogVisible(false);
       setIsYoIDOnboardingLoading(false);
@@ -278,14 +281,14 @@ export const Global: React.FC = () => {
         onRequestClose={() => {
           setOnboardingDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[500px] md:rounded-3xl`}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[700px] md:w-[500px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
         <div className="flex flex-col gap-2">
           <div className="relative flex h-32 flex-row bg-green p-4">
             <h1 className="flex-grow"></h1>
-            <button
+            {/* <button
               type="button"
               className="btn rounded-full border-0 bg-green-tint p-3 text-white hover:bg-white hover:text-green"
               onClick={() => {
@@ -293,7 +296,7 @@ export const Global: React.FC = () => {
               }}
             >
               <IoMdClose className="h-6 w-6"></IoMdClose>
-            </button>
+            </button> */}
             <Image
               src={stamps}
               alt="Stamps"
@@ -329,6 +332,13 @@ export const Global: React.FC = () => {
             <p className="text-gray-dark">
               Introducing YoID, your Learning Identity Passport. Log in easily
               across all Yoma Partners while we keep your info safe and secure.
+            </p>
+
+            <p className="text-gray-dark">
+              Please note that to use your wallet and digital credentials, you
+              will need to activate YoID. <br /> YoID and previously completed
+              opportunities will appear as digital credentials in your wallet in
+              24 hours.
             </p>
 
             <div className="mt-4 flex flex-grow flex-col items-center gap-6">

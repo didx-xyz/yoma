@@ -264,13 +264,13 @@ const MyCredentials: NextPageWithLayout<{
                 {userProfile?.skills.map((item, index) => (
                   <div
                     key={`${item.id}_${index}`}
-                    className="flex h-[160px] flex-col rounded-lg bg-white p-4 shadow-custom"
+                    className="flex h-[150px] flex-col rounded-lg bg-white p-4 shadow-custom"
                     // onClick={() => handleOnClickCredential(item)}
                   >
                     <div className="flex h-full flex-col gap-2">
                       <div className="flex flex-grow flex-row items-start justify-start">
                         <div className="flex flex-col items-start justify-start gap-2">
-                          <p className="max-h-[45px] overflow-hidden text-ellipsis text-base font-semibold text-black">
+                          <p className="line-clamp-2 max-h-[45px] overflow-hidden text-ellipsis text-base font-semibold text-black">
                             {item.name}
                           </p>
                           {/* <p className="max-h-[80px] overflow-hidden text-ellipsis text-sm font-bold">
@@ -288,27 +288,24 @@ const MyCredentials: NextPageWithLayout<{
                       </div>
 
                       <div className="flex flex-row text-xs text-gray-dark">
-                        <b>{userProfile.skills?.length}</b>&nbsp;experiences
-                        across {item.organizations.length} partner
+                        Skill issued by {item.organizations.length} partner
                         {item.organizations.length > 1 ? "s" : ""}
                       </div>
 
-                      <div className="flex flex-row items-start overflow-hidden">
+                      <div className="flex flex-row items-start overflow-visible">
                         {item.organizations.map((org, index) => (
                           <div
-                            className="relative -mr-4 overflow-hidden rounded-full shadow"
+                            className="-mr-4 flex w-fit items-center justify-center overflow-visible rounded-full bg-white"
                             style={{
                               zIndex: item.organizations.length - index,
                             }}
                             key={`${item.id}_${index}`}
                           >
-                            <>
-                              <AvatarImage
-                                icon={org.logoURL ?? null}
-                                alt={`${org.name} Logo`}
-                                size={40}
-                              />
-                            </>
+                            <AvatarImage
+                              icon={org.logoURL ?? null}
+                              alt={`${org.name} Logo`}
+                              size={40}
+                            />
                           </div>
                         ))}
                       </div>

@@ -119,7 +119,7 @@ const MyOpportunitiesSaved: NextPageWithLayout<{
 
       {/* NO ROWS */}
       {dataMyOpportunities && dataMyOpportunities.totalCount === 0 && (
-        <div className="flex justify-center rounded-lg bg-white p-8">
+        <div className="flex justify-center rounded-lg bg-white text-center md:p-8">
           <NoRowsMessage
             title={"You don't have any saved opportunities."}
             description={

@@ -23,11 +23,6 @@ export default function Document() {
           strategy="afterInteractive"
         />
         <Script src="/scripts/help-scout.js" strategy="afterInteractive" />
-        <Script
-          id="hs-script-loader"
-          src="//js.hs-scripts.com/20355202.js"
-          strategy="afterInteractive"
-        />
       </Head>
       <body>
         <Main />
