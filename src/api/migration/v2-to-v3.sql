@@ -786,11 +786,12 @@ SELECT
     ) AS "StatusId",
     NULL::varchar(500) AS "Keywords",
     start_of_day(o.startdate) AT TIME ZONE 'UTC' AS "DateStart",
-    CASE
-      WHEN o.enddate IS NULL THEN NULL
-      WHEN (o.enddate AT TIME ZONE 'UTC')::date >= '3849-12-31' THEN NULL
-      ELSE end_of_day(o.enddate) AT TIME ZONE 'UTC'
-    END AS "DateEnd",
+    end_of_day(
+        CASE
+            WHEN o.enddate IS NULL OR (o.enddate AT TIME ZONE 'UTC')::date >= '3849-12-31' THEN NULL
+            ELSE o.enddate
+        END
+    ) AT TIME ZONE 'UTC' AS "DateEnd",
     true AS "CredentialIssuanceEnabled",
     'Opportunity|Default' AS "SSISchemaName",
     o.createdat AT TIME ZONE 'UTC' as "DateCreated",
@@ -975,13 +976,15 @@ WITH Inserted AS (
             ELSE NULL
         END AS "CommentVerification",
         start_of_day(C.startdate) AT TIME ZONE 'UTC' AS "DateStart",
-        CASE
-  			  WHEN C.enddate IS NULL AND (C.verifiedat IS NOT NULL AND C.approved = TRUE) THEN end_of_day(C.verifiedat) AT TIME ZONE 'UTC'
-  			  WHEN (C.enddate AT TIME ZONE 'UTC')::date >= '3849-12-31' AND (C.verifiedat IS NOT NULL AND C.approved = TRUE) THEN end_of_day(C.verifiedat) AT TIME ZONE 'UTC'
-  			  WHEN C.enddate IS NULL OR (C.enddate AT TIME ZONE 'UTC')::date >= '3849-12-31' THEN NULL
-  			  ELSE end_of_day(C.enddate) AT TIME ZONE 'UTC'
-		    END AS "DateEnd",
-        C.verifiedat AS "DateCompleted",
+        end_of_day(
+            CASE
+                WHEN C.enddate IS NULL AND (C.verifiedat IS NOT NULL AND C.approved = TRUE) THEN C.verifiedat
+                WHEN (C.enddate AT TIME ZONE 'UTC')::date >= '3849-12-31' AND (C.verifiedat IS NOT NULL AND C.approved = TRUE) THEN C.verifiedat
+                WHEN C.enddate IS NULL OR (C.enddate AT TIME ZONE 'UTC')::date >= '3849-12-31' THEN NULL
+                ELSE C.enddate
+            END
+        ) AT TIME ZONE 'UTC' AS "DateEnd",
+        C.verifiedat AT TIME ZONE 'UTC' AS "DateCompleted",
         CASE
             WHEN C.verifiedat IS NOT NULL AND C.approved = TRUE AND ABS(C.zltoreward) > 0 THEN CAST(ABS(C.zltoreward) AS numeric(8,2))
             ELSE NULL
@@ -1027,6 +1030,98 @@ SELECT "Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "Com
        "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified"
 FROM TempInsertedOpportunity;
 
+--"Opportunity"."MyOpportunity" start and end date data fixes 'Pending' and 'Completed' verifications
+WITH AdjustedStartDate AS (
+    SELECT DISTINCT ON (mo."Id")
+    	mo."Id" as my_opp_id,
+        mo."OpportunityId" as opp_id,
+        o."DateStart" AT TIME ZONE 'UTC' as opp_date_start,
+        o."DateEnd" AT TIME ZONE 'UTC' as opp_date_end,
+        mo."DateStart" AT TIME ZONE 'UTC' AS my_opp_original_date_start,
+        -- Adjust the start date based on the following conditions:
+		start_of_day(CASE
+		    -- If "my opportunity" start date (mo."DateStart") is after the "opportunity" end date (o."DateEnd"),
+		    -- this indicates the "my opportunity" starts after the "opportunity" has ended.
+		    -- In this case, use the "opportunity" start date (o."DateStart") to align the start dates.
+		    WHEN mo."DateStart" IS NOT NULL AND o."DateEnd" IS NOT NULL AND mo."DateStart" > o."DateEnd" THEN o."DateStart"
+
+		    -- If "my opportunity" start date (mo."DateStart") is before the "opportunity" start date (o."DateStart"),
+		    -- indicating the "my opportunity" starts before the "opportunity" itself,
+		    -- use the "opportunity" start date to ensure "my opportunity" does not start earlier.
+		    WHEN mo."DateStart" IS NOT NULL AND mo."DateStart" < o."DateStart" THEN o."DateStart"
+
+		    -- If none of the above conditions are met, or if "my opportunity" start date (mo."DateStart") is NULL,
+		    -- use COALESCE to select the first non-null value between "my opportunity" start date and "opportunity" start date.
+		    -- This ensures that a start date is always set, preferring "my opportunity" start date if it's available,
+		    -- otherwise falling back to the "opportunity" start date.
+		    ELSE COALESCE(mo."DateStart", o."DateStart")
+		END) AT TIME ZONE 'UTC' AS my_opp_adjusted_date_start,
+        mo."DateEnd" AT TIME ZONE 'UTC' AS my_opp_original_date_end,
+        ti."Name" AS time_interval_name,
+        o."CommitmentIntervalCount" as commitment_interval_count
+    FROM "Opportunity"."MyOpportunity" mo
+    INNER JOIN "Opportunity"."Opportunity" o ON mo."OpportunityId" = o."Id"
+    INNER JOIN "Lookup"."TimeInterval" ti ON o."CommitmentIntervalId" = ti."Id"
+    WHERE mo."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
+    AND mo."VerificationStatusId" IN (
+        SELECT "Id"
+        FROM "Opportunity"."MyOpportunityVerificationStatus"
+        WHERE "Name" IN ('Pending', 'Completed')
+    )
+), AdjustedEndDates AS (
+    SELECT
+        *,
+        end_of_day(CASE
+            -- Condition 1: Start date was adjusted
+            WHEN my_opp_adjusted_date_start != my_opp_original_date_start THEN
+                my_opp_adjusted_date_start +
+                CASE
+                    WHEN time_interval_name = 'Hour' AND commitment_interval_count / 24.0 < 1 THEN INTERVAL '1 day'
+                    WHEN time_interval_name = 'Hour' THEN INTERVAL '1 day' * CEIL(commitment_interval_count / 24.0)
+                    WHEN time_interval_name = 'Day' THEN INTERVAL '1 day' * commitment_interval_count
+                    WHEN time_interval_name = 'Week' THEN INTERVAL '7 days' * commitment_interval_count
+                    WHEN time_interval_name = 'Month' THEN INTERVAL '30 days' * commitment_interval_count
+                END
+            -- Condition 2: Original end date is null or less than the adjusted start date
+            WHEN my_opp_original_date_end IS NULL OR my_opp_original_date_end < my_opp_adjusted_date_start THEN
+                my_opp_adjusted_date_start +
+                CASE
+                    WHEN time_interval_name = 'Hour' AND commitment_interval_count / 24.0 < 1 THEN INTERVAL '1 day'
+                    WHEN time_interval_name = 'Hour' THEN INTERVAL '1 day' * CEIL(commitment_interval_count / 24.0)
+                    WHEN time_interval_name = 'Day' THEN INTERVAL '1 day' * commitment_interval_count
+                    WHEN time_interval_name = 'Week' THEN INTERVAL '7 days' * commitment_interval_count
+                    WHEN time_interval_name = 'Month' THEN INTERVAL '30 days' * commitment_interval_count
+                END
+            -- Condition 3: Duration from adjusted start to original end exceeds commitment
+            WHEN my_opp_original_date_end - my_opp_adjusted_date_start >
+                CASE
+                    WHEN time_interval_name = 'Hour' AND commitment_interval_count / 24.0 < 1 THEN INTERVAL '1 day'
+                    WHEN time_interval_name = 'Hour' THEN INTERVAL '1 day' * CEIL(commitment_interval_count / 24.0)
+                    WHEN time_interval_name = 'Day' THEN INTERVAL '1 day' * commitment_interval_count
+                    WHEN time_interval_name = 'Week' THEN INTERVAL '7 days' * commitment_interval_count
+                    WHEN time_interval_name = 'Month' THEN INTERVAL '30 days' * commitment_interval_count
+                END
+            THEN my_opp_adjusted_date_start +
+                CASE
+                    WHEN time_interval_name = 'Hour' AND commitment_interval_count / 24.0 < 1 THEN INTERVAL '1 day'
+                    WHEN time_interval_name = 'Hour' THEN INTERVAL '1 day' * CEIL(commitment_interval_count / 24.0)
+                    WHEN time_interval_name = 'Day' THEN INTERVAL '1 day' * commitment_interval_count
+                    WHEN time_interval_name = 'Week' THEN INTERVAL '7 days' * commitment_interval_count
+                    WHEN time_interval_name = 'Month' THEN INTERVAL '30 days' * commitment_interval_count
+                END
+            ELSE
+                -- Default to using the original end date if none of the above conditions are met
+                my_opp_original_date_end
+        END) AT TIME ZONE 'UTC' AS my_opp_adjusted_date_end
+    FROM AdjustedStartDate
+)
+UPDATE "Opportunity"."MyOpportunity" mo
+SET
+    "DateStart" = ad.my_opp_adjusted_date_start,
+    "DateEnd" = ad.my_opp_adjusted_date_end
+FROM AdjustedEndDates ad
+WHERE mo."Id" = ad.my_opp_id;
+
 --Object.Blob (credential certificates / 'my' opportinity verifcation file upload)
 INSERT INTO "Object"."Blob" (
     "Id",
@@ -1067,7 +1162,7 @@ SELECT
     (SELECT "Id" FROM "Opportunity"."OpportunityVerificationType" WHERE "Name" = 'FileUpload') AS "VerificationTypeId",
     NULL AS "GeometryProperties",
     TOD.FileId AS "FileId",
-    TOD.DateCreated AS "DateCreated"
+    TOD.DateCreated AT TIME ZONE 'UTC' AS "DateCreated"
 FROM
     TempOpportunityDetails TOD;
 
@@ -1104,8 +1199,8 @@ SELECT
     NULL AS "CredentialId",
     NULL AS "ErrorReason",
     NULL AS "RetryCount",
-    MO."DateModified" AS "DateCreated",
-    MO."DateModified" AS "DateModified"
+    MO."DateModified" AT TIME ZONE 'UTC' AS "DateCreated",
+    MO."DateModified" AT TIME ZONE 'UTC' AS "DateModified"
 FROM
     "Opportunity"."MyOpportunity" MO
 INNER JOIN
@@ -1181,8 +1276,8 @@ SELECT
     END AS "TransactionId",
     NULL AS "ErrorReason",
     NULL AS "RetryCount",
-    MO."DateModified" AS "DateCreated",
-    MO."DateModified" AS "DateModified"
+    MO."DateModified" AT TIME ZONE 'UTC' AS "DateCreated",
+    MO."DateModified" AT TIME ZONE 'UTC' AS "DateModified"
 FROM
     "Opportunity"."MyOpportunity" MO
 WHERE
@@ -1229,7 +1324,7 @@ SELECT DISTINCT ON (MO."UserId", OS."SkillId")
     gen_random_uuid(),
     MO."UserId",
     OS."SkillId",
-    MAX(MO."DateModified") OVER (PARTITION BY MO."UserId", OS."SkillId") AS "DateCreated"
+    MAX(MO."DateModified") OVER (PARTITION BY MO."UserId", OS."SkillId") AT TIME ZONE 'UTC' AS "DateCreated"
 FROM
     "Opportunity"."MyOpportunity" MO
 INNER JOIN
@@ -1257,7 +1352,7 @@ SELECT
     gen_random_uuid() AS "Id",
     US."Id" AS "UserSkillId",
     OP."OrganizationId" AS "OrganizationId",
-    US."DateCreated" AS "DateCreated"
+    US."DateCreated" AT TIME ZONE 'UTC' AS "DateCreated"
 FROM
     "Entity"."UserSkills" US
 INNER JOIN "Opportunity"."OpportunitySkills" OS ON US."SkillId" = OS."SkillId"

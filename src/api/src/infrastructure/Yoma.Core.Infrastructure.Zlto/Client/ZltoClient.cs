@@ -5,6 +5,7 @@ using System.Net;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Marketplace.Interfaces.Provider;
 using Yoma.Core.Domain.Marketplace.Models;
@@ -129,6 +130,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
               ? parsedAmount
               : throw new InvalidOperationException($"{nameof(o.ZltoAmount)} of '{o.ZltoAmount}' couldn't be parsed to an integer"),
         Status = Enum.Parse<Domain.Reward.VoucherStatus>(o.VoucherState, true),
+        DateStamp = DateTimeHelper.GetLatestValidDate(o.DateCreated, o.LastUpdated)
       }).OrderBy(o => o.Name).ToList();
 
       return results;
