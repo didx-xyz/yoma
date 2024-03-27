@@ -52,7 +52,7 @@ export const OpportunitiesCarousel: React.FC<{
 
     // reset to first item when resizing (UX fix with changing of carousel column)
     setSelectedItem(0);
-  }, [screenWidth, setSelectedItem, setCols]);
+  }, [screenWidth, setSelectedItem, setCols, slidePercentage]);
 
   const onChange = useCallback(
     async (index: number) => {
@@ -106,15 +106,7 @@ export const OpportunitiesCarousel: React.FC<{
         setSelectedItem(index);
       }
     },
-    [
-      loadData,
-      isLoadingDataRef,
-      cache,
-      setCache,
-      slidePercentage,
-      setSelectedItem,
-      cols,
-    ],
+    [loadData, isLoadingDataRef, cache, setCache, setSelectedItem, cols],
   );
 
   return (

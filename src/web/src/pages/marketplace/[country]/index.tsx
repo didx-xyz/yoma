@@ -62,7 +62,7 @@ interface IParams extends ParsedUrlQuery {
 // whenever additional data is requested in the carousels (during paging).
 export const getStaticProps: GetStaticProps = async (context) => {
   // check if marketplace is enabled
-  let marketplace_enabled =
+  const marketplace_enabled =
     env.MARKETPLACE_ENABLED?.toLowerCase() == "true" ? true : false;
 
   if (!marketplace_enabled)

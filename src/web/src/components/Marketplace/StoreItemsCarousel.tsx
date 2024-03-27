@@ -27,7 +27,7 @@ export const StoreItemsCarousel: React.FC<{
 
   useEffect(() => {
     // update the slide percentage based on the viewport size
-    let slidePercentage =
+    const slidePercentage =
       screenWidth < VIEWPORT_SIZE.SM
         ? 100 // 1 column
         : screenWidth < VIEWPORT_SIZE.LG
@@ -91,15 +91,7 @@ export const StoreItemsCarousel: React.FC<{
         setSelectedItem(index);
       }
     },
-    [
-      loadData,
-      isLoadingDataRef,
-      cache,
-      setCache,
-      slidePercentage,
-      setSelectedItem,
-      cols,
-    ],
+    [loadData, isLoadingDataRef, cache, setCache, setSelectedItem, cols],
   );
 
   return (
