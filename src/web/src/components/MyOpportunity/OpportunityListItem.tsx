@@ -61,7 +61,7 @@ const OpportunityListItem: React.FC<{
             <div className="flex flex-row flex-wrap gap-2">
               {data.skills?.map((skill, index) => (
                 <div
-                  className="badge whitespace-nowrap rounded-md bg-green-light text-[12px] font-semibold text-green"
+                  className="badge truncate whitespace-nowrap rounded-md bg-green-light text-[12px] font-semibold text-green"
                   key={`skill_${index}`}
                 >
                   {skill.name}
@@ -84,7 +84,7 @@ const OpportunityListItem: React.FC<{
 
         {/* COMMENT */}
         {data.commentVerification && (
-          <div className="flex flex-row gap-1">
+          <div className="flex flex-row flex-wrap gap-1">
             <h4 className="line-clamp-4 text-sm font-bold">Comment: </h4>
             <h4 className="line-clamp-4 text-sm font-thin">
               {data.commentVerification}

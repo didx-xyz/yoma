@@ -21,7 +21,7 @@ import {
   userProfileAtom,
 } from "~/lib/store";
 import ReactModal from "react-modal";
-import { IoMdFingerPrint, IoMdClose } from "react-icons/io";
+import { IoMdFingerPrint } from "react-icons/io";
 import iconBell from "public/images/icon-bell.webp";
 import YoIDCard from "public/images/YoID-modal-card.webp";
 import Image from "next/image";
