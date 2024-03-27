@@ -23,6 +23,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { env } from "process";
+import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
 
 // 👇 SSG
 // This page undergoes static generation at run time on the server-side.
@@ -42,10 +43,19 @@ export const getStaticProps: GetStaticProps = async (context) => {
     };
   }
 
+  // check if marketplace is enabled
+  let marketplace_enabled =
+    env.MARKETPLACE_ENABLED?.toLowerCase() == "true" ? true : false;
+
+  if (!marketplace_enabled)
+    return {
+      props: { marketplace_enabled },
+    };
+
   const lookups_countries = await listSearchCriteriaCountries(context);
 
   return {
-    props: { lookups_countries },
+    props: { lookups_countries, marketplace_enabled },
 
     // Next.js will attempt to re-generate the page:
     // - When a request comes in
@@ -57,12 +67,16 @@ export const getStaticProps: GetStaticProps = async (context) => {
 const Marketplace: NextPageWithLayout<{
   lookups_countries: Country[];
   error?: number;
-}> = ({ lookups_countries, error }) => {
+  marketplace_enabled: boolean;
+}> = ({ lookups_countries, error, marketplace_enabled }) => {
   const router = useRouter();
   const [userProfile] = useAtom(userProfileAtom);
-
   const [userCountrySelection] = useAtom(userCountrySelectionAtom);
   const setUserCountrySelection = useSetAtom(userCountrySelectionAtom);
+  const [countrySelectorDialogVisible, setCountrySelectorDialogVisible] =
+    useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>();
+  const myRef = useRef<HTMLDivElement>(null);
 
   const onFilterCountry = useCallback(
     (value: string) => {
@@ -80,10 +94,6 @@ const Marketplace: NextPageWithLayout<{
       label: c.name,
     }));
   }, [lookups_countries]);
-
-  const [countrySelectorDialogVisible, setCountrySelectorDialogVisible] =
-    useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<string | null>();
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
@@ -112,7 +122,8 @@ const Marketplace: NextPageWithLayout<{
     userCountrySelection,
     lookups_countries,
   ]);
-  const myRef = useRef<HTMLDivElement>(null);
+
+  if (!marketplace_enabled) return <MarketplaceDown />;
 
   if (error) {
     if (error === 401) return <Unauthenticated />;

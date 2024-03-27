@@ -47,6 +47,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { env } from "process";
+import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
 
 interface IParams extends ParsedUrlQuery {
   country: string;
@@ -60,6 +61,15 @@ interface IParams extends ParsedUrlQuery {
 // Subsequent client-side queries are executed and cached using the queryClient
 // whenever additional data is requested in the carousels (during paging).
 export const getStaticProps: GetStaticProps = async (context) => {
+  // check if marketplace is enabled
+  let marketplace_enabled =
+    env.MARKETPLACE_ENABLED?.toLowerCase() == "true" ? true : false;
+
+  if (!marketplace_enabled)
+    return {
+      props: { marketplace_enabled },
+    };
+
   const { country } = context.params as IParams;
   const lookups_countries = await listSearchCriteriaCountries(context);
   const lookups_categories = await listStoreCategories(
@@ -151,7 +161,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   }
 
   return {
-    props: { country, lookups_countries, data_storeItems },
+    props: { country, lookups_countries, data_storeItems, marketplace_enabled },
 
     // Next.js will attempt to re-generate the page:
     // - When a request comes in
@@ -190,7 +200,14 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
     storeItems: { store: Store; items: StoreItemCategorySearchResults }[];
   }[];
   error?: number;
-}> = ({ country, lookups_countries, data_storeItems, error }) => {
+  marketplace_enabled: boolean;
+}> = ({
+  country,
+  lookups_countries,
+  data_storeItems,
+  error,
+  marketplace_enabled,
+}) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [buyDialogVisible, setBuyDialogVisible] = useState(false);
@@ -401,6 +418,8 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       setUserProfile,
     ],
   );
+
+  if (!marketplace_enabled) return <MarketplaceDown />;
 
   if (error) {
     if (error === 401) return <Unauthenticated />;

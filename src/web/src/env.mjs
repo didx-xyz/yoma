@@ -24,6 +24,7 @@ export const env = createEnv({
     KEYCLOAK_CLIENT_ID: z.string(),
     KEYCLOAK_CLIENT_SECRET: z.string(),
     API_BASE_URL: z.string().url(), // URL of the API that the server will call
+    MARKETPLACE_ENABLED: z.boolean(),
   },
 
   /**
@@ -53,6 +54,10 @@ export const env = createEnv({
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:
       process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
     NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
+    MARKETPLACE_ENABLED:
+      (process.env.MARKETPLACE_ENABLED ?? "").toLowerCase() === "true"
+        ? true
+        : false,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation.
