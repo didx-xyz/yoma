@@ -22,19 +22,30 @@ export const OpportunitiesCarousel: React.FC<{
   const isLoadingDataRef = useRef(false);
   const [selectedItem, setSelectedItem] = useState(0);
 
-  // viewport
-  const [viewportSize, setViewportSize] = useState(screenWidth);
+  function getSlidePercentage(screenWidth: number) {
+    if (screenWidth < VIEWPORT_SIZE.SM) {
+      return 100; // 1 column
+    } else if (screenWidth < VIEWPORT_SIZE.LG) {
+      return 50; // 2 columns
+    } else if (screenWidth < VIEWPORT_SIZE.XL) {
+      return 33; // 3 columns
+    } else if (screenWidth < VIEWPORT_SIZE["2XL"]) {
+      return 25; // 4 columns
+    } else {
+      return 25;
+    }
+  }
+
+  // calculate the slider percentage based on the viewport size
+  // i.e 33% = cols 3, 25% = cols 4 etc
+  const [slidePercentage, setSlidePercentage] = useState(
+    getSlidePercentage(screenWidth),
+  );
 
   useEffect(() => {
-    setViewportSize(
-      screenWidth < VIEWPORT_SIZE.SM
-        ? 100
-        : screenWidth < VIEWPORT_SIZE.LG
-          ? 50
-          : screenWidth < VIEWPORT_SIZE.XL
-            ? 25
-            : 25,
-    );
+    // update the slide percentage based on the viewport size
+    setSlidePercentage(getSlidePercentage(screenWidth));
+
     // reset to first item when resizing (UX fix with changing of carousel column)
     setSelectedItem(0);
   }, [screenWidth, setSelectedItem]);
@@ -45,23 +56,29 @@ export const OpportunitiesCarousel: React.FC<{
       if (isLoadingDataRef.current) return;
 
       // calculate the number of columns based on the viewport size
-      const cols = 100 / viewportSize;
+      const cols = Math.round(100 / slidePercentage);
 
       // calculate the start row based on the current index
       const startRow = index + 1;
 
-      const nextStartRow = Math.ceil((startRow + 1) / cols) * cols + 1;
+      const nextStartRow = Math.round((startRow + 1) / cols) * cols + 1;
+
+      // console.warn(
+      //   `index: ${index}, startRow: ${startRow}, nextStartRow: ${nextStartRow} cols: ${cols}`,
+      // );
 
       // HACK: Update the selected item
-      // this moves the selected items along with the new data
-      // prevents an issue where the selected item has a large gap (index=1)
-      if (index == 1) {
+      // this helps move the selected items along for larger displays
+      // prevents large gaps around the selected item
+      if (cols > 2 && index == 1) {
+        //console.warn("SKIPPING... for larger displays: ", index + 1);
         setSelectedItem(index + 1);
         return;
       }
 
       // if there's enough data in the cache, skip fetching more data
       if (startRow + cols <= cache.length) {
+        //console.warn("SKIPPING... enough data");
         // if the index is not close to the end, skip fetching more rows
         return;
       }
@@ -83,13 +100,18 @@ export const OpportunitiesCarousel: React.FC<{
 
       // set the cacheRef.current.items to the new data
       setCache([...cache, ...newItems]);
+
+      // HACK: this helps move the carousel along with the new data for larger displays
+      if (newItems.length > 0 && cols > 2) {
+        setSelectedItem(index);
+      }
     },
     [
       loadData,
       isLoadingDataRef,
       cache,
       setCache,
-      viewportSize,
+      slidePercentage,
       setSelectedItem,
     ],
   );
@@ -114,22 +136,23 @@ export const OpportunitiesCarousel: React.FC<{
             )}
           </div>
 
-          {viewportSize <= 0 && (
+          {slidePercentage <= 0 && (
             <div className="flex items-center justify-center">
               <LoadingSkeleton />
             </div>
           )}
 
-          {viewportSize > 0 && (
+          {slidePercentage > 0 && (
             <Carousel
               centerMode
-              centerSlidePercentage={viewportSize}
+              centerSlidePercentage={slidePercentage}
               swipeScrollTolerance={5}
               showStatus={false}
               showIndicators={false}
               showThumbs={false}
               onChange={onChange}
               selectedItem={selectedItem}
+              swipeable={true}
               renderArrowPrev={(
                 onClickHandler: () => void,
                 hasPrev: boolean,

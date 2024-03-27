@@ -610,9 +610,11 @@ const Opportunities: NextPageWithLayout<{
         queryClient.getQueryData<OpportunitySearchResultsInfo>(queryKey);
 
       if (cachedData) {
+        console.warn("CACHE HIT: ", queryKey);
         return cachedData;
       }
 
+      console.warn("FETCHING DATA: ", queryKey);
       const data = await searchOpportunities(filter);
 
       queryClient.setQueryData(queryKey, data);
