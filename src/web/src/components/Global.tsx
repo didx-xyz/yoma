@@ -281,22 +281,13 @@ export const Global: React.FC = () => {
         onRequestClose={() => {
           setOnboardingDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[700px] md:w-[500px] md:rounded-3xl`}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden overflow-y-auto bg-white animate-in fade-in md:m-auto md:max-h-[700px] md:w-[500px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
         <div className="flex flex-col gap-2">
           <div className="relative flex h-32 flex-row bg-green p-4">
             <h1 className="flex-grow"></h1>
-            {/* <button
-              type="button"
-              className="btn rounded-full border-0 bg-green-tint p-3 text-white hover:bg-white hover:text-green"
-              onClick={() => {
-                setOnboardingDialogVisible(false);
-              }}
-            >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
-            </button> */}
             <Image
               src={stamps}
               alt="Stamps"
@@ -307,8 +298,7 @@ export const Global: React.FC = () => {
               className="absolute -bottom-5 z-0 -rotate-3 opacity-70 mix-blend-plus-lighter md:left-[10%]"
             />
           </div>
-
-          <div className="flex flex-col items-center justify-center gap-8 px-12 text-center">
+          <div className="flex flex-col items-center justify-center gap-8 px-12 pb-8 text-center">
             <div className="z-30 -mb-6 -mr-4 -mt-24 flex items-center justify-center">
               <Image
                 src={YoIDCard}
@@ -319,7 +309,6 @@ export const Global: React.FC = () => {
                 priority={true}
               />
             </div>
-
             <div className="flex flex-col gap-2">
               <h5 className="text-sm font-semibold tracking-widest">
                 EXCITING UPDATE
@@ -328,19 +317,17 @@ export const Global: React.FC = () => {
                 Connected with one profile!
               </h4>
             </div>
-
             <p className="text-gray-dark">
               Introducing YoID, your Learning Identity Passport. Log in easily
               across all Yoma Partners while we keep your info safe and secure.
             </p>
-
             <p className="text-gray-dark">
               Please note that to use your wallet and digital credentials, you
-              will need to activate YoID. <br /> YoID and previously completed
-              opportunities will appear as digital credentials in your wallet in
-              24 hours.
+              will need to activate YoID.
+              <br />
+              YoID and previously completed opportunities will appear as digital
+              credentials in your wallet in 24 hours.
             </p>
-
             <div className="mt-4 flex flex-grow flex-col items-center gap-6">
               <button
                 type="button"
@@ -365,7 +352,6 @@ export const Global: React.FC = () => {
           </div>
         </div>
       </ReactModal>
-
       {/* LOGIN AGAIN DIALOG */}
       <ReactModal
         isOpen={loginDialogVisible}

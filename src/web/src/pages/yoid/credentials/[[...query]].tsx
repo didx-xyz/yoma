@@ -142,7 +142,7 @@ const MyCredentials: NextPageWithLayout<{
         onRequestClose={() => {
           setCredentialDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[650px] md:w-[600px] md:rounded-3xl`}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden overflow-y-auto bg-white animate-in fade-in md:m-auto md:max-h-[650px] md:w-[600px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
@@ -170,7 +170,7 @@ const MyCredentials: NextPageWithLayout<{
                   />
                 )}
 
-                <div className="flex flex-grow flex-col gap-4 overflow-x-hidden overflow-y-scroll p-4 pt-0 md:max-h-[480px] md:min-h-[350px]">
+                <div className="flex flex-grow flex-col gap-4 overflow-x-hidden overflow-y-scroll p-4 pb-8 pt-0 md:max-h-[480px] md:min-h-[350px]">
                   <h4 className="text-center">{activeCredential?.title}</h4>
 
                   {/* CREDENTIAL DETAILS */}
