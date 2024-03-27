@@ -21,8 +21,9 @@ export const OpportunitiesCarousel: React.FC<{
   const [cache, setCache] = useState(data?.items);
   const isLoadingDataRef = useRef(false);
   const [selectedItem, setSelectedItem] = useState(0);
+  const [cols, setCols] = useState(1);
 
-  function getSlidePercentage(screenWidth: number) {
+  const getSlidePercentage = (screenWidth: number) => {
     if (screenWidth < VIEWPORT_SIZE.SM) {
       return 100; // 1 column
     } else if (screenWidth < VIEWPORT_SIZE.LG) {
@@ -34,7 +35,7 @@ export const OpportunitiesCarousel: React.FC<{
     } else {
       return 25;
     }
-  }
+  };
 
   // calculate the slider percentage based on the viewport size
   // i.e 33% = cols 3, 25% = cols 4 etc
@@ -46,22 +47,20 @@ export const OpportunitiesCarousel: React.FC<{
     // update the slide percentage based on the viewport size
     setSlidePercentage(getSlidePercentage(screenWidth));
 
+    // calculate the number of columns based on the viewport size
+    setCols(Math.round(100 / slidePercentage));
+
     // reset to first item when resizing (UX fix with changing of carousel column)
     setSelectedItem(0);
-  }, [screenWidth, setSelectedItem]);
+  }, [screenWidth, setSelectedItem, setCols]);
 
   const onChange = useCallback(
     async (index: number) => {
       // if data is currently being loaded, do nothing
       if (isLoadingDataRef.current) return;
 
-      // calculate the number of columns based on the viewport size
-      const cols = Math.round(100 / slidePercentage);
-
       // calculate the start row based on the current index
       const startRow = index + 1;
-
-      const nextStartRow = Math.round((startRow + 1) / cols) * cols + 1;
 
       // console.warn(
       //   `index: ${index}, startRow: ${startRow}, nextStartRow: ${nextStartRow} cols: ${cols}`,
@@ -87,6 +86,7 @@ export const OpportunitiesCarousel: React.FC<{
       isLoadingDataRef.current = true;
 
       // fetch more data
+      const nextStartRow = Math.round((startRow + 1) / cols) * cols + 1;
       const newData = await loadData?.(nextStartRow);
 
       // filter out any items that are already in the cacheRef.current.items
@@ -113,6 +113,7 @@ export const OpportunitiesCarousel: React.FC<{
       setCache,
       slidePercentage,
       setSelectedItem,
+      cols,
     ],
   );
 
@@ -146,13 +147,13 @@ export const OpportunitiesCarousel: React.FC<{
             <Carousel
               centerMode
               centerSlidePercentage={slidePercentage}
+              swipeable={true}
               swipeScrollTolerance={5}
               showStatus={false}
               showIndicators={false}
               showThumbs={false}
               onChange={onChange}
               selectedItem={selectedItem}
-              swipeable={true}
               renderArrowPrev={(
                 onClickHandler: () => void,
                 hasPrev: boolean,

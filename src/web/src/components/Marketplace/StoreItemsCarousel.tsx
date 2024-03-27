@@ -22,41 +22,41 @@ export const StoreItemsCarousel: React.FC<{
   const [cache, setCache] = useState(data?.items);
   const isLoadingDataRef = useRef(false);
   const [selectedItem, setSelectedItem] = useState(0);
-
-  // viewport
-  const [viewportSize, setViewportSize] = useState(screenWidth);
+  const [slidePercentage, setSlidePercentage] = useState(screenWidth);
+  const [cols, setCols] = useState(1);
 
   useEffect(() => {
-    setViewportSize(
+    // update the slide percentage based on the viewport size
+    let slidePercentage =
       screenWidth < VIEWPORT_SIZE.SM
         ? 100 // 1 column
         : screenWidth < VIEWPORT_SIZE.LG
           ? 50 // 2 columns
           : screenWidth < VIEWPORT_SIZE.XL
             ? 33 // 3 columns
-            : 33,
-    );
+            : 33;
+    setSlidePercentage(slidePercentage);
+
+    // calculate the number of columns based on the viewport size
+    setCols(Math.round(100 / slidePercentage));
+
     // reset to first item when resizing (UX fix with changing of carousel column)
     setSelectedItem(0);
-  }, [screenWidth, setSelectedItem]);
+  }, [screenWidth, setSelectedItem, setCols]);
 
   const onChange = useCallback(
     async (index: number) => {
       // if data is currently being loaded, do nothing
       if (isLoadingDataRef.current) return;
 
-      // calculate the number of columns based on the viewport size
-      const cols = 100 / viewportSize;
-
       // calculate the start row based on the current index
       const startRow = index + 1;
 
-      const nextStartRow = Math.ceil((startRow + 1) / cols) * cols + 1;
-
       // HACK: Update the selected item
-      // this moves the selected items along with the new data
-      // prevents an issue where the selected item has a large gap (index=1)
-      if (index == 1) {
+      // this helps move the selected items along for larger displays
+      // prevents large gaps around the selected item
+      if (cols > 2 && index == 1) {
+        //console.warn("SKIPPING... for larger displays: ", index + 1);
         setSelectedItem(index + 1);
         return;
       }
@@ -71,6 +71,7 @@ export const StoreItemsCarousel: React.FC<{
       isLoadingDataRef.current = true;
 
       // fetch more data
+      const nextStartRow = Math.round((startRow + 1) / cols) * cols + 1;
       const newData = await loadData?.(nextStartRow);
 
       // filter out any items that are already in the cacheRef.current.items
@@ -84,14 +85,20 @@ export const StoreItemsCarousel: React.FC<{
 
       // set the cacheRef.current.items to the new data
       setCache([...cache, ...newItems]);
+
+      // HACK: this helps move the carousel along with the new data for larger displays
+      if (newItems.length > 0 && cols > 2) {
+        setSelectedItem(index);
+      }
     },
     [
       loadData,
       isLoadingDataRef,
       cache,
       setCache,
-      viewportSize,
+      slidePercentage,
       setSelectedItem,
+      cols,
     ],
   );
 
@@ -115,16 +122,17 @@ export const StoreItemsCarousel: React.FC<{
             )}
           </div>
 
-          {viewportSize <= 0 && (
+          {slidePercentage <= 0 && (
             <div className="flex items-center justify-center">
               <LoadingSkeleton />
             </div>
           )}
 
-          {viewportSize > 0 && (
+          {slidePercentage > 0 && (
             <Carousel
               centerMode
-              centerSlidePercentage={viewportSize}
+              centerSlidePercentage={slidePercentage}
+              swipeable={true}
               swipeScrollTolerance={5}
               showStatus={false}
               showIndicators={false}
@@ -154,7 +162,8 @@ export const StoreItemsCarousel: React.FC<{
                 hasNext: boolean,
                 label: string,
               ) =>
-                hasNext && (
+                hasNext &&
+                !(cache.length < cols) && (
                   <button
                     type="button"
                     onClick={() => {
