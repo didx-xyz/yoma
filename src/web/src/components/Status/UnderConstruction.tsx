@@ -9,7 +9,7 @@ export const UnderConstruction = () => (
     </Head>
 
     <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-      <div className="flex w-full max-w-md flex-col place-items-center justify-center rounded-xl bg-white p-4">
+      <div className="flex w-full max-w-md flex-col place-items-center justify-center rounded-xl bg-white p-4 md:p-16">
         <RoundedImage
           icon={iconImage}
           alt="Icon Rocket"

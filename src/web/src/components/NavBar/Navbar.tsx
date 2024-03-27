@@ -52,8 +52,16 @@ const navBarLinksUser: TabItem[] = [
 
 const navBarLinksAdmin: TabItem[] = [
   {
-    title: "Dashboard",
-    description: "Dashboard",
+    title: "Home",
+    description: "Home",
+    url: `/`,
+    badgeCount: null,
+    selected: false,
+    iconImage: null,
+  },
+  {
+    title: "Overview",
+    description: "Overview",
     url: "/admin",
     badgeCount: null,
     selected: false,
@@ -107,6 +115,14 @@ export const Navbar: React.FC = () => {
         {
           title: "Home",
           description: "Home",
+          url: `/`,
+          badgeCount: null,
+          selected: false,
+          iconImage: null,
+        },
+        {
+          title: "Overview",
+          description: "Overview",
           url: `/organisations/${currentOrganisationId}`,
           badgeCount: null,
           selected: false,

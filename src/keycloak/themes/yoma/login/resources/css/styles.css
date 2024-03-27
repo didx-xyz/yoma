@@ -11,6 +11,18 @@
 /* #kc-locale-dropdown {
 } */
 
+.login-pf-page .login-pf-page-header::before {
+  content: "";
+  display: inline-block;
+  background-image: url('https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/shared-resources/yoma.png');
+  width: 100px;
+  height: 42px;
+  margin-right: 10px;
+  margin-left: -10px;
+  margin-top: -10px;
+  overflow: hidden;
+}
+
 #kc-current-locale-link {
     text-decoration: none;
     font-size: 14px;
