@@ -339,10 +339,10 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         .EnsureSuccessStatusCodeAsync()
         .ReceiveJson<ReserveItemResponse>();
 
-      if (response.BankResponse == null)
+      if (response.BankTransactionId <= default(int))
         throw new HttpClientException(HttpStatusCode.InternalServerError, $"Item reservation failed: {(string.IsNullOrWhiteSpace(response.Message) ? "no info" : response.Message)}");
 
-      return response.BankResponse.TransactionInfo.TransactionId.ToString();
+      return response.BankTransactionId.ToString();
     }
 
     public async System.Threading.Tasks.Task ItemReserveReset(string itemId, string transactionId)

@@ -1,11 +1,12 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Yoma.Core.Domain.Core.Exceptions;
+using System.Transactions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Marketplace.Interfaces;
@@ -14,6 +15,8 @@ using Yoma.Core.Domain.Marketplace.Interfaces.Provider;
 using Yoma.Core.Domain.Marketplace.Models;
 using Yoma.Core.Domain.Marketplace.Validators;
 using Yoma.Core.Domain.Reward.Interfaces;
+using Yoma.Core.Domain.Reward.Models;
+using static Hangfire.Storage.JobStorageFeatures;
 
 namespace Yoma.Core.Domain.Marketplace.Services
 {
@@ -32,6 +35,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
     private readonly StoreItemCategorySearchFilterValidator _storeItemCategorySearchFilterValidator;
     private readonly StoreItemSearchFilterValidator _storeItemSearchFilterValidator;
 
+    private readonly IExecutionStrategyService _executionStrategyService;
+
     private static readonly object _lock_Object = new();
     #endregion
 
@@ -46,7 +51,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
         IRepository<TransactionLog> transactionLogRepository,
         StoreSearchFilterValidator storeSearchFilterValidator,
         StoreItemCategorySearchFilterValidator storeItemCategorySearchFilterValidator,
-        StoreItemSearchFilterValidator storeItemSearchFilterValidator)
+        StoreItemSearchFilterValidator storeItemSearchFilterValidator,
+        IExecutionStrategyService executionStrategyService)
     {
       _logger = logger;
       _httpContextAccessor = httpContextAccessor;
@@ -59,6 +65,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       _storeSearchFilterValidator = storeSearchFilterValidator;
       _storeItemCategorySearchFilterValidator = storeItemCategorySearchFilterValidator;
       _storeItemSearchFilterValidator = storeItemSearchFilterValidator;
+      _executionStrategyService = executionStrategyService;
     }
     #endregion
 
@@ -155,13 +162,9 @@ namespace Yoma.Core.Domain.Marketplace.Services
       if (string.IsNullOrEmpty(walletBalance.WalletId))
         throw new InvalidOperationException($"Wallet id expected with status '{walletStatus}'");
 
-      var statusReleasedId = _transactionStatusService.GetByName(TransactionStatus.Released.ToString()).Id;
-      var statusReservedId = _transactionStatusService.GetByName(TransactionStatus.Reserved.ToString()).Id;
-      var statusSoldId = _transactionStatusService.GetByName(TransactionStatus.Sold.ToString()).Id;
-
       //lock retrieval (ListStoreItems), reservation (ItemReserve) and update as sold (ItemSold), ensuring single thread execution.
       //zlto allows processing of an item for multiple wallets, resulting in success (OK)
-      lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
+      lock (_lock_Object)
       {
         //find the 1st available item for the specified store and item category
         var storeItems = _marketplaceProviderClient.ListStoreItems(storeId, itemCategoryId, 1, 0).Result;
@@ -172,102 +175,117 @@ namespace Yoma.Core.Domain.Marketplace.Services
         if (walletBalance.Available < storeItem.Amount)
           throw new ValidationException($"Insufficient funds to purchase the item. Current avaliable balance '{walletBalance.Available:N2}'");
 
-        var item = new TransactionLog
-        {
-          UserId = user.Id,
-          ItemCategoryId = itemCategoryId,
-          ItemId = storeItem.Id,
-          Amount = storeItem.Amount
-        };
+        //find latest transaction for the user and item category
+        var transactionExisting = _transactionLogRepository.Query()
+          .Where(o => o.UserId == user.Id && o.ItemCategoryId == itemCategoryId)
+          .OrderByDescending(o => o.DateModified).FirstOrDefault();
 
-        //reserve item and track transaction
-        var transactionId = _marketplaceProviderClient.ItemReserve(walletBalance.WalletId, user.Email, storeItem.Id).Result;
-        item.Status = TransactionStatus.Reserved;
-        item.StatusId = statusReservedId;
-        item.TransactionId = transactionId;
+        //existing reservation re-used if available; assume remains effective and not expired by ZLTO
+        var transaction = transactionExisting != null && transactionExisting.Status == TransactionStatus.Reserved
+          ? transactionExisting : BuyItemTransactionReserve(user, walletBalance.WalletId, itemCategoryId, storeItem);
 
-        try
-        {
-          _transactionLogRepository.Create(item).Wait();
-        }
-        catch (Exception ex)
-        {
-          //item flagged as reserved but log could not commit; log error and continue
-          _logger.LogError(ex, "Failed to log 'Reserved' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
-              user.Id, item.ItemCategoryId.SanitizeLogValue(), item.ItemId.SanitizeLogValue(), item.TransactionId.SanitizeLogValue());
-
-          //continue with transaction as item was reserved
-        }
-
-        try
-        {
-          //mark item as sold and track transaction   
-          _marketplaceProviderClient.ItemSold(walletBalance.WalletId, user.Email, storeItem.Id, transactionId).Wait();
-          item.Status = TransactionStatus.Sold;
-          item.StatusId = statusSoldId;
-          _transactionLogRepository.Create(item).Wait();
-        }
-        catch (Exception ex)
-        {
-          switch (item.Status)
-          {
-            case TransactionStatus.Sold:
-              //item flagged as sold but log could not commit; log error and continue
-              _logger.LogError(ex, "Failed to log 'Sold' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
-                  user.Id, item.ItemCategoryId.SanitizeLogValue(), item.ItemId.SanitizeLogValue(), item.TransactionId.SanitizeLogValue());
-
-              break; //buy is successful
-
-            case TransactionStatus.Reserved: //buy not successful
-                                             //attempt to release reservation and track transaction (upon failure assume zlto will expire reservation)
-              try
-              {
-                //can be invoke multiple times without any side effects (OK); with not found, assume reservation reset
-                _marketplaceProviderClient.ItemReserveReset(item.ItemId, item.TransactionId).Wait();
-              }
-              catch (HttpClientException exHttpException)
-              {
-                switch (exHttpException.StatusCode)
-                {
-                  case System.Net.HttpStatusCode.OK:
-                  case System.Net.HttpStatusCode.NotFound:
-                    if (exHttpException.StatusCode == System.Net.HttpStatusCode.NotFound)
-                      //log error and continue; assume release succeeded
-                      _logger.LogError(exHttpException, "Failed 'Release' reservation for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'." +
-                          " Reservation not found, assuming it has been expired by ZLTO.",
-                          user.Id, item.ItemCategoryId.SanitizeLogValue(), item.ItemId.SanitizeLogValue(), item.TransactionId.SanitizeLogValue());
-
-                    //release succeeded; attempt to commit 'Released' log
-                    item.Status = TransactionStatus.Released;
-                    item.StatusId = statusReleasedId;
-
-                    try
-                    {
-                      _transactionLogRepository.Create(item).Wait();
-                    }
-                    catch (Exception exLog)
-                    {
-                      //log error and continue
-                      _logger.LogError(exLog, "Failed to log 'Released' event for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
-                          user.Id, item.ItemCategoryId.SanitizeLogValue(), item.ItemId.SanitizeLogValue(), item.TransactionId.SanitizeLogValue());
-                    }
-                    break;
-
-                  default:
-                    //log error and continue
-                    _logger.LogError(exHttpException, "Failed to 'Release' reservation for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' with reservation transaction id '{transactionId}'",
-                      user.Id, item.ItemCategoryId.SanitizeLogValue(), item.ItemId.SanitizeLogValue(), item.TransactionId.SanitizeLogValue());
-                    break;
-                }
-              }
-
-              throw; //buy not successful
-
-            default:
-              throw; //fall through; buy not successful
-          }
-        }
+        BuyItemTransactionSold(transaction, user, walletBalance.WalletId);
       }
+    }
+
+    /// <summary>
+    /// Reserve item and log transaction; with failure attempt to reset / release reservation
+    /// </summary>
+    private TransactionLog BuyItemTransactionReserve(User user, string walletId, string itemCategoryId, StoreItem storeItem)
+    {
+      var result = new TransactionLog
+      {
+        UserId = user.Id,
+        ItemCategoryId = itemCategoryId,
+        ItemId = storeItem.Id,
+        Amount = storeItem.Amount
+      };
+
+      var reserved = false;
+      try
+      {
+        result.TransactionId = _marketplaceProviderClient.ItemReserve(walletId, user.Email, storeItem.Id).Result;
+        reserved = true;
+
+        result.Status = TransactionStatus.Reserved;
+        result.StatusId = _transactionStatusService.GetByName(TransactionStatus.Reserved.ToString()).Id;
+        result = _transactionLogRepository.Create(result).Result;
+
+        return result;
+      }
+      catch (Exception ex)
+      {
+        if (reserved) BuyItemTransactionReserveReset(result);
+        BuyItemLogException(ex, result, reserved ? "Reservation succeeded but failed to log transaction" : "Reservation failed");
+        throw;
+      }
+    }
+
+    /// <summary>
+    /// Mark item as sold and log trasnaction; with failure attempt to reset / release reservation provided not sold
+    /// </summary>
+    private void BuyItemTransactionSold(TransactionLog transaction, User user, string walletId)
+    {
+      var sold = false;
+      try
+      {
+        _executionStrategyService.ExecuteInExecutionStrategy(() =>
+        {
+          using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+          transaction.Status = TransactionStatus.Sold;
+          transaction.StatusId = _transactionStatusService.GetByName(TransactionStatus.Sold.ToString()).Id;
+          transaction = _transactionLogRepository.Create(transaction).Result;
+
+          _marketplaceProviderClient.ItemSold(walletId, user.Email, transaction.ItemId, transaction.TransactionId).Wait();
+          sold = true;
+
+          scope.Complete();
+        });
+      }
+      catch (Exception ex)
+      {
+        if (!sold) BuyItemTransactionReserveReset(transaction);
+        BuyItemLogException(ex, transaction, sold ? "Item marked as sold, but failed to log transaction" : "Failed to mark item as sold");
+        throw;
+      }
+    }
+
+    /// <summary>
+    /// Attempt to reset / release reservation and log transaction; reservation logged and re-used with next attempt; no exception thrown upon failure
+    /// </summary>
+    /// <param name="transaction"></param>
+    private void BuyItemTransactionReserveReset(TransactionLog transaction)
+    {
+      var reserveReset = false;
+      try
+      {
+        _executionStrategyService.ExecuteInExecutionStrategy(() =>
+        {
+          using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+          transaction.Status = TransactionStatus.Released;
+          transaction.StatusId = _transactionStatusService.GetByName(TransactionStatus.Released.ToString()).Id;
+          _transactionLogRepository.Create(transaction).Wait();
+
+          _marketplaceProviderClient.ItemReserveReset(transaction.ItemId, transaction.TransactionId).Wait();
+          reserveReset = true;
+
+          scope.Complete();
+        });
+      }
+      catch (Exception ex)
+      {
+        BuyItemLogException(ex, transaction, reserveReset ? "Reservation reset succeeded but failed to log transaction" : "Reservation reset failed");
+      }
+    }
+
+    private void BuyItemLogException(Exception ex, TransactionLog transaction, string messageSuffix)
+    {
+      _logger.LogError(ex, "Failed to execute '{status}' action for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' (transaction id '{transactionId}'): {messageSuffix}",
+        TransactionStatus.Released, transaction.Id, transaction.ItemCategoryId.SanitizeLogValue(), transaction.ItemId.SanitizeLogValue(),
+        string.IsNullOrEmpty(transaction.TransactionId) ? "n/a" : transaction.TransactionId.SanitizeLogValue(),
+        messageSuffix.SanitizeLogValue());
     }
     #endregion
   }

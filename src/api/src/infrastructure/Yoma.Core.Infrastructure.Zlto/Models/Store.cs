@@ -1,7 +1,5 @@
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
-using Yoma.Core.Domain.Core.Converters;
-using static Yoma.Core.Infrastructure.Zlto.Models.Common;
 
 namespace Yoma.Core.Infrastructure.Zlto.Models
 {
@@ -199,12 +197,23 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
 
   public class ReserveItemResponse
   {
-    [JsonProperty("bank_response")]
-    [JsonConverter(typeof(IgnoreEmptyJsonObjectConverter<BankResponse>))]
-    public BankResponse? BankResponse { get; set; }
+    [JsonProperty("wallet_id")]
+    public string WalletId { get; set; }
+
+    [JsonProperty("original_wallet_balance")]
+    public int WalletBalanceBefore { get; set; }
+
+    [JsonProperty("new_wallet_balance")]
+    public int WalletBalanceAfter { get; set; }
+
+    [JsonProperty("bank_transaction_id")]
+    public int BankTransactionId { get; set; }
 
     [JsonProperty("message")]
     public string Message { get; set; }
+
+    [JsonProperty("return_state")]
+    public int ReturnState { get; set; }
   }
 
   public enum StoreItemState
