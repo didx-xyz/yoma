@@ -24,6 +24,7 @@ import "~/styles/globals.scss";
 import "~/styles/FileUpload.css";
 import { THEME_PURPLE } from "~/lib/constants";
 import { GoogleAnalytics } from "~/components/GoogleAnalytics";
+import "~/styles/embla.css";
 
 // configure font for tailwindcss
 // see https://nextjs.org/docs/pages/building-your-application/optimizing/fonts

@@ -54,7 +54,7 @@ import { Loading } from "~/components/Status/Loading";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { useSession } from "next-auth/react";
 import { OpportunityFilterOptions } from "~/api/models/opportunity";
-import { OpportunitiesCarousel } from "~/components/Opportunity/OpportunitiesCarousel";
+import OpportunitiesCarousel2 from "~/components/Opportunity/OpportunitiesCarousel2";
 
 // 👇 SSG
 // This page is statically generated at build time on server-side
@@ -855,49 +855,77 @@ const Opportunities: NextPageWithLayout<{
 
         {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
         {!isSearchPerformed && (
-          <div className="-mt-4 flex flex-col gap-6 px-2 pb-4 md:p-0 md:pb-0">
+          <div className="-mt-4 gap-6 px-2 pb-4 md:p-0 md:pb-0">
             {/* TRENDING */}
             {(opportunities_trending?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel
-                id="opportunities_trending"
+              <OpportunitiesCarousel2
+                id={`opportunities_trending`}
                 title="Trending 🔥"
                 data={opportunities_trending}
-                viewAllUrl="/opportunities?mostViewed=true"
                 loadData={loadDataTrending}
+                viewAllUrl="/opportunities?mostViewed=true"
               />
+              // <OpportunitiesCarousel
+              //   id="opportunities_trending"
+              //   title="Trending 🔥"
+              //   data={opportunities_trending}
+              //   viewAllUrl="/opportunities?mostViewed=true"
+              //   loadData={loadDataTrending}
+              // />
             )}
 
             {/* LEARNING COURSES */}
             {(opportunities_learning?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel
-                id="opportunities_learning"
+              <OpportunitiesCarousel2
+                id={`opportunities_learning`}
                 title="Learning Courses 📚"
                 data={opportunities_learning}
-                viewAllUrl="/opportunities?types=Learning"
                 loadData={loadDataLearning}
+                viewAllUrl="/opportunities?types=Learning"
               />
+              // <OpportunitiesCarousel
+              //   id="opportunities_learning"
+              //   title="Learning Courses 📚"
+              //   data={opportunities_learning}
+              //   viewAllUrl="/opportunities?types=Learning"
+              //   loadData={loadDataLearning}
+              // />
             )}
 
             {/* IMPACT TASKS */}
             {(opportunities_tasks?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel
-                id="opportunities_tasks"
+              <OpportunitiesCarousel2
+                id={`opportunities_tasks`}
                 title="Impact Tasks ⚡"
                 data={opportunities_tasks}
-                viewAllUrl="/opportunities?types=Task"
                 loadData={loadDataTasks}
+                viewAllUrl="/opportunities?types=Task"
               />
+              // <OpportunitiesCarousel
+              //   id="opportunities_tasks"
+              //   title="Impact Tasks ⚡"
+              //   data={opportunities_tasks}
+              //   viewAllUrl="/opportunities?types=Task"
+              //   loadData={loadDataTasks}
+              // />
             )}
 
             {/* ALL OPPORTUNITIES */}
             {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel
-                id="opportunities_allOpportunities"
+              <OpportunitiesCarousel2
+                id={`opportunities_allOpportunities`}
                 title="All Opportunities"
                 data={opportunities_allOpportunities}
-                viewAllUrl="/opportunities?page=1"
                 loadData={loadDataOpportunities}
+                viewAllUrl="/opportunities?page=1"
               />
+              // <OpportunitiesCarousel
+              //   id="opportunities_allOpportunities"
+              //   title="All Opportunities"
+              //   data={opportunities_allOpportunities}
+              //   viewAllUrl="/opportunities?page=1"
+              //   loadData={loadDataOpportunities}
+              // />
             )}
           </div>
         )}

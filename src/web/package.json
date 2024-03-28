@@ -21,6 +21,7 @@
     "@types/file-saver": "^2.0.7",
     "axios": "^1.6.2",
     "daisyui": "^4.4.11",
+    "embla-carousel-react": "^8.0.0",
     "file-saver": "^2.0.5",
     "jotai": "^2.6.0",
     "moment": "^2.29.4",

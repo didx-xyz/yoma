@@ -48,6 +48,9 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { env } from "process";
 import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
+import EmblaCarousel from "~/components/Marketplace/StoreItemsCarousel2";
+import { EmblaOptionsType } from "embla-carousel";
+import StoreItemsCarousel2 from "~/components/Marketplace/StoreItemsCarousel2";
 
 interface IParams extends ParsedUrlQuery {
   country: string;
@@ -748,7 +751,17 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
               <div
                 key={`category_${category_storeItems.category.id}_${index}_${index2}`}
               >
-                <StoreItemsCarousel
+                <StoreItemsCarousel2
+                  id={`storeItem_${category_storeItems.category.id}_${index}_${index2}`}
+                  title={storeItem.store?.name}
+                  data={storeItem.items}
+                  loadData={(startRow) =>
+                    loadData(startRow, storeItem.store.id)
+                  }
+                  onClick={onBuyClick}
+                />
+
+                {/* <StoreItemsCarousel
                   id={`storeItem_${category_storeItems.category.id}_${index}_${index2}`}
                   title={storeItem.store?.name}
                   data={storeItem.items}
@@ -757,7 +770,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                     loadData(startRow, storeItem.store.id)
                   }
                   onClick={onBuyClick}
-                />
+                /> */}
               </div>
             ))}
           </div>
