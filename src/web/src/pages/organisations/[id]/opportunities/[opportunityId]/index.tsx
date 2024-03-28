@@ -930,7 +930,7 @@ const OpportunityDetails: NextPageWithLayout<{
         onRequestClose={() => {
           setOppExpiredModalVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[380px] md:w-[450px] md:rounded-3xl`}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[450px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
@@ -968,6 +968,10 @@ const OpportunityDetails: NextPageWithLayout<{
             <p className="w-80 text-center text-base">
               Once you’re happy with the opportunity changes, you can set it to
               active.
+            </p>
+            <p className="w-80 text-center text-base">
+              Please make sure to set the end date in the future, else it will
+              set your opportunity to expired again.
             </p>
 
             <div className="mt-4 flex flex-grow gap-4">

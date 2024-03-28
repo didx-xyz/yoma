@@ -199,12 +199,35 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3 # https://github.com/actions/runner/pull/2477
+        id: filter
+        with:
+          base: master
+          filters: |-
+            api:
+              - './src/api/**'
+            web:
+              - './src/web/**'
+            keycloak:
+              - './src/keycloak/**'
       - uses: docker/login-action@v3
+        if: (
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
+          )
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ github.token }}
       - name: Create env file
+        if: (
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
+          )
         run: |
           echo "AWSS3__Buckets__Public__AccessKey=${{ secrets.PUBLIC_S3_ACCESS_KEY }}" >> src/api/env.secrets
           echo "AWSS3__Buckets__Public__SecretKey=${{ secrets.PUBLIC_S3_SECRET_KEY }}" >> src/api/env.secrets
@@ -223,17 +246,14 @@ jobs:
           echo "Zlto__Password=${{ secrets.ZLTO_PASSWORD }}" >> src/api/env.secrets
           echo "AppSettings__SSIIssuerNameYomaOrganization=${{ secrets.APPSETTINGS_SSIISSUERNAMEYOMAORGANIZATION }}" >> src/api/env.secrets
           echo "AppSettings__SSISchemaFullNameYoID=${{ secrets.APPSETTINGS_SSISCHEMAFULLNAMEYOID }}" >> src/api/env.secrets
-      - uses: dorny/paths-filter@v3 # https://github.com/actions/runner/pull/2477
-        id: filter
-        with:
-          base: master
-          filters: |-
-            api:
-              - './src/api/**'
-            web:
-              - './src/web/**'
 
       - name: Pre-pull images
+        if: (
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
+          )
         run: |-
           docker compose -f ./src/api/docker-compose.yml pull
           docker compose -f ./src/web/docker-compose.yml pull
@@ -242,6 +262,12 @@ jobs:
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
         continue-on-error: true
       - name: Start services
+        if: (
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
+          )
         run: |-
           docker compose -f ./src/api/docker-compose.yml up -d
           docker compose -f ./src/web/docker-compose.yml up -d
@@ -250,10 +276,22 @@ jobs:
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
 
       - uses: actions/setup-node@v4
+        if: (
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
+          )
         with:
           node-version: 18
           cache: yarn
       - uses: cypress-io/github-action@v6
+        if: (
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
+          )
       - name: Upload Cypress Screenshots
         uses: actions/upload-artifact@v4
         if: always()
@@ -270,16 +308,36 @@ jobs:
           if-no-files-found: ignore
 
       - name: Keycloak Config logs
-        if: always()
+        if: always() && (
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
+          )
         run: docker logs keycloak-config
       - name: Keycloak logs
-        if: always()
+        if: always() && (
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
+          )
         run: docker logs keycloak
       - name: Yoma API logs
-        if: always()
+        if: always() && (
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
+          )
         run: docker logs yoma-api
       - name: Yoma Web logs
-        if: always()
+        if: always() && (
+          steps.filter.outputs.api == 'true' ||
+          steps.filter.outputs.web == 'true' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
+          )
         run: docker logs yoma-web
 
       - run: docker compose down -v
@@ -294,8 +352,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TAILSCALE_VERSION: 1.62.0
-      HELMFILE_VERSION: v0.162.0
+      TAILSCALE_VERSION: 1.62.1
+      HELMFILE_VERSION: v0.163.1
       HELM_VERSION: v3.14.3
       TAG: ${{ needs.build.outputs.image_version }}
 

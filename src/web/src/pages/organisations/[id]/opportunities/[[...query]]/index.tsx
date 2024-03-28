@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import { useCallback, type ReactElement } from "react";
 import { getOpportunitiesAdmin } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
-import { type User, authOptions } from "~/server/auth";
+import { authOptions } from "~/server/auth";
 import {
   Status,
   type OpportunitySearchResults,
@@ -18,7 +18,7 @@ import { PageBackground } from "~/components/PageBackground";
 import { IoIosAdd, IoMdPerson, IoIosLink } from "react-icons/io";
 import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { PAGE_SIZE, ROLE_ADMIN } from "~/lib/constants";
+import { PAGE_SIZE } from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
@@ -68,7 +68,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         pageSize: PAGE_SIZE,
         startDate: null,
         endDate: null,
-        // admins can see deleted opportunities, org admins can see Active, Expired & Inactive
         statuses:
           status === "active"
             ? [Status.Active]
@@ -76,12 +75,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
               ? [Status.Inactive]
               : status === "expired"
                 ? [Status.Expired]
-                : status === "deleted" &&
-                    session?.user?.roles.some((x) => x === ROLE_ADMIN)
+                : status === "deleted"
                   ? [Status.Deleted]
-                  : session?.user?.roles.some((x) => x === ROLE_ADMIN)
-                    ? null
-                    : [Status.Active, Status.Expired, Status.Inactive],
+                  : [
+                      Status.Active,
+                      Status.Expired,
+                      Status.Inactive,
+                      Status.Deleted,
+                    ],
         types: null,
         categories: null,
         languages: null,
@@ -118,7 +119,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       page: page ?? null,
       status: status ?? null,
       theme: theme,
-      user: session?.user ?? null,
       error: errorCode,
     },
   };
@@ -129,10 +129,9 @@ const Opportunities: NextPageWithLayout<{
   query?: string;
   page?: string;
   theme: string;
-  user?: User;
   error?: number;
   status?: string;
-}> = ({ user, id, query, page, status, error }) => {
+}> = ({ id, query, page, status, error }) => {
   const router = useRouter();
   const currentOrganisationInactive = useAtomValue(
     currentOrganisationInactiveAtom,
@@ -158,12 +157,13 @@ const Opportunities: NextPageWithLayout<{
               : status === "expired"
                 ? [Status.Expired]
                 : status === "deleted"
-                  ? user?.roles.some((x) => x === ROLE_ADMIN)
-                    ? [Status.Deleted]
-                    : null
-                  : user?.roles.some((x) => x === ROLE_ADMIN)
-                    ? null
-                    : [Status.Active, Status.Expired, Status.Inactive],
+                  ? [Status.Deleted]
+                  : [
+                      Status.Active,
+                      Status.Expired,
+                      Status.Inactive,
+                      Status.Deleted,
+                    ],
         types: null,
         categories: null,
         languages: null,
@@ -241,11 +241,11 @@ const Opportunities: NextPageWithLayout<{
                 role="tablist"
               >
                 <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
-                  <ul className="gap-auto overflow-x-hiddem -mb-px flex w-full justify-between md:justify-start md:gap-6">
-                    <li className="">
+                  <ul className="overflow-x-hiddem -mb-px flex w-full justify-center gap-0 md:justify-start">
+                    <li className="w-1/5 md:w-20">
                       <Link
                         href={`/organisations/${id}/opportunities`}
-                        className={`inline-block rounded-t-lg border-b-4 px-2 py-2 text-white duration-300 md:px-8 ${
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           !status
                             ? "active border-orange"
                             : "border-transparent hover:border-gray hover:text-gray"
@@ -255,10 +255,10 @@ const Opportunities: NextPageWithLayout<{
                         All
                       </Link>
                     </li>
-                    <li className="">
+                    <li className="w-1/5 md:w-20">
                       <Link
                         href={`/organisations/${id}/opportunities?status=active`}
-                        className={`inline-block rounded-t-lg border-b-4 px-2 py-2 text-white duration-300 md:px-8 ${
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "active"
                             ? "active border-orange"
                             : "border-transparent hover:border-gray hover:text-gray"
@@ -268,10 +268,10 @@ const Opportunities: NextPageWithLayout<{
                         Active
                       </Link>
                     </li>
-                    <li className="">
+                    <li className="w-1/5 md:w-20">
                       <Link
                         href={`/organisations/${id}/opportunities?status=inactive`}
-                        className={`inline-block rounded-t-lg border-b-4 px-2 py-2 text-white duration-300 md:px-8 ${
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "inactive"
                             ? "active border-orange"
                             : "border-transparent hover:border-gray hover:text-gray"
@@ -281,10 +281,10 @@ const Opportunities: NextPageWithLayout<{
                         Inactive
                       </Link>
                     </li>
-                    <li className="">
+                    <li className="w-1/5 md:w-20">
                       <Link
                         href={`/organisations/${id}/opportunities?status=expired`}
-                        className={`inline-block rounded-t-lg border-b-4 px-2 py-2 text-white duration-300 md:px-8 ${
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "expired"
                             ? "active border-orange"
                             : "border-transparent hover:border-gray hover:text-gray"
@@ -294,21 +294,19 @@ const Opportunities: NextPageWithLayout<{
                         Expired
                       </Link>
                     </li>
-                    {user?.roles.some((x) => x === ROLE_ADMIN) && (
-                      <li className="">
-                        <Link
-                          href={`/organisations/${id}/opportunities?status=deleted`}
-                          className={`inline-block rounded-t-lg border-b-4 px-4 py-2 text-white duration-300 md:px-8 ${
-                            status === "deleted"
-                              ? "active border-orange"
-                              : "border-transparent hover:border-gray hover:text-gray"
-                          }`}
-                          role="tab"
-                        >
-                          Deleted
-                        </Link>
-                      </li>
-                    )}
+                    <li className="w-1/5 md:w-20">
+                      <Link
+                        href={`/organisations/${id}/opportunities?status=deleted`}
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                          status === "deleted"
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        Deleted
+                      </Link>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -326,7 +324,7 @@ const Opportunities: NextPageWithLayout<{
             ) : (
               <Link
                 href={`/organisations/${id}/opportunities/create`}
-                className="bg-theme btn btn-circle btn-secondary btn-sm h-fit w-fit whitespace-nowrap p-1 text-xs text-white shadow-custom brightness-105 md:p-2 md:px-4"
+                className="bg-theme btn btn-circle btn-secondary btn-sm h-fit w-fit whitespace-nowrap !border-none p-1 text-xs text-white shadow-custom brightness-105 md:p-2 md:px-4"
                 id="btnCreateOpportunity" // e2e
               >
                 <IoIosAdd className="h-7 w-7 md:h-5 md:w-5" />
