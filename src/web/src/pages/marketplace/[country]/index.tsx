@@ -706,9 +706,12 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             (c) => c.value === (country?.toString() ?? COUNTRY_WW),
           )}
           placeholder="Country"
+          // fix menu z-index issue
+          menuPortalTarget={document.body}
+          styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
         />
       </div>
-      <div className=" flex flex-col gap-6 px-2 pb-4 md:p-0 md:pb-0">
+      <div className="flex flex-col gap-6 px-2 pb-4 md:p-0 md:pb-0">
         {data_storeItems.length == 0 && (
           <NoRowsMessage title="No items found" />
         )}
