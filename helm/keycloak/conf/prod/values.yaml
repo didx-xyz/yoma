@@ -87,14 +87,14 @@ config-cli:
     KEYCLOAK_URL: https://auth.yoma.world
     IMPORT_FILES_LOCATIONS: "/init/*.yaml"
     # KEYCLOAK_USER: xxx
-    # REALM_YOMA_ADMIN_CLI_SECRET: "xxx"
-    # SMTP_PASSWORD: "SG.xxx"
-    CLIENT_YOMA_API_URL: "https://api.yoma.world"
-    CLIENT_YOMA_WEB_URL: "https://app.yoma.world"
-    CLIENT_ATINGI_URL: https://sandbox.atingi.org # TODO
-    CLIENT_ATINGI_URL_REDIRECT: https://keycloak-uat.enovationaws.com/realms/master/broker/yoma-prod/endpoint # TODO
-    CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT: https://keycloak-uat.enovationaws.com/realms/master/broker/yoma-prod/endpoint # TODO
-    CLIENT_GOODWALL_URL: https://dev.goodlab.io # TODO
+    # REALM_YOMA_ADMIN_CLI_SECRET: xxx
+    # SMTP_PASSWORD: SG.xxx
+    CLIENT_YOMA_API_URL: https://api.yoma.world
+    CLIENT_YOMA_WEB_URL: https://app.yoma.world
+    CLIENT_ATINGI_URL: https://online.atingi.org
+    CLIENT_ATINGI_URL_REDIRECT: https://keycloak.atingi.org/realms/master/broker/yoma-prod/endpoint
+    CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT: https://keycloak.atingi.org/realms/master/broker/yoma-prod/endpoint
+    CLIENT_GOODWALL_URL: https://www.goodwall.io
     CLIENT_GOODWALL_URL_REDIRECT: goodwallauth://yomaredirect
 
   init:
