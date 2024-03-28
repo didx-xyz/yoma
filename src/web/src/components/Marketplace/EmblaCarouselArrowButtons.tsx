@@ -1,22 +1,22 @@
 import React, {
-  PropsWithChildren,
+  type PropsWithChildren,
   useCallback,
   useEffect,
   useState,
 } from "react";
-import { EmblaCarouselType } from "embla-carousel";
+import type { EmblaCarouselType } from "embla-carousel";
 
-type UsePrevNextButtonsType = {
+interface IUsePrevNextButtons {
   prevBtnDisabled: boolean;
   nextBtnDisabled: boolean;
   onPrevButtonClick: () => void;
   onNextButtonClick: () => void;
-};
+}
 
 export const usePrevNextButtons = (
   emblaApi: EmblaCarouselType | undefined,
   onButtonClick?: (emblaApi: EmblaCarouselType) => void,
-): UsePrevNextButtonsType => {
+): IUsePrevNextButtons => {
   const [prevBtnDisabled, setPrevBtnDisabled] = useState(true);
   const [nextBtnDisabled, setNextBtnDisabled] = useState(true);
 

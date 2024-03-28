@@ -28,7 +28,6 @@ import {
 import type { Country } from "~/api/models/lookups";
 import Select from "react-select";
 import { useRouter } from "next/router";
-import { StoreItemsCarousel } from "~/components/Marketplace/StoreItemsCarousel";
 import type { ParsedUrlQuery } from "querystring";
 import { AvatarImage } from "~/components/AvatarImage";
 import { IoMdClose, IoMdFingerPrint, IoMdWarning } from "react-icons/io";
@@ -48,8 +47,6 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { env } from "process";
 import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
-import EmblaCarousel from "~/components/Marketplace/StoreItemsCarousel2";
-import { EmblaOptionsType } from "embla-carousel";
 import StoreItemsCarousel2 from "~/components/Marketplace/StoreItemsCarousel2";
 
 interface IParams extends ParsedUrlQuery {

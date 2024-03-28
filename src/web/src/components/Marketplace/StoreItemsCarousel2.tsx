@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { EngineType } from "embla-carousel/components/Engine";
-import { EmblaCarouselType, EmblaOptionsType } from "embla-carousel";
+import type { EngineType } from "embla-carousel/components/Engine";
+import type { EmblaCarouselType, EmblaOptionsType } from "embla-carousel";
 import useEmblaCarousel from "embla-carousel-react";
 import {
   NextButton,
@@ -12,16 +12,6 @@ import { ItemCardComponent } from "./ItemCard";
 import Link from "next/link";
 import { PAGE_SIZE_MINIMUM } from "~/lib/constants";
 
-type PropType = {
-  [id: string]: any;
-  title?: string;
-  viewAllUrl?: string;
-  loadData: (startRow: number) => Promise<StoreItemCategorySearchResults>;
-  onClick: (item: any) => void;
-  data: StoreItemCategorySearchResults;
-  options?: EmblaOptionsType;
-};
-
 const OPTIONS: EmblaOptionsType = {
   dragFree: true,
   containScroll: "keepSnaps",
@@ -29,7 +19,15 @@ const OPTIONS: EmblaOptionsType = {
   watchResize: true,
 };
 
-const StoreItemsCarousel2: React.FC<PropType> = (props) => {
+const StoreItemsCarousel2: React.FC<{
+  [id: string]: any;
+  title?: string;
+  viewAllUrl?: string;
+  loadData: (startRow: number) => Promise<StoreItemCategorySearchResults>;
+  onClick: (item: any) => void;
+  data: StoreItemCategorySearchResults;
+  options?: EmblaOptionsType;
+}> = (props) => {
   const { id, title, viewAllUrl, loadData, onClick, data: propData } = props;
   const scrollListenerRef = useRef<() => void>(() => undefined);
   const listenForScrollRef = useRef(true);
@@ -88,44 +86,47 @@ const StoreItemsCarousel2: React.FC<PropType> = (props) => {
     onNextButtonClick,
   } = usePrevNextButtons(emblaApi);
 
-  const onScroll = useCallback((emblaApi: EmblaCarouselType) => {
-    if (!listenForScrollRef.current) return;
+  const onScroll = useCallback(
+    (emblaApi: EmblaCarouselType) => {
+      if (!listenForScrollRef.current) return;
 
-    setLoadingMore((loadingMore) => {
-      const lastSlide = emblaApi.slideNodes().length - 1;
-      const lastSlideInView = emblaApi.slidesInView().includes(lastSlide);
-      let loadMore = !loadingMore && lastSlideInView;
+      setLoadingMore((loadingMore) => {
+        const lastSlide = emblaApi.slideNodes().length - 1;
+        const lastSlideInView = emblaApi.slidesInView().includes(lastSlide);
+        let loadMore = !loadingMore && lastSlideInView;
 
-      // console.warn(
-      //   `onScroll... lastSlide: ${lastSlide} lastSlideInView: ${lastSlideInView} loadMore: ${loadMore}`,
-      // );
-      if (emblaApi.slideNodes().length < PAGE_SIZE_MINIMUM) {
-        loadMore = false;
-      }
+        // console.warn(
+        //   `onScroll... lastSlide: ${lastSlide} lastSlideInView: ${lastSlideInView} loadMore: ${loadMore}`,
+        // );
+        if (emblaApi.slideNodes().length < PAGE_SIZE_MINIMUM) {
+          loadMore = false;
+        }
 
-      if (loadMore) {
-        listenForScrollRef.current = false;
+        if (loadMore) {
+          listenForScrollRef.current = false;
 
-        console.warn(
-          `Loading more data... ${lastSlide} lastSlideInView: ${lastSlideInView} nextStartRow: ${
-            emblaApi.slideNodes().length + 1
-          }`,
-        );
+          console.warn(
+            `Loading more data... ${lastSlide} lastSlideInView: ${lastSlideInView} nextStartRow: ${
+              emblaApi.slideNodes().length + 1
+            }`,
+          );
 
-        loadData(emblaApi.slideNodes().length + 1).then((data) => {
-          // debugger;
-          if (data.items.length == 0) {
-            setHasMoreToLoad(false);
-            emblaApi.off("scroll", scrollListenerRef.current);
-          }
+          loadData(emblaApi.slideNodes().length + 1).then((data) => {
+            // debugger;
+            if (data.items.length == 0) {
+              setHasMoreToLoad(false);
+              emblaApi.off("scroll", scrollListenerRef.current);
+            }
 
-          setSlides((prevSlides) => [...prevSlides, ...data.items]);
-        });
-      }
+            setSlides((prevSlides) => [...prevSlides, ...data.items]);
+          });
+        }
 
-      return loadingMore || lastSlideInView;
-    });
-  }, []);
+        return loadingMore || lastSlideInView;
+      });
+    },
+    [loadData],
+  );
 
   const addScrollListener = useCallback(
     (emblaApi: EmblaCarouselType) => {
