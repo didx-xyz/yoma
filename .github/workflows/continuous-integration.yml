@@ -77,14 +77,18 @@ jobs:
           filters: |-
             changes:
               - '${{ matrix.dir }}/**'
-            web:
-              - './src/web/**'
 
       - uses: actions/setup-node@v4
-        if: (steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
           node-version: 18
           cache: yarn
+          cache-dependency-path: ${{ matrix.dir }}/yarn.lock
+      - uses: actions/cache@v4
+        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+        with:
+          path: ${{ matrix.dir }}/node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
       - run: yarn install --frozen-lockfile
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         working-directory: ${{ matrix.dir }}
