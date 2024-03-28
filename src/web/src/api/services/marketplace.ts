@@ -65,8 +65,7 @@ export const searchStoreItemCategories = async (
   );
   return data;
 
-  // TODO: remove
-  // return hardcoded data based on the filter.pageNumber
+  // TODO: hardcoded data based on the filter.pageNumber
   // const { pageNumber } = filter;
   // const items = Array.from({ length: 4 }, (_, index) => {
   //   return {

@@ -7,10 +7,14 @@ import Link from "next/link";
 import { PAGE_SIZE_MINIMUM } from "~/lib/constants";
 import { OpportunityPublicSmallComponent } from "./OpportunityPublicSmall";
 import {
-  NextButton,
-  PrevButton,
+  SelectedSnapDisplay,
+  useSelectedSnapDisplay,
+} from "../Carousel/SelectedSnapDisplay";
+import {
   usePrevNextButtons,
-} from "../Marketplace/EmblaCarouselArrowButtons";
+  PrevButton,
+  NextButton,
+} from "../Carousel/ArrowButtons";
 
 const OPTIONS: EmblaOptionsType = {
   dragFree: true,
@@ -77,6 +81,7 @@ const OpportunitiesCarousel2: React.FC<{
       }
     },
   });
+  const { selectedSnap, snapCount } = useSelectedSnapDisplay(emblaApi);
 
   const {
     prevBtnDisabled,
@@ -151,8 +156,8 @@ const OpportunitiesCarousel2: React.FC<{
   }, [hasMoreToLoad]);
 
   return (
-    <>
-      <div className="mb-4 flex flex-col gap-6">
+    <div className="mb-4">
+      <div className="mb-2 flex flex-col gap-6">
         <div className="flex flex-row">
           <div className="flex flex-grow">
             <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-black md:max-w-[800px]">
@@ -200,8 +205,13 @@ const OpportunitiesCarousel2: React.FC<{
           </div>
         </div>
 
-        <div className="embla__controls">
-          <div className="mt-10 flex gap-2">
+        {snapCount > 1 && selectedSnap < snapCount && (
+          <div className="flex place-content-end gap-2">
+            <SelectedSnapDisplay
+              selectedSnap={selectedSnap}
+              snapCount={propData.totalCount ?? snapCount}
+            />
+
             <PrevButton
               onClick={onPrevButtonClick}
               disabled={prevBtnDisabled}
@@ -211,9 +221,9 @@ const OpportunitiesCarousel2: React.FC<{
               disabled={nextBtnDisabled}
             />
           </div>
-        </div>
+        )}
       </div>
-    </>
+    </div>
   );
 };
 

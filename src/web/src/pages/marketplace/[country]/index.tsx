@@ -1,6 +1,6 @@
 import type { GetStaticPaths, GetStaticProps } from "next";
 import { useQueryClient } from "@tanstack/react-query";
-import React, { useCallback, type ReactElement, useState } from "react";
+import React, { useCallback, type ReactElement, useState, useRef } from "react";
 import { type NextPageWithLayout } from "~/pages/_app";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import {
@@ -226,6 +226,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   const setUserProfile = useSetAtom(userProfileAtom);
   const setUserCountrySelection = useSetAtom(userCountrySelectionAtom);
   const modalContext = useConfirmationModalContext();
+  const myRef = useRef<HTMLDivElement>(null);
 
   const onFilterCountry = useCallback(
     (value: string) => {
@@ -692,6 +693,9 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         </div>
       </ReactModal>
 
+      {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
+      <div ref={myRef} />
+
       {/* FILTER: COUNTRY */}
       <div className="flex flex-row items-center justify-start gap-4">
         <div className="text-sm font-semibold text-gray-dark">Filter by:</div>
@@ -707,7 +711,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
           )}
           placeholder="Country"
           // fix menu z-index issue
-          menuPortalTarget={document.body}
+          menuPortalTarget={myRef.current}
           styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
         />
       </div>

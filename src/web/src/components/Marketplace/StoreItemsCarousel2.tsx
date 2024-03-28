@@ -2,15 +2,19 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { EngineType } from "embla-carousel/components/Engine";
 import type { EmblaCarouselType, EmblaOptionsType } from "embla-carousel";
 import useEmblaCarousel from "embla-carousel-react";
-import {
-  NextButton,
-  PrevButton,
-  usePrevNextButtons,
-} from "./EmblaCarouselArrowButtons";
 import type { StoreItemCategorySearchResults } from "~/api/models/marketplace";
 import { ItemCardComponent } from "./ItemCard";
 import Link from "next/link";
 import { PAGE_SIZE_MINIMUM } from "~/lib/constants";
+import {
+  usePrevNextButtons,
+  PrevButton,
+  NextButton,
+} from "../Carousel/ArrowButtons";
+import {
+  SelectedSnapDisplay,
+  useSelectedSnapDisplay,
+} from "../Carousel/SelectedSnapDisplay";
 
 const OPTIONS: EmblaOptionsType = {
   dragFree: true,
@@ -33,7 +37,9 @@ const StoreItemsCarousel2: React.FC<{
   const listenForScrollRef = useRef(true);
   const hasMoreToLoadRef = useRef(true);
   const [slides, setSlides] = useState(propData.items);
-  const [hasMoreToLoad, setHasMoreToLoad] = useState(true);
+  const [hasMoreToLoad, setHasMoreToLoad] = useState(
+    propData.items.length >= PAGE_SIZE_MINIMUM,
+  );
   const [loadingMore, setLoadingMore] = useState(false);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -78,6 +84,7 @@ const StoreItemsCarousel2: React.FC<{
       }
     },
   });
+  const { selectedSnap, snapCount } = useSelectedSnapDisplay(emblaApi);
 
   const {
     prevBtnDisabled,
@@ -100,6 +107,7 @@ const StoreItemsCarousel2: React.FC<{
         // );
         if (emblaApi.slideNodes().length < PAGE_SIZE_MINIMUM) {
           loadMore = false;
+          setHasMoreToLoad(false);
         }
 
         if (loadMore) {
@@ -112,7 +120,6 @@ const StoreItemsCarousel2: React.FC<{
           );
 
           loadData(emblaApi.slideNodes().length + 1).then((data) => {
-            // debugger;
             if (data.items.length == 0) {
               setHasMoreToLoad(false);
               emblaApi.off("scroll", scrollListenerRef.current);
@@ -176,13 +183,12 @@ const StoreItemsCarousel2: React.FC<{
       )} */}
       </div>
 
-      <div className="embla">
+      <div className="embla h-60x">
         <div className="embla__viewport" ref={emblaRef}>
           <div className="embla__container max-3">
             {slides?.map((item, index) => (
               <div className="embla__slide" key={index}>
                 <div className="embla__slide__number">
-                  {/* <span>{index + 1}</span> */}
                   <ItemCardComponent
                     key={`storeCategoryItem_${id}_${index}`}
                     id={`storeCategoryItem_${id}_${index}`}
@@ -209,18 +215,24 @@ const StoreItemsCarousel2: React.FC<{
           </div>
         </div>
 
-        <div className="embla__controls">
-          <div className="flex gap-2">
+        {snapCount > 1 && selectedSnap < snapCount && (
+          <div className="flex place-content-end gap-2">
+            <SelectedSnapDisplay
+              selectedSnap={selectedSnap}
+              snapCount={snapCount}
+            />
+
             <PrevButton
               onClick={onPrevButtonClick}
               disabled={prevBtnDisabled}
             />
+
             <NextButton
               onClick={onNextButtonClick}
               disabled={nextBtnDisabled}
             />
           </div>
-        </div>
+        )}
       </div>
     </>
   );

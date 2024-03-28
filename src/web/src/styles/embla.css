@@ -1,10 +1,15 @@
 .embla {
-  /* max-width: 48rem; */
   margin: auto;
-  --slide-height: 19rem;
+  /* --slide-height: 19rem; */
   --slide-spacing: 1rem;
   --slide-size: 100%;
 }
+/* height override on the carousel height (marketplace) */
+/* .embla.h-60{
+
+  --slide-height: 240px;
+} */
+
 .embla__viewport {
   overflow: hidden;
 }
@@ -13,6 +18,7 @@
   display: flex;
   touch-action: pan-y;
   margin-left: calc(var(--slide-spacing) * -1);
+  padding: 10px;
 }
 /* .embla__slide {
   flex: 0 0 var(--slide-size);
@@ -42,7 +48,6 @@
 @media (min-width: 1200px) {
   .embla__container.max-3 .embla__slide {
     flex: 0 0 33.33%; /* LG: slide covers 33.33% of the viewport */
-    padding: 0px;
   }
 }
 
@@ -56,22 +61,19 @@
 @media (min-width: 768px) {
   .embla__container.max-4 .embla__slide {
     flex: 0 0 50%; /* MD: slide covers 50% of the viewport */
-    padding: 0px;
   }
 }
 
 @media (min-width: 992px) {
   .embla__container.max-4 .embla__slide {
     flex: 0 0 33.33%; /* LG: slide covers 33.33% of the viewport */
-    padding: 0px;
   }
 }
 
 @media (min-width: 1200px) {
   .embla__container.max-4 .embla__slide {
     flex: 0 0 25%; /* XL: slide covers 25% of the viewport */
-    padding-left: 20px;
-    padding-right: 20px;
+    padding: 0px;
   }
 }
 
@@ -92,13 +94,13 @@
   gap: 1.2rem;
   margin-top: 1.8rem;
 } */
-.embla__controls {
+/* .embla__controls {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 1.2rem;
   margin-top: 1.8rem;
-}
+} */
 .embla__buttons {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -106,8 +108,7 @@
   align-items: center;
 }
 
-.embla__button {
-  transform: translateY(-50%);
+/* .embla__button {
   z-index: 1;
   border-radius: 50%;
   border: 0;
@@ -129,26 +130,27 @@
   color: #fff;
   align-items: center;
   justify-content: center;
-}
-.embla__button:hover {
+} */
+/* .embla__button:hover {
+   transform: translateY(-50%);
   filter: brightness(110%);
-}
+} */
 
-.embla__button:disabled {
+/* .embla__button:disabled {
   color: var(--detail-high-contrast);
   background-color: gray;
   cursor: not-allowed;
-}
-.embla__button__svg {
+} */
+/* .embla__button__svg {
   width: 35%;
   height: 35%;
-}
-.embla__selected-snap-display {
+} */
+/* .embla__selected-snap-display {
   justify-self: flex-end;
   align-self: center;
   color: var(--text-low-contrast);
   font-weight: 600;
-}
+} */
 .embla-infinite-scroll {
   position: relative;
   flex: 0 0 15rem;
