@@ -22,6 +22,16 @@ environments:
         ddProfilingEnabled: false
         gitref: master
         postgresEnabled: false
+  prod:
+    values:
+      - namespace: yoma-v3-prod
+        arch: amd64
+        lifecycle: on-demand
+        tag: {{ env "TAG" | default "master" }}
+        ddInjectEnabled: true
+        ddProfilingEnabled: false
+        gitref: master
+        postgresEnabled: false
 ---
 repositories:
 {{ if eq .Environment.Name "local" }}
