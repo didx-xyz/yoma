@@ -214,12 +214,15 @@ jobs:
               - './src/web/**'
             keycloak:
               - './src/keycloak/**'
+            cypress:
+              - './cypress/**'
       - name: Should e2e run?
         id: should-run
         run: |-
           if [ "${{ steps.filter.outputs.api }}" = "true" ] || \
               [ "${{ steps.filter.outputs.web }}" = "true" ] || \
               [ "${{ steps.filter.outputs.keycloak }}" = "true" ] || \
+              [ "${{ steps.filter.outputs.cypress }}" = "true" ] || \
               [ "${{ github.event_name == 'workflow_dispatch' }}" = "true" ]; then
              echo run=true >> $GITHUB_OUTPUT
           else
