@@ -132,10 +132,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       }),
     ]);
 
-    // 👇 perform viewed action
-    if (dataOpportunityInfo.published)
+    // 👇 perform viewed action (authenticated users only)
+    if (session && dataOpportunityInfo.published)
       await performActionViewed(opportunityId, context);
   } catch (error) {
+    console.error("Error fetching data in getServerSideProps", error);
     if (axios.isAxiosError(error) && error.response?.status) {
       if (error.response.status === 404) {
         return {
