@@ -210,24 +210,25 @@ jobs:
               - './src/web/**'
             keycloak:
               - './src/keycloak/**'
+      - name: Should e2e run?
+        id: should-run
+        run: |-
+          if [ "${{ steps.filter.outputs.api }}" = "true" ] || \
+              [ "${{ steps.filter.outputs.web }}" = "true" ] || \
+              [ "${{ steps.filter.outputs.keycloak }}" = "true" ] || \
+              [ "${{ github.event_name == 'workflow_dispatch' }}" = "true" ]; then
+             echo run=true >> $GITHUB_OUTPUT
+          else
+            echo run=false >> $GITHUB_OUTPUT
+          fi
       - uses: docker/login-action@v3
-        if: (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: steps.should-run.outputs.run == 'true'
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ github.token }}
       - name: Create env file
-        if: (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: steps.should-run.outputs.run == 'true'
         run: |
           echo "AWSS3__Buckets__Public__AccessKey=${{ secrets.PUBLIC_S3_ACCESS_KEY }}" >> src/api/env.secrets
           echo "AWSS3__Buckets__Public__SecretKey=${{ secrets.PUBLIC_S3_SECRET_KEY }}" >> src/api/env.secrets
@@ -248,12 +249,7 @@ jobs:
           echo "AppSettings__SSISchemaFullNameYoID=${{ secrets.APPSETTINGS_SSISCHEMAFULLNAMEYOID }}" >> src/api/env.secrets
 
       - name: Pre-pull images
-        if: (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: steps.should-run.outputs.run == 'true'
         run: |-
           docker compose -f ./src/api/docker-compose.yml pull
           docker compose -f ./src/web/docker-compose.yml pull
@@ -262,12 +258,7 @@ jobs:
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
         continue-on-error: true
       - name: Start services
-        if: (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: steps.should-run.outputs.run == 'true'
         run: |-
           docker compose -f ./src/api/docker-compose.yml up -d
           docker compose -f ./src/web/docker-compose.yml up -d
@@ -276,22 +267,12 @@ jobs:
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
 
       - uses: actions/setup-node@v4
-        if: (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: steps.should-run.outputs.run == 'true'
         with:
           node-version: 18
           cache: yarn
       - uses: cypress-io/github-action@v6
-        if: (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: steps.should-run.outputs.run == 'true'
       - name: Upload Cypress Screenshots
         uses: actions/upload-artifact@v4
         if: always()
@@ -308,36 +289,16 @@ jobs:
           if-no-files-found: ignore
 
       - name: Keycloak Config logs
-        if: always() && (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: always() && steps.should-run.outputs.run == 'true'
         run: docker logs keycloak-config
       - name: Keycloak logs
-        if: always() && (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: always() && steps.should-run.outputs.run == 'true'
         run: docker logs keycloak
       - name: Yoma API logs
-        if: always() && (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: always() && steps.should-run.outputs.run == 'true'
         run: docker logs yoma-api
       - name: Yoma Web logs
-        if: always() && (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: always() && steps.should-run.outputs.run == 'true'
         run: docker logs yoma-web
 
       - run: docker compose down -v
@@ -386,46 +347,32 @@ jobs:
             keycloak:
               - './src/keycloak/**'
               - './helm/keycloak/**'
+      - name: Should deploy?
+        id: should-run
+        run: |-
+          if [ "${{ steps.filter.outputs.api }}" = "true" ] || \
+              [ "${{ steps.filter.outputs.web }}" = "true" ] || \
+              [ "${{ steps.filter.outputs.keycloak }}" = "true" ] || \
+              [ "${{ github.event_name == 'workflow_dispatch' }}" = "true" ]; then
+             echo run=true >> $GITHUB_OUTPUT
+          else
+            echo run=false >> $GITHUB_OUTPUT
+          fi
       - uses: unfor19/install-aws-cli-action@v1
-        if: (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: steps.should-run.outputs.run == 'true'
       - name: SOPS Binary Installer
-        if: (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: steps.should-run.outputs.run == 'true'
         uses: mdgreenwald/mozilla-sops-action@v1.6.0
       - uses: aws-actions/configure-aws-credentials@v4
-        if: (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: steps.should-run.outputs.run == 'true'
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: github-cicd
       - run: aws eks update-kubeconfig --name ${{ secrets.CLUSTER }}
-        if: (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: steps.should-run.outputs.run == 'true'
       - uses: tailscale/github-action@main
-        if: (
-          steps.filter.outputs.api == 'true' ||
-          steps.filter.outputs.web == 'true' ||
-          steps.filter.outputs.keycloak == 'true' ||
-          github.event_name == 'workflow_dispatch'
-          )
+        if: steps.should-run.outputs.run == 'true'
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           version: ${{ env.TAILSCALE_VERSION }}
