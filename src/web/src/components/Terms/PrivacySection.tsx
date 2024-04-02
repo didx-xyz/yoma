@@ -70,17 +70,12 @@ const PrivacySection = () => {
           computer or mobile device.
         </p>
         <p className="text-gray-dark">
-          <span className="font-semibold text-black">c) Mobile – </span>This is
-          the Yoma app that is downloaded from the Google Play Store or App
-          Store.
-        </p>
-        <p className="text-gray-dark">
-          <span className="font-semibold text-black">d) Desktop – </span>This
+          <span className="font-semibold text-black">c) Desktop – </span>This
           refers specifically to the website accessed only via computer or
           laptop.
         </p>
         <p className="text-gray-dark">
-          <span className="font-semibold text-black">e) Services – </span>The
+          <span className="font-semibold text-black">d) Services – </span>The
           services refer to the backend development and data handling procedures
           that have been built in order to offer the experience that users
           receive. The backend development and data handling define the scope of
@@ -94,7 +89,7 @@ const PrivacySection = () => {
           minimization.)
         </p>
         <p className="text-gray-dark">
-          <span className="font-semibold text-black">f) Partners – </span>We
+          <span className="font-semibold text-black">e) Partners – </span>We
           have a number of different partners that provide value to youth on the
           platform. Below are the types of partners involved currently.
         </p>
@@ -712,15 +707,6 @@ const PrivacySection = () => {
           Please keep us informed if your personal data changes during your
           relationship with us. It is important that the personal data we hold
           about you is accurate and current.
-        </p>
-        <p className="mb-2 text-lg font-semibold text-black">
-          Queries, Requests or Concerns
-        </p>
-        <p className="mb-3 text-gray-dark">
-          To exercise all relevant rights, queries or complaints in relation to
-          this policy or any other data protection matter between you and us,
-          please in the first instance contact our data representative, Clayton
-          Bond, at admin@yoma.world.
         </p>
         <p className="mb-0 text-gray-dark">
           If this does not resolve your complaint to your satisfaction, you have

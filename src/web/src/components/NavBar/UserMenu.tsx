@@ -74,7 +74,7 @@ export const UserMenu: React.FC = () => {
           />
 
           <div className="ml-2 flex flex-col gap-1">
-            <div className="w-[230px] overflow-hidden text-ellipsis whitespace-nowrap text-black md:max-w-[230px]">
+            <div className="w-[180px] overflow-hidden text-ellipsis whitespace-nowrap text-black md:max-w-[230px]">
               {organisation.name}
             </div>
             <div className="flex flex-row items-center">

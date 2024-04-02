@@ -52,8 +52,8 @@ export const FileUpload: React.FC<InputProps> = ({
       key={`OpportunityFileUpload_${id}`}
       className="flex w-full flex-col rounded-lg border-dotted bg-gray-light"
     >
-      <div className="flex w-full flex-row">
-        <div className="flex items-center p-8">
+      <div className="flex w-full flex-col md:flex-row">
+        <div className="hidden items-center p-8 md:flex">
           <Image
             src={icon ?? iconCertificate}
             alt="Icon Certificate"
@@ -64,13 +64,13 @@ export const FileUpload: React.FC<InputProps> = ({
             style={{ width: "28px", height: "28px" }}
           />
         </div>
-        <div className="flex flex-grow flex-col items-start justify-center">
+        <div className="flex flex-grow flex-col items-start justify-center p-4 pb-0 md:p-0">
           <div>{label}</div>
           <div className="text-sm text-gray-dark">{fileTypesLabels}</div>
         </div>
-        <div className="flex items-center justify-center p-4">
+        <div className="flex justify-end p-4 md:items-center md:justify-center">
           <button
-            className="btn btn-sm mr-2 rounded-md border-green bg-transparent normal-case text-green hover:border-green"
+            className="btn btn-circle btn-sm -mt-[54px] scale-[1.15] border-green bg-transparent normal-case text-green hover:border-green md:mr-2 md:mt-0 md:w-[95px] md:scale-100"
             onClick={fileUpload}
           >
             <Image
@@ -82,7 +82,7 @@ export const FileUpload: React.FC<InputProps> = ({
               priority={true}
               style={{ width: "14px", height: "14px" }}
             />
-            Upload
+            <span className="hidden md:inline">Upload</span>
           </button>
           <input
             hidden
@@ -95,19 +95,19 @@ export const FileUpload: React.FC<InputProps> = ({
       </div>
       {/* render each file with remove button */}
       {data && data.length > 0 && (
-        <div className="flex w-full flex-col p-4 pt-0">
+        <div className="flex w-full flex-col p-2 pt-0 md:p-6">
           {data.map((file, index) => (
             <div
               key={`OpportunityFileUpload_${id}_${index}`}
               className="flex flex-row"
             >
-              <div className="flex flex-grow flex-col items-start justify-center">
+              <div className="flex flex-grow flex-col items-start justify-center pl-2 md:pl-0">
                 <div>{file.name}</div>
                 <div className="text-sm text-gray-dark">{file.size}</div>
               </div>
-              <div className="flex w-[100px] items-center justify-center">
+              <div className="flex w-[100px] items-center justify-end">
                 <button
-                  className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+                  className="btn scale-75 rounded-full border-green-dark bg-green-dark p-3 text-white md:scale-100"
                   onClick={() => {
                     const newData = data.filter((_, i) => i !== index);
                     setFiles(newData);

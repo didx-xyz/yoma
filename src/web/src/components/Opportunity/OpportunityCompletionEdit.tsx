@@ -261,21 +261,21 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 />
               </div>
             </div>
-            <div className="flex flex-grow flex-col gap-4 overflow-y-auto px-10 md:max-h-[480px] md:min-h-[350px]">
-              <div className="mb-8 flex flex-col items-center gap-1">
+            <div className="flex flex-grow flex-col gap-4 overflow-y-auto px-4 md:max-h-[480px] md:min-h-[350px] md:px-10">
+              <div className="mb-8 flex flex-col items-center gap-1 text-center">
                 <h4 className="font-semibold tracking-wide">
                   Well done for completing this opportunity!
                 </h4>
                 <div className="tracking-wide text-gray-dark">
                   Upload the required documents below, and once
-                  <br />
+                  <br className="hidden md:inline" />
                   approved, we&apos;ll add the accreditation to your CV!
                 </div>
               </div>
 
               <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
                 <div className="flex w-full flex-row">
-                  <div className="ml-2 flex items-center p-2 md:p-6">
+                  <div className="ml-2 hidden items-center p-2 md:flex md:p-6">
                     <Image
                       src={iconClock}
                       alt="Icon Clock"
@@ -286,8 +286,10 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       style={{ width: "32px", height: "32px" }}
                     />
                   </div>
-                  <div className="flex flex-grow flex-col items-start justify-center">
-                    <div>When did you complete this opportunity?</div>
+                  <div className="flex flex-grow flex-col items-center justify-center py-2 md:items-start">
+                    <div className="pl-4 md:pl-0">
+                      When did you complete this opportunity?
+                    </div>
                     <div className="text-sm text-gray-dark">
                       Select a start date (end date is optional)
                     </div>
@@ -491,17 +493,17 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 )}
               </div>
 
-              <div className="mt-4 flex flex-grow gap-4">
+              <div className="mb-6 mt-4 flex flex-grow gap-4">
                 <button
                   type="button"
-                  className="btn btn-outline btn-primary w-1/2 rounded-full border-purple bg-white normal-case text-purple"
+                  className="btn btn-outline btn-primary w-1/2 flex-shrink rounded-full border-purple bg-white normal-case text-purple"
                   onClick={onClose}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary w-1/2 rounded-full bg-purple normal-case text-white md:w-[250px]"
+                  className="btn btn-primary w-1/2 flex-shrink rounded-full bg-purple normal-case text-white md:w-[250px]"
                 >
                   Submit
                 </button>

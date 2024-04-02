@@ -17,7 +17,7 @@ export const ZltoModal = ({
         isOpen={isOpen}
         shouldCloseOnOverlayClick={false}
         onRequestClose={onClose}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:max-w-[600px] md:rounded-3xl`}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[700px] md:max-w-[600px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
@@ -45,12 +45,33 @@ export const ZltoModal = ({
               />
             </div>
             <h3>What is Zlto?</h3>
-            <p className="rounded-lg bg-gray-light p-4 text-center md:w-[450px]">
+            <p className="rounded-lg bg-gray-light p-2 text-center md:w-[450px] md:p-4">
               Introducing Zlto, Yoma&apos;s fantastic reward system. Earn Zlto
               by completing tasks and opportunities. Redeem your well-deserved
               rewards in the marketplace and enjoy the amazing benefits that
               await you!
             </p>
+
+            <h3 className="mt-4">How does Zlto balances work?</h3>
+            <ul className="flex list-disc flex-col gap-4 rounded-lg bg-gray-light p-2 text-left md:w-[450px] md:p-4">
+              <li className="ml-6 font-semibold">
+                Pending:
+                <p className="font-normal">
+                  ZLTO is busy transferring to your account. Please give the
+                  system 24 hours to process.
+                </p>
+              </li>
+              <li className="ml-6 font-semibold">
+                Available:
+                <p className="font-normal">
+                  ZLTO available to spend in the marketplace now.
+                </p>
+              </li>
+              <li className="ml-6 font-semibold">
+                Total:
+                <p className="font-normal">Available + Pending</p>
+              </li>
+            </ul>
 
             <div className="mt-4 flex w-full flex-grow justify-center gap-4">
               <button

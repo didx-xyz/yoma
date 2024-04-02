@@ -132,7 +132,7 @@ export const OpportunityFilterVertical: React.FC<{
                         {lookups_categories.map((item) => (
                           <div
                             key={`fs_searchfilter_categories_${item.id}`}
-                            className="flex h-[70px] flex-grow flex-row items-center justify-center gap-2 p-2"
+                            className="flex h-[70px] flex-grow flex-row items-center justify-center gap-4 p-2"
                           >
                             <label
                               className="flex cursor-pointer items-center justify-center"
@@ -141,7 +141,7 @@ export const OpportunityFilterVertical: React.FC<{
                               <AvatarImage
                                 icon={item.imageURL ?? null}
                                 alt="Organization Logo"
-                                size={60}
+                                size={40}
                               />
                             </label>
 
@@ -196,7 +196,7 @@ export const OpportunityFilterVertical: React.FC<{
                 <div className="collapse-title text-xl font-medium">
                   Opportunity type
                 </div>
-                <div className="collapse-content">
+                <div className="collapse-content overflow-hidden">
                   <Controller
                     name="types"
                     control={form.control}
@@ -204,7 +204,7 @@ export const OpportunityFilterVertical: React.FC<{
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
-                          control: () => "input input-bordered",
+                          control: () => "input input-bordered h-fit py-1",
                         }}
                         isMulti={true}
                         options={lookups_types.map((c) => ({
@@ -242,7 +242,7 @@ export const OpportunityFilterVertical: React.FC<{
                 <div className="collapse-title text-xl font-medium">
                   Location
                 </div>
-                <div className="collapse-content">
+                <div className="collapse-content overflow-hidden">
                   <Controller
                     name="countries"
                     control={form.control}
@@ -250,7 +250,7 @@ export const OpportunityFilterVertical: React.FC<{
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
-                          control: () => "input input-bordered",
+                          control: () => "input input-bordered h-fit py-1",
                         }}
                         isMulti={true}
                         options={lookups_countries.map((c) => ({
@@ -289,7 +289,7 @@ export const OpportunityFilterVertical: React.FC<{
                 <div className="collapse-title text-xl font-medium">
                   Language
                 </div>
-                <div className="collapse-content">
+                <div className="collapse-content overflow-hidden">
                   <Controller
                     name="languages"
                     control={form.control}
@@ -297,7 +297,7 @@ export const OpportunityFilterVertical: React.FC<{
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
-                          control: () => "input input-bordered",
+                          control: () => "input input-bordered h-fit py-1",
                         }}
                         isMulti={true}
                         options={lookups_languages.map((c) => ({
@@ -337,7 +337,7 @@ export const OpportunityFilterVertical: React.FC<{
                 <div className="collapse-title text-xl font-medium">
                   Organisation
                 </div>
-                <div className="collapse-content">
+                <div className="collapse-content overflow-hidden">
                   <Controller
                     name="organizations"
                     control={form.control}
@@ -345,7 +345,7 @@ export const OpportunityFilterVertical: React.FC<{
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
-                          control: () => "input input-bordered",
+                          control: () => "input input-bordered h-fit py-1",
                         }}
                         isMulti={true}
                         options={lookups_organisations.map((c) => ({
@@ -383,7 +383,7 @@ export const OpportunityFilterVertical: React.FC<{
               <div className="collapse join-item collapse-arrow">
                 <input type="checkbox" name="my-accordion-6" />
                 <div className="collapse-title text-xl font-medium">Effort</div>
-                <div className="collapse-content">
+                <div className="collapse-content overflow-hidden">
                   <Controller
                     name="commitmentIntervals"
                     control={form.control}
@@ -391,7 +391,7 @@ export const OpportunityFilterVertical: React.FC<{
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
-                          control: () => "input input-bordered",
+                          control: () => "input input-bordered h-fit py-1",
                         }}
                         isMulti={true}
                         options={lookups_commitmentIntervals.map((c) => ({
@@ -429,7 +429,7 @@ export const OpportunityFilterVertical: React.FC<{
               <div className="collapse join-item collapse-arrow">
                 <input type="checkbox" name="my-accordion-7" />
                 <div className="collapse-title text-xl font-medium">Reward</div>
-                <div className="collapse-content">
+                <div className="collapse-content overflow-hidden">
                   <Controller
                     name="zltoRewardRanges"
                     control={form.control}
@@ -437,7 +437,7 @@ export const OpportunityFilterVertical: React.FC<{
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
-                          control: () => "input input-bordered",
+                          control: () => "input input-bordered h-fit py-1",
                         }}
                         isMulti={true}
                         options={lookups_zltoRewardRanges.map((c) => ({
@@ -475,7 +475,7 @@ export const OpportunityFilterVertical: React.FC<{
               <div className="collapse join-item collapse-arrow">
                 <input type="checkbox" name="my-accordion-7" />
                 <div className="collapse-title text-xl font-medium">Status</div>
-                <div className="collapse-content">
+                <div className="collapse-content overflow-hidden">
                   <Controller
                     name="publishedStates"
                     control={form.control}
@@ -483,7 +483,7 @@ export const OpportunityFilterVertical: React.FC<{
                       <Select
                         instanceId="publishedStates"
                         classNames={{
-                          control: () => "input",
+                          control: () => "input h-fit py-1",
                         }}
                         isMulti={true}
                         options={lookups_publishedStates}

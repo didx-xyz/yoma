@@ -797,8 +797,8 @@ const Opportunities: NextPageWithLayout<{
         />
       </ReactModal>
 
-      <div className="container z-10 mt-20 max-w-7xl px-2 py-1 md:py-4">
-        <div className="flex flex-col items-center justify-center gap-2 pt-8 text-white ">
+      <div className="container z-10 mt-12 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
+        <div className="mb-4 flex flex-col items-center justify-center gap-2 pt-12 text-white">
           <h3 className="w-[300px] flex-grow flex-wrap text-center text-xl font-semibold md:w-full">
             Find <span className="mx-2 text-orange">opportunities</span> to
             <span className="mx-2 text-orange">unlock</span> your future.
@@ -808,10 +808,10 @@ const Opportunities: NextPageWithLayout<{
             finish at your convenience.
           </h6>
           <div className="md:items-center md:justify-center">
-            <div className="flex flex-row items-center justify-center gap-2">
+            <div className="flex flex-row items-center justify-center gap-2 md:mt-4">
               <SearchInputLarge
                 onSearch={onSearchInputSubmit}
-                placeholder="What are you looking for?"
+                placeholder="Search..."
                 defaultValue={
                   query ? decodeURIComponent(query.toString()) : null
                 }

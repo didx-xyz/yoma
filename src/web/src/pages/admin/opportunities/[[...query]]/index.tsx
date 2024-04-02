@@ -16,7 +16,7 @@ import { OpportunityFilterOptions } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { SearchInput } from "~/components/SearchInput";
+import { SearchInputLarge } from "~/components/SearchInputLarge";
 import { PAGE_SIZE, PAGE_SIZE_MAXIMUM, THEME_BLUE } from "~/lib/constants";
 import { type NextPageWithLayout } from "~/pages/_app";
 import {
@@ -24,11 +24,15 @@ import {
   getOpportunitiesAdmin,
   getOpportunitiesAdminExportToCSV,
   getCategoriesAdmin,
-  getOpportunityTypes,
-  getZltoRewardRanges,
   getLanguagesAdmin,
   getOrganisationsAdmin,
   getCountriesAdmin,
+  getOpportunityCategories,
+  getOpportunityCountries,
+  getOpportunityLanguages,
+  getOpportunityOrganizations,
+  getOpportunityTypes,
+  getZltoRewardRanges,
 } from "~/api/services/opportunities";
 import type {
   OpportunityCategory,
@@ -49,19 +53,28 @@ import { screenWidthAtom } from "~/lib/store";
 import ReactModal from "react-modal";
 import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
 import iconBell from "public/images/icon-bell.webp";
-import { IoMdDownload } from "react-icons/io";
+import { IoMdDownload, IoMdPerson, IoIosLink } from "react-icons/io";
+import iconZlto from "public/images/icon-zlto.svg";
 
 // 👇 SSG
 // This function gets called at build time on server-side.
 // It may be called again, on a serverless function, if
 // revalidation is enabled and a new request comes in
 export const getStaticProps: GetStaticProps = async (context) => {
+  const lookups_categories = await getOpportunityCategories(context);
+  const lookups_countries = await getOpportunityCountries(context);
+  const lookups_languages = await getOpportunityLanguages(context);
+  const lookups_organisations = await getOpportunityOrganizations(context);
   const lookups_types = await getOpportunityTypes(context);
   const lookups_commitmentIntervals = await getCommitmentIntervals(context);
   const lookups_zltoRewardRanges = await getZltoRewardRanges(context);
 
   return {
     props: {
+      lookups_categories,
+      lookups_countries,
+      lookups_languages,
+      lookups_organisations,
       lookups_types,
       lookups_commitmentIntervals,
       lookups_zltoRewardRanges,
@@ -608,32 +621,39 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
-        <OpportunityFilterVertical
-          htmlRef={myRef.current!}
-          opportunitySearchFilter={opportunitySearchFilter}
-          lookups_categories={lookups_categories!}
-          lookups_countries={lookups_countries!}
-          lookups_languages={lookups_languages!}
-          lookups_types={lookups_types}
-          lookups_organisations={lookups_organisations!}
-          lookups_commitmentIntervals={lookups_commitmentIntervals}
-          lookups_zltoRewardRanges={lookups_zltoRewardRanges}
-          lookups_publishedStates={lookups_publishedStates}
-          lookups_statuses={lookups_statuses}
-          submitButtonText="Done"
-          onCancel={onCloseFilter}
-          onSubmit={onSubmitFilter}
-          filterOptions={[
-            OpportunityFilterOptions.CATEGORIES,
-            OpportunityFilterOptions.TYPES,
-            OpportunityFilterOptions.COUNTRIES,
-            OpportunityFilterOptions.LANGUAGES,
-            OpportunityFilterOptions.ORGANIZATIONS,
-            OpportunityFilterOptions.DATE_START,
-            OpportunityFilterOptions.DATE_END,
-            OpportunityFilterOptions.STATUSES,
-          ]}
-        />
+        {lookups_categories &&
+          lookups_countries &&
+          lookups_languages &&
+          lookups_organisations && (
+            <OpportunityFilterVertical
+              htmlRef={myRef.current!}
+              opportunitySearchFilter={opportunitySearchFilter}
+              lookups_categories={lookups_categories}
+              lookups_countries={lookups_countries}
+              lookups_languages={lookups_languages}
+              lookups_types={lookups_types}
+              lookups_organisations={lookups_organisations}
+              lookups_commitmentIntervals={lookups_commitmentIntervals}
+              lookups_zltoRewardRanges={lookups_zltoRewardRanges}
+              lookups_publishedStates={lookups_publishedStates}
+              lookups_statuses={[]}
+              submitButtonText="Apply Filters"
+              onCancel={onCloseFilter}
+              onSubmit={(e) => onSubmitFilter(e)}
+              onClear={onClearFilter}
+              clearButtonText="Clear All Filters"
+              filterOptions={[
+                OpportunityFilterOptions.CATEGORIES,
+                OpportunityFilterOptions.TYPES,
+                OpportunityFilterOptions.COUNTRIES,
+                OpportunityFilterOptions.LANGUAGES,
+                OpportunityFilterOptions.COMMITMENTINTERVALS,
+                OpportunityFilterOptions.ZLTOREWARDRANGES,
+                OpportunityFilterOptions.ORGANIZATIONS,
+                OpportunityFilterOptions.PUBLISHEDSTATES,
+              ]}
+            />
+          )}
       </ReactModal>
 
       {/* EXPORT DIALOG */}
@@ -708,11 +728,13 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             Opportunities
           </h2>
 
-          <div className="flex gap-2 sm:justify-end">
-            <SearchInput
-              className={
-                "bg-theme hover:bg-theme brightness-105 hover:brightness-110"
-              }
+          <div className="flex gap-2 md:justify-end">
+            <SearchInputLarge
+              // className={
+              //   "bg-theme hover:bg-theme brightness-105 hover:brightness-110"
+              // }
+              openFilter={setFilterFullWindowVisible}
+              maxWidth={400}
               defaultValue={query ? decodeURIComponent(query.toString()) : null}
               onSearch={onSearchInputSubmit}
             />
@@ -778,12 +800,12 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         {/* SEARCH RESULTS */}
         {!isLoading && (
           <div id="results">
-            <div className="mb-6 flex flex-row items-center justify-end"></div>
-            <div className="rounded-lg bg-white p-4">
+            {/* <div className="mb-6 flex flex-row items-center justify-end"></div> */}
+            <div className="rounded-lg bg-transparent md:bg-white md:p-4">
               {/* NO ROWS */}
               {(!searchResults || searchResults.items?.length === 0) &&
                 !isSearchPerformed && (
-                  <div className="flex flex-col place-items-center py-52">
+                  <div className="mb-auto flex flex-col md:place-items-center md:py-52">
                     <NoRowsMessage
                       title={"You will find your opportunities here"}
                       description={
@@ -810,7 +832,98 @@ const OpportunitiesAdmin: NextPageWithLayout<{
               {/* GRID */}
               {searchResults && searchResults.items?.length > 0 && (
                 <div className="overflow-x-auto">
-                  <table className="table">
+                  {/* MOBIlE */}
+                  <div className="flex flex-col gap-4 md:hidden">
+                    {searchResults.items.map((opportunity) => (
+                      <Link
+                        href={`/organisations/${
+                          opportunity.organizationId
+                        }/opportunities/${
+                          opportunity.id
+                        }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
+                        className="rounded-lg bg-white p-2 shadow-custom"
+                        key={opportunity.id}
+                      >
+                        <div className="flex flex-col p-2">
+                          <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs font-semibold text-gray-dark">
+                                Opportunity title
+                              </span>
+                              <span className="line-clamp-2 text-gray-dark">
+                                {opportunity.title}
+                              </span>
+                            </div>
+
+                            {/* BADGES */}
+                            <div className="flex flex-wrap gap-2">
+                              {opportunity.zltoReward && (
+                                <span className="badge bg-orange-light text-orange">
+                                  <Image
+                                    src={iconZlto}
+                                    alt="Zlto icon"
+                                    width={16}
+                                    height={16}
+                                  />
+                                  <span className="ml-1 text-xs">
+                                    {opportunity?.zltoReward}
+                                  </span>
+                                </span>
+                              )}
+                              {opportunity.yomaReward && (
+                                <span className="badge bg-orange-light text-orange">
+                                  <span className="ml-1 text-xs">
+                                    {opportunity.yomaReward} Yoma
+                                  </span>
+                                </span>
+                              )}
+
+                              <span className="badge bg-blue-light text-blue">
+                                <IoMdPerson className="h-4 w-4" />
+                                <span className="ml-1 text-xs">
+                                  {opportunity.participantCountTotal}
+                                </span>
+                              </span>
+                              {opportunity.status == "Active" && (
+                                <>
+                                  <span className="badge bg-blue-light text-blue">
+                                    Active
+                                  </span>
+                                </>
+                              )}
+                              {opportunity?.status == "Expired" && (
+                                <span className="badge bg-green-light text-yellow ">
+                                  Expired
+                                </span>
+                              )}
+                              {opportunity?.status == "Inactive" && (
+                                <span className="badge bg-yellow-tint text-yellow ">
+                                  Inactive
+                                </span>
+                              )}
+                              {opportunity?.status == "Deleted" && (
+                                <span className="badge bg-green-light  text-red-400">
+                                  Deleted
+                                </span>
+                              )}
+
+                              <span
+                                // href={opportunity?.url ?? ""}
+                                className="badge bg-green-light text-green"
+                              >
+                                <IoIosLink className="h-4 w-4" />
+                                <span className="ml-1 text-xs">
+                                  {opportunity?.url}
+                                </span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                  {/* DESKTOP */}
+                  <table className="hidden md:table">
                     <thead>
                       <tr className="border-gray text-gray-dark">
                         <th>Opportunity title</th>

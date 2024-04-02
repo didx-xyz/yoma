@@ -62,6 +62,7 @@ import { getThemeFromRole } from "~/lib/utils";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
+import MobileCard from "~/components/Organisation/Verifications/MobileCard";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -564,8 +565,8 @@ const OpportunityVerifications: NextPageWithLayout<{
           </div>
 
           {/* BUTTONS */}
-          <div className=" flex flex-row place-items-center justify-center px-6 py-4 pt-2">
-            <div className="flex flex-grow">
+          <div className=" flex place-items-center justify-center px-6 py-4 pt-2 md:flex-row">
+            <div className="hidden flex-grow md:flex">
               <button
                 className="btn-default btn btn-sm flex-nowrap rounded-full py-5"
                 onClick={() => setModalVerifySingleVisible(false)}
@@ -703,7 +704,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           </div>
           <div className="flex flex-grow flex-col overflow-x-hidden overflow-y-scroll bg-gray">
             <div className="flex flex-grow flex-col place-items-center justify-center bg-gray-light px-6 py-8">
-              <div className="flex h-full w-full flex-col place-items-center justify-center rounded-lg bg-white py-8">
+              <div className="flex h-full w-full flex-col place-items-center justify-center rounded-lg bg-white py-8 text-center">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-green-dark bg-green-light">
                   <IoIosCheckmark className="h-16 w-16 text-green" />
                 </div>
@@ -767,7 +768,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           </div>
           <div className="flex flex-grow flex-col overflow-x-hidden overflow-y-scroll bg-gray">
             <div className="flex flex-grow flex-col place-items-center justify-center bg-gray-light px-6 py-8">
-              <div className="flex h-full w-full flex-col place-items-center justify-center rounded-lg bg-white py-8">
+              <div className="flex h-full w-full flex-col place-items-center justify-center rounded-lg bg-white py-8 text-center">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-green-dark bg-green-light">
                   <IoIosCheckmark className="h-16 w-16 text-green" />
                 </div>
@@ -803,13 +804,13 @@ const OpportunityVerifications: NextPageWithLayout<{
 
       {/* PAGE */}
 
-      <div className="container z-10 mt-20 max-w-7xl px-2 py-8">
-        <div>
-          <div className="mt-1 flex flex-row items-center">
-            <h3 className="flex flex-grow items-center py-4 font-semibold text-white">
-              Verifications <LimitedFunctionalityBadge />
-            </h3>
-            <div className="mb-2 flex gap-4 sm:justify-end">
+      <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[8rem]">
+        <div className="px-2 md:px-0">
+          <h3 className="mb-6 mt-3 flex items-center text-3xl font-semibold tracking-normal text-white md:mt-0">
+            Verifications <LimitedFunctionalityBadge />
+          </h3>
+          <div className="mt-4 flex flex-row items-center">
+            <div className="mb-4 flex flex-grow flex-col flex-wrap justify-end gap-4 md:flex-row">
               {/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */}
               <Select
                 classNames={{
@@ -860,14 +861,15 @@ const OpportunityVerifications: NextPageWithLayout<{
 
           {/* GRID */}
           {data && data.items?.length > 0 && (
-            <div className="overflow-x-auto rounded-lg shadow-custom">
-              <table className="table rounded-lg bg-white">
+            <div className="overflow-x-auto md:rounded-lg md:shadow-custom">
+              {/* DESKTOP */}
+              <table className="hidden bg-white md:table md:rounded-lg">
                 <thead className="text-sm">
-                  <tr className="border-gray text-gray-dark">
-                    <th className="w-[35px] pr-4 pt-4">
+                  <tr className="!border-gray bg-gray-light text-gray-dark">
+                    <th className="w-[35px] !py-6 pr-4">
                       <input
                         type="checkbox"
-                        className="checkbox-primary checkbox checkbox-sm rounded border-gray bg-white"
+                        className="checkbox-primary checkbox checkbox-sm rounded border-gray-dark bg-white"
                         checked={selectedRows?.length === data.items?.length}
                         onChange={handleAllSelect}
                       />
@@ -875,25 +877,25 @@ const OpportunityVerifications: NextPageWithLayout<{
                     <th className="pl-0">Student</th>
                     <th>Opportunity</th>
                     <th className="w-[195px]">Date connected</th>
-                    <th className="pr-0">Verified</th>
+                    <th className="">Verified</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.items.map((item) => (
                     <tr
                       key={item.id}
-                      className="!h-[70px] border-gray bg-white text-gray-dark"
+                      className="!h-[70px] !border-gray bg-white text-gray-dark"
                     >
                       <td className="w-[35px] pt-4">
                         <input
                           type="checkbox"
-                          className="checkbox-primary checkbox checkbox-sm rounded border-gray bg-white"
+                          className="checkbox-primary checkbox checkbox-sm rounded border-gray-dark bg-white"
                           checked={selectedRows?.some((x) => x.id == item.id)}
                           onChange={(e) => handleRowSelect(e, item)}
                         />
                       </td>
                       <td className="w-[200px] pl-0">{item.userDisplayName}</td>
-                      <td className="w-[400px]">
+                      <td className="w-[420px]">
                         <Link
                           className="line-clamp-2"
                           href={`/organisations/${id}/opportunities/${
@@ -910,8 +912,8 @@ const OpportunityVerifications: NextPageWithLayout<{
                           </Moment>
                         )}
                       </td>
-                      <td className="pr-0">
-                        <div className="flex justify-center">
+                      <td className="w-[120px]">
+                        <div className="flex justify-start">
                           {item.verificationStatus &&
                             item.verificationStatus == "Pending" && (
                               <div className="tooltip" data-tip="Pending">
@@ -947,6 +949,23 @@ const OpportunityVerifications: NextPageWithLayout<{
                   ))}
                 </tbody>
               </table>
+
+              {/* MOBILE */}
+              <div className="my-4 space-y-4 md:hidden">
+                {data.items.map((item) => (
+                  <MobileCard
+                    key={item.id}
+                    item={item}
+                    handleRowSelect={handleRowSelect}
+                    selectedRows={selectedRows}
+                    returnUrl={returnUrl}
+                    id={id}
+                    setCurrentRow={setCurrentRow}
+                    setVerifyComments={setVerifyComments}
+                    setModalVerifySingleVisible={setModalVerifySingleVisible}
+                  />
+                ))}
+              </div>
             </div>
           )}
           <div className="mt-2 grid place-items-center justify-center">

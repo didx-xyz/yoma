@@ -101,3 +101,9 @@ body {
 .slide {
   text-align: inherit !important;
 }
+
+@media (max-width: 760px) {
+  #beacon-container {
+    display: none !important;
+  }
+}

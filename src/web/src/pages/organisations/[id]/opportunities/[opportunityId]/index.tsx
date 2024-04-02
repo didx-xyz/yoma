@@ -922,7 +922,7 @@ const OpportunityDetails: NextPageWithLayout<{
     <>
       {isLoading && <Loading />}
       <PageBackground />
-      error: {JSON.stringify(error)}
+      {/* error: {JSON.stringify(error)} */}
       {/* OPPORTUNITY EXPIRED MODAL */}
       <ReactModal
         isOpen={oppExpiredModalVisible}
@@ -1055,7 +1055,8 @@ const OpportunityDetails: NextPageWithLayout<{
           </div>
         </div>
       </ReactModal>
-      <div className="container z-10 mt-20 max-w-7xl px-2 py-4">
+      {/* PAGE */}
+      <div className="container z-10 mt-20 max-w-7xl overflow-hidden px-2 py-4">
         {/* BREADCRUMB */}
         <div className="flex flex-row items-center text-xs text-white">
           <Link
@@ -1092,9 +1093,7 @@ const OpportunityDetails: NextPageWithLayout<{
         </div>
 
         {opportunityId == "create" ? (
-          <h3 className="mb-6 mt-2 pl-8 font-bold text-white">
-            New opportunity
-          </h3>
+          <h3 className="mb-6 mt-2 font-bold text-white">New opportunity</h3>
         ) : (
           <div className="flex flex-row items-center">
             {/* LOGO */}
@@ -1305,8 +1304,8 @@ const OpportunityDetails: NextPageWithLayout<{
           </select>
 
           {/* FORMS */}
-          <div className="flex flex-grow flex-col items-center rounded-lg bg-white shadow-custom">
-            <div className="flex w-full flex-col p-4 md:p-8">
+          <div className="flex w-full flex-grow flex-col items-center overflow-hidden rounded-lg bg-white shadow-custom">
+            <div className="flex w-full flex-col px-2 py-4 md:p-8">
               {step === 1 && (
                 <>
                   <div className="mb-4 flex flex-col">
@@ -1937,7 +1936,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         )}
                       </div>
                     </div> */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="form-control">
                         <label className="label">
                           <span className="label-text font-bold">

@@ -149,7 +149,7 @@ export const OrganisationCardComponent: React.FC<{
             <AvatarImage
               icon={props.item.logoURL ?? null}
               alt={props.item.name ?? null}
-              size={80}
+              size={60}
             />
           </div>
         </div>
@@ -166,7 +166,7 @@ export const OrganisationCardComponent: React.FC<{
             {props.item.tagline}
           </p>
           {props.item.status && props.item.status === "Inactive" && (
-            <span className="badge absolute right-4 top-4 border-none bg-yellow-light text-xs font-bold text-yellow">
+            <span className="badge absolute bottom-4 right-4 border-none bg-yellow-light text-xs font-bold text-yellow md:top-4">
               Pending
             </span>
           )}

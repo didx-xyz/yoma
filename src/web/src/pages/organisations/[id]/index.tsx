@@ -466,7 +466,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
-      <div className="container z-10 mt-20 max-w-5xl px-4 py-1 md:py-4">
+      <div className="container z-10 mt-20 max-w-5xl overflow-hidden px-4 py-1 md:py-4">
         <div className="flex flex-col gap-4">
           {/* HEADER */}
           <div className="flex flex-col">

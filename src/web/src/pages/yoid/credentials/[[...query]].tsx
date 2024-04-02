@@ -170,7 +170,7 @@ const MyCredentials: NextPageWithLayout<{
                   />
                 )}
 
-                <div className="flex flex-grow flex-col gap-4 overflow-x-hidden overflow-y-scroll p-4 pb-8 pt-0 md:max-h-[480px] md:min-h-[350px]">
+                <div className="flex flex-grow flex-col gap-4 overflow-y-scroll p-4 pb-8 pt-0 md:max-h-[480px] md:min-h-[350px]">
                   <h4 className="text-center">{activeCredential?.title}</h4>
 
                   {/* CREDENTIAL DETAILS */}
@@ -178,7 +178,7 @@ const MyCredentials: NextPageWithLayout<{
                     <ul className="divide-gray-200 divide-y">
                       <li className="py-4">
                         <div className="flex justify-between text-sm">
-                          <p className="text-gray-500 w-64 font-semibold">
+                          <p className="text-gray-500 font-semibold md:w-64">
                             Issuer
                           </p>
                           <p className="text-gray-900 text-end">
@@ -188,7 +188,7 @@ const MyCredentials: NextPageWithLayout<{
                       </li>
                       <li className="py-4">
                         <div className="flex justify-between text-sm">
-                          <p className="text-gray-500 w-64 font-semibold">
+                          <p className="text-gray-500 font-semibold md:w-64">
                             Artifact Type
                           </p>
                           <p className="text-gray-900 text-end">
@@ -198,7 +198,7 @@ const MyCredentials: NextPageWithLayout<{
                       </li>
                       <li className="py-4">
                         <div className="flex justify-between text-sm">
-                          <p className="text-gray-500 w-64 font-semibold">
+                          <p className="text-gray-500 font-semibold md:w-64">
                             Date Issued
                           </p>
                           {activeCredential?.dateIssued && (
@@ -215,7 +215,7 @@ const MyCredentials: NextPageWithLayout<{
                       </li>
                       <li className="py-4">
                         <div className="flex justify-between text-sm">
-                          <p className="text-gray-500 w-64 font-semibold">
+                          <p className="text-gray-500 font-semibold md:w-64">
                             Schema Type
                           </p>
                           <p className="text-gray-900 text-end">
@@ -227,7 +227,7 @@ const MyCredentials: NextPageWithLayout<{
                       {activeCredential?.attributes?.map((attr, index) => (
                         <li key={index} className="py-4">
                           <div className="flex justify-between text-sm">
-                            <p className="text-gray-500 w-64 font-semibold">
+                            <p className="text-gray-500 font-semibold md:w-64">
                               {attr.nameDisplay}
                             </p>
                             <p className="text-gray-900 text-end">
@@ -268,7 +268,7 @@ const MyCredentials: NextPageWithLayout<{
         {/* TODO:data.totalCount not populated by API */}
         {/* {data && (data.totalCount === null || data.totalCount === 0) && ( */}
         {data && data.items.length === 0 && (
-          <div className="flex justify-center rounded-lg bg-white p-8">
+          <div className="flex justify-center rounded-lg bg-white p-8 text-center">
             <NoRowsMessage
               title={"No credentials found"}
               description={
@@ -282,7 +282,7 @@ const MyCredentials: NextPageWithLayout<{
           <div className="flex flex-col items-center gap-4">
             {/* GRID */}
             {data && data.items?.length > 0 && (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="mr-auto grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {data.items.map((item, index) => (
                   <div
                     key={index}
@@ -292,10 +292,10 @@ const MyCredentials: NextPageWithLayout<{
                     <div className="flex h-full flex-row">
                       <div className="flex flex-grow flex-row items-start justify-start">
                         <div className="flex flex-col items-start justify-start gap-1">
-                          <p className="line-clamp-2 max-h-[35px] overflow-hidden text-ellipsis pr-2 text-xs font-medium text-gray-dark">
+                          <p className="line-clamp-2 max-h-[35px] max-w-[210px] overflow-hidden text-ellipsis pr-2 text-xs font-medium text-gray-dark">
                             {item.issuer}
                           </p>
-                          <p className="max-h-[80px] overflow-hidden text-ellipsis pr-2 text-sm font-bold">
+                          <p className="line-clamp-3 max-h-[80px] max-w-[210px] overflow-hidden text-ellipsis pr-2 text-sm font-bold">
                             {item.title}
                           </p>
                         </div>

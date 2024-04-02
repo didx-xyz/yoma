@@ -39,12 +39,12 @@ const ItemCardComponent: React.FC<InputProps> = ({
   return (
     <Link
       key={id}
-      className="relative flex aspect-square h-56 w-[340px] transform-gpu flex-col items-center gap-4 rounded-lg bg-white p-4 shadow-sm transition-transform hover:scale-[1.01] hover:shadow-md"
+      className="relative ml-2 flex aspect-square h-56 w-[265px] transform-gpu flex-col items-center gap-4 overflow-hidden rounded-lg bg-white p-4 shadow-sm transition-transform hover:scale-[1.01] hover:shadow-md md:w-[340px]"
       href={href ?? "/"}
       onClick={onClick2}
       onAuxClick={onClick2}
     >
-      <div className="flex flex-col gap-2">
+      <div className="flex scale-[0.83] flex-col gap-2 md:scale-100">
         {/* HEADER & IMAGE */}
         <div className="flex flex-grow flex-row justify-center">
           <div className="h-16x flex flex-grow flex-col items-start justify-start gap-1">

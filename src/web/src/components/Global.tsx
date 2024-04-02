@@ -298,7 +298,7 @@ export const Global: React.FC = () => {
               className="absolute -bottom-5 z-0 -rotate-3 opacity-70 mix-blend-plus-lighter md:left-[10%]"
             />
           </div>
-          <div className="flex flex-col items-center justify-center gap-8 px-12 pb-8 text-center">
+          <div className="flex flex-col items-center justify-center gap-8 px-6 pb-8 text-center md:px-12">
             <div className="z-30 -mb-6 -mr-4 -mt-24 flex items-center justify-center">
               <Image
                 src={YoIDCard}
@@ -322,11 +322,11 @@ export const Global: React.FC = () => {
               across all Yoma Partners while we keep your info safe and secure.
             </p>
             <p className="text-gray-dark">
-              Please note that to use your wallet and digital credentials, you
-              will need to activate YoID.
-              <br />
-              YoID and previously completed opportunities will appear as digital
-              credentials in your wallet in 24 hours.
+              Please note to use your passport, and receive credentials, you
+              will need to activate your YoID.{" "}
+              <br className="hidden md:inline" /> Your passport will be
+              populated with your YoID and previously completed opportunities
+              within 24 hours.
             </p>
             <div className="mt-4 flex flex-grow flex-col items-center gap-6">
               <button

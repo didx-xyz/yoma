@@ -44,21 +44,21 @@ export const SearchInputLarge: React.FC<{
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="join my-4 md:my-0">
+      <div className="join my-4 overflow-hidden lg:my-0">
         {openFilter && (
           <button
             type="button"
-            className="bg-theme btn join-item inline-flex rounded-l-full border-0 brightness-90 hover:brightness-95 md:hidden"
+            className="bg-theme btn join-item inline-flex rounded-l-full border-0 brightness-90 hover:brightness-95 lg:hidden"
             onClick={() => openFilter(true)}
           >
-            <IoMdOptions className="h-5 w-5" />
+            <IoMdOptions className="h-5 w-5 text-white" />
           </button>
         )}
 
         <input
           type="search"
           placeholder={placeholder ?? "Search..."}
-          className={`bg-theme md:w-[${maxWidth}px] input-md min-w-[250px] py-5 text-sm text-white placeholder-white brightness-90 focus:outline-0 md:rounded-bl-full md:rounded-tl-full md:!pl-8 ${
+          className={`bg-theme w-full md:w-[${maxWidth}px] input-md py-5 text-sm text-white placeholder-white brightness-90 focus:outline-0 md:rounded-bl-full md:rounded-tl-full md:!pl-8 ${
             openFilter ? "" : "rounded-bl-3xl rounded-tl-3xl"
           }`}
           value={searchInputValue ?? ""}

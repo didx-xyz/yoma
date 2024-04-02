@@ -38,7 +38,7 @@ import iconOpen from "public/images/icon-open.svg";
 import iconClock from "public/images/icon-clock.svg";
 import iconZlto from "public/images/icon-zlto.svg";
 import iconBookmark from "public/images/icon-bookmark.svg";
-import iconShare from "public/images/icon-share.svg";
+// import iconShare from "public/images/icon-share.svg";
 import iconDifficulty from "public/images/icon-difficulty.svg";
 import iconLanguage from "public/images/icon-language.svg";
 import iconTopics from "public/images/icon-topics.svg";
@@ -345,7 +345,7 @@ const OpportunityDetails: NextPageWithLayout<{
     <>
       <PageBackground />
 
-      <div className="container z-10 mt-28 max-w-7xl px-2 py-4">
+      <div className="container z-10 mt-16 max-w-7xl px-2 py-4 md:mt-20">
         <>
           {/* ERROR */}
           {serverError && (
@@ -367,14 +367,14 @@ const OpportunityDetails: NextPageWithLayout<{
           {!serverError && (
             <>
               <div className="flex flex-col gap-2 py-6 sm:flex-row">
-                <div className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+                <div className="flex-grow overflow-hidden text-ellipsis px-2 text-sm md:whitespace-nowrap">
                   <ul>
                     <li className="inline">
                       <button
-                        className="inline text-white hover:text-gray"
+                        className="inline text-white hover:text-gray "
                         onClick={() => router.back()}
                       >
-                        <IoMdArrowRoundBack className="mr-1 inline h-4 w-4" />
+                        <IoMdArrowRoundBack className="mb-[2px] mr-1 inline h-4 w-4" />
                         Opportunities
                       </button>
                     </li>
@@ -599,7 +599,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 portalClassName={"fixed z-40"}
                 overlayClassName="fixed inset-0 bg-overlay"
               >
-                <div className="flex flex-col gap-2">
+                <div className="flex w-full flex-col gap-2">
                   <div className="flex flex-row bg-green p-4 shadow-lg">
                     <h1 className="flex-grow"></h1>
                     <button
@@ -625,7 +625,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       />
                     </div>
                     <h3>Submitted!</h3>
-                    <div className="w-[450px] rounded-lg p-4 text-center">
+                    <div className="rounded-lg p-4 text-center md:w-[450px]">
                       <strong>{opportunity?.organizationName}</strong> is busy
                       reviewing your submission. Once approved, the opportunity
                       will be automatically added to your CV.
@@ -682,7 +682,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       />
                     </div>
                     <h3>Your application is pending verification.</h3>
-                    <div className="w-[450px] rounded-lg p-4 text-center">
+                    <div className="rounded-lg p-4 text-center md:w-[450px]">
                       <strong>{opportunity?.organizationName}</strong> is busy
                       reviewing your submission. Once approved, the opportunity
                       will be automatically added to your CV. If you would like
@@ -704,28 +704,29 @@ const OpportunityDetails: NextPageWithLayout<{
 
               {opportunity && (
                 <div className="flex flex-col gap-4">
-                  <div className="relative flex flex-grow flex-row gap-1 rounded-lg bg-white p-6 shadow-lg">
+                  <div className="relative flex flex-grow flex-row gap-1 rounded-lg bg-white p-4 shadow-lg md:p-6">
                     <div className="flex flex-grow flex-col gap-1">
                       <div className="flex flex-grow flex-col">
                         <div className="relative flex justify-start">
-                          <h4 className="text-2xl font-semibold text-black md:max-w-[1125px]">
+                          <h4 className="max-w-[215px] text-xl font-semibold leading-7 text-black md:max-w-[1125px] md:text-2xl md:leading-8">
                             {opportunity.title}
                           </h4>
-                          <div className="absolute right-0 top-0">
+                          <div className="absolute -right-2 -top-2 md:right-0 md:top-0">
                             <AvatarImage
                               icon={opportunity?.organizationLogoURL ?? null}
                               alt="Company Logo"
-                              size={80}
+                              size={60}
+                              // sizeMobile={42}
                             />
                           </div>
                         </div>
 
-                        <h6 className="text-sm text-gray-dark">
+                        <h6 className="max-w-[215px] text-sm text-gray-dark md:max-w-[1125px]">
                           By {opportunity.organizationName}
                         </h6>
 
                         {/* BADGES */}
-                        <div className="my-2 flex flex-row gap-1 text-xs font-bold text-green-dark">
+                        <div className="mb-2 mt-4 flex flex-row flex-wrap gap-1 text-xs font-bold text-green-dark md:my-2">
                           <div className="badge bg-green-light text-green">
                             <Image
                               src={iconClock}
@@ -841,12 +842,12 @@ const OpportunityDetails: NextPageWithLayout<{
                         )}
 
                         {/* BUTTONS */}
-                        <div className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-2">
-                          <div className="flex flex-grow gap-4">
+                        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                          <div className="flex flex-grow flex-col gap-4 md:flex-row">
                             {opportunity.url && (
                               <button
                                 type="button"
-                                className="btn btn-xs rounded-full bg-green normal-case text-white md:btn-sm hover:bg-green-dark md:h-10 md:w-[250px]"
+                                className="btn btn-sm h-10 w-full rounded-full bg-green normal-case text-white hover:bg-green-dark md:w-[250px]"
                                 onClick={() =>
                                   setGotoOpportunityDialogVisible(true)
                                 }
@@ -881,7 +882,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                     !verificationStatusIsLoading && (
                                       <button
                                         type="button"
-                                        className="btn btn-xs rounded-full border-green bg-white normal-case text-green md:btn-sm hover:bg-green-dark hover:text-white md:h-10"
+                                        className="btn btn-sm h-10 w-full rounded-full border-green bg-white normal-case text-green hover:bg-green-dark hover:text-white md:w-[280px]"
                                         onClick={() =>
                                           user
                                             ? setCompleteOpportunityDialogVisible(
@@ -912,7 +913,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                     verificationStatus.status == "Pending" && (
                                       <button
                                         type="button"
-                                        className="btn btn-xs rounded-full border-0 bg-gray-light normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10"
+                                        className="btn btn-sm h-10 w-full rounded-full border-0 bg-gray-light normal-case text-gray-dark hover:bg-green-dark hover:text-white md:w-[250px]"
                                         onClick={() =>
                                           setCancelOpportunityDialogVisible(
                                             true,
@@ -920,7 +921,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                         }
                                       >
                                         Pending verification
-                                        <IoMdClose className="ml-1 h-4 w-4 text-gray-dark" />
+                                        <IoMdClose className="ml-1 mt-[2px] h-4 w-4 text-gray-dark" />
                                       </button>
                                     )}
 
@@ -941,17 +942,11 @@ const OpportunityDetails: NextPageWithLayout<{
                               )}
                           </div>
 
-                          <div className="flex gap-4 md:justify-end lg:justify-end">
+                          <div className="flex justify-between gap-2 md:justify-end md:gap-4 lg:justify-end">
                             <button
                               type="button"
-                              // className="btn btn-xs border-gray-dark text-gray-dark md:btn-sm hover:bg-green-dark rounded-full bg-white normal-case hover:text-white md:h-10"
-                              // className={`btn btn-xs border-gray-dark text-gray-dark md:btn-sm hover:bg-green-dark rounded-full bg-white normal-case hover:text-white md:h-10 ${
-                              //   isOppSaved
-                              //     ? "bg-green-dark text-white"
-                              //     : "bg-yellow text-black"
-                              // }`}
                               className={
-                                "btn btn-xs rounded-full border-gray-dark normal-case text-gray-dark md:btn-sm md:h-10" +
+                                "btn btn-sm h-10 w-full flex-shrink rounded-full border-gray-dark normal-case text-gray-dark md:w-[120px]" +
                                 ` ${
                                   isOppSaved
                                     ? "border-yellow bg-yellow-light text-yellow"
@@ -978,9 +973,9 @@ const OpportunityDetails: NextPageWithLayout<{
                               </span>
                             </button>
 
-                            <button
+                            {/* <button
                               type="button"
-                              className="btn btn-xs rounded-full border-gray-dark bg-white normal-case text-gray-dark md:btn-sm hover:bg-green-dark hover:text-white md:h-10"
+                              className="btn btn-sm h-10 w-1/2 flex-shrink rounded-full border-gray-dark bg-white normal-case text-gray-dark hover:bg-green-dark hover:text-white md:w-[120px]"
                               // ensure user is logged in and opportunity is published and active
                               // disabled={
                               //   !user ||
@@ -1002,7 +997,7 @@ const OpportunityDetails: NextPageWithLayout<{
                               />
 
                               <span className="ml-1">Share</span>
-                            </button>
+                            </button> */}
                           </div>
                         </div>
                       </div>
@@ -1010,13 +1005,13 @@ const OpportunityDetails: NextPageWithLayout<{
                   </div>
 
                   <div className="flex flex-col gap-4 md:flex-row">
-                    <div className="flex-grow rounded-lg bg-white p-6 shadow-lg md:w-[66%]">
+                    <div className="flex-grow rounded-lg bg-white p-4 shadow-lg md:w-[66%] md:p-6">
                       <div style={{ whiteSpace: "pre-wrap" }}>
                         {opportunity?.description}
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 rounded-lg shadow-lg md:w-[33%]">
-                      <div className="flex flex-col gap-1 rounded-lg bg-white p-6">
+                      <div className="flex flex-col gap-1 rounded-lg bg-white p-4 md:p-6">
                         <div>
                           <div className="mt-2 flex flex-row items-center gap-1 text-sm font-bold">
                             <Image

@@ -129,7 +129,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
               priority={true}
               className="absolute z-0 hidden opacity-25 brightness-200 grayscale md:top-10 md:block"
             />
-            <div className="group relative mx-4 flex h-[200px] w-full flex-col items-center justify-center rounded-lg bg-orange shadow-lg before:absolute before:left-0 before:top-0 before:-z-10 before:h-[200px] before:w-full before:rotate-[3deg] before:rounded-lg before:bg-orange before:brightness-75 before:transition-transform before:duration-300 before:ease-linear before:content-[''] md:mx-0 md:h-[200px] md:w-[410px] md:before:h-[200px] md:before:w-[410px] md:hover:before:rotate-0">
+            <div className="group relative mx-4 flex h-[220px] w-full flex-col items-center justify-center rounded-lg bg-orange shadow-lg before:absolute before:left-0 before:top-0 before:-z-10 before:h-[220px] before:w-full before:rotate-[3deg] before:rounded-lg before:bg-orange before:brightness-75 before:transition-transform before:duration-300 before:ease-linear before:content-[''] md:mx-0 md:h-[200px] md:w-[410px] md:before:h-[200px] md:before:w-[410px] md:hover:before:rotate-0">
               <div className="grid w-full grid-cols-3 gap-4 p-2 md:grid-cols-4 md:p-6">
                 <div className="col-span-1 mx-auto my-auto scale-95 md:scale-100">
                   <AvatarImage
@@ -138,7 +138,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                     size={85}
                   />
                 </div>
-                <div className="col-span-2 flex flex-col items-start md:col-span-3 md:items-stretch">
+                <div className="col-span-2 -ml-2 flex flex-col items-start md:col-span-3 md:ml-0 md:items-stretch">
                   <div className="flex flex-grow flex-col">
                     <div className="flex flex-row items-center justify-between">
                       <p className="flex-grow text-left text-xs !tracking-[.25em] text-[#FFD69C]">
@@ -155,7 +155,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
 
                     {/* ZLTO Balances */}
                     <div className="mt-2 flex flex-col gap-2 text-white">
-                      <div className="flex flex-col gap-1 border-y-2 border-dotted border-[#FFD69C] py-2">
+                      <div className="flex flex-col gap-1 border-y-2 border-dotted border-[#FFD69C] py-px md:py-2">
                         <div className="flex flex-row items-center">
                           <p className="w-28 text-xs tracking-widest">
                             Available:

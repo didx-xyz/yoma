@@ -117,10 +117,10 @@ const LocationPicker: React.FC<InputProps> = ({
       className="flex w-full flex-col rounded-lg border-dotted bg-gray-light"
     >
       <div className="flex w-full flex-row">
-        <div className="flex items-center p-8">
+        <div className="hidden items-center p-8 md:flex">
           <IoMdPin className="h-6 w-6 text-gray-dark" />
         </div>
-        <div className="flex flex-grow flex-col items-start justify-center">
+        <div className="flex flex-grow flex-col items-start justify-center p-4 md:p-0">
           <div>{label}</div>
           <div className="text-sm text-gray-dark">
             Select a pin location below or{" "}

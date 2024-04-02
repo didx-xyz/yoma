@@ -51,8 +51,8 @@ const Success: NextPageWithLayout = () => {
   return (
     <div className="bg-theme flex justify-center md:w-screen">
       <div className="container my-auto max-w-md md:w-[28rem]">
-        <div className="flex flex-col place-items-center justify-center rounded-xl bg-white p-12 text-center">
-          <Image src={iconRocket} alt="Icon Rocket" className="-mt-4" />
+        <div className="flex flex-col place-items-center justify-center rounded-xl bg-white p-6 text-center md:p-12">
+          <Image src={iconRocket} alt="Icon Rocket" className="mt-2" />
           <h4 className="font-semibold">
             Your application has been
             <br /> successfully submitted
