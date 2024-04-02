@@ -67,5 +67,17 @@ export interface WalletVoucher {
   code: string;
   instructions: string;
   amount: number;
-  // status: VoucherStatus;
+  status: VoucherStatus | string; //NB: string for API compatibility
+  dateStamp: string | null;
 }
+
+export enum VoucherStatus {
+  New,
+  Viewed,
+}
+
+export interface WalletVoucherSearchResults {
+  items: WalletVoucher[];
+}
+
+export interface WalletVoucherSearchFilter extends PaginationFilter {}

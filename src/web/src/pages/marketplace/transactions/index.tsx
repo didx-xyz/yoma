@@ -11,12 +11,8 @@ import type { WalletVoucher } from "~/api/models/marketplace";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
-import { PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
-import type { WalletVoucherSearchResults } from "~/api/models/reward";
-import iconZlto from "public/images/icon-zlto.svg";
-import Image from "next/image";
-import { toBase64, shimmer } from "~/lib/image";
-import { PaginationButtons } from "~/components/PaginationButtons";
+import { MAX_INT32, THEME_BLUE } from "~/lib/constants";
+import type { WalletVoucherSearchResults } from "~/api/models/marketplace";
 import { useRouter } from "next/router";
 import { IoMdClose, IoMdCopy } from "react-icons/io";
 import ReactModal from "react-modal";
@@ -24,14 +20,8 @@ import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-
-// type GroupedData = {
-//   [key: number]: WalletVoucher[];
-// };
-
-// interface IParams extends ParsedUrlQuery {
-//   page?: string;
-// }
+import { TransactionItemComponent } from "~/components/Marketplace/TransactionItem";
+import Link from "next/link";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -44,7 +34,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     const data = await searchVouchers(
       {
         pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
+        pageSize: MAX_INT32, // paging disabled, get all
       },
       context,
     );
@@ -91,7 +81,7 @@ const MarketplaceTransactions: NextPageWithLayout<{
     queryFn: () =>
       searchVouchers({
         pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
+        pageSize: MAX_INT32, // paging disabled, get all
       }),
     enabled: !error,
   });
@@ -120,22 +110,6 @@ const MarketplaceTransactions: NextPageWithLayout<{
     },
     [setCurrentItem, setItemDialogVisible],
   );
-
-  // memoize the data grouped by date (todo api)
-  // const dataByDate = useMemo<GroupedData | null>(() => {
-  //   if (!data?.items) return null;
-
-  //   const groupedByDate = data.items.reduce<GroupedData>((acc: any, item) => {
-  //     const date = item.amount; //TODO: hacked for now
-
-  //     if (!acc[date]) acc[date] = [];
-  //     acc[date].push(item);
-
-  //     return acc;
-  //   }, {});
-
-  //   return groupedByDate;
-  // }, [data]);
 
   const copyToClipboard = async () => {
     try {
@@ -170,7 +144,6 @@ const MarketplaceTransactions: NextPageWithLayout<{
         onRequestClose={() => {
           setItemDialogVisible(false);
         }}
-        //className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[350px] md:w-[550px] md:rounded-3xl`}
         className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[550px] md:w-[550px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
@@ -315,116 +288,31 @@ const MarketplaceTransactions: NextPageWithLayout<{
         )}
 
         {/* GRID */}
-        {/* {dataByDate && Object.keys(dataByDate).length > 0 && (
-        <div className="flex w-full flex-col flex-wrap gap-4">
-          {Object.entries(dataByDate).map(([date, items]) => (
-            <div key={date} className="flex flex-col gap-2">
-              <label className="text-sm text-gray-dark">{date}</label>
-              {items.map((item, index) => (
+        {data?.items && data.items.length > 0 && (
+          <div className="grid w-full place-items-center">
+            <div className="xs:grid-cols-1 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {data.items.map((item, index) => (
                 <TransactionItemComponent
-                  key={`${date}-${index}`}
-                  item={item}
+                  id={`transaction-${index}`}
+                  data={item}
+                  onClick={() => onItemClick(item)}
                 />
               ))}
             </div>
-          ))}
-        </div>
-      )} */}
-
-        {/* GRID */}
-        {data?.items && data.items.length > 0 && (
-          <>
-            {data.items.map((item, index) => (
-              <TransactionItemComponent
-                key={`transaction-${index}`}
-                item={item}
-                onClick={() => onItemClick(item)}
-              />
-            ))}
-          </>
+          </div>
         )}
 
-        {/* PAGINATION BUTTONS */}
-        <PaginationButtons
-          currentPage={page ? parseInt(page) : 1}
-          //NB: there is no totalCount from the api, so we set it to a high number
-          totalItems={data?.items && data?.items.length > 0 ? 999 : null}
-          pageSize={PAGE_SIZE}
-          onClick={handlePagerChange}
-          showPages={false}
-        />
+        {/* MARKETPLACE BUTTON */}
+        <div className="flex w-full justify-center">
+          <Link
+            href="/marketplace"
+            className="btn mt-8 w-[260px] rounded-xl border-none bg-green normal-case text-white hover:bg-green hover:text-white hover:brightness-110"
+          >
+            Back to Marketplace
+          </Link>
+        </div>
       </div>
     </>
-  );
-};
-
-const TransactionItemComponent: React.FC<{
-  [key: string]: any;
-  item: WalletVoucher;
-  onClick: () => void;
-}> = ({ key, item, onClick }) => {
-  return (
-    <button
-      type="button"
-      key={key}
-      className="flex h-14 w-full transform-gpu flex-row items-center gap-2 rounded-lg bg-white p-8 shadow-lg transition-transform hover:scale-105"
-      onClick={onClick}
-    >
-      <div className="relative h-12 w-12 cursor-pointer overflow-hidden rounded-full shadow">
-        {/* {imageURLs &&
-            imageURLs.length > 0 &&
-            imageURLs.map((url, index) => (
-              <Image
-                key={`${key}_${index}`}
-                src={url}
-                alt={`Store Category ${index}`}
-                width={64}
-                height={64}
-                sizes="(max-width: 64px) 30vw, 50vw"
-                priority={true}
-                placeholder="blur"
-                blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                  shimmer(64, 64),
-                )}`}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  maxWidth: "64px",
-                  maxHeight: "64px",
-                }}
-              />
-            ))}
-          {!imageURLs ||
-            (imageURLs.length === 0 && ( */}
-        <Image
-          src={iconZlto}
-          alt={`Zlto icon`}
-          width={48}
-          height={48}
-          sizes="(max-width: 48px) 30vw, 50vw"
-          priority={true}
-          placeholder="blur"
-          blurDataURL={`data:image/svg+xml;base64,${toBase64(shimmer(48, 48))}`}
-          style={{
-            width: "100%",
-            height: "100%",
-            maxWidth: "48px",
-            maxHeight: "48px",
-          }}
-        />
-        {/* ))} */}
-      </div>
-
-      <div className="flex flex-grow flex-col items-start">
-        <p className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-black md:max-w-[580px]">
-          {item.name}
-        </p>
-        {/* TODO: no company from api */}
-        {/* <p className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-black md:max-w-[580px]">
-          {item.company}
-        </p> */}
-      </div>
-    </button>
   );
 };
 

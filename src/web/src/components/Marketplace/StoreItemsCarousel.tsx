@@ -102,9 +102,6 @@ const StoreItemsCarousel: React.FC<{
         const lastSlideInView = emblaApi.slidesInView().includes(lastSlide);
         let loadMore = !loadingMore && lastSlideInView;
 
-        // console.warn(
-        //   `onScroll... lastSlide: ${lastSlide} lastSlideInView: ${lastSlideInView} loadMore: ${loadMore}`,
-        // );
         if (emblaApi.slideNodes().length < PAGE_SIZE_MINIMUM) {
           loadMore = false;
           setHasMoreToLoad(false);
@@ -176,11 +173,6 @@ const StoreItemsCarousel: React.FC<{
             </Link>
           )}
         </div>
-        {/* {slidePercentage <= 0 && (
-        <div className="flex items-center justify-center">
-          <LoadingSkeleton />
-        </div>
-      )} */}
       </div>
 
       <div className="embla h-60x">

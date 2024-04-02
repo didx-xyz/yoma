@@ -764,17 +764,6 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                   }
                   onClick={onBuyClick}
                 />
-
-                {/* <StoreItemsCarousel
-                  id={`storeItem_${category_storeItems.category.id}_${index}_${index2}`}
-                  title={storeItem.store?.name}
-                  data={storeItem.items}
-                  viewAllUrl=""
-                  loadData={(startRow) =>
-                    loadData(startRow, storeItem.store.id)
-                  }
-                  onClick={onBuyClick}
-                /> */}
               </div>
             ))}
           </div>
