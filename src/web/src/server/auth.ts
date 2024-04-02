@@ -42,6 +42,9 @@ declare module "next-auth/jwt" {
   }
 }
 
+const COOKIES_LIFE_TIME = 24 * 60 * 60;
+const COOKIE_PREFIX = process.env.NODE_ENV === "production" ? "__Secure-" : "";
+
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
  *
@@ -148,6 +151,67 @@ export const authOptions: NextAuthOptions = {
   //   strategy: "jwt",
   //   maxAge: 30 * 24 * 60 * 60, // 30 days
   // },
+  secret: process.env.NEXTAUTH_SECRET,
+
+  // FIX: OAUTH_CALLBACK_ERROR State cookie was missing
+  // https://github.com/nextauthjs/next-auth/discussions/7491
+  cookies: {
+    sessionToken: {
+      name: `${COOKIE_PREFIX}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+      },
+    },
+    callbackUrl: {
+      name: `${COOKIE_PREFIX}next-auth.callback-url`,
+      options: {
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+      },
+    },
+    csrfToken: {
+      name: `${COOKIE_PREFIX}next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+      },
+    },
+    pkceCodeVerifier: {
+      name: `${COOKIE_PREFIX}next-auth.pkce.code_verifier`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+        maxAge: COOKIES_LIFE_TIME,
+      },
+    },
+    state: {
+      name: `${COOKIE_PREFIX}next-auth.state`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+        maxAge: COOKIES_LIFE_TIME,
+      },
+    },
+    nonce: {
+      name: `${COOKIE_PREFIX}next-auth.nonce`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+      },
+    },
+  },
 };
 
 // eslint-disable-next-line
