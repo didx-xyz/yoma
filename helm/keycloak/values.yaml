@@ -121,7 +121,7 @@ postInstallHook:
         - -c
         - |-
           cd /scripts
-          wget -O - \
+          wget -qO - \
             --header="Authorization: token ${GITHUB_PAT}"\
             --header="Accept:application/vnd.github.v3.raw" \
             https://api.github.com/repos/didx-xyz/yoma/tarball/{{ .Values.postInstallHook.ref }} | tar xz
@@ -192,7 +192,7 @@ keycloak:
       args:
         - -c
         - |-
-          wget \
+          wget -q \
             https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-{{ .Values.webhook.version }}-all.jar \
               -O /providers/keycloak-webhook-{{ .Values.webhook.version }}.jar
       volumeMounts:
@@ -208,7 +208,7 @@ keycloak:
         - -c
         - |-
           cd /themes
-          wget -O - \
+          wget -qO - \
             --header="Authorization: token ${GITHUB_PAT}" \
             --header="Accept:application/vnd.github.v3.raw" \
             https://api.github.com/repos/didx-xyz/yoma/tarball/{{ .Values.themes.ref }} | tar xz
