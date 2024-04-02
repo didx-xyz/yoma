@@ -20,7 +20,7 @@ import imageLogoPlayStore from "public/images/home/logo-play-store.png";
 import imageLogoYoma from "public/images/logo-dark.webp";
 import imageLogoWhatsapp from "public/images/home/logo-whatsapp.png";
 import imageLogoAtingi from "public/images/home/logo-atingi.png";
-import imageLogoUCT from "public/images/home/logo-UCT.png";
+import imageLogoUCT from "public/images/home/logo-uct.png";
 import imageLogoCartedo from "public/images/home/logo-cartedo.png";
 import imageImpact from "public/images/home/image-impact.png";
 import imageThrive from "public/images/home/image-thrive.png";
