@@ -149,8 +149,8 @@ namespace Yoma.Core.Domain
       foreach (var job in scheduledJobs) BackgroundJob.Delete(job.Key);
 
       //skills
-      BackgroundJob.Enqueue<ISkillService>(s => s.SeedSkills()); //execute on startup
-      RecurringJob.AddOrUpdate<ISkillService>("Skill Reference Seeding", s => s.SeedSkills(), options.SeedSkillsSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+      BackgroundJob.Enqueue<ISkillService>(s => s.SeedSkills(true)); //execute on startup
+      RecurringJob.AddOrUpdate<ISkillService>("Skill Reference Seeding", s => s.SeedSkills(false), options.SeedSkillsSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //opportunity
       RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration ({Status.Active} or {Status.Inactive} that has ended)",

@@ -302,6 +302,7 @@ namespace Yoma.Core.Domain.Entity.Services
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
         result.YoIDOnboarded = true;
+        result.DateYoIDOnboarded = DateTimeOffset.UtcNow;
         result = await _userRepository.Update(result);
 
         await _ssiTenantService.ScheduleCreation(EntityType.User, result.Id);

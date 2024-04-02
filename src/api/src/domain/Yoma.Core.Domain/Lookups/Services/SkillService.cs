@@ -103,12 +103,18 @@ namespace Yoma.Core.Domain.Lookups.Services
       return results;
     }
 
-    public void SeedSkills()
+    public void SeedSkills(bool onStartupInitialSeeding)
     {
       lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
       {
         try
         {
+          if (onStartupInitialSeeding && _skillRepository.Query().Count() > default(int))
+          {
+            _logger.LogInformation("Seeding of skills (On Startup) skipped as intially seeded has already been executed");
+            return;
+          }
+
           var incomingResults = _laborMarketProviderClient.ListSkills().Result;
           if (incomingResults == null || incomingResults.Count == 0) return;
 

@@ -78,7 +78,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
     {
       ArgumentNullException.ThrowIfNull(item);
 
-      item.DateYoIDOnboarded = !item.YoIDOnboarded.HasValue || !item.YoIDOnboarded.Value ? null : DateTimeOffset.UtcNow;
       item.DateCreated = DateTimeOffset.UtcNow;
       item.DateModified = DateTimeOffset.UtcNow;
 
@@ -99,6 +98,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         DateLastLogin = item.DateLastLogin,
         ExternalId = item.ExternalId,
         YoIDOnboarded = item.YoIDOnboarded,
+        DateYoIDOnboarded = item.DateYoIDOnboarded, 
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
       };
@@ -114,9 +114,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
     {
       var entity = _context.User.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"User with id '{item.Id}' does not exist");
 
-      item.DateYoIDOnboarded = !item.YoIDOnboarded.HasValue || !item.YoIDOnboarded.Value
-          ? null
-          : item.YoIDOnboarded.Value && !entity.DateYoIDOnboarded.HasValue ? DateTimeOffset.UtcNow : entity.DateYoIDOnboarded;
       item.DateModified = DateTimeOffset.UtcNow;
 
       entity.Email = item.Email;
@@ -133,6 +130,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       entity.DateLastLogin = item.DateLastLogin;
       entity.ExternalId = item.ExternalId;
       entity.YoIDOnboarded = item.YoIDOnboarded;
+      entity.DateYoIDOnboarded = item.DateYoIDOnboarded;
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();
