@@ -34,6 +34,7 @@ const config = {
     "@typescript-eslint/no-empty-interface": "off",
     "@typescript-eslint/no-unsafe-argument": "off",
     "@typescript-eslint/no-floating-promises": "off",
+    "@typescript-eslint/no-unsafe-return": "off",
     "prefer-spread": "off",
   },
 };

@@ -40,7 +40,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
     await queryClient.prefetchQuery({
       queryKey: ["Vouchers"],
-      queryFn: () => data, // eslint-disable-line @typescript-eslint/no-unsafe-return
+      queryFn: () => data,
     });
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status) {

@@ -12,11 +12,9 @@ import type {
   StoreItemCategorySearchResults,
   StoreItemSearchFilter,
   StoreItemSearchResults,
-} from "../models/marketplace";
-import type {
   WalletVoucherSearchFilter,
   WalletVoucherSearchResults,
-} from "../models/reward";
+} from "../models/marketplace";
 import type { Country } from "../models/lookups";
 
 export const listSearchCriteriaCountries = async (
