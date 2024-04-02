@@ -147,14 +147,14 @@ keycloak:
     tag: 22.0.1
 
   command:
-    - "/opt/keycloak/bin/kc.sh"
-    - "start"
-    - "--features=preview,declarative-user-profile"
-    - "--http-enabled=true"
-    - "--http-port=8080"
-    - "--hostname-strict=false"
-    - "--spi-events-listener-jboss-logging-success-level=info" # log login/out events
-    - "--spi-events-listener-jboss-logging-error-level=warn"   # log login/out events
+    - /opt/keycloak/bin/kc.sh
+    - start
+    - --features=preview,declarative-user-profile
+    - --http-enabled=true
+    - --http-port=8080
+    - --hostname-strict=false
+    - --spi-events-listener-jboss-logging-success-level=info # log login/out events
+    - --spi-events-listener-jboss-logging-error-level=error  # log login/out events
 
   serviceAccount:
     create: true
@@ -272,6 +272,8 @@ keycloak:
       value: "false"
     - name: KC_JDBC_PARAMS
       value: sslmode=prefer
+    - name: KC_LOG_CONSOLE_OUTPUT
+      value: json
 
   affinity: |-
     nodeAffinity:
