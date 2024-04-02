@@ -1,20 +1,19 @@
 import Image from "next/image";
-import { shimmer, toBase64 } from "src/lib/image";
 import iconZlto from "public/images/icon-zlto.svg";
-import { WalletVoucher } from "~/api/models/marketplace";
+import type { WalletVoucher } from "~/api/models/marketplace";
 import { AvatarImage } from "../AvatarImage";
 import Moment from "react-moment";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { IoMdAlert } from "react-icons/io";
 
 const TransactionItemComponent: React.FC<{
-  id: string;
+  key: string;
   data: WalletVoucher;
   onClick: () => void;
-}> = ({ id, data, onClick }) => {
+}> = ({ key, data, onClick }) => {
   return (
     <button
-      key={id}
+      key={key}
       className="relative flex aspect-square h-64 w-[300px] transform-gpu flex-col gap-1 rounded-lg bg-white p-5 shadow-sm transition-all duration-300 hover:scale-[1.01] hover:shadow-md"
       onClick={onClick}
     >

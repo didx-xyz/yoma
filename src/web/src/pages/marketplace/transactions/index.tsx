@@ -13,7 +13,6 @@ import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
 import { MAX_INT32, THEME_BLUE } from "~/lib/constants";
 import type { WalletVoucherSearchResults } from "~/api/models/marketplace";
-import { useRouter } from "next/router";
 import { IoMdClose, IoMdCopy } from "react-icons/io";
 import ReactModal from "react-modal";
 import axios from "axios";
@@ -41,7 +40,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
     await queryClient.prefetchQuery({
       queryKey: ["Vouchers"],
-      queryFn: () => data,
+      queryFn: () => data, // eslint-disable-line @typescript-eslint/no-unsafe-return
     });
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status) {
@@ -67,7 +66,6 @@ const MarketplaceTransactions: NextPageWithLayout<{
   page?: string;
   error?: number;
 }> = ({ page, error }) => {
-  const router = useRouter();
   const [currentItem, setCurrentItem] = useState<WalletVoucher | null>(null);
   const [itemDialogVisible, setItemDialogVisible] = useState(false);
 
@@ -85,23 +83,6 @@ const MarketplaceTransactions: NextPageWithLayout<{
       }),
     enabled: !error,
   });
-
-  // 🔔 pager change event
-  const handlePagerChange = useCallback(
-    (value: number) => {
-      // redirect
-      void router.push({
-        pathname: `/marketplace/transactions`,
-        query: {
-          page: value,
-        },
-      });
-
-      // reset scroll position
-      window.scrollTo(0, 0);
-    },
-    [router],
-  );
 
   const onItemClick = useCallback(
     (item: WalletVoucher) => {
@@ -293,7 +274,7 @@ const MarketplaceTransactions: NextPageWithLayout<{
             <div className="xs:grid-cols-1 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {data.items.map((item, index) => (
                 <TransactionItemComponent
-                  id={`transaction-${index}`}
+                  key={`transaction-${index}`}
                   data={item}
                   onClick={() => onItemClick(item)}
                 />
