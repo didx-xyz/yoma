@@ -152,6 +152,9 @@ export const authOptions: NextAuthOptions = {
   //   maxAge: 30 * 24 * 60 * 60, // 30 days
   // },
   secret: process.env.NEXTAUTH_SECRET,
+
+  // FIX: OAUTH_CALLBACK_ERROR State cookie was missing
+  // https://github.com/nextauthjs/next-auth/discussions/7491
   cookies: {
     sessionToken: {
       name: `${COOKIE_PREFIX}next-auth.session-token`,

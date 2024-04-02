@@ -47,7 +47,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { env } from "process";
 import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
-import StoreItemsCarousel2 from "~/components/Marketplace/StoreItemsCarousel2";
+import StoreItemsCarousel from "~/components/Marketplace/StoreItemsCarousel";
 
 interface IParams extends ParsedUrlQuery {
   country: string;
@@ -755,7 +755,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
               <div
                 key={`category_${category_storeItems.category.id}_${index}_${index2}`}
               >
-                <StoreItemsCarousel2
+                <StoreItemsCarousel
                   id={`storeItem_${category_storeItems.category.id}_${index}_${index2}`}
                   title={storeItem.store?.name}
                   data={storeItem.items}

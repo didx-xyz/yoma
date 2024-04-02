@@ -1,182 +1,197 @@
-import Link from "next/link";
-import { Carousel } from "react-responsive-carousel";
-import "react-responsive-carousel/lib/styles/carousel.min.css";
-import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { screenWidthAtom } from "~/lib/store";
-import { useAtomValue } from "jotai";
-import { VIEWPORT_SIZE } from "~/lib/constants";
-import { LoadingSkeleton } from "../Status/LoadingSkeleton";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import type { EngineType } from "embla-carousel/components/Engine";
+import type { EmblaCarouselType, EmblaOptionsType } from "embla-carousel";
+import useEmblaCarousel from "embla-carousel-react";
 import type { StoreItemCategorySearchResults } from "~/api/models/marketplace";
 import { ItemCardComponent } from "./ItemCard";
+import Link from "next/link";
+import { PAGE_SIZE_MINIMUM } from "~/lib/constants";
+import {
+  usePrevNextButtons,
+  PrevButton,
+  NextButton,
+} from "../Carousel/ArrowButtons";
+import {
+  SelectedSnapDisplay,
+  useSelectedSnapDisplay,
+} from "../Carousel/SelectedSnapDisplay";
 
-export const StoreItemsCarousel: React.FC<{
+const OPTIONS: EmblaOptionsType = {
+  dragFree: false,
+  containScroll: "keepSnaps",
+  watchSlides: true,
+  watchResize: true,
+};
+
+const StoreItemsCarousel: React.FC<{
   [id: string]: any;
   title?: string;
-  data: StoreItemCategorySearchResults;
   viewAllUrl?: string;
   loadData: (startRow: number) => Promise<StoreItemCategorySearchResults>;
   onClick: (item: any) => void;
-}> = ({ id, title, data, viewAllUrl, loadData, onClick }) => {
-  const screenWidth = useAtomValue(screenWidthAtom);
-  const [cache, setCache] = useState(data?.items);
-  const isLoadingDataRef = useRef(false);
-  const [selectedItem, setSelectedItem] = useState(0);
-  const [slidePercentage, setSlidePercentage] = useState(screenWidth);
-  const [cols, setCols] = useState(1);
+  data: StoreItemCategorySearchResults;
+  options?: EmblaOptionsType;
+}> = (props) => {
+  const { id, title, viewAllUrl, loadData, onClick, data: propData } = props;
+  const scrollListenerRef = useRef<() => void>(() => undefined);
+  const listenForScrollRef = useRef(true);
+  const hasMoreToLoadRef = useRef(true);
+  const [slides, setSlides] = useState(propData.items);
+  const [hasMoreToLoad, setHasMoreToLoad] = useState(
+    propData.items.length >= PAGE_SIZE_MINIMUM,
+  );
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  useEffect(() => {
-    // update the slide percentage based on the viewport size
-    const slidePercentage =
-      screenWidth < VIEWPORT_SIZE.SM
-        ? 100 // 1 column
-        : screenWidth < VIEWPORT_SIZE.LG
-          ? 50 // 2 columns
-          : screenWidth < VIEWPORT_SIZE.XL
-            ? 33 // 3 columns
-            : 33;
-    setSlidePercentage(slidePercentage);
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    ...OPTIONS,
+    watchSlides: (emblaApi) => {
+      const reloadEmbla = (): void => {
+        const oldEngine = emblaApi.internalEngine();
 
-    // calculate the number of columns based on the viewport size
-    setCols(Math.round(100 / slidePercentage));
+        emblaApi.reInit();
+        const newEngine = emblaApi.internalEngine();
+        const copyEngineModules: (keyof EngineType)[] = [
+          "location",
+          "target",
+          "scrollBody",
+        ];
+        copyEngineModules.forEach((engineModule) => {
+          Object.assign(newEngine[engineModule], oldEngine[engineModule]);
+        });
 
-    // reset to first item when resizing (UX fix with changing of carousel column)
-    setSelectedItem(0);
-  }, [screenWidth, setSelectedItem, setCols]);
+        newEngine.translate.to(oldEngine.location.get());
+        const { index } = newEngine.scrollTarget.byDistance(0, false);
+        newEngine.index.set(index);
+        newEngine.animation.start();
 
-  const onChange = useCallback(
-    async (index: number) => {
-      // if data is currently being loaded, do nothing
-      if (isLoadingDataRef.current) return;
+        setLoadingMore(false);
+        listenForScrollRef.current = true;
+      };
 
-      // calculate the start row based on the current index
-      const startRow = index + 1;
+      const reloadAfterPointerUp = (): void => {
+        emblaApi.off("pointerUp", reloadAfterPointerUp);
+        reloadEmbla();
+      };
 
-      // HACK: Update the selected item
-      // this helps move the selected items along for larger displays
-      // prevents large gaps around the selected item
-      if (cols > 2 && index == 1) {
-        //console.warn("SKIPPING... for larger displays: ", index + 1);
-        setSelectedItem(index + 1);
-        return;
-      }
+      const engine = emblaApi.internalEngine();
 
-      // if there's enough data in the cache, skip fetching more data
-      if (startRow + cols <= cache.length) {
-        // if the index is not close to the end, skip fetching more rows
-        return;
-      }
-
-      // if we've reached this point, we need to fetch more data
-      isLoadingDataRef.current = true;
-
-      // fetch more data
-      const nextStartRow = Math.round((startRow + 1) / cols) * cols + 1;
-      const newData = await loadData?.(nextStartRow);
-
-      // filter out any items that are already in the cacheRef.current.items
-      const local = cache;
-      const newItems = newData?.items.filter(
-        (newItem) => !local.find((item) => item.id === newItem.id),
-      );
-
-      // set isLoadingData to false now that the data has been loaded
-      isLoadingDataRef.current = false;
-
-      // set the cacheRef.current.items to the new data
-      setCache([...cache, ...newItems]);
-
-      // HACK: this helps move the carousel along with the new data for larger displays
-      if (newItems.length > 0 && cols > 2) {
-        setSelectedItem(index);
+      if (hasMoreToLoadRef.current && engine.dragHandler.pointerDown()) {
+        const boundsActive = engine.limit.reachedMax(engine.target.get());
+        engine.scrollBounds.toggleActive(boundsActive);
+        emblaApi.on("pointerUp", reloadAfterPointerUp);
+      } else {
+        reloadEmbla();
       }
     },
-    [loadData, isLoadingDataRef, cache, setCache, setSelectedItem, cols],
+  });
+  const { selectedSnap, snapCount } = useSelectedSnapDisplay(emblaApi);
+
+  const {
+    prevBtnDisabled,
+    nextBtnDisabled,
+    onPrevButtonClick,
+    onNextButtonClick,
+  } = usePrevNextButtons(emblaApi);
+
+  const onScroll = useCallback(
+    (emblaApi: EmblaCarouselType) => {
+      if (!listenForScrollRef.current) return;
+
+      setLoadingMore((loadingMore) => {
+        const lastSlide = emblaApi.slideNodes().length - 1;
+        const lastSlideInView = emblaApi.slidesInView().includes(lastSlide);
+        let loadMore = !loadingMore && lastSlideInView;
+
+        // console.warn(
+        //   `onScroll... lastSlide: ${lastSlide} lastSlideInView: ${lastSlideInView} loadMore: ${loadMore}`,
+        // );
+        if (emblaApi.slideNodes().length < PAGE_SIZE_MINIMUM) {
+          loadMore = false;
+          setHasMoreToLoad(false);
+        }
+
+        if (loadMore) {
+          listenForScrollRef.current = false;
+
+          console.warn(
+            `Loading more data... ${lastSlide} lastSlideInView: ${lastSlideInView} nextStartRow: ${
+              emblaApi.slideNodes().length + 1
+            }`,
+          );
+
+          loadData(emblaApi.slideNodes().length + 1).then((data) => {
+            if (data.items.length == 0) {
+              setHasMoreToLoad(false);
+              emblaApi.off("scroll", scrollListenerRef.current);
+            }
+
+            setSlides((prevSlides) => [...prevSlides, ...data.items]);
+          });
+        }
+
+        return loadingMore || lastSlideInView;
+      });
+    },
+    [loadData],
   );
 
+  const addScrollListener = useCallback(
+    (emblaApi: EmblaCarouselType) => {
+      scrollListenerRef.current = () => onScroll(emblaApi);
+      emblaApi.on("scroll", scrollListenerRef.current);
+    },
+    [onScroll],
+  );
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    addScrollListener(emblaApi);
+
+    const onResize = () => emblaApi.reInit();
+    window.addEventListener("resize", onResize);
+    emblaApi.on("destroy", () =>
+      window.removeEventListener("resize", onResize),
+    );
+  }, [emblaApi, addScrollListener]);
+
+  useEffect(() => {
+    hasMoreToLoadRef.current = hasMoreToLoad;
+  }, [hasMoreToLoad]);
+
   return (
-    <div key={`StoreItemCategoriesCarousel_${id}`}>
-      {(data?.items?.length ?? 0) > 0 && (
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-row">
-            <div className="flex flex-grow">
-              <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-black md:max-w-[800px]">
-                {title}
-              </div>
+    <>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-row">
+          <div className="flex flex-grow">
+            <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-black md:max-w-[800px]">
+              {title}
             </div>
-            {viewAllUrl && (
-              <Link
-                href={viewAllUrl}
-                className="my-auto items-end text-sm text-gray-dark"
-              >
-                View all
-              </Link>
-            )}
           </div>
-
-          {slidePercentage <= 0 && (
-            <div className="flex items-center justify-center">
-              <LoadingSkeleton />
-            </div>
-          )}
-
-          {slidePercentage > 0 && (
-            <Carousel
-              centerMode
-              centerSlidePercentage={slidePercentage}
-              swipeable={true}
-              swipeScrollTolerance={5}
-              showStatus={false}
-              showIndicators={false}
-              showThumbs={false}
-              onChange={onChange}
-              selectedItem={selectedItem}
-              renderArrowPrev={(
-                onClickHandler: () => void,
-                hasPrev: boolean,
-                label: string,
-              ) =>
-                hasPrev && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClickHandler();
-                    }}
-                    title={label}
-                    className="-translate-y-1/2x btn absolute left-0 top-1/2 z-10 rounded-full border-0 bg-purple px-3 hover:border-0 hover:bg-purple hover:brightness-110"
-                  >
-                    <IoIosArrowBack className="h-6 w-6 text-white" />
-                  </button>
-                )
-              }
-              renderArrowNext={(
-                onClickHandler: () => void,
-                hasNext: boolean,
-                label: string,
-              ) =>
-                hasNext &&
-                !(cache.length < cols) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClickHandler();
-                    }}
-                    title={label}
-                    className="-translate-y-1/2x btn absolute right-0 top-1/2 z-10 rounded-full border-0 bg-purple px-3 hover:border-0 hover:bg-purple hover:brightness-110"
-                  >
-                    <IoIosArrowForward className="h-6 w-6 text-white" />
-                  </button>
-                )
-              }
+          {viewAllUrl && (
+            <Link
+              href={viewAllUrl}
+              className="my-auto items-end text-sm text-gray-dark"
             >
-              {cache.map((item: any, index: number) => (
-                <div
-                  className="flex items-center justify-center"
-                  key={`${id}_${item.id}_${index}`}
-                >
+              View all
+            </Link>
+          )}
+        </div>
+        {/* {slidePercentage <= 0 && (
+        <div className="flex items-center justify-center">
+          <LoadingSkeleton />
+        </div>
+      )} */}
+      </div>
+
+      <div className="embla h-60x">
+        <div className="embla__viewport" ref={emblaRef}>
+          <div className="embla__container max-3">
+            {slides?.map((item, index) => (
+              <div className="embla__slide" key={index}>
+                <div className="embla__slide__number">
                   <ItemCardComponent
-                    key={`storeCategoryItem_${index}`}
-                    id={`storeCategoryItem__${index}`}
+                    key={`storeCategoryItem_${id}_${index}`}
+                    id={`storeCategoryItem_${id}_${index}`}
                     company={item.name}
                     name={item.name}
                     imageURL={item.imageURL}
@@ -186,11 +201,41 @@ export const StoreItemsCarousel: React.FC<{
                     onClick={() => onClick(item)}
                   />
                 </div>
-              ))}
-            </Carousel>
-          )}
+              </div>
+            ))}
+            {hasMoreToLoad && (
+              <div
+                className={"embla-infinite-scroll".concat(
+                  loadingMore ? " embla-infinite-scroll--loading-more" : "",
+                )}
+              >
+                <span className="embla-infinite-scroll__spinner" />
+              </div>
+            )}
+          </div>
         </div>
-      )}
-    </div>
+
+        {snapCount > 1 && selectedSnap < snapCount && (
+          <div className="flex place-content-end gap-2">
+            <SelectedSnapDisplay
+              selectedSnap={selectedSnap}
+              snapCount={snapCount}
+            />
+
+            <PrevButton
+              onClick={onPrevButtonClick}
+              disabled={prevBtnDisabled}
+            />
+
+            <NextButton
+              onClick={onNextButtonClick}
+              disabled={nextBtnDisabled}
+            />
+          </div>
+        )}
+      </div>
+    </>
   );
 };
+
+export default StoreItemsCarousel;

@@ -1,203 +1,230 @@
-import { OpportunityPublicSmallComponent } from "./OpportunityPublicSmall";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import type { EngineType } from "embla-carousel/components/Engine";
+import type { EmblaCarouselType, EmblaOptionsType } from "embla-carousel";
+import useEmblaCarousel from "embla-carousel-react";
 import type { OpportunitySearchResultsInfo } from "~/api/models/opportunity";
 import Link from "next/link";
-import { Carousel } from "react-responsive-carousel";
-import "react-responsive-carousel/lib/styles/carousel.min.css";
-import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { screenWidthAtom } from "~/lib/store";
-import { useAtomValue } from "jotai";
-import { VIEWPORT_SIZE } from "~/lib/constants";
-import { LoadingSkeleton } from "../Status/LoadingSkeleton";
+import { PAGE_SIZE_MINIMUM } from "~/lib/constants";
+import { OpportunityPublicSmallComponent } from "./OpportunityPublicSmall";
+import {
+  SelectedSnapDisplay,
+  useSelectedSnapDisplay,
+} from "../Carousel/SelectedSnapDisplay";
+import {
+  usePrevNextButtons,
+  PrevButton,
+  NextButton,
+} from "../Carousel/ArrowButtons";
 
-export const OpportunitiesCarousel: React.FC<{
+const OPTIONS: EmblaOptionsType = {
+  dragFree: false,
+  containScroll: "keepSnaps",
+  watchSlides: true,
+  watchResize: true,
+};
+
+const OpportunitiesCarousel: React.FC<{
   [id: string]: any;
   title?: string;
-  data: OpportunitySearchResultsInfo;
   viewAllUrl?: string;
   loadData: (startRow: number) => Promise<OpportunitySearchResultsInfo>;
-}> = ({ id, title, data, viewAllUrl, loadData }) => {
-  const screenWidth = useAtomValue(screenWidthAtom);
-  const [cache, setCache] = useState(data?.items);
-  const isLoadingDataRef = useRef(false);
-  const [selectedItem, setSelectedItem] = useState(0);
-  const [cols, setCols] = useState(1);
+  data: OpportunitySearchResultsInfo;
+  options?: EmblaOptionsType;
+}> = (props) => {
+  const { id, title, viewAllUrl, loadData, data: propData } = props;
+  const scrollListenerRef = useRef<() => void>(() => undefined);
+  const listenForScrollRef = useRef(true);
+  const hasMoreToLoadRef = useRef(true);
+  const [slides, setSlides] = useState(propData.items);
+  const [hasMoreToLoad, setHasMoreToLoad] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const getSlidePercentage = (screenWidth: number) => {
-    if (screenWidth < VIEWPORT_SIZE.SM) {
-      return 100; // 1 column
-    } else if (screenWidth < VIEWPORT_SIZE.LG) {
-      return 50; // 2 columns
-    } else if (screenWidth < VIEWPORT_SIZE.XL) {
-      return 33; // 3 columns
-    } else if (screenWidth < VIEWPORT_SIZE["2XL"]) {
-      return 25; // 4 columns
-    } else {
-      return 25;
-    }
-  };
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    ...OPTIONS,
+    watchSlides: (emblaApi) => {
+      const reloadEmbla = (): void => {
+        const oldEngine = emblaApi.internalEngine();
 
-  // calculate the slider percentage based on the viewport size
-  // i.e 33% = cols 3, 25% = cols 4 etc
-  const [slidePercentage, setSlidePercentage] = useState(
-    getSlidePercentage(screenWidth),
+        emblaApi.reInit();
+        const newEngine = emblaApi.internalEngine();
+        const copyEngineModules: (keyof EngineType)[] = [
+          "location",
+          "target",
+          "scrollBody",
+        ];
+        copyEngineModules.forEach((engineModule) => {
+          Object.assign(newEngine[engineModule], oldEngine[engineModule]);
+        });
+
+        newEngine.translate.to(oldEngine.location.get());
+        const { index } = newEngine.scrollTarget.byDistance(0, false);
+        newEngine.index.set(index);
+        newEngine.animation.start();
+
+        setLoadingMore(false);
+        listenForScrollRef.current = true;
+      };
+
+      const reloadAfterPointerUp = (): void => {
+        emblaApi.off("pointerUp", reloadAfterPointerUp);
+        reloadEmbla();
+      };
+
+      const engine = emblaApi.internalEngine();
+
+      if (hasMoreToLoadRef.current && engine.dragHandler.pointerDown()) {
+        const boundsActive = engine.limit.reachedMax(engine.target.get());
+        engine.scrollBounds.toggleActive(boundsActive);
+        emblaApi.on("pointerUp", reloadAfterPointerUp);
+      } else {
+        reloadEmbla();
+      }
+    },
+  });
+  const { selectedSnap, snapCount } = useSelectedSnapDisplay(emblaApi);
+
+  const {
+    prevBtnDisabled,
+    nextBtnDisabled,
+    onPrevButtonClick,
+    onNextButtonClick,
+  } = usePrevNextButtons(emblaApi);
+
+  const onScroll = useCallback(
+    (emblaApi: EmblaCarouselType) => {
+      if (!listenForScrollRef.current) return;
+
+      setLoadingMore((loadingMore) => {
+        const lastSlide = emblaApi.slideNodes().length - 1;
+        const lastSlideInView = emblaApi.slidesInView().includes(lastSlide);
+        let loadMore = !loadingMore && lastSlideInView;
+
+        // console.warn(
+        //   `onScroll... lastSlide: ${lastSlide} lastSlideInView: ${lastSlideInView} loadMore: ${loadMore}`,
+        // );
+        if (emblaApi.slideNodes().length < PAGE_SIZE_MINIMUM) {
+          loadMore = false;
+        }
+
+        if (loadMore) {
+          listenForScrollRef.current = false;
+
+          console.warn(
+            `Loading more data... ${lastSlide} lastSlideInView: ${lastSlideInView} nextStartRow: ${
+              emblaApi.slideNodes().length + 1
+            }`,
+          );
+
+          loadData(emblaApi.slideNodes().length + 1).then((data) => {
+            // debugger;
+            if (data.items.length == 0) {
+              setHasMoreToLoad(false);
+              emblaApi.off("scroll", scrollListenerRef.current);
+            }
+
+            setSlides((prevSlides) => [...prevSlides, ...data.items]);
+          });
+        }
+
+        return loadingMore || lastSlideInView;
+      });
+    },
+    [loadData],
+  );
+
+  const addScrollListener = useCallback(
+    (emblaApi: EmblaCarouselType) => {
+      scrollListenerRef.current = () => onScroll(emblaApi);
+      emblaApi.on("scroll", scrollListenerRef.current);
+    },
+    [onScroll],
   );
 
   useEffect(() => {
-    // update the slide percentage based on the viewport size
-    setSlidePercentage(getSlidePercentage(screenWidth));
+    if (!emblaApi) return;
+    addScrollListener(emblaApi);
 
-    // calculate the number of columns based on the viewport size
-    setCols(Math.round(100 / slidePercentage));
+    const onResize = () => emblaApi.reInit();
+    window.addEventListener("resize", onResize);
+    emblaApi.on("destroy", () =>
+      window.removeEventListener("resize", onResize),
+    );
+  }, [emblaApi, addScrollListener]);
 
-    // reset to first item when resizing (UX fix with changing of carousel column)
-    setSelectedItem(0);
-  }, [screenWidth, setSelectedItem, setCols, slidePercentage]);
-
-  const onChange = useCallback(
-    async (index: number) => {
-      // if data is currently being loaded, do nothing
-      if (isLoadingDataRef.current) return;
-
-      // calculate the start row based on the current index
-      const startRow = index + 1;
-
-      // console.warn(
-      //   `index: ${index}, startRow: ${startRow}, nextStartRow: ${nextStartRow} cols: ${cols}`,
-      // );
-
-      // HACK: Update the selected item
-      // this helps move the selected items along for larger displays
-      // prevents large gaps around the selected item
-      if (cols > 2 && index == 1) {
-        //console.warn("SKIPPING... for larger displays: ", index + 1);
-        setSelectedItem(index + 1);
-        return;
-      }
-
-      // if there's enough data in the cache, skip fetching more data
-      if (startRow + cols <= cache.length) {
-        //console.warn("SKIPPING... enough data");
-        // if the index is not close to the end, skip fetching more rows
-        return;
-      }
-
-      // if we've reached this point, we need to fetch more data
-      isLoadingDataRef.current = true;
-
-      // fetch more data
-      const nextStartRow = Math.round((startRow + 1) / cols) * cols + 1;
-      const newData = await loadData?.(nextStartRow);
-
-      // filter out any items that are already in the cacheRef.current.items
-      const local = cache;
-      const newItems = newData?.items.filter(
-        (newItem) => !local.find((item) => item.id === newItem.id),
-      );
-
-      // set isLoadingData to false now that the data has been loaded
-      isLoadingDataRef.current = false;
-
-      // set the cacheRef.current.items to the new data
-      setCache([...cache, ...newItems]);
-
-      // HACK: this helps move the carousel along with the new data for larger displays
-      if (newItems.length > 0 && cols > 2) {
-        setSelectedItem(index);
-      }
-    },
-    [loadData, isLoadingDataRef, cache, setCache, setSelectedItem, cols],
-  );
+  useEffect(() => {
+    hasMoreToLoadRef.current = hasMoreToLoad;
+  }, [hasMoreToLoad]);
 
   return (
-    <div key={`OpportunitiesCarousel${id}`}>
-      {(data?.items?.length ?? 0) > 0 && (
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-row">
-            <div className="flex flex-grow">
-              <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-black md:max-w-[800px]">
-                {title}
-              </div>
+    <div className="mb-4">
+      <div className="mb-2 flex flex-col gap-6">
+        <div className="flex flex-row">
+          <div className="flex flex-grow">
+            <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-black md:max-w-[800px]">
+              {title}
             </div>
-            {viewAllUrl && (
-              <Link
-                href={viewAllUrl}
-                className="my-auto items-end text-sm text-gray-dark"
-              >
-                View all
-              </Link>
-            )}
           </div>
-
-          {slidePercentage <= 0 && (
-            <div className="flex items-center justify-center">
-              <LoadingSkeleton />
-            </div>
-          )}
-
-          {slidePercentage > 0 && (
-            <Carousel
-              centerMode
-              centerSlidePercentage={slidePercentage}
-              swipeable={true}
-              swipeScrollTolerance={5}
-              showStatus={false}
-              showIndicators={false}
-              showThumbs={false}
-              onChange={onChange}
-              selectedItem={selectedItem}
-              renderArrowPrev={(
-                onClickHandler: () => void,
-                hasPrev: boolean,
-                label: string,
-              ) =>
-                hasPrev && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClickHandler();
-                    }}
-                    title={label}
-                    className="-translate-y-1/2x btn absolute left-0 top-1/2 z-10 rounded-full border-0 bg-purple px-3 hover:border-0 hover:bg-purple hover:brightness-110"
-                  >
-                    <IoIosArrowBack className="h-6 w-6 text-white" />
-                  </button>
-                )
-              }
-              renderArrowNext={(
-                onClickHandler: () => void,
-                hasNext: boolean,
-                label: string,
-              ) =>
-                hasNext && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClickHandler();
-                    }}
-                    title={label}
-                    className="-translate-y-1/2x btn absolute right-0 top-1/2 z-10 rounded-full border-0 bg-purple px-3 hover:border-0 hover:bg-purple hover:brightness-110"
-                  >
-                    <IoIosArrowForward className="h-6 w-6 text-white" />
-                  </button>
-                )
-              }
+          {viewAllUrl && (
+            <Link
+              href={viewAllUrl}
+              className="my-auto items-end text-sm text-gray-dark"
             >
-              {cache.map((item: any) => (
-                <div
-                  className="flex items-center justify-center"
-                  key={`${id}_${item.id}`}
-                >
+              View all
+            </Link>
+          )}
+        </div>
+        {/* {slidePercentage <= 0 && (
+        <div className="flex items-center justify-center">
+          <LoadingSkeleton />
+        </div>
+      )} */}
+      </div>
+
+      <div className="embla">
+        <div className="embla__viewport" ref={emblaRef}>
+          <div className="embla__container max-4">
+            {slides?.map((item, index) => (
+              <div className="embla__slide" key={index}>
+                <div className="embla__slide__number">
                   <OpportunityPublicSmallComponent
                     key={`${id}_${item.id}_component`}
                     data={item}
                   />
                 </div>
-              ))}
-            </Carousel>
-          )}
+              </div>
+            ))}
+            {hasMoreToLoad && (
+              <div
+                className={"embla-infinite-scroll".concat(
+                  loadingMore ? " embla-infinite-scroll--loading-more" : "",
+                )}
+              >
+                <span className="embla-infinite-scroll__spinner" />
+              </div>
+            )}
+          </div>
         </div>
-      )}
+
+        {snapCount > 1 && selectedSnap < snapCount && (
+          <div className="flex place-content-end gap-2">
+            <SelectedSnapDisplay
+              selectedSnap={selectedSnap}
+              snapCount={propData.totalCount ?? snapCount}
+            />
+
+            <PrevButton
+              onClick={onPrevButtonClick}
+              disabled={prevBtnDisabled}
+            />
+            <NextButton
+              onClick={onNextButtonClick}
+              disabled={nextBtnDisabled}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
+
+export default OpportunitiesCarousel;

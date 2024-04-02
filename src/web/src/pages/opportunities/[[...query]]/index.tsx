@@ -54,7 +54,7 @@ import { Loading } from "~/components/Status/Loading";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { useSession } from "next-auth/react";
 import { OpportunityFilterOptions } from "~/api/models/opportunity";
-import OpportunitiesCarousel2 from "~/components/Opportunity/OpportunitiesCarousel2";
+import OpportunitiesCarousel from "~/components/Opportunity/OpportunitiesCarousel";
 
 // 👇 SSG
 // This page is statically generated at build time on server-side
@@ -858,7 +858,7 @@ const Opportunities: NextPageWithLayout<{
           <div className="-mt-4 gap-6 px-2 pb-4 md:p-0 md:pb-0">
             {/* TRENDING */}
             {(opportunities_trending?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel2
+              <OpportunitiesCarousel
                 id={`opportunities_trending`}
                 title="Trending 🔥"
                 data={opportunities_trending}
@@ -876,7 +876,7 @@ const Opportunities: NextPageWithLayout<{
 
             {/* LEARNING COURSES */}
             {(opportunities_learning?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel2
+              <OpportunitiesCarousel
                 id={`opportunities_learning`}
                 title="Learning Courses 📚"
                 data={opportunities_learning}
@@ -894,7 +894,7 @@ const Opportunities: NextPageWithLayout<{
 
             {/* IMPACT TASKS */}
             {(opportunities_tasks?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel2
+              <OpportunitiesCarousel
                 id={`opportunities_tasks`}
                 title="Impact Tasks ⚡"
                 data={opportunities_tasks}
@@ -912,7 +912,7 @@ const Opportunities: NextPageWithLayout<{
 
             {/* ALL OPPORTUNITIES */}
             {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel2
+              <OpportunitiesCarousel
                 id={`opportunities_allOpportunities`}
                 title="All Opportunities"
                 data={opportunities_allOpportunities}
