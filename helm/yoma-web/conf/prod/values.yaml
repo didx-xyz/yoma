@@ -13,8 +13,17 @@ ingress:
   internal:
     annotations:
       nginx.ingress.kubernetes.io/proxy-buffer-size: 32k
+      nginx.ingress.kubernetes.io/configuration-snippet: |-
+        if ($host = 'app.yoma.africa') {
+          rewrite ^ https://app.yoma.world$request_uri permanent;
+        }
+        if ($host = 'partner.yoma.world') {
+          rewrite ^ https://app.yoma.world$request_uri permanent;
+        }
     rules:
       - host: app.yoma.world
+      - host: partner.yoma.world
+      - host: app.yoma.africa
   external:
     enabled: true
     annotations:
