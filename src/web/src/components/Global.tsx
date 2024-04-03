@@ -465,13 +465,10 @@ export const Global: React.FC = () => {
               moment to review and update your profile.
             </p>
 
-            <div className="max-w-md">
+            <div className="max-w-[300px] md:max-w-md">
               <UserProfileForm
                 userProfile={userProfile}
                 onSubmit={() => {
-                  setUpdateProfileDialogVisible(false);
-                }}
-                onCancel={() => {
                   setUpdateProfileDialogVisible(false);
                 }}
                 filterOptions={[

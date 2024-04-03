@@ -467,7 +467,7 @@ export const UserProfileForm: React.FC<{
         )}
 
         {/* BUTTONS */}
-        <div className="mt-4 flex flex-row items-center justify-end gap-4">
+        <div className="mt-4 flex flex-row items-center justify-center gap-4">
           {onCancel && (
             <button
               type="button"
