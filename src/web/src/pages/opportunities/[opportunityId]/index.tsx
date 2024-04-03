@@ -473,7 +473,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 onRequestClose={() => {
                   setGotoOpportunityDialogVisible(false);
                 }}
-                className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[480px] md:w-[600px] md:rounded-3xl`}
+                className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[440px] md:w-[600px] md:rounded-3xl`}
                 portalClassName={"fixed z-40"}
                 overlayClassName="fixed inset-0 bg-overlay"
               >
@@ -490,7 +490,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       <IoMdClose className="h-6 w-6"></IoMdClose>
                     </button>
                   </div>
-                  <div className="flex flex-col items-center justify-center gap-4 p-2 md:p-0">
+                  <div className="flex flex-col items-center justify-center gap-4 p-4 md:p-0">
                     <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
                       <Image
                         src={iconBell}
@@ -514,11 +514,11 @@ const OpportunityDetails: NextPageWithLayout<{
                       Be mindful of external sites&apos; privacy policy and keep
                       your data private.
                     </div>
-                    <div className="mt-4 flex flex-grow justify-center gap-4">
+                    <div className="mt-4 flex w-full flex-grow flex-col justify-center gap-4 md:flex-row">
                       <button
                         type="button"
                         className={
-                          "btn btn-outline rounded-full border-purple  bg-white normal-case text-purple hover:text-purple md:w-[250px]" +
+                          "btn btn-outline rounded-full border-purple bg-white normal-case text-purple hover:text-purple md:w-[250px]" +
                           `${
                             isOppSaved
                               ? " border-none bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow"
@@ -928,7 +928,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                   {verificationStatus &&
                                     verificationStatus.status ==
                                       "Completed" && (
-                                      <div className="md:text-md flex items-center justify-center rounded-full border border-purple bg-white px-4 text-center text-xs font-bold text-purple">
+                                      <div className="md:text-md flex h-10 items-center justify-center rounded-full border border-purple bg-white px-4 text-center text-sm font-bold text-purple">
                                         Completed
                                         <IoMdCheckmark
                                           strikethroughThickness={2}

@@ -7,16 +7,21 @@ export const SearchInputLarge: React.FC<{
   onSearch?: (query: string) => void;
   openFilter?: (filterFullWindowVisible: boolean) => void;
   maxWidth?: number;
-}> = ({ defaultValue, placeholder, onSearch, openFilter, maxWidth = 600 }) => {
+}> = ({
+  defaultValue,
+  placeholder,
+  onSearch,
+  openFilter,
+  maxWidth = 0, // The default maxWidth is set to 0, which means it will be auto
+}) => {
   const [searchInputValue, setSearchInputValue] = useState(defaultValue);
 
   const handleSubmit = useCallback(
     (e: React.SyntheticEvent) => {
-      e.preventDefault(); // prevent page refresh
+      e.preventDefault(); // Prevent page refresh
 
-      // trim whitespace
+      // Trim whitespace
       const searchValue = searchInputValue?.trim() ?? "";
-
       if (onSearch) onSearch(searchValue);
     },
     [searchInputValue, onSearch],
@@ -25,54 +30,56 @@ export const SearchInputLarge: React.FC<{
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchInputValue(e.target.value);
-      // submit
+      // Submit
       setTimeout(() => {
-        // trim whitespace
+        // Trim whitespace
         const searchValue = e.target.value?.trim() ?? "";
-
         if (onSearch) onSearch(searchValue);
       }, 1000);
     },
     [onSearch],
   );
 
-  // hack: reset searchInputValue when defaultValue changes
-  // the initialValue on the useState ain't working
   useEffect(() => {
     setSearchInputValue(defaultValue);
-  }, [defaultValue, setSearchInputValue]);
+  }, [defaultValue]);
+
+  // Convert maxWidth to a string with px for inline style
+  const maxWidthStyle = maxWidth == 0 ? "auto" : `${maxWidth}px`;
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="join my-4 overflow-hidden lg:my-0">
+    <form onSubmit={handleSubmit} className="flex w-full flex-grow">
+      <div className="join my-4 w-full overflow-hidden rounded-3xl lg:my-0">
         {openFilter && (
           <button
             type="button"
-            className="bg-theme btn join-item inline-flex rounded-l-full border-0 brightness-90 hover:brightness-95 lg:hidden"
+            className="bg-theme btn join-item inline-flex items-center justify-center rounded-l-full border-none p-3 text-white hover:brightness-95 lg:hidden"
             onClick={() => openFilter(true)}
           >
-            <IoMdOptions className="h-5 w-5 text-white" />
+            <IoMdOptions className="h-5 w-5" />
           </button>
         )}
-
         <input
           type="search"
           placeholder={placeholder ?? "Search..."}
-          className={`bg-theme w-full md:w-[${maxWidth}px] input-md py-5 text-sm text-white placeholder-white brightness-90 focus:outline-0 md:rounded-bl-full md:rounded-tl-full md:!pl-8 ${
-            openFilter ? "" : "rounded-bl-3xl rounded-tl-3xl"
+          className={`bg-theme input-md w-full rounded-bl-3xl rounded-tl-3xl text-sm text-white placeholder-white brightness-90 focus:outline-none md:!pl-8 lg:w-full ${
+            openFilter
+              ? "rounded-bl-none rounded-tl-none"
+              : "rounded-bl-3xl rounded-tl-3xl"
           }`}
+          style={{ maxWidth: maxWidthStyle }}
           value={searchInputValue ?? ""}
           onChange={handleChange}
           onFocus={(e) => (e.target.placeholder = "")}
           onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
         />
         <button
-          className="bg-theme btn btn-primary join-item inline-flex rounded-r-full border-0 brightness-90 hover:brightness-95"
-          onClick={() => onSearch}
+          className="bg-theme btn btn-primary join-item inline-flex items-center justify-center rounded-r-full border-none p-3 text-white hover:brightness-95"
+          type="submit"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="mr-1 h-6 w-6"
+            className="h-6 w-6"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -80,7 +87,7 @@ export const SearchInputLarge: React.FC<{
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth="2"
+              strokeWidth={2}
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
             />
           </svg>

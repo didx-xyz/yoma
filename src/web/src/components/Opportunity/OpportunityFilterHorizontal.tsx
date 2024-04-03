@@ -221,7 +221,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                         <Select
                           instanceId="types"
                           classNames={{
-                            control: () => "input input-xs h-fit !border-gray",
+                            control: () => "input input-xs h-fit !border-none",
                           }}
                           isMulti={true}
                           options={lookups_types.map((c) => ({
@@ -271,7 +271,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                         <Select
                           instanceId="countries"
                           classNames={{
-                            control: () => "input input-xs h-fit !border-gray",
+                            control: () => "input input-xs h-fit !border-none",
                           }}
                           isMulti={true}
                           options={lookups_countries.map((c) => ({
@@ -320,7 +320,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                         <Select
                           instanceId="languages"
                           classNames={{
-                            control: () => "input input-xs h-fit !border-gray",
+                            control: () => "input input-xs h-fit !border-none",
                           }}
                           isMulti={true}
                           options={lookups_languages.map((c) => ({
@@ -370,7 +370,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                         <Select
                           instanceId="organizations"
                           classNames={{
-                            control: () => "input input-xs h-fit !border-gray",
+                            control: () => "input input-xs h-fit !border-none",
                           }}
                           isMulti={true}
                           options={lookups_organisations.map((c) => ({
@@ -422,7 +422,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                         <Select
                           instanceId="commitmentIntervals"
                           classNames={{
-                            control: () => "input input-xs h-fit !border-gray",
+                            control: () => "input input-xs h-fit !border-none",
                           }}
                           isMulti={true}
                           options={lookups_commitmentIntervals.map((c) => ({
@@ -471,7 +471,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                         <Select
                           instanceId="zltoRewardRanges"
                           classNames={{
-                            control: () => "input input-xs h-fit !border-gray",
+                            control: () => "input input-xs h-fit !border-none",
                           }}
                           isMulti={true}
                           options={lookups_zltoRewardRanges.map((c) => ({
@@ -520,7 +520,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                         <Select
                           instanceId="publishedStates"
                           classNames={{
-                            control: () => "input input-xs h-fit !border-gray",
+                            control: () => "input input-xs h-fit !border-none",
                           }}
                           isMulti={true}
                           options={lookups_publishedStates}
@@ -564,7 +564,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                         <Select
                           instanceId="statuses"
                           classNames={{
-                            control: () => "input input-xs h-fit !border-gray",
+                            control: () => "input input-xs h-fit !border-none",
                           }}
                           isMulti={true}
                           options={lookups_statuses}

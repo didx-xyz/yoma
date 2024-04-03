@@ -6,15 +6,18 @@ export const Footer: React.FC = () => {
     <footer className="flex w-full place-items-center p-2 px-4 align-middle">
       <div className="flex-grow md:pl-4">
         {/* LINKS */}
-        <div className="grid w-full grid-cols-3 text-xs md:flex md:gap-8 md:text-sm">
+        <div className="grid w-full grid-cols-3 gap-1 text-xs md:flex md:gap-8 md:text-sm">
           <div className="col-span-3 md:col-span-1">
             © 2023 Yoma. All Rights Reserved
           </div>
-          <Link className="text-green hover:underline" href="/terms">
+          <Link
+            className="col-span-3 text-green hover:underline md:col-span-1"
+            href="/terms"
+          >
             Terms and Conditions
           </Link>
           <Link
-            className="text-green hover:underline"
+            className="col-span-3 text-green hover:underline md:col-span-1"
             href="mailto:help@yoma.world"
           >
             help@yoma.world

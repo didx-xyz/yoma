@@ -262,8 +262,10 @@ const MyCredentials: NextPageWithLayout<{
               {/* GRID */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {userProfile?.skills.map((item, index) => (
-                  <div
+                  <Link
                     key={`${item.id}_${index}`}
+                    href={item?.infoURL ? (item?.infoURL as any) : ""}
+                    target="_blank"
                     className="flex h-[150px] flex-col rounded-lg bg-white p-4 shadow-custom"
                     // onClick={() => handleOnClickCredential(item)}
                   >
@@ -276,14 +278,14 @@ const MyCredentials: NextPageWithLayout<{
                           {/* <p className="max-h-[80px] overflow-hidden text-ellipsis text-sm font-bold">
                             Updated: ?
                           </p> */}
-                          {item.infoURL && (
+                          {/* {item.infoURL && (
                             <Link
                               href={item.infoURL}
                               className="max-h-[80px] overflow-hidden text-ellipsis text-sm font-bold"
                             >
                               {item.infoURL}
                             </Link>
-                          )}
+                          )} */}
                         </div>
                       </div>
 
@@ -292,7 +294,7 @@ const MyCredentials: NextPageWithLayout<{
                         {item.organizations.length > 1 ? "s" : ""}
                       </div>
 
-                      <div className="flex flex-row items-start overflow-visible">
+                      <div className="flex flex-row items-start overflow-hidden">
                         {item.organizations.map((org, index) => (
                           <div
                             className="-mr-4 flex w-fit items-center justify-center overflow-visible rounded-full bg-white"
@@ -322,7 +324,7 @@ const MyCredentials: NextPageWithLayout<{
                           Verified
                         </div>
                       </div> */}
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>

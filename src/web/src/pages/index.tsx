@@ -22,7 +22,7 @@ import imageLogoWhatsapp from "public/images/home/logo-whatsapp.png";
 import imageLogoAtingi from "public/images/home/logo-atingi.png";
 import imageLogoUCT from "public/images/home/logo-uct.png";
 import imageLogoCartedo from "public/images/home/logo-cartedo.png";
-import imageImpact from "public/images/home/image-impact.png";
+import iconImpact from "public/images/home/icon-impact.png";
 import imageThrive from "public/images/home/image-thrive.png";
 import imageLogoZltoBig from "public/images/home/logo-zlto.png";
 import iconGreenCheck from "public/images/home/icon-check.png";
@@ -36,14 +36,15 @@ import iconRlabs from "public/images/home/logo-rlabs.webp";
 import iconGiz from "public/images/home/logo-giz.png";
 import iconUnlimitedGeneration from "public/images/home/logo-generation-unlimited.png";
 import iconDidx from "public/images/home/logo-didx.png";
-import imageLogoDelta from "public/images/home/logo-delta.png";
-import imageLogoJobberman from "public/images/home/logo-jobberman.webp";
+import imageMtn from "public/images/home/icon-mtn.png";
+import imageVodacom from "public/images/home/icon-vodacom.png";
 import iconUnicef from "public/images/home/logo-unicef.png";
 import OpportunityCard from "~/components/Home/OpportunityCard";
 import { IoMdCheckmark } from "react-icons/io";
 import { SearchInputLarge } from "~/components/SearchInputLarge";
 import { useRouter } from "next/router";
 import stamps from "public/images/stamps.svg";
+import MarketplaceCard from "~/components/Home/MarketplaceCard";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient(config);
@@ -100,7 +101,7 @@ const Home: NextPageWithLayout<{
       <div className="z-10 mt-4 flex flex-col items-center justify-center overflow-hidden px-4 pt-8 lg:mt-20">
         <div className="grid grid-cols-1 gap-6 md:max-w-5xl lg:grid-cols-2">
           {/* LEFT: HEADERS AND TEXT */}
-          <div className="flex max-w-lg flex-col gap-2 pt-8 text-white md:py-8">
+          <div className="flex flex-col gap-2 overflow-hidden pt-8 text-white md:py-8">
             <h6 className="text-xs uppercase tracking-widest">
               Welcome to Yoma
             </h6>
@@ -113,11 +114,11 @@ const Home: NextPageWithLayout<{
               the loop with what&apos;s happening in the working world.
             </p>
             <div className="mb-4 md:my-4">
-              <div className="flex !w-full flex-row justify-center !px-0 md:justify-start">
+              <div className="flex w-full flex-row justify-start">
                 <SearchInputLarge
                   onSearch={onSearchInputSubmit}
                   placeholder="Explore..."
-                  maxWidth={300}
+                  maxWidth={0}
                 />
               </div>
             </div>
@@ -231,25 +232,27 @@ const Home: NextPageWithLayout<{
           </div>
 
           {/* IMPACT */}
-          <div className="rounded-xl shadow-lg">
-            <div className="relative mx-auto max-w-[380px] overflow-hidden rounded-xl bg-white p-4 shadow-lg">
-              <div className="absolute inset-0">
+          <div className="mx-auto max-w-[380px] rounded-xl bg-white p-4 shadow-lg">
+            <div className="">
+              <div className="-mt-[2rem] flex items-center justify-center">
                 <Image
-                  src={imageImpact}
-                  layout="fill"
-                  objectFit="cover"
-                  alt="Background Image"
+                  src={iconImpact}
+                  alt="People sitting at table"
+                  width={130}
+                  height={130}
+                  sizes="100vw"
+                  className="drop-shadow-[0_16px_4px_rgba(0,0,0,0.16)]"
+                  style={{ height: "130px", width: "130px" }}
                 />
               </div>
-              <div className="relative z-10 p-2 text-white">
-                <div className="mt-[7.8rem]">
-                  <h3 className="font-semibold">Impact</h3>
-                  <p className="mt-2 leading-7">
-                    Make a difference in your community, and build your profile
-                    by participating in our impact tasks.
-                  </p>
-                </div>
-              </div>
+            </div>
+
+            <div className="z-10 mt-[26px] p-2">
+              <h3 className="font-semibold">Impact</h3>
+              <p className="mt-2 leading-7 text-gray-dark">
+                Make a difference in your community, and build your profile by
+                participating in our impact tasks.
+              </p>
             </div>
           </div>
 
@@ -451,8 +454,8 @@ const Home: NextPageWithLayout<{
         </div>
 
         {/* HOW DO I EARN REWARDS? */}
-        <div className="mt-10 flex w-full max-w-5xl flex-col gap-10 py-8 lg:flex-row lg:pb-20">
-          <div className="flex flex-col text-center md:mx-auto md:max-w-lg md:pb-8 lg:max-w-[500px] lg:text-left">
+        <div className="mt-16 flex w-full max-w-5xl flex-col gap-10 py-8 lg:flex-row lg:pb-12">
+          <div className="flex flex-col text-center md:max-w-lg md:pb-8 lg:max-w-[500px] lg:text-left">
             <div className="flex flex-col gap-4">
               <h2 className="text-2xl font-semibold text-black">
                 How do I earn rewards?
@@ -490,7 +493,7 @@ const Home: NextPageWithLayout<{
             <div className="flex items-center justify-center">
               <Link
                 href="/marketplace"
-                className="btn mt-8 w-[260px] rounded-xl border-none bg-green normal-case text-white hover:bg-green hover:text-white hover:brightness-110"
+                className="btn mt-8 w-[260px] rounded-xl border-none bg-green normal-case text-white hover:bg-green hover:text-white hover:brightness-110 lg:mr-auto"
               >
                 Visit Marketplace
               </Link>
@@ -540,31 +543,23 @@ const Home: NextPageWithLayout<{
         </div>
 
         {/* GRAY BACKGROUND */}
-        <div className="mt-10 flex w-screen justify-center bg-gray bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat md:h-[560px] lg:mt-8 lg:h-[460px]">
+        <div className="mt-10 flex w-screen justify-center bg-gray bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat md:h-[560px] lg:mt-8 lg:h-[420px]">
           <div className="flex w-full flex-col md:max-w-lg lg:max-w-5xl lg:flex-row">
             <div className="flex flex-col items-center justify-center md:items-start lg:w-1/2">
-              <div className="relative -mt-14 mr-auto flex scale-[0.80] flex-col md:scale-100 lg:-mt-80">
-                <OpportunityCard
-                  title="General Manager (projects/contracting)"
-                  organisation="The Delta"
-                  description="Lagos, Nigeria"
-                  hours={3}
-                  ongoing={true}
-                  reward={11}
-                  students={1}
-                  image={imageLogoDelta}
+              <div className="relative -mt-14 mr-auto flex scale-[0.75] flex-col md:scale-100 lg:-mt-80">
+                <MarketplaceCard
+                  title="R100 airtime"
+                  organisation="Mtn"
+                  zlto={11}
+                  image={imageMtn}
                 />
 
-                <div className="absolute left-24 top-28 z-10">
-                  <OpportunityCard
-                    title="Assistant Restaurant Floor Manager"
-                    organisation="Jobberman"
-                    description="Lagos, Nigeria"
-                    hours={9}
-                    ongoing={true}
-                    reward={11}
-                    students={1}
-                    image={imageLogoJobberman}
+                <div className="absolute left-24 top-32 -z-10">
+                  <MarketplaceCard
+                    title="R50 airtime"
+                    organisation="Vodacom"
+                    zlto={11}
+                    image={imageVodacom}
                   />
                 </div>
               </div>
@@ -572,21 +567,21 @@ const Home: NextPageWithLayout<{
             <div className="mt-20 flex flex-col items-center justify-center px-6 py-8 md:mt-32 lg:-mt-10 lg:ml-[11.5rem] lg:py-0">
               <div className="flex flex-col items-center gap-4 lg:items-start">
                 <h2 className="text-2xl font-semibold text-black">
-                  Find job opportunities
+                  Yoma Marketplace
                 </h2>
                 <p className="text-center text-sm text-gray-dark lg:text-left">
-                  On Yoma, you can search through thousands of specially curated
-                  Job opportunities made available by our amazing partners.
+                  Unlock the power of your Zlto rewards in the Yoma marketplace!
+                  Treat yourself to selected products like airtime and data.
                 </p>
               </div>
 
-              {/* JOBS BUTTON */}
-              <button
-                className="btn mt-8 w-[260px] rounded-xl border-none bg-purple normal-case text-white hover:bg-purple hover:text-white hover:brightness-110 disabled:bg-purple disabled:text-white lg:mr-auto"
-                disabled={true}
+              {/* MARKETPLACE BUTTON */}
+              <Link
+                href="/marketplace"
+                className="btn mt-8 w-[260px] rounded-xl border-none bg-purple normal-case text-white hover:bg-purple hover:text-white hover:brightness-110  lg:mr-auto"
               >
-                Coming soon!
-              </button>
+                Start shopping
+              </Link>
             </div>
           </div>
         </div>
