@@ -20,6 +20,15 @@ ingress:
         if ($host = 'partner.yoma.world') {
           rewrite ^ https://app.yoma.world$request_uri permanent;
         }
+        if ($request_uri = '/register') {
+          rewrite ^ https://app.yoma.world permanent;
+        }
+        if ($request_uri = '/login') {
+          rewrite ^ https://app.yoma.world permanent;
+        }
+        if ($request_uri = '/employer/auth/login') {
+          rewrite ^ https://app.yoma.world permanent;
+        }
     rules:
       - host: app.yoma.world
       - host: partner.yoma.world
@@ -37,6 +46,15 @@ ingress:
         }
         if ($host = 'www.yoma.world') {
           rewrite ^ https://app.yoma.world$request_uri permanent;
+        }
+        if ($request_uri = '/register') {
+          rewrite ^ https://app.yoma.world permanent;
+        }
+        if ($request_uri = '/login') {
+          rewrite ^ https://app.yoma.world permanent;
+        }
+        if ($request_uri = '/employer/auth/login') {
+          rewrite ^ https://app.yoma.world permanent;
         }
     rules:
       - host: app.yoma.world
