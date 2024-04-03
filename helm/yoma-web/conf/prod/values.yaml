@@ -7,7 +7,7 @@ image:
 env:
   NEXT_PUBLIC_API_BASE_URL: https://api.yoma.world/api/v3
   NEXT_PUBLIC_ENVIRONMENT: production
-  MARKETPLACE_ENABLED: true
+  MARKETPLACE_ENABLED: false
 
 ingress:
   internal:
