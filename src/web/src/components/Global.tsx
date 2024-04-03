@@ -89,7 +89,7 @@ export const Global: React.FC = () => {
       firstName,
       surname,
       displayName,
-      phoneNumber,
+      //phoneNumber, ignore phone number for now
       countryId,
       educationId,
       genderId,
@@ -100,7 +100,7 @@ export const Global: React.FC = () => {
       !firstName ||
       !surname ||
       !displayName ||
-      !phoneNumber ||
+      //!phoneNumber || ignore phone number for now
       !countryId ||
       !educationId ||
       !genderId ||
@@ -154,6 +154,7 @@ export const Global: React.FC = () => {
     userProfile,
     setUserProfile,
     setOnboardingDialogVisible,
+    setUpdateProfileDialogVisible,
     isUserProfileCompleted,
   ]);
 
