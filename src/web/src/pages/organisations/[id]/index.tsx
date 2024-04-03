@@ -515,6 +515,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   lookups_categories={lookups_categories}
                   onSubmit={(e) => onSubmitFilter(e)}
                 />
+
                 {/* FILTER BADGES */}
                 <FilterBadges
                   searchFilter={searchFilter}

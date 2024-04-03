@@ -17,7 +17,6 @@ import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizont
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
-import { IoIosClose } from "react-icons/io";
 
 const ValueContainer = ({
   children,
@@ -152,36 +151,6 @@ export const OpportunityFilterHorizontal: React.FC<{
       }
 
       onSubmit(prev);
-    },
-    [opportunitySearchFilter, onSubmit],
-  );
-
-  // Function to handle removing an item from an array in the filter object
-  const removeFromArray = useCallback(
-    (key: keyof OpportunitySearchFilterCombined, item: string) => {
-      if (!opportunitySearchFilter || !onSubmit) return;
-      if (opportunitySearchFilter) {
-        const updatedFilter: any = {
-          ...opportunitySearchFilter,
-        };
-        updatedFilter[key] = updatedFilter[key]?.filter(
-          (val: any) => val !== item,
-        );
-        onSubmit(updatedFilter);
-      }
-    },
-    [opportunitySearchFilter, onSubmit],
-  );
-
-  // Function to handle removing a value from the filter object
-  const removeValue = useCallback(
-    (key: keyof OpportunitySearchFilterCombined) => {
-      if (!opportunitySearchFilter || !onSubmit) return;
-      if (opportunitySearchFilter) {
-        const updatedFilter = { ...opportunitySearchFilter };
-        updatedFilter[key] = null;
-        onSubmit(updatedFilter);
-      }
     },
     [opportunitySearchFilter, onSubmit],
   );
@@ -738,105 +707,6 @@ export const OpportunityFilterHorizontal: React.FC<{
                 </button>
               </div>
             )}
-          </div>
-
-          {/* FILTER BADGES */}
-          <div className="flex flex-wrap gap-1">
-            {opportunitySearchFilter &&
-              Object.entries(opportunitySearchFilter).map(([key, value]) =>
-                key !== "pageNumber" &&
-                key !== "pageSize" &&
-                value != null &&
-                (Array.isArray(value) ? value.length > 0 : true) ? (
-                  <div key={`filters_${key}`}>
-                    {Array.isArray(value) ? (
-                      value.map((item: string) => {
-                        if (key === "commitmentIntervals") {
-                          const interval = lookups_commitmentIntervals.find(
-                            (interval) => interval.id === item,
-                          );
-                          return (
-                            <span
-                              key={`filters_${key}_${item}`}
-                              className="badge max-w-[200px] bg-green-light p-2 text-green"
-                            >
-                              <p className="truncate text-center text-xs font-semibold">
-                                {interval ? interval.name : ""}
-                              </p>
-                              <button
-                                className="btn h-fit w-fit border-none p-0 shadow-none"
-                                onClick={() => removeFromArray(key, item)}
-                              >
-                                <IoIosClose className="-mr-2 h-6 w-6" />
-                              </button>
-                            </span>
-                          );
-                        } else if (key === "zltoRewardRanges") {
-                          const zltoRewardRange = lookups_zltoRewardRanges.find(
-                            (range) => range.id === item,
-                          );
-                          return (
-                            <span
-                              key={`filters_${key}_${item}`}
-                              className="badge max-w-[200px] bg-green-light p-2 text-green"
-                            >
-                              <p className="truncate text-center text-xs font-semibold">
-                                {zltoRewardRange ? zltoRewardRange.name : ""}
-                              </p>
-                              <button
-                                className="btn h-fit w-fit border-none p-0 shadow-none"
-                                onClick={() => removeFromArray(key, item)}
-                              >
-                                <IoIosClose className="-mr-2 h-6 w-6" />
-                              </button>
-                            </span>
-                          );
-                        } else {
-                          return (
-                            <span
-                              key={`filters_${key}_${item}`}
-                              className="badge max-w-[200px] bg-green-light p-2 text-green"
-                            >
-                              <p className="truncate text-center text-xs font-semibold">
-                                {item}
-                              </p>
-                              <button
-                                className="btn h-fit w-fit border-none p-0 shadow-none"
-                                onClick={() =>
-                                  removeFromArray(
-                                    key as keyof OpportunitySearchFilterCombined,
-                                    item,
-                                  )
-                                }
-                              >
-                                <IoIosClose className="-mr-2 h-6 w-6" />
-                              </button>
-                            </span>
-                          );
-                        }
-                      })
-                    ) : (
-                      <span className="badge max-w-[200px] bg-green-light p-2 text-green">
-                        <p className="truncate text-center text-xs font-semibold">
-                          {key === "startDate" || key === "endDate"
-                            ? new Date(value).toISOString().split("T")[0]
-                            : (value as string)}
-                        </p>
-                        <button
-                          className="btn h-fit w-fit border-none p-0 shadow-none"
-                          onClick={() =>
-                            removeValue(
-                              key as keyof OpportunitySearchFilterCombined,
-                            )
-                          }
-                        >
-                          <IoIosClose className="-mr-2 h-6 w-6" />
-                        </button>
-                      </span>
-                    )}
-                  </div>
-                ) : null,
-              )}
           </div>
         </div>
       </div>
