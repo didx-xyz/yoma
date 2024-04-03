@@ -256,21 +256,12 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         queryClient.getQueryData<StoreItemCategorySearchResults>(queryKey);
 
       if (cachedData) {
-        console.warn(
-          `fetchDataAndUpdateCache: queryKey=${queryKey} returning cached data: ${cachedData.items.length}`,
-        );
         return cachedData;
       }
 
       const data = await searchStoreItemCategories(filter);
 
       queryClient.setQueryData(queryKey, data);
-
-      console.warn(
-        `fetchDataAndUpdateCache: queryKey=${queryKey} filter=${JSON.stringify(
-          filter,
-        )} data: ${data.items.length}`,
-      );
 
       return data;
     },
@@ -279,13 +270,6 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
 
   const loadData = useCallback(
     (startRow: number, storeId: string) => {
-      // if (startRow >= (opportunities_trending?.totalCount ?? 0)) {
-      //   return {
-      //     items: [],
-      //     totalCount: 0,
-      //   };
-      // }
-
       const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
 
       return fetchDataAndUpdateCache([storeId, pageNumber.toString()], {

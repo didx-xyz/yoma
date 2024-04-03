@@ -1,7 +1,7 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getOrganisationById } from "~/api/services/organisations";
 import { getUserProfile, patchYoIDOnboarding } from "~/api/services/user";
 import {
@@ -31,6 +31,10 @@ import { trackGAEvent } from "~/lib/google-analytics";
 import { fetchClientEnv } from "~/lib/utils";
 import Link from "next/link";
 import stamps from "public/images/stamps.svg";
+import {
+  UserProfileFilterOptions,
+  UserProfileForm,
+} from "./User/UserProfileForm";
 
 // * GLOBAL APP CONCERNS
 // * needs to be done here as jotai atoms are not available in _app.tsx
@@ -54,6 +58,9 @@ export const Global: React.FC = () => {
 
   const [onboardingDialogVisible, setOnboardingDialogVisible] = useState(false);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
+  const [updateProfileDialogVisible, setUpdateProfileDialogVisible] =
+    useState(false);
+
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const [isYoIDOnboardingLoading, setIsYoIDOnboardingLoading] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
@@ -73,6 +80,37 @@ export const Global: React.FC = () => {
       console.error("session error: ", session?.error);
     }
   }, [session?.error, setLoginDialogVisible, setLoginMessage]);
+
+  // memo to check if user profile is completed i.e any form field is empty
+  const isUserProfileCompleted = useMemo(() => {
+    if (!userProfile) return null;
+
+    const {
+      firstName,
+      surname,
+      displayName,
+      //phoneNumber, ignore phone number for now
+      countryId,
+      educationId,
+      genderId,
+      dateOfBirth,
+    } = userProfile;
+
+    if (
+      !firstName ||
+      !surname ||
+      !displayName ||
+      //!phoneNumber || ignore phone number for now
+      !countryId ||
+      !educationId ||
+      !genderId ||
+      !dateOfBirth
+    ) {
+      return false;
+    }
+
+    return true;
+  }, [userProfile]);
 
   // 🔔 USER PROFILE
   useEffect(() => {
@@ -96,6 +134,9 @@ export const Global: React.FC = () => {
           // show onboarding dialog if not onboarded
           if (!res.yoIDOnboarded) {
             setOnboardingDialogVisible(true);
+          } else if (isUserProfileCompleted === false) {
+            // show dialog to update profile
+            setUpdateProfileDialogVisible(true);
           }
         })
         .catch((e) => {
@@ -108,7 +149,14 @@ export const Global: React.FC = () => {
           console.error(e);
         });
     }
-  }, [session, userProfile, setUserProfile, setOnboardingDialogVisible]);
+  }, [
+    session,
+    userProfile,
+    setUserProfile,
+    setOnboardingDialogVisible,
+    setUpdateProfileDialogVisible,
+    isUserProfileCompleted,
+  ]);
 
   // 🔔 VIEWPORT DETECTION
   // track the screen size for responsive elements
@@ -133,18 +181,6 @@ export const Global: React.FC = () => {
     // set the active navigation role view atom (based on roles)
     const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
     const isOrgAdmin = session?.user?.roles.includes(ROLE_ORG_ADMIN);
-    // const isAdminOfOrg = currentOrganisationIdValue ? session?.user?.adminsOf.includes(
-    //   currentOrganisationIdValue,
-    // ): ;
-
-    // admins see blue with admin view (admin and organisation pages)
-    // if (
-    //   isAdmin &&
-    //   router.asPath.startsWith("/admin") &&
-    //   router.asPath.startsWith("/organisations")
-    // ) {
-    //   setActiveNavigationRoleViewAtom(RoleView.Admin);
-    // }
 
     setActiveNavigationRoleViewAtom(RoleView.User);
 
@@ -191,23 +227,6 @@ export const Global: React.FC = () => {
         setCurrentOrganisationInactiveAtom(false);
       }
     }
-
-    // if (
-    //   isAdmin &&
-    //   router.asPath.startsWith("/admin") &&
-    //   !router.asPath.startsWith("/organisations")
-    // ) {
-    //   setActiveNavigationRoleViewAtom(RoleView.Admin);
-    // } else if (
-    //   isOrgAdmin &&
-    //   (router.route == "/organisations" ||
-    //     router.asPath.startsWith("/organisations/register"))
-    // ) {
-    //   setActiveNavigationRoleViewAtom(RoleView.User);
-    // } else
-    // } else {
-    //   setActiveNavigationRoleViewAtom(RoleView.User);
-    // }
   }, [
     router,
     session,
@@ -243,6 +262,12 @@ export const Global: React.FC = () => {
       // hide popup
       setOnboardingDialogVisible(false);
       setIsYoIDOnboardingLoading(false);
+
+      // check if profile completed, if not show update profile dialog
+      if (isUserProfileCompleted === false) {
+        // show dialog to update profile
+        setUpdateProfileDialogVisible(true);
+      }
     } catch (error) {
       console.error(error);
       setIsYoIDOnboardingLoading(false);
@@ -252,7 +277,7 @@ export const Global: React.FC = () => {
         icon: false,
       });
     }
-  }, [setUserProfile, setOnboardingDialogVisible]);
+  }, [setUserProfile, setOnboardingDialogVisible, isUserProfileCompleted]);
 
   const onLogin = useCallback(async () => {
     setIsButtonLoading(true);
@@ -352,6 +377,7 @@ export const Global: React.FC = () => {
           </div>
         </div>
       </ReactModal>
+
       {/* LOGIN AGAIN DIALOG */}
       <ReactModal
         isOpen={loginDialogVisible}
@@ -394,6 +420,71 @@ export const Global: React.FC = () => {
                 )}
                 <p className="text-white">Login</p>
               </button>
+            </div>
+          </div>
+        </div>
+      </ReactModal>
+
+      {/* UPDATE PROFILE DIALOG */}
+      <ReactModal
+        isOpen={updateProfileDialogVisible}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setUpdateProfileDialogVisible(false);
+        }}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden overflow-y-auto bg-white animate-in fade-in md:m-auto md:max-h-[700px] md:w-[500px] md:rounded-3xl`}
+        portalClassName={"fixed z-40"}
+        overlayClassName="fixed inset-0 bg-overlay"
+      >
+        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
+          <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
+          <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
+            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-purple-dark bg-white shadow-lg">
+              <Image
+                src={iconBell}
+                alt="Icon Bell"
+                width={28}
+                height={28}
+                sizes="100vw"
+                priority={true}
+                style={{ width: "28px", height: "28px" }}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <h5 className="text-sm font-semibold tracking-widest">
+                PROFILE UPDATE
+              </h5>
+              <h4 className="text-2xl font-semibold tracking-wide">
+                Update your YoID
+              </h4>
+            </div>
+
+            <p className="text-sm text-gray-dark">
+              We want to make sure your details are up to date. Please take a
+              moment to review and update your profile.
+            </p>
+
+            <div className="max-w-md">
+              <UserProfileForm
+                userProfile={userProfile}
+                onSubmit={() => {
+                  setUpdateProfileDialogVisible(false);
+                }}
+                onCancel={() => {
+                  setUpdateProfileDialogVisible(false);
+                }}
+                filterOptions={[
+                  UserProfileFilterOptions.FIRSTNAME,
+                  UserProfileFilterOptions.SURNAME,
+                  UserProfileFilterOptions.DISPLAYNAME,
+                  UserProfileFilterOptions.PHONENUMBER,
+                  UserProfileFilterOptions.COUNTRY,
+                  UserProfileFilterOptions.EDUCATION,
+                  UserProfileFilterOptions.GENDER,
+                  UserProfileFilterOptions.DATEOFBIRTH,
+                ]}
+              />
             </div>
           </div>
         </div>
