@@ -802,7 +802,7 @@ const Opportunities: NextPageWithLayout<{
             A learning opportunity is a self-paced online course that you can
             finish at your convenience.
           </h6>
-          <div className="md:items-center md:justify-center">
+          <div className="md:w-[600px] md:items-center md:justify-center">
             <div className="flex flex-row items-center justify-center gap-2 md:mt-4">
               <SearchInputLarge
                 onSearch={onSearchInputSubmit}

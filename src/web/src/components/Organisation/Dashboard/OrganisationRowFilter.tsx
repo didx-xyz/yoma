@@ -144,8 +144,8 @@ export const OrganisationRowFilter: React.FC<{
         className="flex flex-col gap-2"
       >
         <div className="flex flex-col gap-2 lg:flex-row">
-          <div className="flex flex-grow flex-row items-center gap-2">
-            <div className="mr-4 text-sm font-bold text-white">Filter by:</div>
+          <div className="flex flex-grow flex-col flex-wrap items-center gap-2 lg:flex-row">
+            <div className="mr-4 text-sm font-bold">Search by:</div>
             {/* OPPORTUNITIES */}
             <>
               <Controller
@@ -155,7 +155,8 @@ export const OrganisationRowFilter: React.FC<{
                   <Async
                     instanceId="opportunities"
                     classNames={{
-                      control: () => "input input-xs h-fit !border-gray",
+                      control: () =>
+                        "input input-xs h-fit !border-none w-[18rem] md:w-48",
                     }}
                     isMulti={true}
                     defaultOptions={true} // calls loadOpportunities for initial results when clicking on the dropdown
@@ -190,8 +191,10 @@ export const OrganisationRowFilter: React.FC<{
               )}
             </>
 
-            <div className="flex flex-grow flex-row gap-2">
-              <div className="flex items-center text-xs text-white">OR</div>
+            <div className="flex flex-grow flex-col gap-2 md:flex-row">
+              <div className="mx-auto flex items-center text-center text-xs font-bold md:mx-1 md:text-left">
+                or
+              </div>
 
               {/* CATEGORIES */}
               {lookups_categories && (
@@ -204,7 +207,8 @@ export const OrganisationRowFilter: React.FC<{
                       <Select
                         instanceId="categories"
                         classNames={{
-                          control: () => "input input-xs h-fit !border-gray",
+                          control: () =>
+                            "input input-xs h-fit !border-none w-[18rem] md:w-48",
                         }}
                         isMulti={true}
                         options={lookups_categories.map((c) => ({
@@ -246,7 +250,7 @@ export const OrganisationRowFilter: React.FC<{
             </div>
           </div>
 
-          <div className="flex gap-2 lg:justify-end">
+          <div className="mt-6 flex justify-center gap-2 lg:justify-end">
             {/* DATE START */}
             <>
               <Controller
@@ -254,7 +258,7 @@ export const OrganisationRowFilter: React.FC<{
                 name="startDate"
                 render={({ field: { onChange, value } }) => (
                   <DatePicker
-                    className="input input-bordered input-sm w-32 rounded border-gray !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none"
+                    className="input input-bordered input-sm w-[8.75rem] rounded border-none !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none md:w-32"
                     onChange={(date) => {
                       onChange(toISOStringForTimezone(date));
                       void handleSubmit(onSubmitHandler)();
@@ -281,7 +285,7 @@ export const OrganisationRowFilter: React.FC<{
                 name="endDate"
                 render={({ field: { onChange, value } }) => (
                   <DatePicker
-                    className="input input-bordered input-sm w-32 rounded border-gray !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none"
+                    className="input input-bordered input-sm w-[8.75rem] rounded border-none !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none md:w-32"
                     onChange={(date) => {
                       // change time to 1 second to midnight
                       if (date) date.setHours(23, 59, 59, 999);

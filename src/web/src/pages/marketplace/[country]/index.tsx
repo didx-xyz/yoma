@@ -413,7 +413,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   }
 
   return (
-    <div className="flex w-full max-w-7xl flex-col gap-4">
+    <div className="flex w-full flex-col gap-4 md:max-w-7xl">
       {/* LOGIN DIALOG */}
       <ReactModal
         isOpen={loginDialogVisible}
@@ -722,13 +722,13 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                       }}
                       key={`storeItems_${category_storeItems.category.id}_${index}_${index2}`}
                     >
-                      <>
+                      <span className="z-0">
                         <AvatarImage
                           icon={storeImage ?? null}
                           alt={`Store Image Logo ${index2}`}
                           size={40}
                         />
-                      </>
+                      </span>
                     </div>
                   ),
                 )}

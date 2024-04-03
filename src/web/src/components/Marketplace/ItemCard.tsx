@@ -39,19 +39,19 @@ const ItemCardComponent: React.FC<InputProps> = ({
   return (
     <Link
       key={id}
-      className="relative ml-2 flex aspect-square h-56 w-[265px] transform-gpu flex-col items-center gap-4 overflow-hidden rounded-lg bg-white p-4 shadow-sm transition-transform hover:scale-[1.01] hover:shadow-md md:w-[340px]"
+      className="relative ml-1 flex aspect-square h-56 w-full transform-gpu flex-col flex-wrap items-start justify-start gap-4 overflow-hidden rounded-lg bg-white p-4 shadow-sm transition-transform hover:scale-[1.01] hover:shadow-md md:ml-0 md:w-[340px]"
       href={href ?? "/"}
       onClick={onClick2}
       onAuxClick={onClick2}
     >
-      <div className="flex scale-[0.83] flex-col gap-2 md:scale-100">
+      <div className="flex w-full flex-col items-start justify-start gap-2 md:scale-100">
         {/* HEADER & IMAGE */}
-        <div className="flex flex-grow flex-row justify-center">
-          <div className="h-16x flex flex-grow flex-col items-start justify-start gap-1">
-            <p className="h-6x w-64 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark">
+        <div className="flex w-full flex-grow flex-row items-start justify-between">
+          <div className="h-16x flex flex-col items-start justify-start gap-1">
+            <p className="h-6x mr-1 max-w-[170px] overflow-hidden text-ellipsis whitespace-nowrap text-xs font-medium text-gray-dark md:max-w-[250px]">
               {company}
             </p>
-            <p className="h-14x w-64 overflow-hidden overflow-ellipsis whitespace-nowrap text-xl font-semibold">
+            <p className="h-14x mr-1 max-w-[170px] overflow-hidden text-ellipsis whitespace-nowrap text-[18px] font-semibold md:max-w-[250px]">
               {name}
             </p>
           </div>
@@ -83,14 +83,14 @@ const ItemCardComponent: React.FC<InputProps> = ({
         </div>
 
         {/* DESCRIPTION */}
-        <div className="my-2x h-[100px] overflow-hidden text-start text-sm text-gray-dark">
+        <div className="my-2x h-[100px] max-w-[200px] overflow-hidden text-start text-sm font-light md:max-w-full">
           {summary}
         </div>
 
         {/* BADGES */}
         <div className="flex flex-row items-center justify-start gap-2">
           {(amount ?? 0) > 0 && (
-            <div className="flex w-full">
+            <div className="flex">
               <div className="badge h-6 whitespace-nowrap rounded-md bg-yellow-light text-yellow">
                 <Image
                   src={iconZlto}

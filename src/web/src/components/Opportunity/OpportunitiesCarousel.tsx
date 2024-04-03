@@ -182,10 +182,10 @@ const OpportunitiesCarousel: React.FC<{
 
       <div className="embla">
         <div className="embla__viewport" ref={emblaRef}>
-          <div className="embla__container max-4">
+          <div className="embla__container max-4 w-full gap-2 !rounded-lg !pl-4 !pr-0 md:gap-2 md:!px-4">
             {slides?.map((item, index) => (
-              <div className="embla__slide" key={index}>
-                <div className="embla__slide__number">
+              <div className="embla__slide w-full" key={index}>
+                <div className="embla__slide__number w-full">
                   <OpportunityPublicSmallComponent
                     key={`${id}_${item.id}_component`}
                     data={item}
