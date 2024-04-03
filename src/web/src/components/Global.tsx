@@ -1,7 +1,7 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getOrganisationById } from "~/api/services/organisations";
 import { getUserProfile, patchYoIDOnboarding } from "~/api/services/user";
 import {
@@ -81,9 +81,9 @@ export const Global: React.FC = () => {
     }
   }, [session?.error, setLoginDialogVisible, setLoginMessage]);
 
-  // function to check if user profile is completed i.e any form field is empty
-  const isUserProfileCompleted = useCallback(() => {
-    if (!userProfile) return false;
+  // memo to check if user profile is completed i.e any form field is empty
+  const isUserProfileCompleted = useMemo(() => {
+    if (!userProfile) return null;
 
     const {
       firstName,
@@ -134,7 +134,7 @@ export const Global: React.FC = () => {
           // show onboarding dialog if not onboarded
           if (!res.yoIDOnboarded) {
             setOnboardingDialogVisible(true);
-          } else if (!isUserProfileCompleted()) {
+          } else if (isUserProfileCompleted === false) {
             // show dialog to update profile
             setUpdateProfileDialogVisible(true);
           }
@@ -264,7 +264,7 @@ export const Global: React.FC = () => {
       setIsYoIDOnboardingLoading(false);
 
       // check if profile completed, if not show update profile dialog
-      if (!isUserProfileCompleted()) {
+      if (isUserProfileCompleted === false) {
         // show dialog to update profile
         setUpdateProfileDialogVisible(true);
       }
