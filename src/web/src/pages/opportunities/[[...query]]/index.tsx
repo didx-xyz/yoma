@@ -55,6 +55,7 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import { useSession } from "next-auth/react";
 import { OpportunityFilterOptions } from "~/api/models/opportunity";
 import OpportunitiesCarousel from "~/components/Opportunity/OpportunitiesCarousel";
+import FilterBadges from "~/components/FilterBadges";
 
 // 👇 SSG
 // This page is statically generated at build time on server-side
@@ -273,10 +274,6 @@ const Opportunities: NextPageWithLayout<{
           pageSize: PAGE_SIZE,
           valueContains: query ? decodeURIComponent(query.toString()) : null,
           mostViewed: mostViewed ? Boolean(mostViewed) : null,
-          // publishedStates:
-          //   publishedStates != undefined
-          //     ? publishedStates?.toString().split(",")
-          //     : null,
           publishedStates:
             publishedStates != undefined
               ? publishedStates
@@ -610,11 +607,9 @@ const Opportunities: NextPageWithLayout<{
         queryClient.getQueryData<OpportunitySearchResultsInfo>(queryKey);
 
       if (cachedData) {
-        console.warn("CACHE HIT: ", queryKey);
         return cachedData;
       }
 
-      console.warn("FETCHING DATA: ", queryKey);
       const data = await searchOpportunities(filter);
 
       queryClient.setQueryData(queryKey, data);
@@ -853,6 +848,29 @@ const Opportunities: NextPageWithLayout<{
           totalCount={searchResults?.totalCount ?? 0}
         />
 
+        {/* FILTER BADGES */}
+        <FilterBadges
+          searchFilter={opportunitySearchFilter}
+          excludeKeys={["pageNumber", "pageSize"]}
+          resolveValue={(key, value) => {
+            if (key === "commitmentIntervals") {
+              const lookup = lookups_commitmentIntervals.find(
+                (interval) => interval.id === value,
+              );
+              return lookup?.name;
+            } else if (key === "zltoRewardRanges") {
+              const lookup = lookups_zltoRewardRanges.find(
+                (interval) => interval.id === value,
+              );
+              return lookup?.name;
+            } else if (key === "mostViewed") {
+              return "Trending";
+            }
+            return value;
+          }}
+          onSubmit={(e) => onSubmitFilter(e)}
+        />
+
         {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
         {!isSearchPerformed && (
           <div className="-mt-4 gap-6 px-2 pb-4 md:p-0 md:pb-0">
@@ -865,13 +883,6 @@ const Opportunities: NextPageWithLayout<{
                 loadData={loadDataTrending}
                 viewAllUrl="/opportunities?mostViewed=true"
               />
-              // <OpportunitiesCarousel
-              //   id="opportunities_trending"
-              //   title="Trending 🔥"
-              //   data={opportunities_trending}
-              //   viewAllUrl="/opportunities?mostViewed=true"
-              //   loadData={loadDataTrending}
-              // />
             )}
 
             {/* LEARNING COURSES */}
@@ -883,13 +894,6 @@ const Opportunities: NextPageWithLayout<{
                 loadData={loadDataLearning}
                 viewAllUrl="/opportunities?types=Learning"
               />
-              // <OpportunitiesCarousel
-              //   id="opportunities_learning"
-              //   title="Learning Courses 📚"
-              //   data={opportunities_learning}
-              //   viewAllUrl="/opportunities?types=Learning"
-              //   loadData={loadDataLearning}
-              // />
             )}
 
             {/* IMPACT TASKS */}
@@ -901,13 +905,6 @@ const Opportunities: NextPageWithLayout<{
                 loadData={loadDataTasks}
                 viewAllUrl="/opportunities?types=Task"
               />
-              // <OpportunitiesCarousel
-              //   id="opportunities_tasks"
-              //   title="Impact Tasks ⚡"
-              //   data={opportunities_tasks}
-              //   viewAllUrl="/opportunities?types=Task"
-              //   loadData={loadDataTasks}
-              // />
             )}
 
             {/* ALL OPPORTUNITIES */}
@@ -919,13 +916,6 @@ const Opportunities: NextPageWithLayout<{
                 loadData={loadDataOpportunities}
                 viewAllUrl="/opportunities?page=1"
               />
-              // <OpportunitiesCarousel
-              //   id="opportunities_allOpportunities"
-              //   title="All Opportunities"
-              //   data={opportunities_allOpportunities}
-              //   viewAllUrl="/opportunities?page=1"
-              //   loadData={loadDataOpportunities}
-              // />
             )}
           </div>
         )}
