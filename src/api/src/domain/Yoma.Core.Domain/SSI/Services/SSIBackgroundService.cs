@@ -189,8 +189,6 @@ namespace Yoma.Core.Domain.SSI.Services
             {
               _logger.LogInformation("Processing SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
 
-              var schema = _ssiSchemaService.GetByFullName(item.SchemaName).Result;
-
               var request = new CredentialIssuanceRequest
               {
                 ClientReferent = new KeyValuePair<string, string>(SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString()),
@@ -204,6 +202,7 @@ namespace Yoma.Core.Domain.SSI.Services
                                 }
               };
 
+              SSISchema schema;
               User user;
               (bool proceed, string tenantId) tenantIssuer;
               (bool proceed, string tenantId) tenantHolder;
@@ -238,6 +237,8 @@ namespace Yoma.Core.Domain.SSI.Services
                     continue;
                   }
                   request.TenantIdHolder = tenantHolder.tenantId;
+
+                  schema = _ssiSchemaService.GetByFullName(item.SchemaName).Result;
 
                   foreach (var entity in schema.Entities)
                   {
@@ -280,6 +281,8 @@ namespace Yoma.Core.Domain.SSI.Services
                     continue;
                   }
                   request.TenantIdHolder = tenantHolder.tenantId;
+
+                  schema = _ssiSchemaService.GetByFullName(item.SchemaName).Result;
 
                   foreach (var entity in schema.Entities)
                   {
