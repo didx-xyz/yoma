@@ -12,11 +12,7 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
-import {
-  Action,
-  type MyOpportunityInfo,
-  VerificationStatus,
-} from "~/api/models/myOpportunity";
+import { Action, VerificationStatus } from "~/api/models/myOpportunity";
 import YoIDTabbedOpportunities from "~/components/Layout/YoIDTabbedOpportunities";
 import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListItem";
 import { PaginationInfoComponent } from "~/components/PaginationInfo";
@@ -43,8 +39,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient(config);
   const { id } = context.params as IParams;
   const { query, page } = context.query;
-
-  let pageNumber = page ? parseInt(page.toString()) : 1;
+  const pageNumber = page ? parseInt(page.toString()) : 1;
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
@@ -149,7 +144,6 @@ const MyOpportunitiesSubmitted: NextPageWithLayout<{
               <OpportunityListItem
                 key={index}
                 data={item}
-                onClick={handleOnClickOportunity}
                 displayDate={item.dateModified ?? ""}
               />
             ))}

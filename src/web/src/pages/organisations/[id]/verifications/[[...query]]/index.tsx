@@ -468,7 +468,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         },
       });
     },
-    [router, id, opportunity, returnUrl],
+    [router, id, opportunity, returnUrl, verificationStatus],
   );
   const onFilterOpportunity = useCallback(
     (opportunityId: string) => {
@@ -482,7 +482,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         },
       });
     },
-    [router, id, query, returnUrl],
+    [router, id, query, returnUrl, verificationStatus],
   );
   const onFilterVerificationStatus = useCallback(
     (verificationStatus: string) => {
@@ -496,7 +496,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         },
       });
     },
-    [router, id, query, returnUrl],
+    [router, id, query, returnUrl, opportunity],
   );
 
   const handlePagerChange = useCallback(
@@ -832,7 +832,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                     "input input-xs md:w-[160px] !border-0 !rounded-lg",
                 }}
                 options={lookups_verificationStatuses}
-                onChange={(val) => onFilterVerificationStatus(val?.value!)}
+                onChange={(val) => onFilterVerificationStatus(val?.value ?? "")}
                 value={lookups_verificationStatuses?.find(
                   (c) => c.value === verificationStatus,
                 )}
