@@ -1,6 +1,6 @@
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
 import Moment from "react-moment";
-import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
+import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { useCallback } from "react";
 import { AvatarImage } from "../AvatarImage";
 import { useRouter } from "next/router";
@@ -75,7 +75,7 @@ const OpportunityListItem: React.FC<{
         {displayDate && (
           <div className="flex flex-row">
             <h4 className="line-clamp-4 text-sm font-thin">
-              <Moment format={DATETIME_FORMAT_HUMAN} utc={true}>
+              <Moment format={DATE_FORMAT_HUMAN} utc={true}>
                 {displayDate}
               </Moment>
             </h4>
