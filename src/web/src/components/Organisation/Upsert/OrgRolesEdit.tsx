@@ -1,21 +1,20 @@
-/* eslint-disable */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
-import { FieldValues, useForm } from "react-hook-form";
+import { type FieldValues, useForm } from "react-hook-form";
 import zod from "zod";
-import {
+import type {
   OrganizationDocument,
-  type Organization,
-  type OrganizationProviderType,
-  type OrganizationRequestBase,
+  Organization,
+  OrganizationProviderType,
+  OrganizationRequestBase,
 } from "~/api/models/organisation";
 import { getOrganisationProviderTypes } from "~/api/services/organisations";
 import {
   ACCEPTED_DOC_TYPES,
   ACCEPTED_DOC_TYPES_LABEL,
-  MAX_DOC_SIZE,
-  MAX_DOC_SIZE_LABEL,
+  MAX_FILE_SIZE,
+  MAX_FILE_SIZE_LABEL,
 } from "~/lib/constants";
 import { Document } from "./Document";
 import { FileUploader } from "./FileUpload";
@@ -148,11 +147,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
     .refine(
       (data) => {
         return data.registrationDocuments?.every(
-          (file) => file && file.size <= MAX_DOC_SIZE,
+          (file) => file && file.size <= MAX_FILE_SIZE,
         );
       },
       {
-        message: `Maximum file size is ${MAX_DOC_SIZE_LABEL}.`,
+        message: `Maximum file size is ${MAX_FILE_SIZE_LABEL}.`,
         path: ["registrationDocuments"],
       },
     )
@@ -170,11 +169,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
     .refine(
       (data) => {
         return data.educationProviderDocuments?.every(
-          (file) => file && file.size <= MAX_DOC_SIZE,
+          (file) => file && file.size <= MAX_FILE_SIZE,
         );
       },
       {
-        message: `Maximum file size is ${MAX_DOC_SIZE_LABEL}.`,
+        message: `Maximum file size is ${MAX_FILE_SIZE_LABEL}.`,
         path: ["educationProviderDocuments"],
       },
     )
@@ -192,11 +191,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
     .refine(
       (data) => {
         return data.businessDocuments?.every(
-          (file) => file && file.size <= MAX_DOC_SIZE,
+          (file) => file && file.size <= MAX_FILE_SIZE,
         );
       },
       {
-        message: `Maximum file size is ${MAX_DOC_SIZE_LABEL}.`,
+        message: `Maximum file size is ${MAX_FILE_SIZE_LABEL}.`,
         path: ["businessDocuments"],
       },
     )
@@ -238,7 +237,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
         ),
       });
     }, 100);
-  }, [reset]);
+  }, [reset, formData, organisation]);
 
   // form submission handler
   const onSubmitHandler = useCallback(
@@ -251,13 +250,13 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
   const onRemoveRegistrationDocument = useCallback(
     (doc: OrganizationDocument) => {
       // remove from existing array
-      var arr1 = getValues("registrationDocumentsExisting");
+      let arr1 = getValues("registrationDocumentsExisting");
       if (!arr1) arr1 = [];
       arr1 = arr1.filter((x: OrganizationDocument) => x.fileId != doc.fileId);
       setValue("registrationDocumentExisting", arr1);
 
       // add to deleted array
-      var arr2 = getValues("registrationDocumentsDelete");
+      let arr2 = getValues("registrationDocumentsDelete");
       if (!arr2) arr2 = [];
       arr2.push(doc.fileId);
       setValue("registrationDocumentsDelete", arr2);
@@ -329,7 +328,6 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
           {formState.errors.providerTypes && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${formState.errors.providerTypes.message}`}
               </span>
             </label>
@@ -373,7 +371,6 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
           {formState.errors.registrationDocuments && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${formState.errors.registrationDocuments.message}`}
               </span>
             </label>
@@ -421,7 +418,6 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
               {formState.errors.educationProviderDocuments && (
                 <label className="label font-bold">
                   <span className="label-text-alt italic text-red-500">
-                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                     {`${formState.errors.educationProviderDocuments.message}`}
                   </span>
                 </label>
@@ -469,7 +465,6 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
               {formState.errors.businessDocuments && (
                 <label className="label font-bold">
                   <span className="label-text-alt italic text-red-500">
-                    {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                     {`${formState.errors.businessDocuments.message}`}
                   </span>
                 </label>

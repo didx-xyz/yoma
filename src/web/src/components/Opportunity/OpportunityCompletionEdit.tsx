@@ -14,6 +14,8 @@ import {
   ACCEPTED_DOC_TYPES_LABEL,
   ACCEPTED_IMAGE_TYPES,
   ACCEPTED_IMAGE_TYPES_LABEL,
+  MAX_FILE_SIZE,
+  MAX_FILE_SIZE_LABEL,
 } from "~/lib/constants";
 import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
@@ -62,43 +64,133 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         opportunityInfo?.verificationEnabled &&
         opportunityInfo.verificationMethod == "Manual"
       ) {
-        if (
-          opportunityInfo.verificationTypes?.find(
-            (x) => x.type == "FileUpload",
-          ) &&
-          values.certificate == null
-        ) {
-          ctx.addIssue({
-            message: "Please upload a file.",
-            code: z.ZodIssueCode.custom,
-            path: ["certificate"],
-            fatal: true,
-          });
+        const isFileUpload = opportunityInfo.verificationTypes?.some(
+          (x) => x.type == "FileUpload",
+        );
+
+        if (isFileUpload) {
+          // validate required
+          if (values.certificate == null) {
+            ctx.addIssue({
+              message: "Please upload a file.",
+              code: z.ZodIssueCode.custom,
+              path: ["certificate"],
+              fatal: true,
+            });
+          } else {
+            if (values.certificate?.type) {
+              // validate file type
+              const fileType = values.certificate?.type;
+              if (
+                fileType &&
+                !(
+                  ACCEPTED_DOC_TYPES.includes(fileType) ||
+                  ACCEPTED_IMAGE_TYPES.includes(fileType)
+                )
+              ) {
+                ctx.addIssue({
+                  message: `File type not supported. Please upload a file of type ${[
+                    ...ACCEPTED_DOC_TYPES_LABEL,
+                    ...ACCEPTED_IMAGE_TYPES_LABEL,
+                  ].join(", ")}.`,
+                  code: z.ZodIssueCode.custom,
+                  path: ["certificate"],
+                  fatal: true,
+                });
+              }
+              // validate file size
+              if (values.certificate?.size > MAX_FILE_SIZE) {
+                ctx.addIssue({
+                  message: `File size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
+                  code: z.ZodIssueCode.custom,
+                  path: ["certificate"],
+                  fatal: true,
+                });
+              }
+            }
+          }
         }
-        if (
-          opportunityInfo.verificationTypes?.find((x) => x.type == "Picture") &&
-          values.picture == null
-        ) {
-          ctx.addIssue({
-            message: "Please upload a file.",
-            code: z.ZodIssueCode.custom,
-            path: ["picture"],
-            fatal: true,
-          });
+
+        const isPicture = opportunityInfo.verificationTypes?.some(
+          (x) => x.type == "Picture",
+        );
+
+        if (isPicture) {
+          // validate required
+          if (values.picture == null) {
+            ctx.addIssue({
+              message: "Please upload a file.",
+              code: z.ZodIssueCode.custom,
+              path: ["picture"],
+              fatal: true,
+            });
+          } else {
+            // validate file type
+            if (values.picture?.type) {
+              const fileType = values.picture?.type;
+              if (fileType && !ACCEPTED_IMAGE_TYPES.includes(fileType)) {
+                ctx.addIssue({
+                  message: `File type not supported. Please upload a file of type ${ACCEPTED_IMAGE_TYPES_LABEL.join(
+                    ", ",
+                  )}.`,
+                  code: z.ZodIssueCode.custom,
+                  path: ["picture"],
+                  fatal: true,
+                });
+              }
+            }
+            // validate file size
+            if (values.picture?.size > MAX_FILE_SIZE) {
+              ctx.addIssue({
+                message: `File size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
+                code: z.ZodIssueCode.custom,
+                path: ["picture"],
+                fatal: true,
+              });
+            }
+          }
         }
-        if (
-          opportunityInfo.verificationTypes?.find(
-            (x) => x.type == "VoiceNote",
-          ) &&
-          values.voiceNote == null
-        ) {
-          ctx.addIssue({
-            message: "Please upload a file.",
-            code: z.ZodIssueCode.custom,
-            path: ["voiceNote"],
-            fatal: true,
-          });
+
+        const isVoiceNote = opportunityInfo.verificationTypes?.some(
+          (x) => x.type == "VoiceNote",
+        );
+
+        if (isVoiceNote) {
+          // validate required
+          if (values.voiceNote == null) {
+            ctx.addIssue({
+              message: "Please upload a file.",
+              code: z.ZodIssueCode.custom,
+              path: ["voiceNote"],
+              fatal: true,
+            });
+          } else {
+            // validate file type
+            if (values.voiceNote?.type) {
+              const fileType = values.voiceNote?.type;
+              if (fileType && !ACCEPTED_AUDIO_TYPES.includes(fileType)) {
+                ctx.addIssue({
+                  message: `File type not supported. Please upload a file of type ${ACCEPTED_AUDIO_TYPES_LABEL.join(
+                    ", ",
+                  )}.`,
+                  code: z.ZodIssueCode.custom,
+                  path: ["voiceNote"],
+                  fatal: true,
+                });
+              }
+            }
+            // validate file size
+            if (values.voiceNote?.size > MAX_FILE_SIZE) {
+              ctx.addIssue({
+                message: `File size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
+                code: z.ZodIssueCode.custom,
+                path: ["voiceNote"],
+                fatal: true,
+              });
+            }
+          }
         }
+
         if (
           opportunityInfo.verificationTypes?.find(
             (x) => x.type == "Location",
@@ -121,54 +213,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           path: ["dateStart"],
           fatal: true,
         });
-      } /*else if (values.dateStart > new Date()) {
-        ctx.addIssue({
-          message: "Date cannot be in the future.",
-          code: z.ZodIssueCode.custom,
-          path: ["dateStart"],
-          fatal: true,
-        });
-      } else if (
-        opportunityInfo?.dateStart &&
-        values.dateStart < opportunityInfo?.dateStart
-      ) {
-        ctx.addIssue({
-          message: "Date cannot be earlier than opportunity start date.",
-          code: z.ZodIssueCode.custom,
-          path: ["dateStart"],
-          fatal: true,
-        });
-      } else if (
-        opportunityInfo?.dateEnd &&
-        values.dateStart > opportunityInfo?.dateEnd
-      ) {
-        ctx.addIssue({
-          message: "Date cannot be after than opportunity end date.",
-          code: z.ZodIssueCode.custom,
-          path: ["dateStart"],
-          fatal: true,
-        });
-      }*/
-
-      // if (values.dateEnd != null && values.dateEnd > new Date()) {
-      //   ctx.addIssue({
-      //     message: "Date cannot be in the future.",
-      //     code: z.ZodIssueCode.custom,
-      //     path: ["dateEnd"],
-      //     fatal: true,
-      //   });
-      // } else if (
-      //   opportunityInfo?.dateEnd &&
-      //   values.dateEnd != null &&
-      //   values.dateEnd > opportunityInfo?.dateEnd
-      // ) {
-      //   ctx.addIssue({
-      //     message: "Date cannot be after than opportunity end date.",
-      //     code: z.ZodIssueCode.custom,
-      //     path: ["dateEnd"],
-      //     fatal: true,
-      //   });
-      // }
+      }
     });
 
   type SchemaType = z.infer<typeof schema>;
@@ -193,9 +238,9 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         dateStart: data.dateStart ? data.dateStart : null,
         dateEnd: data.dateEnd ? data.dateEnd : null,
       };
+      /* eslint-enable @typescript-eslint/no-unsafe-argument */
 
       setIsLoading(true);
-      /* eslint-enable @typescript-eslint/no-unsafe-argument */
 
       performActionSendForVerificationManual(opportunityInfo.id, request)
         .then(() => {
@@ -313,6 +358,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         />
                       )}
                     />
+
                     {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
                     {errors.dateStart && (
                       <label className="label">
@@ -339,8 +385,8 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         />
                       )}
                     />
-                    {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
 
+                    {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
                     {errors.dateEnd && (
                       <label className="label">
                         <span className="label-text-alt px-4 text-base italic text-red-500">
@@ -356,140 +402,138 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 {opportunityInfo?.verificationTypes?.find(
                   (x) => x.type == "FileUpload",
                 ) && (
-                  <>
-                    <FileUpload
-                      id="fileUploadFileUpload"
-                      files={[]}
-                      fileTypes={ACCEPTED_DOC_TYPES.join(",")}
-                      fileTypesLabels={ACCEPTED_DOC_TYPES_LABEL}
-                      allowMultiple={false}
-                      label={
-                        opportunityInfo?.verificationTypes?.find(
-                          (x) => x.type == "FileUpload",
-                        )?.description
-                      }
-                      icon={iconCertificate}
-                      onUploadComplete={(files) => {
-                        setValue("certificate", files[0], {
-                          shouldValidate: true,
-                        });
-                      }}
-                    >
-                      <>
-                        {errors.certificate && (
-                          <label className="label">
-                            <span className="label-text-alt text-base italic text-red-500">
-                              {`${errors.certificate.message}`}
-                            </span>
-                          </label>
-                        )}
-                      </>
-                    </FileUpload>
-                  </>
+                  <FileUpload
+                    id="fileUploadFileUpload"
+                    files={[]}
+                    fileTypes={[
+                      ...ACCEPTED_DOC_TYPES,
+                      ...ACCEPTED_IMAGE_TYPES,
+                    ].join(",")}
+                    fileTypesLabels={[
+                      ...ACCEPTED_DOC_TYPES_LABEL,
+                      ...ACCEPTED_IMAGE_TYPES_LABEL,
+                    ].join(",")}
+                    allowMultiple={false}
+                    label={
+                      opportunityInfo?.verificationTypes?.find(
+                        (x) => x.type == "FileUpload",
+                      )?.description
+                    }
+                    icon={iconCertificate}
+                    onUploadComplete={(files) => {
+                      setValue("certificate", files[0], {
+                        shouldValidate: true,
+                      });
+                    }}
+                  >
+                    <>
+                      {errors.certificate && (
+                        <label className="label">
+                          <span className="label-text-alt text-base italic text-red-500">
+                            {`${errors.certificate.message}`}
+                          </span>
+                        </label>
+                      )}
+                    </>
+                  </FileUpload>
                 )}
 
                 {opportunityInfo?.verificationTypes?.find(
                   (x) => x.type == "Picture",
                 ) && (
-                  <>
-                    <FileUpload
-                      id="fileUploadPicture"
-                      files={[]}
-                      fileTypes={ACCEPTED_IMAGE_TYPES.join(",")}
-                      fileTypesLabels={ACCEPTED_IMAGE_TYPES_LABEL}
-                      allowMultiple={false}
-                      label={
-                        opportunityInfo?.verificationTypes?.find(
-                          (x) => x.type == "Picture",
-                        )?.description
-                      }
-                      icon={iconPicture}
-                      onUploadComplete={(files) => {
-                        setValue("picture", files[0], { shouldValidate: true });
-                      }}
-                    >
-                      <>
-                        {errors.picture && (
-                          <label className="label">
-                            <span className="label-text-alt text-base italic text-red-500">
-                              {`${errors.picture.message}`}
-                            </span>
-                          </label>
-                        )}
-                      </>
-                    </FileUpload>
-                  </>
+                  <FileUpload
+                    id="fileUploadPicture"
+                    files={[]}
+                    fileTypes={ACCEPTED_IMAGE_TYPES.join(",")}
+                    fileTypesLabels={ACCEPTED_IMAGE_TYPES_LABEL.join(",")}
+                    allowMultiple={false}
+                    label={
+                      opportunityInfo?.verificationTypes?.find(
+                        (x) => x.type == "Picture",
+                      )?.description
+                    }
+                    icon={iconPicture}
+                    onUploadComplete={(files) => {
+                      setValue("picture", files[0], { shouldValidate: true });
+                    }}
+                  >
+                    <>
+                      {errors.picture && (
+                        <label className="label">
+                          <span className="label-text-alt text-base italic text-red-500">
+                            {`${errors.picture.message}`}
+                          </span>
+                        </label>
+                      )}
+                    </>
+                  </FileUpload>
                 )}
 
                 {opportunityInfo?.verificationTypes?.find(
                   (x) => x.type == "VoiceNote",
                 ) && (
-                  <>
-                    <FileUpload
-                      id="fileUploadVoiceNote"
-                      files={[]}
-                      fileTypes={ACCEPTED_AUDIO_TYPES.join(",")}
-                      fileTypesLabels={ACCEPTED_AUDIO_TYPES_LABEL}
-                      allowMultiple={false}
-                      label={
-                        opportunityInfo?.verificationTypes?.find(
-                          (x) => x.type == "VoiceNote",
-                        )?.description
-                      }
-                      icon={iconVideo}
-                      onUploadComplete={(files) => {
-                        setValue("voiceNote", files[0], {
-                          shouldValidate: true,
-                        });
-                      }}
-                    >
-                      <>
-                        {errors.voiceNote && (
-                          <label className="label">
-                            <span className="label-text-alt text-base italic text-red-500">
-                              {`${errors.voiceNote.message}`}
-                            </span>
-                          </label>
-                        )}
-                      </>
-                    </FileUpload>
-                  </>
+                  <FileUpload
+                    id="fileUploadVoiceNote"
+                    files={[]}
+                    fileTypes={ACCEPTED_AUDIO_TYPES.join(",")}
+                    fileTypesLabels={ACCEPTED_AUDIO_TYPES_LABEL.join(",")}
+                    allowMultiple={false}
+                    label={
+                      opportunityInfo?.verificationTypes?.find(
+                        (x) => x.type == "VoiceNote",
+                      )?.description
+                    }
+                    icon={iconVideo}
+                    onUploadComplete={(files) => {
+                      setValue("voiceNote", files[0], {
+                        shouldValidate: true,
+                      });
+                    }}
+                  >
+                    <>
+                      {errors.voiceNote && (
+                        <label className="label">
+                          <span className="label-text-alt text-base italic text-red-500">
+                            {`${errors.voiceNote.message}`}
+                          </span>
+                        </label>
+                      )}
+                    </>
+                  </FileUpload>
                 )}
 
                 {opportunityInfo?.verificationTypes?.find(
                   (x) => x.type == "Location",
                 ) && (
-                  <>
-                    <LocationPicker
-                      id="locationpicker"
-                      label={
-                        opportunityInfo?.verificationTypes?.find(
-                          (x) => x.type == "Location",
-                        )?.description
-                      }
-                      onSelect={(coords) => {
-                        let result = null;
-                        if (!coords) result = null;
-                        else
-                          result = {
-                            type: SpatialType.Point,
-                            coordinates: [[coords.lng, coords.lat, 0]],
-                          };
+                  <LocationPicker
+                    id="locationpicker"
+                    label={
+                      opportunityInfo?.verificationTypes?.find(
+                        (x) => x.type == "Location",
+                      )?.description
+                    }
+                    onSelect={(coords) => {
+                      let result = null;
+                      if (!coords) result = null;
+                      else
+                        result = {
+                          type: SpatialType.Point,
+                          coordinates: [[coords.lng, coords.lat, 0]],
+                        };
 
-                        setValue("geometry", result, { shouldValidate: true });
-                      }}
-                    >
-                      <>
-                        {errors.geometry && (
-                          <label className="label">
-                            <span className="label-text-alt text-base italic text-red-500">
-                              {`${errors.geometry.message}`}
-                            </span>
-                          </label>
-                        )}
-                      </>
-                    </LocationPicker>
-                  </>
+                      setValue("geometry", result, { shouldValidate: true });
+                    }}
+                  >
+                    <>
+                      {errors.geometry && (
+                        <label className="label">
+                          <span className="label-text-alt text-base italic text-red-500">
+                            {`${errors.geometry.message}`}
+                          </span>
+                        </label>
+                      )}
+                    </>
+                  </LocationPicker>
                 )}
               </div>
 
