@@ -143,7 +143,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     [GeneratedRegex("(\\b[a-zA-Z])[a-zA-Z]*\\.* ?")]
     private static partial Regex RegexInitials();
 
-    [GeneratedRegex("[^a-zA-Z0-9]")]
+    [GeneratedRegex("[^a-zA-Z0-9 ]")] // include a space in the regex pattern
     private static partial Regex NonAplhaNumberic();
     #endregion
   }

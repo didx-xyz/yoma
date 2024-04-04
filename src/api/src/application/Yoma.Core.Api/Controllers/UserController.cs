@@ -84,7 +84,8 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Update the user's profile, within Yoma and the identity provider, optionally requesting a email verification and/or password reset (Authenticated User)")]
+    [SwaggerOperation(Summary = "Update the user's profile (Authenticated User)",
+      Description = "Updated within Yoma and the identity provider, optionally requesting a email verification and/or password reset")]
     [HttpPatch()]
     [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]

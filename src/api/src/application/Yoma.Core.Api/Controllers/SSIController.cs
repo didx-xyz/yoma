@@ -57,7 +57,8 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Return a list of schema entities (objects) and their associated properties that serve as data sources when creating a schema, optionally filtered by schema type")]
+    [SwaggerOperation(Summary = "Return a list of schema entities (objects) and their associated properties",
+      Description = "Serves as data sources when creating a schema, optionally filtered by schema type")]
     [HttpGet("schema/entity")]
     [ProducesResponseType(typeof(List<SSISchemaEntity>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = Constants.Role_Admin)]
@@ -72,7 +73,8 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Return a list of configured schemas, providing only the latest version of each schema, optionally filtered by type (Admin or Organization Admin roles required)", Description = "Results includes the schema's associated entities (objects) and properties")]
+    [SwaggerOperation(Summary = "Return a list of configured schemas (Admin or Organization Admin roles required)",
+      Description = "Results reflect the latest version of each schema, optionally filtered by type, and includes the schema's associated entities (objects) and properties")]
     [HttpGet("schema")]
     [ProducesResponseType(typeof(List<SSISchema>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]

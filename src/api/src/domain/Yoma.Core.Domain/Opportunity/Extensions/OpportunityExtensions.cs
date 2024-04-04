@@ -1,5 +1,6 @@
 using Flurl;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Extensions
@@ -60,7 +61,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       return new OpportunitySearchCriteriaItem
       {
         Id = value.Id,
-        Title = value.Title
+        Title = value.Title.RemoveSpecialCharacters()
       };
     }
 
