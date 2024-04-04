@@ -2,6 +2,7 @@ import Moment from "react-moment";
 import Link from "next/link";
 import { IoMdAlert, IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { type MyOpportunityInfo } from "~/api/models/myOpportunity";
+import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 
 interface MobileCardProps {
   item: MyOpportunityInfo;
@@ -53,34 +54,42 @@ const MobileCard: React.FC<MobileCardProps> = ({
         <p className="mb-1 text-sm">
           <strong>Date connected:</strong>{" "}
           {item.dateStart && (
-            <Moment format="DD MMM YYYY HH:mm" utc={true}>
+            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
               {item.dateStart}
             </Moment>
           )}
         </p>
-        <p className="text-sm">
-          <strong>Verified:</strong>{" "}
+        <p className="flex flex-row items-center text-sm">
+          <div className="mr-2 font-bold">Verified:</div>
           {item.verificationStatus && (
-            <span>
+            <>
               {item.verificationStatus == "Pending" && (
                 <button
                   type="button"
+                  className="flex flex-row"
                   onClick={() => {
                     setCurrentRow(item);
                     setVerifyComments("");
                     setModalVerifySingleVisible(true);
                   }}
                 >
-                  <IoMdAlert className="-mt-1 inline-block h-6 w-6 text-yellow" />
+                  <IoMdAlert className="mr-2 inline-block h-6 w-6 text-yellow" />
+                  Pending
                 </button>
               )}
               {item.verificationStatus == "Completed" && (
-                <IoMdCheckmark className="-mt-1 inline-block h-6 w-6 text-green" />
+                <div className="flex flex-row items-center gap-2">
+                  <IoMdCheckmark className="h-6 w-6 text-green" />
+                  Completed
+                </div>
               )}
               {item.verificationStatus == "Rejected" && (
-                <IoMdClose className="text-red -mt-1 inline-block h-6 w-6" />
+                <div className="flex flex-row items-center gap-2">
+                  <IoMdClose className="h-6 w-6 text-red-400" />
+                  Rejected
+                </div>
               )}
-            </span>
+            </>
           )}
         </p>
       </div>

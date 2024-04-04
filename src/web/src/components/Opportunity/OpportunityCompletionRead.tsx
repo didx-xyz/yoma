@@ -8,7 +8,7 @@ import iconVideo from "public/images/icon-video.svg";
 import iconLocation from "public/images/icon-location.svg";
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
 import { GoogleMap, MarkerF } from "@react-google-maps/api";
-import { DATETIME_FORMAT_HUMAN } from "~/lib/constants";
+import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import Moment from "react-moment";
 import { Loader } from "@googlemaps/js-api-loader";
 import { fetchClientEnv } from "~/lib/utils";
@@ -220,9 +220,9 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
       ))}
       {data?.dateStart && (
         <div className="flex flex-row gap-2 text-sm text-gray-dark md:h-3">
-          <div>Started opportunity at: </div>
+          <div>Started opportunity on: </div>
           <div className="font-bold">
-            <Moment format={DATETIME_FORMAT_HUMAN} utc={true}>
+            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
               {data.dateStart}
             </Moment>
           </div>
@@ -230,9 +230,9 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
       )}
       {data?.dateEnd && (
         <div className="flex flex-row gap-2 text-sm text-gray-dark">
-          <div>Finished opportunity at: </div>
+          <div>Finished opportunity on: </div>
           <div className="font-bold">
-            <Moment format={DATETIME_FORMAT_HUMAN} utc={true}>
+            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
               {data.dateEnd}
             </Moment>
           </div>

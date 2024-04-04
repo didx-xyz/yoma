@@ -8,20 +8,39 @@ export const DATE_FORMAT_HUMAN_LONG = "dddd Do MMMM YYYY";
 export const DATETIME_FORMAT_HUMAN = "MMM D YYYY, h:mm a";
 export const DATE_FORMAT_SYSTEM = "YYYY-MM-DD";
 export const DATETIME_FORMAT_SYSTEM = "YYYY-MM-DD HH:mm:ss";
-export const MAX_IMAGE_SIZE = 5000000;
-export const MAX_IMAGE_SIZE_LABEL = "5MB";
-export const MAX_DOC_SIZE = 10000000;
-export const MAX_DOC_SIZE_LABEL = "10MB";
-export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
-export const ACCEPTED_IMAGE_TYPES_LABEL = ".jpg, .jpeg, .png and .webp";
+export const MAX_FILE_SIZE = 10000000;
+export const MAX_FILE_SIZE_LABEL = "10MB";
+export const ACCEPTED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+];
+export const ACCEPTED_IMAGE_TYPES_LABEL = [".jpg", ".jpeg", ".png", ".webp"];
 export const ACCEPTED_DOC_TYPES = [
   "application/pdf",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 ];
-export const ACCEPTED_DOC_TYPES_LABEL = ".pdf, .doc and .docx";
-export const ACCEPTED_AUDIO_TYPES = ["audio/mpeg", "audio/wav"];
-export const ACCEPTED_AUDIO_TYPES_LABEL = ".mp3, .wav";
+export const ACCEPTED_DOC_TYPES_LABEL = [".pdf", ".doc", ".docx", ".pptx"];
+export const ACCEPTED_AUDIO_TYPES = [
+  "audio/mpeg",
+  "audio/wav",
+  "audio/mp4",
+  "audio/amr",
+  "audio/ogg",
+  "audio/3gpp",
+];
+
+export const ACCEPTED_AUDIO_TYPES_LABEL = [
+  ".mp3",
+  ".wav",
+  ".m4a",
+  ".amr",
+  ".ogg",
+  ".3gp",
+];
 export const REGEX_URL_VALIDATION =
   /^(https?:\/\/)?((www\.)?)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/;
 

@@ -24,7 +24,7 @@ import {
 } from "react-icons/io";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import {
-  DATETIME_FORMAT_HUMAN,
+  DATE_FORMAT_HUMAN,
   GA_ACTION_ORGANISATION_VERIFY,
   GA_CATEGORY_ORGANISATION,
   PAGE_SIZE,
@@ -68,6 +68,7 @@ interface IParams extends ParsedUrlQuery {
   id: string;
   query?: string;
   opportunity?: string;
+  verificationStatus?: string;
   page?: string;
   returnUrl?: string;
 }
@@ -75,7 +76,7 @@ interface IParams extends ParsedUrlQuery {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
-  const { query, opportunity, page } = context.query;
+  const { query, opportunity, verificationStatus, page } = context.query;
   const queryClient = new QueryClient(config);
   const session = await getServerSession(context.req, context.res, authOptions);
   let errorCode = null;
@@ -103,11 +104,13 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         userId: null,
         valueContains: query?.toString() ?? null,
         action: Action.Verification,
-        verificationStatuses: [
-          VerificationStatus.Pending,
-          VerificationStatus.Completed,
-          VerificationStatus.Rejected,
-        ],
+        verificationStatuses: verificationStatus
+          ? [parseInt(verificationStatus.toString())]
+          : [
+              VerificationStatus.Pending,
+              VerificationStatus.Completed,
+              VerificationStatus.Rejected,
+            ],
       },
       context,
     );
@@ -167,13 +170,13 @@ const OpportunityVerifications: NextPageWithLayout<{
   error?: number;
 }> = ({ id, query, opportunity, page, error }) => {
   const router = useRouter();
-  const { returnUrl } = router.query;
+  const { returnUrl, verificationStatus } = router.query;
   const queryClient = useQueryClient();
 
   // 👇 use prefetched queries from server
   const { data: data } = useQuery<MyOpportunitySearchResults>({
     queryKey: [
-      `Verifications_${id}_${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
+      `Verifications_${id}_${query?.toString()}_${opportunity?.toString()}_${verificationStatus}_${page?.toString()}`,
     ],
     queryFn: () =>
       searchMyOpportunitiesAdmin({
@@ -184,11 +187,13 @@ const OpportunityVerifications: NextPageWithLayout<{
         userId: null,
         valueContains: query?.toString() ?? null,
         action: Action.Verification,
-        verificationStatuses: [
-          VerificationStatus.Pending,
-          VerificationStatus.Completed,
-          VerificationStatus.Rejected,
-        ],
+        verificationStatuses: verificationStatus
+          ? [parseInt(verificationStatus.toString())]
+          : [
+              VerificationStatus.Pending,
+              VerificationStatus.Completed,
+              VerificationStatus.Rejected,
+            ],
       }),
     enabled: !error,
   });
@@ -205,67 +210,13 @@ const OpportunityVerifications: NextPageWithLayout<{
     { value: "Approve", label: "Approve" },
     { value: "Reject", label: "Reject" },
   ];
+  const lookups_verificationStatuses: SelectOption[] = [
+    { value: "1", label: "Pending" },
+    { value: "2", label: "Rejected" },
+    { value: "3", label: "Completed" },
+  ];
+
   const [selectedOption, setSelectedOption] = useState(null);
-
-  // const appendReturnUrl
-  const onSearch = useCallback(
-    (query: string) => {
-      if (query && query.length > 2) {
-        // uri encode the search value
-        const queryEncoded = encodeURIComponent(query);
-
-        // redirect to the search page
-        void router.push({
-          pathname: `/organisations/${id}/verifications`,
-          query: {
-            query: queryEncoded,
-            opportunity: opportunity,
-            returnUrl: returnUrl,
-          },
-        });
-      } else {
-        void router.push(`/organisations/${id}/verifications`);
-      }
-    },
-    [router, id, opportunity, returnUrl],
-  );
-  const onFilterOpportunity = useCallback(
-    (opportunityId: string) => {
-      if (opportunityId) {
-        void router.push({
-          pathname: `/organisations/${id}/verifications`,
-          query: {
-            query: query,
-            opportunity: opportunityId,
-            returnUrl: returnUrl,
-          },
-        });
-      } else {
-        void router.push(`/organisations/${id}/verifications`);
-      }
-    },
-    [router, id, query, returnUrl],
-  );
-
-  // 🔔 pager change event
-  const handlePagerChange = useCallback(
-    (value: number) => {
-      // redirect
-      void router.push({
-        pathname: `/organisations/${id}/verifications`,
-        query: {
-          query: query,
-          opportunity: opportunity,
-          page: value,
-          returnUrl: returnUrl,
-        },
-      });
-
-      // reset scroll position
-      window.scrollTo(0, 0);
-    },
-    [router, query, id, opportunity, returnUrl],
-  );
 
   const [isLoading, setIsLoading] = useState(false);
   const [modalVerifySingleVisible, setModalVerifySingleVisible] =
@@ -464,7 +415,6 @@ const OpportunityVerifications: NextPageWithLayout<{
       setModalVerifyBulkVisible,
     ],
   );
-  //#endregion Click Handlers
 
   const handleRowSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>, row: MyOpportunityInfo) => {
@@ -503,6 +453,70 @@ const OpportunityVerifications: NextPageWithLayout<{
     setModalBulkSuccessVisible(false);
     setApproved(false);
   };
+  //#endregion Click Handlers
+
+  //#region Filter Handlers
+  const onSearch = useCallback(
+    (query: string) => {
+      void router.push({
+        pathname: `/organisations/${id}/verifications`,
+        query: {
+          ...(query && query.length > 2 && { query }),
+          ...(opportunity && { opportunity }),
+          ...(returnUrl && { returnUrl }),
+          ...(verificationStatus && { verificationStatus }),
+        },
+      });
+    },
+    [router, id, opportunity, returnUrl, verificationStatus],
+  );
+  const onFilterOpportunity = useCallback(
+    (opportunityId: string) => {
+      void router.push({
+        pathname: `/organisations/${id}/verifications`,
+        query: {
+          ...(query && { query }),
+          ...(opportunityId && { opportunity: opportunityId }),
+          ...(returnUrl && { returnUrl }),
+          ...(verificationStatus && { verificationStatus }),
+        },
+      });
+    },
+    [router, id, query, returnUrl, verificationStatus],
+  );
+  const onFilterVerificationStatus = useCallback(
+    (verificationStatus: string) => {
+      void router.push({
+        pathname: `/organisations/${id}/verifications`,
+        query: {
+          ...(query && { query }),
+          ...(opportunity && { opportunity }),
+          ...(returnUrl && { returnUrl }),
+          ...(verificationStatus && { verificationStatus }),
+        },
+      });
+    },
+    [router, id, query, returnUrl, opportunity],
+  );
+
+  const handlePagerChange = useCallback(
+    (value: number) => {
+      void router.push({
+        pathname: `/organisations/${id}/verifications`,
+        query: {
+          ...(query && { query }),
+          ...(opportunity && { opportunity }),
+          ...(value && { page: value }),
+          ...(returnUrl && { returnUrl }),
+        },
+      });
+
+      // reset scroll position
+      window.scrollTo(0, 0);
+    },
+    [router, query, id, opportunity, returnUrl],
+  );
+  //#endregion Filter Handlers
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -680,7 +694,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         </div>
       </ReactModal>
 
-      {/* MODAL DIALOG FOR VERIFICATION SUCCESS(Single) */}
+      {/* MODAL DIALOG FOR VERIFICATION SUCCESS (SINGLE) */}
       <ReactModal
         isOpen={modalSingleSuccessVisible}
         shouldCloseOnOverlayClick={true}
@@ -744,7 +758,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         </div>
       </ReactModal>
 
-      {/* MODAL DIALOG FOR VERIFICATION APPROVED SUCCESS(Bulk) */}
+      {/* MODAL DIALOG FOR VERIFICATION APPROVED SUCCESS (BULK) */}
       <ReactModal
         isOpen={modalBulkSuccessVisible}
         shouldCloseOnOverlayClick={true}
@@ -803,14 +817,30 @@ const OpportunityVerifications: NextPageWithLayout<{
       </ReactModal>
 
       {/* PAGE */}
-
       <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[8rem]">
         <div className="px-2 md:px-0">
           <h3 className="mb-6 mt-3 flex items-center text-3xl font-semibold tracking-normal text-white md:mt-0">
             Verifications <LimitedFunctionalityBadge />
           </h3>
+
           <div className="mt-4 flex flex-row items-center">
             <div className="mb-4 flex flex-grow flex-col flex-wrap justify-end gap-4 md:flex-row">
+              {/* STATUS FILTER */}
+              <Select
+                classNames={{
+                  control: () =>
+                    "input input-xs md:w-[160px] !border-0 !rounded-lg",
+                }}
+                options={lookups_verificationStatuses}
+                onChange={(val) => onFilterVerificationStatus(val?.value ?? "")}
+                value={lookups_verificationStatuses?.find(
+                  (c) => c.value === verificationStatus,
+                )}
+                placeholder="Status"
+                isClearable={true}
+              />
+
+              {/* OPPORTUNITIES FILTER */}
               {/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */}
               <Select
                 classNames={{
@@ -825,6 +855,8 @@ const OpportunityVerifications: NextPageWithLayout<{
                 placeholder="Opportunities"
                 isClearable={true}
               />
+
+              {/* BULK ACTIONS */}
               {/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */}
               <Select
                 classNames={{
@@ -843,15 +875,8 @@ const OpportunityVerifications: NextPageWithLayout<{
               <SearchInput defaultValue={query} onSearch={onSearch} />
             </div>
           </div>
+
           {/* NO ROWS */}
-          {/* {data && data.items?.length === 0 && !query && (
-            <NoRowsMessage
-              title={"You will find your active opportunities here"}
-              description={
-                "This is where you will find all the awesome opportunities you have shared"
-              }
-            />
-          )} */}
           {data && data.totalCount === 0 && (
             <NoRowsMessage
               title={"No results found"}
@@ -907,7 +932,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                       </td>
                       <td className="w-[185px]">
                         {item.dateStart && (
-                          <Moment format={DATETIME_FORMAT_HUMAN} utc={true}>
+                          <Moment format={DATE_FORMAT_HUMAN} utc={true}>
                             {item.dateStart}
                           </Moment>
                         )}
@@ -916,31 +941,33 @@ const OpportunityVerifications: NextPageWithLayout<{
                         <div className="flex justify-start">
                           {item.verificationStatus &&
                             item.verificationStatus == "Pending" && (
-                              <div className="tooltip" data-tip="Pending">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setCurrentRow(item);
-                                    setVerifyComments("");
-                                    setModalVerifySingleVisible(true);
-                                  }}
-                                >
-                                  <IoMdAlert className="h-6 w-6 text-yellow" />
-                                </button>
-                              </div>
+                              <button
+                                type="button"
+                                className="flex flex-row"
+                                onClick={() => {
+                                  setCurrentRow(item);
+                                  setVerifyComments("");
+                                  setModalVerifySingleVisible(true);
+                                }}
+                              >
+                                <IoMdAlert className="mr-2 h-6 w-6 text-yellow" />
+                                Pending
+                              </button>
                             )}
 
                           {/* Status Badges */}
                           {item.verificationStatus &&
                             item.verificationStatus == "Completed" && (
-                              <div className="tooltip" data-tip="Approved">
-                                <IoMdCheckmark className="h-6 w-6 text-green" />
+                              <div className="flex flex-row">
+                                <IoMdCheckmark className="mr-2 h-6 w-6  text-green" />
+                                Completed
                               </div>
                             )}
                           {item.verificationStatus &&
                             item.verificationStatus == "Rejected" && (
-                              <div className="tooltip" data-tip="Rejected">
-                                <IoMdClose className="h-6 w-6 text-red-400" />
+                              <div className="flex flex-row">
+                                <IoMdClose className="mr-2 h-6 w-6  text-red-400" />
+                                Rejected
                               </div>
                             )}
                         </div>
@@ -968,8 +995,9 @@ const OpportunityVerifications: NextPageWithLayout<{
               </div>
             </div>
           )}
+
+          {/* PAGINATION */}
           <div className="mt-2 grid place-items-center justify-center">
-            {/* PAGINATION */}
             <PaginationButtons
               currentPage={page ? parseInt(page) : 1}
               totalItems={data?.totalCount ?? 0}

@@ -25,8 +25,8 @@ export const getOrganisationProviderTypes = async (
 export const postOrganisation = async (
   model: OrganizationRequestBase,
 ): Promise<Organization> => {
-  /* eslint-disable */
   // convert model to form data
+  /* eslint-disable */
   const formData = new FormData();
   for (const property in model) {
     let propVal = (model as any)[property];
@@ -63,8 +63,8 @@ export const postOrganisation = async (
 export const patchOrganisation = async (
   model: OrganizationRequestBase,
 ): Promise<Organization> => {
-  /* eslint-disable */
   // convert model to form data
+  /* eslint-disable */
   const formData = new FormData();
   for (const property in model) {
     let propVal = (model as any)[property];

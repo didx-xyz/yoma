@@ -48,30 +48,16 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
       {/* DATES */}
       {data.status == "Active" && (
         <div className="flex flex-col text-sm text-gray-dark">
-          {/* <div>
-            {data.dateStart && (
-              <>
-                <span className="mr-2 font-bold">Starts:</span>
-                <span className="text-xs tracking-widest text-black">
-                  <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                    {data.dateStart}
-                  </Moment>
-                </span>
-              </>
-            )}
-          </div> */}
-          <div>
-            {data.dateEnd && (
-              <>
-                <span className="mr-2 font-bold">Ends:</span>
-                <span className="text-xs tracking-widest text-black">
-                  <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                    {data.dateEnd}
-                  </Moment>
-                </span>
-              </>
-            )}
-          </div>
+          {data.dateEnd && (
+            <>
+              <span className="mr-2 font-bold">Ends:</span>
+              <span className="text-xs tracking-widest text-black">
+                <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                  {data.dateEnd}
+                </Moment>
+              </span>
+            </>
+          )}
         </div>
       )}
 

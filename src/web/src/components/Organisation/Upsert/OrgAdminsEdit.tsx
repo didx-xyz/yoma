@@ -1,7 +1,6 @@
-/* eslint-disable */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
-import { Controller, FieldValues, useForm } from "react-hook-form";
+import { Controller, type FieldValues, useForm } from "react-hook-form";
 import CreatableSelect from "react-select/creatable";
 import zod from "zod";
 import { type OrganizationRequestBase } from "~/api/models/organisation";
@@ -70,7 +69,7 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
         ...organisation,
       });
     }, 100);
-  }, [reset]);
+  }, [reset, organisation]);
 
   // form submission handler
   const onSubmitHandler = useCallback(
@@ -166,4 +165,3 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
     </>
   );
 };
-/* eslint-enable */
