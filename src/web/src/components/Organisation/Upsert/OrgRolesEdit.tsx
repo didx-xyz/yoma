@@ -334,7 +334,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
           )}
         </div>
 
-        {/* registration documents */}
+        {/* REGISTRATION DOCUMENTS */}
         <div className="form-control">
           <label className="label font-bold">
             <span className="label-text">Registration documents</span>
@@ -377,100 +377,110 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
           )}
         </div>
 
-        {/* education provider documents */}
-        {watchVerificationTypes &&
-          watchVerificationTypes?.includes(
-            organisationProviderTypes?.find((x) => x.name == "Education")?.id,
-          ) && (
-            <div className="form-control">
-              <label className="label font-bold">
-                <span className="label-text">Education provider documents</span>
-              </label>
-
-              <div className="flex flex-col gap-2">
-                {/* show existing documents */}
-                {organisation?.documents
-                  ?.filter((x) => x.type == "EducationProvider")
-                  .map((item) => (
-                    <Document
-                      key={item.fileId}
-                      doc={item}
-                      onRemove={onRemoveEducationProviderDocument}
-                    />
-                  ))}
-
-                {/* upload documents */}
-                <FileUploader
-                  name="education"
-                  files={educationProviderDocuments}
-                  allowMultiple={true}
-                  fileTypes={ACCEPTED_DOC_TYPES}
-                  onUploadComplete={(files) => {
-                    setEducationProviderDocuments(files.map((x) => x.file));
-                    setValue(
-                      "educationProviderDocuments",
-                      files && files.length > 0 ? files.map((x) => x.file) : [],
-                    );
-                  }}
-                />
-              </div>
-
-              {formState.errors.educationProviderDocuments && (
+        {watchVerificationTypes && (
+          <>
+            {/* EDUCATION PROVIDER DOCUMENTS */}
+            {watchVerificationTypes.includes(
+              organisationProviderTypes?.find((x) => x.name == "Education")?.id,
+            ) && (
+              <div className="form-control">
                 <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {`${formState.errors.educationProviderDocuments.message}`}
+                  <span className="label-text">
+                    Education provider documents
                   </span>
                 </label>
-              )}
-            </div>
-          )}
 
-        {watchVerificationTypes &&
-          watchVerificationTypes?.includes(
-            organisationProviderTypes?.find((x) => x.name == "Marketplace")?.id,
-          ) && (
-            <div className="form-control">
-              <label className="label font-bold">
-                <span className="label-text">VAT and business document</span>
-              </label>
+                <div className="flex flex-col gap-2">
+                  {/* show existing documents */}
+                  {organisation?.documents
+                    ?.filter((x) => x.type == "EducationProvider")
+                    .map((item) => (
+                      <Document
+                        key={item.fileId}
+                        doc={item}
+                        onRemove={onRemoveEducationProviderDocument}
+                      />
+                    ))}
 
-              <div className="flex flex-col gap-2">
-                {/* show existing documents */}
-                {organisation?.documents
-                  ?.filter((x) => x.type == "Business")
-                  .map((item) => (
-                    <Document
-                      key={item.fileId}
-                      doc={item}
-                      onRemove={onRemoveBusinessDocument}
-                    />
-                  ))}
+                  {/* upload documents */}
+                  <FileUploader
+                    name="education"
+                    files={educationProviderDocuments}
+                    allowMultiple={true}
+                    fileTypes={ACCEPTED_DOC_TYPES}
+                    onUploadComplete={(files) => {
+                      setEducationProviderDocuments(files.map((x) => x.file));
+                      setValue(
+                        "educationProviderDocuments",
+                        files && files.length > 0
+                          ? files.map((x) => x.file)
+                          : [],
+                      );
+                    }}
+                  />
+                </div>
 
-                {/* upload documents */}
-                <FileUploader
-                  name="business"
-                  files={businessDocuments}
-                  allowMultiple={true}
-                  fileTypes={ACCEPTED_DOC_TYPES}
-                  onUploadComplete={(files) => {
-                    setBusinessDocuments(files.map((x) => x.file));
-                    setValue(
-                      "businessDocuments",
-                      files && files.length > 0 ? files.map((x) => x.file) : [],
-                    );
-                  }}
-                />
+                {formState.errors.educationProviderDocuments && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${formState.errors.educationProviderDocuments.message}`}
+                    </span>
+                  </label>
+                )}
               </div>
+            )}
 
-              {formState.errors.businessDocuments && (
+            {/* VAT AND BUSINESS DOCUMENTS */}
+            {watchVerificationTypes.includes(
+              organisationProviderTypes?.find((x) => x.name == "Marketplace")
+                ?.id,
+            ) && (
+              <div className="form-control">
                 <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {`${formState.errors.businessDocuments.message}`}
-                  </span>
+                  <span className="label-text">VAT and business document</span>
                 </label>
-              )}
-            </div>
-          )}
+
+                <div className="flex flex-col gap-2">
+                  {/* show existing documents */}
+                  {organisation?.documents
+                    ?.filter((x) => x.type == "Business")
+                    .map((item) => (
+                      <Document
+                        key={item.fileId}
+                        doc={item}
+                        onRemove={onRemoveBusinessDocument}
+                      />
+                    ))}
+
+                  {/* upload documents */}
+                  <FileUploader
+                    name="business"
+                    files={businessDocuments}
+                    allowMultiple={true}
+                    fileTypes={ACCEPTED_DOC_TYPES}
+                    onUploadComplete={(files) => {
+                      setBusinessDocuments(files.map((x) => x.file));
+                      setValue(
+                        "businessDocuments",
+                        files && files.length > 0
+                          ? files.map((x) => x.file)
+                          : [],
+                      );
+                    }}
+                  />
+                </div>
+
+                {formState.errors.businessDocuments && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${formState.errors.businessDocuments.message}`}
+                    </span>
+                  </label>
+                )}
+              </div>
+            )}
+          </>
+        )}
 
         {/* BUTTONS */}
         <div className="mt-4 flex flex-row items-center justify-end gap-4">
