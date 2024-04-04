@@ -30,20 +30,6 @@ export const SearchInput: React.FC<InputProps> = ({
     [searchInputValue, onSearch],
   );
 
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchInputValue(e.target.value);
-      // submit
-      setTimeout(() => {
-        // trim whitespace
-        const searchValue = e.target.value?.trim() ?? "";
-
-        if (onSearch) onSearch(searchValue);
-      }, 1000);
-    },
-    [onSearch],
-  );
-
   return (
     <form onSubmit={handleSubmit} className="w-full md:w-auto">
       <div className="join w-full md:w-auto">
@@ -53,7 +39,7 @@ export const SearchInput: React.FC<InputProps> = ({
           placeholder={placeholder ?? "Search..."}
           autoComplete="off"
           value={searchInputValue ?? ""}
-          onChange={handleChange}
+          onChange={(e) => setSearchInputValue(e.target.value)}
           onFocus={(e) => (e.target.placeholder = "")}
           onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
         />

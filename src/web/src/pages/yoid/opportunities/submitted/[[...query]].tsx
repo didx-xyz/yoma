@@ -12,11 +12,7 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
-import {
-  Action,
-  type MyOpportunityInfo,
-  VerificationStatus,
-} from "~/api/models/myOpportunity";
+import { Action, VerificationStatus } from "~/api/models/myOpportunity";
 import YoIDTabbedOpportunities from "~/components/Layout/YoIDTabbedOpportunities";
 import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListItem";
 import { PaginationInfoComponent } from "~/components/PaginationInfo";
@@ -43,15 +39,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient(config);
   const { id } = context.params as IParams;
   const { query, page } = context.query;
+  const pageNumber = page ? parseInt(page.toString()) : 1;
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
-    queryKey: ["MyOpportunities_Pending"],
+    queryKey: ["MyOpportunities_Pending", pageNumber],
     queryFn: () =>
       searchMyOpportunities({
         action: Action.Verification,
         verificationStatuses: [VerificationStatus.Pending],
-        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageNumber: pageNumber,
         pageSize: PAGE_SIZE,
       }),
   });
@@ -62,28 +59,28 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       user: session?.user ?? null,
       id: id ?? null,
       query: query ?? null,
-      page: page ?? "1",
+      pageNumber: pageNumber,
     },
   };
 }
 
 const MyOpportunitiesSubmitted: NextPageWithLayout<{
   query?: string;
-  page?: string;
+  pageNumber: number;
   error: string;
-}> = ({ query, page, error }) => {
+}> = ({ query, pageNumber, error }) => {
   // 👇 use prefetched queries from server
   const {
     data: dataMyOpportunities,
     error: dataMyOpportunitiesError,
     isLoading: dataMyOpportunitiesIsLoading,
   } = useQuery({
-    queryKey: [`MyOpportunities_Pending`],
+    queryKey: [`MyOpportunities_Pending`, pageNumber],
     queryFn: () =>
       searchMyOpportunities({
         action: Action.Verification,
         verificationStatuses: [VerificationStatus.Pending],
-        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageNumber: pageNumber,
         pageSize: PAGE_SIZE,
       }),
     enabled: !error,
@@ -95,15 +92,11 @@ const MyOpportunitiesSubmitted: NextPageWithLayout<{
       // redirect
       void router.push({
         pathname: `/yoid/opportunities/submitted`,
-        query: { query: query, page: value },
+        query: { ...(query && { query }), ...(value && { page: value }) },
       });
     },
     [query],
   );
-
-  const handleOnClickOportunity = useCallback((item: MyOpportunityInfo) => {
-    window.open(`/opportunities/${item.opportunityId}`, "_blank");
-  }, []);
 
   if (error) return <Unauthorized />;
 
@@ -137,7 +130,7 @@ const MyOpportunitiesSubmitted: NextPageWithLayout<{
         <div className="flex flex-col gap-4">
           {/* PAGINATION INFO */}
           <PaginationInfoComponent
-            currentPage={parseInt(page as string)}
+            currentPage={pageNumber}
             itemCount={
               dataMyOpportunities?.items ? dataMyOpportunities.items.length : 0
             }
@@ -151,7 +144,6 @@ const MyOpportunitiesSubmitted: NextPageWithLayout<{
               <OpportunityListItem
                 key={index}
                 data={item}
-                onClick={handleOnClickOportunity}
                 displayDate={item.dateModified ?? ""}
               />
             ))}
@@ -160,7 +152,7 @@ const MyOpportunitiesSubmitted: NextPageWithLayout<{
           {/* PAGINATION BUTTONS */}
           <div className="mt-2 grid place-items-center justify-center">
             <PaginationButtons
-              currentPage={page ? parseInt(page) : 1}
+              currentPage={pageNumber}
               totalItems={dataMyOpportunities?.totalCount ?? 0}
               pageSize={PAGE_SIZE}
               onClick={handlePagerChange}

@@ -317,7 +317,9 @@ const Opportunities: NextPageWithLayout<{
           <div role="tabpanel" className="tab-content">
             <div className="flex flex-row justify-end py-4">
               <SearchInput
-                defaultValue={query as string}
+                defaultValue={
+                  query ? decodeURIComponent(query.toString()) : null
+                }
                 onSearch={onSearch}
                 className="bg-theme hover:bg-theme brightness-105 hover:brightness-110"
               />
@@ -373,7 +375,12 @@ const Opportunities: NextPageWithLayout<{
 
           <div role="tabpanel" className="tab-content">
             <div className="flex flex-row justify-end py-4">
-              <SearchInput defaultValue={query as string} onSearch={onSearch} />
+              <SearchInput
+                defaultValue={
+                  query ? decodeURIComponent(query.toString()) : null
+                }
+                onSearch={onSearch}
+              />
             </div>
             {/* NO ROWS */}
             {!organisationsActive ||
@@ -423,10 +430,14 @@ const Opportunities: NextPageWithLayout<{
           />
 
           {/* PENDING ORGS CONTENT */}
-
           <div role="tabpanel" className="tab-content">
             <div className="flex flex-row justify-end py-4">
-              <SearchInput defaultValue={query as string} onSearch={onSearch} />
+              <SearchInput
+                defaultValue={
+                  query ? decodeURIComponent(query.toString()) : null
+                }
+                onSearch={onSearch}
+              />
             </div>
 
             {/* NO ROWS */}

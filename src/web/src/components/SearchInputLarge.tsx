@@ -27,19 +27,6 @@ export const SearchInputLarge: React.FC<{
     [searchInputValue, onSearch],
   );
 
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchInputValue(e.target.value);
-      // Submit
-      setTimeout(() => {
-        // Trim whitespace
-        const searchValue = e.target.value?.trim() ?? "";
-        if (onSearch) onSearch(searchValue);
-      }, 1000);
-    },
-    [onSearch],
-  );
-
   useEffect(() => {
     setSearchInputValue(defaultValue);
   }, [defaultValue]);
@@ -69,7 +56,7 @@ export const SearchInputLarge: React.FC<{
           }`}
           style={{ maxWidth: maxWidthStyle }}
           value={searchInputValue ?? ""}
-          onChange={handleChange}
+          onChange={(e) => setSearchInputValue(e.target.value)}
           onFocus={(e) => (e.target.placeholder = "")}
           onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
         />

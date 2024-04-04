@@ -1,17 +1,15 @@
-/* eslint-disable */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useState } from "react";
-import { FieldValues, useForm } from "react-hook-form";
+import { type FieldValues, useForm } from "react-hook-form";
 import zod from "zod";
-import {
+import type {
   Organization,
-  type OrganizationRequestBase,
+  OrganizationRequestBase,
 } from "~/api/models/organisation";
-import { ACCEPTED_IMAGE_TYPES, REGEX_URL_VALIDATION } from "~/lib/constants";
+import { REGEX_URL_VALIDATION } from "~/lib/constants";
 import { useQuery } from "@tanstack/react-query";
 import { getCountries } from "~/api/services/lookups";
 import AvatarUpload from "./AvatarUpload";
-import { AvatarImage } from "~/components/AvatarImage";
 
 export interface InputProps {
   formData: OrganizationRequestBase | null;
@@ -30,7 +28,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
   cancelButtonText = "Cancel",
   submitButtonText = "Submit",
 }) => {
-  const [logoExisting, setLogoExisting] = useState(organisation?.logoURL);
+  const [logoExisting] = useState(organisation?.logoURL);
   const [logoFiles, setLogoFiles] = useState(false);
 
   const { data: countries } = useQuery({
@@ -70,7 +68,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         .optional(),
     })
     .superRefine((values, ctx) => {
-      var logoCount = 0;
+      let logoCount = 0;
       if (values.logoExisting) logoCount++;
       if (values.logo && values.logo.length > 0)
         logoCount = logoCount + values.logo.length;
@@ -109,7 +107,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         logoExisting: organisation?.logoURL,
       });
     }, 100);
-  }, [reset]);
+  }, [reset, formData, organisation?.logoURL]);
 
   // form submission handler
   const onSubmitHandler = useCallback(
@@ -118,12 +116,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
     },
     [onSubmit],
   );
-
-  // const onRemoveLogoExisting = useCallback(() => {
-  //   setValue("logoExisting", null);
-  //   // setLogoExisting(null);
-  //   setLogoFiles([]);
-  // }, [setValue, setLogoFiles]);
 
   return (
     <form
@@ -369,4 +361,3 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
     </form>
   );
 };
-/* eslint-enable */
