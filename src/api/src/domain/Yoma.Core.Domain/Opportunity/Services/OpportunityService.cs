@@ -236,7 +236,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = _opportunityRepository.Contains(query, filter.TitleContains);
 
       var results = new OpportunitySearchResultsCriteria();
-      query = query.OrderBy(o => o.Title);
+      query = query.OrderBy(o => o.Title).ThenBy(o => o.Id); //ensure deterministic sorting / consistent pagination results
 
       if (filter.PaginationEnabled)
       {

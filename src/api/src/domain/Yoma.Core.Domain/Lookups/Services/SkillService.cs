@@ -10,154 +10,154 @@ using Yoma.Core.Domain.Lookups.Validators;
 
 namespace Yoma.Core.Domain.Lookups.Services
 {
-  public class SkillService : ISkillService
-  {
-    #region Class Variables
-    private readonly ILogger<SkillService> _logger;
-    private readonly ScheduleJobOptions _scheduleJobOptions;
-    private readonly ILaborMarketProviderClient _laborMarketProviderClient;
-    private readonly SkillSearchFilterValidator _searchFilterValidator;
-    private readonly IRepositoryBatchedValueContains<Skill> _skillRepository;
-
-    private static readonly object _lock_Object = new();
-    #endregion
-
-    #region Constructor
-    public SkillService(ILogger<SkillService> logger,
-        IOptions<ScheduleJobOptions> scheduleJobOptions,
-        ILaborMarketProviderClientFactory laborMarketProviderClientFactory,
-        SkillSearchFilterValidator searchFilterValidator,
-        IRepositoryBatchedValueContains<Skill> skillRepository)
+    public class SkillService : ISkillService
     {
-      _logger = logger;
-      _scheduleJobOptions = scheduleJobOptions.Value;
-      _laborMarketProviderClient = laborMarketProviderClientFactory.CreateClient();
-      _searchFilterValidator = searchFilterValidator;
-      _skillRepository = skillRepository;
-    }
-    #endregion
+        #region Class Variables
+        private readonly ILogger<SkillService> _logger;
+        private readonly ScheduleJobOptions _scheduleJobOptions;
+        private readonly ILaborMarketProviderClient _laborMarketProviderClient;
+        private readonly SkillSearchFilterValidator _searchFilterValidator;
+        private readonly IRepositoryBatchedValueContains<Skill> _skillRepository;
 
-    #region Public Members
-    public Skill GetByName(string name)
-    {
-      var result = GetByNameOrNull(name);
+        private static readonly object _lock_Object = new();
+        #endregion
 
-      return result ?? throw new ArgumentException($"{nameof(Skill)} with name '{name}' does not exists", nameof(name));
-    }
+        #region Constructor
+        public SkillService(ILogger<SkillService> logger,
+            IOptions<ScheduleJobOptions> scheduleJobOptions,
+            ILaborMarketProviderClientFactory laborMarketProviderClientFactory,
+            SkillSearchFilterValidator searchFilterValidator,
+            IRepositoryBatchedValueContains<Skill> skillRepository)
+        {
+            _logger = logger;
+            _scheduleJobOptions = scheduleJobOptions.Value;
+            _laborMarketProviderClient = laborMarketProviderClientFactory.CreateClient();
+            _searchFilterValidator = searchFilterValidator;
+            _skillRepository = skillRepository;
+        }
+        #endregion
 
-    public Skill? GetByNameOrNull(string name)
-    {
-      if (string.IsNullOrWhiteSpace(name))
-        throw new ArgumentNullException(nameof(name));
-      name = name.Trim();
+        #region Public Members
+        public Skill GetByName(string name)
+        {
+            var result = GetByNameOrNull(name);
+
+            return result ?? throw new ArgumentException($"{nameof(Skill)} with name '{name}' does not exists", nameof(name));
+        }
+
+        public Skill? GetByNameOrNull(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentNullException(nameof(name));
+            name = name.Trim();
 
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-      return _skillRepository.Query().SingleOrDefault(o => o.Name.ToLower() == name.ToLower());
+            return _skillRepository.Query().SingleOrDefault(o => o.Name.ToLower() == name.ToLower());
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-    }
+        }
 
-    public Skill GetById(Guid id)
-    {
-      var result = GetByIdOrNull(id);
-
-      return result ?? throw new ArgumentException($"{nameof(Skill)} with '{id}' does not exists", nameof(id));
-    }
-
-    public Skill? GetByIdOrNull(Guid id)
-    {
-      if (id == Guid.Empty)
-        throw new ArgumentNullException(nameof(id));
-
-      return _skillRepository.Query().SingleOrDefault(o => o.Id == id);
-    }
-
-    public List<Skill> Contains(string value)
-    {
-      if (string.IsNullOrWhiteSpace(value))
-        throw new ArgumentNullException(nameof(value));
-      value = value.Trim();
-
-      return [.. _skillRepository.Contains(_skillRepository.Query(), value)];
-    }
-
-    public SkillSearchResults Search(SkillSearchFilter filter)
-    {
-      ArgumentNullException.ThrowIfNull(filter);
-
-      _searchFilterValidator.ValidateAndThrow(filter);
-
-      var query = _skillRepository.Query();
-      if (!string.IsNullOrEmpty(filter.NameContains))
-        query = _skillRepository.Contains(query, filter.NameContains);
-
-      var results = new SkillSearchResults();
-      query = query.OrderBy(o => o.Name);
-
-      if (filter.PaginationEnabled)
-      {
-        results.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
-      }
-      results.Items = [.. query];
-
-      return results;
-    }
-
-    public void SeedSkills(bool onStartupInitialSeeding)
-    {
-      lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
-      {
-        try
+        public Skill GetById(Guid id)
         {
-          if (onStartupInitialSeeding && _skillRepository.Query().Count() > default(int))
-          {
-            _logger.LogInformation("Seeding of skills (On Startup) skipped as intially seeded has already been executed");
-            return;
-          }
+            var result = GetByIdOrNull(id);
 
-          var incomingResults = _laborMarketProviderClient.ListSkills().Result;
-          if (incomingResults == null || incomingResults.Count == 0) return;
+            return result ?? throw new ArgumentException($"{nameof(Skill)} with '{id}' does not exists", nameof(id));
+        }
 
-          int batchSize = _scheduleJobOptions.SeedSkillsBatchSize;
-          int pageIndex = 0;
-          do
-          {
-            var incomingBatch = incomingResults.Skip(pageIndex * batchSize).Take(batchSize).ToList();
-            var incomingBatchIds = incomingBatch.Select(o => o.Id).ToList();
-            var existingItems = _skillRepository.Query().Where(o => incomingBatchIds.Contains(o.ExternalId)).ToList();
-            var newItems = new List<Skill>();
-            foreach (var item in incomingBatch)
+        public Skill? GetByIdOrNull(Guid id)
+        {
+            if (id == Guid.Empty)
+                throw new ArgumentNullException(nameof(id));
+
+            return _skillRepository.Query().SingleOrDefault(o => o.Id == id);
+        }
+
+        public List<Skill> Contains(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentNullException(nameof(value));
+            value = value.Trim();
+
+            return [.. _skillRepository.Contains(_skillRepository.Query(), value)];
+        }
+
+        public SkillSearchResults Search(SkillSearchFilter filter)
+        {
+            ArgumentNullException.ThrowIfNull(filter);
+
+            _searchFilterValidator.ValidateAndThrow(filter);
+
+            var query = _skillRepository.Query();
+            if (!string.IsNullOrEmpty(filter.NameContains))
+                query = _skillRepository.Contains(query, filter.NameContains);
+
+            var results = new SkillSearchResults();
+            query = query.OrderBy(o => o.Name).ThenBy(o => o.Id); //ensure deterministic sorting / consistent pagination results
+
+            if (filter.PaginationEnabled)
             {
-              var existItem = existingItems.SingleOrDefault(o => o.ExternalId == item.Id);
-              if (existItem != null)
-              {
-                existItem.Name = item.Name;
-                existItem.InfoURL = item.InfoURL;
-              }
-              else
-              {
-                newItems.Add(new Skill
-                {
-                  Name = item.Name,
-                  InfoURL = item.InfoURL,
-                  ExternalId = item.Id
-                });
-              }
+                results.TotalCount = query.Count();
+                query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
             }
+            results.Items = [.. query];
 
-            if (newItems.Count != 0) _skillRepository.Create(newItems).Wait();
-            if (existingItems.Count != 0) _skillRepository.Update(existingItems).Wait();
-
-            pageIndex++;
-          }
-          while ((pageIndex - 1) * batchSize < incomingResults.Count);
+            return results;
         }
-        catch (Exception ex)
+
+        public void SeedSkills(bool onStartupInitialSeeding)
         {
-          _logger.LogError(ex, "Failed to seed labor market skills");
+            lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
+            {
+                try
+                {
+                    if (onStartupInitialSeeding && _skillRepository.Query().Count() > default(int))
+                    {
+                        _logger.LogInformation("Seeding of skills (On Startup) skipped as intially seeded has already been executed");
+                        return;
+                    }
+
+                    var incomingResults = _laborMarketProviderClient.ListSkills().Result;
+                    if (incomingResults == null || incomingResults.Count == 0) return;
+
+                    int batchSize = _scheduleJobOptions.SeedSkillsBatchSize;
+                    int pageIndex = 0;
+                    do
+                    {
+                        var incomingBatch = incomingResults.Skip(pageIndex * batchSize).Take(batchSize).ToList();
+                        var incomingBatchIds = incomingBatch.Select(o => o.Id).ToList();
+                        var existingItems = _skillRepository.Query().Where(o => incomingBatchIds.Contains(o.ExternalId)).ToList();
+                        var newItems = new List<Skill>();
+                        foreach (var item in incomingBatch)
+                        {
+                            var existItem = existingItems.SingleOrDefault(o => o.ExternalId == item.Id);
+                            if (existItem != null)
+                            {
+                                existItem.Name = item.Name;
+                                existItem.InfoURL = item.InfoURL;
+                            }
+                            else
+                            {
+                                newItems.Add(new Skill
+                                {
+                                    Name = item.Name,
+                                    InfoURL = item.InfoURL,
+                                    ExternalId = item.Id
+                                });
+                            }
+                        }
+
+                        if (newItems.Count != 0) _skillRepository.Create(newItems).Wait();
+                        if (existingItems.Count != 0) _skillRepository.Update(existingItems).Wait();
+
+                        pageIndex++;
+                    }
+                    while ((pageIndex - 1) * batchSize < incomingResults.Count);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to seed labor market skills");
+                }
+            }
         }
-      }
+        #endregion
     }
-    #endregion
-  }
 }

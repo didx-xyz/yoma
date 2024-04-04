@@ -97,10 +97,10 @@ namespace Yoma.Core.Domain.SSI.Services
       if (filter.SchemaType.HasValue)
         result.Items = result.Items.Where(o => o.SchemaType == filter.SchemaType.Value).ToList();
 
-      result.Items = [.. result.Items.OrderByDescending(o => o.DateIssued)];
+      result.Items = [.. result.Items.OrderByDescending(o => o.DateIssued).ThenBy(o => o.Id)]; //ensure deterministic sorting / consistent pagination results
 
-      //pagination (client side)
-      if (filter.PaginationEnabled)
+            //pagination (client side)
+            if (filter.PaginationEnabled)
       {
         result.TotalCount = result.Items.Count;
         result.Items = result.Items.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value).ToList();

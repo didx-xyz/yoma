@@ -343,7 +343,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
       var query = SearchOrganizationOpportunitiesQueryBase(filter);
 
-      query = query.OrderByDescending(o => o.ConversionRatioPercentage).ThenBy(o => o.Title);
+      query = query.OrderByDescending(o => o.ConversionRatioPercentage).ThenBy(o => o.Title).ThenBy(o => o.Id); //ensure deterministic sorting / consistent pagination results
 
       var result = new OrganizationSearchResultsOpportunity();
       //pagination
@@ -405,7 +405,8 @@ namespace Yoma.Core.Domain.Analytics.Services
 
       var result = new OrganizationSearchResultsYouth();
 
-      query = query.OrderByDescending(o => o.DateCompleted).ThenBy(o => o.UserDisplayName).ThenBy(o => o.OpportunityTitle);
+      query = query.OrderByDescending(o => o.DateCompleted).ThenBy(o => o.UserDisplayName).ThenBy(o => o.OpportunityTitle)
+        .ThenBy(o => o.UserId).ThenBy(o => o.OpportunityId); //ensure deterministic sorting / consistent pagination results
 
       //pagination
       if (filter.PaginationEnabled)
