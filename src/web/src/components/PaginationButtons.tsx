@@ -47,7 +47,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
   return (
     <>
       {totalPages > 1 && (
-        <div className="flex w-full items-center justify-center gap-2">
+        <div className="mb-4 flex w-full items-center justify-center gap-2">
           {/* PREVIOUS BUTTON */}
           {!(currentPage > 1 && totalPages >= currentPage) && (
             <button

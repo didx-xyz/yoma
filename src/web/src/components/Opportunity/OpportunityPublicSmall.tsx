@@ -18,7 +18,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
   return (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative ml-3 flex aspect-square w-max flex-col gap-1 rounded-lg bg-white p-4 shadow-sm transition-all duration-300 hover:scale-[1.01] hover:shadow-md md:ml-0"
+      className="relative flex aspect-square h-[19rem] w-max flex-col gap-1 rounded-lg bg-white p-4 shadow-sm transition-all duration-300 hover:scale-[1.01] hover:shadow-md md:ml-0"
     >
       <div className="flex flex-row">
         <div className="flex flex-row">
@@ -26,7 +26,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
             <h1 className="h-[32px] max-w-[180px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark md:max-w-[200px]">
               {data.organizationName}
             </h1>
-            <h2 className="mt-1 line-clamp-3 h-[50px] max-w-[180px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight md:max-w-[210px]">
+            <h2 className="mt-1 line-clamp-2 h-[48px] max-w-[180px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight md:max-w-[210px]">
               {data.title}
             </h2>
           </div>

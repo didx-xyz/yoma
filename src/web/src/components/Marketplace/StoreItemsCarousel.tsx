@@ -177,10 +177,10 @@ const StoreItemsCarousel: React.FC<{
 
       <div className="embla h-60">
         <div className="embla__viewport" ref={emblaRef}>
-          <div className="embla__container max-3 w-full gap-2 !rounded-lg">
+          <div className="embla__container max-3">
             {slides?.map((item, index) => (
-              <div className="embla__slide w-full" key={index}>
-                <div className="embla__slide__number w-full">
+              <div className="embla__slide" key={index}>
+                <div className="embla__slide__number">
                   <ItemCardComponent
                     key={`storeCategoryItem_${id}_${index}`}
                     id={`storeCategoryItem_${id}_${index}`}
@@ -208,21 +208,23 @@ const StoreItemsCarousel: React.FC<{
         </div>
 
         {snapCount > 1 && selectedSnap < snapCount && (
-          <div className="flex place-content-end gap-2">
-            <SelectedSnapDisplay
-              selectedSnap={selectedSnap}
-              snapCount={snapCount}
-            />
+          <div className="my-2 mt-0 flex w-full place-content-start md:mb-10">
+            <div className="mx-auto flex scale-100 justify-center gap-4 md:mx-0 md:mr-auto md:scale-[0.85] md:justify-start md:gap-2">
+              <SelectedSnapDisplay
+                selectedSnap={selectedSnap}
+                snapCount={snapCount}
+              />
 
-            <PrevButton
-              onClick={onPrevButtonClick}
-              disabled={prevBtnDisabled}
-            />
+              <PrevButton
+                onClick={onPrevButtonClick}
+                disabled={prevBtnDisabled}
+              />
 
-            <NextButton
-              onClick={onNextButtonClick}
-              disabled={nextBtnDisabled}
-            />
+              <NextButton
+                onClick={onNextButtonClick}
+                disabled={nextBtnDisabled}
+              />
+            </div>
           </div>
         )}
       </div>

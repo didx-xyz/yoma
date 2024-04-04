@@ -686,7 +686,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         <Select
           instanceId={"country"}
           classNames={{
-            control: () => "input input-xs w-[200px]",
+            control: () => "input input-xs w-[200px] !z-50",
           }}
           options={countryOptions}
           onChange={(val) => onFilterCountry(val?.value ?? "")}
@@ -707,19 +707,19 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         {data_storeItems?.map((category_storeItems, index) => (
           <div key={`category_${category_storeItems.category.id}_${index}`}>
             {/* CATEGORY NAME AND IMAGES */}
-            <div className="flex flex-row gap-4 pb-4">
-              <h1>{category_storeItems.category.name}</h1>
+            <div className="flex flex-row items-center justify-start gap-4 pb-4">
+              <h1 className="text-2xl">{category_storeItems.category.name}</h1>
 
               <div className="flex flex-grow flex-row items-start overflow-hidden">
                 {category_storeItems.category.storeImageURLs.map(
                   (storeImage, index2) => (
                     <div
                       className="relative -mr-4 overflow-hidden rounded-full shadow"
-                      style={{
-                        zIndex:
-                          category_storeItems.category.storeImageURLs.length -
-                          index,
-                      }}
+                      // style={{
+                      //   zIndex:
+                      //     category_storeItems.category.storeImageURLs.length -
+                      //     index,
+                      // }}
                       key={`storeItems_${category_storeItems.category.id}_${index}_${index2}`}
                     >
                       <span className="z-0">

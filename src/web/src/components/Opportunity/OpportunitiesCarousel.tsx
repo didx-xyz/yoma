@@ -156,9 +156,9 @@ const OpportunitiesCarousel: React.FC<{
   }, [hasMoreToLoad]);
 
   return (
-    <div className="mb-4">
+    <div className="mb-12 md:mb-8">
       <div className="mb-2 flex flex-col gap-6">
-        <div className="flex flex-row">
+        <div className="flex max-w-full flex-row px-4 md:max-w-7xl md:px-0">
           <div className="flex flex-grow">
             <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-black md:max-w-[800px]">
               {title}
@@ -182,10 +182,10 @@ const OpportunitiesCarousel: React.FC<{
 
       <div className="embla">
         <div className="embla__viewport" ref={emblaRef}>
-          <div className="embla__container max-4 w-full gap-2 !rounded-lg !pl-4 !pr-0 md:gap-2 md:!px-4">
+          <div className="embla__container max-4">
             {slides?.map((item, index) => (
-              <div className="embla__slide w-full" key={index}>
-                <div className="embla__slide__number w-full">
+              <div className="embla__slide" key={index}>
+                <div className="embla__slide__number">
                   <OpportunityPublicSmallComponent
                     key={`${id}_${item.id}_component`}
                     data={item}
@@ -206,20 +206,21 @@ const OpportunitiesCarousel: React.FC<{
         </div>
 
         {snapCount > 1 && selectedSnap < snapCount && (
-          <div className="flex place-content-end gap-2">
-            <SelectedSnapDisplay
-              selectedSnap={selectedSnap}
-              snapCount={propData.totalCount ?? snapCount}
-            />
-
-            <PrevButton
-              onClick={onPrevButtonClick}
-              disabled={prevBtnDisabled}
-            />
-            <NextButton
-              onClick={onNextButtonClick}
-              disabled={nextBtnDisabled}
-            />
+          <div className="my-2 mt-0 flex w-full place-content-start md:mb-10">
+            <div className="mx-auto flex scale-100 justify-center gap-4 md:mx-0 md:mr-auto md:scale-[0.85] md:justify-start md:gap-2">
+              <SelectedSnapDisplay
+                selectedSnap={selectedSnap}
+                snapCount={propData.totalCount ?? snapCount}
+              />
+              <PrevButton
+                onClick={onPrevButtonClick}
+                disabled={prevBtnDisabled}
+              />
+              <NextButton
+                onClick={onNextButtonClick}
+                disabled={nextBtnDisabled}
+              />
+            </div>
           </div>
         )}
       </div>

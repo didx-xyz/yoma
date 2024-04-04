@@ -40,7 +40,7 @@ export const SearchInputLarge: React.FC<{
         {openFilter && (
           <button
             type="button"
-            className="bg-theme btn join-item inline-flex items-center justify-center rounded-l-full border-none p-3 text-white hover:brightness-95 lg:hidden"
+            className="bg-theme btn join-item inline-flex items-center justify-center rounded-l-full border-none p-3 text-white brightness-[1.12] hover:brightness-95 lg:hidden"
             onClick={() => openFilter(true)}
           >
             <IoMdOptions className="h-5 w-5" />
@@ -61,7 +61,7 @@ export const SearchInputLarge: React.FC<{
           onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
         />
         <button
-          className="bg-theme btn btn-primary join-item inline-flex items-center justify-center rounded-r-full border-none p-3 text-white hover:brightness-95"
+          className="bg-theme btn btn-primary join-item inline-flex items-center justify-center rounded-r-full border-none p-3 text-white brightness-[1.12] hover:brightness-95"
           type="submit"
         >
           <svg
