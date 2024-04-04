@@ -175,12 +175,12 @@ const StoreItemsCarousel: React.FC<{
         </div>
       </div>
 
-      <div className="embla h-60x">
+      <div className="embla h-60">
         <div className="embla__viewport" ref={emblaRef}>
-          <div className="embla__container max-3">
+          <div className="embla__container max-3 w-full gap-2 !rounded-lg">
             {slides?.map((item, index) => (
-              <div className="embla__slide" key={index}>
-                <div className="embla__slide__number">
+              <div className="embla__slide w-full" key={index}>
+                <div className="embla__slide__number w-full">
                   <ItemCardComponent
                     key={`storeCategoryItem_${id}_${index}`}
                     id={`storeCategoryItem_${id}_${index}`}

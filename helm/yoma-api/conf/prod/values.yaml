@@ -1,0 +1,57 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/didx-xyz/yoma-api
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "master"
+
+ingress:
+  internal:
+    enabled: true
+    className: nginx-internal
+    annotations:
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.yoma.world"
+    rules:
+      - host: api.yoma.world
+  external:
+    enabled: true
+    className: nginx-external
+    annotations:
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.yoma.world"
+      nginx.ingress.kubernetes.io/server-snippet: |
+        location /hangfire {
+          deny all;
+        }
+    rules:
+      - host: api.yoma.world
+
+env:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  # ConnectionStrings__SQLConnection: "Data Source=mssql-mssqlserver-2022,1433;Initial Catalog=yoma-stage;MultipleActiveResultSets=true;User ID=sa;Password=Password1;TrustServerCertificate=True;Encrypt=True"
+
+appSettings:
+  fileName: appsettings.Production.json
+
+volumes:
+  - name: app-settings
+    secret:
+      secretName: yoma-api
+
+volumeMounts:
+  - name: app-settings
+    mountPath: /api/appsettings.Production.json
+    subPath: appsettings.Production.json
+
+postInstallHook:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 1024Mi
+  limits:
+    cpu: 2000m
+    memory: 1024Mi

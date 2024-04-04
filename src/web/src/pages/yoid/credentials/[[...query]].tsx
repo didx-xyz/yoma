@@ -282,7 +282,7 @@ const MyCredentials: NextPageWithLayout<{
           <div className="flex flex-col items-center gap-4">
             {/* GRID */}
             {data && data.items?.length > 0 && (
-              <div className="mr-auto grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 md:mr-auto md:grid-cols-2 xl:grid-cols-3">
                 {data.items.map((item, index) => (
                   <div
                     key={index}
