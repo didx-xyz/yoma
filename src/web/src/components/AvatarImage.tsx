@@ -6,18 +6,17 @@ interface InputProps {
   icon?: any;
   alt: string;
   size: number;
-  sizeMobile?: number;
 }
 
-export const AvatarImage: React.FC<InputProps> = ({
-  icon,
-  alt,
-  size,
-  sizeMobile,
-}) => {
+export const AvatarImage: React.FC<InputProps> = ({ icon, alt, size }) => {
+  const sizePixels: string = size + "px";
   return (
     <div
-      className={`flex aspect-square flex-shrink-0 overflow-hidden rounded-full bg-white bg-opacity-20 shadow-custom w-[${sizeMobile}px] h-[${sizeMobile}px] md:h-[${size}px] md:w-[${size}px]`}
+      className={`flex aspect-square flex-shrink-0 overflow-hidden rounded-full bg-white bg-opacity-20 shadow-custom `}
+      style={{
+        width: sizePixels,
+        height: sizePixels,
+      }}
     >
       {icon && icon ? (
         <Image
@@ -31,11 +30,18 @@ export const AvatarImage: React.FC<InputProps> = ({
           blurDataURL={`data:image/svg+xml;base64,${toBase64(
             shimmer(size, size),
           )}`}
-          className={`w-[${sizeMobile}px] h-[${sizeMobile}px] md:w-[${size}px] md:h-[${size}px]`}
+          style={{
+            width: sizePixels,
+            height: sizePixels,
+          }}
         />
       ) : (
         <IoMdPerson
-          className={`p-4 text-gray w-[${sizeMobile}px] h-[${sizeMobile}px] md:w-[${size}px] md:h-[${size}px]`}
+          className={`p-4 text-gray`}
+          style={{
+            width: sizePixels,
+            height: sizePixels,
+          }}
         />
       )}
     </div>

@@ -98,7 +98,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         DateLastLogin = item.DateLastLogin,
         ExternalId = item.ExternalId,
         YoIDOnboarded = item.YoIDOnboarded,
-        DateYoIDOnboarded = item.DateYoIDOnboarded, 
+        DateYoIDOnboarded = item.DateYoIDOnboarded,
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
       };

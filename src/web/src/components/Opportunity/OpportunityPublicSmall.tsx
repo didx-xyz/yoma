@@ -18,15 +18,15 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
   return (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex aspect-square h-80 w-[283px] flex-col gap-1 rounded-lg bg-white p-5 shadow-sm transition-all duration-300 hover:scale-[1.01] hover:shadow-md md:w-[300px]"
+      className="relative ml-3 flex aspect-square w-max flex-col gap-1 rounded-lg bg-white p-4 shadow-sm transition-all duration-300 hover:scale-[1.01] hover:shadow-md md:ml-0"
     >
       <div className="flex flex-row">
         <div className="flex flex-row">
           <div className="flex w-3/5 flex-grow flex-col">
-            <h1 className="h-[32px] max-w-[200px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark">
+            <h1 className="h-[32px] max-w-[180px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark md:max-w-[200px]">
               {data.organizationName}
             </h1>
-            <h2 className="line-clamp-3 h-[70px] max-w-[210px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight">
+            <h2 className="mt-1 line-clamp-3 h-[50px] max-w-[180px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight md:max-w-[210px]">
               {data.title}
             </h2>
           </div>
@@ -39,7 +39,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
           </div>
         </div>
       </div>
-      <div className="mb-2 flex max-w-[280px] flex-row">
+      <div className="mb-auto flex max-w-[280px] flex-row">
         <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-ellipsis text-sm font-light">
           {data.description}
         </p>
@@ -48,7 +48,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
       {/* DATES */}
       {data.status == "Active" && (
         <div className="flex flex-col text-sm text-gray-dark">
-          <div>
+          {/* <div>
             {data.dateStart && (
               <>
                 <span className="mr-2 font-bold">Starts:</span>
@@ -59,7 +59,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
                 </span>
               </>
             )}
-          </div>
+          </div> */}
           <div>
             {data.dateEnd && (
               <>
@@ -76,7 +76,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
       )}
 
       {/* BADGES */}
-      <div className="bottom-5x flex flex-row gap-1 whitespace-nowrap pt-2 text-green-dark">
+      <div className="flex flex-row flex-wrap gap-2 whitespace-nowrap pt-2 text-green-dark md:flex-nowrap">
         <div className="badge bg-green-light text-green">
           <Image
             src={iconClock}

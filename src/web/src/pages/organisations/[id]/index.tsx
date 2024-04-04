@@ -459,14 +459,14 @@ const OrganisationDashboard: NextPageWithLayout<{
         <title>Yoma | Organisation Dashboard</title>
       </Head>
 
-      <PageBackground className="h-[340px] lg:h-[275px]" />
+      <PageBackground className="h-[250px] lg:h-[275px]" />
 
       {isSearchPerformed && isLoading && <Loading />}
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
-      <div className="container z-10 mt-20 max-w-5xl overflow-hidden px-4 py-1 md:py-4">
+      <div className="container z-10 mt-20 max-w-7xl overflow-hidden px-4 py-1 md:py-4">
         <div className="flex flex-col gap-4">
           {/* HEADER */}
           <div className="flex flex-col">
@@ -479,7 +479,7 @@ const OrganisationDashboard: NextPageWithLayout<{
               <LimitedFunctionalityBadge />
             </div>
             {/* DESCRIPTION */}
-            <div className="flex flex-col gap-1 lg:flex-row">
+            <div className="-mt-2 mb-4 flex flex-col gap-1 leading-4 text-white lg:flex-row">
               <span>Your dashboard progress so far.</span>
 
               {searchResults?.dateStamp && (
@@ -496,7 +496,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           </div>
 
           {/* FILTERS */}
-          <div className="mb-4 flex">
+          <div className="mt-16 flex lg:mt-20">
             {!lookups_categories && <div>Loading...</div>}
             {lookups_categories && (
               <div className="flex flex-grow flex-col gap-3">
@@ -515,6 +515,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   lookups_categories={lookups_categories}
                   onSubmit={(e) => onSubmitFilter(e)}
                 />
+
                 {/* FILTER BADGES */}
                 <FilterBadges
                   searchFilter={searchFilter}
@@ -540,7 +541,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           </div>
 
           {/* SUMMARY */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 md:-mt-2">
             {/* ENGAGEMENT */}
             <div className="flex flex-col gap-2">
               <div className="text-xl font-semibold">Engagement</div>
@@ -673,19 +674,19 @@ const OrganisationDashboard: NextPageWithLayout<{
                 {/* MOST COMPLETED SKILLS */}
                 {searchResults?.skills?.topCompleted && (
                   <>
-                    <div className="flex h-[160px] w-full flex-col rounded-lg bg-white p-4 shadow">
+                    <div className="flex w-full flex-col rounded-lg bg-white p-4 shadow md:h-[160px]">
                       <div className="flex flex-row items-center gap-2">
                         <IoMdCompass className="text-green" />
                         <div className="text-sm font-semibold">
                           {searchResults?.skills.topCompleted.legend}
                         </div>
                       </div>
-                      <div className="mt-2 flex h-[100px] flex-grow flex-wrap gap-1 overflow-y-scroll">
+                      <div className="mt-2 flex flex-grow flex-wrap gap-1 overflow-x-hidden overflow-y-scroll md:h-[100px]">
                         {searchResults?.skills.topCompleted.topCompleted.map(
                           (x) => (
                             <div
                               key={x.id}
-                              className="min-h-6 badge whitespace-nowrap rounded-md border-0 bg-green text-white"
+                              className="min-h-6 md:truncate-none badge w-min text-ellipsis rounded-md border-0 bg-green text-white md:w-fit md:max-w-none"
                             >
                               {x.name}
                             </div>

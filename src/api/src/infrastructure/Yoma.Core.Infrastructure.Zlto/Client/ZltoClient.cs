@@ -428,7 +428,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
       var response = await _options.Partner.BaseUrl
          .AppendPathSegment("external_partner_login")
-         .WithHeaders(GetAuthHeaderApiKey())
+         .WithAuthHeader(GetAuthHeaderApiKey())
          .PostJsonAsync(request)
          .EnsureSuccessStatusCodeAsync()
          .ReceiveJson<PartnerResponseLogin>();
