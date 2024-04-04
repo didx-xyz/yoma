@@ -221,15 +221,8 @@ const OpportunityDetails: NextPageWithLayout<{
   useEffect(() => {
     if (!user) return;
 
-    // ensure opportunity is published, status is not 'Inactive' and it has not yet started (avoid API 400 error)
-    if (
-      !(
-        opportunity?.published &&
-        opportunity?.status != "Inactive" &&
-        new Date(opportunity?.dateStart) > new Date()
-      )
-    )
-      return;
+    // ensure opportunity is published and status is not 'Inactive' (avoid API 400 error)
+    if (!(opportunity?.published && opportunity?.status != "Inactive")) return;
 
     isOpportunitySaved(opportunity.id).then((res) => {
       setIsOppSaved(!!res);
