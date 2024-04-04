@@ -25,6 +25,8 @@ import {
 import NoRowsMessage from "~/components/NoRowsMessage";
 import {
   DATETIME_FORMAT_HUMAN,
+  DATE_FORMAT_HUMAN,
+  DATE_FORMAT_HUMAN_LONG,
   GA_ACTION_ORGANISATION_VERIFY,
   GA_CATEGORY_ORGANISATION,
   PAGE_SIZE,
@@ -680,7 +682,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         </div>
       </ReactModal>
 
-      {/* MODAL DIALOG FOR VERIFICATION SUCCESS(Single) */}
+      {/* MODAL DIALOG FOR VERIFICATION SUCCESS (SINGLE) */}
       <ReactModal
         isOpen={modalSingleSuccessVisible}
         shouldCloseOnOverlayClick={true}
@@ -744,7 +746,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         </div>
       </ReactModal>
 
-      {/* MODAL DIALOG FOR VERIFICATION APPROVED SUCCESS(Bulk) */}
+      {/* MODAL DIALOG FOR VERIFICATION APPROVED SUCCESS (BULK) */}
       <ReactModal
         isOpen={modalBulkSuccessVisible}
         shouldCloseOnOverlayClick={true}
@@ -803,12 +805,12 @@ const OpportunityVerifications: NextPageWithLayout<{
       </ReactModal>
 
       {/* PAGE */}
-
       <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[8rem]">
         <div className="px-2 md:px-0">
           <h3 className="mb-6 mt-3 flex items-center text-3xl font-semibold tracking-normal text-white md:mt-0">
             Verifications <LimitedFunctionalityBadge />
           </h3>
+
           <div className="mt-4 flex flex-row items-center">
             <div className="mb-4 flex flex-grow flex-col flex-wrap justify-end gap-4 md:flex-row">
               {/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */}
@@ -843,15 +845,8 @@ const OpportunityVerifications: NextPageWithLayout<{
               <SearchInput defaultValue={query} onSearch={onSearch} />
             </div>
           </div>
+
           {/* NO ROWS */}
-          {/* {data && data.items?.length === 0 && !query && (
-            <NoRowsMessage
-              title={"You will find your active opportunities here"}
-              description={
-                "This is where you will find all the awesome opportunities you have shared"
-              }
-            />
-          )} */}
           {data && data.totalCount === 0 && (
             <NoRowsMessage
               title={"No results found"}
@@ -907,7 +902,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                       </td>
                       <td className="w-[185px]">
                         {item.dateStart && (
-                          <Moment format={DATETIME_FORMAT_HUMAN} utc={true}>
+                          <Moment format={DATE_FORMAT_HUMAN} utc={true}>
                             {item.dateStart}
                           </Moment>
                         )}
@@ -916,31 +911,33 @@ const OpportunityVerifications: NextPageWithLayout<{
                         <div className="flex justify-start">
                           {item.verificationStatus &&
                             item.verificationStatus == "Pending" && (
-                              <div className="tooltip" data-tip="Pending">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setCurrentRow(item);
-                                    setVerifyComments("");
-                                    setModalVerifySingleVisible(true);
-                                  }}
-                                >
-                                  <IoMdAlert className="h-6 w-6 text-yellow" />
-                                </button>
-                              </div>
+                              <button
+                                type="button"
+                                className="flex flex-row"
+                                onClick={() => {
+                                  setCurrentRow(item);
+                                  setVerifyComments("");
+                                  setModalVerifySingleVisible(true);
+                                }}
+                              >
+                                <IoMdAlert className="mr-2 h-6 w-6 text-yellow" />
+                                Pending
+                              </button>
                             )}
 
                           {/* Status Badges */}
                           {item.verificationStatus &&
                             item.verificationStatus == "Completed" && (
-                              <div className="tooltip" data-tip="Approved">
-                                <IoMdCheckmark className="h-6 w-6 text-green" />
+                              <div className="flex flex-row">
+                                <IoMdCheckmark className="mr-2 h-6 w-6  text-green" />
+                                Completed
                               </div>
                             )}
                           {item.verificationStatus &&
                             item.verificationStatus == "Rejected" && (
-                              <div className="tooltip" data-tip="Rejected">
-                                <IoMdClose className="h-6 w-6 text-red-400" />
+                              <div className="flex flex-row">
+                                <IoMdClose className="mr-2 h-6 w-6  text-red-400" />
+                                Rejected
                               </div>
                             )}
                         </div>
@@ -968,8 +965,9 @@ const OpportunityVerifications: NextPageWithLayout<{
               </div>
             </div>
           )}
+
+          {/* PAGINATION */}
           <div className="mt-2 grid place-items-center justify-center">
-            {/* PAGINATION */}
             <PaginationButtons
               currentPage={page ? parseInt(page) : 1}
               totalItems={data?.totalCount ?? 0}
