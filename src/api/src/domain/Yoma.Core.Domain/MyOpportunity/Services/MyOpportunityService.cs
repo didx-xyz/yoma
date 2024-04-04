@@ -169,7 +169,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           .ToList();
 
       results.ForEach(o => o.Title = o.Title.RemoveSpecialCharacters());
-      results = [.. results.OrderBy(o => o.Title)]; 
+      results = [.. results.OrderBy(o => o.Title)];
 
       return results;
     }
