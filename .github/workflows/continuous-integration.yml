@@ -4,14 +4,13 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "master"
-    tags:
-      - "v*"
+      - master
   pull_request:
     branches:
-      - "master"
+      - master
   release:
-    types: [released, prereleased]
+    types:
+      - released
 
 env:
   REGISTRY: ghcr.io/${{ github.repository_owner }}
@@ -330,8 +329,8 @@ jobs:
       cancel-in-progress: false
     environment:
       name: ${{
-        (github.event_name == 'release' && github.event.action == 'released') && 'prod' ||
-        (github.event_name == 'release' && github.event.action == 'prereleased') && 'stage' ||
+        github.event_name == 'release' && 'prod' ||
+        (github.event_name == 'push' && format('refs/heads/{0}', github.event.repository.default_branch) == github.ref) && 'stage' ||
         'dev'
         }}
       url: ${{ vars.PUBLIC_URL }}
