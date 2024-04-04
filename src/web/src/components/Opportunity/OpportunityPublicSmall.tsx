@@ -26,7 +26,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
             <h1 className="h-[32px] max-w-[180px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark md:max-w-[200px]">
               {data.organizationName}
             </h1>
-            <h2 className="mt-1 line-clamp-2 h-[48px] max-w-[180px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight md:max-w-[210px]">
+            <h2 className="mt-1 line-clamp-2 h-[45px] max-w-[180px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight md:max-w-[210px]">
               {data.title}
             </h2>
           </div>
