@@ -1,28 +1,21 @@
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
 import Moment from "react-moment";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
-import { useCallback } from "react";
 import { AvatarImage } from "../AvatarImage";
 import { useRouter } from "next/router";
+import Link from "next/link";
 
 const OpportunityListItem: React.FC<{
   data: MyOpportunityInfo;
-  onClick?: (certificate: MyOpportunityInfo) => void;
   displayDate: string;
   [key: string]: any;
-}> = ({ data, onClick, displayDate }) => {
+}> = ({ data, displayDate }) => {
   const router = useRouter();
   const { pathname } = router;
 
-  // 🔔 click handler: use callback parameter
-  const handleClick = useCallback(() => {
-    if (!onClick) return;
-    onClick(data);
-  }, [data, onClick]);
-
   return (
-    <div
-      onClick={handleClick}
+    <Link
+      href={`/opportunities/${data.opportunityId}`}
       className="flex cursor-pointer flex-col gap-1 rounded-lg border-none border-gray bg-white p-4 shadow-custom duration-300 hover:scale-[1.005] hover:shadow-lg"
     >
       <div className="mb-2 flex flex-row gap-2">
@@ -50,7 +43,6 @@ const OpportunityListItem: React.FC<{
 
       <div className="mt-2 flex flex-col gap-4">
         {/* SKILLS */}
-
         {pathname.includes("completed") && (
           <>
             <div className="flex flex-row">
@@ -92,7 +84,7 @@ const OpportunityListItem: React.FC<{
           </div>
         )}
       </div>
-    </div>
+    </Link>
   );
 };
 

@@ -44,14 +44,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
   const { query, page } = context.query;
 
+  let pageNumber = page ? parseInt(page.toString()) : 1;
+
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
-    queryKey: ["MyOpportunities_Rejected"],
+    queryKey: ["MyOpportunities_Rejected", pageNumber],
     queryFn: () =>
       searchMyOpportunities({
         action: Action.Verification,
         verificationStatuses: [VerificationStatus.Rejected],
-        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageNumber: pageNumber,
         pageSize: PAGE_SIZE,
       }),
   });
@@ -62,28 +64,28 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       user: session?.user ?? null,
       id: id ?? null,
       query: query ?? null,
-      page: page ?? "1",
+      pageNumber: pageNumber,
     },
   };
 }
 
 const MyOpportunitiesDeclined: NextPageWithLayout<{
   query?: string;
-  page?: string;
+  pageNumber: number;
   error: string;
-}> = ({ query, page, error }) => {
+}> = ({ query, pageNumber, error }) => {
   // 👇 use prefetched queries from server
   const {
     data: dataMyOpportunities,
     error: dataMyOpportunitiesError,
     isLoading: dataMyOpportunitiesIsLoading,
   } = useQuery({
-    queryKey: [`MyOpportunities_Rejected`],
+    queryKey: ["MyOpportunities_Rejected", pageNumber],
     queryFn: () =>
       searchMyOpportunities({
         action: Action.Verification,
         verificationStatuses: [VerificationStatus.Rejected],
-        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageNumber: pageNumber,
         pageSize: PAGE_SIZE,
       }),
     enabled: !error,
@@ -95,15 +97,11 @@ const MyOpportunitiesDeclined: NextPageWithLayout<{
       // redirect
       void router.push({
         pathname: `/yoid/opportunities/declined`,
-        query: { query: query, page: value },
+        query: { ...(query && { query }), ...(value && { page: value }) },
       });
     },
     [query],
   );
-
-  const handleOnClickOportunity = useCallback((item: MyOpportunityInfo) => {
-    window.open(`/opportunities/${item.opportunityId}`, "_blank");
-  }, []);
 
   if (error) return <Unauthorized />;
 
@@ -133,7 +131,7 @@ const MyOpportunitiesDeclined: NextPageWithLayout<{
         <div className="flex flex-col gap-4">
           {/* PAGINATION INFO */}
           <PaginationInfoComponent
-            currentPage={parseInt(page as string)}
+            currentPage={pageNumber}
             itemCount={
               dataMyOpportunities?.items ? dataMyOpportunities.items.length : 0
             }
@@ -141,13 +139,13 @@ const MyOpportunitiesDeclined: NextPageWithLayout<{
             pageSize={PAGE_SIZE}
             query={null}
           />
+
           {/* GRID */}
           <div className="flex flex-col gap-4">
             {dataMyOpportunities.items.map((item, index) => (
               <OpportunityListItem
                 key={index}
                 data={item}
-                onClick={handleOnClickOportunity}
                 displayDate={item.dateModified ?? ""}
               />
             ))}
@@ -156,7 +154,7 @@ const MyOpportunitiesDeclined: NextPageWithLayout<{
           {/* PAGINATION BUTTONS */}
           <div className="mt-2 grid place-items-center justify-center">
             <PaginationButtons
-              currentPage={page ? parseInt(page) : 1}
+              currentPage={pageNumber}
               totalItems={dataMyOpportunities?.totalCount ?? 0}
               pageSize={PAGE_SIZE}
               onClick={handlePagerChange}
