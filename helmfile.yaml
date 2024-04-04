@@ -6,31 +6,25 @@ environments:
     values:
       - namespace: yoma-v3-dev
         arch: amd64
-        lifecycle: spot
         tag: {{ env "TAG" | default "master" }}
         ddInjectEnabled: false
         ddProfilingEnabled: false
-        gitref: master
         postgresEnabled: true
   stage:
     values:
       - namespace: yoma-v3-stage
         arch: amd64
-        lifecycle: on-demand
         tag: {{ env "TAG" | default "master" }}
         ddInjectEnabled: true
         ddProfilingEnabled: false
-        gitref: master
         postgresEnabled: false
   prod:
     values:
       - namespace: yoma-v3-prod
         arch: amd64
-        lifecycle: on-demand
         tag: {{ env "TAG" | default "master" }}
         ddInjectEnabled: true
         ddProfilingEnabled: false
-        gitref: master
         postgresEnabled: false
 ---
 repositories:
@@ -130,35 +124,6 @@ releases:
         podLabels:
           admission.datadoghq.com/enabled: {{ quote .Values.ddInjectEnabled }}
           tags.datadoghq.com/env: v3-{{ .Environment.Name }}
-      - postInstallHook:
-          initContainers:
-            - name: download-sql
-              image: docker.io/busybox:stable
-              imagePullPolicy: IfNotPresent
-              command:
-                - sh
-              args:
-                - -c
-                - |-
-                  cd /init
-                  wget -O - \
-                    --header="Authorization: token ${GITHUB_PAT}"\
-                    --header="Accept:application/vnd.github.v3.raw" \
-                    https://api.github.com/repos/didx-xyz/yoma/tarball/${GIT_REF} | tar xz
-                  cp -v ./didx-xyz-yoma-*/src/api/cicd/scripts/postgressql-init/* /init/
-                  chmod +x /init/post.sh
-                  rm -rvf ./didx-xyz-yoma-*
-              env:
-                - name: GITHUB_PAT
-                  valueFrom:
-                    secretKeyRef:
-                      name: keycloak-github-pat
-                      key: github-pat
-                - name: GIT_REF
-                  value: {{ .Values.gitref }}
-              volumeMounts:
-                - name: init
-                  mountPath: /init
     secrets:
       - ./helm/yoma-api/conf/base/secrets.yaml
       - ./helm/yoma-api/conf/{{ .Environment.Name }}/secrets.yaml

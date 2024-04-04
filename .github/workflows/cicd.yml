@@ -382,25 +382,22 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           version: ${{ env.TAILSCALE_VERSION }}
-      - name: Set GIT_REF Environment Variable
-        run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            echo "GIT_REF=${{ github.head_ref }}" >> $GITHUB_ENV
-          else
-            echo "GIT_REF=$(echo ${{ github.ref }} | sed 's/refs\/heads\///')" >> $GITHUB_ENV
-          fi
       # Diff on PR draft, otherwise Apply
       - name: Helmfile Apply/Diff Keycloak
-        if: steps.filter.outputs.keycloak == 'true' || github.event_name == 'workflow_dispatch'
+        if: (
+          github.event_name == 'release' ||
+          steps.filter.outputs.keycloak == 'true' ||
+          github.event_name == 'workflow_dispatch'
+          )
         uses: helmfile/helmfile-action@v1.8.0
         with:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
               --environment ${{ vars.ENVIRONMENT }} \
               --selector app=keycloak \
-              --set config-cli.init.ref=${{ github.sha }} \
-              --set keycloak.themes.ref=${{ github.sha }} \
-              --set postInstallHook.ref=${{ github.sha }}
+              --set config-cli.init.ref=${{ github.event_name == 'release' && github.ref_name || github.sha }} \
+              --set keycloak.themes.ref=${{ github.event_name == 'release' && github.ref_name || github.sha }} \
+              --set postInstallHook.ref=${{ github.event_name == 'release' && github.ref_name || github.sha }}
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: |
@@ -408,14 +405,18 @@ jobs:
             https://github.com/jkroepke/helm-secrets,
             https://github.com/aslafy-z/helm-git
       - name: Helmfile Apply/Diff API
-        if: steps.filter.outputs.api == 'true' || github.event_name == 'workflow_dispatch'
+        if: (
+          github.event_name == 'release' ||
+          steps.filter.outputs.api == 'true' ||
+          github.event_name == 'workflow_dispatch'
+          )
         uses: helmfile/helmfile-action@v1.8.0
         with:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
               --environment ${{ vars.ENVIRONMENT }} \
               --selector app=yoma-api \
-              --state-values-set gitref=${{ env.GIT_REF }}
+              --set postInstallHook.ref=${{ github.event_name == 'release' && github.ref_name || github.sha }}
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: |
@@ -423,14 +424,17 @@ jobs:
             https://github.com/jkroepke/helm-secrets,
             https://github.com/aslafy-z/helm-git
       - name: Helmfile Apply/Diff Web
-        if: steps.filter.outputs.web == 'true' || github.event_name == 'workflow_dispatch'
+        if: (
+          github.event_name == 'release' ||
+          steps.filter.outputs.web == 'true' ||
+          github.event_name == 'workflow_dispatch'
+          )
         uses: helmfile/helmfile-action@v1.8.0
         with:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
               --environment ${{ vars.ENVIRONMENT }} \
-              --selector app=yoma-web \
-              --state-values-set gitref=${{ env.GIT_REF }}
+              --selector app=yoma-web
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: |
