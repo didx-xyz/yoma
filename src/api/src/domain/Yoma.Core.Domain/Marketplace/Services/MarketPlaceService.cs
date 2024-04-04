@@ -15,8 +15,6 @@ using Yoma.Core.Domain.Marketplace.Interfaces.Provider;
 using Yoma.Core.Domain.Marketplace.Models;
 using Yoma.Core.Domain.Marketplace.Validators;
 using Yoma.Core.Domain.Reward.Interfaces;
-using Yoma.Core.Domain.Reward.Models;
-using static Hangfire.Storage.JobStorageFeatures;
 
 namespace Yoma.Core.Domain.Marketplace.Services
 {

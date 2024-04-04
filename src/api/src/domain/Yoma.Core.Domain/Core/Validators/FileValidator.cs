@@ -17,12 +17,12 @@ namespace Yoma.Core.Domain.Core.Validators
       switch (type)
       {
         case FileType.Photos:
-          extensions = [".png", ".jpg", ".jpeg", ".svg", ".webp"];
-          maxSizeBytes = 5000000;
+          extensions = [".png", ".jpg", ".jpeg", ".webp"];
+          maxSizeBytes = 10000000;
           break;
 
         case FileType.Certificates:
-          extensions = [".pdf"];
+          extensions = [".pdf", ".doc", ".docx", ".pptx", ".png", ".jpg", ".jpeg", ".webp"];
           maxSizeBytes = 10000000;
           break;
 
@@ -33,7 +33,7 @@ namespace Yoma.Core.Domain.Core.Validators
 
         case FileType.VoiceNotes:
           extensions = [".wav", ".mp3", ".m4a", ".amr", ".ogg", ".3gp"];
-          maxSizeBytes = 5000000;
+          maxSizeBytes = 10000000;
           break;
 
         default:
