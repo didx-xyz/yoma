@@ -367,7 +367,8 @@ jobs:
       - name: Should deploy?
         id: should-run
         run: |-
-          if [ "${{ steps.filter.outputs.api }}" = "true" ] || \
+          if [ "${{ github.event_name }}" = "release" ] \
+              [ "${{ steps.filter.outputs.api }}" = "true" ] || \
               [ "${{ steps.filter.outputs.web }}" = "true" ] || \
               [ "${{ steps.filter.outputs.keycloak }}" = "true" ] || \
               [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
