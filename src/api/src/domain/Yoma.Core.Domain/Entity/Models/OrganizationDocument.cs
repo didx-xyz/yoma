@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
+using Yoma.Core.Domain.BlobProvider;
 
 namespace Yoma.Core.Domain.Entity.Models
 {
@@ -12,6 +13,12 @@ namespace Yoma.Core.Domain.Entity.Models
     public Guid OrganizationId { get; set; }
 
     public Guid FileId { get; set; }
+
+    [JsonIgnore]
+    public StorageType FileStorageType { get; set; }
+
+    [JsonIgnore]
+    public string FileKey { get; set; }
 
     public OrganizationDocumentType Type { get; set; }
 

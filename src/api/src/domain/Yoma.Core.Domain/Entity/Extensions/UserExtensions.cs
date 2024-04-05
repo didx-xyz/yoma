@@ -2,7 +2,7 @@ using Yoma.Core.Domain.Entity.Models;
 
 namespace Yoma.Core.Domain.Entity.Extensions
 {
-  public static class UserExtension
+  public static class UserExtensions
   {
     public static void SetDisplayName(this User user)
     {

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.Database.Context;
@@ -36,6 +37,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         EducationId = entity.EducationId,
         Education = entity.Education == null ? null : entity.Education.Name,
         PhotoId = entity.PhotoId,
+        PhotoStorageType = entity.Photo == null ? null : Enum.Parse<StorageType>(entity.Photo.StorageType, true),
+        PhotoKey = entity.Photo == null ? null : entity.Photo.Key,  
         GenderId = entity.GenderId,
         Gender = entity.Gender == null ? null : entity.Gender.Name,
         DateOfBirth = entity.DateOfBirth,
@@ -55,7 +58,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 {
                   Id = o.Id,
                   Name = o.Organization.Name,
-                  LogoId = o.Organization.LogoId
+                  LogoId = o.Organization.LogoId,
+                  LogoStorageType = o.Organization.Logo == null ? null : Enum.Parse<StorageType>(o.Organization.Logo.StorageType, true),
+                  LogoKey = o.Organization.Logo == null ? null : o.Organization.Logo.Key, 
                 }).OrderBy(o => o.Name).ToList()
 
               }).OrderBy(o => o.Name).ToList() : null

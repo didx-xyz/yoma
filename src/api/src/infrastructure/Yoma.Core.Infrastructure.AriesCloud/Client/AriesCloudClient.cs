@@ -25,7 +25,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     private readonly IRepository<Models.CredentialSchema> _credentialSchemaRepository;
     private readonly IRepository<Models.Connection> _connectionRepository;
 
-    private const string Schema_Prefix_LdProof = "KtX2yAeljr0zZ9MuoQnIcWb";
+    private const string Schema_Prefix_LDProof = "KtX2yAeljr0zZ9MuoQnIcWb";
     private const string Schema_Prefix_JWT = "DEEGg5EAUmvm4goxOygg64p";
     #endregion
 
@@ -221,13 +221,13 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
           var schemaAries = await client.CreateSchemaAsync(schemaCreateRequest);
           return schemaAries.ToSchema();
 
-        case ArtifactType.Ld_proof:
+        case ArtifactType.LD_Proof:
         case ArtifactType.JWS:
           var protocolVersion = _clientFactory.ProtocolVersion.TrimStart('v').TrimStart('V');
 
           var schemaPrefix = request.ArtifactType switch
           {
-            ArtifactType.Ld_proof => Schema_Prefix_LdProof,
+            ArtifactType.LD_Proof => Schema_Prefix_LDProof,
             ArtifactType.JWS => Schema_Prefix_JWT,
             _ => throw new InvalidOperationException($"Artifact type of '{request.ArtifactType}' not supported"),
           };
@@ -371,7 +371,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
           await SendAndAcceptCredential(tenantHolder, clientHolder, clientIssuer, sendCredentialRequest);
           break;
 
-        case ArtifactType.Ld_proof:
+        case ArtifactType.LD_Proof:
           var dids = await clientIssuer.GetDIDsAsync();
           var did = dids.SingleOrDefault(o => o.Key_type == Key_type.Ed25519 && o.Posture == Posture.Posted)
               ?? throw new InvalidOperationException($"Failed to retrieve the issuer DID of type '{Key_type.Ed25519}' and posture '{Posture.Posted}'");
@@ -643,7 +643,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             throw new InvalidOperationException($"Credential referent expected but is null / empty client referent '{clientReferent}'");
           return resultIndy;
 
-        case ArtifactType.Ld_proof:
+        case ArtifactType.LD_Proof:
           ICollection<W3CCredentialsListRequest>? credsW3C = null;
           try
           {

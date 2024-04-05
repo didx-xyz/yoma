@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.MyOpportunity;
@@ -33,6 +34,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         UserCountry = entity.User.Country == null ? null : entity.User.Country.Name,
         UserEducation = entity.User.Education == null ? null : entity.User.Education.Name,
         UserPhotoId = entity.User.PhotoId,
+        UserPhotoStorageType = entity.User.Photo == null ? null : Enum.Parse<StorageType>(entity.User.Photo.StorageType, true),
+        UserPhotoKey = entity.User.Photo == null ? null : entity.User.Photo.Key,
         OpportunityId = entity.OpportunityId,
         OpportunityTitle = entity.Opportunity.Title,
         OpportunityDescription = entity.Opportunity.Description,
@@ -48,6 +51,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         OrganizationId = entity.Opportunity.OrganizationId,
         OrganizationName = entity.Opportunity.Organization.Name,
         OrganizationLogoId = entity.Opportunity.Organization.LogoId,
+        OrganizationLogoStorageType = entity.Opportunity.Organization.Logo == null ? null : Enum.Parse<StorageType>(entity.Opportunity.Organization.Logo.StorageType, true),
+        OrganizationLogoKey = entity.Opportunity.Organization.Logo == null ? null : entity.Opportunity.Organization.Logo.Key,
         OrganizationStatusId = entity.Opportunity.Organization.StatusId,
         OrganizationStatus = Enum.Parse<OrganizationStatus>(entity.Opportunity.Organization.Status.Name, true),
         ActionId = entity.ActionId,
@@ -71,6 +76,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 VerificationType = Enum.Parse<VerificationType>(o.VerificationType.Name, true),
                 GeometryProperties = o.GeometryProperties,
                 FileId = o.FileId,
+                FileStorageType = o.File == null ? null : Enum.Parse<StorageType>(o.File.StorageType, true),
+                FileKey = o.File == null ? null : o.File.Key,
                 DateCreated = o.DateCreated
               }).OrderBy(o => o.DateCreated).ToList() : null,
         Skills = entity.Opportunity.Skills == null ? null : includeChildItems ?

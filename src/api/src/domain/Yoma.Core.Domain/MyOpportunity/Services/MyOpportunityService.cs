@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Transactions;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -117,9 +118,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       if (includeComputed)
       {
-        result.UserPhotoURL = GetBlobObjectURL(result.UserPhotoId);
-        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoId);
-        result.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileId));
+        result.UserPhotoURL = GetBlobObjectURL(result.UserPhotoStorageType, result.UserPhotoKey);
+        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
+        result.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileStorageType, v.FileKey));
       }
 
       return result;
@@ -331,9 +332,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var items = query.ToList();
       items.ForEach(o =>
       {
-        o.UserPhotoURL = GetBlobObjectURL(o.UserPhotoId);
-        o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoId);
-        o.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileId));
+        o.UserPhotoURL = GetBlobObjectURL(o.UserPhotoStorageType, o.UserPhotoKey);
+        o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
+        o.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileStorageType, v.FileKey));
       });
       result.Items = items.Select(o => o.ToInfo()).ToList();
 
@@ -371,8 +372,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     {
       //published opportunities (irrespective of started)
       var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
-      if (!opportunity.Published)
-        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
+      if (!opportunity.Published) return false;
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -654,10 +654,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       result.OpportunityParticipantCountTotal += searchResult.TotalCount ?? default;
     }
 
-    private string? GetBlobObjectURL(Guid? id)
+    private string? GetBlobObjectURL(StorageType? storageType, string? key)
     {
-      if (!id.HasValue) return null;
-      return _blobService.GetURL(id.Value);
+      if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;
+      return _blobService.GetURL(storageType.Value, key);
     }
 
     private static string PerformActionNotPossibleValidationMessage(Opportunity.Models.Opportunity opportunity, string description)

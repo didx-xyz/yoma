@@ -1,3 +1,6 @@
+using Newtonsoft.Json;
+using Yoma.Core.Domain.BlobProvider;
+
 namespace Yoma.Core.Domain.Entity.Models
 {
   public class User
@@ -31,6 +34,12 @@ namespace Yoma.Core.Domain.Entity.Models
     public DateTimeOffset? DateOfBirth { get; set; }
 
     public Guid? PhotoId { get; set; }
+
+    [JsonIgnore]
+    public StorageType? PhotoStorageType { get; set; }
+
+    [JsonIgnore]
+    public string? PhotoKey { get; set; }
 
     public string? PhotoURL { get; set; }
 

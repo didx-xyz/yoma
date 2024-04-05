@@ -45,7 +45,7 @@ namespace Yoma.Core.Domain.Core.Extensions
         {
           var attr = type.GetRuntimeField(name)?.GetCustomAttribute<EnumMemberAttribute>(true);
           if (attr != null && attr.Value == value)
-            return Enum.Parse(type, name).ToString();
+            return Enum.Parse(type, name, true).ToString();
         }
 
         return null;

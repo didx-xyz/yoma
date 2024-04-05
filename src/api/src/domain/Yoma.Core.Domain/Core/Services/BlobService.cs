@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using System.Transactions;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.BlobProvider.Extensions;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
 using Yoma.Core.Domain.Core.Exceptions;
@@ -111,6 +112,16 @@ namespace Yoma.Core.Domain.Core.Services
       var client = _blobProviderClientFactory.CreateClient(item.StorageType);
 
       return client.GetUrl(item.Key);
+    }
+
+    public string GetURL(StorageType storageType, string key)
+    {
+      ArgumentNullException.ThrowIfNullOrWhiteSpace(key);
+      key = key.Trim();
+
+      var client = _blobProviderClientFactory.CreateClient(storageType);
+
+      return client.GetUrl(key);
     }
 
     public async Task Delete(Guid id)

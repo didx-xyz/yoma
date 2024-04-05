@@ -133,7 +133,7 @@ namespace Yoma.Core.Domain.Reward.Services
                 continue;
               }
 
-              var sourceEntityType = Enum.Parse<RewardTransactionEntityType>(item.SourceEntityType, false);
+              var sourceEntityType = Enum.Parse<RewardTransactionEntityType>(item.SourceEntityType, true);
 
               var request = new RewardAwardRequest
               {

@@ -105,7 +105,7 @@ namespace Yoma.Core.Domain.SSI.Services
               _logger.LogInformation("Processing SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
 
               TenantRequest request;
-              var entityType = Enum.Parse<EntityType>(item.EntityType, false);
+              var entityType = Enum.Parse<EntityType>(item.EntityType, true);
               switch (entityType)
               {
                 case EntityType.User:

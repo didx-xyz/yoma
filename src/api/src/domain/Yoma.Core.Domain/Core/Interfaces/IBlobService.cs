@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Core.Interfaces
@@ -17,6 +18,8 @@ namespace Yoma.Core.Domain.Core.Interfaces
     Task<IFormFile> Download(Guid id);
 
     string GetURL(Guid id);
+
+    string GetURL(StorageType storageType, string key);
 
     Task Delete(Guid id);
 

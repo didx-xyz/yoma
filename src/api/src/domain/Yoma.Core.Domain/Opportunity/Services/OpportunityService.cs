@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -167,7 +168,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (includeComputed)
       {
         result.SetPublished();
-        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoId);
+        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
       }
 
       return result;
@@ -187,7 +188,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (includeComputed)
       {
         result.SetPublished();
-        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoId);
+        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
       }
 
       return result;
@@ -205,7 +206,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         results.ForEach(o =>
         {
           o.SetPublished();
-          o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoId);
+          o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
         });
 
       return results;
@@ -788,7 +789,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.Items.ForEach(o =>
       {
         o.SetPublished();
-        o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoId);
+        o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
       });
 
       return result;
@@ -1445,10 +1446,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
     }
 
-    private string? GetBlobObjectURL(Guid? id)
+    private string? GetBlobObjectURL(StorageType? storageType, string? key)
     {
-      if (!id.HasValue) return null;
-      return _blobService.GetURL(id.Value);
+      if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;
+      return _blobService.GetURL(storageType.Value, key);
     }
 
     private async Task<Models.Opportunity> AssignCountries(Models.Opportunity opportunity, List<Guid> countryIds)

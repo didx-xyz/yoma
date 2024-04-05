@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity;
@@ -48,6 +49,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         CommentApproval = entity.CommentApproval,
         DateStatusModified = entity.DateStatusModified,
         LogoId = entity.LogoId,
+        LogoStorageType = entity.Logo == null ? null : Enum.Parse<StorageType>(entity.Logo.StorageType, true),
+        LogoKey = entity.Logo == null ? null : entity.Logo.Key,
         DateCreated = entity.DateCreated,
         CreatedByUserId = entity.CreatedByUserId,
         DateModified = entity.DateModified,
@@ -60,6 +63,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 Id = o.Id,
                 OrganizationId = o.OrganizationId,
                 FileId = o.FileId,
+                FileStorageType = Enum.Parse<StorageType>(o.File.StorageType, true),
+                FileKey = o.File.Key, 
                 Type = Enum.Parse<OrganizationDocumentType>(o.Type, true),
                 ContentType = o.File.ContentType,
                 OriginalFileName = o.File.OriginalFileName,

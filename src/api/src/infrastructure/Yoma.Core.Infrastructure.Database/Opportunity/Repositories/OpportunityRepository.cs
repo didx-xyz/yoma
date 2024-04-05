@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity;
@@ -34,6 +35,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         OrganizationId = entity.OrganizationId,
         OrganizationName = entity.Organization.Name,
         OrganizationLogoId = entity.Organization.LogoId,
+        OrganizationLogoStorageType = entity.Organization.Logo == null ? null : Enum.Parse<StorageType>(entity.Organization.Logo.StorageType, true),
+        OrganizationLogoKey = entity.Organization.Logo == null ? null : entity.Organization.Logo.Key,
         OrganizationStatusId = entity.Organization.StatusId,
         OrganizationStatus = Enum.Parse<OrganizationStatus>(entity.Organization.Status.Name, true),
         Summary = entity.Summary,
@@ -46,7 +49,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         ZltoRewardCumulative = entity.ZltoRewardCumulative,
         YomaRewardCumulative = entity.YomaRewardCumulative,
         VerificationEnabled = entity.VerificationEnabled,
-        VerificationMethod = string.IsNullOrEmpty(entity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(entity.VerificationMethod),
+        VerificationMethod = string.IsNullOrEmpty(entity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(entity.VerificationMethod, true),
         DifficultyId = entity.DifficultyId,
         Difficulty = entity.Difficulty.Name,
         CommitmentIntervalId = entity.CommitmentIntervalId,

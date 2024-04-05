@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Opportunity;
 
@@ -19,6 +21,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public Geometry? Geometry { get; set; }
 
     public Guid? FileId { get; set; }
+
+    [JsonIgnore]
+    public StorageType? FileStorageType { get; set; }
+
+    [JsonIgnore]
+    public string? FileKey { get; set; }
 
     public string? FileURL { get; set; }
 

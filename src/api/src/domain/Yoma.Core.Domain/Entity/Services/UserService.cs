@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using System.Transactions;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -95,8 +96,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
-        result.PhotoURL = GetBlobObjectURL(result.PhotoId);
-        result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId)));
+        result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
+        result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey)));
       }
 
       return result;
@@ -123,8 +124,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
-        result.PhotoURL = GetBlobObjectURL(result.PhotoId);
-        result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId)));
+        result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
+        result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey)));
       }
 
       return result;
@@ -140,8 +141,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
-        results.ForEach(o => o.PhotoURL = GetBlobObjectURL(o.PhotoId));
-        results.ForEach(o => o.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId))));
+        results.ForEach(o => o.PhotoURL = GetBlobObjectURL(o.PhotoStorageType, o.PhotoKey));
+        results.ForEach(o => o.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey))));
       }
 
       return results;
@@ -248,7 +249,7 @@ namespace Yoma.Core.Domain.Entity.Services
         throw;
       }
 
-      result.PhotoURL = GetBlobObjectURL(result.PhotoId);
+      result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
 
       return result;
     }
@@ -316,10 +317,10 @@ namespace Yoma.Core.Domain.Entity.Services
     #endregion
 
     #region Private Members
-    private string? GetBlobObjectURL(Guid? id)
+    private string? GetBlobObjectURL(StorageType? storageType, string? key)
     {
-      if (!id.HasValue) return null;
-      return _blobService.GetURL(id.Value);
+      if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;
+      return _blobService.GetURL(storageType.Value, key);
     }
     #endregion
   }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Analytics.Interfaces;
 using Yoma.Core.Domain.Analytics.Models;
 using Yoma.Core.Domain.Analytics.Validators;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -111,10 +112,10 @@ namespace Yoma.Core.Domain.Analytics.Services
     #endregion
 
     #region Private Members
-    private string? GetBlobObjectURL(Guid? id)
+    private string? GetBlobObjectURL(StorageType? storageType, string? key)
     {
-      if (!id.HasValue) return null;
-      return _blobService.GetURL(id.Value);
+      if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;
+      return _blobService.GetURL(storageType.Value, key);
     }
 
     private OrganizationSearchResultsEngagement SearchOrganizationEngagementInternal(OrganizationSearchFilterEngagement filter)
@@ -354,7 +355,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       }
 
       result.Items = [.. query];
-      result.Items.ForEach(o => o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoId));
+      result.Items.ForEach(o => o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey));
 
       result.DateStamp = DateTimeOffset.UtcNow;
       return result;
@@ -378,6 +379,8 @@ namespace Yoma.Core.Domain.Analytics.Services
             Title = result.Opportunity.Title,
             Status = result.Opportunity.Status,
             OrganizationLogoId = result.Opportunity.OrganizationLogoId,
+            OrganizationLogoStorageType = result.Opportunity.OrganizationLogoStorageType,
+            OrganizationLogoKey = result.Opportunity.OrganizationLogoKey, 
             ViewedCount = result.ViewedCount,
             CompletedCount = result.CompletedCount,
             ConversionRatioPercentage = (result.ViewedCount > 0) ? Math.Min(100, Math.Round((decimal)result.CompletedCount / result.ViewedCount * 100, 2)) : 0
@@ -399,6 +402,8 @@ namespace Yoma.Core.Domain.Analytics.Services
             OpportunityTitle = o.OpportunityTitle,
             OpportunityStatus = o.OpportunityStatus,
             OrganizationLogoId = o.OrganizationLogoId,
+            OrganizationLogoStorageType = o.OrganizationLogoStorageType,
+            OrganizationLogoKey = o.OrganizationLogoKey,
             DateCompleted = o.DateCompleted,
             Verified = o.OpportunityCredentialIssuanceEnabled
           });
@@ -416,7 +421,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       }
 
       result.Items = [.. query];
-      result.Items.ForEach(o => o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoId));
+      result.Items.ForEach(o => o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey));
 
       result.DateStamp = DateTimeOffset.UtcNow;
       return result;

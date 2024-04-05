@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -132,8 +133,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
-        result.LogoURL = GetBlobObjectURL(result.LogoId);
-        result.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileId));
+        result.LogoURL = GetBlobObjectURL(result.LogoStorageType, result.LogoKey);
+        result.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileStorageType, o.FileKey));
       }
 
       return result;
@@ -152,8 +153,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
-        result.LogoURL = GetBlobObjectURL(result.LogoId);
-        result.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileId));
+        result.LogoURL = GetBlobObjectURL(result.LogoStorageType, result.LogoKey);
+        result.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileStorageType, o.FileKey));
       }
 
       return result;
@@ -168,7 +169,7 @@ namespace Yoma.Core.Domain.Entity.Services
       var results = _organizationRepository.Contains(_organizationRepository.Query(), value).ToList();
 
       if (includeComputed)
-        results.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId));
+        results.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey));
 
       return results;
     }
@@ -214,7 +215,7 @@ namespace Yoma.Core.Domain.Entity.Services
       }
 
       var resultsInternal = query.ToList();
-      resultsInternal.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId));
+      resultsInternal.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey));
 
       results.Items = resultsInternal.Select(o => o.ToInfo()).ToList();
       return results;
@@ -784,7 +785,7 @@ namespace Yoma.Core.Domain.Entity.Services
       var orgIds = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).Select(o => o.OrganizationId).ToList();
 
       var organizations = _organizationRepository.Query().Where(o => orgIds.Contains(o.Id)).ToList();
-      if (includeComputed) organizations.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoId));
+      if (includeComputed) organizations.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey));
       return organizations.Select(o => o.ToInfo()).ToList();
     }
     #endregion
@@ -916,7 +917,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (blobObject == null)
         throw new InvalidOperationException("Blob object expected");
 
-      organization.LogoURL = GetBlobObjectURL(organization.LogoId);
+      organization.LogoURL = GetBlobObjectURL(organization.LogoStorageType, organization.LogoKey);
 
       return (organization, blobObject);
     }
@@ -1089,7 +1090,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       organization.Documents ??= [];
       organization.Documents.AddRange(itemsNew);
-      organization.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileId));
+      organization.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileStorageType, o.FileKey));
 
       return (organization, itemsNewBlobs);
     }
@@ -1139,15 +1140,16 @@ namespace Yoma.Core.Domain.Entity.Services
       return (organization, itemsExisting);
     }
 
-    private string GetBlobObjectURL(Guid id)
+    private string GetBlobObjectURL(StorageType storageType, string key)
     {
-      return _blobService.GetURL(id);
+      ArgumentException.ThrowIfNullOrWhiteSpace(key);
+      return _blobService.GetURL(storageType, key);
     }
 
-    private string? GetBlobObjectURL(Guid? id)
+    private string? GetBlobObjectURL(StorageType? storageType, string? key)
     {
-      if (!id.HasValue) return null;
-      return GetBlobObjectURL(id.Value);
+      if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;
+      return _blobService.GetURL(storageType.Value, key);
     }
 
     private static void ValidateUpdatable(Organization organization)

@@ -167,7 +167,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
       await _schemaRequestValidatorCreate.ValidateAndThrowAsync(request);
 
-      if (request.ArtifactType == ArtifactType.Ld_proof)
+      if (request.ArtifactType == ArtifactType.LD_Proof)
         throw new ValidationException($"Artifact type '{request.ArtifactType}' is currently not supported. Support for this artifact type is planned for a future update");
 
       var schemaType = _ssiSchemaTypeService.GetById(request.TypeId);

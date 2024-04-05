@@ -23,8 +23,8 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
       return _context.BlobObject.Select(entity => new Domain.Core.Models.BlobObject
       {
         Id = entity.Id,
-        StorageType = Enum.Parse<StorageType>(entity.StorageType),
-        FileType = Enum.Parse<FileType>(entity.FileType),
+        StorageType = Enum.Parse<StorageType>(entity.StorageType, true),
+        FileType = Enum.Parse<FileType>(entity.FileType, true),
         Key = entity.Key,
         ContentType = entity.ContentType,
         OriginalFileName = entity.OriginalFileName,
