@@ -38,7 +38,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         Education = entity.Education == null ? null : entity.Education.Name,
         PhotoId = entity.PhotoId,
         PhotoStorageType = entity.Photo == null ? null : Enum.Parse<StorageType>(entity.Photo.StorageType, true),
-        PhotoKey = entity.Photo == null ? null : entity.Photo.Key,  
+        PhotoKey = entity.Photo == null ? null : entity.Photo.Key,
         GenderId = entity.GenderId,
         Gender = entity.Gender == null ? null : entity.Gender.Name,
         DateOfBirth = entity.DateOfBirth,
@@ -60,7 +60,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                   Name = o.Organization.Name,
                   LogoId = o.Organization.LogoId,
                   LogoStorageType = o.Organization.Logo == null ? null : Enum.Parse<StorageType>(o.Organization.Logo.StorageType, true),
-                  LogoKey = o.Organization.Logo == null ? null : o.Organization.Logo.Key, 
+                  LogoKey = o.Organization.Logo == null ? null : o.Organization.Logo.Key,
                 }).OrderBy(o => o.Name).ToList()
 
               }).OrderBy(o => o.Name).ToList() : null

@@ -380,7 +380,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             Status = result.Opportunity.Status,
             OrganizationLogoId = result.Opportunity.OrganizationLogoId,
             OrganizationLogoStorageType = result.Opportunity.OrganizationLogoStorageType,
-            OrganizationLogoKey = result.Opportunity.OrganizationLogoKey, 
+            OrganizationLogoKey = result.Opportunity.OrganizationLogoKey,
             ViewedCount = result.ViewedCount,
             CompletedCount = result.CompletedCount,
             ConversionRatioPercentage = (result.ViewedCount > 0) ? Math.Min(100, Math.Round((decimal)result.CompletedCount / result.ViewedCount * 100, 2)) : 0

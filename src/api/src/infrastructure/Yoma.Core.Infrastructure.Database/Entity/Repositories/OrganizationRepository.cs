@@ -64,7 +64,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 OrganizationId = o.OrganizationId,
                 FileId = o.FileId,
                 FileStorageType = Enum.Parse<StorageType>(o.File.StorageType, true),
-                FileKey = o.File.Key, 
+                FileKey = o.File.Key,
                 Type = Enum.Parse<OrganizationDocumentType>(o.Type, true),
                 ContentType = o.File.ContentType,
                 OriginalFileName = o.File.OriginalFileName,
