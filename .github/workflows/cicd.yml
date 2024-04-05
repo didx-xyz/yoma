@@ -336,7 +336,7 @@ jobs:
       TAG: ${{ needs.build.outputs.image_version }}
 
     concurrency:
-      group: ${{ github.workflow }}-deploy-${{ matrix.project }}-${{ github.ref }}
+      group: ${{ github.workflow }}-deploy
       cancel-in-progress: false
     environment:
       name: ${{
