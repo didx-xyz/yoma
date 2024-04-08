@@ -401,7 +401,7 @@ jobs:
           steps.filter.outputs.keycloak == 'true' ||
           github.event_name == 'workflow_dispatch'
           ) && steps.should-run.outputs.run == 'true'
-        uses: helmfile/helmfile-action@v1.8.0
+        uses: helmfile/helmfile-action@v1.9.0
         with:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
@@ -422,7 +422,7 @@ jobs:
           steps.filter.outputs.api == 'true' ||
           github.event_name == 'workflow_dispatch'
           ) && steps.should-run.outputs.run == 'true'
-        uses: helmfile/helmfile-action@v1.8.0
+        uses: helmfile/helmfile-action@v1.9.0
         with:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
@@ -441,7 +441,7 @@ jobs:
           steps.filter.outputs.web == 'true' ||
           github.event_name == 'workflow_dispatch'
           ) && steps.should-run.outputs.run == 'true'
-        uses: helmfile/helmfile-action@v1.8.0
+        uses: helmfile/helmfile-action@v1.9.0
         with:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
