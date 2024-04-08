@@ -705,7 +705,10 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         )}
 
         {data_storeItems?.map((category_storeItems, index) => (
-          <div key={`category_${category_storeItems.category.id}_${index}`}>
+          <div
+            key={`category_${category_storeItems.category.id}_${index}`}
+            className="mb-8 md:mb-4"
+          >
             {/* CATEGORY NAME AND IMAGES */}
             <div className="flex flex-row items-center justify-start gap-4 pb-4">
               <h1 className="text-2xl">{category_storeItems.category.name}</h1>

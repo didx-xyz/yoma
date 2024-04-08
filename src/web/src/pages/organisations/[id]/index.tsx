@@ -159,6 +159,8 @@ const OrganisationDashboard: NextPageWithLayout<{
     endDate,
   } = router.query;
 
+  const comingSoon = true;
+
   // memo for isSearchPerformed based on filter parameters
   const isSearchPerformed = useMemo<boolean>(() => {
     return (
@@ -466,360 +468,477 @@ const OrganisationDashboard: NextPageWithLayout<{
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
-      <div className="container z-10 mt-20 max-w-7xl overflow-hidden px-4 py-1 md:py-4">
-        <div className="flex flex-col gap-4">
-          {/* HEADER */}
-          <div className="flex flex-col">
-            {/* LOGO & TITLE */}
-            <div className="flex flex-row font-semibold text-white">
-              <LogoTitle
-                logoUrl={organisation?.logoURL}
-                title={organisation?.name}
-              />
-              <LimitedFunctionalityBadge />
+      {comingSoon && comingSoon ? (
+        <div className="container z-30 flex max-w-7xl flex-col items-center justify-center p-4">
+          <div className="flex w-full flex-col items-center justify-center gap-8 rounded-lg bg-white p-4 py-16 shadow-custom">
+            <div className="rounded-full p-4 text-4xl tracking-wider shadow-custom">
+              🚀
             </div>
-            {/* DESCRIPTION */}
-            <div className="-mt-2 mb-4 flex flex-col gap-1 leading-4 text-white lg:flex-row">
-              <span>Your dashboard progress so far.</span>
+            <h2 className="text-center text-2xl font-medium text-gray-dark">
+              Dashboard coming soon
+            </h2>
+          </div>
+        </div>
+      ) : (
+        <div className="container z-10 mt-20 max-w-7xl overflow-hidden px-4 py-1 md:py-4">
+          <div className="flex flex-col gap-4">
+            {/* HEADER */}
+            <div className="flex flex-col">
+              {/* LOGO & TITLE */}
+              <div className="flex flex-row font-semibold text-white">
+                <LogoTitle
+                  logoUrl={organisation?.logoURL}
+                  title={organisation?.name}
+                />
+                <LimitedFunctionalityBadge />
+              </div>
+              {/* DESCRIPTION */}
+              <div className="-mt-2 mb-4 flex flex-col gap-1 leading-4 text-white lg:flex-row">
+                <span>Your dashboard progress so far.</span>
 
-              {searchResults?.dateStamp && (
-                <span>
-                  Last updated on{" "}
-                  <span className="font-semibold">
-                    {moment(new Date(searchResults?.dateStamp)).format(
-                      DATETIME_FORMAT_HUMAN,
-                    )}
+                {searchResults?.dateStamp && (
+                  <span>
+                    Last updated on{" "}
+                    <span className="font-semibold">
+                      {moment(new Date(searchResults?.dateStamp)).format(
+                        DATETIME_FORMAT_HUMAN,
+                      )}
+                    </span>
                   </span>
-                </span>
+                )}
+              </div>
+            </div>
+
+            {/* FILTERS */}
+            <div className="mt-16 flex lg:mt-20">
+              {!lookups_categories && <div>Loading...</div>}
+              {lookups_categories && (
+                <div className="flex flex-grow flex-col gap-3">
+                  <OrganisationRowFilter
+                    organisationId={id}
+                    htmlRef={myRef.current!}
+                    searchFilter={{
+                      categories: searchFilter.categories,
+                      opportunities: searchFilter.opportunities,
+                      startDate: searchFilter.startDate,
+                      endDate: searchFilter.endDate,
+                      organization: id,
+                      pageNumber: null,
+                      pageSize: null,
+                    }}
+                    lookups_categories={lookups_categories}
+                    onSubmit={(e) => onSubmitFilter(e)}
+                  />
+
+                  {/* FILTER BADGES */}
+                  <FilterBadges
+                    searchFilter={searchFilter}
+                    excludeKeys={[
+                      "pageSelectedOpportunities",
+                      "pageCompletedYouth",
+                      "pageSize",
+                      "organization",
+                    ]}
+                    resolveValue={(key, value) => {
+                      if (key === "startDate" || key === "endDate")
+                        return value
+                          ? toISOStringForTimezone(new Date(value)).split(
+                              "T",
+                            )[0]
+                          : "";
+                      else {
+                        return value;
+                      }
+                    }}
+                    onSubmit={(e) => onSubmitFilter(e)}
+                  />
+                </div>
               )}
             </div>
-          </div>
 
-          {/* FILTERS */}
-          <div className="mt-16 flex lg:mt-20">
-            {!lookups_categories && <div>Loading...</div>}
-            {lookups_categories && (
-              <div className="flex flex-grow flex-col gap-3">
-                <OrganisationRowFilter
-                  organisationId={id}
-                  htmlRef={myRef.current!}
-                  searchFilter={{
-                    categories: searchFilter.categories,
-                    opportunities: searchFilter.opportunities,
-                    startDate: searchFilter.startDate,
-                    endDate: searchFilter.endDate,
-                    organization: id,
-                    pageNumber: null,
-                    pageSize: null,
-                  }}
-                  lookups_categories={lookups_categories}
-                  onSubmit={(e) => onSubmitFilter(e)}
-                />
+            {/* SUMMARY */}
+            <div className="flex flex-col gap-4 md:-mt-2">
+              {/* ENGAGEMENT */}
+              <div className="flex flex-col gap-2">
+                <div className="text-xl font-semibold">Engagement</div>
 
-                {/* FILTER BADGES */}
-                <FilterBadges
-                  searchFilter={searchFilter}
-                  excludeKeys={[
-                    "pageSelectedOpportunities",
-                    "pageCompletedYouth",
-                    "pageSize",
-                    "organization",
-                  ]}
-                  resolveValue={(key, value) => {
-                    if (key === "startDate" || key === "endDate")
-                      return value
-                        ? toISOStringForTimezone(new Date(value)).split("T")[0]
-                        : "";
-                    else {
-                      return value;
-                    }
-                  }}
-                  onSubmit={(e) => onSubmitFilter(e)}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* SUMMARY */}
-          <div className="flex flex-col gap-4 md:-mt-2">
-            {/* ENGAGEMENT */}
-            <div className="flex flex-col gap-2">
-              <div className="text-xl font-semibold">Engagement</div>
-
-              <div className="flex flex-col gap-2 md:flex-row">
-                {/* VIEWED COMPLETED */}
-                {searchResults?.opportunities?.viewedCompleted && (
-                  <LineChart
-                    id="viewedCompleted"
-                    data={searchResults.opportunities.viewedCompleted}
-                    width={402}
-                    height={328}
-                  />
-                )}
-
-                <div className="flex flex-col gap-2">
-                  {/* OPPORTUNITIES SELECTED */}
-                  <div className="flex h-40 w-full flex-col rounded-lg bg-white p-4 shadow md:w-64">
-                    <div className="flex flex-row items-center gap-2">
-                      <IoMdDocument className="text-green" />
-                      <div className="text-sm font-semibold">
-                        Opportunities selected
-                      </div>
-                    </div>
-
-                    <div className="flex flex-grow flex-col">
-                      <div className="flex-grow text-2xl font-bold">
-                        {searchResults?.opportunities?.selected?.count ?? 0}
-                      </div>
-                    </div>
-                  </div>
+                <div className="flex flex-col gap-2 md:flex-row">
+                  {/* VIEWED COMPLETED */}
+                  {searchResults?.opportunities?.viewedCompleted && (
+                    <LineChart
+                      id="viewedCompleted"
+                      data={searchResults.opportunities.viewedCompleted}
+                      width={402}
+                      height={328}
+                    />
+                  )}
 
                   <div className="flex flex-col gap-2">
-                    <div className="flex flex-col gap-2 md:flex-row">
-                      {/* AVERAGE TIME */}
-                      <div className="flex h-40 w-full flex-col rounded-lg bg-white p-4 shadow md:w-64">
-                        <div className="flex flex-row items-center gap-2">
-                          <IoMdHourglass className="text-green" />
-                          <div className="text-sm font-semibold">
-                            Average time
-                          </div>
-                        </div>
-
-                        <div className="flex flex-grow flex-col">
-                          <div className="flex-grow text-2xl font-bold">
-                            {searchResults?.opportunities.completion
-                              .averageTimeInDays ?? 0}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* CONVERSERSION RATE */}
-                      {searchResults?.opportunities?.conversionRate && (
-                        <PieChart
-                          id="conversionRate"
-                          title={
-                            searchResults.opportunities.conversionRate.legend
-                          }
-                          subTitle={`${
-                            searchResults.opportunities.conversionRate
-                              .percentage ?? 0
-                          } %`}
-                          colors={CHART_COLORS}
-                          data={[
-                            ["Completed", "Viewed"],
-                            [
-                              "Completed",
-                              searchResults.opportunities.conversionRate
-                                .completedCount,
-                            ],
-                            [
-                              "Viewed",
-                              searchResults.opportunities.conversionRate
-                                .viewedCount,
-                            ],
-                          ]}
-                          className="w-full md:w-60 lg:w-80"
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* REWARDS */}
-            <div className="flex flex-col gap-2">
-              <div className="text-xl font-semibold">Rewards</div>
-
-              <div className="flex flex-col gap-2 md:flex-row">
-                {/* ZLTO AMOUNT AWARDED */}
-                <div className="h-40 w-full flex-col rounded-lg bg-white p-4 shadow md:w-[420px]">
-                  <div className="flex flex-row items-center gap-2">
-                    <Image
-                      src={iconZlto}
-                      alt="Icon Zlto"
-                      width={20}
-                      height={20}
-                      sizes="100vw"
-                      priority={true}
-                      style={{ width: "20px", height: "20px" }}
-                    />
-                    <div className="whitespace-nowrap text-sm font-semibold">
-                      ZLTO amount awarded
-                    </div>
-                  </div>
-                  <div className="flex flex-grow flex-col">
-                    <div className="flex-grow text-2xl font-bold">
-                      {searchResults?.opportunities.reward.totalAmount ?? 0}
-                    </div>
-                  </div>
-                </div>
-
-                {/* TOTAL UNIQUE SKILLS */}
-                <div
-                  className="overflow-hidden rounded-lg bg-white shadow"
-                  style={{ minWidth: "288px", height: "160px" }}
-                >
-                  <LineChart
-                    id="totalUniqueSkills"
-                    data={searchResults?.skills?.items}
-                    width={288}
-                    height={160}
-                    chartWidth={288}
-                    chartHeight={100}
-                    hideAxisesAndGridLines={true}
-                  />
-                </div>
-
-                {/* MOST COMPLETED SKILLS */}
-                {searchResults?.skills?.topCompleted && (
-                  <>
-                    <div className="flex w-full flex-col rounded-lg bg-white p-4 shadow md:h-[160px]">
+                    {/* OPPORTUNITIES SELECTED */}
+                    <div className="flex h-40 w-full flex-col rounded-lg bg-white p-4 shadow md:w-64">
                       <div className="flex flex-row items-center gap-2">
-                        <IoMdCompass className="text-green" />
+                        <IoMdDocument className="text-green" />
                         <div className="text-sm font-semibold">
-                          {searchResults?.skills.topCompleted.legend}
+                          Opportunities selected
                         </div>
                       </div>
-                      <div className="mt-2 flex flex-grow flex-wrap gap-1 overflow-x-hidden overflow-y-scroll md:h-[100px]">
-                        {searchResults?.skills.topCompleted.topCompleted.map(
-                          (x) => (
-                            <div
-                              key={x.id}
-                              className="min-h-6 md:truncate-none badge w-min text-ellipsis rounded-md border-0 bg-green text-white md:w-fit md:max-w-none"
-                            >
-                              {x.name}
+
+                      <div className="flex flex-grow flex-col">
+                        <div className="flex-grow text-2xl font-bold">
+                          {searchResults?.opportunities?.selected?.count ?? 0}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-2 md:flex-row">
+                        {/* AVERAGE TIME */}
+                        <div className="flex h-40 w-full flex-col rounded-lg bg-white p-4 shadow md:w-64">
+                          <div className="flex flex-row items-center gap-2">
+                            <IoMdHourglass className="text-green" />
+                            <div className="text-sm font-semibold">
+                              Average time
                             </div>
-                          ),
+                          </div>
+
+                          <div className="flex flex-grow flex-col">
+                            <div className="flex-grow text-2xl font-bold">
+                              {searchResults?.opportunities.completion
+                                .averageTimeInDays ?? 0}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* CONVERSERSION RATE */}
+                        {searchResults?.opportunities?.conversionRate && (
+                          <PieChart
+                            id="conversionRate"
+                            title={
+                              searchResults.opportunities.conversionRate.legend
+                            }
+                            subTitle={`${
+                              searchResults.opportunities.conversionRate
+                                .percentage ?? 0
+                            } %`}
+                            colors={CHART_COLORS}
+                            data={[
+                              ["Completed", "Viewed"],
+                              [
+                                "Completed",
+                                searchResults.opportunities.conversionRate
+                                  .completedCount,
+                              ],
+                              [
+                                "Viewed",
+                                searchResults.opportunities.conversionRate
+                                  .viewedCount,
+                              ],
+                            ]}
+                            className="w-full md:w-60 lg:w-80"
+                          />
                         )}
                       </div>
                     </div>
-                  </>
-                )}
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* DEMOGRAPHICS */}
-            <div className="flex flex-col gap-2">
-              <div className="text-xl font-semibold">Demographics</div>
+              {/* REWARDS */}
+              <div className="flex flex-col gap-2">
+                <div className="text-xl font-semibold">Rewards</div>
 
-              <div className="flex flex-col gap-2 md:flex-row">
-                {/* COUNTRIES */}
-                {searchResults?.demographics?.countries?.items && (
-                  <PieChart
-                    id="countries"
-                    title="Country"
-                    subTitle=""
-                    colors={CHART_COLORS}
-                    data={[
-                      ["Country", "Value"],
-                      ...Object.entries(
-                        searchResults?.demographics?.countries?.items || {},
-                      ),
-                    ]}
-                    className="h-40 w-full md:w-72"
-                  />
-                )}
-
-                {/* GENDERS */}
-                {searchResults?.demographics?.genders?.items && (
-                  <PieChart
-                    id="genders"
-                    title="Genders"
-                    subTitle=""
-                    colors={CHART_COLORS}
-                    data={[
-                      ["Gender", "Value"],
-                      ...Object.entries(
-                        searchResults?.demographics?.genders?.items || {},
-                      ),
-                    ]}
-                    className="h-40 w-full md:w-72"
-                  />
-                )}
-
-                {/* AGE */}
-                {searchResults?.demographics?.ages?.items && (
-                  <PieChart
-                    id="ages"
-                    title="Age"
-                    subTitle=""
-                    colors={CHART_COLORS}
-                    data={[
-                      ["Age", "Value"],
-                      ...Object.entries(
-                        searchResults?.demographics?.ages?.items || {},
-                      ),
-                    ]}
-                    className="h-40 w-full md:w-64 lg:w-72"
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* SELECTED OPPORTUNITIES */}
-          <div className="flex flex-col">
-            <div className="text-xl font-semibold">Selected Opportunities</div>
-
-            {selectedOpportunitiesIsLoading && <LoadingSkeleton />}
-
-            {/* SELECTED OPPORTUNITIES */}
-            {!selectedOpportunitiesIsLoading && (
-              <div id="results">
-                <div className="mb-6 flex flex-row items-center justify-end"></div>
-                <div className="rounded-lg bg-white p-4">
-                  {/* NO ROWS */}
-                  {(!selectedOpportunities ||
-                    selectedOpportunities.items?.length === 0) && (
-                    <div className="flex flex-col place-items-center py-52">
-                      <NoRowsMessage
-                        title={"No opportunities found"}
-                        description={"Please try refining your search query."}
+                <div className="flex flex-col gap-2 md:flex-row">
+                  {/* ZLTO AMOUNT AWARDED */}
+                  <div className="h-40 w-full flex-col rounded-lg bg-white p-4 shadow md:w-[420px]">
+                    <div className="flex flex-row items-center gap-2">
+                      <Image
+                        src={iconZlto}
+                        alt="Icon Zlto"
+                        width={20}
+                        height={20}
+                        sizes="100vw"
+                        priority={true}
+                        style={{ width: "20px", height: "20px" }}
                       />
+                      <div className="whitespace-nowrap text-sm font-semibold">
+                        ZLTO amount awarded
+                      </div>
                     </div>
+                    <div className="flex flex-grow flex-col">
+                      <div className="flex-grow text-2xl font-bold">
+                        {searchResults?.opportunities.reward.totalAmount ?? 0}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* TOTAL UNIQUE SKILLS */}
+                  <div
+                    className="overflow-hidden rounded-lg bg-white shadow"
+                    style={{ minWidth: "288px", height: "160px" }}
+                  >
+                    <LineChart
+                      id="totalUniqueSkills"
+                      data={searchResults?.skills?.items}
+                      width={288}
+                      height={160}
+                      chartWidth={288}
+                      chartHeight={100}
+                      hideAxisesAndGridLines={true}
+                    />
+                  </div>
+
+                  {/* MOST COMPLETED SKILLS */}
+                  {searchResults?.skills?.topCompleted && (
+                    <>
+                      <div className="flex w-full flex-col rounded-lg bg-white p-4 shadow md:h-[160px]">
+                        <div className="flex flex-row items-center gap-2">
+                          <IoMdCompass className="text-green" />
+                          <div className="text-sm font-semibold">
+                            {searchResults?.skills.topCompleted.legend}
+                          </div>
+                        </div>
+                        <div className="mt-2 flex flex-grow flex-wrap gap-1 overflow-x-hidden overflow-y-scroll md:h-[100px]">
+                          {searchResults?.skills.topCompleted.topCompleted.map(
+                            (x) => (
+                              <div
+                                key={x.id}
+                                className="min-h-6 md:truncate-none badge w-min text-ellipsis rounded-md border-0 bg-green text-white md:w-fit md:max-w-none"
+                              >
+                                {x.name}
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* DEMOGRAPHICS */}
+              <div className="flex flex-col gap-2">
+                <div className="text-xl font-semibold">Demographics</div>
+
+                <div className="flex flex-col gap-2 md:flex-row">
+                  {/* COUNTRIES */}
+                  {searchResults?.demographics?.countries?.items && (
+                    <PieChart
+                      id="countries"
+                      title="Country"
+                      subTitle=""
+                      colors={CHART_COLORS}
+                      data={[
+                        ["Country", "Value"],
+                        ...Object.entries(
+                          searchResults?.demographics?.countries?.items || {},
+                        ),
+                      ]}
+                      className="h-40 w-full md:w-72"
+                    />
                   )}
 
-                  {/* GRID */}
-                  {selectedOpportunities &&
-                    selectedOpportunities.items?.length > 0 && (
+                  {/* GENDERS */}
+                  {searchResults?.demographics?.genders?.items && (
+                    <PieChart
+                      id="genders"
+                      title="Genders"
+                      subTitle=""
+                      colors={CHART_COLORS}
+                      data={[
+                        ["Gender", "Value"],
+                        ...Object.entries(
+                          searchResults?.demographics?.genders?.items || {},
+                        ),
+                      ]}
+                      className="h-40 w-full md:w-72"
+                    />
+                  )}
+
+                  {/* AGE */}
+                  {searchResults?.demographics?.ages?.items && (
+                    <PieChart
+                      id="ages"
+                      title="Age"
+                      subTitle=""
+                      colors={CHART_COLORS}
+                      data={[
+                        ["Age", "Value"],
+                        ...Object.entries(
+                          searchResults?.demographics?.ages?.items || {},
+                        ),
+                      ]}
+                      className="h-40 w-full md:w-64 lg:w-72"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* SELECTED OPPORTUNITIES */}
+            <div className="flex flex-col">
+              <div className="text-xl font-semibold">
+                Selected Opportunities
+              </div>
+
+              {selectedOpportunitiesIsLoading && <LoadingSkeleton />}
+
+              {/* SELECTED OPPORTUNITIES */}
+              {!selectedOpportunitiesIsLoading && (
+                <div id="results">
+                  <div className="mb-6 flex flex-row items-center justify-end"></div>
+                  <div className="rounded-lg bg-white p-4">
+                    {/* NO ROWS */}
+                    {(!selectedOpportunities ||
+                      selectedOpportunities.items?.length === 0) && (
+                      <div className="flex flex-col place-items-center py-52">
+                        <NoRowsMessage
+                          title={"No opportunities found"}
+                          description={"Please try refining your search query."}
+                        />
+                      </div>
+                    )}
+
+                    {/* GRID */}
+                    {selectedOpportunities &&
+                      selectedOpportunities.items?.length > 0 && (
+                        <div className="overflow-x-auto">
+                          <table className="table">
+                            <thead>
+                              <tr className="border-gray text-gray-dark">
+                                <th>Opportunity</th>
+                                <th>Views</th>
+                                <th>Converson ratio</th>
+                                <th>Completions</th>
+                                <th>Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {selectedOpportunities.items.map(
+                                (opportunity) => (
+                                  <tr
+                                    key={opportunity.id}
+                                    className="border-gray"
+                                  >
+                                    <td>
+                                      <Link
+                                        href={`/organisations/${id}/opportunities/${
+                                          opportunity.id
+                                        }/info?returnUrl=${encodeURIComponent(
+                                          router.asPath,
+                                        )}`}
+                                      >
+                                        {opportunity.title}
+                                      </Link>
+                                    </td>
+                                    <td className="text-center">
+                                      {opportunity.viewedCount}
+                                    </td>
+                                    <td className="text-center">
+                                      {opportunity.conversionRatioPercentage}
+                                    </td>
+                                    <td className="text-center">
+                                      {opportunity.completedCount}
+                                    </td>
+                                    <td className="whitespace-nowrap text-center">
+                                      {opportunity.status}
+                                    </td>
+                                  </tr>
+                                ),
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                    {/* PAGINATION */}
+                    {selectedOpportunities &&
+                      selectedOpportunities.totalCount > 0 && (
+                        <div className="mt-2 grid place-items-center justify-center">
+                          <PaginationButtons
+                            currentPage={
+                              pageSelectedOpportunities
+                                ? parseInt(pageSelectedOpportunities.toString())
+                                : 1
+                            }
+                            totalItems={selectedOpportunities.totalCount}
+                            pageSize={PAGE_SIZE}
+                            showPages={false}
+                            showInfo={true}
+                            onClick={handlePagerChangeSelectedOpportunities}
+                          />
+                        </div>
+                      )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* COMPLETED YOUTH */}
+            <div className="flex flex-col">
+              <div className="text-xl font-semibold">Completed Youth</div>
+
+              {completedYouthIsLoading && <LoadingSkeleton />}
+
+              {/* COMPLETED YOUTH */}
+              {!completedYouthIsLoading && (
+                <div id="results">
+                  <div className="mb-6 flex flex-row items-center justify-end"></div>
+                  <div className="rounded-lg bg-white p-4">
+                    {/* NO ROWS */}
+                    {(!completedYouth ||
+                      completedYouth.items?.length === 0) && (
+                      <div className="flex flex-col place-items-center py-52">
+                        <NoRowsMessage
+                          title={"No opportunities found"}
+                          description={"Please try refining your search query."}
+                        />
+                      </div>
+                    )}
+
+                    {/* GRID */}
+                    {completedYouth && completedYouth.items?.length > 0 && (
                       <div className="overflow-x-auto">
                         <table className="table">
                           <thead>
                             <tr className="border-gray text-gray-dark">
+                              <th>Student</th>
                               <th>Opportunity</th>
-                              <th>Views</th>
-                              <th>Converson ratio</th>
-                              <th>Completions</th>
-                              <th>Status</th>
+                              <th>Date connected</th>
+                              <th>Verified</th>
+                              <th>Opportunity Status</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {selectedOpportunities.items.map((opportunity) => (
-                              <tr key={opportunity.id} className="border-gray">
+                            {completedYouth.items.map((opportunity) => (
+                              <tr
+                                key={`completedYouth_${opportunity.opportunityId}_${opportunity.userId}`}
+                                className="border-gray"
+                              >
+                                <td>{opportunity.userDisplayName}</td>
                                 <td>
                                   <Link
                                     href={`/organisations/${id}/opportunities/${
-                                      opportunity.id
+                                      opportunity.opportunityId
                                     }/info?returnUrl=${encodeURIComponent(
                                       router.asPath,
                                     )}`}
                                   >
-                                    {opportunity.title}
+                                    {opportunity.opportunityTitle}
                                   </Link>
                                 </td>
-                                <td className="text-center">
-                                  {opportunity.viewedCount}
+                                <td className="whitespace-nowrap">
+                                  {opportunity.dateCompleted
+                                    ? moment(
+                                        new Date(opportunity.dateCompleted),
+                                      ).format(DATETIME_FORMAT_HUMAN)
+                                    : ""}
                                 </td>
-                                <td className="text-center">
-                                  {opportunity.conversionRatioPercentage}
+                                <td className="whitespace-nowrap">
+                                  {opportunity.verified
+                                    ? "Verified"
+                                    : "Not verified"}
                                 </td>
-                                <td className="text-center">
-                                  {opportunity.completedCount}
-                                </td>
-                                <td className="whitespace-nowrap text-center">
-                                  {opportunity.status}
-                                </td>
+                                <td>{opportunity.opportunityStatus}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -827,124 +946,30 @@ const OrganisationDashboard: NextPageWithLayout<{
                       </div>
                     )}
 
-                  {/* PAGINATION */}
-                  {selectedOpportunities &&
-                    selectedOpportunities.totalCount > 0 && (
+                    {/* PAGINATION */}
+                    {completedYouth && completedYouth.totalCount > 0 && (
                       <div className="mt-2 grid place-items-center justify-center">
                         <PaginationButtons
                           currentPage={
-                            pageSelectedOpportunities
-                              ? parseInt(pageSelectedOpportunities.toString())
+                            pageCompletedYouth
+                              ? parseInt(pageCompletedYouth.toString())
                               : 1
                           }
-                          totalItems={selectedOpportunities.totalCount}
+                          totalItems={completedYouth.totalCount}
                           pageSize={PAGE_SIZE}
                           showPages={false}
                           showInfo={true}
-                          onClick={handlePagerChangeSelectedOpportunities}
+                          onClick={handlePagerChangeCompletedYouth}
                         />
                       </div>
                     )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* COMPLETED YOUTH */}
-          <div className="flex flex-col">
-            <div className="text-xl font-semibold">Completed Youth</div>
-
-            {completedYouthIsLoading && <LoadingSkeleton />}
-
-            {/* COMPLETED YOUTH */}
-            {!completedYouthIsLoading && (
-              <div id="results">
-                <div className="mb-6 flex flex-row items-center justify-end"></div>
-                <div className="rounded-lg bg-white p-4">
-                  {/* NO ROWS */}
-                  {(!completedYouth || completedYouth.items?.length === 0) && (
-                    <div className="flex flex-col place-items-center py-52">
-                      <NoRowsMessage
-                        title={"No opportunities found"}
-                        description={"Please try refining your search query."}
-                      />
-                    </div>
-                  )}
-
-                  {/* GRID */}
-                  {completedYouth && completedYouth.items?.length > 0 && (
-                    <div className="overflow-x-auto">
-                      <table className="table">
-                        <thead>
-                          <tr className="border-gray text-gray-dark">
-                            <th>Student</th>
-                            <th>Opportunity</th>
-                            <th>Date connected</th>
-                            <th>Verified</th>
-                            <th>Opportunity Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {completedYouth.items.map((opportunity) => (
-                            <tr
-                              key={`completedYouth_${opportunity.opportunityId}_${opportunity.userId}`}
-                              className="border-gray"
-                            >
-                              <td>{opportunity.userDisplayName}</td>
-                              <td>
-                                <Link
-                                  href={`/organisations/${id}/opportunities/${
-                                    opportunity.opportunityId
-                                  }/info?returnUrl=${encodeURIComponent(
-                                    router.asPath,
-                                  )}`}
-                                >
-                                  {opportunity.opportunityTitle}
-                                </Link>
-                              </td>
-                              <td className="whitespace-nowrap">
-                                {opportunity.dateCompleted
-                                  ? moment(
-                                      new Date(opportunity.dateCompleted),
-                                    ).format(DATETIME_FORMAT_HUMAN)
-                                  : ""}
-                              </td>
-                              <td className="whitespace-nowrap">
-                                {opportunity.verified
-                                  ? "Verified"
-                                  : "Not verified"}
-                              </td>
-                              <td>{opportunity.opportunityStatus}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
-                  {/* PAGINATION */}
-                  {completedYouth && completedYouth.totalCount > 0 && (
-                    <div className="mt-2 grid place-items-center justify-center">
-                      <PaginationButtons
-                        currentPage={
-                          pageCompletedYouth
-                            ? parseInt(pageCompletedYouth.toString())
-                            : 1
-                        }
-                        totalItems={completedYouth.totalCount}
-                        pageSize={PAGE_SIZE}
-                        showPages={false}
-                        showInfo={true}
-                        onClick={handlePagerChangeCompletedYouth}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 };
