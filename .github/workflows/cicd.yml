@@ -170,7 +170,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ matrix.image }}
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+            type=raw,value=latest,enable=${{ github.event.repository.default_branch == github.ref_name || github.event_name == 'release'}}
             type=sha,prefix=pr-${{ github.event.pull_request.number }}-,priority=601,enable=${{ github.event_name == 'pull_request' }}
             type=sha,prefix={{branch}}-,priority=601,enable=${{ github.event_name != 'pull_request' && github.event_name != 'release'  }}
             type=ref,event=branch,priority=600
