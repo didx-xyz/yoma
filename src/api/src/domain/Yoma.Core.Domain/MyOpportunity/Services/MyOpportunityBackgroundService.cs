@@ -141,7 +141,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             }
 
             if (executeUntil <= DateTime.Now) break;
-          } 
+          }
 
           _logger.LogInformation("Processed 'my' opportunity verification rejection");
         }
