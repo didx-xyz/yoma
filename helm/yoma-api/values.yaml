@@ -136,6 +136,26 @@ persistence: {}
 
 postInstallHook:
   enabled: false
+  ref: master
+  initContainers:
+    - name: download-sql
+      image: docker.io/busybox:stable
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+      args:
+        - -c
+        - |-
+          cd /init
+          wget -qO - \
+            --header="Accept:application/vnd.github.v3.raw" \
+            https://api.github.com/repos/didx-xyz/yoma/tarball/{{ .Values.postInstallHook.ref }} | tar xz
+          cp -v ./didx-xyz-yoma-*/src/api/cicd/scripts/postgressql-init/* /init/
+          chmod +x /init/post.sh
+          rm -rvf ./didx-xyz-yoma-*
+      volumeMounts:
+        - name: init
+          mountPath: /init
 
 readinessProbe:
   enabled: true

@@ -59,10 +59,15 @@ export const SearchInputLarge: React.FC<{
           onChange={(e) => setSearchInputValue(e.target.value)}
           onFocus={(e) => (e.target.placeholder = "")}
           onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
+          maxLength={50}
         />
         <button
-          className="bg-theme btn btn-primary join-item inline-flex items-center justify-center rounded-r-full border-none p-3 text-white brightness-[1.12] hover:brightness-95"
+          className="bg-theme btn btn-primary join-item inline-flex items-center justify-center rounded-r-full border-none p-3 text-white brightness-[1.12] hover:brightness-95 disabled:brightness-75"
           type="submit"
+          disabled={
+            !!searchInputValue &&
+            !(searchInputValue.length >= 3 && searchInputValue.length <= 50)
+          }
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
