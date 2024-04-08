@@ -1,4 +1,6 @@
 using FluentValidation;
+using Hangfire;
+using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -18,8 +20,6 @@ namespace Yoma.Core.Domain.Lookups.Services
     private readonly ILaborMarketProviderClient _laborMarketProviderClient;
     private readonly SkillSearchFilterValidator _searchFilterValidator;
     private readonly IRepositoryBatchedValueContains<Skill> _skillRepository;
-
-    private static readonly object _lock_Object = new();
     #endregion
 
     #region Constructor
@@ -103,59 +103,74 @@ namespace Yoma.Core.Domain.Lookups.Services
       return results;
     }
 
-    public void SeedSkills(bool onStartupInitialSeeding)
+    public async Task SeedSkills(bool onStartupInitialSeeding)
     {
-      lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
+      const string lockIdentifier = "skill_seed";
+      var dateTimeNow = DateTime.Now;
+      var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      try
       {
-        try
+        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
-          if (onStartupInitialSeeding && _skillRepository.Query().Any())
+          try
           {
-            _logger.LogInformation("Seeding of skills (On Startup) skipped as intially seeded has already been executed");
-            return;
-          }
-
-          var incomingResults = _laborMarketProviderClient.ListSkills().Result;
-          if (incomingResults == null || incomingResults.Count == 0) return;
-
-          int batchSize = _scheduleJobOptions.SeedSkillsBatchSize;
-          int pageIndex = 0;
-          do
-          {
-            var incomingBatch = incomingResults.Skip(pageIndex * batchSize).Take(batchSize).ToList();
-            var incomingBatchIds = incomingBatch.Select(o => o.Id).ToList();
-            var existingItems = _skillRepository.Query().Where(o => incomingBatchIds.Contains(o.ExternalId)).ToList();
-            var newItems = new List<Skill>();
-            foreach (var item in incomingBatch)
+            if (onStartupInitialSeeding && _skillRepository.Query().Any())
             {
-              var existItem = existingItems.SingleOrDefault(o => o.ExternalId == item.Id);
-              if (existItem != null)
-              {
-                existItem.Name = item.Name;
-                existItem.InfoURL = item.InfoURL;
-              }
-              else
-              {
-                newItems.Add(new Skill
-                {
-                  Name = item.Name,
-                  InfoURL = item.InfoURL,
-                  ExternalId = item.Id
-                });
-              }
+              _logger.LogInformation("Seeding of skills (On Startup) skipped as intially seeded has already been executed");
+              return;
             }
 
-            if (newItems.Count != 0) _skillRepository.Create(newItems).Wait();
-            if (existingItems.Count != 0) _skillRepository.Update(existingItems).Wait();
+            var incomingResults = await _laborMarketProviderClient.ListSkills();
+            if (incomingResults == null || incomingResults.Count == 0) return;
 
-            pageIndex++;
+            int batchSize = _scheduleJobOptions.SeedSkillsBatchSize;
+            int pageIndex = 0;
+            do
+            {
+              var incomingBatch = incomingResults.Skip(pageIndex * batchSize).Take(batchSize).ToList();
+              var incomingBatchIds = incomingBatch.Select(o => o.Id).ToList();
+              var existingItems = _skillRepository.Query().Where(o => incomingBatchIds.Contains(o.ExternalId)).ToList();
+              var newItems = new List<Skill>();
+              foreach (var item in incomingBatch)
+              {
+                var existItem = existingItems.SingleOrDefault(o => o.ExternalId == item.Id);
+                if (existItem != null)
+                {
+                  existItem.Name = item.Name;
+                  existItem.InfoURL = item.InfoURL;
+                }
+                else
+                {
+                  newItems.Add(new Skill
+                  {
+                    Name = item.Name,
+                    InfoURL = item.InfoURL,
+                    ExternalId = item.Id
+                  });
+                }
+              }
+
+              if (newItems.Count != 0) await _skillRepository.Create(newItems);
+              if (existingItems.Count != 0) await _skillRepository.Update(existingItems);
+
+              pageIndex++;
+            }
+            while ((pageIndex - 1) * batchSize < incomingResults.Count);
           }
-          while ((pageIndex - 1) * batchSize < incomingResults.Count);
+          catch (Exception ex)
+          {
+            _logger.LogError(ex, "Failed to seed labor market skills");
+          }
         }
-        catch (Exception ex)
-        {
-          _logger.LogError(ex, "Failed to seed labor market skills");
-        }
+      }
+      catch (DistributedLockTimeoutException ex)
+      {
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(SeedSkills));
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to execute {process}", nameof(SeedSkills));
       }
     }
     #endregion

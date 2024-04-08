@@ -1,3 +1,5 @@
+using Hangfire;
+using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Reflection;
@@ -14,22 +16,23 @@ namespace Yoma.Core.Domain.Entity.Services
     #region Class Variables
     private readonly ILogger<UserBackgroundService> _logger;
     private readonly AppSettings _appSettings;
+    private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly IUserService _userService;
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
-
-    private static readonly object _lock_Object = new();
     #endregion
 
     #region Constructor
     public UserBackgroundService(ILogger<UserBackgroundService> logger,
         IOptions<AppSettings> appSettings,
+        IOptions<ScheduleJobOptions> scheduleJobOptions,
         IEnvironmentProvider environmentProvider,
         IUserService userService,
         IRepositoryValueContainsWithNavigation<User> userRepository)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
+      _scheduleJobOptions = scheduleJobOptions.Value;
       _environmentProvider = environmentProvider;
       _userService = userService;
       _userRepository = userRepository;
@@ -37,28 +40,43 @@ namespace Yoma.Core.Domain.Entity.Services
     #endregion
 
     #region Public Members
-    public void SeedPhotos()
+    public async Task SeedPhotos()
     {
-      lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
+      const string lockIdentifier = "user_seed_photos";
+      var dateTimeNow = DateTime.Now;
+      var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      try
       {
-        if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
-          _logger.LogInformation("User image seeding seeding skipped for environment '{environment}'", _environmentProvider.Environment);
-          return;
+          if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+          {
+            _logger.LogInformation("User image seeding seeding skipped for environment '{environment}'", _environmentProvider.Environment);
+            return;
+          }
+
+          _logger.LogInformation("Processing user image seeding");
+
+          var items = _userRepository.Query().Where(o => !o.PhotoId.HasValue).ToList();
+          await SeedPhotos(items);
+
+          _logger.LogInformation("Processed user image seeding");
         }
-
-        _logger.LogInformation("Processing user image seeding");
-
-        var items = _userRepository.Query().Where(o => !o.PhotoId.HasValue).ToList();
-        SeedPhotos(items);
-
-        _logger.LogInformation("Processed user image seeding");
+      }
+      catch (DistributedLockTimeoutException ex)
+      {
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(SeedPhotos));
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to execute {process}", nameof(SeedPhotos));
       }
     }
     #endregion
 
     #region Private Members
-    private void SeedPhotos(List<User> items)
+    private async Task SeedPhotos(List<User> items)
     {
       if (items.Count == 0) return;
 
@@ -78,7 +96,7 @@ namespace Yoma.Core.Domain.Entity.Services
       var fileExtension = Path.GetExtension(fileName)[1..];
 
       foreach (var item in items)
-        _userService.UpsertPhoto(item.Email, FileHelper.FromByteArray(fileName, $"image/{fileExtension}", resourceBytes)).Wait();
+        await _userService.UpsertPhoto(item.Email, FileHelper.FromByteArray(fileName, $"image/{fileExtension}", resourceBytes));
     }
     #endregion
   }

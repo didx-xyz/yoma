@@ -34,8 +34,6 @@ namespace Yoma.Core.Domain.Marketplace.Services
     private readonly StoreItemSearchFilterValidator _storeItemSearchFilterValidator;
 
     private readonly IExecutionStrategyService _executionStrategyService;
-
-    private static readonly object _lock_Object = new();
     #endregion
 
     #region Constructors
@@ -140,7 +138,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       return result;
     }
 
-    public void BuyItem(string storeId, string itemCategoryId)
+    public async Task BuyItem(string storeId, string itemCategoryId)
     {
       if (string.IsNullOrEmpty(storeId))
         throw new ArgumentNullException(nameof(storeId));
@@ -152,7 +150,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      var (walletStatus, walletBalance) = _walletService.GetWalletStatusAndBalance(user.Id).Result;
+      var (walletStatus, walletBalance) = await _walletService.GetWalletStatusAndBalance(user.Id);
 
       if (walletStatus != Reward.WalletCreationStatus.Created)
         throw new ValidationException($"The wallet creation for the user with email '{user.Email}' is currently pending. Please try again later or contact technical support for assistance");
@@ -160,36 +158,31 @@ namespace Yoma.Core.Domain.Marketplace.Services
       if (string.IsNullOrEmpty(walletBalance.WalletId))
         throw new InvalidOperationException($"Wallet id expected with status '{walletStatus}'");
 
-      //lock retrieval (ListStoreItems), reservation (ItemReserve) and update as sold (ItemSold), ensuring single thread execution.
-      //zlto allows processing of an item for multiple wallets, resulting in success (OK)
-      lock (_lock_Object)
-      {
-        //find the 1st available item for the specified store and item category
-        var storeItems = _marketplaceProviderClient.ListStoreItems(storeId, itemCategoryId, 1, 0).Result;
-        if (storeItems.Count == 0)
-          throw new ValidationException($"Items for the specified store and category has been sold out");
-        var storeItem = storeItems.Single();
+      //find the 1st available item for the specified store and item category
+      var storeItems = await _marketplaceProviderClient.ListStoreItems(storeId, itemCategoryId, 1, 0);
+      if (storeItems.Count == 0)
+        throw new ValidationException($"Items for the specified store and category has been sold out");
+      var storeItem = storeItems.Single();
 
-        if (walletBalance.Available < storeItem.Amount)
-          throw new ValidationException($"Insufficient funds to purchase the item. Current avaliable balance '{walletBalance.Available:N2}'");
+      if (walletBalance.Available < storeItem.Amount)
+        throw new ValidationException($"Insufficient funds to purchase the item. Current avaliable balance '{walletBalance.Available:N2}'");
 
-        //find latest transaction for the user and item category
-        var transactionExisting = _transactionLogRepository.Query()
-          .Where(o => o.UserId == user.Id && o.ItemCategoryId == itemCategoryId)
-          .OrderByDescending(o => o.DateModified).FirstOrDefault();
+      //find latest transaction for the user and item category
+      var transactionExisting = _transactionLogRepository.Query()
+        .Where(o => o.UserId == user.Id && o.ItemCategoryId == itemCategoryId)
+        .OrderByDescending(o => o.DateModified).FirstOrDefault();
 
-        //existing reservation re-used if available; assume remains effective and not expired by ZLTO
-        var transaction = transactionExisting != null && transactionExisting.Status == TransactionStatus.Reserved
-          ? transactionExisting : BuyItemTransactionReserve(user, walletBalance.WalletId, itemCategoryId, storeItem);
+      //existing reservation re-used if available; assume remains effective and not expired by ZLTO
+      var transaction = transactionExisting != null && transactionExisting.Status == TransactionStatus.Reserved
+        ? transactionExisting : await BuyItemTransactionReserve(user, walletBalance.WalletId, itemCategoryId, storeItem);
 
-        BuyItemTransactionSold(transaction, user, walletBalance.WalletId);
-      }
+      await BuyItemTransactionSold(transaction, user, walletBalance.WalletId);
     }
 
     /// <summary>
     /// Reserve item and log transaction; with failure attempt to reset / release reservation
     /// </summary>
-    private TransactionLog BuyItemTransactionReserve(User user, string walletId, string itemCategoryId, StoreItem storeItem)
+    private async Task<TransactionLog> BuyItemTransactionReserve(User user, string walletId, string itemCategoryId, StoreItem storeItem)
     {
       var result = new TransactionLog
       {
@@ -202,18 +195,18 @@ namespace Yoma.Core.Domain.Marketplace.Services
       var reserved = false;
       try
       {
-        result.TransactionId = _marketplaceProviderClient.ItemReserve(walletId, user.Email, storeItem.Id).Result;
+        result.TransactionId = await _marketplaceProviderClient.ItemReserve(walletId, user.Email, storeItem.Id);
         reserved = true;
 
         result.Status = TransactionStatus.Reserved;
         result.StatusId = _transactionStatusService.GetByName(TransactionStatus.Reserved.ToString()).Id;
-        result = _transactionLogRepository.Create(result).Result;
+        result = await _transactionLogRepository.Create(result);
 
         return result;
       }
       catch (Exception ex)
       {
-        if (reserved) BuyItemTransactionReserveReset(result);
+        if (reserved) await BuyItemTransactionReserveReset(result);
         BuyItemLogException(ex, result, reserved ? "Reservation succeeded but failed to log transaction" : "Reservation failed");
         throw;
       }
@@ -222,20 +215,20 @@ namespace Yoma.Core.Domain.Marketplace.Services
     /// <summary>
     /// Mark item as sold and log trasnaction; with failure attempt to reset / release reservation provided not sold
     /// </summary>
-    private void BuyItemTransactionSold(TransactionLog transaction, User user, string walletId)
+    private async Task BuyItemTransactionSold(TransactionLog transaction, User user, string walletId)
     {
       var sold = false;
       try
       {
-        _executionStrategyService.ExecuteInExecutionStrategy(() =>
+        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
           using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
           transaction.Status = TransactionStatus.Sold;
           transaction.StatusId = _transactionStatusService.GetByName(TransactionStatus.Sold.ToString()).Id;
-          transaction = _transactionLogRepository.Create(transaction).Result;
+          transaction = await _transactionLogRepository.Create(transaction);
 
-          _marketplaceProviderClient.ItemSold(walletId, user.Email, transaction.ItemId, transaction.TransactionId).Wait();
+          await _marketplaceProviderClient.ItemSold(walletId, user.Email, transaction.ItemId, transaction.TransactionId);
           sold = true;
 
           scope.Complete();
@@ -243,7 +236,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       }
       catch (Exception ex)
       {
-        if (!sold) BuyItemTransactionReserveReset(transaction);
+        if (!sold) await BuyItemTransactionReserveReset(transaction);
         BuyItemLogException(ex, transaction, sold ? "Item marked as sold, but failed to log transaction" : "Failed to mark item as sold");
         throw;
       }
@@ -253,20 +246,20 @@ namespace Yoma.Core.Domain.Marketplace.Services
     /// Attempt to reset / release reservation and log transaction; reservation logged and re-used with next attempt; no exception thrown upon failure
     /// </summary>
     /// <param name="transaction"></param>
-    private void BuyItemTransactionReserveReset(TransactionLog transaction)
+    private async Task BuyItemTransactionReserveReset(TransactionLog transaction)
     {
       var reserveReset = false;
       try
       {
-        _executionStrategyService.ExecuteInExecutionStrategy(() =>
+        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
           using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
           transaction.Status = TransactionStatus.Released;
           transaction.StatusId = _transactionStatusService.GetByName(TransactionStatus.Released.ToString()).Id;
-          _transactionLogRepository.Create(transaction).Wait();
+          await _transactionLogRepository.Create(transaction);
 
-          _marketplaceProviderClient.ItemReserveReset(transaction.ItemId, transaction.TransactionId).Wait();
+          await _marketplaceProviderClient.ItemReserveReset(transaction.ItemId, transaction.TransactionId);
           reserveReset = true;
 
           scope.Complete();

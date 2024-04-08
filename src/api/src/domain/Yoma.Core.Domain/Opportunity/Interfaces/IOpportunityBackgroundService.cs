@@ -2,10 +2,10 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 {
   public interface IOpportunityBackgroundService
   {
-    void ProcessExpiration();
+    Task ProcessExpiration();
 
-    void ProcessExpirationNotifications();
+    Task ProcessExpirationNotifications();
 
-    void ProcessDeletion();
+    Task ProcessDeletion();
   }
 }

@@ -149,7 +149,7 @@ namespace Yoma.Core.Domain
       foreach (var job in scheduledJobs) BackgroundJob.Delete(job.Key);
 
       //skills
-      BackgroundJob.Enqueue<ISkillService>(s => s.SeedSkills(true)); //execute on startup
+      BackgroundJob.Enqueue<ISkillService>(s => s.SeedSkills(true)); //execute on startup; seed skils
       RecurringJob.AddOrUpdate<ISkillService>("Skill Reference Seeding", s => s.SeedSkills(false), options.SeedSkillsSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //opportunity
@@ -177,7 +177,7 @@ namespace Yoma.Core.Domain
         s => s.ProcessRewardTransactions(), options.RewardTransactionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //ssi
-      BackgroundJob.Enqueue<ISSIBackgroundService>(s => s.SeedSchemas()); //seed default schemas
+      BackgroundJob.Enqueue<ISSIBackgroundService>(s => s.SeedSchemas()); //execute on startup; seed default schemas
       RecurringJob.AddOrUpdate<ISSIBackgroundService>($"SSI Tenant Creation",
          s => s.ProcessTenantCreation(), options.SSITenantCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<ISSIBackgroundService>($"SSI Credential Issuance",

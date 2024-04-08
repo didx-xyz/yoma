@@ -16,6 +16,6 @@ namespace Yoma.Core.Domain.Lookups.Interfaces
 
     SkillSearchResults Search(SkillSearchFilter filter);
 
-    void SeedSkills(bool onStartupInitialSeeding);
+    Task SeedSkills(bool onStartupInitialSeeding);
   }
 }

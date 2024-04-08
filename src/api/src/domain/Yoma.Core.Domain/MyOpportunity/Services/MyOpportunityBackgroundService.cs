@@ -1,3 +1,5 @@
+using Hangfire;
+using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
@@ -32,8 +34,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
 
     private static readonly VerificationStatus[] Statuses_Rejectable = [VerificationStatus.Pending];
-
-    private static readonly object _lock_Object = new();
     #endregion
 
     #region Constructor
@@ -66,107 +66,139 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #endregion
 
     #region Public Members
-    public void ProcessVerificationRejection()
+    public async Task ProcessVerificationRejection()
     {
-      lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
+      const string lockIdentifier = "myopportunity_process_verification_rejection";
+      var dateTimeNow = DateTime.Now;
+      var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
+      var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      try
       {
-        _logger.LogInformation("Processing 'my' opportunity verification rejection");
-
-        var statusRejectedId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Rejected.ToString()).Id;
-        var statusRejectableIds = Statuses_Rejectable.Select(o => _myOpportunityVerificationStatusService.GetByName(o.ToString()).Id).ToList();
-
-        do
+        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
-          var items = _myOpportunityRepository.Query().Where(o => o.VerificationStatusId.HasValue && statusRejectableIds.Contains(o.VerificationStatusId.Value) &&
-            o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.MyOpportunityRejectionIntervalInDays))
-            .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
-          if (items.Count == 0) break;
+          _logger.LogInformation("Processing 'my' opportunity verification rejection");
 
-          foreach (var item in items)
+          var statusRejectedId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Rejected.ToString()).Id;
+          var statusRejectableIds = Statuses_Rejectable.Select(o => _myOpportunityVerificationStatusService.GetByName(o.ToString()).Id).ToList();
+
+          while (executeUntil > DateTime.Now)
           {
-            item.CommentVerification = $"Auto-Rejected due to being {string.Join("/", Statuses_Rejectable).ToLower()} for more than {_scheduleJobOptions.MyOpportunityRejectionIntervalInDays} days";
-            item.VerificationStatusId = statusRejectedId;
-            _logger.LogInformation("'My' opportunity with id '{id}' flagged for verification rejection", item.Id);
-          }
+            var items = _myOpportunityRepository.Query().Where(o => o.VerificationStatusId.HasValue && statusRejectableIds.Contains(o.VerificationStatusId.Value) &&
+              o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.MyOpportunityRejectionIntervalInDays))
+              .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
+            if (items.Count == 0) break;
 
-          items = _myOpportunityRepository.Update(items).Result;
-
-          var groupedMyOpportunities = items.GroupBy(item => new { item.UserEmail, item.UserDisplayName });
-
-          var emailType = EmailType.Opportunity_Verification_Rejected;
-          foreach (var group in groupedMyOpportunities)
-          {
-            try
+            foreach (var item in items)
             {
-              var recipients = new List<EmailRecipient>
+              item.CommentVerification = $"Auto-Rejected due to being {string.Join("/", Statuses_Rejectable).ToLower()} for more than {_scheduleJobOptions.MyOpportunityRejectionIntervalInDays} days";
+              item.VerificationStatusId = statusRejectedId;
+              _logger.LogInformation("'My' opportunity with id '{id}' flagged for verification rejection", item.Id);
+            }
+
+            items = await _myOpportunityRepository.Update(items);
+
+            var groupedMyOpportunities = items.GroupBy(item => new { item.UserEmail, item.UserDisplayName });
+
+            var emailType = EmailType.Opportunity_Verification_Rejected;
+            foreach (var group in groupedMyOpportunities)
+            {
+              try
+              {
+                var recipients = new List<EmailRecipient>
                         {
                             new() { Email = group.Key.UserEmail, DisplayName = group.Key.UserDisplayName }
                         };
 
-              var data = new EmailOpportunityVerification
-              {
-                YoIDURL = _emailURLFactory.OpportunityVerificationYoIDURL(emailType),
-                Opportunities = []
-              };
-
-              foreach (var myOp in group)
-              {
-                data.Opportunities.Add(new EmailOpportunityVerificationItem
+                var data = new EmailOpportunityVerification
                 {
-                  Title = myOp.OpportunityTitle,
-                  DateStart = myOp.DateStart,
-                  DateEnd = myOp.DateEnd,
-                  Comment = myOp.CommentVerification,
-                  URL = _emailURLFactory.OpportunityVerificationItemURL(emailType, myOp.OpportunityId, null),
-                  ZltoReward = myOp.ZltoReward,
-                  YomaReward = myOp.YomaReward
-                });
+                  YoIDURL = _emailURLFactory.OpportunityVerificationYoIDURL(emailType),
+                  Opportunities = []
+                };
+
+                foreach (var myOp in group)
+                {
+                  data.Opportunities.Add(new EmailOpportunityVerificationItem
+                  {
+                    Title = myOp.OpportunityTitle,
+                    DateStart = myOp.DateStart,
+                    DateEnd = myOp.DateEnd,
+                    Comment = myOp.CommentVerification,
+                    URL = _emailURLFactory.OpportunityVerificationItemURL(emailType, myOp.OpportunityId, null),
+                    ZltoReward = myOp.ZltoReward,
+                    YomaReward = myOp.YomaReward
+                  });
+                }
+
+                await _emailProviderClient.Send(emailType, recipients, data);
+
+                _logger.LogInformation("Successfully send email");
               }
-
-              _emailProviderClient.Send(emailType, recipients, data).Wait();
-
-              _logger.LogInformation("Successfully send email");
+              catch (Exception ex)
+              {
+                _logger.LogError(ex, "Failed to send email");
+              }
             }
-            catch (Exception ex)
-            {
-              _logger.LogError(ex, "Failed to send email");
-            }
-          }
 
-        } while (true);
+            if (executeUntil <= DateTime.Now) break;
+          } 
 
-        _logger.LogInformation("Processed 'my' opportunity verification rejection");
+          _logger.LogInformation("Processed 'my' opportunity verification rejection");
+        }
+      }
+      catch (DistributedLockTimeoutException ex)
+      {
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessVerificationRejection));
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessVerificationRejection));
       }
     }
 
-    public void SeedPendingVerifications()
+    public async Task SeedPendingVerifications()
     {
-      lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
+      const string lockIdentifier = "myopportunity_seed_pending_verifications]";
+      var dateTimeNow = DateTime.Now;
+      var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      try
       {
-        if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
-          _logger.LogInformation("Pending verification seeding skipped for environment '{environment}'", _environmentProvider.Environment);
-          return;
+          if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+          {
+            _logger.LogInformation("Pending verification seeding skipped for environment '{environment}'", _environmentProvider.Environment);
+            return;
+          }
+
+          _logger.LogInformation("Processing pending verification seeding seeding");
+
+          var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+          var verificationStatusPendingId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
+
+          var items = _myOpportunityRepository.Query(true).Where(
+              o => !_myOpportunityVerificationRepository.Query().Any(mv => mv.MyOpportunityId == o.Id)
+              && o.ActionId == actionVerificationId && o.VerificationStatusId == verificationStatusPendingId).ToList();
+
+          await SeedPendingVerifications(items);
+
+          _logger.LogInformation("Processed pending verification seeding");
         }
-
-        _logger.LogInformation("Processing pending verification seeding seeding");
-
-        var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
-        var verificationStatusPendingId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
-
-        var items = _myOpportunityRepository.Query(true).Where(
-            o => !_myOpportunityVerificationRepository.Query().Any(mv => mv.MyOpportunityId == o.Id)
-            && o.ActionId == actionVerificationId && o.VerificationStatusId == verificationStatusPendingId).ToList();
-
-        SeedPendingVerifications(items);
-
-        _logger.LogInformation("Processed pending verification seeding");
+      }
+      catch (DistributedLockTimeoutException ex)
+      {
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(SeedPendingVerifications));
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to execute {process}", nameof(SeedPendingVerifications));
       }
     }
     #endregion
 
     #region Private Members
-    private void SeedPendingVerifications(List<Models.MyOpportunity> items)
+    private async Task SeedPendingVerifications(List<Models.MyOpportunity> items)
     {
       if (items.Count == 0) return;
 
@@ -269,7 +301,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             }
           }
 
-          _myOpportunityService.PerformActionSendForVerificationManual(item.UserId, item.OpportunityId, request, true).Wait();
+          await _myOpportunityService.PerformActionSendForVerificationManual(item.UserId, item.OpportunityId, request, true);
 
         }
         catch (FluentValidation.ValidationException ex)

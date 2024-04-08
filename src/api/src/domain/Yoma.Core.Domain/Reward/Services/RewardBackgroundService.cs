@@ -1,3 +1,5 @@
+using Hangfire;
+using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
@@ -25,8 +27,6 @@ namespace Yoma.Core.Domain.Reward.Services
     private readonly IOpportunityService _opportunityService;
     private readonly IRewardProviderClient _rewardProviderClient;
     private readonly IExecutionStrategyService _executionStrategyService;
-
-    private static readonly object _lock_Object = new();
     #endregion
 
     #region Constructor
@@ -51,147 +51,175 @@ namespace Yoma.Core.Domain.Reward.Services
     #endregion
 
     #region Public Members
-    public void ProcessWalletCreation()
+    public async Task ProcessWalletCreation()
     {
-      lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
+      const string lockIdentifier = "reward_process_wallet_creation";
+      var dateTimeNow = DateTime.Now;
+      var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.RewardWalletCreationScheduleMaxIntervalInHours);
+      var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      try
       {
-        _logger.LogInformation("Processing Reward wallet creation");
-
-        var executeUntil = DateTime.Now.AddHours(_scheduleJobOptions.RewardWalletCreationScheduleMaxIntervalInHours);
-
-        var itemIdsToSkip = new List<Guid>();
-        while (executeUntil > DateTime.Now)
+        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
-          var items = _walletService.ListPendingCreationSchedule(_scheduleJobOptions.RewardWalletCreationScheduleBatchSize, itemIdsToSkip);
-          if (items.Count == 0) break;
+          _logger.LogInformation("Processing Reward wallet creation");
 
-          foreach (var item in items)
+          var itemIdsToSkip = new List<Guid>();
+          while (executeUntil > DateTime.Now)
           {
-            try
-            {
-              _logger.LogInformation("Processing reward wallet creation for item with id '{id}'", item.Id);
+            var items = _walletService.ListPendingCreationSchedule(_scheduleJobOptions.RewardWalletCreationScheduleBatchSize, itemIdsToSkip);
+            if (items.Count == 0) break;
 
-              _executionStrategyService.ExecuteInExecutionStrategy(() =>
+            foreach (var item in items)
+            {
+              try
               {
-                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                _logger.LogInformation("Processing reward wallet creation for item with id '{id}'", item.Id);
 
-                var wallet = _walletService.CreateWallet(item.UserId).Result;
+                await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+                {
+                  using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-                item.WalletId = wallet.Id;
-                item.Balance = wallet.Balance; //track initial balance upon creation, if any
-                item.Status = WalletCreationStatus.Created;
-                _walletService.UpdateScheduleCreation(item).Wait();
+                  var wallet = await _walletService.CreateWallet(item.UserId);
 
-                scope.Complete();
-              });
+                  item.WalletId = wallet.Id;
+                  item.Balance = wallet.Balance; //track initial balance upon creation, if any
+                  item.Status = WalletCreationStatus.Created;
+                  await _walletService.UpdateScheduleCreation(item);
 
-              _logger.LogInformation("Processed reward wallet creation for item with id '{id}'", item.Id);
+                  scope.Complete();
+                });
+
+                _logger.LogInformation("Processed reward wallet creation for item with id '{id}'", item.Id);
+              }
+              catch (Exception ex)
+              {
+                _logger.LogError(ex, "Failed to created reward wallet for item with id '{id}'", item.Id);
+
+                item.Status = WalletCreationStatus.Error;
+                item.ErrorReason = ex.Message;
+                await _walletService.UpdateScheduleCreation(item);
+
+                itemIdsToSkip.Add(item.Id);
+              }
+
+              if (executeUntil <= DateTime.Now) break;
             }
-            catch (Exception ex)
-            {
-              _logger.LogError(ex, "Failed to created reward wallet for item with id '{id}'", item.Id);
-
-              item.Status = WalletCreationStatus.Error;
-              item.ErrorReason = ex.Message;
-              _walletService.UpdateScheduleCreation(item).Wait();
-
-              itemIdsToSkip.Add(item.Id);
-            }
-
-            if (executeUntil <= DateTime.Now) break;
           }
-        }
 
-        _logger.LogInformation("Processed reward wallet creation");
+          _logger.LogInformation("Processed reward wallet creation");
+        }
+      }
+      catch (DistributedLockTimeoutException ex)
+      {
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessWalletCreation));
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessWalletCreation));
       }
     }
 
-    public void ProcessRewardTransactions()
+    public async Task ProcessRewardTransactions()
     {
-      lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
+      const string lockIdentifier = "reward_process_transactions";
+      var dateTimeNow = DateTime.Now;
+      var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.RewardTransactionScheduleMaxIntervalInHours);
+      var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      try
       {
-        _logger.LogInformation("Processing reward transactions");
-
-        var executeUntil = DateTime.Now.AddHours(_scheduleJobOptions.RewardTransactionScheduleMaxIntervalInHours);
-
-        var itemIdsToSkip = new List<Guid>();
-        while (executeUntil > DateTime.Now)
+        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
-          var items = _rewardService.ListPendingTransactionSchedule(_scheduleJobOptions.RewardTransactionScheduleBatchSize, itemIdsToSkip);
-          if (items.Count == 0) break;
+          _logger.LogInformation("Processing reward transactions");
 
-          foreach (var item in items)
+          var itemIdsToSkip = new List<Guid>();
+          while (executeUntil > DateTime.Now)
           {
-            try
-            {
-              _logger.LogInformation("Processing reward transaction for item with id '{id}'", item.Id);
+            var items = _rewardService.ListPendingTransactionSchedule(_scheduleJobOptions.RewardTransactionScheduleBatchSize, itemIdsToSkip);
+            if (items.Count == 0) break;
 
-              var (proceed, userEmail, walletId) = GetWalletId(item, item.UserId);
-              if (!proceed)
+            foreach (var item in items)
+            {
+              try
               {
+                _logger.LogInformation("Processing reward transaction for item with id '{id}'", item.Id);
+
+                var (proceed, userEmail, walletId) = GetWalletId(item, item.UserId);
+                if (!proceed)
+                {
+                  itemIdsToSkip.Add(item.Id);
+                  continue;
+                }
+
+                var sourceEntityType = Enum.Parse<RewardTransactionEntityType>(item.SourceEntityType, true);
+
+                var request = new RewardAwardRequest
+                {
+                  Type = sourceEntityType,
+                  Username = userEmail,
+                  UserWalletId = walletId,
+                  Amount = item.Amount
+                };
+
+                switch (sourceEntityType)
+                {
+                  case RewardTransactionEntityType.MyOpportunity:
+                    if (!item.MyOpportunityId.HasValue)
+                      throw new InvalidOperationException($"Source entity type '{item.SourceEntityType}': 'My' opportunity id is null");
+
+                    var myOpportunity = _myOpportunityService.GetById(item.MyOpportunityId.Value, false, false, false);
+                    var opportunity = _opportunityService.GetById(myOpportunity.OpportunityId, true, false, false);
+
+                    request.Id = myOpportunity.Id;
+                    request.Title = opportunity.Title;
+                    request.Description = opportunity.Description;
+                    request.Instructions = opportunity.Instructions;
+                    request.Skills = opportunity.Skills;
+                    request.Countries = opportunity.Countries;
+                    request.Languages = opportunity.Languages;
+                    request.TimeInvestedInHours = opportunity.TimeIntervalToHours();
+                    request.ExternalURL = opportunity.URL;
+                    request.StartDate = myOpportunity.DateStart;
+                    request.EndDate = myOpportunity.DateEnd;
+
+                    break;
+
+                  default:
+                    throw new InvalidOperationException($"Source entity type of '{sourceEntityType}' not supported");
+                }
+
+                item.TransactionId = await _rewardProviderClient.RewardEarn(request);
+                item.Status = RewardTransactionStatus.Processed;
+                await _rewardService.UpdateTransaction(item);
+
+                _logger.LogInformation("Processed reward transaction for item with id '{id}'", item.Id);
+              }
+              catch (Exception ex)
+              {
+                _logger.LogError(ex, "Failed to process reward transaction for item with id '{id}'", item.Id);
+
+                item.Status = RewardTransactionStatus.Error;
+                item.ErrorReason = ex.Message;
+                await _rewardService.UpdateTransaction(item);
+
                 itemIdsToSkip.Add(item.Id);
-                continue;
               }
 
-              var sourceEntityType = Enum.Parse<RewardTransactionEntityType>(item.SourceEntityType, true);
-
-              var request = new RewardAwardRequest
-              {
-                Type = sourceEntityType,
-                Username = userEmail,
-                UserWalletId = walletId,
-                Amount = item.Amount
-              };
-
-              switch (sourceEntityType)
-              {
-                case RewardTransactionEntityType.MyOpportunity:
-                  if (!item.MyOpportunityId.HasValue)
-                    throw new InvalidOperationException($"Source entity type '{item.SourceEntityType}': 'My' opportunity id is null");
-
-                  var myOpportunity = _myOpportunityService.GetById(item.MyOpportunityId.Value, false, false, false);
-                  var opportunity = _opportunityService.GetById(myOpportunity.OpportunityId, true, false, false);
-
-                  request.Id = myOpportunity.Id;
-                  request.Title = opportunity.Title;
-                  request.Description = opportunity.Description;
-                  request.Instructions = opportunity.Instructions;
-                  request.Skills = opportunity.Skills;
-                  request.Countries = opportunity.Countries;
-                  request.Languages = opportunity.Languages;
-                  request.TimeInvestedInHours = opportunity.TimeIntervalToHours();
-                  request.ExternalURL = opportunity.URL;
-                  request.StartDate = myOpportunity.DateStart;
-                  request.EndDate = myOpportunity.DateEnd;
-
-                  break;
-
-                default:
-                  throw new InvalidOperationException($"Source entity type of '{sourceEntityType}' not supported");
-              }
-
-              item.TransactionId = _rewardProviderClient.RewardEarn(request).Result;
-              item.Status = RewardTransactionStatus.Processed;
-              _rewardService.UpdateTransaction(item).Wait();
-
-              _logger.LogInformation("Processed reward transaction for item with id '{id}'", item.Id);
+              if (executeUntil <= DateTime.Now) break;
             }
-            catch (Exception ex)
-            {
-              _logger.LogError(ex, "Failed to process reward transaction for item with id '{id}'", item.Id);
-
-              item.Status = RewardTransactionStatus.Error;
-              item.ErrorReason = ex.Message;
-              _rewardService.UpdateTransaction(item).Wait();
-
-              itemIdsToSkip.Add(item.Id);
-            }
-
-            if (executeUntil <= DateTime.Now) break;
           }
-        }
 
-        _logger.LogInformation("Processed reward transactions");
+          _logger.LogInformation("Processed reward transactions");
+        }
+      }
+      catch (DistributedLockTimeoutException ex)
+      {
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessRewardTransactions));
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessRewardTransactions));
       }
     }
     #endregion

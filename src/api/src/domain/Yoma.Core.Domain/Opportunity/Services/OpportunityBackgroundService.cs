@@ -1,3 +1,5 @@
+using Hangfire;
+using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Helpers;
@@ -25,8 +27,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
     private static readonly Status[] Statuses_Expirable = [Status.Active, Status.Inactive];
     private static readonly Status[] Statuses_Deletion = [Status.Inactive, Status.Expired];
-
-    private static readonly object _lock_Object = new();
     #endregion
 
     #region Constructor
@@ -51,89 +51,143 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #endregion
 
     #region Public Members
-    public void ProcessExpiration()
+    public async Task ProcessExpiration()
     {
-      lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
+      const string lockIdentifier = "opporrtunity_process_expiration";
+      var dateTimeNow = DateTime.Now;
+      var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
+      var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      try
       {
-        _logger.LogInformation("Processing opportunity expiration");
-
-        var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
-        var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
-
-        do
+        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Processing opportunity expiration");
+
+          var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+          var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+
+          while (executeUntil > DateTime.Now)
+          {
+            var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
+                o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.UtcNow).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
+            if (items.Count == 0) break;
+
+            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+
+            foreach (var item in items)
+            {
+              item.StatusId = statusExpiredId;
+              item.ModifiedByUserId = user.Id;
+              _logger.LogInformation("Opportunity with id '{id}' flagged for expiration", item.Id);
+            }
+
+            items = await _opportunityRepository.Update(items);
+
+            await SendEmail(items, EmailType.Opportunity_Expiration_Expired);
+
+            if (executeUntil <= DateTime.Now) break;
+          }
+
+          _logger.LogInformation("Processed opportunity expiration");
+        }
+      }
+      catch (DistributedLockTimeoutException ex)
+      {
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessExpiration));
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessExpiration));
+      }
+    }
+
+    public async Task ProcessExpirationNotifications()
+    {
+      const string lockIdentifier = "opporrtunity_process_expiration_notifications";
+      var dateTimeNow = DateTime.Now;
+      var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      try
+      {
+        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        {
+
+          _logger.LogInformation("Processing opportunity expiration notifications");
+
+          var datetimeFrom = new DateTimeOffset(DateTime.Today).ToUniversalTime();
+          var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.OpportunityExpirationNotificationIntervalInDays);
+          var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+
           var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-              o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.UtcNow).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
-          if (items.Count == 0) break;
+              o.DateEnd.HasValue && o.DateEnd.Value >= datetimeFrom && o.DateEnd.Value <= datetimeTo)
+              .OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
+          if (items.Count == 0) return;
 
-          var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+          await SendEmail(items, EmailType.Opportunity_Expiration_WithinNextDays);
 
-          foreach (var item in items)
-          {
-            item.StatusId = statusExpiredId;
-            item.ModifiedByUserId = user.Id;
-            _logger.LogInformation("Opportunity with id '{id}' flagged for expiration", item.Id);
-          }
-
-          items = _opportunityRepository.Update(items).Result;
-
-          SendEmail(items, EmailType.Opportunity_Expiration_Expired).Wait();
-
-        } while (true);
-
-        _logger.LogInformation("Processed opportunity expiration");
+          _logger.LogInformation("Processed opportunity expiration notifications");
+        }
+      }
+      catch (DistributedLockTimeoutException ex)
+      {
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessExpirationNotifications));
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessExpirationNotifications));
       }
     }
 
-    public void ProcessExpirationNotifications()
+    public async Task ProcessDeletion()
     {
-      lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
+      const string lockIdentifier = "opporrtunity_process_deletion";
+      var dateTimeNow = DateTime.Now;
+      var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
+      var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      try
       {
-        _logger.LogInformation("Processing opportunity expiration notifications");
-
-        var datetimeFrom = new DateTimeOffset(DateTime.Today).ToUniversalTime();
-        var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.OpportunityExpirationNotificationIntervalInDays);
-        var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
-
-        var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-            o.DateEnd.HasValue && o.DateEnd.Value >= datetimeFrom && o.DateEnd.Value <= datetimeTo)
-            .OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
-        if (items.Count == 0) return;
-
-        SendEmail(items, EmailType.Opportunity_Expiration_WithinNextDays).Wait();
-
-        _logger.LogInformation("Processed opportunity expiration notifications");
-      }
-    }
-
-    public void ProcessDeletion()
-    {
-      lock (_lock_Object) //ensure single thread execution at a time; avoid processing the same on multiple threads
-      {
-        _logger.LogInformation("Processing opportunity deletion");
-
-        var statusDeletionIds = Statuses_Deletion.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
-        var statusDeletedId = _opportunityStatusService.GetByName(Status.Deleted.ToString()).Id;
-
-        do
+        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
-          var items = _opportunityRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
-              o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
-              .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
-          if (items.Count == 0) break;
+          _logger.LogInformation("Processing opportunity deletion");
 
-          var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+          var statusDeletionIds = Statuses_Deletion.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+          var statusDeletedId = _opportunityStatusService.GetByName(Status.Deleted.ToString()).Id;
 
-          foreach (var item in items)
+          while (executeUntil > DateTime.Now)
           {
-            item.StatusId = statusDeletedId;
-            item.ModifiedByUserId = user.Id;
-            _logger.LogInformation("Opportunity with id '{id}' flagged for deletion", item.Id);
+            {
+              var items = _opportunityRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
+                  o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
+                  .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
+              if (items.Count == 0) break;
+
+              var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+
+              foreach (var item in items)
+              {
+                item.StatusId = statusDeletedId;
+                item.ModifiedByUserId = user.Id;
+                _logger.LogInformation("Opportunity with id '{id}' flagged for deletion", item.Id);
+              }
+
+              await _opportunityRepository.Update(items);
+
+              if (executeUntil <= DateTime.Now) break;
+            }
           }
 
-          _opportunityRepository.Update(items).Wait();
-
-        } while (true);
+          _logger.LogInformation("Processed opportunity deletion");
+        }
+      }
+      catch (DistributedLockTimeoutException ex)
+      {
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessDeletion));
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessDeletion));
       }
     }
     #endregion

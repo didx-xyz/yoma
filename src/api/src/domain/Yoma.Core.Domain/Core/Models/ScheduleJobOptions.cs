@@ -4,6 +4,10 @@ namespace Yoma.Core.Domain.Core.Models
   {
     public const string Section = "ScheduleJob";
 
+    public int DefaultScheduleMaxIntervalInHours { get; set; }
+
+    public int DistributedLockDurationBufferInMinutes { get; set; }
+
     public string SeedSkillsSchedule { get; set; }
 
     public int SeedSkillsBatchSize { get; set; }
