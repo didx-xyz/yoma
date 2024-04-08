@@ -338,11 +338,11 @@ const Home: NextPageWithLayout<{
             <Image
               src={imageLogoGoodwall}
               alt="Logo Goodwall"
-              width={180}
+              width={200}
               height={45}
               sizes="100vw"
               style={{
-                width: "180px",
+                width: "200px",
                 height: "45px",
                 zIndex: 1,
               }}
