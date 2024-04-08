@@ -42,12 +42,17 @@ export const SearchInput: React.FC<InputProps> = ({
           onChange={(e) => setSearchInputValue(e.target.value)}
           onFocus={(e) => (e.target.placeholder = "")}
           onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
+          maxLength={50}
         />
 
         <button
           type="submit"
           aria-label="Search"
-          className={`btn-search bg-theme btn join-item btn-sm !h-[38px] !rounded-r-lg border-0 text-sm brightness-105 hover:brightness-110 ${heightOverride} ${className}`}
+          className={`btn-search bg-theme btn join-item btn-sm !h-[38px] !rounded-r-lg border-0 text-sm brightness-105 hover:brightness-110 disabled:brightness-75 ${heightOverride} ${className}`}
+          disabled={
+            !!searchInputValue &&
+            !(searchInputValue.length >= 3 && searchInputValue.length <= 50)
+          }
         >
           <IoMdSearch className="icon-search h-6 w-6 text-white" />
         </button>
