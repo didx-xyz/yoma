@@ -367,7 +367,7 @@ jobs:
       - name: Should deploy?
         id: should-run
         run: |-
-          if [ "${{ github.event_name }}" = "release" ] \
+          if [ "${{ github.event_name }}" = "release" ] || \
               [ "${{ steps.filter.outputs.api }}" = "true" ] || \
               [ "${{ steps.filter.outputs.web }}" = "true" ] || \
               [ "${{ steps.filter.outputs.keycloak }}" = "true" ] || \
@@ -400,7 +400,7 @@ jobs:
           github.event_name == 'release' ||
           steps.filter.outputs.keycloak == 'true' ||
           github.event_name == 'workflow_dispatch'
-          )
+          ) && steps.should-run.outputs.run == 'true'
         uses: helmfile/helmfile-action@v1.8.0
         with:
           helmfile-args: |
@@ -421,7 +421,7 @@ jobs:
           github.event_name == 'release' ||
           steps.filter.outputs.api == 'true' ||
           github.event_name == 'workflow_dispatch'
-          )
+          ) && steps.should-run.outputs.run == 'true'
         uses: helmfile/helmfile-action@v1.8.0
         with:
           helmfile-args: |
@@ -440,7 +440,7 @@ jobs:
           github.event_name == 'release' ||
           steps.filter.outputs.web == 'true' ||
           github.event_name == 'workflow_dispatch'
-          )
+          ) && steps.should-run.outputs.run == 'true'
         uses: helmfile/helmfile-action@v1.8.0
         with:
           helmfile-args: |
