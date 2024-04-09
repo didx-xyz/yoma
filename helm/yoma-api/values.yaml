@@ -134,18 +134,7 @@ volumeMounts: {}
 volumes: {}
 persistence: {}
 
-initContainers:
-  - name: check-redis
-    image: redis:7
-    imagePullPolicy: IfNotPresent
-    command:
-      - sh
-      - -c
-      - |
-        until redis-cli -h redis-master -p 6379 ping; do
-          echo "Waiting for Redis to be ready..."
-          sleep 1
-        done
+initContainers: []
 
 postInstallHook:
   enabled: false

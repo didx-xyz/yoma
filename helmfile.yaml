@@ -19,7 +19,7 @@ environments:
         ddInjectEnabled: true
         ddProfilingEnabled: false
         postgresEnabled: false
-        redisEnabled: true
+        redisEnabled: false
   prod:
     values:
       - namespace: yoma-v3-prod
@@ -28,7 +28,7 @@ environments:
         ddInjectEnabled: true
         ddProfilingEnabled: false
         postgresEnabled: false
-        redisEnabled: true
+        redisEnabled: false
 ---
 repositories:
 {{ if eq .Environment.Name "local" }}
