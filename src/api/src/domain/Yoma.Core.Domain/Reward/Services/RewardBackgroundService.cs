@@ -27,6 +27,7 @@ namespace Yoma.Core.Domain.Reward.Services
     private readonly IOpportunityService _opportunityService;
     private readonly IRewardProviderClient _rewardProviderClient;
     private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly IDistributedLockService _distributedLockService;
     #endregion
 
     #region Constructor
@@ -37,7 +38,8 @@ namespace Yoma.Core.Domain.Reward.Services
         IMyOpportunityService myOpportunityService,
         IOpportunityService opportunityService,
         IRewardProviderClientFactory rewardProviderClientFactory,
-        IExecutionStrategyService executionStrategyService)
+        IExecutionStrategyService executionStrategyService,
+        IDistributedLockService distributedLockService)
     {
       _logger = logger;
       _scheduleJobOptions = scheduleJobOptions.Value;
@@ -47,6 +49,7 @@ namespace Yoma.Core.Domain.Reward.Services
       _opportunityService = opportunityService;
       _rewardProviderClient = rewardProviderClientFactory.CreateClient();
       _executionStrategyService = executionStrategyService;
+      _distributedLockService = distributedLockService;
     }
     #endregion
 
@@ -57,6 +60,12 @@ namespace Yoma.Core.Domain.Reward.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.RewardWalletCreationScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessWalletCreation), DateTimeOffset.UtcNow);
+        return;
+      }
 
       try
       {
@@ -121,6 +130,10 @@ namespace Yoma.Core.Domain.Reward.Services
       {
         _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessWalletCreation));
       }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+      }
     }
 
     public async Task ProcessRewardTransactions()
@@ -129,6 +142,12 @@ namespace Yoma.Core.Domain.Reward.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.RewardTransactionScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessRewardTransactions), DateTimeOffset.UtcNow);
+        return;
+      }
 
       try
       {
@@ -226,6 +245,10 @@ namespace Yoma.Core.Domain.Reward.Services
       catch (Exception ex)
       {
         _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessRewardTransactions));
+      }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

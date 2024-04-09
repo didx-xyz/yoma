@@ -20,6 +20,7 @@ namespace Yoma.Core.Domain.Lookups.Services
     private readonly ILaborMarketProviderClient _laborMarketProviderClient;
     private readonly SkillSearchFilterValidator _searchFilterValidator;
     private readonly IRepositoryBatchedValueContains<Skill> _skillRepository;
+    private readonly IDistributedLockService _distributedLockService;
     #endregion
 
     #region Constructor
@@ -27,13 +28,15 @@ namespace Yoma.Core.Domain.Lookups.Services
         IOptions<ScheduleJobOptions> scheduleJobOptions,
         ILaborMarketProviderClientFactory laborMarketProviderClientFactory,
         SkillSearchFilterValidator searchFilterValidator,
-        IRepositoryBatchedValueContains<Skill> skillRepository)
+        IRepositoryBatchedValueContains<Skill> skillRepository,
+        IDistributedLockService distributedLockService)
     {
       _logger = logger;
       _scheduleJobOptions = scheduleJobOptions.Value;
       _laborMarketProviderClient = laborMarketProviderClientFactory.CreateClient();
       _searchFilterValidator = searchFilterValidator;
       _skillRepository = skillRepository;
+      _distributedLockService = distributedLockService;
     }
     #endregion
 
@@ -108,6 +111,12 @@ namespace Yoma.Core.Domain.Lookups.Services
       const string lockIdentifier = "skill_seed";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(SeedSkills), DateTimeOffset.UtcNow);
+        return;
+      }
+
       try
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
@@ -163,6 +172,10 @@ namespace Yoma.Core.Domain.Lookups.Services
           catch (Exception ex)
           {
             _logger.LogError(ex, "Failed to seed labor market skills");
+          }
+          finally
+          {
+            await _distributedLockService.ReleaseLockAsync(lockIdentifier);
           }
         }
       }

@@ -54,6 +54,7 @@ namespace Yoma.Core.Domain
 
       #region Core
       services.AddScoped<IBlobService, BlobService>();
+      services.AddScoped<IDistributedLockService, DistributedLockService>();  
       #endregion Core
 
       #region EmailProvider

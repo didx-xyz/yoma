@@ -20,6 +20,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly IUserService _userService;
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
+    private readonly IDistributedLockService _distributedLockService;
     #endregion
 
     #region Constructor
@@ -28,7 +29,8 @@ namespace Yoma.Core.Domain.Entity.Services
         IOptions<ScheduleJobOptions> scheduleJobOptions,
         IEnvironmentProvider environmentProvider,
         IUserService userService,
-        IRepositoryValueContainsWithNavigation<User> userRepository)
+        IRepositoryValueContainsWithNavigation<User> userRepository,
+        IDistributedLockService distributedLockService)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -36,6 +38,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _environmentProvider = environmentProvider;
       _userService = userService;
       _userRepository = userRepository;
+      _distributedLockService = distributedLockService;
     }
     #endregion
 
@@ -44,6 +47,12 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       const string lockIdentifier = "user_seed_photos";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(SeedPhotos), DateTimeOffset.UtcNow);
+        return;
+      }
 
       try
       {
@@ -73,6 +82,10 @@ namespace Yoma.Core.Domain.Entity.Services
       catch (Exception ex)
       {
         _logger.LogError(ex, "Failed to execute {process}", nameof(SeedPhotos));
+      }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

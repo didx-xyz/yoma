@@ -99,6 +99,7 @@ namespace Yoma.Core.Api
       #endregion Services & Infrastructure
 
       #region 3rd Party (post ConfigureServices_InfrastructureDatabase)
+      ConfigureRedis(services, _configuration); 
       ConfigureHangfire(services, _configuration);
       #endregion 3rd Party (post ConfigureServices_InfrastructureDatabase)
     }
@@ -236,6 +237,17 @@ namespace Yoma.Core.Api
       });
 
       services.AddHangfireServer();
+    }
+
+    public static void ConfigureRedis(IServiceCollection services, IConfiguration configuration)
+    {
+      const string ConnectionStrings_RedisConnection = "RedisConnection";
+
+      services.AddStackExchangeRedisCache(options =>
+      {
+        options.Configuration = configuration.GetConnectionString(ConnectionStrings_RedisConnection);
+        options.InstanceName = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name;
+      });
     }
 
     private void ConfigureSwagger(IServiceCollection services)

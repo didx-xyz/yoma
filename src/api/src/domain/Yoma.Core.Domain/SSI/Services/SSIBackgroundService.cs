@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Collections;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -33,6 +34,7 @@ namespace Yoma.Core.Domain.SSI.Services
     private readonly ISSITenantService _ssiTenantService;
     private readonly ISSICredentialService _ssiCredentialService;
     private readonly ISSIProviderClient _ssiProviderClient;
+    private readonly IDistributedLockService _distributedLockService;
     #endregion
 
     #region Constructor
@@ -46,7 +48,8 @@ namespace Yoma.Core.Domain.SSI.Services
         ISSISchemaService ssiSchemaService,
         ISSITenantService ssiTenantService,
         ISSICredentialService ssiCredentialService,
-        ISSIProviderClientFactory ssiProviderClientFactory)
+        ISSIProviderClientFactory ssiProviderClientFactory,
+        IDistributedLockService distributedLockService)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -59,6 +62,7 @@ namespace Yoma.Core.Domain.SSI.Services
       _ssiTenantService = ssiTenantService;
       _ssiCredentialService = ssiCredentialService;
       _ssiProviderClient = ssiProviderClientFactory.CreateClient();
+      _distributedLockService = distributedLockService;
     }
     #endregion
 
@@ -70,6 +74,12 @@ namespace Yoma.Core.Domain.SSI.Services
     {
       const string lockIdentifier = "ssi_seed_schemas";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(SeedSchemas), DateTimeOffset.UtcNow);
+        return;
+      }
 
       try
       {
@@ -99,6 +109,10 @@ namespace Yoma.Core.Domain.SSI.Services
       {
         _logger.LogError(ex, "Failed to execute {process}", nameof(SeedSchemas));
       }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+      }
     }
 
     public async Task ProcessTenantCreation()
@@ -107,6 +121,12 @@ namespace Yoma.Core.Domain.SSI.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.SSITenantCreationScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessTenantCreation), DateTimeOffset.UtcNow);
+        return;
+      }
 
       try
       {
@@ -201,6 +221,10 @@ namespace Yoma.Core.Domain.SSI.Services
       {
         _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessTenantCreation));
       }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+      }
     }
 
     public async Task ProcessCredentialIssuance()
@@ -209,6 +233,12 @@ namespace Yoma.Core.Domain.SSI.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.SSICredentialIssuanceScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessCredentialIssuance), DateTimeOffset.UtcNow);
+        return;
+      }
 
       try
       {
@@ -383,6 +413,10 @@ namespace Yoma.Core.Domain.SSI.Services
       catch (Exception ex)
       {
         _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessCredentialIssuance));
+      }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

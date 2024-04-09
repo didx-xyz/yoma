@@ -26,6 +26,12 @@ services:
   #   ports:
   #     - "80:80"
 
+  redis:
+    image: redis:7.2
+    container_name: redis
+    ports:
+      - 6379:6379
+
   postgres-init: # Initialise the local postgresql server by populating a test user and organisation(s) for local dev
     image: postgres:16-alpine
     depends_on:

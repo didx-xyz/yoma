@@ -25,6 +25,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IUserService _userService;
     private readonly IEmailURLFactory _emailURLFactory;
     private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
+    private readonly IDistributedLockService _distributedLockService;
     private static readonly Status[] Statuses_Expirable = [Status.Active, Status.Inactive];
     private static readonly Status[] Statuses_Deletion = [Status.Inactive, Status.Expired];
     #endregion
@@ -37,7 +38,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IEmailProviderClientFactory emailProviderClientFactory,
         IUserService userService,
         IEmailURLFactory emailURLFactory,
-        IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository)
+        IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
+        IDistributedLockService distributedLockService)
     {
       _logger = logger;
       _scheduleJobOptions = scheduleJobOptions.Value;
@@ -47,6 +49,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _userService = userService;
       _emailURLFactory = emailURLFactory;
       _opportunityRepository = opportunityRepository;
+      _distributedLockService = distributedLockService;
     }
     #endregion
 
@@ -57,6 +60,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessExpiration), DateTimeOffset.UtcNow);
+        return;
+      }
 
       try
       {
@@ -103,12 +112,22 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessExpiration));
       }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+      }
     }
 
     public async Task ProcessExpirationNotifications()
     {
       const string lockIdentifier = "opporrtunity_process_expiration_notifications";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessExpirationNotifications), DateTimeOffset.UtcNow);
+        return;
+      }
 
       try
       {
@@ -141,6 +160,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessExpirationNotifications));
       }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+      }
     }
 
     public async Task ProcessDeletion()
@@ -149,6 +172,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessDeletion), DateTimeOffset.UtcNow);
+        return;
+      }
 
       try
       {
@@ -195,6 +224,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
       catch (Exception ex)
       {
         _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessDeletion));
+      }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

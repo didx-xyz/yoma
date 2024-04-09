@@ -28,6 +28,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IEmailURLFactory _emailURLFactory;
     private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
     private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
+    private readonly IDistributedLockService _distributedLockService;
     private static readonly OrganizationStatus[] Statuses_Declination = [OrganizationStatus.Inactive];
     private static readonly OrganizationStatus[] Statuses_Deletion = [OrganizationStatus.Declined];
     #endregion
@@ -43,7 +44,8 @@ namespace Yoma.Core.Domain.Entity.Services
         IUserService userService,
         IEmailURLFactory emailURLFactory,
         IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
-        IRepository<OrganizationDocument> organizationDocumentRepository)
+        IRepository<OrganizationDocument> organizationDocumentRepository,
+        IDistributedLockService distributedLockService)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -56,6 +58,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _emailURLFactory = emailURLFactory;
       _organizationRepository = organizationRepository;
       _organizationDocumentRepository = organizationDocumentRepository;
+      _distributedLockService = distributedLockService;
     }
     #endregion
 
@@ -66,6 +69,12 @@ namespace Yoma.Core.Domain.Entity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessDeclination), DateTimeOffset.UtcNow);
+        return;
+      }
 
       try
       {
@@ -146,6 +155,10 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessDeclination));
       }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+      }
     }
 
     public async Task ProcessDeletion()
@@ -154,6 +167,12 @@ namespace Yoma.Core.Domain.Entity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessDeletion), DateTimeOffset.UtcNow);
+        return;
+      }
 
       try
       {
@@ -199,12 +218,22 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessDeletion));
       }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+      }
     }
 
     public async Task SeedLogoAndDocuments()
     {
       const string lockIdentifier = "organization_seed_logos_and_documents";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(SeedLogoAndDocuments), DateTimeOffset.UtcNow);
+        return;
+      }
 
       try
       {
@@ -234,6 +263,10 @@ namespace Yoma.Core.Domain.Entity.Services
       catch (Exception ex)
       {
         _logger.LogError(ex, "Failed to execute {process}", nameof(SeedLogoAndDocuments));
+      }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

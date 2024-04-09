@@ -32,6 +32,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IEmailProviderClient _emailProviderClient;
     private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
+    private readonly IDistributedLockService _distributedLockService;
 
     private static readonly VerificationStatus[] Statuses_Rejectable = [VerificationStatus.Pending];
     #endregion
@@ -48,7 +49,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         IEmailURLFactory emailURLFactory,
         IEmailProviderClientFactory emailProviderClientFactory,
         IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
-        IRepository<MyOpportunityVerification> myOpportunityVerificationRepository)
+        IRepository<MyOpportunityVerification> myOpportunityVerificationRepository,
+        IDistributedLockService distributedLockService)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -62,6 +64,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _emailProviderClient = emailProviderClientFactory.CreateClient();
       _myOpportunityRepository = myOpportunityRepository;
       _myOpportunityVerificationRepository = myOpportunityVerificationRepository;
+      _distributedLockService = distributedLockService;
     }
     #endregion
 
@@ -72,6 +75,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessVerificationRejection), DateTimeOffset.UtcNow);
+        return;
+      }
 
       try
       {
@@ -157,12 +166,22 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessVerificationRejection));
       }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+      }
     }
 
     public async Task SeedPendingVerifications()
     {
       const string lockIdentifier = "myopportunity_seed_pending_verifications]";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(SeedPendingVerifications), DateTimeOffset.UtcNow);
+        return;
+      }
 
       try
       {
@@ -198,6 +217,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       catch (Exception ex)
       {
         _logger.LogError(ex, "Failed to execute {process}", nameof(SeedPendingVerifications));
+      }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion
