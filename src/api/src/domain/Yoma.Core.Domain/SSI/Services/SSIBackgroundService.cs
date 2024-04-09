@@ -198,6 +198,7 @@ namespace Yoma.Core.Domain.SSI.Services
       }
     }
 
+    [DisableConcurrentExecution("ssi_process_credential_issuance", 3 * 60 * 60)]
     public async Task ProcessCredentialIssuance()
     {
       const string lockIdentifier = "ssi_process_credential_issuance";
