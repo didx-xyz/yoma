@@ -106,13 +106,15 @@ namespace Yoma.Core.Domain.Lookups.Services
     public async Task SeedSkills(bool onStartupInitialSeeding)
     {
       const string lockIdentifier = "skill_seed";
-      var dateTimeNow = DateTime.Now;
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       try
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+
           try
           {
             if (onStartupInitialSeeding && _skillRepository.Query().Any())

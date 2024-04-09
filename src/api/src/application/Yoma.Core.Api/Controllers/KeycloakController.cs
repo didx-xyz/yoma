@@ -224,7 +224,7 @@ namespace Yoma.Core.Api.Controllers
 
           //updated here after email verification a login event is raised
           userRequest.EmailConfirmed = kcUser.EmailVerified;
-          userRequest.DateLastLogin = DateTime.Now;
+          userRequest.DateLastLogin = DateTimeOffset.UtcNow;
 
           try
           {

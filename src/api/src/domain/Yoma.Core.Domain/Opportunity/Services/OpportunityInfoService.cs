@@ -139,7 +139,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         cw.WriteRecords(result.Items);
       }
 
-      var fileName = $"Transactions_{DateTime.Now:yyyy-dd-M--HH-mm-ss}.csv";
+      var fileName = $"Transactions_{DateTimeOffset.UtcNow:yyyy-dd-M--HH-mm-ss}.csv";
       return (fileName, stream.ToArray());
     }
     #endregion

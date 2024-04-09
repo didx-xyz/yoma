@@ -63,7 +63,7 @@ namespace Yoma.Core.Domain.Entity.Services
     public async Task ProcessDeclination()
     {
       const string lockIdentifier = "organization_process_declination";
-      var dateTimeNow = DateTime.Now;
+      var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
@@ -71,12 +71,15 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+
           _logger.LogInformation("Processing organization declination");
 
           var statusDeclinationIds = Statuses_Declination.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
           var statusDeclinedId = _organizationStatusService.GetByName(OrganizationStatus.Declined.ToString()).Id;
 
-          while (executeUntil > DateTime.Now)
+          while (executeUntil > DateTimeOffset.UtcNow)
           {
             var items = _organizationRepository.Query(true).Where(o => statusDeclinationIds.Contains(o.StatusId) &&
              o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OrganizationDeclinationIntervalInDays))
@@ -129,7 +132,7 @@ namespace Yoma.Core.Domain.Entity.Services
               }
             }
 
-            if (executeUntil <= DateTime.Now) break;
+            if (executeUntil <= DateTimeOffset.UtcNow) break;
           }
         }
 
@@ -148,7 +151,7 @@ namespace Yoma.Core.Domain.Entity.Services
     public async Task ProcessDeletion()
     {
       const string lockIdentifier = "organization_process_deletion";
-      var dateTimeNow = DateTime.Now;
+      var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
@@ -156,12 +159,15 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+
           _logger.LogInformation("Processing organization deletion");
 
           var statusDeletionIds = Statuses_Deletion.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
           var statusDeletedId = _organizationStatusService.GetByName(OrganizationStatus.Deleted.ToString()).Id;
 
-          while (executeUntil > DateTime.Now)
+          while (executeUntil > DateTimeOffset.UtcNow)
           {
             var items = _organizationRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
                 o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OrganizationDeletionIntervalInDays))
@@ -179,7 +185,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             await _organizationRepository.Update(items);
 
-            if (executeUntil <= DateTime.Now) break;
+            if (executeUntil <= DateTimeOffset.UtcNow) break;
           }
 
           _logger.LogInformation("Processed organization deletion");
@@ -198,13 +204,15 @@ namespace Yoma.Core.Domain.Entity.Services
     public async Task SeedLogoAndDocuments()
     {
       const string lockIdentifier = "organization_seed_logos_and_documents";
-      var dateTimeNow = DateTime.Now;
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       try
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+
           if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
           {
             _logger.LogInformation("Organization logo and document seeding skipped for environment '{environment}'", _environmentProvider.Environment);

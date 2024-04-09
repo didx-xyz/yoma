@@ -69,13 +69,15 @@ namespace Yoma.Core.Domain.SSI.Services
     public async Task SeedSchemas()
     {
       const string lockIdentifier = "ssi_seed_schemas";
-      var dateTimeNow = DateTime.Now;
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       try
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+
           _logger.LogInformation("Processing SSI default schema seeding");
 
           await SeedSchema(ArtifactType.JWS,
@@ -102,7 +104,7 @@ namespace Yoma.Core.Domain.SSI.Services
     public async Task ProcessTenantCreation()
     {
       const string lockIdentifier = "ssi_process_tenant_creation";
-      var dateTimeNow = DateTime.Now;
+      var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.SSITenantCreationScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
@@ -110,10 +112,13 @@ namespace Yoma.Core.Domain.SSI.Services
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+
           _logger.LogInformation("Processing SSI tenant creation");
 
           var itemIdsToSkip = new List<Guid>();
-          while (executeUntil > DateTime.Now)
+          while (executeUntil > DateTimeOffset.UtcNow)
           {
             var items = _ssiTenantService.ListPendingCreationSchedule(_scheduleJobOptions.SSITenantCreationScheduleBatchSize, itemIdsToSkip);
             if (items.Count == 0) break;
@@ -181,7 +186,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 itemIdsToSkip.Add(item.Id);
               }
 
-              if (executeUntil <= DateTime.Now) break;
+              if (executeUntil <= DateTimeOffset.UtcNow) break;
             }
           }
 
@@ -202,7 +207,7 @@ namespace Yoma.Core.Domain.SSI.Services
     public async Task ProcessCredentialIssuance()
     {
       const string lockIdentifier = "ssi_process_credential_issuance";
-      var dateTimeNow = DateTime.Now;
+      var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.SSICredentialIssuanceScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
@@ -210,10 +215,13 @@ namespace Yoma.Core.Domain.SSI.Services
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+
           _logger.LogInformation("Processing SSI credential issuance");
 
           var itemIdsToSkip = new List<Guid>();
-          while (executeUntil > DateTime.Now)
+          while (executeUntil > DateTimeOffset.UtcNow)
           {
             var items = _ssiCredentialService.ListPendingIssuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize, itemIdsToSkip);
             if (items.Count == 0) break;
@@ -362,7 +370,7 @@ namespace Yoma.Core.Domain.SSI.Services
                 itemIdsToSkip.Add(item.Id);
               }
 
-              if (executeUntil <= DateTime.Now) break;
+              if (executeUntil <= DateTimeOffset.UtcNow) break;
             }
           }
 
