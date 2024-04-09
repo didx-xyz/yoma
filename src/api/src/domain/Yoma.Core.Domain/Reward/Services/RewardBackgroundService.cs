@@ -54,7 +54,7 @@ namespace Yoma.Core.Domain.Reward.Services
     public async Task ProcessWalletCreation()
     {
       const string lockIdentifier = "reward_process_wallet_creation";
-      var dateTimeNow = DateTime.Now;
+      var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.RewardWalletCreationScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
@@ -62,10 +62,13 @@ namespace Yoma.Core.Domain.Reward.Services
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+
           _logger.LogInformation("Processing Reward wallet creation");
 
           var itemIdsToSkip = new List<Guid>();
-          while (executeUntil > DateTime.Now)
+          while (executeUntil > DateTimeOffset.UtcNow)
           {
             var items = _walletService.ListPendingCreationSchedule(_scheduleJobOptions.RewardWalletCreationScheduleBatchSize, itemIdsToSkip);
             if (items.Count == 0) break;
@@ -103,7 +106,7 @@ namespace Yoma.Core.Domain.Reward.Services
                 itemIdsToSkip.Add(item.Id);
               }
 
-              if (executeUntil <= DateTime.Now) break;
+              if (executeUntil <= DateTimeOffset.UtcNow) break;
             }
           }
 
@@ -123,7 +126,7 @@ namespace Yoma.Core.Domain.Reward.Services
     public async Task ProcessRewardTransactions()
     {
       const string lockIdentifier = "reward_process_transactions";
-      var dateTimeNow = DateTime.Now;
+      var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.RewardTransactionScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
@@ -131,10 +134,13 @@ namespace Yoma.Core.Domain.Reward.Services
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+
           _logger.LogInformation("Processing reward transactions");
 
           var itemIdsToSkip = new List<Guid>();
-          while (executeUntil > DateTime.Now)
+          while (executeUntil > DateTimeOffset.UtcNow)
           {
             var items = _rewardService.ListPendingTransactionSchedule(_scheduleJobOptions.RewardTransactionScheduleBatchSize, itemIdsToSkip);
             if (items.Count == 0) break;
@@ -206,7 +212,7 @@ namespace Yoma.Core.Domain.Reward.Services
                 itemIdsToSkip.Add(item.Id);
               }
 
-              if (executeUntil <= DateTime.Now) break;
+              if (executeUntil <= DateTimeOffset.UtcNow) break;
             }
           }
 

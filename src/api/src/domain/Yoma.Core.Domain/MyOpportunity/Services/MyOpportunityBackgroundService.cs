@@ -69,7 +69,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     public async Task ProcessVerificationRejection()
     {
       const string lockIdentifier = "myopportunity_process_verification_rejection";
-      var dateTimeNow = DateTime.Now;
+      var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
@@ -77,12 +77,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+
           _logger.LogInformation("Processing 'my' opportunity verification rejection");
 
           var statusRejectedId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Rejected.ToString()).Id;
           var statusRejectableIds = Statuses_Rejectable.Select(o => _myOpportunityVerificationStatusService.GetByName(o.ToString()).Id).ToList();
 
-          while (executeUntil > DateTime.Now)
+          while (executeUntil > DateTimeOffset.UtcNow)
           {
             var items = _myOpportunityRepository.Query().Where(o => o.VerificationStatusId.HasValue && statusRejectableIds.Contains(o.VerificationStatusId.Value) &&
               o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.MyOpportunityRejectionIntervalInDays))
@@ -140,7 +143,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               }
             }
 
-            if (executeUntil <= DateTime.Now) break;
+            if (executeUntil <= DateTimeOffset.UtcNow) break;
           }
 
           _logger.LogInformation("Processed 'my' opportunity verification rejection");
@@ -159,13 +162,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     public async Task SeedPendingVerifications()
     {
       const string lockIdentifier = "myopportunity_seed_pending_verifications]";
-      var dateTimeNow = DateTime.Now;
+      var dateTimeNow = DateTimeOffset.UtcNow;
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       try
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+
           if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
           {
             _logger.LogInformation("Pending verification seeding skipped for environment '{environment}'", _environmentProvider.Environment);

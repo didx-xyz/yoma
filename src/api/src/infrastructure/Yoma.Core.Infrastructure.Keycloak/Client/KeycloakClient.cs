@@ -6,6 +6,7 @@ using FS.Keycloak.RestApiClient.Model;
 using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using System;
 using System.Net.Http.Headers;
 using System.Text;
 using Yoma.Core.Domain.Core;
@@ -78,7 +79,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         throw new ArgumentNullException(nameof(username));
 
       var timeout = 15000;
-      var startTime = DateTime.Now;
+      var startTime = DateTimeOffset.UtcNow;
       UserRepresentation? kcUser = null;
       using (var usersApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient))
       {
@@ -87,7 +88,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
           kcUser = (await usersApi.GetUsersAsync(_keycloakAuthenticationOptions.Realm, username: username, exact: true)).SingleOrDefault();
           if (kcUser != null) break;
 
-          if ((DateTime.Now - startTime).TotalMilliseconds >= timeout) break;
+          if ((DateTimeOffset.UtcNow - startTime).TotalMilliseconds >= timeout) break;
           Thread.Sleep(1000);
         }
       }

@@ -54,7 +54,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task ProcessExpiration()
     {
       const string lockIdentifier = "opporrtunity_process_expiration";
-      var dateTimeNow = DateTime.Now;
+      var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
@@ -62,12 +62,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+
           _logger.LogInformation("Processing opportunity expiration");
 
           var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
           var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
 
-          while (executeUntil > DateTime.Now)
+          while (executeUntil > DateTimeOffset.UtcNow)
           {
             var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
                 o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.UtcNow).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
@@ -86,7 +89,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             await SendEmail(items, EmailType.Opportunity_Expiration_Expired);
 
-            if (executeUntil <= DateTime.Now) break;
+            if (executeUntil <= DateTimeOffset.UtcNow) break;
           }
 
           _logger.LogInformation("Processed opportunity expiration");
@@ -105,13 +108,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task ProcessExpirationNotifications()
     {
       const string lockIdentifier = "opporrtunity_process_expiration_notifications";
-      var dateTimeNow = DateTime.Now;
+      var dateTimeNow = DateTimeOffset.UtcNow;
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       try
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
 
           _logger.LogInformation("Processing opportunity expiration notifications");
 
@@ -142,7 +147,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task ProcessDeletion()
     {
       const string lockIdentifier = "opporrtunity_process_deletion";
-      var dateTimeNow = DateTime.Now;
+      var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
@@ -150,12 +155,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+
           _logger.LogInformation("Processing opportunity deletion");
 
           var statusDeletionIds = Statuses_Deletion.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
           var statusDeletedId = _opportunityStatusService.GetByName(Status.Deleted.ToString()).Id;
 
-          while (executeUntil > DateTime.Now)
+          while (executeUntil > DateTimeOffset.UtcNow)
           {
             {
               var items = _opportunityRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
@@ -174,7 +182,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
               await _opportunityRepository.Update(items);
 
-              if (executeUntil <= DateTime.Now) break;
+              if (executeUntil <= DateTimeOffset.UtcNow) break;
             }
           }
 

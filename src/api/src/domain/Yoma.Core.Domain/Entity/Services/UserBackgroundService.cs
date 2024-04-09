@@ -43,13 +43,16 @@ namespace Yoma.Core.Domain.Entity.Services
     public async Task SeedPhotos()
     {
       const string lockIdentifier = "user_seed_photos";
-      var dateTimeNow = DateTime.Now;
+      var dateTimeNow = DateTimeOffset.UtcNow;
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       try
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+
           if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
           {
             _logger.LogInformation("User image seeding seeding skipped for environment '{environment}'", _environmentProvider.Environment);
