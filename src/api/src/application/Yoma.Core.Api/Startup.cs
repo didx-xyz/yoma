@@ -99,7 +99,7 @@ namespace Yoma.Core.Api
       #endregion Services & Infrastructure
 
       #region 3rd Party (post ConfigureServices_InfrastructureDatabase)
-      ConfigureRedis(services, _configuration); 
+      ConfigureRedis(services, _configuration);
       ConfigureHangfire(services, _configuration);
       #endregion 3rd Party (post ConfigureServices_InfrastructureDatabase)
     }
