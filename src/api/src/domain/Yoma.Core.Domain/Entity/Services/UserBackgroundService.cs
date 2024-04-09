@@ -43,7 +43,6 @@ namespace Yoma.Core.Domain.Entity.Services
     public async Task SeedPhotos()
     {
       const string lockIdentifier = "user_seed_photos";
-      var dateTimeNow = DateTimeOffset.UtcNow;
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       try

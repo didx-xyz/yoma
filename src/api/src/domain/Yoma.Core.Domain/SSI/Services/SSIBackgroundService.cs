@@ -69,7 +69,6 @@ namespace Yoma.Core.Domain.SSI.Services
     public async Task SeedSchemas()
     {
       const string lockIdentifier = "ssi_seed_schemas";
-      var dateTimeNow = DateTimeOffset.UtcNow;
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       try

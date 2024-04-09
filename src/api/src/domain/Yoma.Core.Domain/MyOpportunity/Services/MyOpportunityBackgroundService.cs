@@ -162,7 +162,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     public async Task SeedPendingVerifications()
     {
       const string lockIdentifier = "myopportunity_seed_pending_verifications]";
-      var dateTimeNow = DateTimeOffset.UtcNow;
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       try

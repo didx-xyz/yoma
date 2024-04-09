@@ -108,7 +108,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task ProcessExpirationNotifications()
     {
       const string lockIdentifier = "opporrtunity_process_expiration_notifications";
-      var dateTimeNow = DateTimeOffset.UtcNow;
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       try

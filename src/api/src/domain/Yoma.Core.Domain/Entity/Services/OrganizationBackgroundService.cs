@@ -204,7 +204,6 @@ namespace Yoma.Core.Domain.Entity.Services
     public async Task SeedLogoAndDocuments()
     {
       const string lockIdentifier = "organization_seed_logos_and_documents";
-      var dateTimeNow = DateTimeOffset.UtcNow;
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       try

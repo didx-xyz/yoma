@@ -106,7 +106,6 @@ namespace Yoma.Core.Domain.Lookups.Services
     public async Task SeedSkills(bool onStartupInitialSeeding)
     {
       const string lockIdentifier = "skill_seed";
-      var dateTimeNow = DateTimeOffset.UtcNow;
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       try
