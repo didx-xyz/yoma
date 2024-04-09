@@ -235,7 +235,7 @@ namespace Yoma.Core.Api
              }, new PostgreSqlStorageOptions { SchemaName = "HangFire" });
       });
 
-      services.AddHangfireServer(options => options.Queues = new[] { "critical" });
+      services.AddHangfireServer();
     }
 
     private void ConfigureSwagger(IServiceCollection services)
