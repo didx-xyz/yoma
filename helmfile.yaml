@@ -10,6 +10,7 @@ environments:
         ddInjectEnabled: false
         ddProfilingEnabled: false
         postgresEnabled: true
+        redisEnabled: true
   stage:
     values:
       - namespace: yoma-v3-stage
@@ -18,6 +19,7 @@ environments:
         ddInjectEnabled: true
         ddProfilingEnabled: false
         postgresEnabled: false
+        redisEnabled: true
   prod:
     values:
       - namespace: yoma-v3-prod
@@ -26,6 +28,7 @@ environments:
         ddInjectEnabled: true
         ddProfilingEnabled: false
         postgresEnabled: false
+        redisEnabled: true
 ---
 repositories:
 {{ if eq .Environment.Name "local" }}
@@ -102,6 +105,25 @@ releases:
       #     log_min_duration_statement = 0
     secrets:
       - ./helm/postgresql-yoma/conf/{{ .Environment.Name }}/secrets.yaml
+
+  - name: redis
+    labels:
+      app: redis
+    namespace: {{ .Values.namespace }}
+    chart: oci://registry-1.docker.io/bitnamicharts/redis
+    version: "19.1.0"
+    installed: {{ .Values.redisEnabled }}
+    values:
+      - fullnameOverride: redis
+        architecture: standalone
+        auth:
+          enabled: false
+        master:
+          count: 1
+          persistence:
+            enabled: false
+        replica:
+          replicaCount: 0
 
   - name: yoma-api
     labels:

@@ -46,7 +46,7 @@ volumeMounts:
 
 initContainers:
   - name: check-postgres
-    image: postgres:latest
+    image: postgres:16
     imagePullPolicy: IfNotPresent
     command:
       - sh
@@ -61,6 +61,17 @@ initContainers:
     env:
       - name: PGHOST
         value: &databaseName postgres-yoma
+  - name: check-redis
+    image: redis:7
+    imagePullPolicy: IfNotPresent
+    command:
+      - sh
+      - -c
+      - |
+        until redis-cli -h redis-master -p 6379 ping; do
+          echo "Waiting for Redis to be ready..."
+          sleep 1
+        done
 
 postInstallHook:
   enabled: true
