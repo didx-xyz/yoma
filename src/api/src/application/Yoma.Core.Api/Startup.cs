@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Converters;
+using StackExchange.Redis;
 using Yoma.Core.Api.Common;
 using Yoma.Core.Api.Middleware;
 using Yoma.Core.Domain;
@@ -33,7 +34,8 @@ namespace Yoma.Core.Api
     private readonly Domain.Core.Environment _environment;
     private readonly AppSettings _appSettings;
     private readonly IIdentityProviderAuthOptions _identityProviderAuthOptions;
-    private const string _oAuth_Scope_Separator = " ";
+    private const string OAuth_Scope_Separator = " ";
+    private const string ConnectionStrings_RedisConnection = "RedisConnection";
     #endregion
 
     #region Constructors
@@ -99,7 +101,6 @@ namespace Yoma.Core.Api
       #endregion Services & Infrastructure
 
       #region 3rd Party (post ConfigureServices_InfrastructureDatabase)
-      ConfigureRedis(services, _configuration);
       ConfigureHangfire(services, _configuration);
       #endregion 3rd Party (post ConfigureServices_InfrastructureDatabase)
     }
@@ -114,7 +115,7 @@ namespace Yoma.Core.Api
         s.RoutePrefix = "";
         s.OAuthClientId(_identityProviderAuthOptions.ClientId);
         s.OAuthClientSecret(_identityProviderAuthOptions.ClientSecret);
-        s.OAuthScopeSeparator(_oAuth_Scope_Separator);
+        s.OAuthScopeSeparator(OAuth_Scope_Separator);
       });
       #endregion 3rd Party
 
@@ -199,20 +200,20 @@ namespace Yoma.Core.Api
     {
       services.AddAuthorizationBuilder()
           .AddPolicy(Constants.Authorization_Policy, policy =>
-              {
-                policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-                policy.RequireAuthenticatedUser();
-                policy.Requirements.Add(new RequireAudienceClaimRequirement(_appSettings.AuthorizationPolicyAudience));
-                policy.Requirements.Add(new RequireScopeAuthorizationRequirement(_appSettings.AuthorizationPolicyScope));
-              })
+          {
+            policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+            policy.RequireAuthenticatedUser();
+            policy.Requirements.Add(new RequireAudienceClaimRequirement(_appSettings.AuthorizationPolicyAudience));
+            policy.Requirements.Add(new RequireScopeAuthorizationRequirement(_appSettings.AuthorizationPolicyScope));
+          })
           .AddPolicy(Constants.Authorization_Policy_External_Partner, policy =>
-              {
-                policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-                policy.RequireAuthenticatedUser();
-                policy.Requirements.Add(new RequireAudienceClaimRequirement(_appSettings.AuthorizationPolicyAudience));
-                policy.Requirements.Add(new RequireClientIdClaimRequirement());
-                policy.Requirements.Add(new RequireScopeAuthorizationRequirement(_appSettings.AuthorizationPolicyScope));
-              });
+          {
+            policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+            policy.RequireAuthenticatedUser();
+            policy.Requirements.Add(new RequireAudienceClaimRequirement(_appSettings.AuthorizationPolicyAudience));
+            policy.Requirements.Add(new RequireClientIdClaimRequirement());
+            policy.Requirements.Add(new RequireScopeAuthorizationRequirement(_appSettings.AuthorizationPolicyScope));
+          });
       services.AddSingleton<IAuthorizationHandler, RequireAudienceClaimHandler>();
       services.AddSingleton<IAuthorizationHandler, RequireClientIdClaimHandler>();
       services.AddSingleton<IAuthorizationHandler, RequireScopeAuthorizationHandler>();
@@ -239,24 +240,33 @@ namespace Yoma.Core.Api
       services.AddHangfireServer();
     }
 
-    public static void ConfigureRedis(IServiceCollection services, IConfiguration configuration)
+    public void ConfigureRedis(IServiceCollection services, IConfiguration configuration)
     {
-      const string ConnectionStrings_RedisConnection = "RedisConnection";
+      var connectionString = configuration.GetConnectionString(ConnectionStrings_RedisConnection);
+      if (string.IsNullOrWhiteSpace(connectionString))
+        throw new InvalidOperationException($"Failed to retrieve connection string '{ConnectionStrings_RedisConnection}'");
 
-      services.AddStackExchangeRedisCache(options =>
+      var options = ConfigurationOptions.Parse(connectionString);
+
+      if (options.Ssl && _appSettings.RedisSSLCertificateValidationBypass == true)
+        options.CertificateValidation += (sender, certificate, chain, sslPolicyErrors) => true;
+
+      services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(options));
+
+      services.AddStackExchangeRedisCache(redisCacheOptions =>
       {
-        options.Configuration = configuration.GetConnectionString(ConnectionStrings_RedisConnection);
-        options.InstanceName = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name;
+        redisCacheOptions.InstanceName = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name;
+        redisCacheOptions.Configuration = options.ToString();
       });
     }
 
     private void ConfigureSwagger(IServiceCollection services)
     {
-      var scopesAuthorizationCode = _appSettings.SwaggerScopesAuthorizationCode.Split(_oAuth_Scope_Separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToArray();
+      var scopesAuthorizationCode = _appSettings.SwaggerScopesAuthorizationCode.Split(OAuth_Scope_Separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToArray();
       if (scopesAuthorizationCode.Length == 0)
         throw new InvalidOperationException($"Configuration section '{AppSettings.Section}' contains no configured swagger 'Authorization Code' scopes");
 
-      var scopesClientCredentials = _appSettings.SwaggerScopesClientCredentials.Split(_oAuth_Scope_Separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToArray();
+      var scopesClientCredentials = _appSettings.SwaggerScopesClientCredentials.Split(OAuth_Scope_Separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToArray();
       if (scopesClientCredentials.Length == 0)
         throw new InvalidOperationException($"Configuration section '{AppSettings.Section}' contains no configured swagger 'Client Credentials' scopes");
 
@@ -310,14 +320,14 @@ namespace Yoma.Core.Api
                         {
                             Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = JwtBearerDefaults.AuthenticationScheme }
                         },
-                        new[] { string.Join(_oAuth_Scope_Separator, scopesAuthorizationCode) }
+                        new[] { string.Join(OAuth_Scope_Separator, scopesAuthorizationCode) }
                     },
                     {
                         new OpenApiSecurityScheme
                         {
                             Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = Constants.AuthenticationScheme_ClientCredentials }
                         },
-                        new[] { string.Join(_oAuth_Scope_Separator, scopesClientCredentials) }
+                        new[] { string.Join(OAuth_Scope_Separator, scopesClientCredentials) }
                     }
           });
 
