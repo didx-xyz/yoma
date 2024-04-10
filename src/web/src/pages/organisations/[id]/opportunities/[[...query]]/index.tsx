@@ -25,7 +25,7 @@ import { config } from "~/lib/react-query-config";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { useAtomValue } from "jotai";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
-import { getThemeFromRole } from "~/lib/utils";
+import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -42,7 +42,7 @@ interface IParams extends ParsedUrlQuery {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
-  const { query, page, status } = context.query;
+  const { query, page, status, returnUrl } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
   const queryClient = new QueryClient(config);
   let errorCode = null;
@@ -131,7 +131,8 @@ const Opportunities: NextPageWithLayout<{
   theme: string;
   error?: number;
   status?: string;
-}> = ({ id, query, page, status, error }) => {
+  returnUrl?: string;
+}> = ({ id, query, page, status, error, returnUrl }) => {
   const router = useRouter();
   const currentOrganisationInactive = useAtomValue(
     currentOrganisationInactiveAtom,
@@ -323,7 +324,9 @@ const Opportunities: NextPageWithLayout<{
               </span>
             ) : (
               <Link
-                href={`/organisations/${id}/opportunities/create`}
+                href={`/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
+                  getSafeUrl(returnUrl?.toString(), router.asPath),
+                )}`}`}
                 className="bg-theme btn btn-circle btn-secondary btn-sm h-fit w-fit whitespace-nowrap !border-none p-1 text-xs text-white shadow-custom brightness-105 md:p-2 md:px-4"
                 id="btnCreateOpportunity" // e2e
               >
@@ -350,7 +353,9 @@ const Opportunities: NextPageWithLayout<{
                 </span>
               ) : (
                 <Link
-                  href={`/organisations/${id}/opportunities/create`}
+                  href={`/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
+                    getSafeUrl(returnUrl?.toString(), router.asPath),
+                  )}`}`}
                   className="bg-theme btn btn-primary rounded-3xl border-0 px-16 brightness-105 hover:brightness-110"
                   id="btnCreateOpportunity" // e2e
                 >
@@ -376,9 +381,13 @@ const Opportunities: NextPageWithLayout<{
               <div className="flex flex-col gap-4 md:hidden">
                 {opportunities.items.map((opportunity) => (
                   <Link
-                    href={`/organisations/${id}/opportunities/${opportunity.id}/info`}
-                    className="rounded-lg bg-white p-2 shadow-custom"
                     key={opportunity.id}
+                    className="rounded-lg bg-white p-2 shadow-custom"
+                    href={`/organisations/${id}/opportunities/${
+                      opportunity.id
+                    }/info${`?returnUrl=${encodeURIComponent(
+                      getSafeUrl(returnUrl?.toString(), router.asPath),
+                    )}`}`}
                   >
                     <div className="flex flex-col py-4">
                       <div className="flex flex-col gap-2">
@@ -455,7 +464,11 @@ const Opportunities: NextPageWithLayout<{
                     <tr key={opportunity.id} className="">
                       <td className="max-w-[600px] truncate border-b-2 border-gray-light !py-4">
                         <Link
-                          href={`/organisations/${id}/opportunities/${opportunity.id}/info`}
+                          href={`/organisations/${id}/opportunities/${
+                            opportunity.id
+                          }/info${`?returnUrl=${encodeURIComponent(
+                            getSafeUrl(returnUrl?.toString(), router.asPath),
+                          )}`}`}
                         >
                           {opportunity.title}
                         </Link>
@@ -486,6 +499,7 @@ const Opportunities: NextPageWithLayout<{
                         <Link
                           href={opportunity?.url ?? ""}
                           className="badge bg-green-light text-green"
+                          target="_blank"
                         >
                           <IoIosLink className="h-4 w-4" />
                           <span className="ml-1 text-xs">

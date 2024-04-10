@@ -58,7 +58,7 @@ import { config } from "~/lib/react-query-config";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { IoIosCheckmark } from "react-icons/io";
 import { trackGAEvent } from "~/lib/google-analytics";
-import { getThemeFromRole } from "~/lib/utils";
+import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -925,7 +925,9 @@ const OpportunityVerifications: NextPageWithLayout<{
                           className="line-clamp-2"
                           href={`/organisations/${id}/opportunities/${
                             item.opportunityId
-                          }/info${returnUrl ? `?returnUrl=${returnUrl}` : ""}`}
+                          }/info${`?returnUrl=${encodeURIComponent(
+                            getSafeUrl(returnUrl?.toString(), router.asPath),
+                          )}`}`}
                         >
                           {item.opportunityTitle}
                         </Link>

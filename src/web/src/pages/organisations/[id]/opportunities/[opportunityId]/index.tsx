@@ -262,10 +262,6 @@ const OpportunityDetails: NextPageWithLayout<{
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleCancel = () => {
-    void router.push(`/organisations/${id}/opportunities`);
-  };
-
   const [formData, setFormData] = useState<OpportunityRequestBase>({
     id: opportunity?.id ?? null,
     title: opportunity?.title ?? "",
@@ -1055,6 +1051,7 @@ const OpportunityDetails: NextPageWithLayout<{
           </div>
         </div>
       </ReactModal>
+
       {/* PAGE */}
       <div className="container z-10 mt-20 max-w-7xl overflow-hidden px-2 py-4">
         {/* BREADCRUMB */}
@@ -1079,7 +1076,9 @@ const OpportunityDetails: NextPageWithLayout<{
               <Link
                 className="mt-0 max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap font-bold hover:text-gray md:max-w-[400px] lg:max-w-[800px]"
                 href={`/organisations/${id}/opportunities/${opportunityId}/info${
-                  returnUrl ? `?returnUrl=${returnUrl}` : ""
+                  returnUrl
+                    ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
+                    : ""
                 }`}
               >
                 {opportunity?.title}
@@ -1476,13 +1475,15 @@ const OpportunityDetails: NextPageWithLayout<{
                     {/* BUTTONS */}
                     <div className="my-4 flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
                       {opportunityId === "create" && (
-                        <button
-                          type="button"
+                        <Link
                           className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                          onClick={handleCancel}
+                          href={getSafeUrl(
+                            returnUrl?.toString(),
+                            `/organisations/${id}/opportunities`,
+                          )}
                         >
                           Cancel
-                        </button>
+                        </Link>
                       )}
                       <button
                         type="submit"
