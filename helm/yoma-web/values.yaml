@@ -23,7 +23,16 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-podAnnotations: {}
+podAnnotations:
+  # gcr.io/datadoghq/dd-lib-js-init
+  admission.datadoghq.com/js-lib.version: v5.10.0
+deploymentLabels:
+  tags.datadoghq.com/service: yoma-web
+  tags.datadoghq.com/version: '{{ .Values.image.tag | default .Chart.AppVersion }}'
+podLabels:
+  admission.datadoghq.com/enabled: "false" # disabled by default (for now)
+  tags.datadoghq.com/service: yoma-web
+  tags.datadoghq.com/version: '{{ .Values.image.tag | default .Chart.AppVersion }}'
 
 podSecurityContext: {}
   # fsGroup: 2000
@@ -111,8 +120,11 @@ affinity:
               app.kubernetes.io/instance: '{{ .Release.Name }}'
           topologyKey: kubernetes.io/zone
 
-env: {}
-  # KEY: VALUE
+env:
+  # https://docs.datadoghq.com/tracing/other_telemetry/connect_logs_and_traces/nodejs/
+  DD_LOGS_INJECTION: true
+  # https://docs.datadoghq.com/profiler/enabling/nodejs/?tab=environmentvariables
+  DD_PROFILING_ENABLED: false # Disabled by default (for now)
 
 volumeMounts: {}
 volumes: {}
