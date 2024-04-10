@@ -917,8 +917,9 @@ const OpportunityDetails: NextPageWithLayout<{
   return (
     <>
       {isLoading && <Loading />}
+
       <PageBackground />
-      {/* error: {JSON.stringify(error)} */}
+
       {/* OPPORTUNITY EXPIRED MODAL */}
       <ReactModal
         isOpen={oppExpiredModalVisible}
@@ -989,6 +990,7 @@ const OpportunityDetails: NextPageWithLayout<{
           </div>
         </div>
       </ReactModal>
+
       {/* SAVE CHANGES DIALOG */}
       <ReactModal
         isOpen={saveChangesDialogVisible}

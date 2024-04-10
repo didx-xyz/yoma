@@ -429,15 +429,19 @@ const Opportunities: NextPageWithLayout<{
                               {opportunity.participantCountTotal}
                             </span>
                           </span>
-                          <span
-                            // href={opportunity?.url ?? ""}
-                            className="badge bg-green-light text-green"
-                          >
-                            <IoIosLink className="h-4 w-4" />
-                            <span className="ml-1 text-xs">
-                              {opportunity?.url}
-                            </span>
-                          </span>
+
+                          {opportunity?.url && (
+                            <Link
+                              href={opportunity.url}
+                              className="badge bg-green-light text-green"
+                              target="_blank"
+                            >
+                              <IoIosLink className="h-4 w-4" />
+                              <span className="ml-1 text-xs">
+                                {opportunity.url}
+                              </span>
+                            </Link>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -476,7 +480,7 @@ const Opportunities: NextPageWithLayout<{
                       <td className="w-28 border-b-2 border-gray-light">
                         <div className="flex flex-col">
                           {opportunity.zltoReward && (
-                            <span className="badge bg-orange-light text-orange">
+                            <span className="badge bg-orange-light px-4 text-orange">
                               <Image
                                 src={iconZlto}
                                 alt="Zlto icon"
@@ -489,23 +493,27 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           )}
                           {opportunity.yomaReward && (
-                            <span className="text-xs">
-                              {opportunity.yomaReward} Yoma
+                            <span className="badge bg-orange-light px-4 text-orange">
+                              <span className="ml-1 text-xs">
+                                {opportunity.yomaReward} Yoma
+                              </span>
                             </span>
                           )}
                         </div>
                       </td>
                       <td className="border-b-2 border-gray-light">
-                        <Link
-                          href={opportunity?.url ?? ""}
-                          className="badge bg-green-light text-green"
-                          target="_blank"
-                        >
-                          <IoIosLink className="h-4 w-4" />
-                          <span className="ml-1 text-xs">
-                            {opportunity?.url}
-                          </span>
-                        </Link>
+                        {opportunity?.url && (
+                          <Link
+                            href={opportunity.url}
+                            className="badge bg-green-light text-green"
+                            target="_blank"
+                          >
+                            <IoIosLink className="h-4 w-4" />
+                            <span className="ml-1 text-xs">
+                              {opportunity.url}
+                            </span>
+                          </Link>
+                        )}
                       </td>
                       <td className="border-b-2 border-gray-light">
                         <span className="badge bg-green-light text-green">

@@ -463,8 +463,8 @@ const OpportunityVerifications: NextPageWithLayout<{
         query: {
           ...(query && query.length > 2 && { query }),
           ...(opportunity && { opportunity }),
-          ...(returnUrl && { returnUrl }),
           ...(verificationStatus && { verificationStatus }),
+          ...(returnUrl && { returnUrl }),
         },
       });
     },
@@ -477,8 +477,8 @@ const OpportunityVerifications: NextPageWithLayout<{
         query: {
           ...(query && { query }),
           ...(opportunityId && { opportunity: opportunityId }),
-          ...(returnUrl && { returnUrl }),
           ...(verificationStatus && { verificationStatus }),
+          ...(returnUrl && { returnUrl }),
         },
       });
     },
@@ -491,8 +491,8 @@ const OpportunityVerifications: NextPageWithLayout<{
         query: {
           ...(query && { query }),
           ...(opportunity && { opportunity }),
-          ...(returnUrl && { returnUrl }),
           ...(verificationStatus && { verificationStatus }),
+          ...(returnUrl && { returnUrl }),
         },
       });
     },
@@ -506,6 +506,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         query: {
           ...(query && { query }),
           ...(opportunity && { opportunity }),
+          ...(verificationStatus && { verificationStatus }),
           ...(value && { page: value }),
           ...(returnUrl && { returnUrl }),
         },
