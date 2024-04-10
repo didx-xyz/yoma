@@ -515,7 +515,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       // reset scroll position
       window.scrollTo(0, 0);
     },
-    [router, query, id, opportunity, returnUrl],
+    [router, query, id, opportunity, verificationStatus, returnUrl],
   );
   //#endregion Filter Handlers
 

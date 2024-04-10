@@ -120,6 +120,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       status: status ?? null,
       theme: theme,
       error: errorCode,
+      returnUrl: returnUrl ?? null,
     },
   };
 }
