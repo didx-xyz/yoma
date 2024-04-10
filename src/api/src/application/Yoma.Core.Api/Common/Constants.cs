@@ -1,6 +1,6 @@
 namespace Yoma.Core.Api.Common
 {
-  internal class Constants
+  internal static class Constants
   {
     internal const string RequestHeader_ApiKey = "X-ApiKey";
     internal const string Authorization_Policy = "yoma_core_api";

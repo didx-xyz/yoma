@@ -2,6 +2,7 @@ using Hangfire;
 using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -56,7 +57,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #region Public Members
     public async Task ProcessExpiration()
     {
-      const string lockIdentifier = "opporrtunity_process_expiration";
+      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}opportunity_process_expiration";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
@@ -72,7 +73,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
           _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+            lockIdentifier, System.Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
 
           _logger.LogInformation("Processing opportunity expiration");
 
@@ -120,7 +121,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public async Task ProcessExpirationNotifications()
     {
-      const string lockIdentifier = "opporrtunity_process_expiration_notifications";
+      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}opportunity_process_expiration_notifications";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
@@ -134,7 +135,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
           _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+            lockIdentifier, System.Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
 
           _logger.LogInformation("Processing opportunity expiration notifications");
 
@@ -168,7 +169,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public async Task ProcessDeletion()
     {
-      const string lockIdentifier = "opporrtunity_process_deletion";
+      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}opportunity_process_deletion";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
@@ -184,7 +185,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
           _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+            lockIdentifier, System.Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
 
           _logger.LogInformation("Processing opportunity deletion");
 
