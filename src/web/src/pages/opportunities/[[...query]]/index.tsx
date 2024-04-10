@@ -588,6 +588,7 @@ const Opportunities: NextPageWithLayout<{
 
   const onSubmitFilter = useCallback(
     (val: OpportunitySearchFilterCombined) => {
+      val.pageNumber = null; // clear paging when changing filters
       redirectWithSearchFilterParams(val);
     },
     [redirectWithSearchFilterParams],
