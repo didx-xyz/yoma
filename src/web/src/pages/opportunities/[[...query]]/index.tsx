@@ -276,7 +276,8 @@ const Opportunities: NextPageWithLayout<{
           mostViewed: mostViewed ? Boolean(mostViewed) : null,
           publishedStates:
             publishedStates != undefined
-              ? publishedStates
+              ? // if set, map to id
+                publishedStates
                   ?.toString()
                   .split(",")
                   .map((x) => {
@@ -286,7 +287,12 @@ const Opportunities: NextPageWithLayout<{
                     return item ? item?.value : "";
                   })
                   .filter((x) => x != "")
-              : null,
+              : // if not set, default to active, not started (and expired if logged in)
+                [
+                  PublishedState.Active,
+                  PublishedState.NotStarted,
+                  ...(session ? [PublishedState.Expired] : []),
+                ],
           types:
             types != undefined
               ? types
