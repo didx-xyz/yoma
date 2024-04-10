@@ -255,7 +255,7 @@ namespace Yoma.Core.Api
 
       services.AddStackExchangeRedisCache(redisCacheOptions =>
       {
-        redisCacheOptions.InstanceName = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name;
+        redisCacheOptions.InstanceName = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}:";
         redisCacheOptions.Configuration = options.ToString();
       });
     }
