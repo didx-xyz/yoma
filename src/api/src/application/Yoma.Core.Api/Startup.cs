@@ -101,6 +101,7 @@ namespace Yoma.Core.Api
       #endregion Services & Infrastructure
 
       #region 3rd Party (post ConfigureServices_InfrastructureDatabase)
+      ConfigureRedis(services, _configuration); 
       ConfigureHangfire(services, _configuration);
       #endregion 3rd Party (post ConfigureServices_InfrastructureDatabase)
     }
@@ -249,15 +250,12 @@ namespace Yoma.Core.Api
       var options = ConfigurationOptions.Parse(connectionString);
 
       if (options.Ssl && _appSettings.RedisSSLCertificateValidationBypass == true)
-        options.CertificateValidation += (sender, certificate, chain, sslPolicyErrors) => true;
+        options.CertificateValidation += (sender, certificate, chain, sslPolicyErrors) =>
+        {
+          return true;
+        };
 
       services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(options));
-
-      services.AddStackExchangeRedisCache(redisCacheOptions =>
-      {
-        redisCacheOptions.InstanceName = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}:";
-        redisCacheOptions.Configuration = options.ToString();
-      });
     }
 
     private void ConfigureSwagger(IServiceCollection services)
