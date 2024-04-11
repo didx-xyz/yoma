@@ -8,7 +8,14 @@ namespace Yoma.Core.Api.Middleware
     public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
     {
       var renderedMessage = logEvent.RenderMessage();
-      logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("Message", renderedMessage));
+      var cleanedMessage = RemoveDoubleQuotes(renderedMessage);
+      logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("Message", cleanedMessage));
+    }
+
+    private string RemoveDoubleQuotes(string message)
+    {
+      // replace consecutive double quotes with a single quote
+      return message.Replace("\"\"", "\"");
     }
   }
 }
