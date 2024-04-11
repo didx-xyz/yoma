@@ -3,6 +3,7 @@ using Hangfire.Dashboard.BasicAuthorization;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Converters;
 using StackExchange.Redis;
@@ -243,6 +244,8 @@ namespace Yoma.Core.Api
 
     public void ConfigureRedis(IServiceCollection services, IConfiguration configuration)
     {
+      const string RedisKey_DataProtection = "yoma.api.core:keys:data_protection";
+
       var connectionString = configuration.GetConnectionString(ConnectionStrings_RedisConnection);
       if (string.IsNullOrWhiteSpace(connectionString))
         throw new InvalidOperationException($"Failed to retrieve connection string '{ConnectionStrings_RedisConnection}'");
@@ -255,7 +258,9 @@ namespace Yoma.Core.Api
           return true;
         };
 
-      services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(options));
+      var connectionMultiplexer = ConnectionMultiplexer.Connect(options);
+      services.AddSingleton<IConnectionMultiplexer>(connectionMultiplexer);
+      services.AddDataProtection().PersistKeysToStackExchangeRedis(connectionMultiplexer, RedisKey_DataProtection);
     }
 
     private void ConfigureSwagger(IServiceCollection services)
