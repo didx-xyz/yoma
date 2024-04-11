@@ -1,3 +1,4 @@
+using Serilog;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Models;
 
@@ -13,6 +14,7 @@ namespace Yoma.Core.Api
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
+            .UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration))
             .ConfigureWebHostDefaults(webBuilder =>
             {
               webBuilder.ConfigureAppConfiguration((hostingContext, config) =>

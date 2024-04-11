@@ -7,6 +7,5 @@ namespace Yoma.Core.Domain.Core
     public const string Role_OrganizationAdmin = "OrganisationAdmin";
     public static readonly string[] Roles_Supported = [Role_User, Role_Admin, Role_OrganizationAdmin];
     public const string ModifiedBy_System_Username = "system@yoma.world";
-    public const string Redis_LockIdentifier_Prefix = "yoma.api.core:locks:";
   }
 }

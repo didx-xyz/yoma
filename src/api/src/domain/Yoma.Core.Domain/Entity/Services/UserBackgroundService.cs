@@ -3,7 +3,6 @@ using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Reflection;
-using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -46,7 +45,7 @@ namespace Yoma.Core.Domain.Entity.Services
     #region Public Members
     public async Task SeedPhotos()
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}user_seed_photos";
+      const string lockIdentifier = "user_seed_photos";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))

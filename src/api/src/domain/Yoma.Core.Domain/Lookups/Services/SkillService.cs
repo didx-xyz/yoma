@@ -3,7 +3,6 @@ using Hangfire;
 using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.LaborMarketProvider.Interfaces;
@@ -109,7 +108,7 @@ namespace Yoma.Core.Domain.Lookups.Services
 
     public async Task SeedSkills(bool onStartupInitialSeeding)
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}skill_seed";
+      const string lockIdentifier = "skill_seed";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))

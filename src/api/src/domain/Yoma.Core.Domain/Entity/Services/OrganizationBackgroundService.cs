@@ -3,7 +3,6 @@ using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Reflection;
-using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -66,7 +65,7 @@ namespace Yoma.Core.Domain.Entity.Services
     #region Public Memebers
     public async Task ProcessDeclination()
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}organization_process_declination";
+      const string lockIdentifier = "organization_process_declination";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
@@ -164,7 +163,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public async Task ProcessDeletion()
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}organization_process_deletion";
+      const string lockIdentifier = "organization_process_deletion";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
@@ -227,7 +226,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public async Task SeedLogoAndDocuments()
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}organization_seed_logos_and_documents";
+      const string lockIdentifier = "organization_seed_logos_and_documents";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))

@@ -2,7 +2,6 @@ using Hangfire;
 using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -57,7 +56,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #region Public Members
     public async Task ProcessExpiration()
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}opportunity_process_expiration";
+      const string lockIdentifier = "opportunity_process_expiration";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
@@ -121,7 +120,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public async Task ProcessExpirationNotifications()
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}opportunity_process_expiration_notifications";
+      const string lockIdentifier = "opportunity_process_expiration_notifications";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
@@ -169,7 +168,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public async Task ProcessDeletion()
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}opportunity_process_deletion";
+      const string lockIdentifier = "opportunity_process_deletion";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);

@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
-using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -72,7 +71,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #region Public Members
     public async Task ProcessVerificationRejection()
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}myopportunity_process_verification_rejection";
+      const string lockIdentifier = "myopportunity_process_verification_rejection";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
@@ -175,7 +174,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     public async Task SeedPendingVerifications()
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}myopportunity_seed_pending_verifications]";
+      const string lockIdentifier = "myopportunity_seed_pending_verifications]";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))

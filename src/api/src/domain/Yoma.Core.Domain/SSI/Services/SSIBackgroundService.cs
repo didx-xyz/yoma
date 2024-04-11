@@ -3,7 +3,6 @@ using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Collections;
-using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -73,7 +72,7 @@ namespace Yoma.Core.Domain.SSI.Services
     /// </summary>
     public async Task SeedSchemas()
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}ssi_seed_schemas";
+      const string lockIdentifier = "ssi_seed_schemas";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
@@ -118,7 +117,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
     public async Task ProcessTenantCreation()
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}ssi_process_tenant_creation";
+      const string lockIdentifier = "ssi_process_tenant_creation";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.SSITenantCreationScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
@@ -230,7 +229,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
     public async Task ProcessCredentialIssuance()
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}ssi_process_credential_issuance";
+      const string lockIdentifier = "ssi_process_credential_issuance";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.SSICredentialIssuanceScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);

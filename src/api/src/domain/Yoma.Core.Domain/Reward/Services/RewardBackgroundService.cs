@@ -3,7 +3,6 @@ using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
-using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
@@ -57,7 +56,7 @@ namespace Yoma.Core.Domain.Reward.Services
     #region Public Members
     public async Task ProcessWalletCreation()
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}reward_process_wallet_creation";
+      const string lockIdentifier = "reward_process_wallet_creation";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.RewardWalletCreationScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
@@ -139,7 +138,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
     public async Task ProcessRewardTransactions()
     {
-      const string lockIdentifier = $"{Constants.Redis_LockIdentifier_Prefix}reward_process_transactions";
+      const string lockIdentifier = "reward_process_transactions";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.RewardTransactionScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);

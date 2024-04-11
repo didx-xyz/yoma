@@ -6,7 +6,6 @@ using FS.Keycloak.RestApiClient.Model;
 using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
-using System;
 using System.Net.Http.Headers;
 using System.Text;
 using Yoma.Core.Domain.Core;
