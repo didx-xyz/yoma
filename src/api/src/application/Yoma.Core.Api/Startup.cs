@@ -244,7 +244,7 @@ namespace Yoma.Core.Api
 
     public void ConfigureRedis(IServiceCollection services, IConfiguration configuration)
     {
-      const string RedisKey_DataProtection = "yoma.api.core:keys:data_protection";
+      const string RedisKey_DataProtection = "yoma.core.api:keys:data_protection";
 
       var connectionString = configuration.GetConnectionString(ConnectionStrings_RedisConnection);
       if (string.IsNullOrWhiteSpace(connectionString))
