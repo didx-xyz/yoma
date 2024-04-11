@@ -53,7 +53,7 @@ import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityB
 import { trackGAEvent } from "~/lib/google-analytics";
 import Moment from "react-moment";
 import { useRouter } from "next/router";
-import { getThemeFromRole } from "~/lib/utils";
+import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { AvatarImage } from "~/components/AvatarImage";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -203,10 +203,10 @@ const OpportunityDetails: NextPageWithLayout<{
               <li className="inline">
                 <Link
                   className="inline font-bold text-white hover:text-gray"
-                  href={
-                    returnUrl?.toString() ??
-                    `/organisations/${opportunity?.organizationId}/opportunities`
-                  }
+                  href={getSafeUrl(
+                    returnUrl?.toString(),
+                    `/organisations/${opportunity?.organizationId}/opportunities`,
+                  )}
                 >
                   <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
                   Opportunities

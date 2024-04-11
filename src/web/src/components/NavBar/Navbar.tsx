@@ -139,7 +139,7 @@ export const Navbar: React.FC = () => {
         {
           title: "Verifications",
           description: "Verifications",
-          url: `/organisations/${currentOrganisationId}/verifications`,
+          url: `/organisations/${currentOrganisationId}/verifications?verificationStatus=1`,
           badgeCount: null,
           selected: false,
           iconImage: null,

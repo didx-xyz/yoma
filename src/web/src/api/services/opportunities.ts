@@ -185,7 +185,6 @@ export const searchOpportunities = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunitySearchResultsInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-
   // default published state to active & not started
   if (!filter.publishedStates) {
     filter.publishedStates = ["Active", "NotStarted"];

@@ -70,6 +70,10 @@ import {
   DATE_FORMAT_HUMAN,
   DATE_FORMAT_SYSTEM,
   PAGE_SIZE_MEDIUM,
+  ACCEPTED_IMAGE_TYPES_LABEL,
+  ACCEPTED_DOC_TYPES_LABEL,
+  ACCEPTED_AUDIO_TYPES_LABEL,
+  MAX_FILE_SIZE_LABEL,
 } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
@@ -89,6 +93,7 @@ import { Status } from "~/api/models/opportunity";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { IoMdWarning } from "react-icons/io";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -261,10 +266,6 @@ const OpportunityDetails: NextPageWithLayout<{
 
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-
-  const handleCancel = () => {
-    void router.push(`/organisations/${id}/opportunities`);
-  };
 
   const [formData, setFormData] = useState<OpportunityRequestBase>({
     id: opportunity?.id ?? null,
@@ -921,8 +922,9 @@ const OpportunityDetails: NextPageWithLayout<{
   return (
     <>
       {isLoading && <Loading />}
+
       <PageBackground />
-      {/* error: {JSON.stringify(error)} */}
+
       {/* OPPORTUNITY EXPIRED MODAL */}
       <ReactModal
         isOpen={oppExpiredModalVisible}
@@ -993,6 +995,7 @@ const OpportunityDetails: NextPageWithLayout<{
           </div>
         </div>
       </ReactModal>
+
       {/* SAVE CHANGES DIALOG */}
       <ReactModal
         isOpen={saveChangesDialogVisible}
@@ -1055,6 +1058,7 @@ const OpportunityDetails: NextPageWithLayout<{
           </div>
         </div>
       </ReactModal>
+
       {/* PAGE */}
       <div className="container z-10 mt-20 max-w-7xl overflow-hidden px-2 py-4">
         {/* BREADCRUMB */}
@@ -1079,7 +1083,9 @@ const OpportunityDetails: NextPageWithLayout<{
               <Link
                 className="mt-0 max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap font-bold hover:text-gray md:max-w-[400px] lg:max-w-[800px]"
                 href={`/organisations/${id}/opportunities/${opportunityId}/info${
-                  returnUrl ? `?returnUrl=${returnUrl}` : ""
+                  returnUrl
+                    ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
+                    : ""
                 }`}
               >
                 {opportunity?.title}
@@ -1476,13 +1482,15 @@ const OpportunityDetails: NextPageWithLayout<{
                     {/* BUTTONS */}
                     <div className="my-4 flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
                       {opportunityId === "create" && (
-                        <button
-                          type="button"
+                        <Link
                           className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                          onClick={handleCancel}
+                          href={getSafeUrl(
+                            returnUrl?.toString(),
+                            `/organisations/${id}/opportunities`,
+                          )}
                         >
                           Cancel
-                        </button>
+                        </Link>
                       )}
                       <button
                         type="submit"
@@ -2354,43 +2362,134 @@ const OpportunityDetails: NextPageWithLayout<{
                                   (x: OpportunityVerificationType) =>
                                     x.type === item.type,
                                 ) && (
-                                  <div className="form-control w-full">
-                                    <label className="label">
-                                      <span className="label-text">
-                                        Description
-                                      </span>
-                                    </label>
-                                    <input
-                                      type="text"
-                                      className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                                      placeholder="Enter description"
-                                      onChange={(e) => {
-                                        // update the description in the verificationTypes array
-                                        setValueStep5(
-                                          "verificationTypes",
-                                          watchVerificationTypes?.map(
-                                            (
-                                              x: OpportunityVerificationType,
-                                            ) => {
-                                              if (x.type === item.type) {
-                                                x.description = e.target.value;
-                                              }
-                                              return x;
-                                            },
-                                          ),
-                                        );
-                                      }}
-                                      contentEditable
-                                      defaultValue={
-                                        // get default value from formData or item description
-                                        formData.verificationTypes?.find(
-                                          (x) => x.type === item.type,
-                                        )?.description ?? item.description
-                                      }
-                                      disabled={!watchVerificationEnabled}
-                                      id={`input_verificationType_${item.displayName}`} // e2e
-                                    />
-                                  </div>
+                                  <>
+                                    <div className="form-control w-full">
+                                      <label className="label">
+                                        <span className="label-text">
+                                          Description
+                                        </span>
+                                      </label>
+                                      <input
+                                        type="text"
+                                        className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+                                        placeholder="Enter description"
+                                        onChange={(e) => {
+                                          // update the description in the verificationTypes array
+                                          setValueStep5(
+                                            "verificationTypes",
+                                            watchVerificationTypes?.map(
+                                              (
+                                                x: OpportunityVerificationType,
+                                              ) => {
+                                                if (x.type === item.type) {
+                                                  x.description =
+                                                    e.target.value;
+                                                }
+                                                return x;
+                                              },
+                                            ),
+                                          );
+                                        }}
+                                        contentEditable
+                                        defaultValue={
+                                          // get default value from formData or item description
+                                          formData.verificationTypes?.find(
+                                            (x) => x.type === item.type,
+                                          )?.description ?? item.description
+                                        }
+                                        disabled={!watchVerificationEnabled}
+                                        id={`input_verificationType_${item.displayName}`} // e2e
+                                      />
+                                    </div>
+
+                                    {/* file types and file size message */}
+                                    {item.displayName === "File Upload" && (
+                                      <div className="my-2 flex flex-row border-2 border-dotted border-warning p-2 text-warning">
+                                        <IoMdWarning className="mr-2 inline-block h-12 w-12" />
+                                        <p>
+                                          Kindly note that candidates are
+                                          required to upload a file (max{" "}
+                                          {MAX_FILE_SIZE_LABEL}) in one of the
+                                          following formats:
+                                          <div className="my-1" />
+                                          {ACCEPTED_DOC_TYPES_LABEL.map(
+                                            (item, index) => (
+                                              <span
+                                                key={`verification_file_upload_doc_file_type_${index}`}
+                                                className="mr-2 font-bold"
+                                              >
+                                                {item}
+                                              </span>
+                                            ),
+                                          )}
+                                          {ACCEPTED_IMAGE_TYPES_LABEL.map(
+                                            (item, index) => (
+                                              <span
+                                                key={`verification_file_upload_image_file_type_${index}`}
+                                                className="mr-2 font-bold"
+                                              >
+                                                {item}
+                                              </span>
+                                            ),
+                                          )}
+                                        </p>
+                                      </div>
+                                    )}
+                                    {item.displayName === "Location" && (
+                                      <div className="my-2 flex flex-row items-center border-2 border-dotted border-warning p-2 text-warning">
+                                        <IoMdWarning className="mr-2 inline-block h-12 w-12" />
+                                        <p>
+                                          Kindly note that candidates are
+                                          required to choose their location from
+                                          a map.
+                                        </p>
+                                      </div>
+                                    )}
+                                    {item.displayName === "Picture" && (
+                                      <div className="my-2 flex flex-row border-2 border-dotted border-warning p-2 text-warning">
+                                        <IoMdWarning className="mr-2 inline-block h-12 w-12" />
+                                        <p>
+                                          Kindly note that candidates are
+                                          required to upload a file (max{" "}
+                                          {MAX_FILE_SIZE_LABEL}) in one of the
+                                          following formats:
+                                          <div className="my-1" />
+                                          {ACCEPTED_IMAGE_TYPES_LABEL.map(
+                                            (item, index) => (
+                                              <span
+                                                key={`verificationtype_picture_image_file_type_${index}`}
+                                                className="mr-2 font-bold"
+                                              >
+                                                {item}
+                                              </span>
+                                            ),
+                                          )}
+                                        </p>
+                                      </div>
+                                    )}
+                                    {item.displayName === "Voice Note" && (
+                                      <div className="my-2 flex flex-row border-2 border-dotted border-warning p-2 text-warning">
+                                        <IoMdWarning className="mr-2 inline-block h-12 w-12" />
+                                        <p>
+                                          Kindly note that candidates are
+                                          required to upload a file (max{" "}
+                                          {MAX_FILE_SIZE_LABEL}) in one of the
+                                          following formats:
+                                          <div className="my-1" />
+                                          {ACCEPTED_AUDIO_TYPES_LABEL.map(
+                                            (item, index) => (
+                                              <span
+                                                key={`verificationtype_voicenote_audio_file_type_${index}`}
+                                                className="mr-2 font-bold"
+                                              >
+                                                {item}
+                                              </span>
+                                            ),
+                                          )}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             ))}

@@ -40,7 +40,7 @@ env:
   # https://docs.datadoghq.com/tracing/other_telemetry/connect_logs_and_traces/dotnet/?tab=serilog#automatic-injection
   DD_LOGS_INJECTION: true
   # https://docs.datadoghq.com/profiler/enabling/dotnet/?tab=linux#configuration
-  DD_PROFILING_ENABLED: false
+  DD_PROFILING_ENABLED: false # Disabled by default (for now)
   DD_PROFILING_HEAP_ENABLED: true
   DD_PROFILING_ALLOCATION_ENABLED: true
 
