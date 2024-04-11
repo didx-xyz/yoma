@@ -12,7 +12,7 @@ namespace Yoma.Core.Api.Middleware
       logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("Message", cleanedMessage));
     }
 
-    private string RemoveDoubleQuotes(string message)
+    private static string RemoveDoubleQuotes(string message)
     {
       // replace consecutive double quotes with a single quote
       return message.Replace("\"\"", "\"");
