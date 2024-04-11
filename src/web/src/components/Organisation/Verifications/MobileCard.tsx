@@ -3,6 +3,8 @@ import Link from "next/link";
 import { IoMdAlert, IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { type MyOpportunityInfo } from "~/api/models/myOpportunity";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
+import { getSafeUrl } from "~/lib/utils";
+import { useRouter } from "next/router";
 
 interface MobileCardProps {
   item: MyOpportunityInfo;
@@ -28,6 +30,8 @@ const MobileCard: React.FC<MobileCardProps> = ({
   setVerifyComments,
   setModalVerifySingleVisible,
 }) => {
+  const router = useRouter();
+
   return (
     <div className="rounded-lg bg-white p-4 text-gray-dark shadow-custom">
       <div className="mb-2 flex items-center">
@@ -46,7 +50,9 @@ const MobileCard: React.FC<MobileCardProps> = ({
             className="line-clamp-2"
             href={`/organisations/${id}/opportunities/${
               item.opportunityId
-            }/info${returnUrl ? `?returnUrl=${returnUrl}` : ""}`}
+            }/info${`?returnUrl=${encodeURIComponent(
+              getSafeUrl(returnUrl?.toString(), router.asPath),
+            )}`}`}
           >
             {item.opportunityTitle}
           </Link>

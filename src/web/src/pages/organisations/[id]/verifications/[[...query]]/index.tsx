@@ -58,7 +58,7 @@ import { config } from "~/lib/react-query-config";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { IoIosCheckmark } from "react-icons/io";
 import { trackGAEvent } from "~/lib/google-analytics";
-import { getThemeFromRole } from "~/lib/utils";
+import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -463,8 +463,8 @@ const OpportunityVerifications: NextPageWithLayout<{
         query: {
           ...(query && query.length > 2 && { query }),
           ...(opportunity && { opportunity }),
-          ...(returnUrl && { returnUrl }),
           ...(verificationStatus && { verificationStatus }),
+          ...(returnUrl && { returnUrl }),
         },
       });
     },
@@ -477,8 +477,8 @@ const OpportunityVerifications: NextPageWithLayout<{
         query: {
           ...(query && { query }),
           ...(opportunityId && { opportunity: opportunityId }),
-          ...(returnUrl && { returnUrl }),
           ...(verificationStatus && { verificationStatus }),
+          ...(returnUrl && { returnUrl }),
         },
       });
     },
@@ -491,8 +491,8 @@ const OpportunityVerifications: NextPageWithLayout<{
         query: {
           ...(query && { query }),
           ...(opportunity && { opportunity }),
-          ...(returnUrl && { returnUrl }),
           ...(verificationStatus && { verificationStatus }),
+          ...(returnUrl && { returnUrl }),
         },
       });
     },
@@ -506,6 +506,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         query: {
           ...(query && { query }),
           ...(opportunity && { opportunity }),
+          ...(verificationStatus && { verificationStatus }),
           ...(value && { page: value }),
           ...(returnUrl && { returnUrl }),
         },
@@ -514,7 +515,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       // reset scroll position
       window.scrollTo(0, 0);
     },
-    [router, query, id, opportunity, returnUrl],
+    [router, query, id, opportunity, verificationStatus, returnUrl],
   );
   //#endregion Filter Handlers
 
@@ -925,7 +926,9 @@ const OpportunityVerifications: NextPageWithLayout<{
                           className="line-clamp-2"
                           href={`/organisations/${id}/opportunities/${
                             item.opportunityId
-                          }/info${returnUrl ? `?returnUrl=${returnUrl}` : ""}`}
+                          }/info${`?returnUrl=${encodeURIComponent(
+                            getSafeUrl(returnUrl?.toString(), router.asPath),
+                          )}`}`}
                         >
                           {item.opportunityTitle}
                         </Link>

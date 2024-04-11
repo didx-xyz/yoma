@@ -137,11 +137,11 @@ releases:
     values:
       - ./helm/yoma-api/conf/base/values.yaml
       - ./helm/yoma-api/conf/{{ .Environment.Name }}/values.yaml
-      - env:
-          DD_PROFILING_ENABLED: {{ .Values.ddProfilingEnabled }}
       - nodeSelector:
           kubernetes.io/arch: {{ .Values.arch }}
-        labels:
+      - env:
+          DD_PROFILING_ENABLED: {{ .Values.ddProfilingEnabled }}
+        deploymentLabels:
           tags.datadoghq.com/env: v3-{{ .Environment.Name }}
         podLabels:
           admission.datadoghq.com/enabled: {{ quote .Values.ddInjectEnabled }}
@@ -164,6 +164,13 @@ releases:
       - ./helm/yoma-web/conf/{{ .Environment.Name }}/values.yaml
       - nodeSelector:
           kubernetes.io/arch: {{ .Values.arch }}
+      - env:
+          DD_PROFILING_ENABLED: {{ .Values.ddProfilingEnabled }}
+        deploymentLabels:
+          tags.datadoghq.com/env: v3-{{ .Environment.Name }}
+        podLabels:
+          admission.datadoghq.com/enabled: {{ quote .Values.ddInjectEnabled }}
+          tags.datadoghq.com/env: v3-{{ .Environment.Name }}
     secrets:
       - ./helm/yoma-web/conf/base/secrets.yaml
       - ./helm/yoma-web/conf/{{ .Environment.Name }}/secrets.yaml
