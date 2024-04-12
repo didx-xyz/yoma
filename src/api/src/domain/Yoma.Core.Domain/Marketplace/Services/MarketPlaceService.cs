@@ -92,7 +92,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     public async Task<StoreItemCategorySearchResults> SearchStoreItemCategories(StoreItemCategorySearchFilter filter)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       await _storeItemCategorySearchFilterValidator.ValidateAndThrowAsync(filter);
 
@@ -108,7 +108,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     public async Task<StoreSearchResults> SearchStores(StoreSearchFilter filter)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       await _storeSearchFilterValidator.ValidateAndThrowAsync(filter);
 
@@ -124,7 +124,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     public async Task<StoreItemSearchResults> SearchStoreItems(StoreItemSearchFilter filter)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       await _storeItemSearchFilterValidator.ValidateAndThrowAsync(filter);
 

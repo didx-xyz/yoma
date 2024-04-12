@@ -44,7 +44,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 
     public async Task<Domain.Lookups.Models.Skill> Create(Domain.Lookups.Models.Skill item)
     {
-      ArgumentNullException.ThrowIfNull(item);
+      ArgumentNullException.ThrowIfNull(item, nameof(item));
 
       item.DateCreated = DateTimeOffset.UtcNow;
       item.DateModified = DateTimeOffset.UtcNow;

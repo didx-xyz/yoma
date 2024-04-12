@@ -10,7 +10,7 @@ using Yoma.Core.Domain.SSI.Models.Lookups;
 
 namespace Yoma.Core.Api.Controllers
 {
-  [Route("api/v3/ssi")]
+  [Route($"api/{Common.Constants.Api_Version}/ssi")]
   [ApiController]
   [Authorize(Policy = Common.Constants.Authorization_Policy)]
   [SwaggerTag("(by default, Admin role required)")]

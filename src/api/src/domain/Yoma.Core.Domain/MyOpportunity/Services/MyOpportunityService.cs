@@ -193,7 +193,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     public MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       //filter validated by SearchAdmin
 
@@ -214,7 +214,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     public MyOpportunitySearchResults Search(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       _myOpportunitySearchFilterValidator.ValidateAndThrow(filter);
 
@@ -506,7 +506,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     public async Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalizeBatch request)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       if (request.Items == null)
         throw new ArgumentNullException(nameof(request), "No items specified");
@@ -534,7 +534,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     //supported statuses: Rejected or Completed
     public async Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalize request)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       await _myOpportunityRequestValidatorVerifyFinalize.ValidateAndThrowAsync(request);
 
@@ -680,7 +680,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     private async Task PerformActionSendForVerificationManual(User user, Guid opportunityId, MyOpportunityRequestVerify request, bool overridePending)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       await _myOpportunityRequestValidatorVerify.ValidateAndThrowAsync(request);
 

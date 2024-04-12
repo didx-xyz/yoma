@@ -87,7 +87,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public async Task<UserProfile> Update(UserRequestProfile request)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       await _userProfileRequestValidator.ValidateAndThrowAsync(request);
 

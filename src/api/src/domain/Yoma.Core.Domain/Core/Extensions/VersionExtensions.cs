@@ -6,14 +6,14 @@ namespace Yoma.Core.Domain.Core.Extensions
 
     public static Version ToMajorMinor(this Version version)
     {
-      ArgumentNullException.ThrowIfNull(version);
+      ArgumentNullException.ThrowIfNull(version, nameof(version));
 
       return new Version(version.Major, version.Minor);
     }
 
     public static Version IncrementMinor(this Version version)
     {
-      ArgumentNullException.ThrowIfNull(version);
+      ArgumentNullException.ThrowIfNull(version, nameof(version));
 
       return version.Minor < 9 ? new Version(version.Major, version.Minor + 1) : new Version(version.Major + 1, 0);
     }

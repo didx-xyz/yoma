@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -319,7 +320,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               case VerificationType.Location:
                 request.Geometry = new Geometry
                 {
-                  Type = Core.SpatialType.Point,
+                  Type = SpatialType.Point,
                   Coordinates = [[-0.09394821166991196, 51.50525376803295, 0]]
                 };
                 break;

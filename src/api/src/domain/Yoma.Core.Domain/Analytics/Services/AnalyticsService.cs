@@ -120,7 +120,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
     private OrganizationSearchResultsEngagement SearchOrganizationEngagementInternal(OrganizationSearchFilterEngagement filter)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       _organizationSearchFilterEngagementValidator.ValidateAndThrow(filter);
 
@@ -338,7 +338,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
     private OrganizationSearchResultsOpportunity SearchOrganizationOpportunitiesInternal(OrganizationSearchFilterOpportunity filter)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       _organizationSearchFilterOpportunityValidator.ValidateAndThrow(filter);
 
@@ -389,7 +389,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
     private OrganizationSearchResultsYouth SearchOrganizationYouthInternal(OrganizationSearchFilterYouth filter)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       _organizationSearchFilterYouthValidator.ValidateAndThrow(filter);
 

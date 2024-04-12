@@ -214,7 +214,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public OpportunitySearchResultsCriteria SearchCriteriaOpportunities(OpportunitySearchFilterCriteria filter, bool ensureOrganizationAuthorization)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       _opportunitySearchFilterCriteriaValidator.ValidateAndThrow(filter);
 
@@ -598,7 +598,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       ParseOpportunitySearchFilterCommitmentIntervals(filter);
       ParseOpportunitySearchFilterZltoRewardRanges(filter);
@@ -797,7 +797,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       request.URL = request.URL?.EnsureHttpsScheme();
 
@@ -906,7 +906,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public async Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       request.URL = request.URL?.EnsureHttpsScheme();
 

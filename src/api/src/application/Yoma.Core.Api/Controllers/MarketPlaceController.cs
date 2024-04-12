@@ -10,7 +10,7 @@ using Yoma.Core.Domain.Reward.Models;
 
 namespace Yoma.Core.Api.Controllers
 {
-  [Route("api/v3/marketplace")]
+  [Route($"api/{Common.Constants.Api_Version}/marketplace")]
   [ApiController]
   [SwaggerTag("(by default, Anonymous)")]
   public class MarketplaceController : Controller

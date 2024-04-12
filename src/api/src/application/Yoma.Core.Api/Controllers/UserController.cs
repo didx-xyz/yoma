@@ -9,7 +9,7 @@ using Yoma.Core.Domain.Entity.Models;
 
 namespace Yoma.Core.Api.Controllers
 {
-  [Route("api/v3/user")]
+  [Route($"api/{Common.Constants.Api_Version}/user")]
   [ApiController]
   [Authorize(Policy = Common.Constants.Authorization_Policy)]
   [SwaggerTag("(by default, User role required)")]

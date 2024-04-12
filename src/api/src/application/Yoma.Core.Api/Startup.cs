@@ -116,7 +116,7 @@ namespace Yoma.Core.Api
       app.UseSwagger();
       app.UseSwaggerUI(s =>
       {
-        s.SwaggerEndpoint("/swagger/v3/swagger.json", $"Yoma Core Api ({_environment.ToDescription()} v3)");
+        s.SwaggerEndpoint($"/swagger/{Constants.Api_Version}/swagger.json", $"Yoma Core Api ({_environment.ToDescription()} {Constants.Api_Version})");
         s.RoutePrefix = "";
         s.OAuthClientId(_identityProviderAuthOptions.ClientId);
         s.OAuthClientSecret(_identityProviderAuthOptions.ClientSecret);
@@ -136,13 +136,13 @@ namespace Yoma.Core.Api
       app.UseEndpoints(endpoints =>
       {
         // basic check to ensure the API is up
-        endpoints.MapHealthChecks("/api/v3/health/ready", new HealthCheckOptions
+        endpoints.MapHealthChecks($"/api/{Constants.Api_Version}/health/ready", new HealthCheckOptions
         {
           Predicate = (check) => check.Tags.Contains("ready")
         }).AllowAnonymous();
 
         // more detailed check to ensure the API can connect to the database
-        endpoints.MapHealthChecks("/api/v3/health/live", new HealthCheckOptions
+        endpoints.MapHealthChecks($"/api/{Constants.Api_Version}/health/live", new HealthCheckOptions
         {
           Predicate = (check) => check.Tags.Contains("live")
         }).AllowAnonymous();
@@ -156,7 +156,7 @@ namespace Yoma.Core.Api
       app.UseHangfireDashboard(options: new DashboardOptions
       {
         DarkModeEnabled = true,
-        IgnoreAntiforgeryToken = true, //replicas >=2 will cause antiforgery token issues
+        IgnoreAntiforgeryToken = false, //data protection keys now in Redis; without replicas >=2 will cause antiforgery token issues
         Authorization = [new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
         {
           RequireSsl = false, //handled by AWS
@@ -285,7 +285,7 @@ namespace Yoma.Core.Api
 
       services.AddSwaggerGen(c =>
       {
-        c.SwaggerDoc("v3", new OpenApiInfo { Title = $"Yoma Core Api ({_environment.ToDescription()})", Version = "v3" });
+        c.SwaggerDoc(Constants.Api_Version, new OpenApiInfo { Title = $"Yoma Core Api ({_environment.ToDescription()})", Version = Constants.Api_Version });
         c.EnableAnnotations();
         c.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
         {

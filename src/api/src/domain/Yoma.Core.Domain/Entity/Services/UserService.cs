@@ -150,7 +150,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public UserSearchResults Search(UserSearchFilter filter)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       _userSearchFilterValidator.ValidateAndThrow(filter);
 
@@ -177,7 +177,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public async Task<User> Upsert(UserRequest request)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       await _userRequestValidator.ValidateAndThrowAsync(request);
 
@@ -220,7 +220,7 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       var result = GetByEmail(email, true, false);
 
-      ArgumentNullException.ThrowIfNull(file);
+      ArgumentNullException.ThrowIfNull(file, nameof(file));
 
       var currentPhotoId = result.PhotoId;
 
@@ -256,9 +256,9 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public async Task AssignSkills(User user, Opportunity.Models.Opportunity opportunity)
     {
-      ArgumentNullException.ThrowIfNull(user);
+      ArgumentNullException.ThrowIfNull(user, nameof(user));
 
-      ArgumentNullException.ThrowIfNull(opportunity);
+      ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
 
       var skillIds = opportunity.Skills?.Select(o => o.Id).ToList();
       if (skillIds == null || skillIds.Count == 0) return;

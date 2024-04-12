@@ -85,7 +85,7 @@ namespace Yoma.Core.Domain.Lookups.Services
 
     public SkillSearchResults Search(SkillSearchFilter filter)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       _searchFilterValidator.ValidateAndThrow(filter);
 

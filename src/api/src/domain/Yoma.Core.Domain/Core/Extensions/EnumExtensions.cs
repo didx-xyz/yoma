@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.Core.Extensions
   {
     public static string ToEnumMemberValue(this Enum value)
     {
-      ArgumentNullException.ThrowIfNull(value);
+      ArgumentNullException.ThrowIfNull(value, nameof(value));
 
       var type = value.GetType();
 
@@ -23,7 +23,7 @@ namespace Yoma.Core.Domain.Core.Extensions
 
     public static string ToDescription(this Enum value)
     {
-      ArgumentNullException.ThrowIfNull(value);
+      ArgumentNullException.ThrowIfNull(value, nameof(value));
 
       var type = value.GetType();
 

@@ -9,7 +9,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
   {
     public static int TimeIntervalToHours(this Models.Opportunity opportunity)
     {
-      ArgumentNullException.ThrowIfNull(opportunity);
+      ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
 
       if (!Enum.TryParse<TimeInterval>(opportunity.CommitmentInterval, true, out var interval))
         throw new ArgumentOutOfRangeException(nameof(opportunity), $"{nameof(opportunity.CommitmentInterval)} of '{opportunity.CommitmentInterval}' is not supported");
@@ -29,7 +29,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
 
     public static int TimeIntervalToDays(this Models.Opportunity opportunity)
     {
-      ArgumentNullException.ThrowIfNull(opportunity);
+      ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
 
       if (!Enum.TryParse<TimeInterval>(opportunity.CommitmentInterval, true, out var interval))
         throw new ArgumentOutOfRangeException(nameof(opportunity), $"{nameof(opportunity.CommitmentInterval)} of '{opportunity.CommitmentInterval}' is not supported");
@@ -49,14 +49,14 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
 
     public static void SetPublished(this Models.Opportunity opportunity)
     {
-      ArgumentNullException.ThrowIfNull(opportunity);
+      ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
 
       opportunity.Published = opportunity.Status == Status.Active && opportunity.OrganizationStatus == Entity.OrganizationStatus.Active;
     }
 
     public static OpportunitySearchCriteriaItem ToOpportunitySearchCriteria(this Models.Opportunity value)
     {
-      ArgumentNullException.ThrowIfNull(value);
+      ArgumentNullException.ThrowIfNull(value, nameof(value));
 
       return new OpportunitySearchCriteriaItem
       {
@@ -67,9 +67,9 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
 
     public static OpportunityInfo ToOpportunityInfo(this Models.Opportunity value, string appBaseURL)
     {
-      ArgumentNullException.ThrowIfNull(value);
+      ArgumentNullException.ThrowIfNull(value, nameof(value));
 
-      ArgumentException.ThrowIfNullOrWhiteSpace(appBaseURL);
+      ArgumentException.ThrowIfNullOrWhiteSpace(appBaseURL, nameof(appBaseURL));
       appBaseURL = appBaseURL.Trim();
 
       return new OpportunityInfo

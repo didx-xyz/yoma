@@ -9,7 +9,7 @@ using Yoma.Core.Domain.MyOpportunity.Models;
 
 namespace Yoma.Core.Api.Controllers
 {
-  [Route("api/v3/myOpportunity")]
+  [Route($"api/{Common.Constants.Api_Version}/myOpportunity")]
   [ApiController]
   [Authorize(Policy = Common.Constants.Authorization_Policy)]
   [SwaggerTag("(by default, User role required)")]

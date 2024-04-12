@@ -7,7 +7,7 @@ using Yoma.Core.Domain.Lookups.Models;
 
 namespace Yoma.Core.Api.Controllers
 {
-  [Route("api/v3/lookup")]
+  [Route($"api/{Common.Constants.Api_Version}/lookup")]
   [ApiController]
   [AllowAnonymous]
   [SwaggerTag("(Anonymous)")]

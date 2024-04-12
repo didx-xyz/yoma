@@ -49,14 +49,14 @@ namespace Yoma.Core.Domain.Core.Helpers
 
     public static void UpdateUsername(IHttpContextAccessor? httpContextAccessor, string newEmail)
     {
-      ArgumentException.ThrowIfNullOrWhiteSpace(newEmail);
+      ArgumentException.ThrowIfNullOrWhiteSpace(newEmail, nameof(newEmail));
       newEmail = newEmail.Trim();
 
       var claimsPrincipal = httpContextAccessor?.HttpContext?.User;
-      ArgumentNullException.ThrowIfNull(claimsPrincipal);
+      ArgumentNullException.ThrowIfNull(claimsPrincipal, nameof(claimsPrincipal));
 
       var identity = claimsPrincipal.Identity as ClaimsIdentity;
-      ArgumentNullException.ThrowIfNull(identity);
+      ArgumentNullException.ThrowIfNull(identity, nameof(identity));
 
       var existingPreferredUsernameClaim = identity.FindFirst("preferred_username");
       if (existingPreferredUsernameClaim != null)

@@ -2,13 +2,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net;
+using Yoma.Core.Api.Common;
 
 namespace Yoma.Core.Api.Controllers
 {
   [ApiExplorerSettings(IgnoreApi = true)]
-  [Route("api/v3/externalpartner")]
+  [Route($"api/{Constants.Api_Version}/externalpartner")]
   [ApiController]
-  [Authorize(Policy = Common.Constants.Authorization_Policy_External_Partner)]
+  [Authorize(Policy = Constants.Authorization_Policy_External_Partner)]
   [SwaggerTag("(by default, requires an external partner bearer token obtained via the Client Credentials flow)")]
   public class ExternalPartnerController : Controller
   {

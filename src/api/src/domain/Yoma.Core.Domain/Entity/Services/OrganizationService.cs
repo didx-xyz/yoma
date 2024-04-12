@@ -142,8 +142,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public Organization? GetByNameOrNull(string name, bool includeChildItems, bool includeComputed)
     {
-      if (string.IsNullOrWhiteSpace(name))
-        throw new ArgumentNullException(nameof(name));
+      ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));  
       name = name.Trim();
 
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
@@ -162,8 +161,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public List<Organization> Contains(string value, bool includeComputed)
     {
-      if (string.IsNullOrWhiteSpace(value))
-        throw new ArgumentNullException(nameof(value));
+      ArgumentException.ThrowIfNullOrWhiteSpace(value, nameof(value));  
       value = value.Trim();
 
       var results = _organizationRepository.Contains(_organizationRepository.Query(), value).ToList();
@@ -176,7 +174,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public OrganizationSearchResults Search(OrganizationSearchFilter filter, bool ensureOrganizationAuthorization)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       _organizationSearchFilterValidator.ValidateAndThrow(filter);
 
@@ -223,7 +221,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public async Task<Organization> Create(OrganizationRequestCreate request)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       request.WebsiteURL = request.WebsiteURL?.EnsureHttpsScheme();
 
@@ -337,7 +335,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public async Task<Organization> Update(OrganizationRequestUpdate request, bool ensureOrganizationAuthorization)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       request.WebsiteURL = request.WebsiteURL?.EnsureHttpsScheme();
 
@@ -493,7 +491,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public async Task<Organization> UpdateStatus(Guid id, OrganizationRequestUpdateStatus request, bool ensureOrganizationAuthorization)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       await _organizationRequestUpdateStatusValidator.ValidateAndThrowAsync(request);
 
@@ -885,7 +883,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private async Task<(Organization Organization, BlobObject ItemAdded)> UpdateLogo(
         Organization organization, IFormFile? file, OrganizationReapprovalAction reapprovalAction)
     {
-      ArgumentNullException.ThrowIfNull(file);
+      ArgumentNullException.ThrowIfNull(file, nameof(file));
 
       var currentLogoId = organization.LogoId;
 
@@ -1142,7 +1140,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     private string GetBlobObjectURL(StorageType storageType, string key)
     {
-      ArgumentException.ThrowIfNullOrWhiteSpace(key);
+      ArgumentException.ThrowIfNullOrWhiteSpace(key, nameof(key));
       return _blobService.GetURL(storageType, key);
     }
 

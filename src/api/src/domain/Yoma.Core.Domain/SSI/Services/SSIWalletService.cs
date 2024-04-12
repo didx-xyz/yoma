@@ -52,7 +52,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
     public async Task<SSIWalletSearchResults> SearchUserCredentials(SSIWalletFilter filter)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -73,7 +73,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
     private async Task<SSIWalletSearchResults> Search(SSIWalletFilter filter)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       await _ssiWalletFilterValidator.ValidateAndThrowAsync(filter);
 

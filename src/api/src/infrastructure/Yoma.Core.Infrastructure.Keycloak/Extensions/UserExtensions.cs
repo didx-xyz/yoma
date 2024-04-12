@@ -8,7 +8,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Extensions
   {
     public static User ToUser(this UserRepresentation kcUser)
     {
-      ArgumentNullException.ThrowIfNull(kcUser);
+      ArgumentNullException.ThrowIfNull(kcUser, nameof(kcUser));
 
       var result = new User
       {

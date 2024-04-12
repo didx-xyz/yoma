@@ -75,7 +75,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public OpportunitySearchResultsInfo Search(OpportunitySearchFilter filter)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       //filter validated by OpportunityService.Search
       var filterInternal = new OpportunitySearchFilterAdmin
@@ -126,7 +126,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public (string fileName, byte[] bytes) ExportToCSVOpportunitySearch(OpportunitySearchFilterAdmin filter)
     {
-      ArgumentNullException.ThrowIfNull(filter);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       var result = Search(filter, true);
 

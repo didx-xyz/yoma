@@ -40,7 +40,7 @@ namespace Yoma.Core.Domain.Reward.Services
       if (entityId == Guid.Empty) //used internally by other services which validates the entity id prior to invocation
         throw new ArgumentNullException(nameof(entityId));
 
-      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(amount, default);
+      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(amount, default, nameof(amount));
 
       var statusPendingId = _rewardTransactionStatusService.GetByName(RewardTransactionStatus.Pending.ToString()).Id;
 
@@ -83,7 +83,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
     public List<RewardTransaction> ListPendingTransactionSchedule(int batchSize, List<Guid> idsToSkip)
     {
-      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(batchSize, default);
+      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(batchSize, default, nameof(batchSize));
 
       var statusPendingId = _rewardTransactionStatusService.GetByName(RewardTransactionStatus.Pending.ToString()).Id;
 
@@ -109,7 +109,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
     public async Task UpdateTransaction(RewardTransaction item)
     {
-      ArgumentNullException.ThrowIfNull(item);
+      ArgumentNullException.ThrowIfNull(item, nameof(item));
 
       UpdateTransactionProcess(item);
 

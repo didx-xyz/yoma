@@ -107,7 +107,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
     public List<SSITenantCreation> ListPendingCreationSchedule(int batchSize, List<Guid> idsToSkip)
     {
-      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(batchSize, default);
+      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(batchSize, default, nameof(batchSize));
 
       var statusPendingId = _ssiTenantCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
 
@@ -123,7 +123,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
     public async Task UpdateScheduleCreation(SSITenantCreation item)
     {
-      ArgumentNullException.ThrowIfNull(item);
+      ArgumentNullException.ThrowIfNull(item, nameof(item));
 
       item.TenantId = item.TenantId?.Trim();
 

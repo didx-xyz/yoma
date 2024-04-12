@@ -126,7 +126,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
     public async Task<SSISchema> Update(SSISchemaRequestUpdate request)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       await _schemaRequestValidatorUpdate.ValidateAndThrowAsync(request);
 
@@ -163,7 +163,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
     public async Task<SSISchema> Create(SSISchemaRequestCreate request)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       await _schemaRequestValidatorCreate.ValidateAndThrowAsync(request);
 

@@ -9,7 +9,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     #region Public Members
     public static string SanitizeLogValue(this string input)
     {
-      ArgumentNullException.ThrowIfNull(input);
+      ArgumentNullException.ThrowIfNull(input, nameof(input));
 
       return input.Replace(System.Environment.NewLine, string.Empty);
     }
@@ -21,7 +21,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     /// <returns></returns>
     public static string NormalizeTrim(this string input)
     {
-      ArgumentNullException.ThrowIfNull(input);
+      ArgumentNullException.ThrowIfNull(input, nameof(input));
 
       var ret = input.Normalize().Trim();
       //set more than one space to one space
@@ -36,7 +36,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     /// <returns></returns>
     public static string NormalizeContact(this string input)
     {
-      ArgumentNullException.ThrowIfNull(input);
+      ArgumentNullException.ThrowIfNull(input, nameof(input));
 
       var rgx = RegexContactNumber();
       return rgx.Replace(input.Normalize().Trim(), "");
@@ -49,7 +49,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     /// <returns></returns>
     public static string RemoveWhiteSpaces(this string input)
     {
-      ArgumentNullException.ThrowIfNull(input);
+      ArgumentNullException.ThrowIfNull(input, nameof(input));
 
       return new string(input.ToCharArray()
                 .Where(c => !char.IsWhiteSpace(c))
@@ -63,9 +63,9 @@ namespace Yoma.Core.Domain.Core.Extensions
     /// <returns></returns>
     public static bool EqualsInvariantCultureIgnoreCase(this string input, string comparate)
     {
-      ArgumentNullException.ThrowIfNull(input);
+      ArgumentNullException.ThrowIfNull(input, nameof(input));
 
-      ArgumentNullException.ThrowIfNull(comparate);
+      ArgumentNullException.ThrowIfNull(comparate, nameof(comparate));
 
       return string.Equals(input, comparate, StringComparison.InvariantCultureIgnoreCase);
     }
@@ -88,7 +88,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     /// <returns></returns>
     public static string TitleCase(this string input)
     {
-      ArgumentNullException.ThrowIfNull(input);
+      ArgumentNullException.ThrowIfNull(input, nameof(input));
 
       return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input.NormalizeTrim());
     }
@@ -99,7 +99,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     /// <returns></returns>
     public static string ToInitials(this string input)
     {
-      ArgumentNullException.ThrowIfNull(input);
+      ArgumentNullException.ThrowIfNull(input, nameof(input));
 
       var initialsRegEx = RegexInitials();
       return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(
@@ -110,7 +110,7 @@ namespace Yoma.Core.Domain.Core.Extensions
 
     public static string RemoveSpecialCharacters(this string input)
     {
-      ArgumentNullException.ThrowIfNull(input);
+      ArgumentNullException.ThrowIfNull(input, nameof(input));
 
       // normalize the string to remove diacritics (accents)
       string normalizedString = input.Normalize(NormalizationForm.FormD).Trim();

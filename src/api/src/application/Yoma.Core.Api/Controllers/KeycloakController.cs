@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
-using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
@@ -13,7 +12,7 @@ using Yoma.Core.Infrastructure.Keycloak;
 
 namespace Yoma.Core.Api.Controllers
 {
-  [Route("api/v3/keycloak")]
+  [Route($"api/{Common.Constants.Api_Version}/keycloak")]
   [ApiController]
   [AllowAnonymous]
   [ApiExplorerSettings(IgnoreApi = true)]
@@ -207,7 +206,7 @@ namespace Yoma.Core.Api.Controllers
           try
           {
             //add newly registered user to the default "User" role
-            await _identityProviderClient.EnsureRoles(kcUser.Id, [Constants.Role_User]);
+            await _identityProviderClient.EnsureRoles(kcUser.Id, [Domain.Core.Constants.Role_User]);
           }
           catch (Exception ex)
           {

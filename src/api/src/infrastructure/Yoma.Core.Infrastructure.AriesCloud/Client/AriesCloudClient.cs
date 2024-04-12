@@ -196,7 +196,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
     public async Task<Domain.SSI.Models.Provider.Schema> UpsertSchema(SchemaRequest request)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       if (request.Attributes != null) request.Attributes = request.Attributes.Distinct().ToList();
       if (request.Attributes == null || request.Attributes.Count == 0)
@@ -251,7 +251,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
     public async Task<string> EnsureTenant(TenantRequest request)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       if (string.IsNullOrWhiteSpace(request.Referent))
         throw new ArgumentException($"'{nameof(request.Referent)}' is required", nameof(request));
@@ -303,7 +303,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
     public async Task<string?> IssueCredential(CredentialIssuanceRequest request)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       request.ClientReferent = new KeyValuePair<string, string>(request.ClientReferent.Key?.Trim() ?? string.Empty, request.ClientReferent.Value?.Trim() ?? string.Empty);
       if (string.IsNullOrEmpty(request.ClientReferent.Key) && string.IsNullOrEmpty(request.ClientReferent.Value))

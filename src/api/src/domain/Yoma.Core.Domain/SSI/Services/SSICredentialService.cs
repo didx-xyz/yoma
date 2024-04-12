@@ -87,7 +87,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
     public async Task UpdateScheduleIssuance(SSICredentialIssuance item)
     {
-      ArgumentNullException.ThrowIfNull(item);
+      ArgumentNullException.ThrowIfNull(item, nameof(item));
 
       item.CredentialId = item.CredentialId?.Trim();
 

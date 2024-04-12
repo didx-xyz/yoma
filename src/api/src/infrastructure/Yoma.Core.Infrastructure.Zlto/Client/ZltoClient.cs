@@ -42,7 +42,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
     #region IRewardProviderClient
     public async Task<(Domain.Reward.Models.Wallet wallet, WalletCreationStatus status)> CreateWallet(Domain.Reward.Models.Provider.WalletRequestCreate request)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       //check if wallet already exists
       var existing = await GetWalletByUsername(request.Username);
@@ -139,7 +139,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
     public async Task<string> RewardEarn(RewardAwardRequest request)
     {
-      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       var httpRequest = new RewardEarnRequest
       {

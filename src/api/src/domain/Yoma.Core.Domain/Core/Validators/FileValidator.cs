@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.Core.Validators
 
     public void Validate(IFormFile file)
     {
-      ArgumentNullException.ThrowIfNull(file);
+      ArgumentNullException.ThrowIfNull(file, nameof(file));
 
       if (!extensions.Contains(file.GetExtension(), StringComparer.InvariantCultureIgnoreCase))
         throw new BusinessException($"Only supports file formats '{string.Join(",", extensions)}'");

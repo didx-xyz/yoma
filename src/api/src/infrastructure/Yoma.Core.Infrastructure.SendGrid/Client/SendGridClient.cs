@@ -53,7 +53,7 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
       if (recipients == null || recipients.Count == 0)
         throw new ArgumentNullException(nameof(recipients));
 
-      ArgumentNullException.ThrowIfNull(data);
+      ArgumentNullException.ThrowIfNull(data, nameof(data));
 
       if (!_options.Templates.ContainsKey(type.ToString()))
         throw new ArgumentException($"Email template id for type '{type}' not configured", nameof(type));
