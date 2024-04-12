@@ -147,7 +147,7 @@ export const OrganisationRowFilter: React.FC<{
           <div className="flex w-full flex-grow flex-col flex-wrap items-center gap-2 md:w-fit lg:flex-row">
             <div className="mr-4 text-sm font-bold">Search by:</div>
             {/* OPPORTUNITIES */}
-            <span className="w-full md:w-48">
+            <span className="w-full md:w-72">
               <Controller
                 name="opportunities"
                 control={form.control}
@@ -156,7 +156,7 @@ export const OrganisationRowFilter: React.FC<{
                     instanceId="opportunities"
                     classNames={{
                       control: () =>
-                        "input input-xs h-fit !border-none w-full md:w-48",
+                        "input input-xs h-fit !border-none w-full md:w-72",
                     }}
                     isMulti={true}
                     defaultOptions={true} // calls loadOpportunities for initial results when clicking on the dropdown
@@ -198,7 +198,7 @@ export const OrganisationRowFilter: React.FC<{
 
               {/* CATEGORIES */}
               {lookups_categories && (
-                <span className="w-full md:w-48">
+                <span className="w-full md:w-72">
                   <Controller
                     name="categories"
                     control={form.control}
@@ -208,7 +208,7 @@ export const OrganisationRowFilter: React.FC<{
                         instanceId="categories"
                         classNames={{
                           control: () =>
-                            "input input-xs h-fit !border-none w-full md:w-48",
+                            "input input-xs h-fit !border-none w-full md:w-72",
                         }}
                         isMulti={true}
                         options={lookups_categories.map((c) => ({
@@ -250,7 +250,7 @@ export const OrganisationRowFilter: React.FC<{
             </div>
           </div>
 
-          <div className="mt-6 flex w-full justify-between gap-4 md:mt-0 md:w-fit lg:justify-end">
+          <div className="mt-6 flex hidden w-full justify-between gap-4 md:mt-0 md:w-fit lg:justify-end">
             {/* DATE START */}
             <span className="flex">
               <Controller

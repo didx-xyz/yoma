@@ -15,7 +15,7 @@ const NoRowsMessage: React.FC<{
         imageHeight={28}
       />
 
-      <h2 className="text-gray-900 mb-2 mt-4 text-lg font-medium">
+      <h2 className="text-gray-900 mb-2 mt-4 text-center text-lg font-medium">
         {title ?? "No rows found"}
       </h2>
       <p className="text-gray-500 text-center">

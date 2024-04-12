@@ -620,7 +620,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   <div className="flex flex-grow flex-col gap-2">
                     <div className="flex flex-col gap-4">
                       {/* AVERAGE CONVERSION RATE */}
-                      <div className="flex h-[185px] flex-col gap-10 rounded-lg bg-white p-4 shadow">
+                      <div className="flex h-[185px] flex-col gap-4 rounded-lg bg-white p-4 shadow">
                         <div className="flex flex-row items-center gap-3">
                           {/* <IoMdHourglass className="text-green" /> */}
                           <div className="rounded-lg bg-green-light p-1">
@@ -646,6 +646,10 @@ const OrganisationDashboard: NextPageWithLayout<{
                                 ?.percentage ?? 0
                             } %`}
                           </div>
+                        </div>
+                        <div className="text-xs text-gray-dark min-[380px]:w-64 md:w-72">
+                          Please note this data may be skewed as tracking of
+                          views was only recently introduced.
                         </div>
                       </div>
 
@@ -716,7 +720,8 @@ const OrganisationDashboard: NextPageWithLayout<{
                         style={{ width: "35px", height: "35px" }}
                       />
                       <div className="flex-grow text-3xl font-semibold">
-                        {searchResults?.opportunities.reward.totalAmount ?? 0}
+                        {searchResults?.opportunities.reward.totalAmount.toLocaleString() ??
+                          0}
                       </div>
                     </div>
                   </div>
@@ -859,12 +864,12 @@ const OrganisationDashboard: NextPageWithLayout<{
             <div className="mt-4 flex flex-col">
               <div>
                 <div className="mb-1 text-3xl font-semibold">Opportunities</div>
-                <div>
+                {/* <div>
                   Opportunities performance (sort by views, completions,
                   conversion ratio)
-                </div>
+                </div> */}
 
-                <div className="mb-4 flex flex-col gap-4 md:flex-row">
+                <div className="mb-4 flex hidden flex-col gap-4 md:flex-row">
                   {/* UNPUBLISHED */}
                   <div className="mt-4 flex h-32 w-full flex-col gap-2 rounded-lg bg-white p-4 shadow md:w-72">
                     <div className="flex h-min items-center gap-2">

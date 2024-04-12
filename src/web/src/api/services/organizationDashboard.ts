@@ -17,6 +17,7 @@ export const searchOrganizationEngagement = async (
     "/organization/search/analytics/engagement",
     filter,
   );
+  console.log("Data: ", data);
   return data;
   console.info("getOrganisationDashboardSummary", filter);
 

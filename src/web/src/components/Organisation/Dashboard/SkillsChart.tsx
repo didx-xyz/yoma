@@ -230,7 +230,7 @@ export const SkillsChart: React.FC<{
             ]}
           />
         ) : (
-          <div className=" mx-4 mt-2 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center text-xs">
+          <div className=" mx-4 mt-4 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center text-xs">
             Not enough data to display
           </div>
         )}

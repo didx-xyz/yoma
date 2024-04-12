@@ -37,7 +37,7 @@ const updateCustomLegendLineChart = (
       <span class="rounded-lg bg-green-light p-1 hidden min-[400px]:inline"><img class="w-3 h-3 md:h-5 md:w-5" src="/images/icon-skills-green.svg"/></span>
         <span class="text-xs md:text-sm font-semibold">Opportunities</span>
       </div>
-      <div class="text-sm md:text-3xl font-semibold border-b-2 border-green w-fit">${opportunityCount}</div>
+      <div class="text-sm md:text-3xl font-semibold border-b-2 border-green w-fit">${opportunityCount?.toLocaleString()}</div>
     </div>`;
 
   legendDiv.appendChild(opportunitiesDiv);
@@ -58,7 +58,7 @@ const updateCustomLegendLineChart = (
         }</span></div>
             ${
               data.count[i] != null
-                ? `<div class="text-sm md:text-3xl font-semibold border-b-2 border-green w-fit">${data.count[
+                ? `<div class="text-sm md:text-3xl font-semibold border-b-2 border-green w-fit border-dashed">${data.count[
                     i
                   ]?.toLocaleString()}</div>`
                 : ""
@@ -72,7 +72,7 @@ const updateCustomLegendLineChart = (
         }</span></div>
             ${
               data.count[i] != null
-                ? `<div class="text-sm md:text-3xl font-semibold border-b-2 border-green w-fit border-dashed">${data.count[
+                ? `<div class="text-sm md:text-3xl font-semibold border-b-2 border-green w-fit">${data.count[
                     i
                   ]?.toLocaleString()}</div>`
                 : ""
@@ -217,7 +217,7 @@ export const LineChart: React.FC<{
         className="ml-0 flex flex-row gap-2 md:ml-3"
       ></div>
 
-      <div className="ml-4 flex items-stretch justify-stretch md:ml-6">
+      <div className="ml-4 flex items-stretch justify-stretch pt-2 md:ml-6">
         {showLabels ? (
           <Chart
             width={chartSize.width}
@@ -264,11 +264,11 @@ export const LineChart: React.FC<{
                 baselineColor: "transparent",
               },
               series: {
-                0: {},
-                1: {
+                0: {
                   lineDashStyle: [4, 4],
                   areaOpacity: 0,
                 },
+                1: {},
               },
               chartArea: {
                 // left: "3%",
@@ -307,7 +307,7 @@ export const LineChart: React.FC<{
             ]}
           />
         ) : (
-          <div className="mr-4 mt-10 flex w-[900px] flex-col items-center justify-center rounded-lg bg-gray-light p-8 text-center md:mr-6 md:mt-6 md:h-[15rem]">
+          <div className="mr-4 mt-10 flex w-[900px] flex-col items-center justify-center rounded-lg bg-gray-light p-8 text-center md:mr-6 md:mt-4 md:h-[15rem]">
             Not enough data to display
           </div>
         )}
