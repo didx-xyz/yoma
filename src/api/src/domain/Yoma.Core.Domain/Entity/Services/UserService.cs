@@ -232,6 +232,8 @@ namespace Yoma.Core.Domain.Entity.Services
           using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
           blobObject = await _blobService.Create(file, FileType.Photos);
           result.PhotoId = blobObject.Id;
+          result.PhotoStorageType = blobObject.StorageType;
+          result.PhotoKey = blobObject.Key;
           result = await _userRepository.Update(result);
 
           if (currentPhotoId.HasValue)

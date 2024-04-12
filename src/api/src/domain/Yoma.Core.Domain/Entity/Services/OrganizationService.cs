@@ -895,6 +895,8 @@ namespace Yoma.Core.Domain.Entity.Services
           using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
           blobObject = await _blobService.Create(file, FileType.Photos);
           organization.LogoId = blobObject.Id;
+          organization.LogoStorageType = blobObject.StorageType;
+          organization.LogoKey = blobObject.Key;
           organization = await _organizationRepository.Update(organization);
 
           if (currentLogoId.HasValue)
@@ -1061,6 +1063,8 @@ namespace Yoma.Core.Domain.Entity.Services
             {
               OrganizationId = organization.Id,
               FileId = blobObject.Id,
+              FileStorageType = blobObject.StorageType,
+              FileKey = blobObject.Key,
               Type = type,
               ContentType = file.ContentType,
               OriginalFileName = file.FileName,
