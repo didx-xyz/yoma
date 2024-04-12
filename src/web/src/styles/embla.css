@@ -22,6 +22,11 @@
   gap: 6px;
 }
 
+.embla__container.max-1 {
+  gap: 20px;
+  margin-left: 1px;
+}
+
 @media (min-width: 321px) and (max-width: 768px) {
   .embla__container.max-4 {
     margin-left: 0;
@@ -42,6 +47,13 @@
 .embla__slide {
   flex: 0 0 100%; /* Default slide covers 100% of the viewport */
   min-width: 0;
+}
+
+/* maximun 1 slide */
+@media (max-width: 768px) {
+  .embla__container.max-1 .embla__slide {
+    flex: 0 0 100%; /* Breakpoint SM slide covers 100% of the viewport */
+  }
 }
 
 /* maximum 3 slides */

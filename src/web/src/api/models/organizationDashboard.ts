@@ -71,7 +71,7 @@ export interface TimeIntervalSummary {
 }
 
 export interface TimeValueEntry {
-  date: string;
+  date: string | Date;
   values: any[];
 }
 

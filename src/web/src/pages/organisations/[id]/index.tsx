@@ -13,14 +13,14 @@ import "react-datepicker/dist/react-datepicker.css";
 import { type Organization } from "~/api/models/organisation";
 import { getOrganisationById } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
-import { LogoTitle } from "~/components/Organisation/LogoTitle";
+// import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { authOptions } from "~/server/auth";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { config } from "~/lib/react-query-config";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { PageBackground } from "~/components/PageBackground";
-import { IoMdCompass, IoMdDocument, IoMdHourglass } from "react-icons/io";
+import { IoMdPerson } from "react-icons/io";
 import { useRouter } from "next/router";
 import {
   searchOrganizationEngagement,
@@ -28,7 +28,7 @@ import {
   searchOrganizationYouth,
 } from "~/api/services/organizationDashboard";
 import type { GetServerSidePropsContext } from "next";
-import type { OpportunityCategory } from "~/api/models/opportunity";
+import { type OpportunityCategory } from "~/api/models/opportunity";
 import { getServerSession } from "next-auth";
 import { Loading } from "~/components/Status/Loading";
 import { OrganisationRowFilter } from "~/components/Organisation/Dashboard/OrganisationRowFilter";
@@ -37,7 +37,9 @@ import { toISOStringForTimezone } from "~/lib/utils";
 import Link from "next/link";
 import { getThemeFromRole } from "~/lib/utils";
 import Image from "next/image";
-import iconZlto from "public/images/icon-zlto.svg";
+import iconZlto from "public/images/icon-zlto-green.svg";
+import iconBookmark from "public/images/icon-bookmark-green.svg";
+import iconSkills from "public/images/icon-skills-green.svg";
 import {
   CHART_COLORS,
   DATETIME_FORMAT_HUMAN,
@@ -55,10 +57,13 @@ import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import moment from "moment";
 import { getCategoriesAdmin } from "~/api/services/opportunities";
 import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
+import { SkillsChart } from "~/components/Organisation/Dashboard/SkillsChart";
 import { PieChart } from "~/components/Organisation/Dashboard/PieChart";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { AvatarImage } from "~/components/AvatarImage";
+import DashboardCarousel from "~/components/Organisation/Dashboard/DashboardCarousel";
 
 interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
@@ -134,9 +139,13 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const OrganisationDashboard: NextPageWithLayout<{
   id: string;
   error?: number;
-}> = ({ id, error }) => {
+  user?: any;
+}> = ({ id, error, user }) => {
   const router = useRouter();
   const myRef = useRef<HTMLDivElement>(null);
+  const [inactiveOpportunitiesCount, setInactiveOpportunitiesCount] =
+    useState(0);
+  const [expiredOpportunitiesCount, setExpiredOpportunitiesCount] = useState(0);
 
   // 👇 use prefetched queries from server
   const { data: lookups_categories } = useQuery<OpportunityCategory[]>({
@@ -158,8 +167,6 @@ const OrganisationDashboard: NextPageWithLayout<{
     startDate,
     endDate,
   } = router.query;
-
-  const comingSoon = true;
 
   // memo for isSearchPerformed based on filter parameters
   const isSearchPerformed = useMemo<boolean>(() => {
@@ -249,6 +256,24 @@ const OrganisationDashboard: NextPageWithLayout<{
       }),
     enabled: !error,
   });
+
+  useEffect(() => {
+    const calculateCounts = () => {
+      if (!selectedOpportunities?.items) return;
+
+      const inactiveCount = selectedOpportunities.items.filter(
+        (opportunity) => opportunity.status === ("Inactive" as any),
+      ).length;
+      const expiredCount = selectedOpportunities.items.filter(
+        (opportunity) => opportunity.status === ("Expired" as any),
+      ).length;
+
+      setInactiveOpportunitiesCount(inactiveCount);
+      setExpiredOpportunitiesCount(expiredCount);
+    };
+
+    calculateCounts();
+  }, [selectedOpportunities]);
 
   // QUERY: COMPLETED YOUTH
   const { data: completedYouth, isLoading: completedYouthIsLoading } =
@@ -449,6 +474,28 @@ const OrganisationDashboard: NextPageWithLayout<{
     [searchFilter, redirectWithSearchFilterParams],
   );
 
+  // Function to get the current time of day and the corresponding emoji
+  const getTimeOfDayAndEmoji = (): [string, string] => {
+    const hour = new Date().getHours();
+    let timeOfDay: string;
+    let timeOfDayEmoji: string;
+
+    if (hour < 12) {
+      timeOfDay = "morning";
+      timeOfDayEmoji = "☀️";
+    } else if (hour < 18) {
+      timeOfDay = "afternoon";
+      timeOfDayEmoji = "☀️";
+    } else {
+      timeOfDay = "evening";
+      timeOfDayEmoji = "🌙";
+    }
+
+    return [timeOfDay, timeOfDayEmoji];
+  };
+
+  const [timeOfDay, timeOfDayEmoji] = getTimeOfDayAndEmoji();
+
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -461,183 +508,171 @@ const OrganisationDashboard: NextPageWithLayout<{
         <title>Yoma | Organisation Dashboard</title>
       </Head>
 
-      <PageBackground className="h-[250px] lg:h-[275px]" />
+      <PageBackground className="h-[305px] lg:h-[275px]" />
 
       {isSearchPerformed && isLoading && <Loading />}
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
-      {comingSoon && comingSoon ? (
-        <div className="container z-30 flex max-w-7xl flex-col items-center justify-center p-4">
-          <div className="flex w-full flex-col items-center justify-center gap-8 rounded-lg bg-white p-4 py-16 shadow-custom">
-            <div className="rounded-full p-4 text-4xl tracking-wider shadow-custom">
-              🚀
+      <div className="container z-10 mt-[7.5rem] max-w-7xl overflow-hidden px-4 py-1 md:py-4">
+        <div className="flex flex-col gap-4">
+          {/* HEADER */}
+          <div className="mb-4 flex flex-col">
+            {/* LOGO & TITLE */}
+            {/* <div className="-mb-4 -mt-2 flex flex-row font-semibold text-white">
+              <LogoTitle
+                logoUrl={organisation?.logoURL}
+                title={organisation?.name}
+              />
+              <LimitedFunctionalityBadge />
+            </div> */}
+            {/* WELCOME MSG */}
+            <div className="text-2xl font-semibold text-white md:text-3xl">
+              <span>
+                Good {timeOfDay}, {user?.name} {timeOfDayEmoji}
+              </span>
             </div>
-            <h2 className="text-center text-2xl font-medium text-gray-dark">
-              Dashboard coming soon
-            </h2>
-          </div>
-        </div>
-      ) : (
-        <div className="container z-10 mt-20 max-w-7xl overflow-hidden px-4 py-1 md:py-4">
-          <div className="flex flex-col gap-4">
-            {/* HEADER */}
-            <div className="flex flex-col">
-              {/* LOGO & TITLE */}
-              <div className="flex flex-row font-semibold text-white">
-                <LogoTitle
-                  logoUrl={organisation?.logoURL}
-                  title={organisation?.name}
-                />
-                <LimitedFunctionalityBadge />
-              </div>
-              {/* DESCRIPTION */}
-              <div className="-mt-2 mb-4 flex flex-col gap-1 leading-4 text-white lg:flex-row">
-                <span>Your dashboard progress so far.</span>
+            {/* DESCRIPTION */}
+            <div className="mt-2 flex flex-col gap-1 leading-4 text-white lg:flex-row">
+              <span>Your dashboard progress so far.</span>
 
-                {searchResults?.dateStamp && (
-                  <span>
-                    Last updated on{" "}
-                    <span className="font-semibold">
-                      {moment(new Date(searchResults?.dateStamp)).format(
-                        DATETIME_FORMAT_HUMAN,
-                      )}
-                    </span>
+              {searchResults?.dateStamp && (
+                <span>
+                  Last updated on{" "}
+                  <span className="font-semibold">
+                    {moment(new Date(searchResults?.dateStamp)).format(
+                      DATETIME_FORMAT_HUMAN,
+                    )}
                   </span>
-                )}
-              </div>
-            </div>
-
-            {/* FILTERS */}
-            <div className="mt-16 flex lg:mt-20">
-              {!lookups_categories && <div>Loading...</div>}
-              {lookups_categories && (
-                <div className="flex flex-grow flex-col gap-3">
-                  <OrganisationRowFilter
-                    organisationId={id}
-                    htmlRef={myRef.current!}
-                    searchFilter={{
-                      categories: searchFilter.categories,
-                      opportunities: searchFilter.opportunities,
-                      startDate: searchFilter.startDate,
-                      endDate: searchFilter.endDate,
-                      organization: id,
-                      pageNumber: null,
-                      pageSize: null,
-                    }}
-                    lookups_categories={lookups_categories}
-                    onSubmit={(e) => onSubmitFilter(e)}
-                  />
-
-                  {/* FILTER BADGES */}
-                  <FilterBadges
-                    searchFilter={searchFilter}
-                    excludeKeys={[
-                      "pageSelectedOpportunities",
-                      "pageCompletedYouth",
-                      "pageSize",
-                      "organization",
-                    ]}
-                    resolveValue={(key, value) => {
-                      if (key === "startDate" || key === "endDate")
-                        return value
-                          ? toISOStringForTimezone(new Date(value)).split(
-                              "T",
-                            )[0]
-                          : "";
-                      else {
-                        return value;
-                      }
-                    }}
-                    onSubmit={(e) => onSubmitFilter(e)}
-                  />
-                </div>
+                </span>
               )}
             </div>
+            <LimitedFunctionalityBadge />
+          </div>
 
-            {/* SUMMARY */}
+          {/* FILTERS */}
+          <div className="mt-16 flex lg:mt-16">
+            {!lookups_categories && <div>Loading...</div>}
+            {lookups_categories && (
+              <div className="flex flex-grow flex-col gap-3">
+                <OrganisationRowFilter
+                  organisationId={id}
+                  htmlRef={myRef.current!}
+                  searchFilter={{
+                    categories: searchFilter.categories,
+                    opportunities: searchFilter.opportunities,
+                    startDate: searchFilter.startDate,
+                    endDate: searchFilter.endDate,
+                    organization: id,
+                    pageNumber: null,
+                    pageSize: null,
+                  }}
+                  lookups_categories={lookups_categories}
+                  onSubmit={(e) => onSubmitFilter(e)}
+                />
+
+                {/* FILTER BADGES */}
+                <FilterBadges
+                  searchFilter={searchFilter}
+                  excludeKeys={[
+                    "pageSelectedOpportunities",
+                    "pageCompletedYouth",
+                    "pageSize",
+                    "organization",
+                  ]}
+                  resolveValue={(key, value) => {
+                    if (key === "startDate" || key === "endDate")
+                      return value
+                        ? toISOStringForTimezone(new Date(value)).split("T")[0]
+                        : "";
+                    else {
+                      return value;
+                    }
+                  }}
+                  onSubmit={(e) => onSubmitFilter(e)}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* SUMMARY */}
+          {searchResults ? (
             <div className="flex flex-col gap-4 md:-mt-2">
               {/* ENGAGEMENT */}
               <div className="flex flex-col gap-2">
-                <div className="text-xl font-semibold">Engagement</div>
+                <div className="text-3xl font-semibold">Engagement</div>
 
-                <div className="flex flex-col gap-2 md:flex-row">
+                <div className="mt-2 flex flex-col gap-4 md:flex-row">
                   {/* VIEWED COMPLETED */}
                   {searchResults?.opportunities?.viewedCompleted && (
                     <LineChart
                       id="viewedCompleted"
                       data={searchResults.opportunities.viewedCompleted}
-                      width={402}
-                      height={328}
+                      width={900}
+                      height={386}
+                      opportunityCount={
+                        searchResults?.opportunities?.selected?.count ?? 0
+                      }
                     />
                   )}
 
-                  <div className="flex flex-col gap-2">
-                    {/* OPPORTUNITIES SELECTED */}
-                    <div className="flex h-40 w-full flex-col rounded-lg bg-white p-4 shadow md:w-64">
-                      <div className="flex flex-row items-center gap-2">
-                        <IoMdDocument className="text-green" />
-                        <div className="text-sm font-semibold">
-                          Opportunities selected
-                        </div>
-                      </div>
-
-                      <div className="flex flex-grow flex-col">
-                        <div className="flex-grow text-2xl font-bold">
-                          {searchResults?.opportunities?.selected?.count ?? 0}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <div className="flex flex-col gap-2 md:flex-row">
-                        {/* AVERAGE TIME */}
-                        <div className="flex h-40 w-full flex-col rounded-lg bg-white p-4 shadow md:w-64">
-                          <div className="flex flex-row items-center gap-2">
-                            <IoMdHourglass className="text-green" />
-                            <div className="text-sm font-semibold">
-                              Average time
-                            </div>
+                  <div className="flex flex-grow flex-col gap-2">
+                    <div className="flex flex-col gap-4">
+                      {/* AVERAGE CONVERSION RATE */}
+                      <div className="flex h-[185px] flex-col gap-10 rounded-lg bg-white p-4 shadow">
+                        <div className="flex flex-row items-center gap-3">
+                          {/* <IoMdHourglass className="text-green" /> */}
+                          <div className="rounded-lg bg-green-light p-1">
+                            <Image
+                              src={iconBookmark}
+                              alt="Icon Bookmark"
+                              width={20}
+                              height={20}
+                              sizes="100vw"
+                              priority={true}
+                              style={{ width: "20px", height: "20px" }}
+                            />
                           </div>
-
-                          <div className="flex flex-grow flex-col">
-                            <div className="flex-grow text-2xl font-bold">
-                              {searchResults?.opportunities.completion
-                                .averageTimeInDays ?? 0}
-                            </div>
+                          <div className="text-sm font-semibold">
+                            Average conversion rate
                           </div>
                         </div>
 
-                        {/* CONVERSERSION RATE */}
-                        {searchResults?.opportunities?.conversionRate && (
-                          <PieChart
-                            id="conversionRate"
-                            title={
-                              searchResults.opportunities.conversionRate.legend
-                            }
-                            subTitle={`${
-                              searchResults.opportunities.conversionRate
-                                .percentage ?? 0
+                        <div className="flex flex-grow flex-col">
+                          <div className="flex-grow text-4xl font-semibold">
+                            {`${
+                              searchResults?.opportunities?.conversionRate
+                                ?.percentage ?? 0
                             } %`}
-                            colors={CHART_COLORS}
-                            data={[
-                              ["Completed", "Viewed"],
-                              [
-                                "Completed",
-                                searchResults.opportunities.conversionRate
-                                  .completedCount,
-                              ],
-                              [
-                                "Viewed",
-                                searchResults.opportunities.conversionRate
-                                  .viewedCount,
-                              ],
-                            ]}
-                            className="w-full md:w-60 lg:w-80"
-                          />
-                        )}
+                          </div>
+                        </div>
                       </div>
+
+                      {/* Overall ratio */}
+                      {searchResults?.opportunities?.conversionRate && (
+                        <PieChart
+                          id="conversionRate"
+                          title="Overall ratio"
+                          subTitle=""
+                          width={313}
+                          colors={CHART_COLORS}
+                          data={[
+                            ["Completed", "Viewed"],
+                            [
+                              "Completed",
+                              searchResults.opportunities.conversionRate
+                                .completedCount,
+                            ],
+                            [
+                              "Viewed",
+                              searchResults.opportunities.conversionRate
+                                .viewedCount,
+                            ],
+                          ]}
+                          className="h-[185px] w-full md:w-[332px]"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -645,70 +680,101 @@ const OrganisationDashboard: NextPageWithLayout<{
 
               {/* REWARDS */}
               <div className="flex flex-col gap-2">
-                <div className="text-xl font-semibold">Rewards</div>
-
-                <div className="flex flex-col gap-2 md:flex-row">
+                <div className="mb-2 flex gap-2">
+                  <div className="w-[297px] text-xl font-semibold">Rewards</div>
+                  <div className="hidden text-xl font-semibold md:inline">
+                    Skills
+                  </div>
+                </div>
+                <div className="flex flex-col gap-4 md:flex-row">
                   {/* ZLTO AMOUNT AWARDED */}
-                  <div className="h-40 w-full flex-col rounded-lg bg-white p-4 shadow md:w-[420px]">
-                    <div className="flex flex-row items-center gap-2">
-                      <Image
-                        src={iconZlto}
-                        alt="Icon Zlto"
-                        width={20}
-                        height={20}
-                        sizes="100vw"
-                        priority={true}
-                        style={{ width: "20px", height: "20px" }}
-                      />
+                  <div className="h-[176px] w-full flex-col rounded-lg bg-white p-4 shadow md:w-[420px] md:min-w-[288px]">
+                    <div className="flex flex-row items-center gap-3">
+                      <div className="rounded-lg bg-green-light p-1">
+                        <Image
+                          src={iconZlto}
+                          alt="Icon Zlto"
+                          width={20}
+                          height={20}
+                          sizes="100vw"
+                          priority={true}
+                          style={{ width: "20px", height: "20px" }}
+                        />
+                      </div>
                       <div className="whitespace-nowrap text-sm font-semibold">
                         ZLTO amount awarded
                       </div>
                     </div>
-                    <div className="flex flex-grow flex-col">
-                      <div className="flex-grow text-2xl font-bold">
+                    <div className="-ml-1 mt-4 flex flex-grow items-center gap-2">
+                      <Image
+                        src={iconZlto}
+                        alt="Icon Zlto"
+                        width={35}
+                        height={35}
+                        sizes="100vw"
+                        priority={true}
+                        style={{ width: "35px", height: "35px" }}
+                      />
+                      <div className="flex-grow text-3xl font-semibold">
                         {searchResults?.opportunities.reward.totalAmount ?? 0}
                       </div>
                     </div>
                   </div>
 
+                  <div className="text-xl font-semibold md:hidden">Skills</div>
+
                   {/* TOTAL UNIQUE SKILLS */}
                   <div
                     className="overflow-hidden rounded-lg bg-white shadow"
-                    style={{ minWidth: "288px", height: "160px" }}
+                    style={{ minWidth: "288px", height: "176px" }}
                   >
-                    <LineChart
+                    <SkillsChart
                       id="totalUniqueSkills"
                       data={searchResults?.skills?.items}
-                      width={288}
-                      height={160}
+                      height={176}
                       chartWidth={288}
                       chartHeight={100}
-                      hideAxisesAndGridLines={true}
                     />
                   </div>
 
                   {/* MOST COMPLETED SKILLS */}
                   {searchResults?.skills?.topCompleted && (
                     <>
-                      <div className="flex w-full flex-col rounded-lg bg-white p-4 shadow md:h-[160px]">
-                        <div className="flex flex-row items-center gap-2">
-                          <IoMdCompass className="text-green" />
+                      <div className="flex h-[176px] w-full flex-col rounded-lg bg-white p-4 shadow">
+                        <div className="flex flex-row items-center gap-3">
+                          <div className="rounded-lg bg-green-light p-1">
+                            <Image
+                              src={iconSkills}
+                              alt="Icon Skills"
+                              width={20}
+                              height={20}
+                              sizes="100vw"
+                              priority={true}
+                              style={{ width: "20px", height: "20px" }}
+                            />
+                          </div>
                           <div className="text-sm font-semibold">
                             {searchResults?.skills.topCompleted.legend}
                           </div>
                         </div>
-                        <div className="mt-2 flex flex-grow flex-wrap gap-1 overflow-x-hidden overflow-y-scroll md:h-[100px]">
+                        <div className="mt-4 flex flex-grow flex-wrap gap-1 overflow-y-auto overflow-x-hidden md:h-[100px]">
                           {searchResults?.skills.topCompleted.topCompleted.map(
                             (x) => (
                               <div
                                 key={x.id}
-                                className="min-h-6 md:truncate-none badge w-min text-ellipsis rounded-md border-0 bg-green text-white md:w-fit md:max-w-none"
+                                className=" md:truncate-none flex h-9 w-max items-center text-ellipsis rounded border-[1px] border-green bg-white px-2 text-xs text-gray-dark md:w-fit md:max-w-none"
                               >
                                 {x.name}
                               </div>
                             ),
                           )}
                         </div>
+                        {searchResults?.skills?.topCompleted.topCompleted
+                          .length === 0 && (
+                          <div className="flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center text-xs">
+                            Not enough data to display
+                          </div>
+                        )}
                       </div>
                     </>
                   )}
@@ -717,15 +783,16 @@ const OrganisationDashboard: NextPageWithLayout<{
 
               {/* DEMOGRAPHICS */}
               <div className="flex flex-col gap-2">
-                <div className="text-xl font-semibold">Demographics</div>
+                <div className="mb-2 text-xl font-semibold">Demographics</div>
 
-                <div className="flex flex-col gap-2 md:flex-row">
+                <div className="flex flex-col gap-4 md:flex-row">
                   {/* COUNTRIES */}
                   {searchResults?.demographics?.countries?.items && (
                     <PieChart
                       id="countries"
                       title="Country"
                       subTitle=""
+                      width={420}
                       colors={CHART_COLORS}
                       data={[
                         ["Country", "Value"],
@@ -733,7 +800,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           searchResults?.demographics?.countries?.items || {},
                         ),
                       ]}
-                      className="h-40 w-full md:w-72"
+                      className="h-44 w-full md:w-72"
                     />
                   )}
 
@@ -743,6 +810,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                       id="genders"
                       title="Genders"
                       subTitle=""
+                      width={420}
                       colors={CHART_COLORS}
                       data={[
                         ["Gender", "Value"],
@@ -750,7 +818,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           searchResults?.demographics?.genders?.items || {},
                         ),
                       ]}
-                      className="h-40 w-full md:w-72"
+                      className="h-44 w-full md:w-72"
                     />
                   )}
 
@@ -760,6 +828,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                       id="ages"
                       title="Age"
                       subTitle=""
+                      width={420}
                       colors={CHART_COLORS}
                       data={[
                         ["Age", "Value"],
@@ -767,16 +836,82 @@ const OrganisationDashboard: NextPageWithLayout<{
                           searchResults?.demographics?.ages?.items || {},
                         ),
                       ]}
-                      className="h-40 w-full md:w-64 lg:w-72"
+                      className="h-44 w-full md:w-64 lg:w-72"
                     />
                   )}
                 </div>
               </div>
             </div>
+          ) : (
+            <div className="flex flex-col place-items-center py-16">
+              <NoRowsMessage
+                title={"No results found"}
+                description={"Please try refining your search query."}
+              />
+            </div>
+          )}
 
-            {/* SELECTED OPPORTUNITIES */}
-            <div className="flex flex-col">
-              <div className="text-xl font-semibold">
+          {/* DIVIDER */}
+          <div className="border-px mb-2 mt-8 border-t border-gray" />
+
+          {/* SELECTED OPPORTUNITIES */}
+          {selectedOpportunities && selectedOpportunities?.items.length > 0 ? (
+            <div className="mt-4 flex flex-col">
+              <div>
+                <div className="mb-1 text-3xl font-semibold">Opportunities</div>
+                <div>
+                  Opportunities performance (sort by views, completions,
+                  conversion ratio)
+                </div>
+
+                <div className="mb-4 flex flex-col gap-4 md:flex-row">
+                  {/* UNPUBLISHED */}
+                  <div className="mt-4 flex h-32 w-full flex-col gap-2 rounded-lg bg-white p-4 shadow md:w-72">
+                    <div className="flex h-min items-center gap-2">
+                      <div className="items-center rounded-lg bg-green-light p-1">
+                        <Image
+                          src={iconBookmark}
+                          alt="Icon Status"
+                          width={20}
+                          height={20}
+                          sizes="100vw"
+                          priority={true}
+                          style={{ width: "20px", height: "20px" }}
+                        />
+                      </div>
+                      <div className="text-sm font-semibold">
+                        Unpublished opportunities
+                      </div>
+                    </div>
+                    <div className="mt-4 text-3xl font-semibold">
+                      {inactiveOpportunitiesCount}
+                    </div>
+                  </div>
+                  {/* EXPIRED */}
+                  <div className="mt-4 flex h-32 w-full flex-col gap-2 rounded-lg bg-white p-4 shadow md:w-72">
+                    <div className="flex h-min items-center gap-2">
+                      <div className="items-center rounded-lg bg-green-light p-1">
+                        <Image
+                          src={iconBookmark}
+                          alt="Icon Status"
+                          width={20}
+                          height={20}
+                          sizes="100vw"
+                          priority={true}
+                          style={{ width: "20px", height: "20px" }}
+                        />
+                      </div>
+                      <div className="text-sm font-semibold">
+                        Expired opportunities
+                      </div>
+                    </div>
+                    <div className="mt-4 text-3xl font-semibold">
+                      {expiredOpportunitiesCount}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2 text-xl font-semibold">
                 Selected Opportunities
               </div>
 
@@ -786,11 +921,11 @@ const OrganisationDashboard: NextPageWithLayout<{
               {!selectedOpportunitiesIsLoading && (
                 <div id="results">
                   <div className="mb-6 flex flex-row items-center justify-end"></div>
-                  <div className="rounded-lg bg-white p-4">
+                  <div className="rounded-lg bg-transparent p-0 shadow-none md:bg-white md:p-4 md:shadow">
                     {/* NO ROWS */}
                     {(!selectedOpportunities ||
                       selectedOpportunities.items?.length === 0) && (
-                      <div className="flex flex-col place-items-center py-52">
+                      <div className="flex flex-col place-items-center py-16">
                         <NoRowsMessage
                           title={"No opportunities found"}
                           description={"Please try refining your search query."}
@@ -801,59 +936,81 @@ const OrganisationDashboard: NextPageWithLayout<{
                     {/* GRID */}
                     {selectedOpportunities &&
                       selectedOpportunities.items?.length > 0 && (
-                        <div className="overflow-x-auto">
-                          <table className="table">
-                            <thead>
-                              <tr className="border-gray text-gray-dark">
-                                <th>Opportunity</th>
-                                <th>Views</th>
-                                <th>Converson ratio</th>
-                                <th>Completions</th>
-                                <th>Status</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {selectedOpportunities.items.map(
-                                (opportunity) => (
-                                  <tr
-                                    key={opportunity.id}
-                                    className="border-gray"
-                                  >
-                                    <td>
-                                      <Link
-                                        href={`/organisations/${id}/opportunities/${
-                                          opportunity.id
-                                        }/info?returnUrl=${encodeURIComponent(
-                                          router.asPath,
-                                        )}`}
-                                      >
-                                        {opportunity.title}
-                                      </Link>
-                                    </td>
-                                    <td className="text-center">
-                                      {opportunity.viewedCount}
-                                    </td>
-                                    <td className="text-center">
-                                      {opportunity.conversionRatioPercentage}
-                                    </td>
-                                    <td className="text-center">
-                                      {opportunity.completedCount}
-                                    </td>
-                                    <td className="whitespace-nowrap text-center">
-                                      {opportunity.status}
-                                    </td>
-                                  </tr>
-                                ),
-                              )}
-                            </tbody>
-                          </table>
+                        <div>
+                          {/* DESKTOP */}
+                          <div className="hidden overflow-x-auto px-4 md:block">
+                            <table className="table">
+                              <thead>
+                                <tr className="border-gray-light text-gray-dark">
+                                  <th className="!pl-0">Opportunity</th>
+                                  <th>Views</th>
+                                  <th>Conversion ratio</th>
+                                  <th>Completions</th>
+                                  <th className="text-center">Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {selectedOpportunities.items.map(
+                                  (opportunity) => (
+                                    <tr
+                                      key={opportunity.id}
+                                      className="border-gray-light"
+                                    >
+                                      <td>
+                                        <Link
+                                          href={`/organisations/${id}/opportunities/${
+                                            opportunity.id
+                                          }/info?returnUrl=${encodeURIComponent(
+                                            router.asPath,
+                                          )}`}
+                                        >
+                                          <div className="-ml-4 flex items-center gap-2">
+                                            <AvatarImage
+                                              icon={
+                                                opportunity?.organizationLogoURL
+                                              }
+                                              alt="Organization Logo"
+                                              size={40}
+                                            />
+                                            {opportunity.title}
+                                          </div>
+                                        </Link>
+                                      </td>
+                                      <td className="text-center">
+                                        {opportunity.viewedCount}
+                                      </td>
+                                      <td className="text-center">
+                                        {opportunity.conversionRatioPercentage}%
+                                      </td>
+                                      <td className="text-center">
+                                        <span className="badge bg-green-light text-green">
+                                          <IoMdPerson className="mr-1" />
+                                          {opportunity.completedCount}
+                                        </span>
+                                      </td>
+                                      <td className="whitespace-nowrap text-center">
+                                        {opportunity.status}
+                                      </td>
+                                    </tr>
+                                  ),
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                          {/* MOBILE */}
+                          <div className="flex flex-col gap-2 md:hidden">
+                            <DashboardCarousel
+                              orgId={id}
+                              slides={selectedOpportunities.items}
+                            />
+                          </div>
                         </div>
                       )}
 
                     {/* PAGINATION */}
                     {selectedOpportunities &&
                       selectedOpportunities.totalCount > 0 && (
-                        <div className="mt-2 grid place-items-center justify-center">
+                        <div className="mt-2 hidden place-items-center justify-center md:grid">
                           <PaginationButtons
                             currentPage={
                               pageSelectedOpportunities
@@ -872,49 +1029,62 @@ const OrganisationDashboard: NextPageWithLayout<{
                 </div>
               )}
             </div>
+          ) : (
+            <div className="flex flex-col place-items-center py-16">
+              <NoRowsMessage
+                title={"No opportunities found"}
+                description={"Please try refining your search query."}
+              />
+            </div>
+          )}
+
+          {/* COMPLETED YOUTH */}
+          <div className="my-8 flex flex-col">
+            <div className="text-xl font-semibold">Completed by Youth</div>
+
+            {completedYouthIsLoading && <LoadingSkeleton />}
 
             {/* COMPLETED YOUTH */}
-            <div className="flex flex-col">
-              <div className="text-xl font-semibold">Completed Youth</div>
+            {!completedYouthIsLoading && (
+              <div id="results">
+                <div className="mb-6 flex flex-row items-center justify-end"></div>
+                <div className="rounded-lg bg-transparent p-0 shadow-none md:bg-white md:p-4 md:shadow">
+                  {/* NO ROWS */}
+                  {(!completedYouth || completedYouth.items?.length === 0) && (
+                    <div className="flex flex-col place-items-center py-16">
+                      <NoRowsMessage
+                        title={"No completed opportunities found"}
+                        // description={"Please try refining your search query."}
+                      />
+                    </div>
+                  )}
 
-              {completedYouthIsLoading && <LoadingSkeleton />}
-
-              {/* COMPLETED YOUTH */}
-              {!completedYouthIsLoading && (
-                <div id="results">
-                  <div className="mb-6 flex flex-row items-center justify-end"></div>
-                  <div className="rounded-lg bg-white p-4">
-                    {/* NO ROWS */}
-                    {(!completedYouth ||
-                      completedYouth.items?.length === 0) && (
-                      <div className="flex flex-col place-items-center py-52">
-                        <NoRowsMessage
-                          title={"No opportunities found"}
-                          description={"Please try refining your search query."}
-                        />
-                      </div>
-                    )}
-
-                    {/* GRID */}
-                    {completedYouth && completedYouth.items?.length > 0 && (
-                      <div className="overflow-x-auto">
+                  {/* GRID */}
+                  {completedYouth && completedYouth.items?.length > 0 && (
+                    <div>
+                      {/* DESKTOP */}
+                      <div className="hidden overflow-x-auto md:block">
                         <table className="table">
                           <thead>
-                            <tr className="border-gray text-gray-dark">
+                            <tr className="border-gray-light text-gray-dark">
                               <th>Student</th>
                               <th>Opportunity</th>
-                              <th>Date connected</th>
-                              <th>Verified</th>
-                              <th>Opportunity Status</th>
+                              <th>Date completed</th>
+                              <th className="text-center">Verified</th>
+                              <th className="text-center">Status</th>
                             </tr>
                           </thead>
                           <tbody>
                             {completedYouth.items.map((opportunity) => (
                               <tr
                                 key={`completedYouth_${opportunity.opportunityId}_${opportunity.userId}`}
-                                className="border-gray"
+                                className="border-gray-light"
                               >
-                                <td>{opportunity.userDisplayName}</td>
+                                <td>
+                                  <div className="w-max py-2">
+                                    {opportunity.userDisplayName}
+                                  </div>
+                                </td>
                                 <td>
                                   <Link
                                     href={`/organisations/${id}/opportunities/${
@@ -922,54 +1092,64 @@ const OrganisationDashboard: NextPageWithLayout<{
                                     }/info?returnUrl=${encodeURIComponent(
                                       router.asPath,
                                     )}`}
+                                    className="text-center"
                                   >
                                     {opportunity.opportunityTitle}
                                   </Link>
                                 </td>
-                                <td className="whitespace-nowrap">
+                                <td className="whitespace-nowrap text-center">
                                   {opportunity.dateCompleted
                                     ? moment(
                                         new Date(opportunity.dateCompleted),
-                                      ).format(DATETIME_FORMAT_HUMAN)
+                                      ).format("MMM D YYYY")
                                     : ""}
                                 </td>
-                                <td className="whitespace-nowrap">
+                                <td className="whitespace-nowrap text-center">
                                   {opportunity.verified
                                     ? "Verified"
                                     : "Not verified"}
                                 </td>
-                                <td>{opportunity.opportunityStatus}</td>
+                                <td className="text-center">
+                                  {opportunity.opportunityStatus}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
                       </div>
-                    )}
-
-                    {/* PAGINATION */}
-                    {completedYouth && completedYouth.totalCount > 0 && (
-                      <div className="mt-2 grid place-items-center justify-center">
-                        <PaginationButtons
-                          currentPage={
-                            pageCompletedYouth
-                              ? parseInt(pageCompletedYouth.toString())
-                              : 1
-                          }
-                          totalItems={completedYouth.totalCount}
-                          pageSize={PAGE_SIZE}
-                          showPages={false}
-                          showInfo={true}
-                          onClick={handlePagerChangeCompletedYouth}
+                      {/* MOBILE */}
+                      <div className="flex flex-col gap-2 md:hidden">
+                        <DashboardCarousel
+                          orgId={id}
+                          slides={completedYouth.items}
                         />
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* PAGINATION */}
+                  {completedYouth && completedYouth.totalCount > 0 && (
+                    <div className="mt-2 grid place-items-center justify-center">
+                      <PaginationButtons
+                        currentPage={
+                          pageCompletedYouth
+                            ? parseInt(pageCompletedYouth.toString())
+                            : 1
+                        }
+                        totalItems={completedYouth.totalCount}
+                        pageSize={PAGE_SIZE}
+                        showPages={false}
+                        showInfo={true}
+                        onClick={handlePagerChangeCompletedYouth}
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </>
   );
 };

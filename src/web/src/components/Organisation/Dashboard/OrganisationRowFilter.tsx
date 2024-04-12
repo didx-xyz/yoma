@@ -8,7 +8,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
 import type { OrganizationSearchFilterBase } from "~/api/models/organizationDashboard";
-import { IoMdDownload } from "react-icons/io";
+// import { IoMdDownload } from "react-icons/io";
 import { searchCriteriaOpportunities } from "~/api/services/opportunities";
 import Select, { components, type ValueContainerProps } from "react-select";
 import Async from "react-select/async";
@@ -143,11 +143,11 @@ export const OrganisationRowFilter: React.FC<{
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
         className="flex flex-col gap-2"
       >
-        <div className="flex flex-col gap-2 lg:flex-row">
-          <div className="flex flex-grow flex-col flex-wrap items-center gap-2 lg:flex-row">
+        <div className="flex w-full flex-col items-center justify-center gap-2 md:justify-start lg:flex-row">
+          <div className="flex w-full flex-grow flex-col flex-wrap items-center gap-2 md:w-fit lg:flex-row">
             <div className="mr-4 text-sm font-bold">Search by:</div>
             {/* OPPORTUNITIES */}
-            <>
+            <span className="w-full md:w-48">
               <Controller
                 name="opportunities"
                 control={form.control}
@@ -156,7 +156,7 @@ export const OrganisationRowFilter: React.FC<{
                     instanceId="opportunities"
                     classNames={{
                       control: () =>
-                        "input input-xs h-fit !border-none w-[18rem] md:w-48",
+                        "input input-xs h-fit !border-none w-full md:w-48",
                     }}
                     isMulti={true}
                     defaultOptions={true} // calls loadOpportunities for initial results when clicking on the dropdown
@@ -189,16 +189,16 @@ export const OrganisationRowFilter: React.FC<{
                   </span>
                 </label>
               )}
-            </>
+            </span>
 
-            <div className="flex flex-grow flex-col gap-2 md:flex-row">
+            <div className="flex w-full flex-grow flex-col items-center gap-2 md:w-fit md:flex-row">
               <div className="mx-auto flex items-center text-center text-xs font-bold md:mx-1 md:text-left">
                 or
               </div>
 
               {/* CATEGORIES */}
               {lookups_categories && (
-                <>
+                <span className="w-full md:w-48">
                   <Controller
                     name="categories"
                     control={form.control}
@@ -208,7 +208,7 @@ export const OrganisationRowFilter: React.FC<{
                         instanceId="categories"
                         classNames={{
                           control: () =>
-                            "input input-xs h-fit !border-none w-[18rem] md:w-48",
+                            "input input-xs h-fit !border-none w-full md:w-48",
                         }}
                         isMulti={true}
                         options={lookups_categories.map((c) => ({
@@ -245,20 +245,20 @@ export const OrganisationRowFilter: React.FC<{
                       </span>
                     </label>
                   )}
-                </>
+                </span>
               )}
             </div>
           </div>
 
-          <div className="mt-6 flex justify-center gap-2 lg:justify-end">
+          <div className="mt-6 flex w-full justify-between gap-4 md:mt-0 md:w-fit lg:justify-end">
             {/* DATE START */}
-            <>
+            <span className="flex">
               <Controller
                 control={form.control}
                 name="startDate"
                 render={({ field: { onChange, value } }) => (
                   <DatePicker
-                    className="input input-bordered input-sm w-[8.75rem] rounded border-none !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none md:w-32"
+                    className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none md:w-32"
                     onChange={(date) => {
                       onChange(toISOStringForTimezone(date));
                       void handleSubmit(onSubmitHandler)();
@@ -276,16 +276,16 @@ export const OrganisationRowFilter: React.FC<{
                   </span>
                 </label>
               )}
-            </>
+            </span>
 
             {/* DATE END */}
-            <>
+            <span className="flex">
               <Controller
                 control={form.control}
                 name="endDate"
                 render={({ field: { onChange, value } }) => (
                   <DatePicker
-                    className="input input-bordered input-sm w-[8.75rem] rounded border-none !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none md:w-32"
+                    className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none md:w-32"
                     onChange={(date) => {
                       // change time to 1 second to midnight
                       if (date) date.setHours(23, 59, 59, 999);
@@ -305,21 +305,21 @@ export const OrganisationRowFilter: React.FC<{
                   </span>
                 </label>
               )}
-            </>
+            </span>
 
             {/* EXPORT TO CSV */}
-            {exportToCsv && (
+            {/* {exportToCsv && (
               <div className="flex flex-row items-center justify-end">
                 <IoMdDownload className="cursor-pointer text-white" />
-                {/* <button
+                <button
                   type="button"
                   className="btn btn-sm h-[2.4rem] rounded-md border-2 border-green text-xs font-semibold text-green"
                   onClick={() => exportToCsv(true)}
                 >
                   Export to CSV
-                </button> */}
+                </button>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </form>
