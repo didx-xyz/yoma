@@ -133,8 +133,24 @@ namespace Yoma.Core.Api
       app.UseRouting();
       app.UseAuthentication();
       app.UseAuthorization();
+
+      app.UseHangfireDashboard(options: new DashboardOptions
+      {
+        DarkModeEnabled = true,
+        IgnoreAntiforgeryToken = false, //data protection keys now in Redis; without replicas >=2 will cause antiforgery token issues
+        Authorization = [new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
+        {
+          RequireSsl = false, //handled by AWS
+          SslRedirect = false, //handled by AWS
+          LoginCaseSensitive = true,
+          Users = [new BasicAuthAuthorizationUser { Login = _appSettings.Hangfire.Username, PasswordClear = _appSettings.Hangfire.Password }]
+        })]
+      });
+
       app.UseEndpoints(endpoints =>
       {
+        endpoints.MapControllers();
+
         // basic check to ensure the API is up
         endpoints.MapHealthChecks($"/api/{Constants.Api_Version}/health/ready", new HealthCheckOptions
         {
@@ -153,19 +169,6 @@ namespace Yoma.Core.Api
       #endregion
 
       #region 3rd Party
-      app.UseHangfireDashboard(options: new DashboardOptions
-      {
-        DarkModeEnabled = true,
-        IgnoreAntiforgeryToken = false, //data protection keys now in Redis; without replicas >=2 will cause antiforgery token issues
-        Authorization = [new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
-        {
-          RequireSsl = false, //handled by AWS
-          SslRedirect = false, //handled by AWS
-          LoginCaseSensitive = true,
-          Users = [new BasicAuthAuthorizationUser { Login = _appSettings.Hangfire.Username, PasswordClear = _appSettings.Hangfire.Password }]
-        })]
-      });
-
       app.UseSSIProvider();
       #endregion
 
