@@ -142,7 +142,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public Organization? GetByNameOrNull(string name, bool includeChildItems, bool includeComputed)
     {
-      ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));  
+      ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
       name = name.Trim();
 
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
@@ -161,7 +161,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public List<Organization> Contains(string value, bool includeComputed)
     {
-      ArgumentException.ThrowIfNullOrWhiteSpace(value, nameof(value));  
+      ArgumentException.ThrowIfNullOrWhiteSpace(value, nameof(value));
       value = value.Trim();
 
       var results = _organizationRepository.Contains(_organizationRepository.Query(), value).ToList();
