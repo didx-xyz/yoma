@@ -4,6 +4,8 @@ using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Converters;
 using StackExchange.Redis;
@@ -81,6 +83,7 @@ namespace Yoma.Core.Api
 
       services.AddHttpContextAccessor();
       services.AddMemoryCache();
+      services.AddHealthChecks().AddCheck("API Ready Check", () => HealthCheckResult.Healthy("API is up"), tags: ["ready"]);
       #endregion
 
       #region 3rd Party
@@ -128,24 +131,31 @@ namespace Yoma.Core.Api
       if (_appSettings.HttpsRedirectionEnabledEnvironmentsAsEnum.HasFlag(_environment)) app.UseHttpsRedirection();
       app.UseStaticFiles();
       app.UseRouting();
+      app.UseAuthentication();
+      app.UseAuthorization();
+      app.UseEndpoints(endpoints =>
+      {
+        // basic check to ensure the API is up
+        endpoints.MapHealthChecks("/api/v3/health/ready", new HealthCheckOptions
+        {
+          Predicate = (check) => check.Tags.Contains("ready")
+        }).AllowAnonymous();
+
+        // more detailed check to ensure the API can connect to the database
+        endpoints.MapHealthChecks("/api/v3/health/live", new HealthCheckOptions
+        {
+          Predicate = (check) => check.Tags.Contains("live")
+        }).AllowAnonymous();
+      });
 
       //enabling sentry tracing causes endless information logs about 'Sentry trace header is null'
       //if (_environment != Domain.Core.Environment.Local) app.UseSentryTracing();
-
-      app.UseAuthentication();
-      app.UseAuthorization();
       #endregion
 
       #region 3rd Party
       app.UseHangfireDashboard(options: new DashboardOptions
       {
         DarkModeEnabled = true,
-        /*
-        TODO: Resolve shared Data Protection Keys (NFS or S3 or SSM or Postgres) and set this back to `false`
-        * https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/implementation/key-storage-providers
-        * https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/configuration/overview
-        * https://github.com/aws/aws-ssm-data-protection-provider-for-aspnet
-        */
         IgnoreAntiforgeryToken = true, //replicas >=2 will cause antiforgery token issues
         Authorization = [new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
         {

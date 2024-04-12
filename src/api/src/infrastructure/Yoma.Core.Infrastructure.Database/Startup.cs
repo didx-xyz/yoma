@@ -52,9 +52,16 @@ namespace Yoma.Core.Infrastructure.Database
                           maxRetryDelay: TimeSpan.FromSeconds(appSettings.DatabaseRetryPolicy.MaxRetryDelayInSeconds),
                           errorCodesToAdd: null);
               })
-              .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.MultipleCollectionIncludeWarning)); //didable warning related to not using AsSplitQuery() as per MS SQL implementation
-                                                                                                                   //.UseLazyLoadingProxies(): without arguments is used to enable lazy loading. Simply not calling UseLazyLoadingProxies() ensure lazy loading is not enabled
+        //disable warning related to not using AsSplitQuery() as per MS SQL implementation
+        //.UseLazyLoadingProxies(): without arguments is used to enable lazy loading. Simply not calling UseLazyLoadingProxies() ensure lazy loading is not enabled
+        .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.MultipleCollectionIncludeWarning)); 
+                                                                                                                   
       }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
+
+      services.AddHealthChecks().AddNpgSql(
+        connectionString: configuration.Configuration_ConnectionString(),
+        name: "Database Connectivity Check",
+        tags: ["live"]);
 
       //<PackageReference Include="EntityFrameworkProfiler.Appender" Version="6.0.6040" />
       //if (environment == Domain.Core.Environment.Local)
