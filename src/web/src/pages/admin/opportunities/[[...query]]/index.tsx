@@ -53,7 +53,7 @@ import { screenWidthAtom } from "~/lib/store";
 import ReactModal from "react-modal";
 import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
 import iconBell from "public/images/icon-bell.webp";
-import { IoMdDownload, IoMdPerson, IoIosLink } from "react-icons/io";
+import { IoMdDownload, IoMdPerson } from "react-icons/io";
 import iconZlto from "public/images/icon-zlto.svg";
 
 // 👇 SSG
@@ -728,7 +728,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             Opportunities
           </h2>
 
-          <div className="flex gap-2 md:justify-end">
+          <div className="flex h-fit gap-2 md:justify-end">
             <SearchInputLarge
               // className={
               //   "bg-theme hover:bg-theme brightness-105 hover:brightness-110"
@@ -841,82 +841,76 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                         }/opportunities/${
                           opportunity.id
                         }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
-                        className="rounded-lg bg-white p-2 shadow-custom"
+                        className="flex flex-col justify-between gap-4 rounded-lg bg-white p-4 shadow-custom"
                         key={opportunity.id}
                       >
-                        <div className="flex flex-col p-2">
-                          <div className="flex flex-col gap-2">
-                            <div className="flex flex-col gap-1">
-                              <span className="text-xs font-semibold text-gray-dark">
-                                Opportunity title
-                              </span>
-                              <span className="line-clamp-2 text-gray-dark">
-                                {opportunity.title}
-                              </span>
-                            </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="line-clamp-2 font-semibold text-gray-dark">
+                            {opportunity.title}
+                          </span>
+                        </div>
 
-                            {/* BADGES */}
-                            <div className="flex flex-wrap gap-2">
-                              {opportunity.zltoReward && (
-                                <span className="badge bg-orange-light text-orange">
-                                  <Image
-                                    src={iconZlto}
-                                    alt="Zlto icon"
-                                    width={16}
-                                    height={16}
-                                  />
-                                  <span className="ml-1 text-xs">
-                                    {opportunity?.zltoReward}
-                                  </span>
-                                </span>
-                              )}
-                              {opportunity.yomaReward && (
-                                <span className="badge bg-orange-light text-orange">
-                                  <span className="ml-1 text-xs">
-                                    {opportunity.yomaReward} Yoma
-                                  </span>
-                                </span>
-                              )}
-
-                              <span className="badge bg-blue-light text-blue">
-                                <IoMdPerson className="h-4 w-4" />
+                        <div className="flex flex-col gap-2 text-gray-dark">
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">Reward</p>
+                            {opportunity.zltoReward && (
+                              <span className="badge bg-orange-light text-orange">
+                                <Image
+                                  src={iconZlto}
+                                  alt="Zlto icon"
+                                  width={16}
+                                  height={16}
+                                />
                                 <span className="ml-1 text-xs">
-                                  {opportunity.participantCountTotal}
+                                  {opportunity?.zltoReward}
                                 </span>
                               </span>
-                              {opportunity.status == "Active" && (
-                                <>
-                                  <span className="badge bg-blue-light text-blue">
-                                    Active
-                                  </span>
-                                </>
-                              )}
-                              {opportunity?.status == "Expired" && (
-                                <span className="badge bg-green-light text-yellow ">
-                                  Expired
-                                </span>
-                              )}
-                              {opportunity?.status == "Inactive" && (
-                                <span className="badge bg-yellow-tint text-yellow ">
-                                  Inactive
-                                </span>
-                              )}
-                              {opportunity?.status == "Deleted" && (
-                                <span className="badge bg-green-light  text-red-400">
-                                  Deleted
-                                </span>
-                              )}
-
-                              <span
-                                // href={opportunity?.url ?? ""}
-                                className="badge bg-green-light text-green"
-                              >
-                                <IoIosLink className="h-4 w-4" />
+                            )}
+                            {opportunity.yomaReward && (
+                              <span className="badge bg-orange-light text-orange">
                                 <span className="ml-1 text-xs">
-                                  {opportunity?.url}
+                                  {opportunity.yomaReward} Yoma
                                 </span>
                               </span>
-                            </div>
+                            )}
+                          </div>
+
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">
+                              Participants
+                            </p>
+                            <span className="badge bg-green-light text-green">
+                              <IoMdPerson className="h-4 w-4" />
+                              <span className="ml-1 text-xs">
+                                {opportunity.participantCountTotal}
+                              </span>
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">Status</p>
+                            {opportunity.status == "Active" && (
+                              <>
+                                <span className="badge bg-blue-light text-blue">
+                                  Active
+                                </span>
+                              </>
+                            )}
+                            {opportunity?.status == "Expired" && (
+                              <span className="badge bg-green-light text-yellow ">
+                                Expired
+                              </span>
+                            )}
+                            {opportunity?.status == "Inactive" && (
+                              <span className="badge bg-yellow-tint text-yellow ">
+                                Inactive
+                              </span>
+                            )}
+                            {opportunity?.status == "Deleted" && (
+                              <span className="badge bg-green-light  text-red-400">
+                                Deleted
+                              </span>
+                            )}
                           </div>
                         </div>
                       </Link>
@@ -925,18 +919,18 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   {/* DESKTOP */}
                   <table className="hidden md:table">
                     <thead>
-                      <tr className="border-gray text-gray-dark">
+                      <tr className="!border-gray-light text-gray-dark">
                         <th>Opportunity title</th>
                         <th>Reward</th>
                         <th>Url</th>
                         <th>Participants</th>
-                        <th>Status</th>
+                        <th className="text-center">Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {searchResults.items.map((opportunity) => (
-                        <tr key={opportunity.id} className="border-gray">
-                          <td>
+                        <tr key={opportunity.id} className="!border-gray-light">
+                          <td className="!py-4">
                             <Link
                               href={`/organisations/${
                                 opportunity.organizationId
@@ -945,6 +939,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               }/info?returnUrl=${encodeURIComponent(
                                 router.asPath,
                               )}`}
+                              className="line-clamp-1"
                             >
                               {opportunity.title}
                             </Link>
