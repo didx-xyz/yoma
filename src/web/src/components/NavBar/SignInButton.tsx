@@ -8,7 +8,7 @@ import { currentLanguageAtom } from "~/lib/store";
 import { fetchClientEnv } from "~/lib/utils";
 
 export const SignInButton: React.FC<{ className?: string }> = ({
-  className = "hover:brightness-50x btn gap-2 border-0 border-none bg-transparent px-2 disabled:brightness-50",
+  className = "btn gap-2 border-0 border-none bg-transparent px-2 disabled:brightness-50",
 }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const currentLanguage = useAtomValue(currentLanguageAtom);

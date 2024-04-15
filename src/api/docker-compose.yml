@@ -151,6 +151,7 @@ services:
       CLIENT_GOODWALL_URL: "https://www.goodwall.io"
       CLIENT_GOODWALL_URL_REDIRECT: "goodwallauth://yomaredirect"
       CLIENT_YOMA_API_SECRET: superSecretYomaApiClientSecret
+      CLIENT_YOMA_WEB_SECRET: superSecretYomaWebClientSecret
       CLIENT_ATINGI_SECRET: superSecretAtingiClientSecret
       CLIENT_GOODWALL_SECRET: superSecretAtingiClientSecret
       SA_YOMA_API_PASSWORD: &KCAdminPassword superSecretYomaApiServiceAccountPassword
