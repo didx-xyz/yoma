@@ -490,7 +490,6 @@ namespace Yoma.Core.Domain.Analytics.Services
     private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryViewed(IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
     {
       var actionId = _myOpportunityActionService.GetByName(MyOpportunity.Action.Viewed.ToString()).Id;
-      //include all states; don't filter on active opportunity and / or active organization; should see all historical views
 
       var result = queryBase.Where(o => o.ActionId == actionId);
 
