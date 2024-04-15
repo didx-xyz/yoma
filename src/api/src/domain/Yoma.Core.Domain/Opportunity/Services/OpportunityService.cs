@@ -486,7 +486,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var filter = new OrganizationSearchFilter
       {
         Organizations = organizationIds,
-        Statuses = [Status.Active],
+        Statuses = [OrganizationStatus.Active],
         InternalUse = true
       };
 
