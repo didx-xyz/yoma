@@ -40,6 +40,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.Ar
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.Shared", "src\infrastructure\Yoma.Core.Infrastructure.Shared\Yoma.Core.Infrastructure.Shared.csproj", "{4244D97D-502A-4B37-9C1A-EFD7D2DBEFDD}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.Bitly", "src\infrastructure\Yoam.Core.Infrastructure.Bitly\Yoma.Core.Infrastructure.Bitly.csproj", "{4988FBD6-4E1F-4830-A0EC-8975FE152FF1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -86,6 +88,10 @@ Global
 		{4244D97D-502A-4B37-9C1A-EFD7D2DBEFDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4244D97D-502A-4B37-9C1A-EFD7D2DBEFDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4244D97D-502A-4B37-9C1A-EFD7D2DBEFDD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4988FBD6-4E1F-4830-A0EC-8975FE152FF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4988FBD6-4E1F-4830-A0EC-8975FE152FF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4988FBD6-4E1F-4830-A0EC-8975FE152FF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4988FBD6-4E1F-4830-A0EC-8975FE152FF1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -104,6 +110,7 @@ Global
 		{17BCA099-6C01-49D5-BBC7-FFA77F42DCCD} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{86015AFD-8D18-437C-92E4-87ECCA82C574} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{4244D97D-502A-4B37-9C1A-EFD7D2DBEFDD} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
+		{4988FBD6-4E1F-4830-A0EC-8975FE152FF1} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D658A68F-8A10-4EF2-B8C9-F1350399BF58}

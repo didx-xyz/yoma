@@ -26,7 +26,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IEmailURLFactory _emailURLFactory;
     private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
     private readonly IDistributedLockService _distributedLockService;
-    private static readonly Status[] Statuses_Expirable = [Status.Active, Status.Inactive];
+    private static readonly Status[] Statuses_Expirable = [Status.Active];
     private static readonly Status[] Statuses_Deletion = [Status.Inactive, Status.Expired];
     #endregion
 

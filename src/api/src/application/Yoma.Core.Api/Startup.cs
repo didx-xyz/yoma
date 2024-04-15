@@ -21,6 +21,7 @@ using Yoma.Core.Domain.Core.Services;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Infrastructure.AmazonS3;
 using Yoma.Core.Infrastructure.AriesCloud;
+using Yoma.Core.Infrastructure.Bitly;
 using Yoma.Core.Infrastructure.Database;
 using Yoma.Core.Infrastructure.Emsi;
 using Yoma.Core.Infrastructure.Keycloak;
@@ -63,12 +64,15 @@ namespace Yoma.Core.Api
           _configuration.GetSection(AppSettings.Section).Bind(options));
       services.Configure<ScheduleJobOptions>(options =>
           _configuration.GetSection(ScheduleJobOptions.Section).Bind(options));
-      services.ConfigureServices_IdentityProvider(_configuration);
-      services.ConfigureServices_LaborMarketProvider(_configuration);
-      services.ConfigureServices_RewardProvider(_configuration);
+
       services.AddSingleton<IEnvironmentProvider>(p => ActivatorUtilities.CreateInstance<EnvironmentProvider>(p, _webHostEnvironment.EnvironmentName));
-      services.ConfigureServices_EmailProvider(_configuration);
+
       services.ConfigureServices_BlobProvider(_configuration);
+      services.ConfigureServices_ShortLinkProvider(_configuration);
+      services.ConfigureServices_LaborMarketProvider(_configuration);
+      services.ConfigureServices_IdentityProvider(_configuration);
+      services.ConfigureServices_EmailProvider(_configuration);
+      services.ConfigureServices_RewardProvider(_configuration);
       #endregion Configuration
 
       #region System
@@ -95,13 +99,14 @@ namespace Yoma.Core.Api
 
       #region Services & Infrastructure
       services.ConfigureServices_DomainServices();
-      services.ConfigureServices_InfrastructureSSIProvider(_configuration, _configuration.Configuration_ConnectionString(), _appSettings);
       services.ConfigureServices_InfrastructureBlobProvider();
-      services.ConfigureServices_InfrastructureIdentityProvider();
+      services.ConfigureServices_InfrastructureSSIProvider(_configuration, _configuration.Configuration_ConnectionString(), _appSettings);
+      services.ConfigureServices_InfrastructureShortLinkProvider();
+      services.ConfigureServices_InfrastructureDatabase(_configuration, _appSettings);
       services.ConfigureServices_InfrastructureLaborMarketProvider();
+      services.ConfigureServices_InfrastructureIdentityProvider();
       services.ConfigureServices_InfrastructureEmailProvider(_configuration);
       services.ConfigureServices_InfrastructureRewardProvider();
-      services.ConfigureServices_InfrastructureDatabase(_configuration, _appSettings);
       #endregion Services & Infrastructure
 
       #region 3rd Party (post ConfigureServices_InfrastructureDatabase)

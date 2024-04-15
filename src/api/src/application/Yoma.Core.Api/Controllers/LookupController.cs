@@ -60,7 +60,7 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Return a list of edcuations")]
+    [SwaggerOperation(Summary = "Return a list of educations")]
     [HttpGet("education")]
     [ProducesResponseType(typeof(List<Education>), (int)HttpStatusCode.OK)]
     public IActionResult ListEducations()

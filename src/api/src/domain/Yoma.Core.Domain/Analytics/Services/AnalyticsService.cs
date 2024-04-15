@@ -36,6 +36,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
     private const int Skill_Count = 10;
     private const int Country_Count = 5;
+    private const string Education_Group_Default = "Unspecified";
     private const string Gender_Group_Default = "Other";
     private const string Country_Group_Default = "Unspecified";
     private const string AgeBracket_Group_Default = "Unspecified";
@@ -210,7 +211,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
       result.Opportunities.Completion = new OpportunityCompletion { Legend = "Average time (days)", AverageTimeInDays = (int)Math.Round(averageCompletionTimeInDays) };
 
-      //average converstion rate
+      //average conversation rate
       var items = SearchOrganizationOpportunitiesQueryBase(new OrganizationSearchFilterOpportunity
       {
         Organization = filter.Organization,
@@ -266,11 +267,26 @@ namespace Yoma.Core.Domain.Analytics.Services
         { Legend = ["Total unique skills",], Data = resultsSkills, Count = [flattenedSkills.Count] }
       };
 
-      //demogrpahics
+      //demographics
       var currentDate = DateTimeOffset.UtcNow;
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       result.Demographics = new OrganizationDemographic
       {
+        //education
+        Education = new Demographic
+        {
+          Legend = "Education",
+          Items = queryCompleted
+              .GroupBy(opportunity =>
+                  string.IsNullOrEmpty(opportunity.UserEducation)
+                      ? Education_Group_Default
+                      : opportunity.UserEducation)
+              .Select(group => new { UserEducation = group.Key, Count = group.Count() })
+              .OrderBy(education => education.UserEducation.ToLower() == Education_Group_Default.ToLower() ? int.MaxValue : 0)
+              .ThenBy(education => education.UserEducation)
+              .ToDictionary(education => education.UserEducation, education => education.Count)
+        },
+
         //countries
         Countries = new Demographic
         {
@@ -368,10 +384,18 @@ namespace Yoma.Core.Domain.Analytics.Services
           {
             Opportunity = opportunity,
             ViewedCount = _myOpportunityRepository.Query()
-                  .Count(mo => mo.OpportunityId == opportunity.Id && mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Viewed.ToString()).Id),
-            CompletedCount = _myOpportunityRepository.Query()
-                  .Count(mo => mo.OpportunityId == opportunity.Id && mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id &&
-                               mo.VerificationStatusId == _myOpportunityVerificationStatusService.GetByName(MyOpportunity.VerificationStatus.Completed.ToString()).Id)
+              .Where(mo => mo.OpportunityId == opportunity.Id &&
+                           mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Viewed.ToString()).Id &&
+                           (!filter.StartDate.HasValue || mo.OpportunityDateStart >= filter.StartDate.RemoveTime()) &&
+                           (!filter.EndDate.HasValue || (!mo.OpportunityDateEnd.HasValue || mo.OpportunityDateEnd <= filter.EndDate.ToEndOfDay())))
+              .Count(),
+                      CompletedCount = _myOpportunityRepository.Query()
+              .Where(mo => mo.OpportunityId == opportunity.Id &&
+                           mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id &&
+                           mo.VerificationStatusId == _myOpportunityVerificationStatusService.GetByName(MyOpportunity.VerificationStatus.Completed.ToString()).Id &&
+                           (!filter.StartDate.HasValue || mo.OpportunityDateStart >= filter.StartDate.RemoveTime()) &&
+                           (!filter.EndDate.HasValue || (!mo.OpportunityDateEnd.HasValue || mo.OpportunityDateEnd <= filter.EndDate.ToEndOfDay())))
+              .Count()
           })
           .Select(result => new OpportunityInfoAnalytics
           {
@@ -466,7 +490,7 @@ namespace Yoma.Core.Domain.Analytics.Services
     private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryViewed(IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
     {
       var actionId = _myOpportunityActionService.GetByName(MyOpportunity.Action.Viewed.ToString()).Id;
-      //include all states; don't filter on active opportunity and / or active organization; should see all hisatorical views
+      //include all states; don't filter on active opportunity and / or active organization; should see all historical views
 
       var result = queryBase.Where(o => o.ActionId == actionId);
 

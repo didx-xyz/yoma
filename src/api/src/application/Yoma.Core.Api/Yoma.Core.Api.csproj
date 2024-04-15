@@ -29,6 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\infrastructure\Yoam.Core.Infrastructure.Bitly\Yoma.Core.Infrastructure.Bitly.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.AmazonS3\Yoma.Core.Infrastructure.AmazonS3.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.AriesCloud\Yoma.Core.Infrastructure.AriesCloud.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Database\Yoma.Core.Infrastructure.Database.csproj" />

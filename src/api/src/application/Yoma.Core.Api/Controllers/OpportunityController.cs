@@ -274,7 +274,7 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Search for opporutnities based on the supplied filter, returning a lightweight result set/list for search filter input")]
+    [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter, returning a lightweight result set/list for search filter input")]
     [HttpPost("search/filter/opportunity")]
     [ProducesResponseType(typeof(OpportunitySearchResultsCriteria), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
