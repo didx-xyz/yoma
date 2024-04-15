@@ -1,4 +1,9 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  dehydrate,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -6,7 +11,7 @@ import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
 import { User, authOptions } from "~/server/auth";
-import { Status } from "~/api/models/opportunity";
+import { OrganizationStatus, Status } from "~/api/models/opportunity";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { type ParsedUrlQuery } from "querystring";
 import Link from "next/link";
@@ -15,6 +20,8 @@ import { IoIosAdd } from "react-icons/io";
 import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import {
+  GA_ACTION_OPPORTUNITY_UPDATE,
+  GA_CATEGORY_OPPORTUNITY,
   PAGE_SIZE,
   ROLE_ADMIN,
   ROLE_ORG_ADMIN,
@@ -25,16 +32,26 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { getOrganisations } from "~/api/services/organisations";
+import {
+  getOrganisations,
+  patchOrganisationStatus,
+} from "~/api/services/organisations";
 import { SelectOption } from "~/api/models/lookups";
 import {
+  OrganizationInfo,
   OrganizationSearchFilter,
   OrganizationSearchResults,
 } from "~/api/models/organisation";
 import { OrganisationCardComponent } from "~/components/Organisation/OrganisationCardComponent";
+import { FaPencilAlt, FaClock, FaTrash } from "react-icons/fa";
+import ReactModal from "react-modal";
+import { toast } from "react-toastify";
+import { ApiErrors } from "~/components/Status/ApiErrors";
+import { trackGAEvent } from "~/lib/google-analytics";
+import { set } from "zod";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -134,6 +151,12 @@ const Organisations: NextPageWithLayout<{
   user: User;
 }> = ({ query, page, status, error, returnUrl, user }) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  // const [isLoading, setIsLoading] = useState(false);
+  // const [currentOrganisation, setCurrentOrganisation] =
+  //   useState<OrganizationInfo | null>(null);
+  // const [manageOpportunityMenuVisible, setManageOpportunityMenuVisible] =
+  //   useState(false);
 
   const lookups_statuses: SelectOption[] = [
     { value: "0", label: "Active" },
@@ -150,7 +173,7 @@ const Organisations: NextPageWithLayout<{
     statuses:
       status != undefined
         ? lookups_statuses
-            .filter((y) => y.label === status)
+            .filter((y) => y.label.toLowerCase() === status.toLowerCase())
             .map((item) => item.value)
         : null,
   });
@@ -162,39 +185,90 @@ const Organisations: NextPageWithLayout<{
     enabled: !error,
   });
 
-  const onSearch = useCallback(
+  // 🎈 FUNCTIONS
+  const getSearchFilterAsQueryString = useCallback(
+    (filter: OrganizationSearchFilter) => {
+      if (!filter) return null;
+
+      // construct querystring parameters from filter
+      const params = new URLSearchParams();
+      if (
+        filter.valueContains !== undefined &&
+        filter.valueContains !== null &&
+        filter.valueContains.length > 0
+      )
+        params.append("query", filter.valueContains);
+
+      if (
+        filter?.statuses !== undefined &&
+        filter?.statuses !== null &&
+        filter?.statuses.length > 0
+      )
+        params.append(
+          "status",
+          filter?.statuses
+            .map(
+              (status) =>
+                lookups_statuses.find((item) => item.value === status)?.label,
+            )
+            .join(","),
+        );
+
+      if (
+        filter.pageNumber !== null &&
+        filter.pageNumber !== undefined &&
+        filter.pageNumber !== 1
+      )
+        params.append("page", filter.pageNumber.toString());
+
+      if (params.size === 0) return null;
+      return params;
+    },
+    [lookups_statuses],
+  );
+
+  const redirectWithSearchFilterParams = useCallback(
+    (filter: OrganizationSearchFilter) => {
+      let url = "/organisations";
+      const params = getSearchFilterAsQueryString(filter);
+      if (params != null && params.size > 0)
+        url = `/organisations?${params.toString()}`;
+
+      if (url != router.asPath)
+        void router.push(url, undefined, { scroll: false });
+    },
+    [router, getSearchFilterAsQueryString],
+  );
+
+  // 🔔 CHANGE EVENTS
+  const handlePagerChange = useCallback(
+    (value: number) => {
+      searchFilter.pageNumber = value;
+      redirectWithSearchFilterParams(searchFilter);
+    },
+    [searchFilter, redirectWithSearchFilterParams],
+  );
+
+  const onSearchInputSubmit = useCallback(
     (query: string) => {
       if (query && query.length > 2) {
         // uri encode the search value
-        const queryEncoded = encodeURIComponent(query);
-
-        // redirect to the search page
-        void router.push(
-          `/organisations?query=${queryEncoded}${
-            status ? `&status=${status}` : ""
-          }`,
-        );
-      } else {
-        void router.push(`/organisations${status ? `?status=${status}` : ""}`);
+        const searchValueEncoded = encodeURIComponent(query);
+        query = searchValueEncoded;
       }
+
+      searchFilter.valueContains = query;
+      redirectWithSearchFilterParams(searchFilter);
     },
-    [router, status],
+    [searchFilter, redirectWithSearchFilterParams],
   );
 
-  // 🔔 pager change event
-  const handlePagerChange = useCallback(
-    (value: number) => {
-      // redirect
-      void router.push({
-        pathname: `/organisations`,
-        query: { query: query, page: value, status: status },
-      });
-
-      // reset scroll position
-      window.scrollTo(0, 0);
-    },
-    [query, router, status],
-  );
+  const updateStatus = useCallback(async () => {
+    // invalidate cache
+    await queryClient.invalidateQueries({
+      queryKey: ["Organisations", query, page, status],
+    });
+  }, [query, page, status, queryClient]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -207,6 +281,7 @@ const Organisations: NextPageWithLayout<{
       <Head>
         <title>Yoma | Organisations</title>
       </Head>
+
       <PageBackground className="h-[14.5rem] md:h-[18rem]" />
 
       <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
@@ -240,7 +315,7 @@ const Organisations: NextPageWithLayout<{
                     </li>
                     <li className="w-1/5 md:w-20">
                       <Link
-                        href={`/organisations?status=active`}
+                        href={`/organisations?status=Active`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "active"
                             ? "active border-orange"
@@ -253,7 +328,7 @@ const Organisations: NextPageWithLayout<{
                     </li>
                     <li className="w-1/5 md:w-20">
                       <Link
-                        href={`/organisations?status=inactive`}
+                        href={`/organisations?status=Inactive`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "inactive"
                             ? "active border-orange"
@@ -261,25 +336,12 @@ const Organisations: NextPageWithLayout<{
                         }`}
                         role="tab"
                       >
-                        Inactive
+                        Pending
                       </Link>
                     </li>
                     <li className="w-1/5 md:w-20">
                       <Link
-                        href={`/organisations?status=expired`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          status === "expired"
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        Expired
-                      </Link>
-                    </li>
-                    <li className="w-1/5 md:w-20">
-                      <Link
-                        href={`/organisations?status=deleted`}
+                        href={`/organisations?status=Deleted`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "deleted"
                             ? "active border-orange"
@@ -298,7 +360,7 @@ const Organisations: NextPageWithLayout<{
 
           {/* SEARCH INPUT */}
           <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
-            <SearchInput defaultValue={query} onSearch={onSearch} />
+            <SearchInput defaultValue={query} onSearch={onSearchInputSubmit} />
 
             <Link
               href={`/organisations/register${`?returnUrl=${encodeURIComponent(
@@ -312,7 +374,7 @@ const Organisations: NextPageWithLayout<{
             </Link>
           </div>
         </div>
-        searchFilter: {JSON.stringify(searchFilter)}
+
         <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
           {/* NO ROWS */}
           {searchResults && searchResults.items?.length === 0 && !query && (
@@ -354,6 +416,7 @@ const Organisations: NextPageWithLayout<{
                     key={`OrganisationCardComponent_${item.id}`}
                     item={item}
                     user={user}
+                    onUpdateStatus={updateStatus}
                   />
                 ))}
               </div>
