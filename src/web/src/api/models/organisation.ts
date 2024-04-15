@@ -91,7 +91,7 @@ export enum OrganizationStatus {
 
 export interface OrganizationSearchFilter extends PaginationFilter {
   valueContains: string | null;
-  statuses: Status[] | null;
+  statuses: Status[] | null | string[]; //NB: string[] is a workaround for the API
 }
 
 export enum Status {
