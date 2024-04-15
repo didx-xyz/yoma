@@ -170,7 +170,7 @@ export const OpportunityFilterHorizontal: React.FC<{
             <div className="flex justify-center gap-2">
               {/* CATEGORIES */}
               {filterOptions?.includes(OpportunityFilterOptions.CATEGORIES) && (
-                <div className="flex justify-center gap-4 overflow-hidden md:w-full">
+                <div className="flex justify-center gap-4 md:w-full">
                   {lookups_categories.map((item) => (
                     <OpportunityCategoryHorizontalCard
                       key={`categories_${item.id}`}

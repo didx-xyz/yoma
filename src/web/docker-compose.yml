@@ -16,14 +16,17 @@ services:
       - "3000:3000"
     environment:
       # SERVER VARIABLES
-      # KEYCLOAK_CLIENT_SECRET is a placeholder for future functionality, but is required by the app to run.
       NEXTAUTH_SECRET: VerySecretAndSecureNextAuthSecret # openssl rand -base64 32
       KEYCLOAK_CLIENT_ID: yoma-web
-      KEYCLOAK_CLIENT_SECRET: VerySecretAndSecureKeycloakClientSecret
+      KEYCLOAK_CLIENT_SECRET: superSecretYomaWebClientSecret
+      KEYCLOAK_GOODWALL_CLIENT_ID: goodwall
+      KEYCLOAK_GOODWALL_CLIENT_SECRET: superSecretAtingiClientSecret
+      KEYCLOAK_ATINGI_CLIENT_ID: atingi
+      KEYCLOAK_ATINGI_CLIENT_SECRET: superSecretAtingiClientSecret
       NEXTAUTH_URL: http://localhost:3000
       API_BASE_URL: http://yoma-api:5000/api/v3
       KEYCLOAK_ISSUER: http://keycloak:8080/realms/yoma
-      NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER: keycloak
+      NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER: yoma-web
       NEXT_PUBLIC_API_BASE_URL: http://localhost:5000/api/v3
       NEXT_PUBLIC_ENVIRONMENT: local
       NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: secret

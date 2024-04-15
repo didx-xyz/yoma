@@ -6,11 +6,7 @@ import {
   type NextAuthOptions,
 } from "next-auth";
 import { type DefaultJWT } from "next-auth/jwt";
-import { type OAuthConfig } from "next-auth/providers";
-import KeycloakProvider, {
-  type KeycloakProfile,
-} from "next-auth/providers/keycloak";
-import { env } from "process";
+import KeycloakProvider from "next-auth/providers/keycloak";
 import { type UserProfile } from "~/api/models/user";
 
 /**
@@ -43,7 +39,14 @@ declare module "next-auth/jwt" {
 }
 
 const COOKIES_LIFE_TIME = 24 * 60 * 60;
-const COOKIE_PREFIX = process.env.NODE_ENV === "production" ? "__Secure-" : "";
+const COOKIE_PREFIX =
+  process.env.NODE_ENV === "production" &&
+  process.env.NEXT_PUBLIC_ENVIRONMENT !== "local"
+    ? "__Secure-"
+    : "";
+const CLIENT_WEB = "yoma-web";
+const CLIENT_GOODWALL = "goodwall";
+const CLIENT_ATINGI = "atingi";
 
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
@@ -51,34 +54,37 @@ const COOKIE_PREFIX = process.env.NODE_ENV === "production" ? "__Secure-" : "";
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
+  logger: {
+    error(code, metadata) {
+      console.error(code, metadata);
+    },
+    warn(code) {
+      console.warn(code);
+    },
+  },
   events: {
     async signOut({ token }) {
-      if (token.provider === "keycloak") {
-        const issuerUrl = (
-          authOptions.providers.find(
-            (p) => p.id === "keycloak",
-          ) as OAuthConfig<KeycloakProfile>
-        ).options!.issuer!;
-        const logOutUrl = new URL(
-          `${issuerUrl}/protocol/openid-connect/logout`,
-        );
-        logOutUrl.searchParams.set("id_token_hint", token.accessToken);
-        await fetch(logOutUrl);
-      }
-      const url =
-        process.env.KEYCLOAK_ISSUER + "/protocol/openid-connect/logout?";
+      // get the client id & secret based on the provider
+      const { client_id, client_secret } = getClientIdAndSecretForProvider(
+        token.provider,
+      );
 
-      await fetch(url, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        method: "POST",
-        body: new URLSearchParams({
-          client_id: process.env.KEYCLOAK_CLIENT_ID!, // eslint-disable-line
-          client_secret: process.env.KEYCLOAK_CLIENT_SECRET!, // eslint-disable-line
-          refresh_token: token.refreshToken, // eslint-disable-line
-        }),
-      });
+      const url = new URL(
+        `${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/logout`,
+      );
+
+      url.searchParams.set("id_token_hint", token.idToken!);
+      url.searchParams.set("client_id", client_id);
+      url.searchParams.set("client_secret", client_secret);
+      url.searchParams.set("refresh_token", token.refreshToken);
+
+      // invalidates the session, but doesn't delete it
+      const response = await fetch(url.toString());
+      if (!response.ok) {
+        const message = `An error has occurred: ${response.status}`;
+        console.error(message);
+        throw new Error(message);
+      }
     },
   },
   callbacks: {
@@ -100,6 +106,7 @@ export const authOptions: NextAuthOptions = {
         const userProfile = await getYomaUserProfile(account.access_token!);
 
         return {
+          idToken: account.id_token, // needed for signout event (id_token_hint)
           accessToken: account.accessToken,
           accessTokenExpires: account.expires_at,
           refreshToken: account.refresh_token,
@@ -108,6 +115,7 @@ export const authOptions: NextAuthOptions = {
             roles: realm_access.roles, // eslint-disable-line
             adminsOf: userProfile?.adminsOf.map((org) => org.id) ?? [],
           },
+          provider: account.provider, //NB: used to determine which client id & secret to use when refreshing token
         };
       }
 
@@ -132,11 +140,31 @@ export const authOptions: NextAuthOptions = {
     },
   },
   providers: [
+    // YOMA-WEB CLIENT
     KeycloakProvider({
-      clientId: env.KEYCLOAK_CLIENT_ID!,
-      clientSecret: env.KEYCLOAK_CLIENT_SECRET!,
-      issuer: env.KEYCLOAK_ISSUER,
+      clientId: process.env.KEYCLOAK_CLIENT_ID!,
+      clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
+      issuer: process.env.KEYCLOAK_ISSUER,
+      id: CLIENT_WEB,
+      name: "Yoma",
     }),
+    // GOODWALL
+    KeycloakProvider({
+      clientId: process.env.KEYCLOAK_GOODWALL_CLIENT_ID!,
+      clientSecret: process.env.KEYCLOAK_GOODWALL_CLIENT_SECRET!,
+      issuer: process.env.KEYCLOAK_ISSUER,
+      id: CLIENT_GOODWALL,
+      name: "Goodwall",
+    }),
+    // ATINGI
+    KeycloakProvider({
+      clientId: process.env.KEYCLOAK_ATINGI_CLIENT_ID!,
+      clientSecret: process.env.KEYCLOAK_ATINGI_CLIENT_SECRET!,
+      issuer: process.env.KEYCLOAK_ISSUER,
+      id: CLIENT_ATINGI,
+      name: "Atingi",
+    }),
+
     /**
      * ...add more providers here.
      *
@@ -147,10 +175,6 @@ export const authOptions: NextAuthOptions = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
-  // session: {
-  //   strategy: "jwt",
-  //   maxAge: 30 * 24 * 60 * 60, // 30 days
-  // },
   secret: process.env.NEXTAUTH_SECRET,
 
   // FIX: OAUTH_CALLBACK_ERROR State cookie was missing
@@ -230,14 +254,19 @@ async function refreshAccessToken(token: any) {
   try {
     const url = process.env.KEYCLOAK_ISSUER + "/protocol/openid-connect/token?";
 
+    // get the client id & secret based on the provider
+    const { client_id, client_secret } = getClientIdAndSecretForProvider(
+      token.provider,
+    );
+
     const response = await fetch(url, {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       method: "POST",
       body: new URLSearchParams({
-        client_id: process.env.KEYCLOAK_CLIENT_ID!, // eslint-disable-line
-        client_secret: process.env.KEYCLOAK_CLIENT_SECRET!, // eslint-disable-line
+        client_id: client_id,
+        client_secret: client_secret,
         grant_type: "refresh_token",
         refresh_token: token.refreshToken, // eslint-disable-line
       }),
@@ -283,7 +312,7 @@ async function refreshAccessToken(token: any) {
 async function getYomaUserProfile(
   access_token: string,
 ): Promise<UserProfile | null> {
-  const response = await fetch(`${env.API_BASE_URL}/user`, {
+  const response = await fetch(`${process.env.API_BASE_URL}/user`, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${access_token}`,
@@ -301,6 +330,23 @@ async function getYomaUserProfile(
   return await response.json(); // eslint-disable-line
 }
 
+function getClientIdAndSecretForProvider(provider: unknown) {
+  let client_id = "";
+  let client_secret = "";
+  if (provider === CLIENT_WEB) {
+    client_id = process.env.KEYCLOAK_CLIENT_ID!;
+    client_secret = process.env.KEYCLOAK_CLIENT_SECRET!;
+  } else if (provider === CLIENT_GOODWALL) {
+    client_id = process.env.KEYCLOAK_GOODWALL_CLIENT_ID!;
+    client_secret = process.env.KEYCLOAK_GOODWALL_CLIENT_SECRET!;
+  } else if (provider === CLIENT_ATINGI) {
+    client_id = process.env.KEYCLOAK_ATINGI_CLIENT_ID!;
+    client_secret = process.env.KEYCLOAK_ATINGI_CLIENT_SECRET!;
+  } else {
+    throw new Error("Invalid provider");
+  }
+  return { client_id, client_secret };
+}
 /**
  * Wrapper for `getServerSession` so that you don't need to import the `authOptions` in every file.
  *

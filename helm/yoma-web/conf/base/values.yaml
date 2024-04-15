@@ -22,7 +22,7 @@ ingress:
 
 env:
   NEXT_PUBLIC_ENVIRONMENT: local
-  NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER: keycloak
+  NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER: yoma-web
 
 livenessProbe:
   enabled: true
