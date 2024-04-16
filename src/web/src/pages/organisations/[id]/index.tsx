@@ -39,7 +39,7 @@ import Link from "next/link";
 import { getThemeFromRole } from "~/lib/utils";
 import Image from "next/image";
 import iconZlto from "public/images/icon-zlto-green.svg";
-import iconBookmark from "public/images/icon-bookmark-green.svg";
+import iconBookmark from "public/images/icon-completions-green.svg";
 import iconSkills from "public/images/icon-skills-green.svg";
 import {
   CHART_COLORS,
@@ -773,10 +773,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                         </span>
 
                         {/* TOTAL UNIQUE SKILLS */}
-                        <SkillsChart
-                          id="totalUniqueSkills"
-                          data={searchResults?.skills?.items}
-                        />
+                        <SkillsChart data={searchResults?.skills?.items} />
                       </div>
                     </div>
                     {/* MOST COMPLETED SKILLS */}
