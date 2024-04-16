@@ -1069,7 +1069,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         // update ZltoRewardCumulative, treating null as 0 for the addition
         opportunity.ZltoRewardCumulative = (opportunity.ZltoRewardCumulative ?? default) + result.ZltoReward.Value;
       }
-      
+
       if (result.YomaReward.HasValue)
       {
         if (opportunity.YomaRewardPool.HasValue)
