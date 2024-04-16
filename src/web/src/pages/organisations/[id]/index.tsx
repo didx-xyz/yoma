@@ -711,12 +711,6 @@ const OrganisationDashboard: NextPageWithLayout<{
               <div className="flex flex-col">
                 <div className="mb-4 flex gap-4">
                   <div className="text-xl font-semibold">Countries</div>
-                  {/* <div className="hidden w-[17.2rem] text-xl font-semibold md:inline">
-                    Rewards
-                  </div>
-                  <div className="hidden text-xl font-semibold md:inline">
-                    Skills
-                  </div> */}
                 </div>
                 <div className="flex flex-col gap-4 md:flex-row">
                   <div className="flex w-full flex-col justify-center overflow-hidden rounded-lg bg-white shadow">
@@ -1091,7 +1085,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                     <div className="flex flex-col place-items-center py-16">
                       <NoRowsMessage
                         title={"No completed opportunities found"}
-                        // description={"Please try refining your search query."}
+                        description={
+                          "Opportunities completed by youth will be displayed here."
+                        }
                       />
                     </div>
                   )}

@@ -1,4 +1,3 @@
-// Import the necessary items
 import { Chart } from "react-google-charts";
 
 type GoogleChartData = (string | number)[][];
