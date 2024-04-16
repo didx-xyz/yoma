@@ -26,7 +26,10 @@ import {
   searchOrganizationYouth,
 } from "~/api/services/organizationDashboard";
 import type { GetServerSidePropsContext } from "next";
-import { type OpportunityCategory } from "~/api/models/opportunity";
+import {
+  OpportunitySearchResultsInfo,
+  type OpportunityCategory,
+} from "~/api/models/opportunity";
 import { getServerSession } from "next-auth";
 import { Loading } from "~/components/Status/Loading";
 import { OrganisationRowFilter } from "~/components/Organisation/Dashboard/OrganisationRowFilter";
@@ -53,7 +56,10 @@ import type {
 } from "~/api/models/organizationDashboard";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import moment from "moment";
-import { getCategoriesAdmin } from "~/api/services/opportunities";
+import {
+  getCategoriesAdmin,
+  searchCriteriaOpportunities,
+} from "~/api/services/opportunities";
 import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
 import { SkillsChart } from "~/components/Organisation/Dashboard/SkillsChart";
 import { PieChart } from "~/components/Organisation/Dashboard/PieChart";
@@ -80,6 +86,7 @@ interface IParams extends ParsedUrlQuery {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
+  const { opportunities } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
   let errorCode = null;
 
@@ -95,6 +102,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const theme = getThemeFromRole(session, id);
 
   const queryClient = new QueryClient(config);
+  let lookups_selectedOpportunities;
 
   try {
     const dataCategories = await getCategoriesAdmin(id, context);
@@ -111,7 +119,20 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         queryFn: () => dataOrganisation,
       }),
     ]);
+
+    // HACK: lookup each of the opportunities (to resolve ids to titles)
+    lookups_selectedOpportunities = await searchCriteriaOpportunities(
+      {
+        //id: null TODO: api
+        organization: null,
+        titleContains: null,
+        pageNumber: 1,
+        pageSize: 1,
+      },
+      context,
+    );
   } catch (error) {
+    console.error(error);
     if (axios.isAxiosError(error) && error.response?.status) {
       if (error.response.status === 404) {
         return {
@@ -129,6 +150,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       theme: theme,
       id,
       error: errorCode,
+      lookups_selectedOpportunities: lookups_selectedOpportunities ?? null,
     },
   };
 }
@@ -138,7 +160,8 @@ const OrganisationDashboard: NextPageWithLayout<{
   id: string;
   error?: number;
   user?: any;
-}> = ({ id, error, user }) => {
+  lookups_selectedOpportunities?: OpportunitySearchResultsInfo;
+}> = ({ id, error, user, lookups_selectedOpportunities }) => {
   const router = useRouter();
   const myRef = useRef<HTMLDivElement>(null);
   const [inactiveOpportunitiesCount, setInactiveOpportunitiesCount] =
@@ -584,7 +607,13 @@ const OrganisationDashboard: NextPageWithLayout<{
                       return value
                         ? toISOStringForTimezone(new Date(value)).split("T")[0]
                         : "";
-                    else {
+                    else if (key === "opportunities") {
+                      // HACK: resolve opportunity ids to titles
+                      const lookup = lookups_selectedOpportunities?.items.find(
+                        (x) => x.id === value,
+                      );
+                      return lookup?.title ?? value;
+                    } else {
                       return value;
                     }
                   }}
