@@ -10,15 +10,15 @@ import {
 } from "~/lib/constants";
 import { AvatarImage } from "../AvatarImage";
 import { User } from "~/server/auth";
-import { IoIosSettings, IoMdOptions } from "react-icons/io";
+import { IoIosSettings } from "react-icons/io";
 import { AxiosError } from "axios";
 import { useState, useCallback } from "react";
 import { FaPencilAlt, FaClock, FaTrash } from "react-icons/fa";
-import ReactModal from "react-modal";
 import { toast } from "react-toastify";
 import { patchOrganisationStatus } from "~/api/services/organisations";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { ApiErrors } from "../Status/ApiErrors";
+import { useRouter } from "next/router";
 
 export const OrganisationCardComponent: React.FC<{
   key: string;
@@ -27,6 +27,7 @@ export const OrganisationCardComponent: React.FC<{
   returnUrl?: string;
   onUpdateStatus: () => void;
 }> = ({ key, item, user, returnUrl, onUpdateStatus }) => {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [manageOpportunityMenuVisible, setManageOpportunityMenuVisible] =
     useState(false);
@@ -84,7 +85,6 @@ export const OrganisationCardComponent: React.FC<{
   return (
     <div
       key={`orgCard_${key}`}
-      //className="flex flex-row rounded-xl bg-white shadow-custom transition duration-300 hover:scale-[1.01] dark:bg-neutral-700 md:max-w-7xl"
       className="flex flex-row rounded-xl bg-white shadow-custom transition duration-300 dark:bg-neutral-700 md:max-w-7xl"
     >
       <div className="flex w-1/4 items-center justify-center p-2">
@@ -133,47 +133,16 @@ export const OrganisationCardComponent: React.FC<{
           </div>
 
           <div className="dropdown dropdown-left w-10">
-            {/* <button
-              role="button"
-              className="btn btn-square p-1"
-              // onClick={() => {
-              //   setManageOpportunityMenuVisible(true);
-              // }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="1"></circle>
-                <circle cx="19" cy="12" r="1"></circle>
-                <circle cx="5" cy="12" r="1"></circle>
-              </svg>
-            </button> */}
+
             <button
               className="bg-theme hover:bg-theme w-40x flex flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 hover:brightness-110 disabled:cursor-not-allowed disabled:bg-gray-dark"
-              // onClick={() => {
-              //   setManageOpportunityMenuVisible(true);
-              // }}
-              //disabled={currentOrganisationInactive}
+
+              disabled={item?.status == "Deleted"}
             >
               <IoIosSettings className="mr-1x h-5 w-5" />
             </button>
 
             <ul className="menu dropdown-content z-[1] w-52 rounded-box bg-base-100 p-2 shadow">
-              {/* <li>
-              <a>Item 1</a>
-            </li>
-            <li>
-              <a>Item 2</a>
-            </li> */}
-
               {item?.status != "Deleted" && (
                 <li>
                   <Link
@@ -182,7 +151,7 @@ export const OrganisationCardComponent: React.FC<{
                         ? `?returnUrl=${encodeURIComponent(
                             returnUrl.toString(),
                           )}`
-                        : ""
+                        : router.asPath
                     }`}
                     className="flex flex-row items-center text-gray-dark hover:brightness-50"
                   >
@@ -191,14 +160,6 @@ export const OrganisationCardComponent: React.FC<{
                   </Link>
                 </li>
               )}
-              {/* TODO */}
-              {/* <Link
-                href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
-                className="flex flex-row items-center text-gray-dark hover:brightness-50"
-              >
-                <FaClipboard className="mr-2 h-3 w-3" />
-                Duplicate
-              </Link> */}
 
               {/* if active, then org admins can make it inactive
                   if deleted, admins can make it inactive */}
@@ -214,9 +175,7 @@ export const OrganisationCardComponent: React.FC<{
                 </li>
               )}
 
-              {(item?.status == "Inactive" ||
-                (user?.roles.some((x) => x === "Admin") &&
-                  item?.status == "Deleted")) && (
+              {item?.status == "Inactive" && (
                 <li>
                   <button
                     className="flex flex-row items-center text-gray-dark hover:brightness-50"
@@ -228,7 +187,6 @@ export const OrganisationCardComponent: React.FC<{
                 </li>
               )}
 
-              {/* <div className="divider -m-2" /> */}
               {item?.status != "Deleted" && (
                 <li>
                   <button

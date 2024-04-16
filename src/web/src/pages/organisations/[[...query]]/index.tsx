@@ -152,17 +152,12 @@ const Organisations: NextPageWithLayout<{
 }> = ({ query, page, status, error, returnUrl, user }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  // const [isLoading, setIsLoading] = useState(false);
-  // const [currentOrganisation, setCurrentOrganisation] =
-  //   useState<OrganizationInfo | null>(null);
-  // const [manageOpportunityMenuVisible, setManageOpportunityMenuVisible] =
-  //   useState(false);
 
   const lookups_statuses: SelectOption[] = [
-    { value: "0", label: "Active" },
-    { value: "1", label: "Deleted" },
-    { value: "2", label: "Expired" },
-    { value: "3", label: "Inactive" },
+    { value: "0", label: "Inactive" },
+    { value: "1", label: "Active" },
+    { value: "2", label: "Declined" },
+    { value: "3", label: "Deleted" },
   ];
 
   // search filter state
@@ -317,7 +312,7 @@ const Organisations: NextPageWithLayout<{
                       <Link
                         href={`/organisations?status=Active`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          status === "active"
+                          status === "Active"
                             ? "active border-orange"
                             : "border-transparent hover:border-gray hover:text-gray"
                         }`}
@@ -330,7 +325,7 @@ const Organisations: NextPageWithLayout<{
                       <Link
                         href={`/organisations?status=Inactive`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          status === "inactive"
+                          status === "Inactive"
                             ? "active border-orange"
                             : "border-transparent hover:border-gray hover:text-gray"
                         }`}
@@ -341,9 +336,22 @@ const Organisations: NextPageWithLayout<{
                     </li>
                     <li className="w-1/5 md:w-20">
                       <Link
+                        href={`/organisations?status=Declined`}
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                          status === "Declined"
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        Declined
+                      </Link>
+                    </li>
+                    <li className="w-1/5 md:w-20">
+                      <Link
                         href={`/organisations?status=Deleted`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          status === "deleted"
+                          status === "Deleted"
                             ? "active border-orange"
                             : "border-transparent hover:border-gray hover:text-gray"
                         }`}
@@ -377,7 +385,7 @@ const Organisations: NextPageWithLayout<{
 
         <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
           {/* NO ROWS */}
-          {searchResults && searchResults.items?.length === 0 && !query && (
+          {searchResults && searchResults.totalCount === 0 && !query && (
             <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
               <NoRowsMessage
                 title={"You will find your active opportunities here"}
@@ -398,7 +406,7 @@ const Organisations: NextPageWithLayout<{
               </Link>
             </div>
           )}
-          {searchResults && searchResults.items?.length === 0 && query && (
+          {searchResults && searchResults.totalCount === 0 && query && (
             <div className="flex flex-col place-items-center py-32">
               <NoRowsMessage
                 title={"No organisations found"}
@@ -406,7 +414,6 @@ const Organisations: NextPageWithLayout<{
               />
             </div>
           )}
-
           {/* GRID */}
           {searchResults && searchResults.items.length > 0 && (
             <div className="grid w-full place-items-center">
@@ -417,12 +424,12 @@ const Organisations: NextPageWithLayout<{
                     item={item}
                     user={user}
                     onUpdateStatus={updateStatus}
+                    returnUrl={router.asPath}
                   />
                 ))}
               </div>
             </div>
           )}
-
           <div className="mt-2 grid place-items-center justify-center">
             {/* PAGINATION */}
             <PaginationButtons
