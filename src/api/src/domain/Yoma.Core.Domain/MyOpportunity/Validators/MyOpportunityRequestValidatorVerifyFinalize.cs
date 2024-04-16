@@ -23,7 +23,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
       RuleFor(x => x.OpportunityId).NotEmpty().Must(OpportunityExists).WithMessage($"Specified opportunity does not exist.");
       RuleFor(x => x.UserId).NotEmpty().Must(UserExists).WithMessage($"Specified user does not exist.");
       RuleFor(x => x.Status).Must(x => Statuses_Finalize.Contains(x)).WithMessage($"{{PropertyName}} must be '{string.Join(" / ", Statuses_Finalize)}'.");
-      RuleFor(x => x.Comment).NotEmpty().When(x => x.Status == VerificationStatus.Rejected).WithMessage($"{{PropertyName}} required when '{VerificationStatus.Rejected}'.");
+      RuleFor(x => x.Comment)
+          .MaximumLength(400)
+          .WithMessage("{PropertyName} can not exceed 400 characters.")
+          .NotEmpty()
+          .When(x => x.Status == VerificationStatus.Rejected)
+          .WithMessage("{PropertyName} is required when '{VerificationStatus.Rejected}'.");
     }
     #endregion
 

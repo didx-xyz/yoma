@@ -1012,7 +1012,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public async Task<(decimal? ZltoReward, decimal? YomaReward)> AllocateRewards(Guid id, Guid userId, bool ensureOrganizationAuthorization)
+    public async Task<OpportunityAllocateRewardResponse> AllocateRewards(Guid id, Guid userId, bool ensureOrganizationAuthorization)
     {
       var opportunity = GetById(id, false, true, ensureOrganizationAuthorization);
 
@@ -1046,36 +1046,46 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       opportunity.ParticipantCount = count;
 
-      var zltoReward = opportunity.ZltoReward;
-      if (zltoReward.HasValue)
+      var result = new OpportunityAllocateRewardResponse
+      {
+        ZltoReward = opportunity.ZltoReward,
+        YomaReward = opportunity.YomaReward
+      };
+
+      if (result.ZltoReward.HasValue)
       {
         if (opportunity.ZltoRewardPool.HasValue)
         {
           // calculate the remainder of ZltoRewardPool - ZltoRewardCumulative, treating null as 0
-          var remainder = opportunity.ZltoRewardPool.Value - (opportunity.ZltoRewardCumulative ?? 0);
+          var remainder = opportunity.ZltoRewardPool.Value - (opportunity.ZltoRewardCumulative ?? default);
 
           // if remainder >= zltoReward, zltoReward stays the same; otherwise, it becomes the remainder
-          zltoReward = Math.Max(Math.Min(remainder, zltoReward.Value), 0);
+          result.ZltoReward = Math.Max(Math.Min(remainder, result.ZltoReward.Value), default);
+
+          // set flag indicating if the pool has been depleted
+          result.ZltoRewardPoolDepleted = remainder <= default(decimal);
         }
 
         // update ZltoRewardCumulative, treating null as 0 for the addition
-        opportunity.ZltoRewardCumulative = (opportunity.ZltoRewardCumulative ?? 0) + zltoReward.Value;
+        opportunity.ZltoRewardCumulative = (opportunity.ZltoRewardCumulative ?? default) + result.ZltoReward.Value;
       }
-
-      var yomaReward = opportunity.YomaReward;
-      if (yomaReward.HasValue)
+      
+      if (result.YomaReward.HasValue)
       {
         if (opportunity.YomaRewardPool.HasValue)
         {
           // calculate the remainder of YomaRewardPool - YomaRewardCumulative, treating null as 0
-          var remainder = opportunity.YomaRewardPool.Value - (opportunity.YomaRewardCumulative ?? 0);
+          var remainder = opportunity.YomaRewardPool.Value - (opportunity.YomaRewardCumulative ?? default);
 
           // if remainder >= yomaReward, yomaReward stays the same; otherwise, it becomes the remainder
-          yomaReward = Math.Max(Math.Min(remainder, yomaReward.Value), 0);
+          result.YomaReward = Math.Max(Math.Min(remainder, result.YomaReward.Value), default);
+
+          // set flag indicating if the pool has been depleted
+          result.YomaRewardPoolDepleted = remainder <= default(decimal);
         }
 
         // update YomaRewardCumulative, treating null as 0 for the addition
-        opportunity.YomaRewardCumulative = (opportunity.YomaRewardCumulative ?? 0) + yomaReward.Value;
+        opportunity.YomaRewardCumulative = (opportunity.YomaRewardCumulative ?? default) + result.YomaReward.Value;
       }
 
       opportunity.ModifiedByUserId = user.Id;
@@ -1083,7 +1093,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //modifiedBy preserved
       await _opportunityRepository.Update(opportunity);
 
-      return (zltoReward, yomaReward);
+      return result;
     }
 
     public async Task<Models.Opportunity> UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization)

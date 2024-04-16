@@ -576,9 +576,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (item.DateEnd.HasValue && item.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())
               throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd:yyyy-MM-dd}')");
 
-            var (zltoReward, yomaReward) = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, true);
-            item.ZltoReward = zltoReward;
-            item.YomaReward = yomaReward;
+            var result = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, true);
+            item.ZltoReward = result.ZltoReward;
+            item.YomaReward = result.YomaReward;
             item.DateCompleted = DateTimeOffset.UtcNow;
 
             await _userService.AssignSkills(user, opportunity);
@@ -590,8 +590,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               await _ssiCredentialService.ScheduleIssuance(item.OpportunitySSISchemaName, item.Id);
             }
 
-            if (zltoReward.HasValue)
-              await _rewardService.ScheduleRewardTransaction(user.Id, Reward.RewardTransactionEntityType.MyOpportunity, item.Id, zltoReward.Value);
+            if (result.ZltoReward.HasValue && result.ZltoReward.Value > default(decimal))
+              await _rewardService.ScheduleRewardTransaction(user.Id, Reward.RewardTransactionEntityType.MyOpportunity, item.Id, result.ZltoReward.Value);
+
+            if (result.ZltoRewardPoolDepleted == true) item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "ZLTO not awarded as reward pool has been depleted");
+            if (result.YomaRewardPoolDepleted == true) item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "Yoma not awarded as reward pool has been depleted");
 
             emailType = EmailType.Opportunity_Verification_Completed;
             break;
@@ -640,6 +643,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #endregion
 
     #region Private Members
+    private static string CommentVerificationAppendInfo(string? currentComment, string info)
+    {
+      ArgumentException.ThrowIfNullOrWhiteSpace(info, nameof(info));
+
+      return string.IsNullOrEmpty(currentComment) ? info : $"{currentComment}{System.Environment.NewLine}{info}";
+    }
+
     private void SetParticipantCounts(MyOpportunityInfo result)
     {
       var filter = new MyOpportunitySearchFilterAdmin

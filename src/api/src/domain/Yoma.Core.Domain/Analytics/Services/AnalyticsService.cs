@@ -387,14 +387,14 @@ namespace Yoma.Core.Domain.Analytics.Services
               .Where(mo => mo.OpportunityId == opportunity.Id &&
                            mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Viewed.ToString()).Id &&
                            (!filter.StartDate.HasValue || mo.OpportunityDateStart >= filter.StartDate.RemoveTime()) &&
-                           (!filter.EndDate.HasValue || (!mo.OpportunityDateEnd.HasValue || mo.OpportunityDateEnd <= filter.EndDate.ToEndOfDay())))
+                           (!filter.EndDate.HasValue || !mo.OpportunityDateEnd.HasValue || mo.OpportunityDateEnd <= filter.EndDate.ToEndOfDay()))
               .Count(),
             CompletedCount = _myOpportunityRepository.Query()
               .Where(mo => mo.OpportunityId == opportunity.Id &&
                            mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id &&
                            mo.VerificationStatusId == _myOpportunityVerificationStatusService.GetByName(MyOpportunity.VerificationStatus.Completed.ToString()).Id &&
                            (!filter.StartDate.HasValue || mo.OpportunityDateStart >= filter.StartDate.RemoveTime()) &&
-                           (!filter.EndDate.HasValue || (!mo.OpportunityDateEnd.HasValue || mo.OpportunityDateEnd <= filter.EndDate.ToEndOfDay())))
+                           (!filter.EndDate.HasValue || !mo.OpportunityDateEnd.HasValue || mo.OpportunityDateEnd <= filter.EndDate.ToEndOfDay()))
               .Count()
           })
           .Select(result => new OpportunityInfoAnalytics

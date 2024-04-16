@@ -41,7 +41,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization);
 
-    Task<(decimal? ZltoReward, decimal? YomaReward)> AllocateRewards(Guid id, Guid userId, bool ensureOrganizationAuthorization);
+    Task<OpportunityAllocateRewardResponse> AllocateRewards(Guid id, Guid userId, bool ensureOrganizationAuthorization);
 
     Task<Models.Opportunity> UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization);
 
