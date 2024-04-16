@@ -1,44 +1,47 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  dehydrate,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
-import Link from "next/link";
 import { useRouter } from "next/router";
-import React, {
-  type ReactElement,
-  useCallback,
-  useState,
-  type ChangeEvent,
-} from "react";
-import { IoMdAdd } from "react-icons/io";
-import {
-  type OrganizationInfo,
-  type OrganizationSearchResults,
-  Status,
-} from "~/api/models/organisation";
-import { getOrganisations } from "~/api/services/organisations";
+import { useCallback, useMemo, type ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
-import NoRowsMessage from "~/components/NoRowsMessage";
+import { type User, authOptions } from "~/server/auth";
+import { OrganizationStatus } from "~/api/models/opportunity";
+import { type NextPageWithLayout } from "~/pages/_app";
+import Link from "next/link";
+import { PageBackground } from "~/components/PageBackground";
+import { IoIosAdd } from "react-icons/io";
 import { SearchInput } from "~/components/SearchInput";
-import { Unauthorized } from "~/components/Status/Unauthorized";
+import NoRowsMessage from "~/components/NoRowsMessage";
 import {
+  PAGE_SIZE,
   ROLE_ADMIN,
   ROLE_ORG_ADMIN,
   THEME_BLUE,
   THEME_GREEN,
 } from "~/lib/constants";
-import { type NextPageWithLayout } from "~/pages/_app";
-import { type User, authOptions } from "~/server/auth";
+import { PaginationButtons } from "~/components/PaginationButtons";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
-import { AvatarImage } from "~/components/AvatarImage";
-import { PageBackground } from "~/components/PageBackground";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { getSafeUrl } from "~/lib/utils";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { getOrganisations } from "~/api/services/organisations";
+import type { SelectOption } from "~/api/models/lookups";
+import type { OrganizationSearchFilter } from "~/api/models/organisation";
+import { OrganisationCardComponent } from "~/components/Organisation/OrganisationCardComponent";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { query, page, status, returnUrl } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
+  const queryClient = new QueryClient(config);
   let errorCode = null;
 
   // 👇 ensure authenticated
@@ -61,47 +64,64 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     return {
       props: {
         error: 401,
+        theme: THEME_GREEN,
       },
     };
   }
 
-  const { query, page } = context.query;
-  const queryClient = new QueryClient(config);
-
-  // 👇 prefetch queries on server
   try {
-    const organisationsActive = await getOrganisations(
-      {
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: 20,
-        valueContains: query?.toString() ?? null,
-        statuses: [Status.Active],
-      },
-      context,
-    );
-
-    const organisationsInactive = await getOrganisations(
-      {
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: 20,
-        valueContains: query?.toString() ?? null,
-        statuses: [Status.Inactive],
-      },
-      context,
-    );
-
+    // 👇 prefetch queries on server
+    // get the totalCount for each status from the getOrganisations function
     await Promise.all([
-      await queryClient.prefetchQuery({
-        queryKey: [
-          `OrganisationsActive_${query?.toString()}_${page?.toString()}`,
-        ],
-        queryFn: () => organisationsActive,
+      queryClient.prefetchQuery({
+        queryKey: ["Organisations_TotalCount", null],
+        queryFn: () =>
+          getOrganisations({
+            pageNumber: 1,
+            pageSize: 1,
+            valueContains: null,
+            statuses: null,
+          }).then((data) => data.totalCount ?? 0),
       }),
-      await queryClient.prefetchQuery({
-        queryKey: [
-          `OrganisationsInactive_${query?.toString()}_${page?.toString()}`,
-        ],
-        queryFn: () => organisationsInactive,
+      queryClient.prefetchQuery({
+        queryKey: ["Organisations_TotalCount", OrganizationStatus.Active],
+        queryFn: () =>
+          getOrganisations({
+            pageNumber: 1,
+            pageSize: 1,
+            valueContains: null,
+            statuses: [OrganizationStatus.Active],
+          }).then((data) => data.totalCount ?? 0),
+      }),
+      queryClient.prefetchQuery({
+        queryKey: ["Organisations_TotalCount", OrganizationStatus.Inactive],
+        queryFn: () =>
+          getOrganisations({
+            pageNumber: 1,
+            pageSize: 1,
+            valueContains: null,
+            statuses: [OrganizationStatus.Inactive],
+          }).then((data) => data.totalCount ?? 0),
+      }),
+      queryClient.prefetchQuery({
+        queryKey: ["Organisations_TotalCount", OrganizationStatus.Declined],
+        queryFn: () =>
+          getOrganisations({
+            pageNumber: 1,
+            pageSize: 1,
+            valueContains: null,
+            statuses: [OrganizationStatus.Declined],
+          }).then((data) => data.totalCount ?? 0),
+      }),
+      queryClient.prefetchQuery({
+        queryKey: ["Organisations_TotalCount", OrganizationStatus.Deleted],
+        queryFn: () =>
+          getOrganisations({
+            pageNumber: 1,
+            pageSize: 1,
+            valueContains: null,
+            statuses: [OrganizationStatus.Deleted],
+          }).then((data) => data.totalCount ?? 0),
       }),
     ]);
   } catch (error) {
@@ -118,145 +138,208 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null,
+      query: query ?? null,
+      page: page ?? null,
+      status: status ?? null,
       theme: theme,
       error: errorCode,
+      returnUrl: returnUrl ?? null,
+      user: session?.user ?? null,
     },
   };
 }
 
-export const OrganisationCardComponent: React.FC<{
-  key: string;
-  item: OrganizationInfo;
-  user: User;
-}> = (props) => {
-  const link = props.user.roles.includes(ROLE_ADMIN)
-    ? props.item.status === "Active"
-      ? `/organisations/${props.item.id}/info`
-      : `/organisations/${props.item.id}/verify`
-    : props.item.status === "Active"
-      ? `/organisations/${props.item.id}`
-      : `/organisations/${props.item.id}/edit`;
-
-  return (
-    <Link href={link} id={`lnkOrganisation_${props.item.name}`}>
-      <div
-        key={`$orgCard_{props.key}`}
-        className="flex flex-row rounded-xl bg-white shadow-custom transition duration-300 hover:scale-[1.01] dark:bg-neutral-700 md:max-w-7xl"
-      >
-        <div className="flex w-1/4 items-center justify-center p-2">
-          <div className="flex h-28 w-28 items-center justify-center">
-            <AvatarImage
-              icon={props.item.logoURL ?? null}
-              alt={props.item.name ?? null}
-              size={60}
-            />
-          </div>
-        </div>
-
-        <div className="relative flex w-3/4 flex-col justify-start p-2 pr-4">
-          <h5
-            className={`my-1 truncate overflow-ellipsis whitespace-nowrap font-medium ${
-              props.item.status === "Inactive" ? "pr-20" : ""
-            }`}
-          >
-            {props.item.name}
-          </h5>
-          <p className="h-[40px] overflow-hidden text-ellipsis text-sm">
-            {props.item.tagline}
-          </p>
-          {props.item.status && props.item.status === "Inactive" && (
-            <span className="badge absolute bottom-4 right-4 border-none bg-yellow-light text-xs font-bold text-yellow md:top-4">
-              Pending
-            </span>
-          )}
-        </div>
-      </div>
-    </Link>
-  );
-};
-
-const Opportunities: NextPageWithLayout<{
-  user: User;
+const Organisations: NextPageWithLayout<{
+  query?: string;
+  page?: string;
+  status?: string;
   theme: string;
   error?: number;
-}> = ({ user, error }) => {
+  returnUrl?: string;
+  user: User;
+}> = ({ query, page, status, error, returnUrl, user }) => {
   const router = useRouter();
-  const [showAll, setShowAll] = useState(true);
-  const [showPending, setShowPending] = useState(false);
-  const [showApproved, setShowApproved] = useState(false);
+  const queryClient = useQueryClient();
 
-  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    type TabStates = Record<string, [boolean, boolean, boolean]>;
+  const lookups_statuses = useMemo<SelectOption[]>(
+    () => [
+      { value: "0", label: "Inactive" },
+      { value: "1", label: "Active" },
+      { value: "2", label: "Declined" },
+      { value: "3", label: "Deleted" },
+    ],
+    [],
+  );
 
-    const tabStates: TabStates = {
-      all_tab: [true, false, false],
-      pending_tab: [false, true, false],
-      approved_tab: [false, false, true],
-    };
-
-    const { id } = event.target;
-
-    if (id && tabStates.hasOwnProperty(id)) {
-      const tabState = tabStates[id] as [boolean, boolean, boolean];
-
-      const [showAll, showPending, showApproved] = tabState;
-
-      setShowAll(showAll);
-      setShowPending(showPending);
-      setShowApproved(showApproved);
-    }
-  };
-
-  // get query parameter from route
-  const { query, page } = router.query;
+  // search filter state
+  const searchFilter = useMemo(
+    () => ({
+      pageNumber: page ? parseInt(page.toString()) : 1,
+      pageSize: PAGE_SIZE,
+      valueContains: query?.toString() ?? "",
+      statuses:
+        status != undefined
+          ? lookups_statuses
+              .filter((y) => y.label.toLowerCase() === status.toLowerCase())
+              .map((item) => item.value)
+          : null,
+    }),
+    [page, query, status, lookups_statuses],
+  );
 
   // 👇 use prefetched queries from server
-  const { data: organisationsActive } = useQuery<OrganizationSearchResults>({
-    queryKey: [`OrganisationsActive_${query?.toString()}_${page?.toString()}`],
+  const { data: totalCountAll } = useQuery<number>({
+    queryKey: ["Organisations_TotalCount", null],
     queryFn: () =>
       getOrganisations({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: 20,
-        valueContains: query?.toString() ?? "",
-        statuses: [Status.Active],
-      }),
+        pageNumber: 1,
+        pageSize: 1,
+        valueContains: null,
+        statuses: null,
+      }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
-  const { data: organisationsInactive } = useQuery<OrganizationSearchResults>({
-    queryKey: [
-      `OrganisationsInactive_${query?.toString()}_${page?.toString()}`,
-    ],
+  const { data: totalCountActive } = useQuery<number>({
+    queryKey: ["Organisations_TotalCount", OrganizationStatus.Active],
     queryFn: () =>
       getOrganisations({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: 20,
-        valueContains: query?.toString() ?? "",
-        statuses: [Status.Inactive],
-      }),
+        pageNumber: 1,
+        pageSize: 1,
+        valueContains: null,
+        statuses: [OrganizationStatus.Active],
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountInactive } = useQuery<number>({
+    queryKey: ["Organisations_TotalCount", OrganizationStatus.Inactive],
+    queryFn: () =>
+      getOrganisations({
+        pageNumber: 1,
+        pageSize: 1,
+        valueContains: null,
+        statuses: [OrganizationStatus.Inactive],
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountDeclined } = useQuery<number>({
+    queryKey: ["Organisations_TotalCount", OrganizationStatus.Declined],
+    queryFn: () =>
+      getOrganisations({
+        pageNumber: 1,
+        pageSize: 1,
+        valueContains: null,
+        statuses: [OrganizationStatus.Declined],
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountDeleted } = useQuery<number>({
+    queryKey: ["Organisations_TotalCount", OrganizationStatus.Deleted],
+    queryFn: () =>
+      getOrganisations({
+        pageNumber: 1,
+        pageSize: 1,
+        valueContains: null,
+        statuses: [OrganizationStatus.Deleted],
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  // this is not prefetched on the server
+  const { data: searchResults } = useQuery({
+    queryKey: ["Organisations", searchFilter],
+    queryFn: () => getOrganisations(searchFilter),
     enabled: !error,
   });
 
-  const organisationsAll = [
-    ...(organisationsActive?.items ?? []),
-    ...(organisationsInactive?.items ?? []),
-  ];
+  // 🎈 FUNCTIONS
+  const getSearchFilterAsQueryString = useCallback(
+    (filter: OrganizationSearchFilter) => {
+      if (!filter) return null;
 
-  const onSearch = useCallback(
+      // construct querystring parameters from filter
+      const params = new URLSearchParams();
+      if (
+        filter.valueContains !== undefined &&
+        filter.valueContains !== null &&
+        filter.valueContains.length > 0
+      )
+        params.append("query", filter.valueContains);
+
+      if (
+        filter?.statuses !== undefined &&
+        filter?.statuses !== null &&
+        filter?.statuses.length > 0
+      )
+        params.append(
+          "status",
+          filter?.statuses
+            .map(
+              (status) =>
+                lookups_statuses.find((item) => item.value === status)?.label,
+            )
+            .join(","),
+        );
+
+      if (
+        filter.pageNumber !== null &&
+        filter.pageNumber !== undefined &&
+        filter.pageNumber !== 1
+      )
+        params.append("page", filter.pageNumber.toString());
+
+      if (params.size === 0) return null;
+      return params;
+    },
+    [lookups_statuses],
+  );
+
+  const redirectWithSearchFilterParams = useCallback(
+    (filter: OrganizationSearchFilter) => {
+      let url = "/organisations";
+      const params = getSearchFilterAsQueryString(filter);
+      if (params != null && params.size > 0)
+        url = `/organisations?${params.toString()}`;
+
+      if (url != router.asPath)
+        void router.push(url, undefined, { scroll: false });
+    },
+    [router, getSearchFilterAsQueryString],
+  );
+
+  // 🔔 CHANGE EVENTS
+  const handlePagerChange = useCallback(
+    (value: number) => {
+      searchFilter.pageNumber = value;
+      redirectWithSearchFilterParams(searchFilter);
+    },
+    [searchFilter, redirectWithSearchFilterParams],
+  );
+
+  const onSearchInputSubmit = useCallback(
     (query: string) => {
       if (query && query.length > 2) {
         // uri encode the search value
         const searchValueEncoded = encodeURIComponent(query);
-
-        // redirect to the search page
-        void router.push(`/organisations?query=${searchValueEncoded}`);
-      } else {
-        // redirect to the search page
-        void router.push("/organisations");
+        query = searchValueEncoded;
       }
+
+      searchFilter.valueContains = query;
+      redirectWithSearchFilterParams(searchFilter);
     },
-    [router],
+    [searchFilter, redirectWithSearchFilterParams],
   );
+
+  const updateStatus = useCallback(async () => {
+    // invalidate cache
+    // this will match all queries with the following prefixes 'Organisations' (list data) & 'Organisations_TotalCount' (tab counts)
+    await queryClient.invalidateQueries({
+      queryKey: ["Organisations"],
+      exact: false,
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ["Organisations_TotalCount"],
+      exact: false,
+    });
+  }, [queryClient]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -270,208 +353,188 @@ const Opportunities: NextPageWithLayout<{
         <title>Yoma | Organisations</title>
       </Head>
 
-      <PageBackground className="h-[260px] lg:h-[268px]" />
+      <PageBackground className="h-[14.5rem] md:h-[18rem]" />
 
-      <div className="container z-10 max-w-7xl px-2 py-8">
-        <div className="relative flex flex-row gap-2 py-20">
-          <h2 className="flex flex-grow font-semibold text-white">
+      <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
+        <div className="flex flex-col gap-4 py-4">
+          <h3 className="mb-6 mt-3 flex items-center text-3xl font-semibold tracking-normal text-white md:mb-9 md:mt-0">
             Organisations
-          </h2>
+          </h3>
 
-          <div className="flex gap-2 sm:justify-end">
+          {/* TABBED NAVIGATION */}
+          <div className="z-10 flex justify-center md:justify-start">
+            <div className="flex w-full gap-2">
+              {/* TABS */}
+              <div
+                className="tabs tabs-bordered w-full gap-2 overflow-x-scroll md:overflow-hidden"
+                role="tablist"
+              >
+                <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
+                  <ul className="overflow-x-hiddem -mb-px flex w-full justify-center gap-0 md:justify-start">
+                    <li className="w-1/5 md:w-24">
+                      <Link
+                        href={`/organisations`}
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                          !status
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        All
+                        {(totalCountAll ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                            {totalCountAll}
+                          </div>
+                        )}
+                      </Link>
+                    </li>
+                    <li className="w-1/5 md:w-24">
+                      <Link
+                        href={`/organisations?status=Active`}
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                          status === "Active"
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        Active
+                        {(totalCountActive ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                            {totalCountActive}
+                          </div>
+                        )}
+                      </Link>
+                    </li>
+                    <li className="w-1/5 md:w-24">
+                      <Link
+                        href={`/organisations?status=Inactive`}
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                          status === "Inactive"
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        Pending
+                        {(totalCountInactive ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                            {totalCountInactive}
+                          </div>
+                        )}
+                      </Link>
+                    </li>
+                    <li className="w-1/5 md:w-24">
+                      <Link
+                        href={`/organisations?status=Declined`}
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                          status === "Declined"
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        Declined
+                        {(totalCountDeclined ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                            {totalCountDeclined}
+                          </div>
+                        )}
+                      </Link>
+                    </li>
+                    <li className="w-1/5 md:w-24">
+                      <Link
+                        href={`/organisations?status=Deleted`}
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                          status === "Deleted"
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        Deleted
+                        {(totalCountDeleted ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                            {totalCountDeleted}
+                          </div>
+                        )}
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SEARCH INPUT */}
+          <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
+            <SearchInput defaultValue={query} onSearch={onSearchInputSubmit} />
+
             <Link
-              href={`/organisations/register?returnUrl=${router.asPath}`}
-              className="bg-theme hover:bg-theme flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 hover:brightness-110"
+              href={`/organisations/register${`?returnUrl=${encodeURIComponent(
+                getSafeUrl(returnUrl?.toString(), router.asPath),
+              )}`}`}
+              className="bg-theme btn btn-circle btn-secondary btn-sm h-fit w-fit whitespace-nowrap !border-none p-1 text-xs text-white shadow-custom brightness-105 md:p-2 md:px-4"
+              id="btnCreateOpportunity" // e2e
             >
-              <IoMdAdd className="h-5 w-5" />
-              Add organisation
+              <IoIosAdd className="h-7 w-7 md:h-5 md:w-5" />
+              <span className="hidden md:inline">Add organisation</span>
             </Link>
           </div>
         </div>
 
-        {/* TABS */}
-
-        <div role="tablist" className="tabs tabs-bordered relative mt-2">
-          {/* PENDING COUNT BADGE */}
-          <span className="absolute left-[270px] top-[7px] rounded bg-yellow px-1 text-xs text-white">
-            {organisationsInactive?.items?.length}
-          </span>
-
-          {/* ALL ORGS TAB */}
-          <input
-            type="radio"
-            name="org_tabs_1"
-            role="tab"
-            className={`tab !border-b-4 px-6 font-bold text-white  ${
-              showAll
-                ? "active !border-yellow"
-                : "!border-transparent hover:text-gray"
-            }`}
-            aria-label="All"
-            checked={showAll}
-            onChange={handleInputChange}
-            id="all_tab"
-          />
-
-          {/* ALL ORGS CONTENT */}
-          <div role="tabpanel" className="tab-content">
-            <div className="flex flex-row justify-end py-4">
-              <SearchInput
-                defaultValue={
-                  query ? decodeURIComponent(query.toString()) : null
-                }
-                onSearch={onSearch}
-                className="bg-theme hover:bg-theme brightness-105 hover:brightness-110"
+        <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
+          {/* NO RESULTS */}
+          {searchResults && searchResults.totalCount === 0 && (
+            <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
+              <NoRowsMessage
+                title={"No organisations found"}
+                description={"Please try refining your search query."}
               />
-            </div>
-            {/* NO ROWS */}
-            {!organisationsAll ||
-              (organisationsAll.length === 0 && !query && (
-                <NoRowsMessage
-                  title={"No organisations found"}
-                  description={"Approved organisations will be displayed here."}
-                />
-              ))}
-            {!organisationsAll ||
-              (organisationsAll.length === 0 && query && (
-                <NoRowsMessage
-                  title={"No organisations found"}
-                  description={"Please try refining your search query."}
-                />
-              ))}
-            {organisationsAll && organisationsAll.length > 0 && (
-              <>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-4">
-                  {organisationsAll.map((item) => (
-                    <OrganisationCardComponent
-                      key={item.id}
-                      item={item}
-                      user={user}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
 
-          {/* APPROVED ORGS TAB */}
-
-          <input
-            type="radio"
-            name="org_tabs_1"
-            role="tab"
-            className={`tab !border-b-4 px-6 font-bold text-white  ${
-              showApproved
-                ? "active !border-yellow"
-                : "!border-transparent hover:text-gray"
-            }`}
-            aria-label="Approved"
-            checked={showApproved}
-            onChange={handleInputChange}
-            id="approved_tab"
-          />
-
-          {/* APPROVED ORGS CONTENT */}
-
-          <div role="tabpanel" className="tab-content">
-            <div className="flex flex-row justify-end py-4">
-              <SearchInput
-                defaultValue={
-                  query ? decodeURIComponent(query.toString()) : null
-                }
-                onSearch={onSearch}
-              />
-            </div>
-            {/* NO ROWS */}
-            {!organisationsActive ||
-              (organisationsActive.items.length === 0 && !query && (
-                <NoRowsMessage
-                  title={"No organisations found"}
-                  description={"Approved organisations will be displayed here."}
-                />
-              ))}
-            {!organisationsActive ||
-              (organisationsActive.items.length === 0 && query && (
-                <NoRowsMessage
-                  title={"No organisations found"}
-                  description={"Please try refining your search query."}
-                />
-              ))}
-            {organisationsActive && organisationsActive.items.length > 0 && (
-              <>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-4">
-                  {organisationsActive.items.map((item) => (
-                    <OrganisationCardComponent
-                      key={item.id}
-                      item={item}
-                      user={user}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* PENDING ORGS TAB */}
-
-          <input
-            type="radio"
-            name="org_tabs_1"
-            role="tab"
-            className={`tab !border-b-4 pl-6 pr-11 font-bold text-white  ${
-              showPending
-                ? "active !border-yellow"
-                : "!border-transparent hover:text-gray"
-            }`}
-            aria-label="Pending"
-            checked={showPending}
-            onChange={handleInputChange}
-            id="pending_tab"
-          />
-
-          {/* PENDING ORGS CONTENT */}
-          <div role="tabpanel" className="tab-content">
-            <div className="flex flex-row justify-end py-4">
-              <SearchInput
-                defaultValue={
-                  query ? decodeURIComponent(query.toString()) : null
-                }
-                onSearch={onSearch}
-              />
-            </div>
-
-            {/* NO ROWS */}
-            {!organisationsInactive ||
-              (organisationsInactive.items.length === 0 && !query && (
-                <NoRowsMessage
-                  title={"No organisations found"}
-                  description={
-                    "Organisations awaiting approval will be displayed here."
-                  }
-                />
-              ))}
-
-            {!organisationsInactive ||
-              (organisationsInactive.items.length === 0 && query && (
-                <NoRowsMessage
-                  title={"No organisations found"}
-                  description={"Please try refining your search query."}
-                />
-              ))}
-
-            {/* GRID */}
-            {organisationsInactive &&
-              organisationsInactive.items.length > 0 && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-4">
-                  {organisationsInactive.items.map((item) => (
-                    <OrganisationCardComponent
-                      key={item.id}
-                      item={item}
-                      user={user}
-                    />
-                  ))}
-                </div>
+              {!status && (
+                <Link
+                  href={`/organisations/register${`?returnUrl=${encodeURIComponent(
+                    getSafeUrl(returnUrl?.toString(), router.asPath),
+                  )}`}`}
+                  className="bg-theme btn btn-primary rounded-3xl border-0 px-16 brightness-105 hover:brightness-110"
+                  id="btnCreateOpportunity" // e2e
+                >
+                  <IoIosAdd className="mr-1 h-5 w-5" />
+                  Add organisation
+                </Link>
               )}
+            </div>
+          )}
+
+          {/* RESULTS */}
+          {searchResults && searchResults.items.length > 0 && (
+            <div className="grid w-full place-items-center">
+              <div className="xs:grid-cols-1 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {searchResults.items.map((item: any) => (
+                  <OrganisationCardComponent
+                    key={`OrganisationCardComponent_${item.id}`}
+                    item={item}
+                    user={user}
+                    onUpdateStatus={updateStatus}
+                    returnUrl={router.asPath}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* PAGINATION */}
+          <div className="mt-2 grid place-items-center justify-center">
+            <PaginationButtons
+              currentPage={page ? parseInt(page) : 1}
+              totalItems={searchResults?.totalCount ?? 0}
+              pageSize={PAGE_SIZE}
+              onClick={handlePagerChange}
+              showPages={false}
+              showInfo={true}
+            />
           </div>
         </div>
       </div>
@@ -479,14 +542,14 @@ const Opportunities: NextPageWithLayout<{
   );
 };
 
-Opportunities.getLayout = function getLayout(page: ReactElement) {
+Organisations.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-Opportunities.theme = function getTheme(page: ReactElement) {
+Organisations.theme = function getTheme(page: ReactElement) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };
 
-export default Opportunities;
+export default Organisations;

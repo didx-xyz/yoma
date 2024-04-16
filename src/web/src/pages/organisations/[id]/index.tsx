@@ -10,10 +10,8 @@ import {
   useCallback,
 } from "react";
 import "react-datepicker/dist/react-datepicker.css";
-import { type Organization } from "~/api/models/organisation";
 import { getOrganisationById } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
-// import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { authOptions } from "~/server/auth";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import type { NextPageWithLayout } from "~/pages/_app";
@@ -153,10 +151,10 @@ const OrganisationDashboard: NextPageWithLayout<{
     queryFn: () => getCategoriesAdmin(id),
     enabled: !error,
   });
-  const { data: organisation } = useQuery<Organization>({
-    queryKey: ["organisation", id],
-    enabled: !error,
-  });
+  // const { data: organisation } = useQuery<Organization>({
+  //   queryKey: ["organisation", id],
+  //   enabled: !error,
+  // });
 
   // get filter parameters from route
   const {

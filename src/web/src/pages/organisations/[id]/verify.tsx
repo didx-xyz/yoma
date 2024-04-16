@@ -19,7 +19,7 @@ import {
   IoMdThumbsDown,
   IoMdThumbsUp,
   IoMdWarning,
-  IoIosArrowBack,
+  IoMdArrowRoundBack,
 } from "react-icons/io";
 import ReactModal from "react-modal";
 import { toast } from "react-toastify";
@@ -356,22 +356,23 @@ const OrganisationDetails: NextPageWithLayout<{
       <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
         {isLoading && <Loading />}
         {/* BREADCRUMB */}
-        <span className="flex flex-row items-center text-xs text-white">
-          <span>Organisations</span>
-          <span className="mx-2 font-bold">|</span>
-          <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
+        <div className="flex flex-row text-xs text-white">
+          <Link
+            className="flex items-center justify-center font-bold hover:text-gray"
+            href={getSafeUrl(returnUrl?.toString(), `/organisations`)}
+          >
+            <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4" />
+            Organisations
+          </Link>
+          <div className="mx-2 font-bold">|</div>
+
+          <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
             {organisation?.name}
           </span>
-        </span>
+        </div>
 
         {/* LOGO/TITLE */}
         <div className="-mt-2 flex flex-row">
-          <Link
-            className="flex flex-row items-center text-white hover:text-gray"
-            href={getSafeUrl(returnUrl?.toString(), "/organisations")}
-          >
-            <IoIosArrowBack className="inline-block h-6 w-6 rounded-full bg-blue-shade pr-[2px]" />
-          </Link>
           <LogoTitle
             logoUrl={organisation?.logoURL}
             title={organisation?.name}

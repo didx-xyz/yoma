@@ -135,7 +135,11 @@ const OrganisationOverview: NextPageWithLayout<{
         {/* BUTTONS */}
         <div className="my-4 flex items-center justify-center gap-2">
           <Link
-            href={`/organisations/${id}/edit`}
+            href={`/organisations/${id}/edit${
+              returnUrl
+                ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
+                : ``
+            }`}
             type="button"
             className="btn btn-info btn-wide text-white"
           >
