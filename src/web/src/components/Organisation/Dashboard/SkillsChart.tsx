@@ -33,7 +33,7 @@ const updateCustomLegendLineChart = (
     // Create a div for the series
     const seriesDiv = document.createElement("div");
     seriesDiv.classList.add("ml-4");
-    seriesDiv.classList.add("mt-2");
+    seriesDiv.classList.add("mt-4");
 
     // Add the series name and color to the div
     seriesDiv.innerHTML = `<div class="flex flex-col gap-4"><div class="flex flex-row gap-3 items-center"><span class="rounded-lg bg-green-light p-1"><img src="/images/icon-views-green.svg"/></span><span class="text-sm font-semibold">${
@@ -41,7 +41,7 @@ const updateCustomLegendLineChart = (
     }</span></div>
         ${
           data.count[i] != null
-            ? `<div class="text-3xl font-semibold mt-1">${data.count[
+            ? `<div class="text-3xl font-semibold mb-2">${data.count[
                 i
               ]?.toLocaleString()}</div>`
             : ""
@@ -61,10 +61,7 @@ const updateCustomLegendLineChart = (
 export const SkillsChart: React.FC<{
   id: string;
   data: TimeIntervalSummary | undefined;
-  height: number;
-  chartWidth?: number;
-  chartHeight?: number;
-}> = ({ id, data, height, chartWidth, chartHeight }) => {
+}> = ({ id, data }) => {
   const [showChart, setShowChart] = useState<boolean>(true);
   // map the data to the format required by the chart
   const localData = useMemo<(string | number)[][]>(() => {
@@ -106,40 +103,6 @@ export const SkillsChart: React.FC<{
     updateCustomLegendLineChart(`legend_div_${id}`, data, undefined);
   }, [id, localData, data]);
 
-  const [responsiveWidth, setResponsiveWidth] = useState(chartWidth);
-  const [chartLeftMargin, setChartLeftMargin] = useState("3%");
-  const [chartRightMargin, setChartRightMargin] = useState("0%");
-
-  // Responsiveness
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 360) {
-        setResponsiveWidth(0);
-        setChartLeftMargin("17%");
-        setChartRightMargin("17%");
-      } else if (window.innerWidth >= 360 && window.innerWidth < 375) {
-        setResponsiveWidth(0);
-        setChartLeftMargin("13%");
-        setChartRightMargin("13%");
-      } else if (window.innerWidth >= 375 && window.innerWidth <= 390) {
-        setResponsiveWidth(0);
-        setChartLeftMargin("11%");
-        setChartRightMargin("11%");
-      } else if (window.innerWidth > 390 && window.innerWidth < 768) {
-        setResponsiveWidth(0);
-        setChartLeftMargin("6%");
-        setChartRightMargin("6%");
-      } else {
-        setChartRightMargin("3%");
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    handleResize(); // Initial size adjustment
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, [chartWidth]);
-
   if (!localData) {
     return (
       <div className="mt-10 flex flex-grow items-center justify-center">
@@ -149,17 +112,12 @@ export const SkillsChart: React.FC<{
   }
 
   return (
-    <div
-      className="overflow-hidden rounded-lg bg-white pt-2 shadow"
-      style={{ height: height }}
-    >
+    <div className="h-44 w-full overflow-hidden rounded-lg bg-white shadow md:w-[275px]">
       <div id={`legend_div_${id}`} className="flex flex-row gap-2"></div>
 
-      <div className="flex w-full justify-center">
+      <div className="flex w-full justify-center pt-2">
         {showChart ? (
           <Chart
-            width={responsiveWidth}
-            height={chartHeight}
             chartType="AreaChart"
             loader={
               <div className="flex w-full items-center justify-center">
@@ -181,6 +139,7 @@ export const SkillsChart: React.FC<{
               title: "",
               pointSize: 0,
               pointShape: "circle",
+              enableInteractivity: false,
               hAxis: {
                 gridlines: {
                   color: "transparent",
@@ -196,11 +155,11 @@ export const SkillsChart: React.FC<{
                 baselineColor: "transparent",
               },
               chartArea: {
-                left: chartLeftMargin,
+                left: 0,
                 top: 0,
-                right: chartRightMargin,
+                right: 0,
                 width: "94%",
-                height: "65%",
+                height: "38%",
               },
             }}
             chartEvents={[
@@ -230,7 +189,7 @@ export const SkillsChart: React.FC<{
             ]}
           />
         ) : (
-          <div className=" mx-4 mt-4 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center text-xs">
+          <div className=" mx-4 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center text-xs">
             Not enough data to display
           </div>
         )}

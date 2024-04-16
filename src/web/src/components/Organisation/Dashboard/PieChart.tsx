@@ -1,5 +1,4 @@
 import Chart from "react-google-charts";
-import { useEffect, useState } from "react";
 
 type GoogleChartData = (string | number)[][];
 
@@ -10,35 +9,11 @@ export const PieChart: React.FC<{
   data: GoogleChartData;
   colors?: string[];
   className?: string;
-  width?: number;
-}> = ({ id, title, subTitle, data, colors, width = 0, className = "" }) => {
-  const [chartWidth, setChartWidth] = useState(width);
-  const [marginRight, setMarginRight] = useState(0);
-
-  // Responsiveness
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 360) {
-        setChartWidth(0);
-        setMarginRight(110);
-      } else if (window.innerWidth >= 360 && window.innerWidth < 411) {
-        setChartWidth(0);
-        setMarginRight(60);
-      } else if (window.innerWidth >= 411 && window.innerWidth < 768) {
-        setChartWidth(0);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    handleResize(); // Initial size adjustment
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, [chartWidth]);
-
+}> = ({ id, title, subTitle, data, colors, className = "" }) => {
   return (
     <div
       key={id}
-      className={`flex h-44 flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:px-6 ${className}`}
+      className={`flex h-44 w-full flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem] md:w-[20.75rem] md:px-6 ${className}`}
     >
       <div className="flex flex-row items-center gap-2 tracking-wide">
         <div className="text-sm font-semibold">{title}</div>
@@ -58,7 +33,6 @@ export const PieChart: React.FC<{
             </div>
           }
           data={data}
-          style={{ width: chartWidth }}
           options={{
             legend: {
               position: "left",
@@ -73,12 +47,11 @@ export const PieChart: React.FC<{
             pieHole: 0.7,
             height: 125,
             backgroundColor: "transparent",
-            width: chartWidth,
             pieSliceText: "none",
             chartArea: {
               top: 10,
               bottom: 10,
-              right: marginRight,
+              right: 0,
               width: "100%",
               height: "100%",
             },
@@ -88,7 +61,7 @@ export const PieChart: React.FC<{
           }}
         />
       ) : (
-        <div className="mt-10 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center text-xs">
+        <div className="mt-6 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-10 text-center text-xs">
           No data
         </div>
       )}

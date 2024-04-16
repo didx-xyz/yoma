@@ -109,12 +109,8 @@ const updateCustomLegendLineChart = (
 export const LineChart: React.FC<{
   id: string;
   data: TimeIntervalSummary | undefined;
-  width: number;
-  height: number;
-  chartWidth?: number;
-  chartHeight?: number;
   opportunityCount?: number;
-}> = ({ id, data, width, height, opportunityCount }) => {
+}> = ({ id, data, opportunityCount }) => {
   const [showLabels, setShowLabels] = useState<boolean>(true);
 
   // map the data to the format required by the chart
@@ -150,43 +146,6 @@ export const LineChart: React.FC<{
     return [["Date", ...labels], ...mappedData] as (string | number)[][];
   }, [data]);
 
-  const [chartSize, setChartSize] = useState({
-    width: width,
-    height: height,
-    areaWidth: "94%",
-  });
-
-  const [responsiveHeight, setResponsiveHeight] = useState(height);
-
-  // Responsiveness
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth <= 359) {
-        setResponsiveHeight(245);
-        setChartSize({ width: 0, height: 0, areaWidth: "65%" });
-      } else if (window.innerWidth > 359 && window.innerWidth < 390) {
-        setChartSize({ width: 0, height: 0, areaWidth: "75%" });
-        setResponsiveHeight(245);
-      } else if (window.innerWidth >= 390 && window.innerWidth < 411) {
-        setChartSize({ width: 0, height: 0, areaWidth: "81%" });
-        setResponsiveHeight(245);
-      } else if (window.innerWidth >= 411 && window.innerWidth < 420) {
-        setChartSize({ width: 0, height: 0, areaWidth: "85%" });
-        setResponsiveHeight(245);
-      } else if (window.innerWidth >= 420 && window.innerWidth < 768) {
-        setChartSize({ width: 0, height: 0, areaWidth: "91%" });
-        setResponsiveHeight(245);
-      } else {
-        setChartSize({ width: width, height: height, areaWidth: "94%" });
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    handleResize(); // Initial size adjustment
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, [width, height]);
-
   useEffect(() => {
     if (!data || !localData) return;
 
@@ -208,20 +167,15 @@ export const LineChart: React.FC<{
   }
 
   return (
-    <div
-      className="overflow-hidden rounded-lg bg-white pt-4 shadow"
-      style={{ height: responsiveHeight }}
-    >
+    <div className="flex w-full flex-col justify-between gap-4 overflow-hidden rounded-lg bg-white pt-4 shadow md:w-[900px]">
       <div
         id={`legend_div_${id}`}
         className="ml-0 flex flex-row gap-2 md:ml-3"
       ></div>
 
-      <div className="ml-4 flex items-stretch justify-stretch pt-2 md:ml-6">
-        {showLabels ? (
+      {showLabels ? (
+        <div className="ml-4 mt-2 flex h-full w-[94%] flex-col items-stretch justify-center pb-4 md:ml-6 md:w-full md:pb-0">
           <Chart
-            width={chartSize.width}
-            height={chartSize.height}
             chartType="AreaChart"
             loader={
               <div className="mt-20 flex w-full items-center justify-center">
@@ -238,8 +192,6 @@ export const LineChart: React.FC<{
               legend: "none",
               lineWidth: 1,
               areaOpacity: 0.1,
-              width: chartSize.width,
-              height: chartSize.height,
               colors: ["#387F6A"],
               curveType: "function",
               title: "",
@@ -271,11 +223,10 @@ export const LineChart: React.FC<{
                 1: {},
               },
               chartArea: {
-                // left: "3%",
                 left: 0,
-                top: 0,
-                width: chartSize.areaWidth,
-                height: "65%",
+                top: "3%",
+                width: "95%",
+                height: "90%",
               },
             }}
             chartEvents={[
@@ -306,12 +257,12 @@ export const LineChart: React.FC<{
               },
             ]}
           />
-        ) : (
-          <div className="mr-4 mt-10 flex w-[900px] flex-col items-center justify-center rounded-lg bg-gray-light p-8 text-center md:mr-6 md:mt-4 md:h-[15rem]">
-            Not enough data to display
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="m-6 flex flex-grow flex-col items-center justify-center rounded-lg bg-gray-light p-12 text-center">
+          Not enough data to display
+        </div>
+      )}
     </div>
   );
 };

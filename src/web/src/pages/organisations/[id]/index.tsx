@@ -68,6 +68,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { AvatarImage } from "~/components/AvatarImage";
 import DashboardCarousel from "~/components/Organisation/Dashboard/DashboardCarousel";
+import { WorldMapChart } from "~/components/Organisation/Dashboard/WorldMapChart";
 
 interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
@@ -637,18 +638,16 @@ const OrganisationDashboard: NextPageWithLayout<{
                     <LineChart
                       id="viewedCompleted"
                       data={searchResults.opportunities.viewedCompleted}
-                      width={900}
-                      height={386}
                       opportunityCount={
                         searchResults?.opportunities?.selected?.count ?? 0
                       }
                     />
                   )}
 
-                  <div className="flex flex-grow flex-col gap-2">
+                  <div className="flex flex-col gap-2">
                     <div className="flex flex-col gap-4">
                       {/* AVERAGE CONVERSION RATE */}
-                      <div className="flex h-[185px] flex-col gap-4 rounded-lg bg-white p-4 shadow">
+                      <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow md:w-[333px]">
                         <div className="flex flex-row items-center gap-3">
                           {/* <IoMdHourglass className="text-green" /> */}
                           <div className="rounded-lg bg-green-light p-1">
@@ -687,7 +686,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                           id="conversionRate"
                           title="Overall ratio"
                           subTitle=""
-                          width={313}
                           colors={CHART_COLORS}
                           data={[
                             ["Completed", "Viewed"],
@@ -710,75 +708,43 @@ const OrganisationDashboard: NextPageWithLayout<{
                 </div>
               </div>
 
-              {/* REWARDS */}
-              <div className="flex flex-col gap-2">
-                <div className="mb-2 flex gap-2">
-                  <div className="w-[297px] text-xl font-semibold">Rewards</div>
+              <div className="flex flex-col">
+                <div className="mb-4 flex gap-4">
+                  <div className="text-xl font-semibold">Countries</div>
+                  {/* <div className="hidden w-[17.2rem] text-xl font-semibold md:inline">
+                    Rewards
+                  </div>
                   <div className="hidden text-xl font-semibold md:inline">
                     Skills
-                  </div>
+                  </div> */}
                 </div>
                 <div className="flex flex-col gap-4 md:flex-row">
-                  {/* ZLTO AMOUNT AWARDED */}
-                  <div className="h-[176px] w-full flex-col rounded-lg bg-white p-4 shadow md:w-[420px] md:min-w-[288px]">
-                    <div className="flex flex-row items-center gap-3">
-                      <div className="rounded-lg bg-green-light p-1">
-                        <Image
-                          src={iconZlto}
-                          alt="Icon Zlto"
-                          width={20}
-                          height={20}
-                          sizes="100vw"
-                          priority={true}
-                          style={{ width: "20px", height: "20px" }}
-                        />
-                      </div>
-                      <div className="whitespace-nowrap text-sm font-semibold">
-                        ZLTO amount awarded
-                      </div>
-                    </div>
-                    <div className="-ml-1 mt-4 flex flex-grow items-center gap-2">
-                      <Image
-                        src={iconZlto}
-                        alt="Icon Zlto"
-                        width={35}
-                        height={35}
-                        sizes="100vw"
-                        priority={true}
-                        style={{ width: "35px", height: "35px" }}
+                  <div className="flex w-full flex-col justify-center overflow-hidden rounded-lg bg-white shadow">
+                    {/* COUNTRIES - WORLD MAP */}
+                    {searchResults?.demographics?.countries?.items && (
+                      <WorldMapChart
+                        data={[
+                          ["Country", "Opportunities"],
+                          ...Object.entries(
+                            searchResults?.demographics?.countries?.items || {},
+                          ),
+                        ]}
                       />
-                      <div className="flex-grow text-3xl font-semibold">
-                        {searchResults?.opportunities.reward.totalAmount.toLocaleString() ??
-                          0}
-                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-4">
+                    <div className="mt-0 text-xl font-semibold md:-mt-[2.75rem]">
+                      Rewards
                     </div>
-                  </div>
-
-                  <div className="text-xl font-semibold md:hidden">Skills</div>
-
-                  {/* TOTAL UNIQUE SKILLS */}
-                  <div
-                    className="overflow-hidden rounded-lg bg-white shadow"
-                    style={{ minWidth: "288px", height: "176px" }}
-                  >
-                    <SkillsChart
-                      id="totalUniqueSkills"
-                      data={searchResults?.skills?.items}
-                      height={176}
-                      chartWidth={288}
-                      chartHeight={100}
-                    />
-                  </div>
-
-                  {/* MOST COMPLETED SKILLS */}
-                  {searchResults?.skills?.topCompleted && (
-                    <>
-                      <div className="flex h-[176px] w-full flex-col rounded-lg bg-white p-4 shadow">
+                    <div className="flex flex-col gap-4 md:flex-row">
+                      {/* ZLTO AMOUNT AWARDED */}
+                      <div className="h-[176px] w-full flex-col rounded-lg bg-white p-4 shadow md:w-[275px]">
                         <div className="flex flex-row items-center gap-3">
                           <div className="rounded-lg bg-green-light p-1">
                             <Image
-                              src={iconSkills}
-                              alt="Icon Skills"
+                              src={iconZlto}
+                              alt="Icon Zlto"
                               width={20}
                               height={20}
                               sizes="100vw"
@@ -786,92 +752,130 @@ const OrganisationDashboard: NextPageWithLayout<{
                               style={{ width: "20px", height: "20px" }}
                             />
                           </div>
-                          <div className="text-sm font-semibold">
-                            {searchResults?.skills.topCompleted.legend}
+                          <div className="whitespace-nowrap text-sm font-semibold">
+                            ZLTO amount awarded
                           </div>
                         </div>
-                        <div className="mt-4 flex flex-grow flex-wrap gap-1 overflow-y-auto overflow-x-hidden md:h-[100px]">
-                          {searchResults?.skills.topCompleted.topCompleted.map(
-                            (x) => (
-                              <div
-                                key={x.id}
-                                className=" md:truncate-none flex h-9 w-max items-center text-ellipsis rounded border-[1px] border-green bg-white px-2 text-xs text-gray-dark md:w-fit md:max-w-none"
-                              >
-                                {x.name}
-                              </div>
-                            ),
+                        <div className="-ml-1 mt-4 flex flex-grow items-center gap-2">
+                          <Image
+                            src={iconZlto}
+                            alt="Icon Zlto"
+                            width={35}
+                            height={35}
+                            sizes="100vw"
+                            priority={true}
+                            style={{ width: "35px", height: "35px" }}
+                          />
+                          <div className="flex-grow text-3xl font-semibold">
+                            {searchResults?.opportunities.reward.totalAmount.toLocaleString() ??
+                              0}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col md:-mt-[2.75rem]">
+                        <span className="mb-4 text-xl font-semibold">
+                          Skills
+                        </span>
+
+                        {/* TOTAL UNIQUE SKILLS */}
+                        <SkillsChart
+                          id="totalUniqueSkills"
+                          data={searchResults?.skills?.items}
+                        />
+                      </div>
+                    </div>
+                    {/* MOST COMPLETED SKILLS */}
+                    {searchResults?.skills?.topCompleted && (
+                      <>
+                        <div className="flex h-[176px] w-full flex-col rounded-lg bg-white p-4 shadow md:w-[565px]">
+                          <div className="flex flex-row items-center gap-3">
+                            <div className="rounded-lg bg-green-light p-1">
+                              <Image
+                                src={iconSkills}
+                                alt="Icon Skills"
+                                width={20}
+                                height={20}
+                                sizes="100vw"
+                                priority={true}
+                                style={{ width: "20px", height: "20px" }}
+                              />
+                            </div>
+                            <div className="text-sm font-semibold">
+                              {searchResults?.skills.topCompleted.legend}
+                            </div>
+                          </div>
+                          <div className="mt-4 flex flex-grow flex-wrap gap-1 overflow-y-auto overflow-x-hidden md:h-[100px]">
+                            {searchResults?.skills.topCompleted.topCompleted.map(
+                              (x) => (
+                                <div
+                                  key={x.id}
+                                  className=" md:truncate-none flex h-9 w-max items-center text-ellipsis rounded border-[1px] border-green bg-white px-2 text-xs text-gray-dark md:w-fit md:max-w-none"
+                                >
+                                  {x.name}
+                                </div>
+                              ),
+                            )}
+                          </div>
+                          {searchResults?.skills?.topCompleted.topCompleted
+                            .length === 0 && (
+                            <div className="mb-8 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-10 text-center text-xs">
+                              Not enough data to display
+                            </div>
                           )}
                         </div>
-                        {searchResults?.skills?.topCompleted.topCompleted
-                          .length === 0 && (
-                          <div className="flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center text-xs">
-                            Not enough data to display
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* DEMOGRAPHICS */}
-              <div className="flex flex-col gap-2">
+              <div className="flex w-full flex-col gap-2">
                 <div className="mb-2 text-xl font-semibold">Demographics</div>
 
-                <div className="flex flex-col gap-4 md:flex-row">
-                  {/* COUNTRIES */}
-                  {searchResults?.demographics?.countries?.items && (
-                    <PieChart
-                      id="countries"
-                      title="Country"
-                      subTitle=""
-                      width={420}
-                      colors={CHART_COLORS}
-                      data={[
-                        ["Country", "Value"],
-                        ...Object.entries(
-                          searchResults?.demographics?.countries?.items || {},
-                        ),
-                      ]}
-                      className="h-44 w-full md:w-72"
-                    />
-                  )}
+                <div className="flex w-full flex-col gap-4 md:flex-row">
+                  {/* EDUCATION */}
+                  <PieChart
+                    id="education"
+                    title="Education"
+                    subTitle=""
+                    colors={CHART_COLORS}
+                    data={[
+                      ["Education", "Value"],
+                      ...Object.entries(
+                        searchResults?.demographics?.education?.items || {},
+                      ),
+                    ]}
+                  />
 
                   {/* GENDERS */}
-                  {searchResults?.demographics?.genders?.items && (
-                    <PieChart
-                      id="genders"
-                      title="Genders"
-                      subTitle=""
-                      width={420}
-                      colors={CHART_COLORS}
-                      data={[
-                        ["Gender", "Value"],
-                        ...Object.entries(
-                          searchResults?.demographics?.genders?.items || {},
-                        ),
-                      ]}
-                      className="h-44 w-full md:w-72"
-                    />
-                  )}
+                  <PieChart
+                    id="genders"
+                    title="Genders"
+                    subTitle=""
+                    colors={CHART_COLORS}
+                    data={[
+                      ["Gender", "Value"],
+                      ...Object.entries(
+                        searchResults?.demographics?.genders?.items || {},
+                      ),
+                    ]}
+                  />
 
                   {/* AGE */}
-                  {searchResults?.demographics?.ages?.items && (
-                    <PieChart
-                      id="ages"
-                      title="Age"
-                      subTitle=""
-                      width={420}
-                      colors={CHART_COLORS}
-                      data={[
-                        ["Age", "Value"],
-                        ...Object.entries(
-                          searchResults?.demographics?.ages?.items || {},
-                        ),
-                      ]}
-                      className="h-44 w-full md:w-64 lg:w-72"
-                    />
-                  )}
+                  <PieChart
+                    id="ages"
+                    title="Age"
+                    subTitle=""
+                    colors={CHART_COLORS}
+                    data={[
+                      ["Age", "Value"],
+                      ...Object.entries(
+                        searchResults?.demographics?.ages?.items || {},
+                      ),
+                    ]}
+                  />
                 </div>
               </div>
             </div>
