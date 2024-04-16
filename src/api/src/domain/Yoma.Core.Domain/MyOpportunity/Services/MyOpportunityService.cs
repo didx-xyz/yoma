@@ -685,7 +685,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var reasonText = string.Join(", ", reasons);
 
-      return $"Oportunity '{opportunity.Title}' {description}, because {reasonText}. Please check these conditions and try again";
+      return $"Opportunity '{opportunity.Title}' {description}, because {reasonText}. Please check these conditions and try again";
     }
 
     private async Task PerformActionSendForVerificationManual(User user, Guid opportunityId, MyOpportunityRequestVerify request, bool overridePending)
@@ -778,7 +778,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       await SendEmail(myOpportunity, EmailType.Opportunity_Verification_Pending);
 
       //sent to organization admins
-      await SendEmail(myOpportunity, EmailType.Opportunity_Verification_Pending_Admin);
+      //[REMOVED/TODO: Pending user settings]
+      //await SendEmail(myOpportunity, EmailType.Opportunity_Verification_Pending_Admin);
     }
 
     private async Task SendEmail(Models.MyOpportunity myOpportunity, EmailType type)

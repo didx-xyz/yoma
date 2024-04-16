@@ -165,7 +165,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       var storeItem = storeItems.Single();
 
       if (walletBalance.Available < storeItem.Amount)
-        throw new ValidationException($"Insufficient funds to purchase the item. Current avaliable balance '{walletBalance.Available:N2}'");
+        throw new ValidationException($"Insufficient funds to purchase the item. Current available balance '{walletBalance.Available:N2}'");
 
       //find latest transaction for the user and item category
       var transactionExisting = _transactionLogRepository.Query()

@@ -236,6 +236,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (!string.IsNullOrEmpty(filter.TitleContains))
         query = _opportunityRepository.Contains(query, filter.TitleContains);
 
+      if (filter.Opportunities != null && filter.Opportunities.Count != 0)
+      {
+        filter.Opportunities = filter.Opportunities.Distinct().ToList();
+        query = query.Where(o => filter.Opportunities.Contains(o.Id));
+      }
+
       var results = new OpportunitySearchResultsCriteria();
       query = query.OrderBy(o => o.Title).ThenBy(o => o.Id); //ensure deterministic sorting / consistent pagination results
 
@@ -341,7 +347,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var countryIds = query.Select(o => o.CountryId).Distinct().ToList();
 
       return [.. _countryService.List().Where(o => countryIds.Contains(o.Id))
-                .OrderBy(o => o.CodeAlpha2 != Country.Worldwide.ToDescription()).ThenBy(o => o.Name)]; //esnure Worldwide appears first
+                .OrderBy(o => o.CodeAlpha2 != Country.Worldwide.ToDescription()).ThenBy(o => o.Name)]; //ensure Worldwide appears first
     }
 
     public List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountries(List<PublishedState>? publishedStates)
@@ -380,7 +386,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var countryIds = query.Select(o => o.CountryId).Distinct().ToList();
 
       return [.. _countryService.List().Where(o => countryIds.Contains(o.Id))
-                .OrderBy(o => o.CodeAlpha2 != Country.Worldwide.ToDescription()).ThenBy(o => o.Name)]; //esnure Worldwide appears first
+                .OrderBy(o => o.CodeAlpha2 != Country.Worldwide.ToDescription()).ThenBy(o => o.Name)]; //ensure Worldwide appears first
     }
 
     public List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguagesAdmin(Guid? organizationId, bool ensureOrganizationAuthorization)
@@ -1035,7 +1041,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         var reasonText = string.Join(", ", reasons);
 
-        throw new ValidationException($"Oportunity '{opportunity.Title}' rewards can no longer be allocated, because {reasonText}. Please check these conditions and try again");
+        throw new ValidationException($"Opportunity '{opportunity.Title}' rewards can no longer be allocated, because {reasonText}. Please check these conditions and try again");
       }
 
       var count = (opportunity.ParticipantCount ?? 0) + 1;

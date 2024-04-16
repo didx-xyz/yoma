@@ -40,7 +40,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    //anonymously accesable from controller
+    //anonymously accessible from controller
     public OpportunityInfo GetPublishedOrExpiredById(Guid id)
     {
       var opportunity = _opportunityService.GetById(id, true, true, false);

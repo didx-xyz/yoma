@@ -7,5 +7,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public Guid? Organization { get; set; }
 
     public string? TitleContains { get; set; }
+
+    public List<Guid>? Opportunities { get; set; }
   }
 }

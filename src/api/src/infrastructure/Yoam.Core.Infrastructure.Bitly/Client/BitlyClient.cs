@@ -25,6 +25,40 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
     #endregion
 
     #region Public Members
+    public string CreateShortLink(string title, string url, string? titleUrl)
+    {
+      ArgumentException.ThrowIfNullOrEmpty(title, nameof(title));
+
+      if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
+        throw new ArgumentException("Invalid URL", nameof(url));
+
+      var request = new BitLinksRequest
+      {
+        LongURL = url,
+        GroupId = _options.GroupId,
+        Title = title,
+        Tags = _options.Tags
+      };
+
+      switch (_options.ShortLinkType)
+      {
+        case ShortLinkType.Generic:
+          break;
+
+        case ShortLinkType.CustomDomain:
+          request.Domain = _options.DomainCustom;
+          break;
+
+        case ShortLinkType.CustomBackHalf:
+          break;
+
+        case ShortLinkType.CustomDomainAndBackHalf:
+          request.Domain = _options.DomainCustom;
+          break;
+      }
+
+      return string.Empty;
+    }
     #endregion
   }
 }

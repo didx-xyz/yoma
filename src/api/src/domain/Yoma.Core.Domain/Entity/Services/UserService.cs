@@ -194,7 +194,7 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         var kcUser = await _identityProviderClient.GetUser(request.Email)
             ?? throw new InvalidOperationException($"{nameof(User)} with email '{request.Email}' does not exist");
-        //preserve keycloak formatting for email, firstname and surname
+        //preserve keycloak formatting for email, first name and surname
         result.Email = request.Email;
         result.FirstName = request.FirstName;
         result.Surname = request.Surname;
