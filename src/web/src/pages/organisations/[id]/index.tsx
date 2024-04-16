@@ -636,7 +636,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                   {/* VIEWED COMPLETED */}
                   {searchResults?.opportunities?.viewedCompleted && (
                     <LineChart
-                      id="viewedCompleted"
                       data={searchResults.opportunities.viewedCompleted}
                       opportunityCount={
                         searchResults?.opportunities?.selected?.count ?? 0
