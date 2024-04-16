@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {
-  OrganizationInfo,
+  type OrganizationInfo,
   OrganizationStatus,
 } from "~/api/models/organisation";
 import {
@@ -9,9 +9,9 @@ import {
   ROLE_ADMIN,
 } from "~/lib/constants";
 import { AvatarImage } from "../AvatarImage";
-import { User } from "~/server/auth";
-import { IoIosSettings } from "react-icons/io";
-import { AxiosError } from "axios";
+import type { User } from "~/server/auth";
+import { IoIosSettings, IoMdWarning } from "react-icons/io";
+import type { AxiosError } from "axios";
 import { useState, useCallback } from "react";
 import { FaPencilAlt, FaClock, FaTrash } from "react-icons/fa";
 import { toast } from "react-toastify";
@@ -19,6 +19,8 @@ import { patchOrganisationStatus } from "~/api/services/organisations";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { ApiErrors } from "../Status/ApiErrors";
 import { useRouter } from "next/router";
+import { Loading } from "../Status/Loading";
+import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 
 export const OrganisationCardComponent: React.FC<{
   key: string;
@@ -29,19 +31,56 @@ export const OrganisationCardComponent: React.FC<{
 }> = ({ key, item, user, returnUrl, onUpdateStatus }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [manageOpportunityMenuVisible, setManageOpportunityMenuVisible] =
-    useState(false);
-  const link = user.roles.includes(ROLE_ADMIN)
-    ? item.status === "Active"
-      ? `/organisations/${item.id}/info`
-      : `/organisations/${item.id}/verify`
-    : item.status === "Active"
-      ? `/organisations/${item.id}`
-      : `/organisations/${item.id}/edit`;
+  const modalContext = useConfirmationModalContext();
+
+  const _returnUrl = returnUrl
+    ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
+    : router.asPath;
+  const isAdmin = user.roles.includes(ROLE_ADMIN);
+  const link =
+    item.status === "Active"
+      ? `/organisations/${item.id}${_returnUrl}`
+      : item.status === "Inactive" && isAdmin
+        ? `/organisations/${item.id}/verify${_returnUrl}`
+        : `/organisations/${item.id}/info${_returnUrl}`;
 
   const updateStatus = useCallback(
     async (status: OrganizationStatus) => {
       if (!item) return;
+
+      // confirm dialog
+      const result = await modalContext.showConfirmation(
+        "",
+        <div
+          key="confirm-dialog-content"
+          className="text-gray-500 flex h-full flex-col space-y-2"
+        >
+          <div className="flex flex-row items-center gap-2">
+            <IoMdWarning className="h-6 w-6 text-warning" />
+            <p className="text-lg">Confirm</p>
+          </div>
+
+          <div>
+            <p className="text-sm leading-6">
+              {status === OrganizationStatus.Deleted && (
+                <>
+                  Are you sure you want to delete this organisation?
+                  <br />
+                  This action cannot be undone.
+                </>
+              )}
+              {status === OrganizationStatus.Active && (
+                <>Are you sure you want to activate this organisation?</>
+              )}
+              {status === OrganizationStatus.Inactive && (
+                <>Are you sure you want to inactivate this organisation?</>
+              )}
+            </p>
+          </div>
+        </div>,
+      );
+      if (!result) return;
+
       setIsLoading(true);
 
       try {
@@ -57,11 +96,6 @@ export const OrganisationCardComponent: React.FC<{
           GA_ACTION_OPPORTUNITY_UPDATE,
           `Organisation Status Changed to ${status} for Organisation ID: ${item.id}`,
         );
-
-        // invalidate cache
-        // await queryClient.invalidateQueries({
-        //   queryKey: ["Organisations", query, page, status],
-        // });
 
         toast.success("Organisation status updated");
 
@@ -79,7 +113,7 @@ export const OrganisationCardComponent: React.FC<{
 
       return;
     },
-    [item, setIsLoading],
+    [item, modalContext, setIsLoading, onUpdateStatus],
   );
 
   return (
@@ -87,6 +121,8 @@ export const OrganisationCardComponent: React.FC<{
       key={`orgCard_${key}`}
       className="flex flex-row rounded-xl bg-white shadow-custom transition duration-300 dark:bg-neutral-700 md:max-w-7xl"
     >
+      {isLoading && <Loading />}
+
       <div className="flex w-1/4 items-center justify-center p-2">
         <div className="flex h-28 w-28 items-center justify-center">
           <AvatarImage
@@ -133,10 +169,8 @@ export const OrganisationCardComponent: React.FC<{
           </div>
 
           <div className="dropdown dropdown-left w-10">
-
             <button
               className="bg-theme hover:bg-theme w-40x flex flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 hover:brightness-110 disabled:cursor-not-allowed disabled:bg-gray-dark"
-
               disabled={item?.status == "Deleted"}
             >
               <IoIosSettings className="mr-1x h-5 w-5" />
@@ -146,13 +180,7 @@ export const OrganisationCardComponent: React.FC<{
               {item?.status != "Deleted" && (
                 <li>
                   <Link
-                    href={`/organisations/${item?.id}/edit${
-                      returnUrl
-                        ? `?returnUrl=${encodeURIComponent(
-                            returnUrl.toString(),
-                          )}`
-                        : router.asPath
-                    }`}
+                    href={`/organisations/${item?.id}/edit${_returnUrl}`}
                     className="flex flex-row items-center text-gray-dark hover:brightness-50"
                   >
                     <FaPencilAlt className="mr-2 h-3 w-3" />
@@ -161,30 +189,34 @@ export const OrganisationCardComponent: React.FC<{
                 </li>
               )}
 
-              {/* if active, then org admins can make it inactive
-                  if deleted, admins can make it inactive */}
-              {item?.status == "Active" && (
-                <li>
-                  <button
-                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                    onClick={() => updateStatus(OrganizationStatus.Inactive)}
-                  >
-                    <FaClock className="mr-2 h-3 w-3" />
-                    Make Inactive
-                  </button>
-                </li>
-              )}
+              {isAdmin && (
+                <>
+                  {item?.status == "Active" && (
+                    <li>
+                      <button
+                        className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                        onClick={() =>
+                          updateStatus(OrganizationStatus.Inactive)
+                        }
+                      >
+                        <FaClock className="mr-2 h-3 w-3" />
+                        Make Inactive
+                      </button>
+                    </li>
+                  )}
 
-              {item?.status == "Inactive" && (
-                <li>
-                  <button
-                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                    onClick={() => updateStatus(OrganizationStatus.Active)}
-                  >
-                    <FaClock className="mr-2 h-3 w-3" />
-                    Make Active
-                  </button>
-                </li>
+                  {item?.status == "Inactive" && (
+                    <li>
+                      <button
+                        className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                        onClick={() => updateStatus(OrganizationStatus.Active)}
+                      >
+                        <FaClock className="mr-2 h-3 w-3" />
+                        Make Active
+                      </button>
+                    </li>
+                  )}
+                </>
               )}
 
               {item?.status != "Deleted" && (

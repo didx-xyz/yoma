@@ -24,6 +24,7 @@ import {
   IoMdPause,
   IoMdPlay,
   IoIosBook,
+  IoMdWarning,
 } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
@@ -58,6 +59,7 @@ import { AvatarImage } from "~/components/AvatarImage";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -135,6 +137,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const currentOrganisationInactive = useAtomValue(
     currentOrganisationInactiveAtom,
   );
+  const modalContext = useConfirmationModalContext();
 
   // 👇 use prefetched queries from server
   const { data: opportunity } = useQuery<OpportunityInfo>({
@@ -148,6 +151,40 @@ const OpportunityDetails: NextPageWithLayout<{
 
   const updateStatus = useCallback(
     async (status: Status) => {
+      setManageOpportunityMenuVisible(false);
+      // confirm dialog
+      const result = await modalContext.showConfirmation(
+        "",
+        <div
+          key="confirm-dialog-content"
+          className="text-gray-500 flex h-full flex-col space-y-2"
+        >
+          <div className="flex flex-row items-center gap-2">
+            <IoMdWarning className="h-6 w-6 text-warning" />
+            <p className="text-lg">Confirm</p>
+          </div>
+
+          <div>
+            <p className="text-sm leading-6">
+              {status === Status.Deleted && (
+                <>
+                  Are you sure you want to delete this opportunity?
+                  <br />
+                  This action cannot be undone.
+                </>
+              )}
+              {status === Status.Active && (
+                <>Are you sure you want to activate this opportunity?</>
+              )}
+              {status === Status.Inactive && (
+                <>Are you sure you want to inactivate this opportunity?</>
+              )}
+            </p>
+          </div>
+        </div>,
+      );
+      if (!result) return;
+
       setIsLoading(true);
 
       try {
@@ -180,7 +217,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
       return;
     },
-    [opportunityId, queryClient],
+    [opportunityId, queryClient, setManageOpportunityMenuVisible, modalContext],
   );
 
   if (error) {
@@ -227,7 +264,9 @@ const OpportunityDetails: NextPageWithLayout<{
               onClick={() => {
                 setManageOpportunityMenuVisible(true);
               }}
-              disabled={currentOrganisationInactive}
+              disabled={
+                currentOrganisationInactive || opportunity?.status == "Deleted"
+              }
             >
               <IoIosSettings className="mr-1 h-5 w-5" />
               Manage opportunity

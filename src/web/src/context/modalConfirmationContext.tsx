@@ -101,8 +101,9 @@ const ConfirmationModalContextProvider: React.FC<
           isOpen={show}
           shouldCloseOnOverlayClick={true}
           onRequestClose={onHide}
-          className="fixed inset-0 z-50 m-auto h-[170px] w-[380px] rounded-lg bg-white p-4 font-openSans duration-100 animate-in zoom-in md:mt-[10%]"
-          overlayClassName="fixed inset-0 bg-transparent z-50"
+          className="fixed inset-0 z-50 m-auto h-[170px] w-[380px] rounded-lg bg-white p-4 font-openSans outline-2 duration-100 animate-in zoom-in md:mt-[10%]"
+          portalClassName={"fixed z-40"}
+          overlayClassName="fixed inset-0 bg-overlay"
         >
           <div className="flex h-full flex-col space-y-2">
             {/* TITLE */}

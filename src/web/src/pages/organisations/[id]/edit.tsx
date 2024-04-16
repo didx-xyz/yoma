@@ -44,10 +44,11 @@ import { config } from "~/lib/react-query-config";
 import { getCountries } from "~/api/services/lookups";
 import { IoMdArrowRoundBack, IoMdWarning } from "react-icons/io";
 import { trackGAEvent } from "~/lib/google-analytics";
-import { getThemeFromRole } from "~/lib/utils";
+import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { useRouter } from "next/router";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -121,6 +122,8 @@ const OrganisationUpdate: NextPageWithLayout<{
   theme: string;
   error?: number;
 }> = ({ id, user, error }) => {
+  const router = useRouter();
+  const { returnUrl } = router.query;
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
   const userProfile = useAtomValue(userProfileAtom);
@@ -267,7 +270,7 @@ const OrganisationUpdate: NextPageWithLayout<{
           <div className="flex flex-row text-xs text-white">
             <Link
               className="flex items-center justify-center font-bold hover:text-gray"
-              href={"/organisations"}
+              href={getSafeUrl(returnUrl?.toString(), `/organisations`)}
             >
               <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4" />
               Organisations
@@ -277,7 +280,11 @@ const OrganisationUpdate: NextPageWithLayout<{
 
             <Link
               className="flex max-w-[300px] items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap font-bold hover:text-gray md:max-w-[400px] lg:max-w-[800px]"
-              href={`/organisations/${id}`}
+              href={`/organisations/${id}${
+                returnUrl
+                  ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
+                  : ""
+              }`}
             >
               {organisation?.name}
             </Link>

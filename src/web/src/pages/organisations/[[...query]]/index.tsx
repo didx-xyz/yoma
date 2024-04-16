@@ -8,20 +8,17 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useCallback, useState, type ReactElement } from "react";
+import { useCallback, useMemo, type ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
-import { User, authOptions } from "~/server/auth";
-import { OrganizationStatus, Status } from "~/api/models/opportunity";
+import { type User, authOptions } from "~/server/auth";
+import { OrganizationStatus } from "~/api/models/opportunity";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { type ParsedUrlQuery } from "querystring";
 import Link from "next/link";
 import { PageBackground } from "~/components/PageBackground";
 import { IoIosAdd } from "react-icons/io";
 import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import {
-  GA_ACTION_OPPORTUNITY_UPDATE,
-  GA_CATEGORY_OPPORTUNITY,
   PAGE_SIZE,
   ROLE_ADMIN,
   ROLE_ORG_ADMIN,
@@ -31,34 +28,14 @@ import {
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
-import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
-import axios, { AxiosError } from "axios";
+import { getSafeUrl } from "~/lib/utils";
+import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import {
-  getOrganisations,
-  patchOrganisationStatus,
-} from "~/api/services/organisations";
-import { SelectOption } from "~/api/models/lookups";
-import {
-  OrganizationInfo,
-  OrganizationSearchFilter,
-  OrganizationSearchResults,
-} from "~/api/models/organisation";
+import { getOrganisations } from "~/api/services/organisations";
+import type { SelectOption } from "~/api/models/lookups";
+import type { OrganizationSearchFilter } from "~/api/models/organisation";
 import { OrganisationCardComponent } from "~/components/Organisation/OrganisationCardComponent";
-import { FaPencilAlt, FaClock, FaTrash } from "react-icons/fa";
-import ReactModal from "react-modal";
-import { toast } from "react-toastify";
-import { ApiErrors } from "~/components/Status/ApiErrors";
-import { trackGAEvent } from "~/lib/google-analytics";
-import { set } from "zod";
-
-interface IParams extends ParsedUrlQuery {
-  id: string;
-  query?: string;
-  page?: string;
-  status?: string;
-}
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -94,28 +71,59 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   try {
     // 👇 prefetch queries on server
-    // const data = await getOrganisations(
-    //   {
-    //     pageNumber: page ? parseInt(page.toString()) : 1,
-    //     pageSize: PAGE_SIZE,
-    //     valueContains: query?.toString() ?? "",
-    //     statuses:
-    //       status === "active"
-    //         ? [Status.Active]
-    //         : status === "inactive"
-    //           ? [Status.Inactive]
-    //           : status === "expired"
-    //             ? [Status.Expired]
-    //             : status === "deleted"
-    //               ? [Status.Deleted]
-    //               : null,
-    //   },
-    //   context,
-    // );
-    // await queryClient.prefetchQuery({
-    //   queryKey: ["Organisations", query, page, status],
-    //   queryFn: () => data,
-    // });
+    // get the totalCount for each status from the getOrganisations function
+    await Promise.all([
+      queryClient.prefetchQuery({
+        queryKey: ["Organisations_TotalCount", null],
+        queryFn: () =>
+          getOrganisations({
+            pageNumber: 1,
+            pageSize: 1,
+            valueContains: null,
+            statuses: null,
+          }).then((data) => data.totalCount ?? 0),
+      }),
+      queryClient.prefetchQuery({
+        queryKey: ["Organisations_TotalCount", OrganizationStatus.Active],
+        queryFn: () =>
+          getOrganisations({
+            pageNumber: 1,
+            pageSize: 1,
+            valueContains: null,
+            statuses: [OrganizationStatus.Active],
+          }).then((data) => data.totalCount ?? 0),
+      }),
+      queryClient.prefetchQuery({
+        queryKey: ["Organisations_TotalCount", OrganizationStatus.Inactive],
+        queryFn: () =>
+          getOrganisations({
+            pageNumber: 1,
+            pageSize: 1,
+            valueContains: null,
+            statuses: [OrganizationStatus.Inactive],
+          }).then((data) => data.totalCount ?? 0),
+      }),
+      queryClient.prefetchQuery({
+        queryKey: ["Organisations_TotalCount", OrganizationStatus.Declined],
+        queryFn: () =>
+          getOrganisations({
+            pageNumber: 1,
+            pageSize: 1,
+            valueContains: null,
+            statuses: [OrganizationStatus.Declined],
+          }).then((data) => data.totalCount ?? 0),
+      }),
+      queryClient.prefetchQuery({
+        queryKey: ["Organisations_TotalCount", OrganizationStatus.Deleted],
+        queryFn: () =>
+          getOrganisations({
+            pageNumber: 1,
+            pageSize: 1,
+            valueContains: null,
+            statuses: [OrganizationStatus.Deleted],
+          }).then((data) => data.totalCount ?? 0),
+      }),
+    ]);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status) {
       if (error.response.status === 404) {
@@ -129,7 +137,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   return {
     props: {
-      // dehydratedState: dehydrate(queryClient),
+      dehydratedState: dehydrate(queryClient),
       query: query ?? null,
       page: page ?? null,
       status: status ?? null,
@@ -153,29 +161,91 @@ const Organisations: NextPageWithLayout<{
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const lookups_statuses: SelectOption[] = [
-    { value: "0", label: "Inactive" },
-    { value: "1", label: "Active" },
-    { value: "2", label: "Declined" },
-    { value: "3", label: "Deleted" },
-  ];
+  const lookups_statuses = useMemo<SelectOption[]>(
+    () => [
+      { value: "0", label: "Inactive" },
+      { value: "1", label: "Active" },
+      { value: "2", label: "Declined" },
+      { value: "3", label: "Deleted" },
+    ],
+    [],
+  );
 
   // search filter state
-  const [searchFilter, setSearchFilter] = useState<OrganizationSearchFilter>({
-    pageNumber: page ? parseInt(page.toString()) : 1,
-    pageSize: PAGE_SIZE,
-    valueContains: query?.toString() ?? "",
-    statuses:
-      status != undefined
-        ? lookups_statuses
-            .filter((y) => y.label.toLowerCase() === status.toLowerCase())
-            .map((item) => item.value)
-        : null,
-  });
+  const searchFilter = useMemo(
+    () => ({
+      pageNumber: page ? parseInt(page.toString()) : 1,
+      pageSize: PAGE_SIZE,
+      valueContains: query?.toString() ?? "",
+      statuses:
+        status != undefined
+          ? lookups_statuses
+              .filter((y) => y.label.toLowerCase() === status.toLowerCase())
+              .map((item) => item.value)
+          : null,
+    }),
+    [page, query, status, lookups_statuses],
+  );
 
   // 👇 use prefetched queries from server
-  const { data: searchResults } = useQuery<OrganizationSearchResults>({
-    queryKey: ["Organisations", query, page, status],
+  const { data: totalCountAll } = useQuery<number>({
+    queryKey: ["Organisations_TotalCount", null],
+    queryFn: () =>
+      getOrganisations({
+        pageNumber: 1,
+        pageSize: 1,
+        valueContains: null,
+        statuses: null,
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountActive } = useQuery<number>({
+    queryKey: ["Organisations_TotalCount", OrganizationStatus.Active],
+    queryFn: () =>
+      getOrganisations({
+        pageNumber: 1,
+        pageSize: 1,
+        valueContains: null,
+        statuses: [OrganizationStatus.Active],
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountInactive } = useQuery<number>({
+    queryKey: ["Organisations_TotalCount", OrganizationStatus.Inactive],
+    queryFn: () =>
+      getOrganisations({
+        pageNumber: 1,
+        pageSize: 1,
+        valueContains: null,
+        statuses: [OrganizationStatus.Inactive],
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountDeclined } = useQuery<number>({
+    queryKey: ["Organisations_TotalCount", OrganizationStatus.Declined],
+    queryFn: () =>
+      getOrganisations({
+        pageNumber: 1,
+        pageSize: 1,
+        valueContains: null,
+        statuses: [OrganizationStatus.Declined],
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountDeleted } = useQuery<number>({
+    queryKey: ["Organisations_TotalCount", OrganizationStatus.Deleted],
+    queryFn: () =>
+      getOrganisations({
+        pageNumber: 1,
+        pageSize: 1,
+        valueContains: null,
+        statuses: [OrganizationStatus.Deleted],
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  // this is not prefetched on the server
+  const { data: searchResults } = useQuery({
+    queryKey: ["Organisations", searchFilter],
     queryFn: () => getOrganisations(searchFilter),
     enabled: !error,
   });
@@ -260,10 +330,16 @@ const Organisations: NextPageWithLayout<{
 
   const updateStatus = useCallback(async () => {
     // invalidate cache
+    // this will match all queries with the following prefixes 'Organisations' (list data) & 'Organisations_TotalCount' (tab counts)
     await queryClient.invalidateQueries({
-      queryKey: ["Organisations", query, page, status],
+      queryKey: ["Organisations"],
+      exact: false,
     });
-  }, [query, page, status, queryClient]);
+    await queryClient.invalidateQueries({
+      queryKey: ["Organisations_TotalCount"],
+      exact: false,
+    });
+  }, [queryClient]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -295,7 +371,7 @@ const Organisations: NextPageWithLayout<{
               >
                 <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
                   <ul className="overflow-x-hiddem -mb-px flex w-full justify-center gap-0 md:justify-start">
-                    <li className="w-1/5 md:w-20">
+                    <li className="w-1/5 md:w-24">
                       <Link
                         href={`/organisations`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -306,9 +382,14 @@ const Organisations: NextPageWithLayout<{
                         role="tab"
                       >
                         All
+                        {(totalCountAll ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                            {totalCountAll}
+                          </div>
+                        )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-20">
+                    <li className="w-1/5 md:w-24">
                       <Link
                         href={`/organisations?status=Active`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -319,9 +400,14 @@ const Organisations: NextPageWithLayout<{
                         role="tab"
                       >
                         Active
+                        {(totalCountActive ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                            {totalCountActive}
+                          </div>
+                        )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-20">
+                    <li className="w-1/5 md:w-24">
                       <Link
                         href={`/organisations?status=Inactive`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -332,9 +418,14 @@ const Organisations: NextPageWithLayout<{
                         role="tab"
                       >
                         Pending
+                        {(totalCountInactive ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                            {totalCountInactive}
+                          </div>
+                        )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-20">
+                    <li className="w-1/5 md:w-24">
                       <Link
                         href={`/organisations?status=Declined`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -345,9 +436,14 @@ const Organisations: NextPageWithLayout<{
                         role="tab"
                       >
                         Declined
+                        {(totalCountDeclined ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                            {totalCountDeclined}
+                          </div>
+                        )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-20">
+                    <li className="w-1/5 md:w-24">
                       <Link
                         href={`/organisations?status=Deleted`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -358,6 +454,11 @@ const Organisations: NextPageWithLayout<{
                         role="tab"
                       >
                         Deleted
+                        {(totalCountDeleted ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                            {totalCountDeleted}
+                          </div>
+                        )}
                       </Link>
                     </li>
                   </ul>
@@ -384,37 +485,30 @@ const Organisations: NextPageWithLayout<{
         </div>
 
         <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
-          {/* NO ROWS */}
-          {searchResults && searchResults.totalCount === 0 && !query && (
+          {/* NO RESULTS */}
+          {searchResults && searchResults.totalCount === 0 && (
             <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
-              <NoRowsMessage
-                title={"You will find your active opportunities here"}
-                description={
-                  "This is where you will find all the awesome opportunities you have shared"
-                }
-              />
-
-              <Link
-                href={`/organisations/register${`?returnUrl=${encodeURIComponent(
-                  getSafeUrl(returnUrl?.toString(), router.asPath),
-                )}`}`}
-                className="bg-theme btn btn-primary rounded-3xl border-0 px-16 brightness-105 hover:brightness-110"
-                id="btnCreateOpportunity" // e2e
-              >
-                <IoIosAdd className="mr-1 h-5 w-5" />
-                Add organisation
-              </Link>
-            </div>
-          )}
-          {searchResults && searchResults.totalCount === 0 && query && (
-            <div className="flex flex-col place-items-center py-32">
               <NoRowsMessage
                 title={"No organisations found"}
                 description={"Please try refining your search query."}
               />
+
+              {!status && (
+                <Link
+                  href={`/organisations/register${`?returnUrl=${encodeURIComponent(
+                    getSafeUrl(returnUrl?.toString(), router.asPath),
+                  )}`}`}
+                  className="bg-theme btn btn-primary rounded-3xl border-0 px-16 brightness-105 hover:brightness-110"
+                  id="btnCreateOpportunity" // e2e
+                >
+                  <IoIosAdd className="mr-1 h-5 w-5" />
+                  Add organisation
+                </Link>
+              )}
             </div>
           )}
-          {/* GRID */}
+
+          {/* RESULTS */}
           {searchResults && searchResults.items.length > 0 && (
             <div className="grid w-full place-items-center">
               <div className="xs:grid-cols-1 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -430,8 +524,9 @@ const Organisations: NextPageWithLayout<{
               </div>
             </div>
           )}
+
+          {/* PAGINATION */}
           <div className="mt-2 grid place-items-center justify-center">
-            {/* PAGINATION */}
             <PaginationButtons
               currentPage={page ? parseInt(page) : 1}
               totalItems={searchResults?.totalCount ?? 0}

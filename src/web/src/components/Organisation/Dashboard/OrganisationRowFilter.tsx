@@ -8,7 +8,6 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
 import type { OrganizationSearchFilterBase } from "~/api/models/organizationDashboard";
-// import { IoMdDownload } from "react-icons/io";
 import { searchCriteriaOpportunities } from "~/api/services/opportunities";
 import Select, { components, type ValueContainerProps } from "react-select";
 import Async from "react-select/async";
@@ -56,16 +55,12 @@ export const OrganisationRowFilter: React.FC<{
   searchFilter: OrganizationSearchFilterBase | null;
   lookups_categories?: OpportunityCategory[];
   onSubmit?: (fieldValues: OrganizationSearchFilterBase) => void;
-  onOpenFilterFullWindow?: () => void;
-  exportToCsv?: (arg0: boolean) => void;
 }> = ({
   organisationId,
   htmlRef,
   searchFilter,
   lookups_categories,
-
   onSubmit,
-  exportToCsv,
 }) => {
   const schema = zod.object({
     organization: zod.string().optional().nullable(),
