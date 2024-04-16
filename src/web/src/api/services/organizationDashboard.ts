@@ -132,6 +132,10 @@ export const searchOrganizationEngagement = async (
         legend: "ages",
         items: { item1: 100, item2: 200 },
       },
+      education: {
+        legend: "education",
+        items: { item1: 100, item2: 200 },
+      },
     },
     dateStamp: "2021-12-01",
   };
