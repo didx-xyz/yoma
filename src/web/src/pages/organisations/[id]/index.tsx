@@ -26,9 +26,9 @@ import {
   searchOrganizationYouth,
 } from "~/api/services/organizationDashboard";
 import type { GetServerSidePropsContext } from "next";
-import {
+import type {
   OpportunitySearchResultsInfo,
-  type OpportunityCategory,
+  OpportunityCategory,
 } from "~/api/models/opportunity";
 import { getServerSession } from "next-auth";
 import { Loading } from "~/components/Status/Loading";
@@ -121,16 +121,17 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     ]);
 
     // HACK: lookup each of the opportunities (to resolve ids to titles)
-    lookups_selectedOpportunities = await searchCriteriaOpportunities(
-      {
-        //id: null TODO: api
-        organization: null,
-        titleContains: null,
-        pageNumber: 1,
-        pageSize: 1,
-      },
-      context,
-    );
+    if (opportunities)
+      lookups_selectedOpportunities = await searchCriteriaOpportunities(
+        {
+          opportunities: opportunities.toString().split(",") ?? [],
+          organization: id,
+          titleContains: null,
+          pageNumber: 1,
+          pageSize: opportunities.length,
+        },
+        context,
+      );
   } catch (error) {
     console.error(error);
     if (axios.isAxiosError(error) && error.response?.status) {
