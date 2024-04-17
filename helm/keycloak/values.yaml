@@ -353,7 +353,8 @@ keycloak:
     enabled: true
 
   http:
-    relativePath: "/"
+    # TODO: migrate to /auth
+    relativePath: /
 
   autoscaling:
     # If `true`, an autoscaling/v2 HorizontalPodAutoscaler resource is created (requires Kubernetes 1.23 or above)
