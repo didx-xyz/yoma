@@ -11,7 +11,7 @@ ingress:
     enabled: true
     annotations:
       nginx.ingress.kubernetes.io/enable-cors: "true"
-      nginx.ingress.kubernetes.io/cors-allow-origin: "https://v3app.dev.yoma.world"
+      nginx.ingress.kubernetes.io/cors-allow-origin: "https://dev.yoma.world"
     rules:
       - host: v3api.dev.yoma.world
   external:
@@ -19,7 +19,7 @@ ingress:
     className: nginx-external
     annotations:
       nginx.ingress.kubernetes.io/enable-cors: "true"
-      nginx.ingress.kubernetes.io/cors-allow-origin: "https://v3app.dev.yoma.world"
+      nginx.ingress.kubernetes.io/cors-allow-origin: "https://dev.yoma.world"
       nginx.ingress.kubernetes.io/server-snippet: |
         location /hangfire {
           deny all;

@@ -4,21 +4,23 @@ ingress:
     annotations:
       nginx.ingress.kubernetes.io/configuration-snippet: |-
         more_clear_headers "Content-Security-Policy";
-        add_header Content-Security-Policy "frame-ancestors 'self' https://v3app.stage.yoma.world; frame-src 'self'; object-src 'none';" always;
+        add_header Content-Security-Policy "frame-ancestors 'self' https://stage.yoma.world; frame-src 'self'; object-src 'none';" always;
     rules:
-      - host: v3auth.stage.yoma.world
+      - host: stage.yoma.world
+        paths:
+          - path: /auth
   external:
     enabled: true
     annotations:
       nginx.ingress.kubernetes.io/configuration-snippet: |-
         more_clear_headers "Content-Security-Policy";
-        add_header Content-Security-Policy "frame-ancestors 'self' https://v3app.stage.yoma.world; frame-src 'self'; object-src 'none';" always;
+        add_header Content-Security-Policy "frame-ancestors 'self' https://stage.yoma.world; frame-src 'self'; object-src 'none';" always;
     rules:
-      - host: v3auth.stage.yoma.world
+      - host: stage.yoma.world
         paths:
-          - path: /realms/yoma
-          - path: /resources
-          - path: /js
+          - path: /auth/realms/yoma
+          - path: /auth/resources
+          - path: /auth/js
 
 postInstallHook:
   enabled: false
@@ -32,6 +34,9 @@ keycloak:
     limits:
       cpu: 2500m
       memory: 512Mi
+
+  http:
+    relativePath: /auth
 
   themes:
     enabled: true
@@ -84,13 +89,13 @@ keycloak:
 config-cli:
   enabled: true
   env:
-    KEYCLOAK_URL: https://v3auth.stage.yoma.world
+    KEYCLOAK_URL: https://stage.yoma.world/auth
     IMPORT_FILES_LOCATIONS: "/init/*.yaml"
     # KEYCLOAK_USER: xxx
-    # REALM_YOMA_ADMIN_CLI_SECRET: "xxx"
-    # SMTP_PASSWORD: "SG.xxx"
-    CLIENT_YOMA_API_URL: "https://v3api.stage.yoma.world"
-    CLIENT_YOMA_WEB_URL: "https://v3app.stage.yoma.world"
+    # REALM_YOMA_ADMIN_CLI_SECRET: xxx
+    # SMTP_PASSWORD: SG.xxx
+    CLIENT_YOMA_API_URL: https://v3api.stage.yoma.world
+    CLIENT_YOMA_WEB_URL: https://stage.yoma.world
     CLIENT_ATINGI_URL: https://sandbox.atingi.org
     CLIENT_ATINGI_URL_REDIRECT: https://keycloak-uat.enovationaws.com/realms/master/broker/yoma-prod/endpoint
     CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT: https://keycloak-uat.enovationaws.com/realms/master/broker/yoma-prod/endpoint
