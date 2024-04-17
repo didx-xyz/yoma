@@ -20,7 +20,7 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
     private const string Header_Authorization = "Authorization";
     private const string Header_Authorization_Value_Prefix = "Bearer";
 
-    private readonly static string[] Common_Words = [
+    private readonly static string[] Common_Words = {
         "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "arent", "as", "at",
         "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can", "cant", "cannot",
         "could", "couldnt", "did", "didnt", "do", "does", "doesnt", "doing", "dont", "down", "during", "each", "few",
@@ -33,7 +33,8 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
         "theres", "these", "they", "theyd", "theyll", "theyre", "theyve", "this", "those", "through", "to", "too",
         "under", "until", "up", "very", "was", "wasnt", "we", "wed", "well", "were", "weve", "werent", "what", "whats",
         "when", "whens", "where", "wheres", "which", "while", "who", "whos", "whom", "why", "whys", "will", "with", "wont",
-        "would", "wouldnt", "you", "youd", "youll", "youre", "youve", "your", "yours", "yourself", "yourselves"];
+        "would", "wouldnt", "you", "youd", "youll", "youre", "youve", "your", "yours", "yourself", "yourselves"
+    };
     #endregion
 
     #region Constructor
