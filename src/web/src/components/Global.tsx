@@ -66,6 +66,7 @@ export const Global: React.FC = () => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const [isYoIDOnboardingLoading, setIsYoIDOnboardingLoading] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
+  const [redirecting, setRedirecting] = useState(false);
 
   // SESSION
   useEffect(() => {
@@ -137,8 +138,15 @@ export const Global: React.FC = () => {
     // skip if not logged in or userProfile atom already set (atomWithStorage)
     //if (!session || userProfile) return;
 
+    // check error
+    if (session?.error) {
+      setLoginMessage("Your session has expired. Please sign in again.");
+      setLoginDialogVisible(true);
+      return;
+    }
+
     // check existing session
-    if (session && !session?.error) {
+    if (session) {
       // skip if userProfile already set
       if (userProfile) return;
 
@@ -181,7 +189,13 @@ export const Global: React.FC = () => {
       const existingSessionCookieValue = cookies[COOKIE_KEYCLOAK_SESSION];
 
       console.warn("existingSessionCookieValue", existingSessionCookieValue);
-      if (existingSessionCookieValue) onSignIn();
+      if (existingSessionCookieValue && !redirecting) {
+        setRedirecting(true);
+        onSignIn().then(() => {
+          toast.info("Hold on while we sign you in...");
+          setRedirecting(false);
+        });
+      }
     }
   }, [
     session,
@@ -189,6 +203,8 @@ export const Global: React.FC = () => {
     setUserProfile,
     setOnboardingDialogVisible,
     setUpdateProfileDialogVisible,
+    redirecting,
+    setRedirecting,
     isUserProfileCompleted,
     onSignIn,
   ]);
