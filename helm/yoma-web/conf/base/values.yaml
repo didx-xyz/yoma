@@ -4,7 +4,7 @@ image:
   repository: ghcr.io/didx-xyz/yoma-web
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "pr-257"
+  tag: master
 
 ingress:
   internal:
@@ -12,13 +12,13 @@ ingress:
     className: nginx-internal
     annotations: {}
     rules:
-      - host: v3api.local.yoma.world
+      - host: local.yoma.world
   external:
     enabled: false
     className: nginx-external
     annotations: {}
     rules:
-      - host: v3api.local.yoma.world
+      - host: local.yoma.world
 
 env:
   NEXT_PUBLIC_ENVIRONMENT: local
