@@ -45,8 +45,6 @@ const COOKIE_PREFIX =
     ? "__Secure-"
     : "";
 const CLIENT_WEB = "yoma-web";
-const CLIENT_GOODWALL = "goodwall";
-const CLIENT_ATINGI = "atingi";
 
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
@@ -64,18 +62,16 @@ export const authOptions: NextAuthOptions = {
   },
   events: {
     async signOut({ token }) {
-      // get the client id & secret based on the provider
-      const { client_id, client_secret } = getClientIdAndSecretForProvider(
-        token.provider,
-      );
-
       const url = new URL(
         `${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/logout`,
       );
 
       url.searchParams.set("id_token_hint", token.idToken!);
-      url.searchParams.set("client_id", client_id);
-      url.searchParams.set("client_secret", client_secret);
+      url.searchParams.set("client_id", process.env.KEYCLOAK_CLIENT_ID!);
+      url.searchParams.set(
+        "client_secret",
+        process.env.KEYCLOAK_CLIENT_SECRET!,
+      );
       url.searchParams.set("refresh_token", token.refreshToken);
 
       // invalidates the session, but doesn't delete it
@@ -147,22 +143,6 @@ export const authOptions: NextAuthOptions = {
       issuer: process.env.KEYCLOAK_ISSUER,
       id: CLIENT_WEB,
       name: "Yoma",
-    }),
-    // GOODWALL
-    KeycloakProvider({
-      clientId: process.env.KEYCLOAK_GOODWALL_CLIENT_ID!,
-      clientSecret: process.env.KEYCLOAK_GOODWALL_CLIENT_SECRET!,
-      issuer: process.env.KEYCLOAK_ISSUER,
-      id: CLIENT_GOODWALL,
-      name: "Goodwall",
-    }),
-    // ATINGI
-    KeycloakProvider({
-      clientId: process.env.KEYCLOAK_ATINGI_CLIENT_ID!,
-      clientSecret: process.env.KEYCLOAK_ATINGI_CLIENT_SECRET!,
-      issuer: process.env.KEYCLOAK_ISSUER,
-      id: CLIENT_ATINGI,
-      name: "Atingi",
     }),
 
     /**
@@ -254,19 +234,14 @@ async function refreshAccessToken(token: any) {
   try {
     const url = process.env.KEYCLOAK_ISSUER + "/protocol/openid-connect/token?";
 
-    // get the client id & secret based on the provider
-    const { client_id, client_secret } = getClientIdAndSecretForProvider(
-      token.provider,
-    );
-
     const response = await fetch(url, {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       method: "POST",
       body: new URLSearchParams({
-        client_id: client_id,
-        client_secret: client_secret,
+        client_id: process.env.KEYCLOAK_CLIENT_ID!,
+        client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
         grant_type: "refresh_token",
         refresh_token: token.refreshToken, // eslint-disable-line
       }),
@@ -330,23 +305,6 @@ async function getYomaUserProfile(
   return await response.json(); // eslint-disable-line
 }
 
-function getClientIdAndSecretForProvider(provider: unknown) {
-  let client_id = "";
-  let client_secret = "";
-  if (provider === CLIENT_WEB) {
-    client_id = process.env.KEYCLOAK_CLIENT_ID!;
-    client_secret = process.env.KEYCLOAK_CLIENT_SECRET!;
-  } else if (provider === CLIENT_GOODWALL) {
-    client_id = process.env.KEYCLOAK_GOODWALL_CLIENT_ID!;
-    client_secret = process.env.KEYCLOAK_GOODWALL_CLIENT_SECRET!;
-  } else if (provider === CLIENT_ATINGI) {
-    client_id = process.env.KEYCLOAK_ATINGI_CLIENT_ID!;
-    client_secret = process.env.KEYCLOAK_ATINGI_CLIENT_SECRET!;
-  } else {
-    throw new Error("Invalid provider");
-  }
-  return { client_id, client_secret };
-}
 /**
  * Wrapper for `getServerSession` so that you don't need to import the `authOptions` in every file.
  *
