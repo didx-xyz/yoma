@@ -179,6 +179,7 @@ export const Global: React.FC = () => {
       console.warn("checking for existing keycloak session");
       const cookies = parseCookies();
       const existingSessionCookieValue = cookies[COOKIE_KEYCLOAK_SESSION];
+
       console.warn("existingSessionCookieValue", existingSessionCookieValue);
       if (existingSessionCookieValue) onSignIn();
     }

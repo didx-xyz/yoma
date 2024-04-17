@@ -19,10 +19,6 @@ services:
       NEXTAUTH_SECRET: VerySecretAndSecureNextAuthSecret # openssl rand -base64 32
       KEYCLOAK_CLIENT_ID: yoma-web
       KEYCLOAK_CLIENT_SECRET: superSecretYomaWebClientSecret
-      KEYCLOAK_GOODWALL_CLIENT_ID: goodwall
-      KEYCLOAK_GOODWALL_CLIENT_SECRET: superSecretAtingiClientSecret
-      KEYCLOAK_ATINGI_CLIENT_ID: atingi
-      KEYCLOAK_ATINGI_CLIENT_SECRET: superSecretAtingiClientSecret
       NEXTAUTH_URL: http://localhost:3000
       API_BASE_URL: http://yoma-api:5000/api/v3
       KEYCLOAK_ISSUER: http://keycloak:8080/realms/yoma
