@@ -102,6 +102,7 @@ export const OrganisationRowFilter: React.FC<{
   const loadOpportunities = debounce(
     (inputValue: string, callback: (options: any) => void) => {
       searchCriteriaOpportunities({
+        opportunities: [],
         organization: organisationId,
         titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
         pageNumber: 1,
