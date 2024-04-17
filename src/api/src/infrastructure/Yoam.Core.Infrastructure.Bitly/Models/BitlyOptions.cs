@@ -4,7 +4,7 @@ namespace Yoma.Core.Infrastructure.Bitly.Models
   {
     public const string Section = "Bitly";
 
-    public string BaseUrl { get; set; } 
+    public string BaseUrl { get; set; }
 
     public string GroupId { get; set; }
 
