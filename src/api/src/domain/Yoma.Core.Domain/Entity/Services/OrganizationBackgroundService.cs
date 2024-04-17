@@ -81,7 +81,7 @@ namespace Yoma.Core.Domain.Entity.Services
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
           _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, System.Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
 
           _logger.LogInformation("Processing organization declination");
 
@@ -179,7 +179,7 @@ namespace Yoma.Core.Domain.Entity.Services
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
           _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, System.Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
 
           _logger.LogInformation("Processing organization deletion");
 
@@ -240,7 +240,7 @@ namespace Yoma.Core.Domain.Entity.Services
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
           _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, System.Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
 
           if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
           {

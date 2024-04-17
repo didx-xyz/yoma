@@ -72,7 +72,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
           _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, System.Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
 
           _logger.LogInformation("Processing opportunity expiration");
 
@@ -134,7 +134,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
           _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, System.Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
 
           _logger.LogInformation("Processing opportunity expiration notifications");
 
@@ -184,7 +184,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
         {
           _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, System.Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
 
           _logger.LogInformation("Processing opportunity deletion");
 

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.ShortLinkProvider.Interfaces;
@@ -9,17 +8,14 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
   public class BitlyClientFactory : IShortLinkProviderClientFactory
   {
     #region Class Variables
-    private readonly ILogger<BitlyClient> _logger;
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly BitlyOptions _options;
     #endregion
 
     #region Constructor
-    public BitlyClientFactory(ILogger<BitlyClient> logger,
-        IEnvironmentProvider environmentProvider,
+    public BitlyClientFactory(IEnvironmentProvider environmentProvider,
         IOptions<BitlyOptions> options)
     {
-      _logger = logger;
       _environmentProvider = environmentProvider;
       _options = options.Value;
     }
@@ -28,7 +24,7 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
     #region Public Members
     public IShortLinkProviderClient CreateClient()
     {
-      return new BitlyClient(_logger, _environmentProvider, _options);
+      return new BitlyClient(_environmentProvider, _options);
     }
     #endregion
   }

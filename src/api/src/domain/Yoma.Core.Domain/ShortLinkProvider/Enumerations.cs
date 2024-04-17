@@ -1,24 +1,24 @@
-namespace Yoma.Core.Infrastructure.Bitly
+namespace Yoma.Core.Domain.ShortLinkProvider
 {
   public enum ShortLinkType
   {
     /// <summary>
-    /// Bitly's generic domain, no customized back-half
+    /// Generic domain and no customized back-half
     /// </summary>
     Generic,
 
     /// <summary>
-    /// A custom domain, but no customized back-half
+    /// Custom domain and no customized back-half
     /// </summary>
     CustomDomain,
 
     /// <summary>
-    /// Bitly's generic domain, with a customized back-half
+    /// Generic domain and a customized back-half
     /// </summary>
     CustomBackHalf,
 
     /// <summary>
-    /// A custom domain and a customized back-half
+    /// Custom domain and a customized back-half
     /// </summary>
     CustomDomainAndBackHalf,
   }

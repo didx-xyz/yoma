@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace Yoma.Core.Infrastructure.Bitly.Models
 {
-  public class BitLinksResponse
+  public class BitLinkResponse
   {
     [JsonProperty("link")]
     public string Link { get; set; }
@@ -33,5 +33,11 @@ namespace Yoma.Core.Infrastructure.Bitly.Models
 
     [JsonProperty("tags")]
     public string[] Tags { get; set; }
+
+    [JsonProperty("launchpad_ids")]
+    public string[] LaunchpadIds { get; set; }
+
+    [JsonProperty("campaign_ids")]
+    public string[] CampaignIds { get; set; }
   }
 }

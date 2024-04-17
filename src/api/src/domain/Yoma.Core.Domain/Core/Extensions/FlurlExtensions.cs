@@ -40,7 +40,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     /// </summary>
     /// <param name="response"></param>
     /// <returns></returns>
-    public static async Task<IFlurlResponse> EnsureSuccessStatusCodeAsync(this Task<IFlurlResponse> response)
+    public static async Task<IFlurlResponse> EnsureSuccessStatusCodeAsync(this Task<IFlurlResponse> response, List<HttpStatusCode>? AdditionalSuccessStatusCodes = null)
     {
       IFlurlResponse resp;
 
@@ -66,7 +66,9 @@ namespace Yoma.Core.Domain.Core.Extensions
       var statusCode = (HttpStatusCode)resp.StatusCode;
       var message = await resp.ResponseMessage.Content.ReadAsStringAsync();
 
-      if (statusCode == HttpStatusCode.OK) return resp;
+      var successStatusCodes = AdditionalSuccessStatusCodes ?? [];
+      if(!successStatusCodes.Contains(HttpStatusCode.OK)) successStatusCodes.Add(HttpStatusCode.OK);
+      if (successStatusCodes.Contains(statusCode)) return resp;
 
       throw new HttpClientException(statusCode, message);
     }
