@@ -1,4 +1,9 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  dehydrate,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import Head from "next/head";
 import { type ParsedUrlQuery } from "querystring";
 import {
@@ -45,6 +50,7 @@ import {
   CHART_COLORS,
   DATETIME_FORMAT_HUMAN,
   PAGE_SIZE,
+  PAGE_SIZE_MINIMUM,
 } from "~/lib/constants";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -169,6 +175,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   const [inactiveOpportunitiesCount, setInactiveOpportunitiesCount] =
     useState(0);
   const [expiredOpportunitiesCount, setExpiredOpportunitiesCount] = useState(0);
+  const queryClient = useQueryClient();
 
   // 👇 use prefetched queries from server
   const { data: lookups_categories } = useQuery<OpportunityCategory[]>({
@@ -280,24 +287,6 @@ const OrganisationDashboard: NextPageWithLayout<{
     enabled: !error,
   });
 
-  useEffect(() => {
-    const calculateCounts = () => {
-      if (!selectedOpportunities?.items) return;
-
-      const inactiveCount = selectedOpportunities.items.filter(
-        (opportunity) => opportunity.status === ("Inactive" as any),
-      ).length;
-      const expiredCount = selectedOpportunities.items.filter(
-        (opportunity) => opportunity.status === ("Expired" as any),
-      ).length;
-
-      setInactiveOpportunitiesCount(inactiveCount);
-      setExpiredOpportunitiesCount(expiredCount);
-    };
-
-    calculateCounts();
-  }, [selectedOpportunities]);
-
   // QUERY: COMPLETED YOUTH
   const { data: completedYouth, isLoading: completedYouthIsLoading } =
     useQuery<OrganizationSearchResultsYouth>({
@@ -383,6 +372,148 @@ const OrganisationDashboard: NextPageWithLayout<{
     startDate,
     endDate,
   ]);
+
+  // Carousel data
+  const fetchDataAndUpdateCache = useCallback(
+    async (
+      queryKey: string[],
+      filter: any,
+    ): Promise<OrganizationSearchResultsOpportunity> => {
+      const cachedData =
+        queryClient.getQueryData<OrganizationSearchResultsOpportunity>(
+          queryKey,
+        );
+
+      if (cachedData) {
+        return cachedData;
+      }
+
+      const data = await searchOrganizationOpportunities(filter);
+
+      queryClient.setQueryData(queryKey, data);
+
+      return data;
+    },
+    [queryClient],
+  );
+
+  const loadDataSelected = useCallback(
+    async (startRow: number) => {
+      if (startRow >= (selectedOpportunities?.totalCount ?? 0)) {
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache(
+        [
+          "OrganizationSearchResultsSelectedOpportunities",
+          pageNumber.toString(),
+        ],
+        {
+          organization: id,
+          categories:
+            categories != undefined
+              ? categories
+                  ?.toString()
+                  .split(",")
+                  .map((x) => {
+                    const item = lookups_categories?.find((y) => y.name === x);
+                    return item ? item?.id : "";
+                  })
+                  .filter((x) => x != "")
+              : null,
+          opportunities: opportunities
+            ? opportunities?.toString().split(",")
+            : null,
+          startDate: startDate ? startDate.toString() : "",
+          endDate: endDate ? endDate.toString() : "",
+          pageNumber: pageNumber,
+          pageSize: PAGE_SIZE_MINIMUM,
+          enabled: !error,
+        },
+      );
+    },
+    [
+      selectedOpportunities,
+      fetchDataAndUpdateCache,
+      categories,
+      opportunities,
+      startDate,
+      endDate,
+      id,
+      lookups_categories,
+      error,
+    ],
+  );
+
+  const loadDataYouth = useCallback(
+    async (startRow: number) => {
+      if (startRow >= (selectedOpportunities?.totalCount ?? 0)) {
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache(
+        ["OrganizationSearchResultsCompletedYouth", pageNumber.toString()],
+        {
+          organization: id,
+          categories:
+            categories != undefined
+              ? categories
+                  ?.toString()
+                  .split(",")
+                  .map((x) => {
+                    const item = lookups_categories?.find((y) => y.name === x);
+                    return item ? item?.id : "";
+                  })
+                  .filter((x) => x != "")
+              : null,
+          opportunities: opportunities
+            ? opportunities?.toString().split(",")
+            : null,
+          startDate: startDate ? startDate.toString() : "",
+          endDate: endDate ? endDate.toString() : "",
+          pageNumber: pageNumber,
+          pageSize: PAGE_SIZE_MINIMUM,
+        },
+      );
+    },
+    [
+      selectedOpportunities,
+      fetchDataAndUpdateCache,
+      categories,
+      opportunities,
+      startDate,
+      endDate,
+      id,
+      lookups_categories,
+    ],
+  );
+
+  // Calculate counts
+  useEffect(() => {
+    const calculateCounts = () => {
+      if (!selectedOpportunities?.items) return;
+
+      const inactiveCount = selectedOpportunities.items.filter(
+        (opportunity) => opportunity.status === ("Inactive" as any),
+      ).length;
+      const expiredCount = selectedOpportunities.items.filter(
+        (opportunity) => opportunity.status === ("Expired" as any),
+      ).length;
+
+      setInactiveOpportunitiesCount(inactiveCount);
+      setExpiredOpportunitiesCount(expiredCount);
+    };
+
+    calculateCounts();
+  }, [selectedOpportunities]);
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
@@ -1029,6 +1160,8 @@ const OrganisationDashboard: NextPageWithLayout<{
                             <DashboardCarousel
                               orgId={id}
                               slides={selectedOpportunities.items}
+                              loadData={loadDataSelected}
+                              totalSildes={selectedOpportunities?.totalCount}
                             />
                           </div>
                         </div>
@@ -1151,6 +1284,8 @@ const OrganisationDashboard: NextPageWithLayout<{
                         <DashboardCarousel
                           orgId={id}
                           slides={completedYouth.items}
+                          totalSildes={completedYouth?.totalCount}
+                          loadData={loadDataYouth}
                         />
                       </div>
                     </div>

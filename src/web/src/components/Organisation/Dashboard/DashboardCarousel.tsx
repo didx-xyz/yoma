@@ -1,5 +1,6 @@
-import React from "react";
-import type { EmblaOptionsType } from "embla-carousel";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import type { EmblaCarouselType, EmblaOptionsType } from "embla-carousel";
+import type { EngineType } from "embla-carousel/components/Engine";
 import {
   PrevButton,
   NextButton,
@@ -20,6 +21,8 @@ import { YouthCompletedCard } from "./YouthCompletedCard";
 interface PropType {
   slides: OpportunityInfoAnalytics[] | YouthInfo[];
   orgId: string;
+  loadData: (startRow: number) => Promise<any>;
+  totalSildes: number;
 }
 
 const OPTIONS: EmblaOptionsType = {
@@ -30,8 +33,56 @@ const OPTIONS: EmblaOptionsType = {
 };
 
 const DashboardCarousel: React.FC<PropType> = (props: PropType) => {
-  const { slides, orgId } = props;
-  const [emblaRef, emblaApi] = useEmblaCarousel(OPTIONS);
+  const { orgId, loadData, totalSildes } = props;
+  const scrollListenerRef = useRef<() => void>(() => undefined);
+  const listenForScrollRef = useRef(true);
+  const hasMoreToLoadRef = useRef(true);
+  const [slides, setSlides] = useState(props.slides);
+  const [hasMoreToLoad, setHasMoreToLoad] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    ...OPTIONS,
+    watchSlides: (emblaApi) => {
+      const reloadEmbla = (): void => {
+        const oldEngine = emblaApi.internalEngine();
+
+        emblaApi.reInit();
+        const newEngine = emblaApi.internalEngine();
+        const copyEngineModules: (keyof EngineType)[] = [
+          "location",
+          "target",
+          "scrollBody",
+        ];
+        copyEngineModules.forEach((engineModule) => {
+          Object.assign(newEngine[engineModule], oldEngine[engineModule]);
+        });
+
+        newEngine.translate.to(oldEngine.location.get());
+        const { index } = newEngine.scrollTarget.byDistance(0, false);
+        newEngine.index.set(index);
+        newEngine.animation.start();
+
+        setLoadingMore(false);
+        listenForScrollRef.current = true;
+      };
+
+      const reloadAfterPointerUp = (): void => {
+        emblaApi.off("pointerUp", reloadAfterPointerUp);
+        reloadEmbla();
+      };
+
+      const engine = emblaApi.internalEngine();
+
+      if (hasMoreToLoadRef.current && engine.dragHandler.pointerDown()) {
+        const boundsActive = engine.limit.reachedMax(engine.target.get());
+        engine.scrollBounds.toggleActive(boundsActive);
+        emblaApi.on("pointerUp", reloadAfterPointerUp);
+      } else {
+        reloadEmbla();
+      }
+    },
+  });
 
   const {
     prevBtnDisabled,
@@ -41,6 +92,68 @@ const DashboardCarousel: React.FC<PropType> = (props: PropType) => {
   } = usePrevNextButtons(emblaApi);
 
   const { selectedSnap, snapCount } = useSelectedSnapDisplay(emblaApi);
+
+  const onScroll = useCallback(
+    (emblaApi: EmblaCarouselType) => {
+      if (!listenForScrollRef.current) return;
+
+      setLoadingMore((loadingMore) => {
+        const lastSlide = emblaApi.slideNodes().length - 1;
+        const lastSlideInView = emblaApi.slidesInView().includes(lastSlide);
+        let loadMore = !loadingMore && lastSlideInView;
+
+        if (emblaApi.slideNodes().length < 1) {
+          loadMore = false;
+        }
+
+        if (loadMore) {
+          listenForScrollRef.current = false;
+
+          console.warn(
+            `Loading more data... ${lastSlide} lastSlideInView: ${lastSlideInView} nextStartRow: ${
+              emblaApi.slideNodes().length + 1
+            }`,
+          );
+
+          loadData(emblaApi.slideNodes().length + 1).then((data) => {
+            // debugger;
+            if (data.items.length == 0) {
+              setHasMoreToLoad(false);
+              emblaApi.off("scroll", scrollListenerRef.current);
+            }
+
+            setSlides((prevSlides) => [...prevSlides, ...data.items]);
+          });
+        }
+
+        return loadingMore || lastSlideInView;
+      });
+    },
+    [loadData],
+  );
+
+  const addScrollListener = useCallback(
+    (emblaApi: EmblaCarouselType) => {
+      scrollListenerRef.current = () => onScroll(emblaApi);
+      emblaApi.on("scroll", scrollListenerRef.current);
+    },
+    [onScroll],
+  );
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    addScrollListener(emblaApi);
+
+    const onResize = () => emblaApi.reInit();
+    window.addEventListener("resize", onResize);
+    emblaApi.on("destroy", () =>
+      window.removeEventListener("resize", onResize),
+    );
+  }, [emblaApi, addScrollListener]);
+
+  useEffect(() => {
+    hasMoreToLoadRef.current = hasMoreToLoad;
+  }, [hasMoreToLoad]);
 
   return (
     <div>
@@ -67,6 +180,15 @@ const DashboardCarousel: React.FC<PropType> = (props: PropType) => {
                 </div>
               </div>
             ))}
+            {hasMoreToLoad && (
+              <div
+                className={"embla-infinite-scroll".concat(
+                  loadingMore ? " embla-infinite-scroll--loading-more" : "",
+                )}
+              >
+                <span className="embla-infinite-scroll__spinner" />
+              </div>
+            )}
           </div>
         </div>
 
@@ -75,7 +197,7 @@ const DashboardCarousel: React.FC<PropType> = (props: PropType) => {
             <div className="flex justify-center gap-4">
               <SelectedSnapDisplay
                 selectedSnap={selectedSnap}
-                snapCount={slides.length ?? snapCount}
+                snapCount={totalSildes ?? slides.length}
               />
               <PrevButton
                 onClick={onPrevButtonClick}

@@ -8,6 +8,7 @@ import Moment from "react-moment";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { IoMdPause, IoMdPlay, IoMdClose } from "react-icons/io";
 import { AvatarImage } from "../AvatarImage";
+import { useRouter } from "next/router";
 
 interface InputProps {
   data: OpportunityInfo;
@@ -15,10 +16,16 @@ interface InputProps {
 }
 
 const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
+  const router = useRouter();
+
+  // Check if the query parameter exists and apply a hover effect based on it
+  const hasQuery = Object.keys(router.query).length > 0;
+  const hoverClass = hasQuery ? "md:hover:scale-[1.02]" : "";
+
   return (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex aspect-square h-[19rem] w-max flex-col gap-1 rounded-lg bg-white p-4 shadow-sm transition-all duration-300 md:ml-0 md:hover:scale-[1.01] md:hover:shadow-md"
+      className={`relative flex aspect-square h-[19rem] w-max flex-col gap-1 rounded-lg bg-white p-4 shadow-sm transition-all duration-300 ${hoverClass} md:ml-0`}
     >
       <div className="flex flex-row">
         <div className="flex flex-row">

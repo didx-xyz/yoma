@@ -39,7 +39,7 @@ const ItemCardComponent: React.FC<InputProps> = ({
   return (
     <Link
       key={id}
-      className="relative ml-1 flex aspect-square h-56 w-full transform-gpu flex-col flex-wrap items-start justify-start gap-4 overflow-hidden rounded-lg bg-white p-4 shadow-sm transition-transform hover:scale-[1.01] hover:shadow-md md:ml-0 md:w-[340px]"
+      className="relative ml-1 flex aspect-square h-56 w-full flex-col flex-wrap items-start justify-start gap-4 overflow-hidden rounded-lg bg-white p-4 shadow-sm md:ml-0 md:w-[340px]"
       href={href ?? "/"}
       onClick={onClick2}
       onAuxClick={onClick2}
