@@ -65,7 +65,7 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
         .Append(_environmentProvider.Environment.ToString())
         .Distinct(StringComparer.InvariantCultureIgnoreCase)
         .ToList();
-    
+
       var environmentPrefix = _environmentProvider.Environment != Domain.Core.Environment.Production ? $"{_environmentProvider.Environment}: " : string.Empty;
       var requestCreate = new BitLinkRequestCreate
       {
@@ -104,7 +104,7 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
       {
         Id = bitLink.Id,
         Link = bitLink.Link
-      };  
+      };
 
       switch (type)
       {

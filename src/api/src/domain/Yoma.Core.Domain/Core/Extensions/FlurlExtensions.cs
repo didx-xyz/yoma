@@ -67,7 +67,7 @@ namespace Yoma.Core.Domain.Core.Extensions
       var message = await resp.ResponseMessage.Content.ReadAsStringAsync();
 
       var successStatusCodes = AdditionalSuccessStatusCodes ?? [];
-      if(!successStatusCodes.Contains(HttpStatusCode.OK)) successStatusCodes.Add(HttpStatusCode.OK);
+      if (!successStatusCodes.Contains(HttpStatusCode.OK)) successStatusCodes.Add(HttpStatusCode.OK);
       if (successStatusCodes.Contains(statusCode)) return resp;
 
       throw new HttpClientException(statusCode, message);
