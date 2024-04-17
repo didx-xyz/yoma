@@ -20,7 +20,7 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
     private const string Header_Authorization = "Authorization";
     private const string Header_Authorization_Value_Prefix = "Bearer";
 
-    private readonly static string[] Common_Words = ["a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "arent", "as", "at",
+    private readonly static string[] Common_Words = ["a","about","above","after","again","against","all","am","an","and","any","are","arent","as","at",
       "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can", "cant", "cannot",
       "could", "couldnt", "did", "didnt", "do", "does", "doesnt", "doing", "dont", "down", "during", "each", "few",
       "for", "from", "further", "had", "hadnt", "has", "hasnt", "have", "havent", "having", "he", "hed", "hell", "hes",
