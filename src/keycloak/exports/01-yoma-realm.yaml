@@ -527,23 +527,21 @@ clients:
     redirectUris:
       - "/*"
       - $(env:CLIENT_ATINGI_URL_REDIRECT)
-      - $(env:CLIENT_YOMA_WEB_URL)/*
     webOrigins:
       - $(env:CLIENT_ATINGI_URL)
-      - $(env:CLIENT_YOMA_WEB_URL)
     notBefore: 0
     bearerOnly: false
     consentRequired: false
     standardFlowEnabled: true
     implicitFlowEnabled: false
-    directAccessGrantsEnabled: true
-    serviceAccountsEnabled: true
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
     publicClient: false
     frontchannelLogout: true
     protocol: openid-connect
     attributes:
       oidc.ciba.grant.enabled: "false"
-      post.logout.redirect.uris: $(env:CLIENT_ATINGI_URL)/*##$(env:CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT)/*##$(env:CLIENT_YOMA_WEB_URL)/*
+      post.logout.redirect.uris: $(env:CLIENT_ATINGI_URL)/*##$(env:CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT)/*
       oauth2.device.authorization.grant.enabled: "false"
       backchannel.logout.session.required: "true"
       backchannel.logout.revoke.offline.tokens: "false"
@@ -579,23 +577,21 @@ clients:
     redirectUris:
       - "/*"
       - $(env:CLIENT_GOODWALL_URL_REDIRECT)
-      - $(env:CLIENT_YOMA_WEB_URL)/*
     webOrigins:
       - $(env:CLIENT_GOODWALL_URL)
-      - $(env:CLIENT_YOMA_WEB_URL)
     notBefore: 0
     bearerOnly: false
     consentRequired: false
     standardFlowEnabled: true
     implicitFlowEnabled: false
-    directAccessGrantsEnabled: true
-    serviceAccountsEnabled: true
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
     publicClient: false
     frontchannelLogout: true
     protocol: openid-connect
     attributes:
       oidc.ciba.grant.enabled: "false"
-      post.logout.redirect.uris: $(env:CLIENT_GOODWALL_URL)/*##$(env:CLIENT_YOMA_WEB_URL)/*
+      post.logout.redirect.uris: $(env:CLIENT_GOODWALL_URL)/*
       oauth2.device.authorization.grant.enabled: "false"
       backchannel.logout.session.required: "true"
       backchannel.logout.revoke.offline.tokens: "false"
