@@ -286,7 +286,7 @@ const MyCredentials: NextPageWithLayout<{
                 {data.items.map((item, index) => (
                   <div
                     key={index}
-                    className="flex h-[180px] transform-gpu cursor-pointer flex-col rounded-lg bg-white p-4 shadow-custom duration-300 hover:scale-[1.01] hover:shadow-lg"
+                    className="flex h-[180px] cursor-pointer flex-col rounded-lg bg-white p-4 shadow-custom"
                     onClick={() => handleOnClickCredential(item)}
                   >
                     <div className="flex h-full flex-row">
