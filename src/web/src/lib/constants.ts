@@ -115,3 +115,4 @@ export const VIEWPORT_SIZE = {
 };
 
 export const COUNTRY_WW = "WW";
+export const COOKIE_KEYCLOAK_SESSION = "KEYCLOAK_SESSION";
