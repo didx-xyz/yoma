@@ -170,7 +170,7 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
       return result;
     }
 
-    public static string ReplaceLastSegmentAndRemoveScheme(string url, string newLastSegment)
+    private static string ReplaceLastSegmentAndRemoveScheme(string url, string newLastSegment)
     {
       var uri = new Uri(url, UriKind.RelativeOrAbsolute);
       var segments = uri.AbsolutePath.Trim('/').Split('/');
