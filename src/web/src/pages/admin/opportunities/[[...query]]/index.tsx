@@ -250,7 +250,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             languages != undefined
               ? languages
                   ?.toString()
-                  .split(",")
+                  .split("|") // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
                   .map((x) => {
                     const item = lookups_languages?.find((y) => y.name === x);
                     return item ? item?.id : "";
@@ -331,7 +331,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             ? countries?.toString().split(",")
             : null,
         languages:
-          languages != undefined ? languages?.toString().split(",") : null,
+          languages != undefined ? languages?.toString().split("|") : null, // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
         organizations:
           organizations != undefined
             ? organizations?.toString().split(",")
@@ -467,7 +467,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         opportunitySearchFilter?.languages?.length !== undefined &&
         opportunitySearchFilter.languages.length > 0
       )
-        params.append("languages", opportunitySearchFilter.languages.join(","));
+        params.append("languages", opportunitySearchFilter.languages.join("|")); // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
       if (
         opportunitySearchFilter?.types?.length !== undefined &&
         opportunitySearchFilter.types.length > 0
