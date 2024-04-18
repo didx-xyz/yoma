@@ -25,6 +25,7 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Validators;
+using Yoma.Core.Domain.ShortLinkProvider.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
@@ -51,6 +52,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IEmailURLFactory _emailURLFactory;
     private readonly IEmailProviderClient _emailProviderClient;
     private readonly IIdentityProviderClient _identityProviderClient;
+    private readonly IShortLinkProviderClient _shortLinkProviderClient;
 
     private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
@@ -94,6 +96,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IEmailURLFactory emailURLFactory,
         IEmailProviderClientFactory emailProviderClientFactory,
         IIdentityProviderClientFactory identityProviderClientFactory,
+        IShortLinkProviderClientFactory shortLinkProviderClientFactory,
         OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
@@ -126,6 +129,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _emailURLFactory = emailURLFactory;
       _emailProviderClient = emailProviderClientFactory.CreateClient();
       _identityProviderClient = identityProviderClientFactory.CreateClient();
+      _shortLinkProviderClient = shortLinkProviderClientFactory.CreateClient();
 
       _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate;
       _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate;
@@ -192,6 +196,46 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       return result;
+    }
+
+    public async Task<OpportunitySharingResult> GetSharingDetails(Guid id, bool publishedOrExpiredOnly, bool? includeQRCode)
+    {
+      if (id == Guid.Empty)
+        throw new ArgumentNullException(nameof(id));
+
+      var opportunity = GetById(id, false, false, false);
+
+      if (publishedOrExpiredOnly)
+      {
+        var (result, message) = opportunity.PublishedOrExpired();
+
+        if (!result)
+        {
+          ArgumentException.ThrowIfNullOrEmpty(message);
+          throw new EntityNotFoundException(message);
+        }
+      }
+
+      if (string.IsNullOrEmpty(opportunity.ShortURL))
+      {
+        var request = new ShortLinkProvider.Models.ShortLinkRequest
+        {
+          Type = ShortLinkProvider.EntityType.Opportunity,
+          Action = ShortLinkProvider.Action.Sharing,
+          Title = opportunity.Title,
+          URL = opportunity.YomaInfoURL(_appSettings.AppBaseURL)
+        };
+
+        var response = await _shortLinkProviderClient.CreateShortLink(request);
+        opportunity.ShortURL = response.Link;
+        await _opportunityRepository.Update(opportunity);
+      }
+
+      return new OpportunitySharingResult
+      {
+        ShortURL = opportunity.ShortURL,
+        QRCodeBase64 = includeQRCode == true ? QRCodeHelper.GenerateQRCodeBase64(opportunity.ShortURL) : null
+      };
     }
 
     public List<Models.Opportunity> Contains(string value, bool includeComputed)

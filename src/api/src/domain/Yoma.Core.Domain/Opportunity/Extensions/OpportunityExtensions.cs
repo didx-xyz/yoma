@@ -47,6 +47,20 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       return days;
     }
 
+    public static (bool result, string? message) PublishedOrExpired(this Models.Opportunity opportunity)
+    {
+      ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
+
+      if (opportunity.OrganizationStatus != Entity.OrganizationStatus.Active)
+        return (false, $"Opportunity with id '{opportunity.Id}' belongs to an inactive organization");
+
+      var statuses = new List<Status>() { Status.Active, Status.Expired }; //ignore DateStart, includes both not started and started
+      if (!statuses.Contains(opportunity.Status))
+        return (false, $"Opportunity with id '{opportunity.Id}' has an invalid status. Expected status(es): '{string.Join(", ", statuses)}'");
+
+      return (true, null);
+    }
+
     public static void SetPublished(this Models.Opportunity opportunity)
     {
       ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
@@ -63,6 +77,11 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Id = value.Id,
         Title = value.Title.RemoveSpecialCharacters()
       };
+    }
+
+    public static string YomaInfoURL(this Models.Opportunity value, string appBaseURL)
+    {
+      return appBaseURL.AppendPathSegment("opportunities").AppendPathSegment(value.Id).ToString();
     }
 
     public static OpportunityInfo ToOpportunityInfo(this Models.Opportunity value, string appBaseURL)
@@ -84,6 +103,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Summary = value.Summary,
         Instructions = value.Instructions,
         URL = value.URL,
+        ShortURL = value.ShortURL,
         ZltoReward = value.ZltoReward,
         YomaReward = value.YomaReward,
         VerificationEnabled = value.VerificationEnabled,
@@ -101,7 +121,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         DateStart = value.DateStart,
         DateEnd = value.DateEnd,
         Published = value.Published,
-        YomaInfoURL = appBaseURL.AppendPathSegment("opportunities").AppendPathSegment(value.Id).ToString(),
+        YomaInfoURL = value.YomaInfoURL(appBaseURL),
         Categories = value.Categories,
         Countries = value.Countries,
         Languages = value.Languages,

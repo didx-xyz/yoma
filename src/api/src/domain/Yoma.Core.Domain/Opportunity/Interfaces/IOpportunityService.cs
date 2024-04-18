@@ -11,6 +11,8 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     Models.Opportunity? GetByTitleOrNull(string title, bool includeChildItems, bool includeComputed);
 
+    Task<OpportunitySharingResult> GetSharingDetails(Guid id, bool publishedOrExpiredOnly, bool? includeQRCode);
+
     List<Models.Opportunity> Contains(string value, bool includeComputed);
 
     OpportunitySearchResultsCriteria SearchCriteriaOpportunities(OpportunitySearchFilterCriteria filter, bool ensureOrganizationAuthorization);

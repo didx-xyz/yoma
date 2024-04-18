@@ -87,6 +87,10 @@ namespace Yoma.Core.Domain.Core.Models
 
     public Environment LaborMarketProviderAsSourceEnabledEnvironmentsAsEnum => ParseEnvironmentInput(LaborMarketProviderAsSourceEnabledEnvironments);
 
+    public string ShortLinkProviderAsSourceEnabledEnvironments { get; set; }
+
+    public Environment ShortLinkProviderAsSourceEnabledEnvironmentsAsEnum => ParseEnvironmentInput(ShortLinkProviderAsSourceEnabledEnvironments);
+
     public AppSettingsDatabaseRetryPolicy DatabaseRetryPolicy { get; set; }
 
     public bool? RedisSSLCertificateValidationBypass { get; set; }

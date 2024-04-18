@@ -45,14 +45,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var opportunity = _opportunityService.GetById(id, true, true, false);
 
-      //inactive organization
-      if (opportunity.OrganizationStatus != Entity.OrganizationStatus.Active)
-        throw new EntityNotFoundException($"Opportunity with id '{id}' belongs to an inactive organization");
+      var (publishedOrExpiredResult, message) = opportunity.PublishedOrExpired();
 
-      //status criteria not met
-      var statuses = new List<Status>() { Status.Active, Status.Expired }; //ignore DateStart, includes both not started and started
-      if (!statuses.Contains(opportunity.Status))
-        throw new EntityNotFoundException($"Opportunity with id '{id}' has an invalid status. Expected status(es): '{string.Join(", ", statuses)}'");
+      if (!publishedOrExpiredResult)
+      {
+        ArgumentException.ThrowIfNullOrEmpty(message);
+        throw new EntityNotFoundException(message);
+      }
 
       var result = opportunity.ToOpportunityInfo(_appSettings.AppBaseURL);
       SetParticipantCounts(result);

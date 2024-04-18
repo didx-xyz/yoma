@@ -30,6 +30,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public string? URL { get; set; }
 
+    public string? ShortURL { get; set; }
+
     [Name("Zlto Reward")]
     public decimal? ZltoReward { get; set; }
 

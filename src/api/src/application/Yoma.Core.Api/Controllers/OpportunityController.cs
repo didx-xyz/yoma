@@ -66,6 +66,22 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Get sharing details for published or expired opportunity by id (Anonymous)")]
+    [HttpGet("{id}/sharing")]
+    [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetSharingDetails([FromRoute] Guid id, [FromQuery] bool? includeQRCode)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(GetSharingDetails));
+
+      var result = await _opportunityService.GetSharingDetails(id, true, includeQRCode);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(GetSharingDetails));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Search for published opportunities based on the supplied filter (Anonymous)",
         Description = "Results are always associated with an active organization. By default published opportunities are included, thus active opportunities, irrespective of whether they started (includes both NotStarted and Active states). This default behavior is overridable")]
     [HttpPost("search")]
@@ -204,10 +220,27 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
 
-      //by default, all users possess the user role. Therefore, organizational authorization checks are omitted here, allowing org admins to access information for all opportunities without restriction.
+      //by default, all users possess the user role. Therefore, organizational authorization checks are omitted here, allowing org admins to access information for all opportunities without restriction
       var result = _opportunityInfoService.GetById(id, false);
 
       _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Get sharing details for the specified opportunity by id (User, Admin or Organization Admin role required)")]
+    [HttpGet("{id}/auth/sharing")]
+    [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public async Task<IActionResult> GetSharingDetailsAuthed([FromRoute] Guid id, [FromQuery] bool? includeQRCode)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(GetSharingDetailsAuthed));
+
+      //by default, all users possess the user role. Therefore, organizational authorization checks are omitted here, allowing org admins to access information for all opportunities without restriction
+      var result = await _opportunityService.GetSharingDetails(id, false, includeQRCode);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(GetSharingDetailsAuthed));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
