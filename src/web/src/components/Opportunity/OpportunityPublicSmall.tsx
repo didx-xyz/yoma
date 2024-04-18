@@ -8,7 +8,6 @@ import Moment from "react-moment";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { IoMdPause, IoMdPlay, IoMdClose } from "react-icons/io";
 import { AvatarImage } from "../AvatarImage";
-
 interface InputProps {
   data: OpportunityInfo;
   [key: string]: any;
@@ -18,7 +17,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
   return (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex aspect-square h-[19rem] w-max flex-col gap-1 rounded-lg bg-white p-4 shadow-sm transition-all duration-300 md:ml-0 md:hover:scale-[1.01] md:hover:shadow-md"
+      className="relative flex aspect-square h-[19rem] w-max flex-col gap-1 rounded-lg bg-white p-4 shadow-sm md:ml-0"
     >
       <div className="flex flex-row">
         <div className="flex flex-row">

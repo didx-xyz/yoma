@@ -79,6 +79,7 @@ export interface OrganizationDemographic {
   countries: Demographic;
   genders: Demographic;
   ages: Demographic;
+  education: Demographic;
 }
 
 export interface Demographic {

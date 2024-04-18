@@ -16,7 +16,7 @@ const OpportunityListItem: React.FC<{
   return (
     <Link
       href={`/opportunities/${data.opportunityId}`}
-      className="flex cursor-pointer flex-col gap-1 rounded-lg border-none border-gray bg-white p-4 shadow-custom duration-300 hover:scale-[1.005] hover:shadow-lg"
+      className="flex cursor-pointer flex-col gap-1 rounded-lg border-none border-gray bg-white p-4 shadow-custom"
     >
       <div className="mb-2 flex flex-row gap-2">
         <AvatarImage
