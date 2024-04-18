@@ -35,9 +35,6 @@ keycloak:
       cpu: 2500m
       memory: 512Mi
 
-  http:
-    relativePath: /auth
-
   themes:
     enabled: true
     ref: master

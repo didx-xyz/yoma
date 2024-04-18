@@ -7,7 +7,9 @@ ingress:
       nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
     className: nginx-internal
     rules:
-      - host: keycloak.example.com
+      - host: example.com
+        paths:
+          - path: /auth
 
   external:
     enabled: false
@@ -15,11 +17,11 @@ ingress:
       nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
     className: nginx-external
     rules:
-      - host: keycloak.example.com
+      - host: example.com
         paths:
-          # - path: /realms/example
-          - path: /resources
-          - path: /js
+          # - path: /auth/realms/example
+          - path: /auth/resources
+          - path: /auth/js
 
 postInstallHook:
   enabled: false
@@ -42,7 +44,7 @@ postInstallHook:
 
   env:
     - name: KC_BASE_URL
-      value: http://keycloak-http:80
+      value: http://keycloak-http:80/auth
     - name: KC_REALM
       valueFrom:
         secretKeyRef:
@@ -355,8 +357,7 @@ keycloak:
     enabled: true
 
   http:
-    # TODO: migrate to /auth
-    relativePath: /
+    relativePath: /auth
 
   autoscaling:
     # If `true`, an autoscaling/v2 HorizontalPodAutoscaler resource is created (requires Kubernetes 1.23 or above)
@@ -394,6 +395,7 @@ config-cli:
     tag: 5.8.0-22.0.0
 
   env:
+    KEYCLOAK_URL: https://keycloak.example.com/auth
     KEYCLOAK_AVAILABILITYCHECK_ENABLED: "true"
     KEYCLOAK_AVAILABILITYCHECK_TIMEOUT: "120s"
     IMPORT_VALIDATE: "true"
