@@ -42,7 +42,7 @@ import { parseCookies } from "nookies";
 // * needs to be done here as jotai atoms are not available in _app.tsx
 export const Global: React.FC = () => {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
   const setActiveNavigationRoleViewAtom = useSetAtom(
@@ -66,7 +66,6 @@ export const Global: React.FC = () => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const [isYoIDOnboardingLoading, setIsYoIDOnboardingLoading] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
-  const [redirecting, setRedirecting] = useState(false);
 
   // SESSION
   useEffect(() => {
@@ -137,11 +136,12 @@ export const Global: React.FC = () => {
     //TODO: disabled for now. need to fix issue with GA login event beging tracked twice
     // skip if not logged in or userProfile atom already set (atomWithStorage)
     //if (!session || userProfile) return;
+    console.warn("sessionStatus", sessionStatus);
+    if (sessionStatus === "loading") return;
 
     // check error
     if (session?.error) {
-      setLoginMessage("Your session has expired. Please sign in again.");
-      setLoginDialogVisible(true);
+      setLoginMessage("There was an error signing in. Please sign in again.");
       return;
     }
 
@@ -183,28 +183,26 @@ export const Global: React.FC = () => {
     }
     // check if external partner session exists i.e keycloak session cookie
     // if it does, perform the sign-in action (SSO)
+    // this will redirect to keycloak, automatically sign the user in and redirect back to the app
     else {
       console.warn("checking for existing keycloak session");
       const cookies = parseCookies();
       const existingSessionCookieValue = cookies[COOKIE_KEYCLOAK_SESSION];
 
       console.warn("existingSessionCookieValue", existingSessionCookieValue);
-      if (existingSessionCookieValue && !redirecting) {
-        setRedirecting(true);
+      if (existingSessionCookieValue) {
         onSignIn().then(() => {
           toast.info("Hold on while we sign you in...");
-          setRedirecting(false);
         });
       }
     }
   }, [
     session,
+    sessionStatus,
     userProfile,
     setUserProfile,
     setOnboardingDialogVisible,
     setUpdateProfileDialogVisible,
-    redirecting,
-    setRedirecting,
     isUserProfileCompleted,
     onSignIn,
   ]);
