@@ -136,7 +136,6 @@ export const Global: React.FC = () => {
     //TODO: disabled for now. need to fix issue with GA login event beging tracked twice
     // skip if not logged in or userProfile atom already set (atomWithStorage)
     //if (!session || userProfile) return;
-    console.warn("sessionStatus", sessionStatus);
     if (sessionStatus === "loading") return;
 
     // check error
@@ -185,15 +184,11 @@ export const Global: React.FC = () => {
     // if it does, perform the sign-in action (SSO)
     // this will redirect to keycloak, automatically sign the user in and redirect back to the app
     else {
-      console.warn("checking for existing keycloak session");
       const cookies = parseCookies();
       const existingSessionCookieValue = cookies[COOKIE_KEYCLOAK_SESSION];
 
-      console.warn("existingSessionCookieValue", existingSessionCookieValue);
       if (existingSessionCookieValue) {
-        onSignIn().then(() => {
-          toast.info("Hold on while we sign you in...");
-        });
+        onSignIn();
       }
     }
   }, [

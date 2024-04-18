@@ -62,6 +62,7 @@ export const authOptions: NextAuthOptions = {
   },
   events: {
     async signOut({ token }) {
+      // kill the session in keycloak
       const url = new URL(
         `${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/logout`,
       );
@@ -74,7 +75,6 @@ export const authOptions: NextAuthOptions = {
       );
       url.searchParams.set("refresh_token", token.refreshToken);
 
-      // invalidates the session, but doesn't delete it
       const response = await fetch(url.toString());
       if (!response.ok) {
         const message = `An error has occurred: ${response.status}`;
