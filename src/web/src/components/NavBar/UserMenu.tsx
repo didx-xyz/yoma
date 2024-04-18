@@ -12,6 +12,7 @@ import {
 import ReactModal from "react-modal";
 import { type OrganizationInfo } from "~/api/models/user";
 import {
+  COOKIE_KEYCLOAK_SESSION,
   GA_ACTION_USER_LOGOUT,
   GA_CATEGORY_USER,
   ROLE_ADMIN,
@@ -24,6 +25,7 @@ import {
   userProfileAtom,
 } from "~/lib/store";
 import { AvatarImage } from "../AvatarImage";
+import { destroyCookie } from "nookies";
 
 export const UserMenu: React.FC = () => {
   const [userMenuVisible, setUserMenuVisible] = useState(false);
@@ -46,6 +48,12 @@ export const UserMenu: React.FC = () => {
     // signout from keycloak
     signOut({
       callbackUrl: `${window.location.origin}/`,
+    }).then(() => {
+      // delete the KEYCLOAK_SESSION cookie (prevents signing in again after signout)
+      destroyCookie(null, COOKIE_KEYCLOAK_SESSION, {
+        path: "/",
+        maxAge: 0, // expire the cookie immediately
+      });
     }); // eslint-disable-line @typescript-eslint/no-floating-promises
   }, [setUserProfile]);
 
