@@ -1351,7 +1351,7 @@ loginTheme: yoma
 accountTheme: ""
 adminTheme: ""
 emailTheme: yoma
-eventsEnabled: false
+eventsEnabled: true
 eventsListeners:
   - jboss-logging
   - listener-webhook
@@ -1435,7 +1435,7 @@ enabledEventTypes:
   - VERIFY_PROFILE
   - GRANT_CONSENT_ERROR
   - IDENTITY_PROVIDER_FIRST_LOGIN_ERROR
-adminEventsEnabled: false
+adminEventsEnabled: true
 adminEventsDetailsEnabled: false
 identityProviders: []
 identityProviderMappers: []
