@@ -2,9 +2,9 @@ namespace Yoma.Core.Domain.Entity
 {
   public enum OrganizationStatus
   {
-    Inactive, //flagged as declined if inactive for x days
+    Inactive, //flagged as declined if inactive and not modified for x days
     Active,
-    Declined, //flagged as deleted if declined for x days
+    Declined, //flagged as deleted if declined and not modified for x days
     Deleted
   }
 

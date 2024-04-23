@@ -1,16 +1,11 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace Yoma.Core.Domain.Entity.Models
 {
   public abstract class UserRequestBase
   {
-    [Required]
     public string Email { get; set; }
 
-    [Required]
     public string FirstName { get; set; }
 
-    [Required]
     public string Surname { get; set; }
 
     public string? DisplayName { get; set; }

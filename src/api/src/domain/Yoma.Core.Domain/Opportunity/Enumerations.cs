@@ -4,8 +4,8 @@ namespace Yoma.Core.Domain.Opportunity
   {
     Active, //flagged as expired provided ended (notified)
     Deleted,
-    Expired, //flagged as deleted if expired for x days
-    Inactive, //flagged expired provided ended (notified), or as deleted if inactive for x days
+    Expired, //flagged as deleted if expired and not modified for x days
+    Inactive, //flagged as deleted if inactive and not modified for x days
   }
 
   public enum VerificationMethod

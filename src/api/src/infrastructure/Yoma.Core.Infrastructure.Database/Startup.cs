@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Yoma.Core.Domain.ActionLink.Models;
+using Yoma.Core.Domain.ActionLink.Models.Lookups;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Models;
@@ -10,6 +12,8 @@ using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
+using Yoma.Core.Infrastructure.Database.ActionLink.Repositories;
+using Yoma.Core.Infrastructure.Database.ActionLink.Repositories.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Database.Core.Services;
@@ -68,6 +72,15 @@ namespace Yoma.Core.Infrastructure.Database
       //    HibernatingRhinos.Profiler.Appender.EntityFramework.EntityFrameworkProfiler.Initialize();
 
       // repositories
+      #region ActionLink
+      #region Lookups
+      services.AddScoped<IRepository<LinkAction>, LinkActionRepository>();
+      services.AddScoped<IRepository<LinkStatus>, LinkStatusRepository>();
+      #endregion Lookups
+      services.AddScoped<IRepository<Link>, LinkRepository>();
+      services.AddScoped<IRepository<LinkClaimLog>, LinkClaimLogRepository>();
+      #endregion ActionLink
+
       #region Core
       services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
       services.AddScoped<IRepository<BlobObject>, BlobObjectRepository>();
