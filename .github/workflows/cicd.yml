@@ -330,13 +330,13 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TAILSCALE_VERSION: 1.62.1
+      TAILSCALE_VERSION: 1.64.0
       HELMFILE_VERSION: v0.163.1
-      HELM_VERSION: v3.14.3
+      HELM_VERSION: v3.14.4
       TAG: ${{ needs.build.outputs.image_version }}
 
     concurrency:
-      group: ${{ github.workflow }}-deploy
+      group: ${{ github.workflow }}-deploy-${{ vars.ENVIRONMENT }}
       cancel-in-progress: false
     environment:
       name: ${{
