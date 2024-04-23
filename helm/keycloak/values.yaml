@@ -10,7 +10,14 @@ ingress:
       - host: example.com
         paths:
           - path: /auth
-
+  internal-admin:
+    enabled: false
+    annotations:
+      nginx.ingress.kubernetes.io/app-root: /auth
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
+    className: nginx-internal
+    rules:
+      - host: auth.example.com
   external:
     enabled: false
     annotations:

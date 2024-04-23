@@ -5,6 +5,10 @@ ingress:
       - host: yoma.world
         paths:
           - path: /auth
+  internal-admin:
+    enabled: true
+    rules:
+      - host: auth.yoma.world
   external:
     enabled: true
     rules:

@@ -5,6 +5,10 @@ ingress:
       - host: stage.yoma.world
         paths:
           - path: /auth
+  internal-admin:
+    enabled: true
+    rules:
+      - host: auth.stage.yoma.world
   external:
     enabled: true
     rules:
