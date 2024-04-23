@@ -1343,7 +1343,7 @@ smtpServer:
   port: "587"
   host: smtp.sendgrid.net
   replyTo: ""
-  from: no-reply@yoma.africa
+  from: no-reply@yoma.world
   fromDisplayName: Yoma
   user: apikey
   verifyLinkExpiration: 86400
