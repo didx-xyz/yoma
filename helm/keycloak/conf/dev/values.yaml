@@ -1,10 +1,6 @@
 ingress:
   internal:
     enabled: true
-    annotations:
-      nginx.ingress.kubernetes.io/configuration-snippet: |-
-        more_clear_headers "Content-Security-Policy";
-        add_header Content-Security-Policy "frame-ancestors 'self' https://dev.yoma.world; frame-src 'self'; object-src 'none';" always;
     rules:
       - host: dev.yoma.world
         paths:
@@ -12,10 +8,6 @@ ingress:
 
   external:
     enabled: false
-    annotations:
-      nginx.ingress.kubernetes.io/configuration-snippet: |-
-        more_clear_headers "Content-Security-Policy";
-        add_header Content-Security-Policy "frame-ancestors 'self' https://dev.yoma.world; frame-src 'self'; object-src 'none';" always;
     rules:
       - host: dev.yoma.world
         paths:
