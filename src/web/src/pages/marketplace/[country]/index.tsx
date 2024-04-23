@@ -19,6 +19,8 @@ import type {
 } from "~/api/models/marketplace";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
 import {
+  ADDRESS_TO,
+  ADDRESS_TOKEN,
   COUNTRY_WW,
   GA_ACTION_MARKETPLACE_ITEM_BUY,
   GA_CATEGORY_OPPORTUNITY,
@@ -48,6 +50,8 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import { env } from "process";
 import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
 import StoreItemsCarousel from "~/components/Marketplace/StoreItemsCarousel";
+import { formatEther, parseEther } from "ethers/lib/utils";
+import { ethers } from "ethers";
 
 interface IParams extends ParsedUrlQuery {
   country: string;
@@ -327,32 +331,33 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         return;
       }
 
+      //TODO: remove for hackaphon
       // check price
-      if (userProfile.zlto.available < item.amount) {
-        // show confirm dialog
-        await modalContext.showConfirmation(
-          "",
-          <div
-            key="confirm-dialog-content"
-            className="text-gray-500 flex h-full flex-col space-y-2"
-          >
-            <div className="flex flex-row space-x-2">
-              <IoMdWarning className="gl-icon-yellow h-6 w-6" />
-              <p className="text-lg">Insufficient funds</p>
-            </div>
+      // if (userProfile.zlto.available < item.amount) {
+      //   // show confirm dialog
+      //   await modalContext.showConfirmation(
+      //     "",
+      //     <div
+      //       key="confirm-dialog-content"
+      //       className="text-gray-500 flex h-full flex-col space-y-2"
+      //     >
+      //       <div className="flex flex-row space-x-2">
+      //         <IoMdWarning className="gl-icon-yellow h-6 w-6" />
+      //         <p className="text-lg">Insufficient funds</p>
+      //       </div>
 
-            <div>
-              <p className="text-sm leading-6">
-                You do not have sufficient Zlto to purchase this item.
-              </p>
-            </div>
-          </div>,
-          false,
-          true,
-        );
+      //       <div>
+      //         <p className="text-sm leading-6">
+      //           You do not have sufficient Zlto to purchase this item.
+      //         </p>
+      //       </div>
+      //     </div>,
+      //     false,
+      //     true,
+      //   );
 
-        return;
-      }
+      //   return;
+      // }
 
       setCurrentItem(item);
       setBuyDialogVisible(true);
@@ -367,12 +372,80 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
     ],
   );
 
+  //* Meta Mask
+  // async function sendTransaction(provider: any, to: any, amount: any) {
+  //   const signer = provider.getSigner();
+  //   const transaction = {
+  //     to,
+  //     value: parseEther(amount),
+  //   };
+
+  //   try {
+  //     const txResponse = await signer.sendTransaction(transaction);
+  //     await txResponse.wait();
+  //     console.log("Transaction successful");
+  //   } catch (error) {
+  //     console.error("Error sending transaction:", error);
+  //   }
+  // }
+  async function sendTransaction(provider: any, to: any, amount: any) {
+    // You can also use an ENS name for the contract address
+    const daiAddress = ADDRESS_TOKEN;
+
+    // The ERC-20 Contract ABI, which is a common contract interface
+    // for tokens (this is the Human-Readable ABI format)
+    const daiAbi = [
+      // Some details about the token
+      "function name() view returns (string)",
+      "function symbol() view returns (string)",
+
+      // Get the account balance
+      "function balanceOf(address) view returns (uint)",
+
+      // Send some of your tokens to someone else
+      "function transfer(address to, uint amount)",
+
+      // An event triggered whenever anyone transfers to someone else
+      "event Transfer(address indexed from, address indexed to, uint amount)",
+    ];
+
+    // The Contract object
+    try {
+      const daiContract = new ethers.Contract(daiAddress, daiAbi, provider);
+
+      // const toAddress = '0x...'; // The address you want to send to
+      const amount2 = ethers.utils.parseUnits(amount, "ether"); // The amount you want to send
+
+      const signer = provider.getSigner(); // Get the signer from the provider
+      const daiContractWithSigner = daiContract.connect(signer); // Connect the contract to the signer
+
+      const tx = await daiContractWithSigner.transfer(ADDRESS_TO, amount2); // Send the transaction
+      const receipt = await tx.wait(); // Wait for the transaction to be mined
+
+      console.log(
+        `Transaction ${receipt.transactionHash} mined in block ${receipt.blockNumber}`,
+      );
+
+      console.log("Transaction successful");
+    } catch (error) {
+      console.error("Error sending transaction:", error);
+    }
+  }
+
   const onBuyConfirm = useCallback(
     (item: StoreItemCategory) => {
       setBuyDialogVisible(false);
 
       // update api
-      buyItem(item.storeId, item.id)
+      //buyItem(item.storeId, item.id)
+      debugger;
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+
+      sendTransaction(
+        provider,
+        ADDRESS_TO, // elmer's address
+        item.amount.toString(),
+      )
         .then(() => {
           // 📊 GOOGLE ANALYTICS: track event
           trackGAEvent(

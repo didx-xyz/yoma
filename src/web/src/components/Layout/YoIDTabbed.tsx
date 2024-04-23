@@ -20,7 +20,21 @@ import { AvatarImage } from "../AvatarImage";
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import { ZltoModal } from "../Modals/ZltoModal";
 import stamps from "public/images/stamps.svg";
-// import iconShare from "public/images/icon-share.png";
+import { ethers } from "ethers";
+import { formatEther } from "ethers/lib/utils";
+
+//*
+interface EthereumProvider {
+  request: (request: { method: string; params?: any[] }) => Promise<any>;
+  on: (event: string, listener: (...args: any[]) => void) => void;
+}
+
+declare global {
+  interface Window {
+    ethereum: EthereumProvider;
+  }
+}
+//*
 
 export type TabProps = ({
   children,
@@ -103,6 +117,43 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
     }
   }, [userProfile]);
 
+  //* Meta Mask
+  const [provider, setProvider] = useState<any>(null);
+  const [account, setAccount] = useState(null);
+  const [balance, setBalance] = useState<any>(null);
+  const [error, setError] = useState<any>(null);
+
+  // initialize MetaMask
+  useEffect(() => {
+    if (typeof window.ethereum !== "undefined") {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      setProvider(provider);
+
+      window.ethereum
+        .request({ method: "eth_requestAccounts" })
+        .then((accounts) => {
+          setAccount(accounts[0]);
+          fetchBalance(provider, accounts[0]);
+        })
+        .catch((err) => {
+          setError(err);
+        });
+
+      window.ethereum.on("accountsChanged", (accounts) => {
+        setAccount(accounts[0]);
+        fetchBalance(provider, accounts[0]);
+      });
+    } else {
+      setError("MetaMask is not installed");
+    }
+  }, []);
+
+  async function fetchBalance(provider: any, account: any) {
+    const balance = await provider.getBalance(account);
+    const ethersBalance = formatEther(balance);
+    setBalance(ethersBalance);
+  }
+
   return (
     <MainLayout>
       <>
@@ -169,7 +220,8 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                               width={18}
                               height={18}
                             />
-                            {available ?? "Loading..."}
+                            {/* {available ?? "Loading..."} */}
+                            {balance ?? "Loading..."}
                           </div>
                         </div>
                         <div className="flex flex-row items-center">

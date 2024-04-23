@@ -11,6 +11,9 @@ import iconZltoWhite from "public/images/icon-zlto-white.svg";
 import { SignInButton } from "../NavBar/SignInButton";
 import iconZltoCircle from "public/images/icon-zlto-rounded.webp";
 import { ZltoModal } from "../Modals/ZltoModal";
+import { ethers } from "ethers";
+import { formatEther, formatUnits } from "ethers/lib/utils";
+import { ADDRESS_FROM, ADDRESS_TOKEN } from "~/lib/constants";
 
 export type TabProps = ({
   children,
@@ -40,6 +43,70 @@ const MarketplaceLayout: TabProps = ({ children }) => {
     }
   }, [userProfile]);
 
+  //* Meta Mask
+  const [provider, setProvider] = useState<any>(null);
+  const [account, setAccount] = useState(null);
+  const [balance, setBalance] = useState<any>(null);
+  const [error, setError] = useState<any>(null);
+
+  // initialize MetaMask
+  useEffect(() => {
+    if (typeof window.ethereum !== "undefined") {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      setProvider(provider);
+
+      window.ethereum
+        .request({ method: "eth_requestAccounts" })
+        .then((accounts) => {
+          setAccount(accounts[0]);
+          fetchBalance(provider, accounts[0]);
+        })
+        .catch((err) => {
+          setError(err);
+        });
+
+      window.ethereum.on("accountsChanged", (accounts) => {
+        setAccount(accounts[0]);
+        fetchBalance(provider, accounts[0]);
+      });
+    } else {
+      setError("MetaMask is not installed");
+    }
+  }, []);
+
+  async function fetchBalance(provider: any, account: any) {
+    // You can also use an ENS name for the contract address
+    const daiAddress = ADDRESS_TOKEN;
+
+    // The ERC-20 Contract ABI, which is a common contract interface
+    // for tokens (this is the Human-Readable ABI format)
+    const daiAbi = [
+      // Some details about the token
+      "function name() view returns (string)",
+      "function symbol() view returns (string)",
+
+      // Get the account balance
+      "function balanceOf(address) view returns (uint)",
+
+      // Send some of your tokens to someone else
+      "function transfer(address to, uint amount)",
+
+      // An event triggered whenever anyone transfers to someone else
+      "event Transfer(address indexed from, address indexed to, uint amount)",
+    ];
+
+    // The Contract object
+    const daiContract = new ethers.Contract(daiAddress, daiAbi, provider);
+
+    const balance = await daiContract.balanceOf(ADDRESS_FROM);
+
+    setBalance(formatUnits(balance, 18));
+
+    // const balance = await provider.getBalance(account);
+    // const ethersBalance = formatEther(balance);
+    // setBalance(ethersBalance);
+  }
+
   return (
     <MainLayout>
       <>
@@ -61,7 +128,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
             <div className="mb-8 flex h-36 flex-col items-center justify-center gap-4 text-white">
               <div className="flex flex-row items-center justify-center">
                 <h5 className="flex-grow text-center tracking-widest">
-                  Sign in to see your Zlto balance
+                  Sign in to see your YOT balance
                 </h5>
               </div>
               <div className="flex flex-row gap-2">
@@ -97,7 +164,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                     setWhatIsZltoDialogVisible(true);
                   }}
                 >
-                  What is Zlto?
+                  What is YOT?
                 </button>
 
                 <SignInButton className="btn rounded-full border-2 border-blue-dark brightness-110" />
@@ -111,7 +178,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
               <div>
                 <div className="flex flex-row items-center justify-center">
                   <h5 className="mb-2 flex-grow text-center tracking-widest">
-                    My Zlto balance
+                    My YOT balance
                   </h5>
                 </div>
                 <div className="flex flex-row gap-2">
@@ -161,7 +228,8 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                           width={20}
                           height={20}
                         />
-                        {available ?? "Loading..."}
+                        {/* {available ?? "Loading..."} */}
+                        {balance ?? "Loading..."}
                       </div>
                     </div>
 
@@ -192,7 +260,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                     setWhatIsZltoDialogVisible(true);
                   }}
                 >
-                  What is Zlto?
+                  What is YOT?
                 </button>
 
                 <Link

@@ -44,27 +44,27 @@ export const ZltoModal = ({
                 style={{ width: "40px", height: "40px" }}
               />
             </div>
-            <h3>What is Zlto?</h3>
+            <h3>What is YOT?</h3>
             <p className="rounded-lg bg-gray-light p-2 text-center md:w-[450px] md:p-4">
-              Introducing Zlto, Yoma&apos;s fantastic reward system. Earn Zlto
-              by completing tasks and opportunities. Redeem your well-deserved
+              Introducing YOT, Yoma&apos;s fantastic reward system. Earn YOT by
+              completing tasks and opportunities. Redeem your well-deserved
               rewards in the marketplace and enjoy the amazing benefits that
               await you!
             </p>
 
-            <h3 className="mt-4">How does Zlto balances work?</h3>
+            <h3 className="mt-4">How does YOT balances work?</h3>
             <ul className="flex list-disc flex-col gap-4 rounded-lg bg-gray-light p-2 text-left md:w-[450px] md:p-4">
               <li className="ml-6 font-semibold">
                 Pending:
                 <p className="font-normal">
-                  ZLTO is busy transferring to your account. Please give the
+                  YOT is busy transferring to your account. Please give the
                   system 24 hours to process.
                 </p>
               </li>
               <li className="ml-6 font-semibold">
                 Available:
                 <p className="font-normal">
-                  ZLTO available to spend in the marketplace now.
+                  YOT available to spend in the marketplace now.
                 </p>
               </li>
               <li className="ml-6 font-semibold">

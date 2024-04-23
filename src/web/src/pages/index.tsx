@@ -470,7 +470,7 @@ const Home: NextPageWithLayout<{
             </div>
 
             <div className="flex flex-col items-center justify-center gap-8 lg:flex-row">
-              <Image
+              {/* <Image
                 src={imageLogoZltoBig}
                 alt="Logo Zlto"
                 width={134}
@@ -481,9 +481,9 @@ const Home: NextPageWithLayout<{
                   height: "74px",
                   zIndex: 1,
                 }}
-              />
+              /> */}
               <p className="-mt-4 text-sm leading-6 text-gray-dark lg:-mt-0">
-                Zlto is Yoma&apos;s fantastic reward currency. Redeem your
+                YOT is Yoma&apos;s fantastic reward currency. Redeem your
                 hard-earned rewards in the Marketplace and experience the
                 incredible benefits that await you!
               </p>
@@ -570,7 +570,7 @@ const Home: NextPageWithLayout<{
                   Yoma Marketplace
                 </h2>
                 <p className="text-center text-sm text-gray-dark lg:text-left">
-                  Unlock the power of your Zlto rewards in the Yoma marketplace!
+                  Unlock the power of your YOT rewards in the Yoma marketplace!
                   Treat yourself to selected products like airtime and data.
                 </p>
               </div>
