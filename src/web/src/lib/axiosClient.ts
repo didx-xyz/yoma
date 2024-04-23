@@ -2,6 +2,7 @@ import axios from "axios";
 import { type Session } from "next-auth";
 import { getSession } from "next-auth/react";
 import { fetchClientEnv } from "./utils";
+import NProgress from "nprogress";
 
 let apiBaseUrl = "";
 
@@ -18,6 +19,7 @@ const ApiClient = async () => {
 
   let lastSession: Session | null = null;
 
+  //* Intercept requests to add the session token
   instance.interceptors.request.use(
     async (request) => {
       if (lastSession == null || Date.now() > Date.parse(lastSession.expires)) {
@@ -36,6 +38,23 @@ const ApiClient = async () => {
     (error) => {
       console.error(`API Error: `, error);
       throw error;
+    },
+  );
+
+  //* Intercept requests/responses for NProgress
+  instance.interceptors.request.use((config) => {
+    NProgress.start();
+    return config;
+  });
+
+  instance.interceptors.response.use(
+    (response) => {
+      NProgress.done();
+      return response;
+    },
+    (error) => {
+      NProgress.done();
+      return Promise.reject(error);
     },
   );
 

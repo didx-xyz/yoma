@@ -25,6 +25,9 @@ import "~/styles/FileUpload.css";
 import { THEME_PURPLE } from "~/lib/constants";
 import { GoogleAnalytics } from "~/components/GoogleAnalytics";
 import "~/styles/embla.css";
+import Router from "next/router";
+import NProgress from "nprogress";
+import "nprogress/nprogress.css";
 
 // configure font for tailwindcss
 // see https://nextjs.org/docs/pages/building-your-application/optimizing/fonts
@@ -38,6 +41,16 @@ const openSans = Open_Sans({
 try {
   ReactModal.setAppElement("#mainContent");
 } catch (e) {}
+
+//#region Configure NProgress
+NProgress.configure({ showSpinner: false });
+
+// Bind Router Events
+Router.events.on("routeChangeStart", () => NProgress.start());
+Router.events.on("routeChangeComplete", () => NProgress.done());
+Router.events.on("routeChangeError", () => NProgress.done());
+
+//#endregion Configure NProgress
 
 export type NextPageWithLayout<P = object, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
