@@ -22,7 +22,6 @@ import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import ReactModal from "react-modal";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-// import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import YoIDTabbed from "~/components/Layout/YoIDTabbed";
 import { toast } from "react-toastify";
 import { config } from "~/lib/react-query-config";
