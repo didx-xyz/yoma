@@ -202,8 +202,8 @@ const Opportunities: NextPageWithLayout<{
 
   const lookups_publishedStates: SelectOption[] = [
     { value: "0", label: "Not started" },
-    { value: "1", label: "Active" },
-    ...(session ? [{ value: "2", label: "Expired" }] : []), // logged in users can see expired
+    { value: "1", label: "Ongoing" },
+    ...(session ? [{ value: "2", label: "Upload Only" }] : []), // logged in users can see expired
   ];
 
   // get filter parameters from route
@@ -886,6 +886,7 @@ const Opportunities: NextPageWithLayout<{
               <OpportunitiesCarousel
                 id={`opportunities_trending`}
                 title="Trending 🔥"
+                description="The most viewed opportunities"
                 data={opportunities_trending}
                 loadData={loadDataTrending}
                 viewAllUrl="/opportunities?mostViewed=true"
@@ -897,6 +898,7 @@ const Opportunities: NextPageWithLayout<{
               <OpportunitiesCarousel
                 id={`opportunities_learning`}
                 title="Learning Courses 📚"
+                description="Discover exciting online courses"
                 data={opportunities_learning}
                 loadData={loadDataLearning}
                 viewAllUrl="/opportunities?types=Learning"
@@ -908,6 +910,7 @@ const Opportunities: NextPageWithLayout<{
               <OpportunitiesCarousel
                 id={`opportunities_tasks`}
                 title="Impact Tasks ⚡"
+                description="Contribute to real-world projects"
                 data={opportunities_tasks}
                 loadData={loadDataTasks}
                 viewAllUrl="/opportunities?types=Task"
@@ -919,6 +922,7 @@ const Opportunities: NextPageWithLayout<{
               <OpportunitiesCarousel
                 id={`opportunities_allOpportunities`}
                 title="All Opportunities"
+                description="Explore all available opportunities"
                 data={opportunities_allOpportunities}
                 loadData={loadDataOpportunities}
                 viewAllUrl="/opportunities?page=1"

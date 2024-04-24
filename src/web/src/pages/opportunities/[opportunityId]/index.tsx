@@ -25,11 +25,12 @@ import {
   IoMdClose,
   IoMdFingerPrint,
   IoMdArrowRoundBack,
-  IoMdPause,
   IoMdPlay,
   IoMdBookmark,
   IoMdPerson,
   IoIosBook,
+  IoMdCalendar,
+  IoMdCloudUpload,
 } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
@@ -645,7 +646,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 onRequestClose={() => {
                   setCancelOpportunityDialogVisible(false);
                 }}
-                className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:overflow-y-clip md:rounded-3xl`}
+                className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:overflow-y-hidden md:rounded-3xl`}
                 portalClassName={"fixed z-40"}
                 overlayClassName="fixed inset-0 bg-overlay"
               >
@@ -776,22 +777,28 @@ const OpportunityDetails: NextPageWithLayout<{
                             <>
                               {new Date(opportunity.dateStart) > new Date() && (
                                 <div className="badge bg-yellow-tint text-yellow">
-                                  <IoMdPause />
-                                  <p className="ml-1">Not started</p>
+                                  <IoMdCalendar className="h-4 w-4" />
+                                  <Moment
+                                    format={DATE_FORMAT_HUMAN}
+                                    utc={true}
+                                    className="ml-1"
+                                  >
+                                    {opportunity.dateStart}
+                                  </Moment>
                                 </div>
                               )}
                               {new Date(opportunity.dateStart) < new Date() && (
                                 <div className="badge bg-purple-tint text-purple-shade">
                                   <IoMdPlay />
-                                  <span className="ml-1">Started</span>
+                                  <span className="ml-1">Ongoing</span>
                                 </div>
                               )}
                             </>
                           )}
                           {opportunity?.status == "Expired" && (
                             <div className="badge bg-red-100 text-error">
-                              <IoMdClose className="h-4 w-4" />
-                              <span className="ml-1">Expired</span>
+                              <IoMdCloudUpload className="h-4 w-4" />
+                              <span className="ml-1">Upload Only</span>
                             </div>
                           )}
                         </div>

@@ -110,19 +110,11 @@ body {
 
 // NProgress
 #nprogress .bar {
-  height: 4px !important;
+  height: 5.5px !important;
+  background: theme("colors.white") !important;
+  opacity: 0.3 !important;
 }
 
-// override the NProgress styles based on the theme
-[data-theme="purple"] #nprogress .bar {
-  @apply bg-blue;
-}
-[data-theme="green"] #nprogress .bar {
-  @apply bg-blue;
-}
-[data-theme="blue"] #nprogress .bar {
-  @apply bg-white;
-}
-[data-theme="orange"] #nprogress .bar {
-  @apply bg-blue;
+#nprogress .peg {
+  display: none !important;
 }
