@@ -81,13 +81,15 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
 
     public static string YomaInfoURL(this Models.Opportunity value, string appBaseURL)
     {
+      ArgumentNullException.ThrowIfNull(value, nameof(value));
+
       return appBaseURL.AppendPathSegment("opportunities").AppendPathSegment(value.Id).ToString();
     }
 
-#pragma warning disable IDE0060 // Remove unused parameter
     public static string YomaInstantVerifyURL(this Models.Opportunity value, string appBaseURL)
-#pragma warning restore IDE0060 // Remove unused parameter
     {
+      ArgumentNullException.ThrowIfNull(value, nameof(value));
+
       return appBaseURL.AppendPathSegment("opportunities/actionLink/verify");
     }
 
