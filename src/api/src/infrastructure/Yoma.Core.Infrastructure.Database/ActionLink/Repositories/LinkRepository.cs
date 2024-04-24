@@ -76,7 +76,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
 
       item.DateModified = DateTimeOffset.UtcNow;
 
-      entity.ParticipantCount = item.ParticipantCount;  
+      entity.ParticipantCount = item.ParticipantCount;
       entity.StatusId = item.StatusId;
       entity.DateModified = item.DateModified;
       entity.ModifiedByUserId = item.ModifiedByUserId;

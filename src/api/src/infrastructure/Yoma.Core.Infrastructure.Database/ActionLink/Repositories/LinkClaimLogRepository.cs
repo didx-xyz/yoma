@@ -26,7 +26,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
     public async Task<LinkClaimLog> Create(LinkClaimLog item)
     {
       item.DateCreated = DateTimeOffset.UtcNow;
-   
+
       var entity = new Entities.LinkClaimLog
       {
         Id = item.Id,

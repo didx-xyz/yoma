@@ -54,7 +54,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IEmailURLFactory _emailURLFactory;
     private readonly IEmailProviderClient _emailProviderClient;
     private readonly IIdentityProviderClient _identityProviderClient;
-    
+
     private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
     private readonly OpportunitySearchFilterValidator _opportunitySearchFilterValidator;
@@ -1406,7 +1406,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public async Task<LinkInfo> CreateLinkInstantVerify(Guid id, OpportunityRequestLinkInstantVerify request, bool ensureOrganizationAuthorization)
     {
-      ArgumentNullException.ThrowIfNull(request, nameof(request));  
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       var opportunity = GetById(id, false, false, ensureOrganizationAuthorization);
 
