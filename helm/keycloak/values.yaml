@@ -151,8 +151,10 @@ keycloak:
 
   serviceAccount:
     create: true
-    allowReadPods: true
+    # This creates a ClusterRole and ClusterRolebinding which is not needed
+    allowReadPods: false
 
+  # This creates a Role and Rolebinding which makes the above ClusterRole and ClusterRolebinding redundant
   rbac:
     create: true
     rules:
