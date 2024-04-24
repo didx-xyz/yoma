@@ -45,12 +45,15 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   await queryClient.prefetchQuery({
     queryKey: ["MyOpportunities_Pending", pageNumber],
     queryFn: () =>
-      searchMyOpportunities({
-        action: Action.Verification,
-        verificationStatuses: [VerificationStatus.Pending],
-        pageNumber: pageNumber,
-        pageSize: PAGE_SIZE,
-      }),
+      searchMyOpportunities(
+        {
+          action: Action.Verification,
+          verificationStatuses: [VerificationStatus.Pending],
+          pageNumber: pageNumber,
+          pageSize: PAGE_SIZE,
+        },
+        context,
+      ),
   });
 
   return {

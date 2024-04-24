@@ -37,19 +37,19 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   await Promise.all([
     await queryClient.prefetchQuery({
       queryKey: ["genders"],
-      queryFn: async () => await getGenders(),
+      queryFn: async () => await getGenders(context),
     }),
     await queryClient.prefetchQuery({
       queryKey: ["countries"],
-      queryFn: async () => await getCountries(),
+      queryFn: async () => await getCountries(context),
     }),
     await queryClient.prefetchQuery({
       queryKey: ["educations"],
-      queryFn: async () => await getEducations(),
+      queryFn: async () => await getEducations(context),
     }),
     await queryClient.prefetchQuery({
       queryKey: ["userProfile"],
-      queryFn: async () => await getUserProfile(),
+      queryFn: async () => await getUserProfile(context),
     }),
   ]);
 
