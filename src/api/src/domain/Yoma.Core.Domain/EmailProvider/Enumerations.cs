@@ -11,6 +11,7 @@ namespace Yoma.Core.Domain.EmailProvider
     Opportunity_Expiration_WithinNextDays, //sent to organization admin
     Opportunity_Posted_Admin, //sent to admin
     Opportunity_Verification_Pending, //sent to youth
-    Opportunity_Verification_Pending_Admin //sent to organization admin
+    Opportunity_Verification_Pending_Admin, //sent to organization admin
+    Opportunity_Verification_Instant //sent to youth
   }
 }

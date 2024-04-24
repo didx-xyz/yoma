@@ -43,10 +43,10 @@ namespace Yoma.Core.Api.Controllers
     #region Public Members
 
     #region Authenticated User Based Actions
-    [SwaggerOperation(Summary = "Create a new organization (User, Admin or Organization Admin role required)")]
+    [SwaggerOperation(Summary = "Create a new organization (Authenticated User)")]
     [HttpPost()]
     [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> Create([FromForm] OrganizationRequestCreate request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(Create));
@@ -58,10 +58,10 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Return a list of provider types (User, Admin or Organization Admin role required)")]
+    [SwaggerOperation(Summary = "Return a list of provider types (Authenticated User)")]
     [HttpGet("lookup/providerType")]
     [ProducesResponseType(typeof(List<Domain.Entity.Models.Lookups.OrganizationProviderType>), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    [Authorize(Roles = $"{Constants.Role_User}")]
     public IActionResult ListProviderTypes()
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ListProviderTypes));
@@ -72,7 +72,7 @@ namespace Yoma.Core.Api.Controllers
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
-    #endregion
+    #endregion Authenticated User Based Actions
 
     #region Administrative Actions
     [SwaggerOperation(Summary = "Get the specified organization by id")]

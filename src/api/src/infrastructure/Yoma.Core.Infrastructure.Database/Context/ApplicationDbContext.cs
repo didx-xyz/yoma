@@ -21,8 +21,6 @@ namespace Yoma.Core.Infrastructure.Database.Context
     #region Public Members
     #region ActionLink
     #region Lookups
-    public DbSet<ActionLink.Entities.Lookups.LinkAction> LinkAction { get; set; }
-
     public DbSet<ActionLink.Entities.Lookups.LinkStatus> LinkStatus { get; set; }
     #endregion Lookups
 

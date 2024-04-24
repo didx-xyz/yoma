@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
+using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
@@ -66,18 +67,18 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Get sharing details for published or expired opportunity by id (Anonymous)")]
-    [HttpGet("{id}/sharing")]
-    [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
+    [SwaggerOperation(Summary = "Create sharing link for published or expired opportunity by id (Anonymous)")]
+    [HttpGet("{id}/link/sharing")]
+    [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [AllowAnonymous]
-    public async Task<IActionResult> GetSharingDetails([FromRoute] Guid id, [FromQuery] bool? includeQRCode)
+    public async Task<IActionResult> CreateSharingLink([FromRoute] Guid id, [FromQuery] bool? includeQRCode)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetSharingDetails));
+      _logger.LogInformation("Handling request {requestName}", nameof(CreateSharingLink));
 
-      var result = await _opportunityService.GetSharingDetails(id, true, includeQRCode);
+      var result = await _opportunityService.CreateLinkSharing(id, true, includeQRCode, false);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetSharingDetails));
+      _logger.LogInformation("Request {requestName} handled", nameof(CreateSharingLink));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -211,40 +212,22 @@ namespace Yoma.Core.Api.Controllers
     #endregion
 
     #region Authenticated User Based Actions
-    [SwaggerOperation(Summary = "Get the specified opportunity info by id (User, Admin or Organization Admin role required)")]
+    [SwaggerOperation(Summary = "Get the specified opportunity info by id (Authenticated User)")]
     [HttpGet("{id}/auth/info")]
     [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
-    [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    [Authorize(Roles = $"{Constants.Role_User}")]
     public IActionResult GetInfoById([FromRoute] Guid id)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
 
-      //by default, all users possess the user role. Therefore, organizational authorization checks are omitted here, allowing org admins to access information for all opportunities without restriction
       var result = _opportunityInfoService.GetById(id, false);
 
       _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
-
-    [SwaggerOperation(Summary = "Get sharing details for the specified opportunity by id (User, Admin or Organization Admin role required)")]
-    [HttpGet("{id}/auth/sharing")]
-    [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
-    [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> GetSharingDetailsAuthed([FromRoute] Guid id, [FromQuery] bool? includeQRCode)
-    {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetSharingDetailsAuthed));
-
-      //by default, all users possess the user role. Therefore, organizational authorization checks are omitted here, allowing org admins to access information for all opportunities without restriction
-      var result = await _opportunityService.GetSharingDetails(id, false, includeQRCode);
-
-      _logger.LogInformation("Request {requestName} handled", nameof(GetSharingDetailsAuthed));
-
-      return StatusCode((int)HttpStatusCode.OK, result);
-    }
-    #endregion
+    #endregion Authenticated User Based Actions
 
     #region Administrative Actions
     [SwaggerOperation(Summary = "Return a list of categories associated with opportunities, optionally filter by organization")]
@@ -620,6 +603,19 @@ namespace Yoma.Core.Api.Controllers
       return File(bytes, "text/csv", fileName);
     }
 
+    [SwaggerOperation(Summary = "Create an instant-verify link for the specified opportunity")]
+    [HttpPost("{id}/link/instantVerify")]
+    [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public async Task<IActionResult> CreateInstantVerifyLink([FromRoute] Guid id, [FromBody] OpportunityRequestLinkInstantVerify request)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(CreateInstantVerifyLink));
+
+      var result = await _opportunityService.CreateLinkInstantVerify(id, request, true);
+      _logger.LogInformation("Request {requestName} handled", nameof(CreateInstantVerifyLink));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
     #endregion
   }
 }

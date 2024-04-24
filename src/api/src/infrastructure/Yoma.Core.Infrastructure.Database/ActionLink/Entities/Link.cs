@@ -6,24 +6,26 @@ using Yoma.Core.Infrastructure.Database.Entity.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
 {
-  [Table("ActionLink", Schema = "Link")]
+  [Table("Link", Schema = "ActionLink")]
+  [Index(nameof(URL), IsUnique = true)]
   [Index(nameof(ShortURL), IsUnique = true)]
-  [Index(nameof(EntityType), nameof(ActionId), nameof(StatusId), nameof(OpportunityId), nameof(DateEnd), nameof(DateCreated))]
+  [Index(nameof(EntityType), nameof(Action), nameof(StatusId), nameof(OpportunityId), nameof(DateEnd), nameof(DateCreated))]
   public class Link : BaseEntity<Guid>
   {
-    //support specials characters like emojis  
     [Required]
-    [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(500)
-    public string Description { get; set; }
+    [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)
+    public string Name { get; set; }
+
+    [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(MAX)
+    public string? Description { get; set; }
 
     [Required]
     [Column(TypeName = "varchar(25)")]
     public string EntityType { get; set; }
 
     [Required]
-    [ForeignKey("StatusId")]
-    public Guid ActionId { get; set; }
-    public Lookups.LinkAction Action { get; set; }
+    [Column(TypeName = "varchar(25)")]
+    public string Action { get; set; }
 
     [Required]
     [ForeignKey("StatusId")]
@@ -36,17 +38,17 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
 
     [Required]
     [Column(TypeName = "varchar(2048)")]
-    public string ShortURL { get; set; }
+    public string URL { get; set; }
 
     [Required]
-    public int ParticipantLimit { get; set; }
+    [Column(TypeName = "varchar(2048)")]
+    public string ShortURL { get; set; }
+
+    public int? ParticipantLimit { get; set; }
 
     public int? ParticipantCount { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }
-
-    [Column(TypeName = "jsonb ")]
-    public string? DistributionList { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

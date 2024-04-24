@@ -18,18 +18,18 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
       return _context.Link.Select(entity => new Link
       {
         Id = entity.Id,
+        Name = entity.Name,
         Description = entity.Description,
         EntityType = entity.EntityType,
-        ActionId = entity.ActionId,
-        Action = Enum.Parse<LinkAction>(entity.Status.Name, true),
+        Action = entity.Action,
         StatusId = entity.StatusId,
         Status = Enum.Parse<LinkStatus>(entity.Status.Name, true),
         OpportunityId = entity.OpportunityId,
-        ShortURL = entity.ShortURL,
+        URL = entity.URL,
+        ShortURL = entity.URL,
         ParticipantLimit = entity.ParticipantLimit,
         ParticipantCount = entity.ParticipantCount,
         DateEnd = entity.DateEnd,
-        DistributionList = entity.DistributionList,
         DateCreated = entity.DateCreated,
         CreatedByUserId = entity.CreatedByUserId,
         DateModified = entity.DateModified,
@@ -45,16 +45,17 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
       var entity = new Entities.Link
       {
         Id = item.Id,
+        Name = item.Name,
         Description = item.Description,
         EntityType = item.EntityType,
-        ActionId = item.ActionId,
+        Action = item.Action,
         StatusId = item.StatusId,
         OpportunityId = item.OpportunityId,
+        URL = item.URL,
         ShortURL = item.ShortURL,
         ParticipantLimit = item.ParticipantLimit,
         ParticipantCount = item.ParticipantCount,
         DateEnd = item.DateEnd,
-        DistributionList = item.DistributionList,
         DateCreated = item.DateCreated,
         CreatedByUserId = item.CreatedByUserId,
         DateModified = item.DateModified,
@@ -75,6 +76,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
 
       item.DateModified = DateTimeOffset.UtcNow;
 
+      entity.ParticipantCount = item.ParticipantCount;  
       entity.StatusId = item.StatusId;
       entity.DateModified = item.DateModified;
       entity.ModifiedByUserId = item.ModifiedByUserId;

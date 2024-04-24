@@ -2,6 +2,9 @@ using FluentValidation;
 using Hangfire;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Yoma.Core.Domain.ActionLink.Interfaces;
+using Yoma.Core.Domain.ActionLink.Services;
+using Yoma.Core.Domain.ActionLink.Services.Lookups;
 using Yoma.Core.Domain.Analytics.Interfaces;
 using Yoma.Core.Domain.Analytics.Services;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -47,6 +50,14 @@ namespace Yoma.Core.Domain
     {
       //register all validators in Yoma.Core.Domain assembly
       services.AddValidatorsFromAssemblyContaining<UserService>();
+
+      #region ActionLink
+      #region Lookups
+      services.AddScoped<ILinkStatusService, LinkStatusService>();
+      #endregion Lookups
+
+      services.AddScoped<ILinkService, LinkService>();
+      #endregion ActionLink
 
       #region Analytics
       services.AddScoped<IAnalyticsService, AnalyticsService>();

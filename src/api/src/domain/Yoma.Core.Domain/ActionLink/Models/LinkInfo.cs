@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.ActionLink.Models
 {
-  public class Link
+  public class LinkInfo
   {
     public Guid Id { get; set; }
 
@@ -8,19 +8,15 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public string? Description { get; set; }
 
-    public string EntityType { get; set; }
-
-    public string Action { get; set; }
-
     public Guid StatusId { get; set; }
 
     public LinkStatus Status { get; set; }
 
-    public Guid? OpportunityId { get; set; }
-
     public string URL { get; set; }
 
     public string ShortURL { get; set; }
+
+    public string? QRCodeBase64 { get; set; }
 
     public int? ParticipantLimit { get; set; }
 
@@ -30,10 +26,6 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public DateTimeOffset DateCreated { get; set; }
 
-    public Guid CreatedByUserId { get; set; }
-
     public DateTimeOffset DateModified { get; set; }
-
-    public Guid ModifiedByUserId { get; set; }
   }
 }

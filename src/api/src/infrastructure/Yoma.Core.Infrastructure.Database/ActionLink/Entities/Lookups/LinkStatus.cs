@@ -5,7 +5,7 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities.Lookups
 {
-  [Table("ActionLink", Schema = "Status")]
+  [Table("Status", Schema = "ActionLink")]
   [Index(nameof(Name), IsUnique = true)]
   public class LinkStatus : BaseEntity<Guid>
   {

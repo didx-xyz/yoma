@@ -42,7 +42,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         Summary = entity.Summary,
         Instructions = entity.Instructions,
         URL = entity.URL,
-        ShortURL = entity.ShortURL,
         ZltoReward = entity.ZltoReward,
         YomaReward = entity.YomaReward,
         ZltoRewardPool = entity.ZltoRewardPool,
@@ -144,7 +143,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         Summary = item.Summary,
         Instructions = item.Instructions,
         URL = item.URL,
-        ShortURL = item.ShortURL,
         ZltoReward = item.ZltoReward,
         YomaReward = item.YomaReward,
         ZltoRewardPool = item.ZltoRewardPool,
@@ -193,7 +191,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
           Summary = item.Summary,
           Instructions = item.Instructions,
           URL = item.URL,
-          ShortURL = item.ShortURL,
           ZltoReward = item.ZltoReward,
           YomaReward = item.YomaReward,
           ZltoRewardPool = item.ZltoRewardPool,
@@ -247,7 +244,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       entity.Summary = item.Summary;
       entity.Instructions = item.Instructions;
       entity.URL = item.URL;
-      entity.ShortURL = item.ShortURL;
       entity.ZltoReward = item.ZltoReward;
       entity.YomaReward = item.YomaReward;
       entity.ZltoRewardPool = item.ZltoRewardPool;
@@ -296,7 +292,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         entity.Summary = item.Summary;
         entity.Instructions = item.Instructions;
         entity.URL = item.URL;
-        entity.ShortURL = item.ShortURL;
         entity.ZltoReward = item.ZltoReward;
         entity.YomaReward = item.YomaReward;
         entity.ZltoRewardPool = item.ZltoRewardPool;

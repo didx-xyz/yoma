@@ -47,7 +47,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       return days;
     }
 
-    public static (bool result, string? message) PublishedOrExpired(this Models.Opportunity opportunity)
+    public static (bool found, string? message) PublishedOrExpired(this Models.Opportunity opportunity)
     {
       ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
 
@@ -84,6 +84,13 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       return appBaseURL.AppendPathSegment("opportunities").AppendPathSegment(value.Id).ToString();
     }
 
+#pragma warning disable IDE0060 // Remove unused parameter
+    public static string YomaInstantVerifyURL(this Models.Opportunity value, string appBaseURL)
+#pragma warning restore IDE0060 // Remove unused parameter
+    {
+      return appBaseURL.AppendPathSegment("opportunities/actionLink/verify");
+    }
+
     public static OpportunityInfo ToOpportunityInfo(this Models.Opportunity value, string appBaseURL)
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
@@ -103,7 +110,6 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Summary = value.Summary,
         Instructions = value.Instructions,
         URL = value.URL,
-        ShortURL = value.ShortURL,
         ZltoReward = value.ZltoReward,
         YomaReward = value.YomaReward,
         VerificationEnabled = value.VerificationEnabled,

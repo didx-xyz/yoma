@@ -45,9 +45,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [Column(TypeName = "varchar(2048)")]
     public string? URL { get; set; }
 
-    [Column(TypeName = "varchar(2048)")]
-    public string? ShortURL { get; set; }
-
     [Column(TypeName = "decimal(8,2)")]
     public decimal? ZltoReward { get; set; }
 

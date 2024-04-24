@@ -59,7 +59,7 @@ namespace Yoma.Core.Domain.SSI.Services
           break;
 
         case SchemaType.YoID:
-          existingItem = _ssiCredentialIssuanceRepository.Query().SingleOrDefault(o => o.SchemaTypeId == item.SchemaTypeId && o.OrganizationId == entityId);
+          existingItem = _ssiCredentialIssuanceRepository.Query().SingleOrDefault(o => o.SchemaTypeId == item.SchemaTypeId && o.UserId == entityId);
           item.UserId = entityId;
           break;
       }

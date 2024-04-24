@@ -1,12 +1,5 @@
 namespace Yoma.Core.Domain.ActionLink
 {
-  public enum LinkStatus
-  {
-    Active,
-    Inactive,
-    Expired
-  }
-
   public enum LinkEntityType
   {
     Opportunity
@@ -14,6 +7,15 @@ namespace Yoma.Core.Domain.ActionLink
 
   public enum LinkAction
   {
+    Share,
     Verify
+  }
+
+  public enum LinkStatus
+  {
+    Active,
+    Inactive,
+    Expired,
+    LimitReached
   }
 }
