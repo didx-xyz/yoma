@@ -20,7 +20,6 @@ import { AvatarImage } from "../AvatarImage";
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import { ZltoModal } from "../Modals/ZltoModal";
 import stamps from "public/images/stamps.svg";
-// import iconShare from "public/images/icon-share.png";
 
 export type TabProps = ({
   children,
