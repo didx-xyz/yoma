@@ -6,13 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { type ParsedUrlQuery } from "querystring";
-import {
-  useState,
-  type ReactElement,
-  useMemo,
-  useCallback,
-  useEffect,
-} from "react";
+import { useState, type ReactElement, useCallback, useEffect } from "react";
 import { type OpportunityInfo } from "~/api/models/opportunity";
 import {
   getOpportunityInfoById,
@@ -25,22 +19,15 @@ import {
   IoMdClose,
   IoMdFingerPrint,
   IoMdArrowRoundBack,
-  IoMdPlay,
   IoMdBookmark,
-  IoMdPerson,
-  IoIosBook,
-  IoMdCalendar,
-  IoMdCloudUpload,
+  IoMdShare,
 } from "react-icons/io";
-import { IoCopy, IoQrCode, IoEllipsisHorizontalOutline } from "react-icons/io5";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
 import iconUpload from "public/images/icon-upload.svg";
 import iconOpen from "public/images/icon-open.svg";
 import iconClock from "public/images/icon-clock.svg";
-import iconZlto from "public/images/icon-zlto.svg";
 import iconBookmark from "public/images/icon-bookmark.svg";
-import iconShare from "public/images/icon-share.svg";
 import iconDifficulty from "public/images/icon-difficulty.svg";
 import iconLanguage from "public/images/icon-language.svg";
 import iconTopics from "public/images/icon-topics.svg";
@@ -85,7 +72,6 @@ import { AvatarImage } from "~/components/AvatarImage";
 import { useRouter } from "next/router";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { set } from "nprogress";
 import Badges from "~/components/Opportunity/Badges";
 import Share from "~/components/Opportunity/Share";
 
@@ -523,11 +509,12 @@ const OpportunityDetails: NextPageWithLayout<{
                       this page upon finishing to{" "}
                       <strong>earn your ZLTO</strong>.
                     </div>
-                    {/* <div>Don’t show me this message again</div> */}
+
                     <div className="text-center md:w-[450px]">
                       Be mindful of external sites&apos; privacy policy and keep
                       your data private.
                     </div>
+
                     <div className="mt-4 flex w-full flex-grow flex-col justify-center gap-4 md:flex-row">
                       <button
                         type="button"
@@ -540,15 +527,6 @@ const OpportunityDetails: NextPageWithLayout<{
                           }`
                         }
                         onClick={onUpdateSavedOpportunity}
-                        // ensure user is logged in and opportunity is published and active
-                        // disabled={
-                        //   !user ||
-                        //   !(
-                        //     opportunity?.published &&
-                        //     opportunity?.status != "Inactive" &&
-                        //     new Date(opportunity?.dateStart) > new Date()
-                        //   )
-                        // }
                       >
                         <IoMdBookmark
                           style={{ width: "20px", height: "20px" }}
@@ -800,7 +778,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         )}
 
                         {/* BUTTONS */}
-                        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <div className="mt-4 flex flex-col gap-4 md:flex-row">
                           <div className="flex flex-grow flex-col gap-4 md:flex-row">
                             {opportunity.url && (
                               <button
@@ -899,12 +877,12 @@ const OpportunityDetails: NextPageWithLayout<{
                                 </>
                               )}
                           </div>
-                          //TODO: last here, buttons wrapping at md
-                          <div className="flex justify-between gap-2 md:justify-end md:gap-4 lg:justify-end">
+
+                          <div className="flex gap-2">
                             <button
                               type="button"
                               className={
-                                "btn btn-sm h-10 w-full flex-shrink rounded-full border-gray-dark normal-case text-gray-dark md:max-w-[120px]" +
+                                "btn btn-sm h-10 w-full flex-shrink flex-nowrap rounded-full border-gray-dark normal-case text-gray-dark md:max-w-[120px]" +
                                 ` ${
                                   isOppSaved
                                     ? "border-yellow bg-yellow-light text-yellow"
@@ -912,28 +890,15 @@ const OpportunityDetails: NextPageWithLayout<{
                                 }`
                               }
                               onClick={onUpdateSavedOpportunity}
-                              // ensure user is logged in and opportunity is published and active
-                              // disabled={
-                              //   !user ||
-                              //   !(
-                              //     opportunity?.published &&
-                              //     opportunity?.status != "Inactive" &&
-                              //     new Date(opportunity?.dateStart) > new Date()
-                              //   )
-                              // }
                             >
-                              <IoMdBookmark
-                                style={{ width: "20px", height: "20px" }}
-                              />
+                              <IoMdBookmark className="mr-1 h-5 w-5" />
 
-                              <span className="ml-1">
-                                {isOppSaved ? "Saved" : "Save"}
-                              </span>
+                              {isOppSaved ? "Saved" : "Save"}
                             </button>
 
                             <button
                               type="button"
-                              className="btn btn-sm h-10 w-full flex-shrink rounded-full border-gray-dark bg-white normal-case text-gray-dark hover:bg-green-dark hover:text-white md:max-w-[120px]"
+                              className="btn btn-sm h-10 w-full flex-shrink flex-nowrap rounded-full border-gray-dark bg-white normal-case text-gray-dark hover:bg-green-dark hover:text-white md:max-w-[120px]"
                               onClick={onShareOpportunity}
                               // ensure opportunity is published and active (user logged in check is done in function)
                               disabled={
@@ -943,17 +908,8 @@ const OpportunityDetails: NextPageWithLayout<{
                                 )
                               }
                             >
-                              <Image
-                                src={iconShare}
-                                alt="Icon Share"
-                                width={20}
-                                height={20}
-                                sizes="100vw"
-                                priority={true}
-                                style={{ width: "20px", height: "20px" }}
-                              />
-
-                              <span className="ml-1">Share</span>
+                              <IoMdShare className="mr-1 h-5 w-5" />
+                              Share
                             </button>
                           </div>
                         </div>

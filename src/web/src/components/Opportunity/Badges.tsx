@@ -9,10 +9,10 @@ import {
 import iconClock from "public/images/icon-clock.svg";
 import iconZlto from "public/images/icon-zlto.svg";
 import { useMemo } from "react";
-import { OpportunityInfo } from "~/api/models/opportunity";
+import type { OpportunityInfo } from "~/api/models/opportunity";
 
 interface BadgesProps {
-  opportunity: OpportunityInfo | undefined; // replace 'any' with the actual type
+  opportunity: OpportunityInfo | undefined;
 }
 
 const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
