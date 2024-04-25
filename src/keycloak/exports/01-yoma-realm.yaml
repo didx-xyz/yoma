@@ -35,14 +35,14 @@ loginWithEmailAllowed: true
 duplicateEmailsAllowed: false
 resetPasswordAllowed: true
 editUsernameAllowed: false
-bruteForceProtected: false
+bruteForceProtected: true
 permanentLockout: false
-maxFailureWaitSeconds: 0
-minimumQuickLoginWaitSeconds: 0
-waitIncrementSeconds: 0
-quickLoginCheckMilliSeconds: 0
-maxDeltaTimeSeconds: 0
-failureFactor: 0
+maxFailureWaitSeconds: 900
+minimumQuickLoginWaitSeconds: 60
+waitIncrementSeconds: 60
+quickLoginCheckMilliSeconds: 1000
+maxDeltaTimeSeconds: 43200
+failureFactor: 30
 roles:
   realm:
     - id: 25be88e1-2f97-4ea3-b936-a19a94e45a65
