@@ -9,7 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
   [Table("Link", Schema = "ActionLink")]
   [Index(nameof(URL), IsUnique = true)]
   [Index(nameof(ShortURL), IsUnique = true)]
-  [Index(nameof(EntityType), nameof(Action), nameof(StatusId), nameof(OpportunityId), nameof(DateEnd), nameof(DateCreated))]
+  [Index(nameof(Name), nameof(EntityType), nameof(Action), nameof(StatusId), nameof(OpportunityId), nameof(DateEnd), nameof(DateCreated))]
   public class Link : BaseEntity<Guid>
   {
     [Required]

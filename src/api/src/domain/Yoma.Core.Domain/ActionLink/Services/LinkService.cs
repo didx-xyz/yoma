@@ -112,10 +112,14 @@ namespace Yoma.Core.Domain.ActionLink.Services
         ModifiedByUserId = user.Id,
       };
 
+      Link? itemExisting = null;
+      IQueryable<Link>? queryItemExisting = null;
       switch (request.EntityType)
       {
         case LinkEntityType.Opportunity:
           item.OpportunityId = request.EntityId;
+
+          queryItemExisting = _linkRepository.Query().Where(o => o.EntityType == item.EntityType && o.Action == item.Action && o.OpportunityId == item.OpportunityId);  
 
           switch (request.Action)
           {
@@ -123,7 +127,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
               if (request.UsagesLimit.HasValue || request.DateEnd.HasValue)
                 throw new ValidationException($"Neither a usage limit nor an end date is supported by the link with action '{request.Action}'.");
 
-              var itemExisting = _linkRepository.Query().SingleOrDefault(o => o.EntityType == item.EntityType && o.Action == item.Action && o.OpportunityId == item.OpportunityId);
+              itemExisting = queryItemExisting.SingleOrDefault();
               if (itemExisting == null) break;
 
               if (!string.Equals(itemExisting.URL, item.URL))
@@ -137,6 +141,12 @@ namespace Yoma.Core.Domain.ActionLink.Services
             case LinkAction.Verify:
               if (!request.UsagesLimit.HasValue && !request.DateEnd.HasValue)
                 throw new ValidationException($"Either a usage limit or an end date is required for the link with action '{request.Action}'.");
+
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+              itemExisting = queryItemExisting.Where(o => o.Name.ToLower() == item.Name.ToLower()).SingleOrDefault();
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+              if (itemExisting != null)
+                throw new ValidationException($"Link with name '{item.Name}' already exists for the opportunity");  
 
               item.URL = item.URL.AppendPathSegment(item.Id.ToString());
               break;
