@@ -316,10 +316,6 @@ const OpportunityDetails: NextPageWithLayout<{
   }, [opportunityId, queryClient]);
 
   const onShareOpportunity = useCallback(() => {
-    if (!user) {
-      toast.warning("Please sign-in to share an opportunity");
-      return;
-    }
     setShareOpportunityDialogVisible(true);
   }, [user, setShareOpportunityDialogVisible]);
 

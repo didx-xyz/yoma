@@ -2,9 +2,7 @@ import Image from "next/image";
 import {
   IoMdPerson,
   IoIosBook,
-  IoMdPause,
   IoMdPlay,
-  IoMdClose,
   IoMdCalendar,
   IoMdCloudUpload,
 } from "react-icons/io";
