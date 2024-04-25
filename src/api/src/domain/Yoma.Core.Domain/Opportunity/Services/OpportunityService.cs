@@ -1425,12 +1425,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      var opportunity = GetById(id, false, false, ensureOrganizationAuthorization);
+      var opportunity = GetById(id, false, true, ensureOrganizationAuthorization);
 
       await _opportunityRequestLinkInstantVerifyValidator.ValidateAndThrowAsync(request);
 
-      if (opportunity.Status != Status.Active)
-        throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' is not active");
+      if (!opportunity.VerificationEnabled || opportunity.VerificationMethod != VerificationMethod.Manual)
+        throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' does not support manual verification");
+
+      if (!opportunity.Published)
+        throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' has not been published");
 
       if (string.IsNullOrEmpty(request.Name)) request.Name = opportunity.Title.RemoveSpecialCharacters();
 
