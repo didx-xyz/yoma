@@ -6,7 +6,7 @@ import iconUser from "public/images/icon-user.svg";
 import iconZlto from "public/images/icon-zlto.svg";
 import Moment from "react-moment";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
-import { IoMdPause, IoMdPlay, IoMdClose } from "react-icons/io";
+import { IoMdCalendar, IoMdPlay, IoMdCloudUpload } from "react-icons/io";
 import { AvatarImage } from "../AvatarImage";
 interface InputProps {
   data: OpportunityInfo;
@@ -112,22 +112,24 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
           <>
             {new Date(data.dateStart) > new Date() && (
               <div className="badge bg-yellow-tint text-yellow">
-                <IoMdPause />
-                <p className="ml-1">Not started</p>
+                <IoMdCalendar className="h-4 w-4" />
+                <Moment format={DATE_FORMAT_HUMAN} utc={true} className="ml-1">
+                  {data.dateStart}
+                </Moment>
               </div>
             )}
             {new Date(data.dateStart) < new Date() && (
               <div className="badge bg-purple-tint text-purple-shade">
                 <IoMdPlay />
-                <span className="ml-1">Started</span>
+                <span className="ml-1">Ongoing</span>
               </div>
             )}
           </>
         )}
         {data.status == "Expired" && (
           <div className="badge bg-red-100 text-error">
-            <IoMdClose className="h-4 w-4" />
-            <span className="ml-1">Expired</span>
+            <IoMdCloudUpload className="h-4 w-4" />
+            <span className="ml-1">Upload Only</span>
           </div>
         )}
       </div>

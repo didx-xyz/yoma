@@ -364,17 +364,44 @@ const Organisations: NextPageWithLayout<{
           {/* TABBED NAVIGATION */}
           <div className="z-10 flex justify-center md:justify-start">
             <div className="flex w-full gap-2">
+              {/* LEFT BUTTON MOBILE */}
+              <div className="-ml-1 mb-1 flex items-center md:hidden">
+                <button
+                  className="ease-bounce focus:outline-none active:scale-90"
+                  onClick={() => {
+                    const tabList = document.querySelector('[role="tablist"]');
+                    if (tabList) {
+                      tabList.scrollLeft -= 100;
+                    }
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
+              </div>
               {/* TABS */}
               <div
                 className="tabs tabs-bordered w-full gap-2 overflow-x-scroll md:overflow-hidden"
                 role="tablist"
               >
                 <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
-                  <ul className="overflow-x-hiddem -mb-px flex w-full justify-center gap-0 md:justify-start">
-                    <li className="w-1/5 md:w-24">
+                  <ul className="-mb-px flex w-full justify-between gap-4 overflow-x-auto md:justify-start md:gap-0">
+                    <li className=" md:w-24">
                       <Link
                         href={`/organisations`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                        className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           !status
                             ? "active border-orange"
                             : "border-transparent hover:border-gray hover:text-gray"
@@ -383,16 +410,16 @@ const Organisations: NextPageWithLayout<{
                       >
                         All
                         {(totalCountAll ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
                             {totalCountAll}
                           </div>
                         )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-24">
+                    <li className=" md:w-24">
                       <Link
                         href={`/organisations?status=Active`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                        className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "Active"
                             ? "active border-orange"
                             : "border-transparent hover:border-gray hover:text-gray"
@@ -401,16 +428,16 @@ const Organisations: NextPageWithLayout<{
                       >
                         Active
                         {(totalCountActive ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
                             {totalCountActive}
                           </div>
                         )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-24">
+                    <li className=" md:w-24">
                       <Link
                         href={`/organisations?status=Inactive`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                        className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "Inactive"
                             ? "active border-orange"
                             : "border-transparent hover:border-gray hover:text-gray"
@@ -419,16 +446,16 @@ const Organisations: NextPageWithLayout<{
                       >
                         Pending
                         {(totalCountInactive ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
                             {totalCountInactive}
                           </div>
                         )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-24">
+                    <li className=" md:w-24">
                       <Link
                         href={`/organisations?status=Declined`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                        className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "Declined"
                             ? "active border-orange"
                             : "border-transparent hover:border-gray hover:text-gray"
@@ -437,16 +464,16 @@ const Organisations: NextPageWithLayout<{
                       >
                         Declined
                         {(totalCountDeclined ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
                             {totalCountDeclined}
                           </div>
                         )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-24">
+                    <li className=" md:w-24">
                       <Link
                         href={`/organisations?status=Deleted`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                        className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "Deleted"
                             ? "active border-orange"
                             : "border-transparent hover:border-gray hover:text-gray"
@@ -455,7 +482,7 @@ const Organisations: NextPageWithLayout<{
                       >
                         Deleted
                         {(totalCountDeleted ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning text-[12px] font-semibold text-white">
+                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
                             {totalCountDeleted}
                           </div>
                         )}
@@ -463,6 +490,33 @@ const Organisations: NextPageWithLayout<{
                     </li>
                   </ul>
                 </div>
+              </div>
+              {/* RIGHT BUTTON MOBILE */}
+              <div className="-mr-1 mb-1 flex items-center md:hidden ">
+                <button
+                  className="ease-bounce focus:outline-none active:scale-90"
+                  onClick={() => {
+                    const tabList = document.querySelector('[role="tablist"]');
+                    if (tabList) {
+                      tabList.scrollLeft += 100;
+                    }
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -484,7 +538,7 @@ const Organisations: NextPageWithLayout<{
           </div>
         </div>
 
-        <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
+        <div className="rounded-lg md:p-4">
           {/* NO RESULTS */}
           {searchResults && searchResults.totalCount === 0 && (
             <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">

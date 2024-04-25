@@ -17,6 +17,7 @@ import type {
   OpportunitySearchCriteriaCommitmentInterval,
   Status,
   OpportunitySearchFilterCriteria,
+  LinkInfo,
 } from "../models/opportunity";
 import type { Country, Language } from "../models/lookups";
 import type { OrganizationInfo } from "../models/organisation";
@@ -321,6 +322,23 @@ export const searchCriteriaOpportunities = async (
   const { data } = await instance.post<OpportunitySearchResultsInfo>(
     `/opportunity/search/filter/opportunity`,
     filter,
+  );
+  return data;
+};
+
+export const createSharingLink = async (
+  id: string,
+  includeQRCode?: boolean,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<LinkInfo> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  // construct querystring parameters from filter
+  const params = new URLSearchParams();
+  if (includeQRCode) params.append("includeQRCode", includeQRCode.toString());
+
+  const { data } = await instance.get<LinkInfo>(
+    `/opportunity/${id}/link/sharing?${params.toString()}`,
   );
   return data;
 };
