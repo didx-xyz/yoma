@@ -349,7 +349,7 @@ defaultRole:
   containerId: 38946a18-e1b9-4469-a85b-d109e170a2dd
 requiredCredentials:
   - password
-passwordPolicy: hashAlgorithm(pbkdf2-sha256) and hashIterations(27500) and length(8) and lowerCase(1) and upperCase(1) and digits(1) and specialChars(1) and notUsername(undefined)
+passwordPolicy: hashAlgorithm(pbkdf2-sha512) and hashIterations(250000) and length(10) and lowerCase(1) and upperCase(1) and digits(1) and specialChars(0) and notUsername(true) and notEmail(true)
 otpPolicyType: totp
 otpPolicyAlgorithm: HmacSHA1
 otpPolicyInitialCounter: 0
