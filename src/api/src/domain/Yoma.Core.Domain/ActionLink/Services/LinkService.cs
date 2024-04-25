@@ -129,12 +129,13 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       AssertActive(link);
 
+      //only track unique usages provided authenticated
       if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor)) return link;
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var item = _linkUsageLogRepository.Query().SingleOrDefault(o => o.LinkId == id && o.UserId == user.Id);
-      if (item != null) return link; //already claimed by the user
+      if (item != null) return link; //already used by the user
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
