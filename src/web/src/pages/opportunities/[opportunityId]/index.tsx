@@ -27,7 +27,6 @@ import ReactModal from "react-modal";
 import iconUpload from "public/images/icon-upload.svg";
 import iconOpen from "public/images/icon-open.svg";
 import iconClock from "public/images/icon-clock.svg";
-import iconBookmark from "public/images/icon-bookmark.svg";
 import iconDifficulty from "public/images/icon-difficulty.svg";
 import iconLanguage from "public/images/icon-language.svg";
 import iconTopics from "public/images/icon-topics.svg";
@@ -317,7 +316,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
   const onShareOpportunity = useCallback(() => {
     setShareOpportunityDialogVisible(true);
-  }, [user, setShareOpportunityDialogVisible]);
+  }, [setShareOpportunityDialogVisible]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
