@@ -27,7 +27,6 @@ import ReactModal from "react-modal";
 import iconUpload from "public/images/icon-upload.svg";
 import iconOpen from "public/images/icon-open.svg";
 import iconClock from "public/images/icon-clock.svg";
-import iconBookmark from "public/images/icon-bookmark.svg";
 import iconDifficulty from "public/images/icon-difficulty.svg";
 import iconLanguage from "public/images/icon-language.svg";
 import iconTopics from "public/images/icon-topics.svg";
@@ -219,7 +218,7 @@ const OpportunityDetails: NextPageWithLayout<{
   // CLICK HANDLERS
   const onUpdateSavedOpportunity = useCallback(() => {
     if (!user) {
-      toast.warning("You need to be logged in to save an opportunity");
+      setLoginDialogVisible(true);
       return;
     }
 
@@ -316,24 +315,8 @@ const OpportunityDetails: NextPageWithLayout<{
   }, [opportunityId, queryClient]);
 
   const onShareOpportunity = useCallback(() => {
-    if (!user) {
-      toast.warning("You need to be logged in to save an opportunity");
-      return;
-    }
     setShareOpportunityDialogVisible(true);
-  }, [user, setShareOpportunityDialogVisible]);
-
-  // const [showQRCode, setShowQRCode] = useState(false);
-
-  // const copyToClipboard = () => {
-  //   navigator.clipboard.writeText(
-  //     "Lorem ipsum dolor sit amet, consectetuer adipiscing elit.",
-  //   );
-  //   toast("URL copied to clipboard!");
-  // };
-  // const generateQRCode = () => {
-  //   setShowQRCode(true);
-  // };
+  }, [setShareOpportunityDialogVisible]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -427,7 +410,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       />
                     </div>
 
-                    <h5>Please login to continue</h5>
+                    <h5>Please sign-in to continue</h5>
 
                     <div className="mt-4 flex flex-grow gap-4">
                       <button
@@ -435,17 +418,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
                         onClick={() => setLoginDialogVisible(false)}
                       >
-                        <Image
-                          src={iconBookmark}
-                          alt="Icon Bookmark"
-                          width={20}
-                          height={20}
-                          sizes="100vw"
-                          priority={true}
-                          style={{ width: "20px", height: "20px" }}
-                        />
-
-                        <span className="ml-1">Cancel</span>
+                        <IoMdClose className="h-5 w-5 text-purple" /> Cancel
                       </button>
 
                       <button
@@ -459,7 +432,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         {!isButtonLoading && (
                           <IoMdFingerPrint className="h-5 w-5 text-white" />
                         )}
-                        <p className="text-white">Login</p>
+                        <p className="text-white">Sign-in</p>
                       </button>
                     </div>
                   </div>
