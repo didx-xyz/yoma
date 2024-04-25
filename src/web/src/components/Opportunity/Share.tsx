@@ -38,7 +38,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
 
   const onClick_CopyToClipboard = useCallback(() => {
     navigator.clipboard.writeText(linkInfo?.shortURL ?? linkInfo?.uRL ?? "");
-    toast("URL copied to clipboard!", { autoClose: 2000 });
+    toast.success("URL copied to clipboard!", { autoClose: 2000 });
   }, [linkInfo]);
 
   const onClick_GenerateQRCode = useCallback(() => {
@@ -72,25 +72,10 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
         .then(() => console.log("Successful share"))
         .catch((error) => console.log("Error sharing", error));
     } else {
+      toast.warn("Share not supported on this browser", { autoClose: 2000 });
       console.log("Share not supported on this browser");
     }
   }, [opportunity, linkInfo]);
-
-  // const shareOnFacebook = () => {
-  //   window.open(
-  //     `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-  //     "_blank",
-  //   );
-  // };
-
-  // const shareOnLinkedIn = () => {
-  //   window.open(
-  //     `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-  //       url,
-  //     )}`,
-  //     "_blank",
-  //   );
-  // };
 
   return (
     <div className="flex h-full flex-col gap-2 overflow-y-auto">

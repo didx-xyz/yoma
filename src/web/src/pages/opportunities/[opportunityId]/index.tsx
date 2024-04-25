@@ -219,7 +219,7 @@ const OpportunityDetails: NextPageWithLayout<{
   // CLICK HANDLERS
   const onUpdateSavedOpportunity = useCallback(() => {
     if (!user) {
-      toast.warning("You need to be logged in to save an opportunity");
+      toast.warning("Please sign-in to save an opportunity");
       return;
     }
 
@@ -317,23 +317,11 @@ const OpportunityDetails: NextPageWithLayout<{
 
   const onShareOpportunity = useCallback(() => {
     if (!user) {
-      toast.warning("You need to be logged in to save an opportunity");
+      toast.warning("Please sign-in to share an opportunity");
       return;
     }
     setShareOpportunityDialogVisible(true);
   }, [user, setShareOpportunityDialogVisible]);
-
-  // const [showQRCode, setShowQRCode] = useState(false);
-
-  // const copyToClipboard = () => {
-  //   navigator.clipboard.writeText(
-  //     "Lorem ipsum dolor sit amet, consectetuer adipiscing elit.",
-  //   );
-  //   toast("URL copied to clipboard!");
-  // };
-  // const generateQRCode = () => {
-  //   setShowQRCode(true);
-  // };
 
   if (error) {
     if (error === 401) return <Unauthenticated />;

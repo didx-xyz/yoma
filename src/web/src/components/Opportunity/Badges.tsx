@@ -5,11 +5,15 @@ import {
   IoMdPause,
   IoMdPlay,
   IoMdClose,
+  IoMdCalendar,
+  IoMdCloudUpload,
 } from "react-icons/io";
 import iconClock from "public/images/icon-clock.svg";
 import iconZlto from "public/images/icon-zlto.svg";
 import { useMemo } from "react";
 import type { OpportunityInfo } from "~/api/models/opportunity";
+import Moment from "react-moment";
+import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 
 interface BadgesProps {
   opportunity: OpportunityInfo | undefined;
@@ -77,22 +81,24 @@ const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
         <>
           {new Date(opportunity.dateStart) > new Date() && (
             <div className="badge bg-yellow-tint text-yellow">
-              <IoMdPause />
-              <p className="ml-1">Not started</p>
+              <IoMdCalendar className="h-4 w-4" />
+              <Moment format={DATE_FORMAT_HUMAN} utc={true} className="ml-1">
+                {opportunity.dateStart}
+              </Moment>
             </div>
           )}
           {new Date(opportunity.dateStart) < new Date() && (
             <div className="badge bg-purple-tint text-purple-shade">
               <IoMdPlay />
-              <span className="ml-1">Started</span>
+              <span className="ml-1">Ongoing</span>
             </div>
           )}
         </>
       )}
       {opportunity?.status == "Expired" && (
         <div className="badge bg-red-100 text-error">
-          <IoMdClose className="h-4 w-4" />
-          <span className="ml-1">Expired</span>
+          <IoMdCloudUpload className="h-4 w-4" />
+          <span className="ml-1">Upload Only</span>
         </div>
       )}
     </div>
