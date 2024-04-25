@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Opportunity.Models;
@@ -69,5 +70,9 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
     Task<LinkInfo> CreateLinkSharing(Guid id, bool publishedOrExpiredOnly, bool? includeQRCode, bool ensureOrganizationAuthorization);
 
     Task<LinkInfo> CreateLinkInstantVerify(Guid id, OpportunityRequestLinkInstantVerify request, bool ensureOrganizationAuthorization);
+
+    List<LinkInfo> ListInstantVerifyLinks(Guid id, bool ensureOrganizationAuthorization);
+
+    Task<LinkInfo> UpdateStatusInstantVerifyLink(Guid linkId, LinkStatus status, bool ensureOrganizationAuthorization);
   }
 }

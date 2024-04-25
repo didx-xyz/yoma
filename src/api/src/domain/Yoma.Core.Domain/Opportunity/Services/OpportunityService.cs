@@ -1,9 +1,9 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
+using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.ActionLink.Extensions;
 using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.ActionLink.Models;
@@ -21,6 +21,7 @@ using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
+using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.IdentityProvider.Helpers;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
@@ -61,6 +62,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
     private readonly OpportunitySearchFilterValidator _opportunitySearchFilterValidator;
     private readonly OpportunitySearchFilterCriteriaValidator _opportunitySearchFilterCriteriaValidator;
+    private readonly OpportunityRequestLinkInstantVerifyValidator _opportunityRequestLinkInstantVerifyValidator;
 
     private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
     private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
@@ -104,6 +106,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
         OpportunitySearchFilterCriteriaValidator opportunitySearchFilterCriteriaValidator,
+        OpportunityRequestLinkInstantVerifyValidator opportunityRequestLinkInstantVerifyValidator,
         IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
         IRepository<OpportunityCategory> opportunityCategoryRepository,
         IRepository<OpportunityCountry> opportunityCountryRepository,
@@ -138,6 +141,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate;
       _opportunitySearchFilterValidator = opportunitySearchFilterValidator;
       _opportunitySearchFilterCriteriaValidator = opportunitySearchFilterCriteriaValidator;
+      _opportunityRequestLinkInstantVerifyValidator = opportunityRequestLinkInstantVerifyValidator;
 
       _opportunityRepository = opportunityRepository;
       _opportunityCategoryRepository = opportunityCategoryRepository;
@@ -933,7 +937,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var result = GetById(request.Id, true, true, false);
 
-      ValidateUpdatable(result);
+      AssertUpdatable(result);
 
       var existingByTitle = GetByTitleOrNull(request.Title, false, false);
       if (existingByTitle != null && result.Id != existingByTitle.Id)
@@ -1123,7 +1127,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             throw new ValidationException($"{nameof(Models.Opportunity)} can not be activated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
 
           //ensure DateEnd was updated for re-activation of previously expired opportunities
-          if (result.DateEnd.HasValue && result.DateEnd <= DateTimeOffset.UtcNow)
+          if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
             throw new ValidationException($"The {nameof(Models.Opportunity)} '{result.Title}' cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation.");
 
           break;
@@ -1162,7 +1166,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      ValidateUpdatable(result);
+      AssertUpdatable(result);
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -1185,7 +1189,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (categoryIds == null || categoryIds.Count == 0)
         throw new ArgumentNullException(nameof(categoryIds));
 
-      ValidateUpdatable(result);
+      AssertUpdatable(result);
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -1205,7 +1209,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      ValidateUpdatable(result);
+      AssertUpdatable(result);
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -1228,7 +1232,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (countryIds == null || countryIds.Count == 0)
         throw new ArgumentNullException(nameof(countryIds));
 
-      ValidateUpdatable(result);
+      AssertUpdatable(result);
 
       result = await RemoveCountries(result, countryIds);
 
@@ -1239,7 +1243,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      ValidateUpdatable(result);
+      AssertUpdatable(result);
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -1262,7 +1266,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (languageIds == null || languageIds.Count == 0)
         throw new ArgumentNullException(nameof(languageIds));
 
-      ValidateUpdatable(result);
+      AssertUpdatable(result);
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -1285,7 +1289,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (skillIds == null || skillIds.Count == 0)
         throw new ArgumentNullException(nameof(skillIds));
 
-      ValidateUpdatable(result);
+      AssertUpdatable(result);
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -1308,7 +1312,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (skillIds == null || skillIds.Count == 0)
         throw new ArgumentNullException(nameof(skillIds));
 
-      ValidateUpdatable(result);
+      AssertUpdatable(result);
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -1331,7 +1335,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (verificationTypes == null || verificationTypes.Count == 0)
         throw new ArgumentNullException(nameof(verificationTypes));
 
-      ValidateUpdatable(result);
+      AssertUpdatable(result);
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -1354,7 +1358,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (verificationTypes == null || verificationTypes.Count == 0)
         throw new ArgumentNullException(nameof(verificationTypes));
 
-      ValidateUpdatable(result);
+      AssertUpdatable(result);
 
       if (result.VerificationEnabled && (result.VerificationTypes == null || result.VerificationTypes.All(o => verificationTypes.Contains(o.Type))))
         throw new ValidationException("One or more verification types are required when verification is supported. Removal will result in no associated verification types");
@@ -1394,8 +1398,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var request = new LinkRequestCreate
       {
         Name = opportunity.Title.RemoveSpecialCharacters(),
-        EntityType = ActionLink.LinkEntityType.Opportunity,
-        Action = ActionLink.LinkAction.Share,
+        EntityType = LinkEntityType.Opportunity,
+        Action = LinkAction.Share,
         EntityId = opportunity.Id,
         URL = opportunity.YomaInfoURL(_appSettings.AppBaseURL)
       };
@@ -1423,7 +1427,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var opportunity = GetById(id, false, false, ensureOrganizationAuthorization);
 
-      //TODO: Validator
+      await _opportunityRequestLinkInstantVerifyValidator.ValidateAndThrowAsync(request);
 
       if (opportunity.Status != Status.Active)
         throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' is not active");
@@ -1436,8 +1440,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         Name = request.Name,
         Description = request.Description,
-        EntityType = ActionLink.LinkEntityType.Opportunity,
-        Action = ActionLink.LinkAction.Verify,
+        EntityType = LinkEntityType.Opportunity,
+        Action = LinkAction.Verify,
         EntityId = opportunity.Id,
         URL = opportunity.YomaInstantVerifyURL(_appSettings.AppBaseURL),
         UsagesLimit = request.UsagesLimit,
@@ -1451,9 +1455,39 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result.ToLinkInfo(request.IncludeQRCode);
     }
 
+    public List<LinkInfo> ListInstantVerifyLinks(Guid id, bool ensureOrganizationAuthorization)
+    {
+      var opportunity = GetById(id, false, false, ensureOrganizationAuthorization);
+
+      var results = _linkService.ListByEntityAndAction(LinkEntityType.Opportunity, LinkAction.Verify, opportunity.Id);
+
+      return results.Select(o => o.ToLinkInfo(false)).ToList();
+    }
+
+    public async Task<LinkInfo> UpdateStatusInstantVerifyLink(Guid linkId, LinkStatus status, bool ensureOrganizationAuthorization)
+    {
+      var link = _linkService.GetById(linkId);
+
+      if (link.EntityType != LinkEntityType.Opportunity.ToString() || link.Action != LinkAction.Verify.ToString())
+        throw new ValidationException($"Link is not an instant verify link");
+
+      if (!link.OpportunityId.HasValue)
+        throw new DataInconsistencyException("OpportunityId expected");
+
+      _ = GetById(link.OpportunityId.Value, false, false, ensureOrganizationAuthorization);
+
+      var result = await _linkService.UpdateStatus(linkId, status);
+      return result.ToLinkInfo(false);
+    }
     #endregion
 
     #region Private Members
+    private static void AssertUpdatable(Models.Opportunity opportunity)
+    {
+      if (!Statuses_Updatable.Contains(opportunity.Status))
+        throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+    }
+
     private async Task SendEmail(Models.Opportunity opportunity, EmailType type)
     {
       try
@@ -1882,12 +1916,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       });
 
       return opportunity;
-    }
-
-    private static void ValidateUpdatable(Models.Opportunity opportunity)
-    {
-      if (!Statuses_Updatable.Contains(opportunity.Status))
-        throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
     }
     #endregion
   }

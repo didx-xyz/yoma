@@ -33,5 +33,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
     Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalize request);
 
     Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(bool includeExpired);
+
+    Task PerformActionInstantVerificationManual(Guid linkId);
   }
 }

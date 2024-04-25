@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
+using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Opportunity;
@@ -72,13 +73,13 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [AllowAnonymous]
-    public async Task<IActionResult> CreateSharingLink([FromRoute] Guid id, [FromQuery] bool? includeQRCode)
+    public async Task<IActionResult> CreateLinkSharing([FromRoute] Guid id, [FromQuery] bool? includeQRCode)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(CreateSharingLink));
+      _logger.LogInformation("Handling request {requestName}", nameof(CreateLinkSharing));
 
       var result = await _opportunityService.CreateLinkSharing(id, true, includeQRCode, false);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(CreateSharingLink));
+      _logger.LogInformation("Request {requestName} handled", nameof(CreateLinkSharing));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -597,7 +598,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ExportToCsvOpportunitySearch));
 
-      var (fileName, bytes) = _opportunityInfoService.ExportToCSVOpportunitySearch(filter);
+      var (fileName, bytes) = _opportunityInfoService.ExportToCSVOpportunitySearch(filter, true);
       _logger.LogInformation("Request {requestName} handled", nameof(ExportToCsvOpportunitySearch));
 
       return File(bytes, "text/csv", fileName);
@@ -608,12 +609,59 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> CreateInstantVerifyLink([FromRoute] Guid id, [FromBody] OpportunityRequestLinkInstantVerify request)
+    public async Task<IActionResult> CreateLinkInstantVerify([FromRoute] Guid id, [FromBody] OpportunityRequestLinkInstantVerify request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(CreateInstantVerifyLink));
+      _logger.LogInformation("Handling request {requestName}", nameof(CreateLinkInstantVerify));
 
       var result = await _opportunityService.CreateLinkInstantVerify(id, request, true);
-      _logger.LogInformation("Request {requestName} handled", nameof(CreateInstantVerifyLink));
+      _logger.LogInformation("Request {requestName} handled", nameof(CreateLinkInstantVerify));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of instant-verify links for the specified opportunity")]
+    [HttpGet("{id}/link/instantVerify")]
+    [ProducesResponseType(typeof(List<LinkInfo>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult ListInstantVerifyLinks([FromRoute] Guid id)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(ListInstantVerifyLinks));
+
+      var result = _opportunityService.ListInstantVerifyLinks(id, true);
+      _logger.LogInformation("Request {requestName} handled", nameof(ListInstantVerifyLinks));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Activate an instant-verify link",
+      Description = "Activate an inactive link provided the end date has not been reached")]
+    [HttpPatch("link/{linkId}/instantVerify/activate")]
+    [ProducesResponseType(typeof(List<LinkInfo>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public async Task<IActionResult> ActivateInstantVerifyLink([FromRoute] Guid linkId)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(ActivateInstantVerifyLink));
+
+      var result = await _opportunityService.UpdateStatusInstantVerifyLink(linkId, LinkStatus.Active, true);
+      _logger.LogInformation("Request {requestName} handled", nameof(ActivateInstantVerifyLink));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Deactivate an instant-verify link",
+      Description = "Deactivate an active link")]
+    [HttpPatch("link/{linkId}/instantVerify/deactivate")]
+    [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public async Task<IActionResult> DeactivateInstantVerifyLink(Guid linkId)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(DeactivateInstantVerifyLink));
+
+      var result = await _opportunityService.UpdateStatusInstantVerifyLink(linkId, LinkStatus.Inactive, true);
+      _logger.LogInformation("Request {requestName} handled", nameof(DeactivateInstantVerifyLink));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

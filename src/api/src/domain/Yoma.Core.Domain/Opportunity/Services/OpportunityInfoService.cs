@@ -123,11 +123,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return results;
     }
 
-    public (string fileName, byte[] bytes) ExportToCSVOpportunitySearch(OpportunitySearchFilterAdmin filter)
+    public (string fileName, byte[] bytes) ExportToCSVOpportunitySearch(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      var result = Search(filter, true);
+      var result = Search(filter, ensureOrganizationAuthorization);
 
       var cc = new CsvConfiguration(System.Globalization.CultureInfo.CurrentCulture);
 

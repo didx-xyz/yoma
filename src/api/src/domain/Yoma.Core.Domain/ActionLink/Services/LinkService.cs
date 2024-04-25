@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Http;
 using System.Transactions;
 using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.ActionLink.Models;
+using Yoma.Core.Domain.ActionLink.Validators;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -24,6 +26,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly IRepository<Link> _linkRepository;
     private readonly IRepository<LinkUsageLog> _linkUsageLogRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
+
+    private readonly LinkRequestCreateValidator _linkRequestCreateValidator;
+
+    private static readonly LinkStatus[] Statuses_Activatable = [LinkStatus.Inactive];
+    private static readonly LinkStatus[] Statuses_DeActivatable = [LinkStatus.Active];
     #endregion
 
     #region Constructor
@@ -33,7 +40,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
       ILinkStatusService linkStatusService,
       IRepository<Link> linkRepository,
       IRepository<LinkUsageLog> linkUsageLogRepository,
-      IExecutionStrategyService executionStrategyService)
+      IExecutionStrategyService executionStrategyService,
+      LinkRequestCreateValidator linkRequestCreateValidator)
     {
       _httpContextAccessor = httpContextAccessor;
       _shortLinkProviderClient = shortLinkProviderClientFactory.CreateClient();
@@ -42,21 +50,49 @@ namespace Yoma.Core.Domain.ActionLink.Services
       _linkRepository = linkRepository;
       _linkUsageLogRepository = linkUsageLogRepository;
       _executionStrategyService = executionStrategyService;
+      _linkRequestCreateValidator = linkRequestCreateValidator;
     }
     #endregion
 
     #region Public Members
+    public Link GetById(Guid id)
+    {
+      if (id == Guid.Empty)
+        throw new ArgumentNullException(nameof(id));
+
+      return _linkRepository.Query().SingleOrDefault(o => o.Id == id)
+       ?? throw new EntityNotFoundException($"Link with id '{id}' does not exist");
+    }
+
     public void AssertActive(Guid id)
     {
       var link = GetById(id);
       AssertActive(link);
     }
 
+    public List<Link> ListByEntityAndAction(LinkEntityType entityType, LinkAction action, Guid entityId)
+    {
+      if (entityId == Guid.Empty)
+        throw new ArgumentNullException(nameof(entityId));
+
+      var query = _linkRepository.Query().Where(o => o.EntityType == entityType.ToString() && o.Action == action.ToString());
+
+      query = entityType switch
+      {
+        LinkEntityType.Opportunity => query.Where(o => o.OpportunityId == entityId),
+        _ => throw new InvalidOperationException($"Invalid / unsupported entity type of '{entityType}'"),
+      };
+
+      query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);  
+
+      return [.. query];
+    }
+
     public async Task<Link> Create(LinkRequestCreate request, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(request);
 
-      //TODO: validation
+      await _linkRequestCreateValidator.ValidateAndThrowAsync(request);
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -71,7 +107,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         StatusId = _linkStatusService.GetByName(LinkStatus.Active.ToString()).Id,
         URL = request.URL,
         UsagesLimit = request.UsagesLimit,
-        DateEnd = request.DateEnd,
+        DateEnd = request.DateEnd.HasValue ? request.DateEnd.Value.ToEndOfDay() : null,
         CreatedByUserId = user.Id,
         ModifiedByUserId = user.Id,
       };
@@ -84,6 +120,9 @@ namespace Yoma.Core.Domain.ActionLink.Services
           switch (request.Action)
           {
             case LinkAction.Share:
+              if (request.UsagesLimit.HasValue || request.DateEnd.HasValue)
+                throw new ValidationException($"Neither a usage limit nor an end date is supported by the link with action '{request.Action}'.");
+
               var itemExisting = _linkRepository.Query().SingleOrDefault(o => o.EntityType == item.EntityType && o.Action == item.Action && o.OpportunityId == item.OpportunityId);
               if (itemExisting == null) break;
 
@@ -96,16 +135,19 @@ namespace Yoma.Core.Domain.ActionLink.Services
               return itemExisting;
 
             case LinkAction.Verify:
+              if (!request.UsagesLimit.HasValue && !request.DateEnd.HasValue)
+                throw new ValidationException($"Either a usage limit or an end date is required for the link with action '{request.Action}'.");
+
               item.URL = item.URL.AppendPathSegment(item.Id.ToString());
               break;
 
             default:
-              throw new InvalidOperationException($"Invalid action of '{request.Action}' for entity type of '{request.EntityType}'");
+              throw new InvalidOperationException($"Invalid / unsupported action of '{request.Action}' for entity type of '{request.EntityType}'");
           }
           break;
 
         default:
-          throw new InvalidOperationException($"Invalid entity type of '{request.EntityType}'");
+          throw new InvalidOperationException($"Invalid / unsupported entity type of '{request.EntityType}'");
       }
 
       var responseShortLink = await _shortLinkProviderClient.CreateShortLink(new ShortLinkRequest
@@ -156,6 +198,50 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       return link;
     }
+
+    public async Task<Link> UpdateStatus(Guid id, LinkStatus status)
+    {
+      var result = GetById(id);
+
+      var action = Enum.Parse<LinkAction>(result.Action);
+
+      switch (action)
+      {
+        case LinkAction.Share:
+          throw new ValidationException($"Link with action '{result.Action}' status can not be changed and remains active indefinitely");
+
+        case LinkAction.Verify:
+          switch (status)
+          {
+            case LinkStatus.Active:
+              if (!Statuses_Activatable.Contains(result.Status))
+                throw new ValidationException($"Link can not be activated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
+
+              //ensure not expired but not yet flagged by background service
+              if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
+                throw new ValidationException($"Link cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past");
+
+              result.StatusId = _linkStatusService.GetByName(LinkStatus.Active.ToString()).Id;
+              result.Status = LinkStatus.Active;
+              break;
+
+            case LinkStatus.Inactive:
+              if (!Statuses_DeActivatable.Contains(result.Status))
+                throw new ValidationException($"Link can not be deactivated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
+
+              result.StatusId = _linkStatusService.GetByName(LinkStatus.Inactive.ToString()).Id;
+              result.Status = LinkStatus.Inactive;
+              break;
+
+            default:
+              throw new InvalidOperationException($"Invalid / unsupported status of '{status}'");
+          }
+          break;
+      }
+
+      result = await _linkRepository.Update(result);
+      return result;
+    }
     #endregion
 
     #region Private Members
@@ -172,17 +258,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
         case LinkStatus.Active:
           return;
         default:
-          throw new InvalidOperationException($"Invalid status of '{link.Status}'");
+          throw new InvalidOperationException($"Invalid / unsupported status of '{link.Status}'");
       }
-    }
-
-    private Link GetById(Guid id)
-    {
-      if (id == Guid.Empty)
-        throw new ArgumentNullException(nameof(id));
-
-      return _linkRepository.Query().SingleOrDefault(o => o.Id == id)
-       ?? throw new EntityNotFoundException($"Link with id '{id}' does not exist");
     }
     #endregion
   }

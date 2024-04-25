@@ -225,6 +225,22 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK);
     }
 
+    [SwaggerOperation(Summary = "Complete an opportunity via an instant-verify link (Authenticated User)")]
+    [HttpPut("action/link/{linkId}/verify")]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public async Task<IActionResult> PerformActionInstantVerificationManual([FromRoute] Guid linkId)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(PerformActionInstantVerificationManual));
+
+      await _myOpportunityService.PerformActionInstantVerificationManual(linkId);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(PerformActionInstantVerificationManual));
+
+      return StatusCode((int)HttpStatusCode.OK);
+    }
+
     [SwaggerOperation(Summary = "Delete a pending verification request for an opportunity (Authenticated User)")]
     [HttpDelete("action/{opportunityId}/verify/delete")]
     [ProducesResponseType((int)HttpStatusCode.OK)]

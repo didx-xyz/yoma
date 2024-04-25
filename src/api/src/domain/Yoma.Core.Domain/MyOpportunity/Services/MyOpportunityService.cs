@@ -438,6 +438,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       await PerformActionSendForVerificationManual(user, opportunityId, request, false);
     }
 
+    public Task PerformActionInstantVerificationManual(Guid linkId)
+    {
+      throw new NotImplementedException();
+    }
+
     public async Task PerformActionSendForVerificationManualDelete(Guid opportunityId)
     {
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
