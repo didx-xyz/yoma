@@ -2,6 +2,12 @@ name: CICD
 
 on:
   workflow_dispatch:
+    inputs:
+      reset-deployments:
+        description: "Reset deployment: Clean start"
+        required: false
+        default: false
+        type: boolean
   push:
     branches:
       - master
@@ -340,6 +346,7 @@ jobs:
       cancel-in-progress: false
     environment:
       name: ${{
+        github.event.inputs.reset-deployments == 'true' && 'dev' ||
         github.event_name == 'release' && 'prod' ||
         (github.event_name == 'push' && github.event.repository.default_branch == github.ref_name) && 'stage' ||
         'dev'
@@ -394,6 +401,36 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           version: ${{ env.TAILSCALE_VERSION }}
+      - name: Helmfile Destroy
+        if: github.event.inputs.reset-deployments == 'true'
+        uses: helmfile/helmfile-action@v1.9.0
+        with:
+          helmfile-args: |
+            destroy \
+              --environment dev
+          helm-plugins: |
+            https://github.com/databus23/helm-diff,
+            https://github.com/jkroepke/helm-secrets,
+            https://github.com/aslafy-z/helm-git
+          helmfile-version: ${{ env.HELMFILE_VERSION }}
+          helm-version: ${{ env.HELM_VERSION }}
+      - name: Delete Pods and PVCs
+        if: github.event.inputs.reset-deployments == 'true'
+        run: kubectl delete pods,pvc --all --namespace yoma-v3-dev
+      - name: Deploy fresh DBs
+        if: github.event.inputs.reset-deployments == 'true'
+        uses: helmfile/helmfile-action@v1.9.0
+        with:
+          helmfile-args: |
+            apply \
+              --environment dev \
+              --selector=app=postgresql-keycloak \
+              --selector=app=postgresql \
+              --selector=app=redis
+          helm-plugins: |
+            https://github.com/databus23/helm-diff,
+            https://github.com/jkroepke/helm-secrets,
+            https://github.com/aslafy-z/helm-git
       # Diff on PR draft, otherwise Apply
       - name: Helmfile Apply/Diff Keycloak
         if: (
