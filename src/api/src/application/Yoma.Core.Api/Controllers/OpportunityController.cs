@@ -606,6 +606,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Create an instant-verify link for the specified opportunity")]
     [HttpPost("{id}/link/instantVerify")]
     [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> CreateInstantVerifyLink([FromRoute] Guid id, [FromBody] OpportunityRequestLinkInstantVerify request)
     {

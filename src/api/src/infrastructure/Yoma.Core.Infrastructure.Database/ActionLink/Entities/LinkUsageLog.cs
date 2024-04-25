@@ -5,10 +5,10 @@ using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
 {
-  [Table("ClaimLog", Schema = "ActionLink")]
+  [Table("UsageLog", Schema = "ActionLink")]
   [Index(nameof(LinkId), nameof(UserId), IsUnique = true)]
   [Index(nameof(DateCreated))]
-  public class LinkClaimLog : BaseEntity<Guid>
+  public class LinkUsageLog : BaseEntity<Guid>
   {
     [ForeignKey("LinkId")]
     public Guid LinkId { get; set; }

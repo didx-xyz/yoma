@@ -26,7 +26,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
     public DbSet<ActionLink.Entities.Link> Link { get; set; }
 
-    public DbSet<ActionLink.Entities.LinkClaimLog> LinkClaimLog { get; set; }
+    public DbSet<ActionLink.Entities.LinkUsageLog> LinkUsageLog { get; set; }
     #endregion ActionLink
 
     #region Core

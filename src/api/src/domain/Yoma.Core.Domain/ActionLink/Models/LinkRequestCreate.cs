@@ -14,10 +14,8 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public string URL { get; set; }
 
-    public int? ParticipantLimit { get; set; }
+    public int? UsagesLimit { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }
-
-    public bool? IncludeQRCode { get; set; }
   }
 }

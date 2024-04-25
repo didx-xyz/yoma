@@ -5,16 +5,16 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
 {
-  internal class LinkClaimLogRepository : BaseRepository<Entities.LinkClaimLog, Guid>, IRepository<LinkClaimLog>
+  internal class LinkUsageLogRepository : BaseRepository<Entities.LinkUsageLog, Guid>, IRepository<LinkUsageLog>
   {
     #region Constructor
-    public LinkClaimLogRepository(ApplicationDbContext context) : base(context) { }
+    public LinkUsageLogRepository(ApplicationDbContext context) : base(context) { }
     #endregion
 
     #region Public Members
-    public IQueryable<LinkClaimLog> Query()
+    public IQueryable<LinkUsageLog> Query()
     {
-      return _context.LinkClaimLog.Select(entity => new LinkClaimLog
+      return _context.LinkUsageLog.Select(entity => new LinkUsageLog
       {
         Id = entity.Id,
         LinkId = entity.LinkId,
@@ -23,11 +23,11 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
       });
     }
 
-    public async Task<LinkClaimLog> Create(LinkClaimLog item)
+    public async Task<LinkUsageLog> Create(LinkUsageLog item)
     {
       item.DateCreated = DateTimeOffset.UtcNow;
 
-      var entity = new Entities.LinkClaimLog
+      var entity = new Entities.LinkUsageLog
       {
         Id = item.Id,
         LinkId = item.LinkId,
@@ -35,19 +35,19 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
         DateCreated = item.DateCreated
       };
 
-      _context.LinkClaimLog.Add(entity);
+      _context.LinkUsageLog.Add(entity);
       await _context.SaveChangesAsync();
 
       item.Id = entity.Id;
       return item;
     }
 
-    public Task<LinkClaimLog> Update(LinkClaimLog item)
+    public Task<LinkUsageLog> Update(LinkUsageLog item)
     {
       throw new NotImplementedException();
     }
 
-    public Task Delete(LinkClaimLog item)
+    public Task Delete(LinkUsageLog item)
     {
       throw new NotImplementedException();
     }

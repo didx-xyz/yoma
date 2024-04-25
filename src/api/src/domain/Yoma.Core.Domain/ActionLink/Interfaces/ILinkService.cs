@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.ActionLink.Interfaces
 {
   public interface ILinkService
   {
-    Task<LinkInfo> Create(LinkRequestCreate request, bool ensureOrganizationAuthorization);
+    Task<Link> Create(LinkRequestCreate request, bool ensureOrganizationAuthorization);
+
+    Task<Link> LogUsage(Guid id);
   }
 }

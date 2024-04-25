@@ -61,12 +61,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<Guid?>("OpportunityId")
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("ParticipantCount")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("ParticipantLimit")
-                        .HasColumnType("integer");
-
                     b.Property<string>("ShortURL")
                         .IsRequired()
                         .HasColumnType("varchar(2048)");
@@ -77,6 +71,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<string>("URL")
                         .IsRequired()
                         .HasColumnType("varchar(2048)");
+
+                    b.Property<int?>("UsagesLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("UsagesTotal")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -99,7 +99,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.ToTable("Link", "ActionLink");
                 });
 
-            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.ActionLink.Entities.LinkClaimLog", b =>
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.ActionLink.Entities.LinkUsageLog", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -123,7 +123,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("LinkId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("ClaimLog", "ActionLink");
+                    b.ToTable("UsageLog", "ActionLink");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.ActionLink.Entities.Lookups.LinkStatus", b =>
@@ -1712,7 +1712,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Navigation("Status");
                 });
 
-            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.ActionLink.Entities.LinkClaimLog", b =>
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.ActionLink.Entities.LinkUsageLog", b =>
                 {
                     b.HasOne("Yoma.Core.Infrastructure.Database.ActionLink.Entities.Link", "Link")
                         .WithMany()

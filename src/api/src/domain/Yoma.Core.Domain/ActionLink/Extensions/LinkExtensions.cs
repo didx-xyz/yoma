@@ -1,10 +1,11 @@
 using Yoma.Core.Domain.ActionLink.Models;
+using Yoma.Core.Domain.Core.Helpers;
 
 namespace Yoma.Core.Domain.ActionLink.Extensions
 {
   public static class LinkExtensions
   {
-    public static LinkInfo ToLinkInfo(this Link value, string? qrCodeBase64)
+    public static LinkInfo ToLinkInfo(this Link value, bool? includeQRCode)
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
 
@@ -17,9 +18,10 @@ namespace Yoma.Core.Domain.ActionLink.Extensions
         Status = value.Status,
         URL = value.URL,
         ShortURL = value.ShortURL,
-        QRCodeBase64 = qrCodeBase64,
-        ParticipantLimit = value.ParticipantLimit,
-        ParticipantCount = value.ParticipantCount,
+        QRCodeBase64 = includeQRCode == true ? QRCodeHelper.GenerateQRCodeBase64(value.ShortURL) : null,
+        UsagesLimit = value.UsagesLimit,
+        UsagesTotal = value.UsagesTotal,
+        UsagesAvailable = value.UsagesLimit.HasValue ? value.UsagesLimit - (value.UsagesTotal ?? 0) : null,
         DateEnd = value.DateEnd,
         DateCreated = value.DateCreated,
         DateModified = value.DateModified

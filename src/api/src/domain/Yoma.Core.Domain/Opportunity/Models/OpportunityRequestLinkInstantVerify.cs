@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public string? Description { get; set; }
 
-    public int? ParticipantLimit { get; set; }
+    public int? UsagesLimit { get; set; }
 
     public List<string>? DistributionList { get; set; }
 

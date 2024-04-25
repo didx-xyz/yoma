@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.ActionLink.Models
 {
-  public class LinkClaimLog
+  public class LinkUsageLog
   {
     public Guid Id { get; set; }
 

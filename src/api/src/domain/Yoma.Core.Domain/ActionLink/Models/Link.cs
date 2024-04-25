@@ -22,9 +22,9 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public string ShortURL { get; set; }
 
-    public int? ParticipantLimit { get; set; }
+    public int? UsagesLimit { get; set; }
 
-    public int? ParticipantCount { get; set; }
+    public int? UsagesTotal { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }
 

@@ -27,8 +27,8 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
         OpportunityId = entity.OpportunityId,
         URL = entity.URL,
         ShortURL = entity.URL,
-        ParticipantLimit = entity.ParticipantLimit,
-        ParticipantCount = entity.ParticipantCount,
+        UsagesLimit = entity.UsagesLimit,
+        UsagesTotal = entity.UsagesTotal,
         DateEnd = entity.DateEnd,
         DateCreated = entity.DateCreated,
         CreatedByUserId = entity.CreatedByUserId,
@@ -53,8 +53,8 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
         OpportunityId = item.OpportunityId,
         URL = item.URL,
         ShortURL = item.ShortURL,
-        ParticipantLimit = item.ParticipantLimit,
-        ParticipantCount = item.ParticipantCount,
+        UsagesLimit = item.UsagesLimit,
+        UsagesTotal = item.UsagesTotal,
         DateEnd = item.DateEnd,
         DateCreated = item.DateCreated,
         CreatedByUserId = item.CreatedByUserId,
@@ -76,7 +76,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
 
       item.DateModified = DateTimeOffset.UtcNow;
 
-      entity.ParticipantCount = item.ParticipantCount;
+      entity.UsagesTotal = item.UsagesTotal;
       entity.StatusId = item.StatusId;
       entity.DateModified = item.DateModified;
       entity.ModifiedByUserId = item.ModifiedByUserId;

@@ -47,8 +47,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             OpportunityId = table.Column<Guid>(type: "uuid", nullable: true),
             URL = table.Column<string>(type: "varchar(2048)", nullable: false),
             ShortURL = table.Column<string>(type: "varchar(2048)", nullable: false),
-            ParticipantLimit = table.Column<int>(type: "integer", nullable: true),
-            ParticipantCount = table.Column<int>(type: "integer", nullable: true),
+            UsagesLimit = table.Column<int>(type: "integer", nullable: true),
+            UsagesTotal = table.Column<int>(type: "integer", nullable: true),
             DateEnd = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
             DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
             CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -88,7 +88,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           });
 
       migrationBuilder.CreateTable(
-          name: "ClaimLog",
+          name: "UsageLog",
           schema: "ActionLink",
           columns: table => new
           {
@@ -99,41 +99,22 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           },
           constraints: table =>
           {
-            table.PrimaryKey("PK_ClaimLog", x => x.Id);
+            table.PrimaryKey("PK_UsageLog", x => x.Id);
             table.ForeignKey(
-                      name: "FK_ClaimLog_Link_LinkId",
+                      name: "FK_UsageLog_Link_LinkId",
                       column: x => x.LinkId,
                       principalSchema: "ActionLink",
                       principalTable: "Link",
                       principalColumn: "Id",
                       onDelete: ReferentialAction.Cascade);
             table.ForeignKey(
-                      name: "FK_ClaimLog_User_UserId",
+                      name: "FK_UsageLog_User_UserId",
                       column: x => x.UserId,
                       principalSchema: "Entity",
                       principalTable: "User",
                       principalColumn: "Id",
                       onDelete: ReferentialAction.Cascade);
           });
-
-      migrationBuilder.CreateIndex(
-          name: "IX_ClaimLog_DateCreated",
-          schema: "ActionLink",
-          table: "ClaimLog",
-          column: "DateCreated");
-
-      migrationBuilder.CreateIndex(
-          name: "IX_ClaimLog_LinkId_UserId",
-          schema: "ActionLink",
-          table: "ClaimLog",
-          columns: ["LinkId", "UserId"],
-          unique: true);
-
-      migrationBuilder.CreateIndex(
-          name: "IX_ClaimLog_UserId",
-          schema: "ActionLink",
-          table: "ClaimLog",
-          column: "UserId");
 
       migrationBuilder.CreateIndex(
           name: "IX_Link_CreatedByUserId",
@@ -186,6 +167,25 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           column: "Name",
           unique: true);
 
+      migrationBuilder.CreateIndex(
+          name: "IX_UsageLog_DateCreated",
+          schema: "ActionLink",
+          table: "UsageLog",
+          column: "DateCreated");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_UsageLog_LinkId_UserId",
+          schema: "ActionLink",
+          table: "UsageLog",
+          columns: ["LinkId", "UserId"],
+          unique: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_UsageLog_UserId",
+          schema: "ActionLink",
+          table: "UsageLog",
+          column: "UserId");
+
       ApplicationDb_ActionLink_Seeding.Seed(migrationBuilder);
     }
 
@@ -193,7 +193,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     protected override void Down(MigrationBuilder migrationBuilder)
     {
       migrationBuilder.DropTable(
-          name: "ClaimLog",
+          name: "UsageLog",
           schema: "ActionLink");
 
       migrationBuilder.DropTable(

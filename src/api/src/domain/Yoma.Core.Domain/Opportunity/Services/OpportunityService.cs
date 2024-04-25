@@ -1,8 +1,10 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
+using Yoma.Core.Domain.ActionLink.Extensions;
 using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.BlobProvider;
@@ -1395,13 +1397,24 @@ namespace Yoma.Core.Domain.Opportunity.Services
         EntityType = ActionLink.LinkEntityType.Opportunity,
         Action = ActionLink.LinkAction.Share,
         EntityId = opportunity.Id,
-        URL = opportunity.YomaInfoURL(_appSettings.AppBaseURL),
-        IncludeQRCode = includeQRCode
+        URL = opportunity.YomaInfoURL(_appSettings.AppBaseURL)
       };
 
-      var result = await _linkService.Create(request, ensureOrganizationAuthorization);
+      Link? result = null;
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-      return result;
+        result = await _linkService.Create(request, ensureOrganizationAuthorization);
+        result = await _linkService.LogUsage(result.Id);
+
+        scope.Complete();
+      });
+
+      if (result == null)
+        throw new InvalidOperationException("Failed to create sharing link");
+
+      return result.ToLinkInfo(includeQRCode);
     }
 
     public async Task<LinkInfo> CreateLinkInstantVerify(Guid id, OpportunityRequestLinkInstantVerify request, bool ensureOrganizationAuthorization)
@@ -1413,7 +1426,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //TODO: Validator
 
       if (opportunity.Status != Status.Active)
-        throw new ValidationException($"Instant Verify Link cannot be created as the opportunity '{opportunity.Title}' is not active");
+        throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' is not active");
 
       if (string.IsNullOrEmpty(request.Name)) request.Name = opportunity.Title.RemoveSpecialCharacters();
 
@@ -1427,16 +1440,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
         Action = ActionLink.LinkAction.Verify,
         EntityId = opportunity.Id,
         URL = opportunity.YomaInstantVerifyURL(_appSettings.AppBaseURL),
-        ParticipantLimit = request.ParticipantLimit,
-        DateEnd = request.DateEnd,
-        IncludeQRCode = request.IncludeQRCode
+        UsagesLimit = request.UsagesLimit,
+        DateEnd = request.DateEnd
       };
 
       var result = await _linkService.Create(requestLink, ensureOrganizationAuthorization);
 
       //send emails if needed
 
-      return result;
+      return result.ToLinkInfo(request.IncludeQRCode);
     }
 
     #endregion
