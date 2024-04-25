@@ -83,7 +83,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         _ => throw new InvalidOperationException($"Invalid / unsupported entity type of '{entityType}'"),
       };
 
-      query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);  
+      query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);
 
       return [.. query];
     }
