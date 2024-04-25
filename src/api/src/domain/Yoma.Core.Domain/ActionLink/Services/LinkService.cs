@@ -91,7 +91,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
                 throw new DataInconsistencyException($"URL mismatch detected for link with id '{itemExisting.Id}'");
 
               //sharing links should always remain active; they cannot be deactivated, have no end date, and are not subject to usage limits
-              AssertActive(itemExisting); 
+              AssertActive(itemExisting);
 
               return itemExisting;
 
