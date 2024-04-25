@@ -119,7 +119,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         case LinkEntityType.Opportunity:
           item.OpportunityId = request.EntityId;
 
-          queryItemExisting = _linkRepository.Query().Where(o => o.EntityType == item.EntityType && o.Action == item.Action && o.OpportunityId == item.OpportunityId);  
+          queryItemExisting = _linkRepository.Query().Where(o => o.EntityType == item.EntityType && o.Action == item.Action && o.OpportunityId == item.OpportunityId);
 
           switch (request.Action)
           {
@@ -146,7 +146,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
               itemExisting = queryItemExisting.Where(o => o.Name.ToLower() == item.Name.ToLower()).SingleOrDefault();
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
               if (itemExisting != null)
-                throw new ValidationException($"Link with name '{item.Name}' already exists for the opportunity");  
+                throw new ValidationException($"Link with name '{item.Name}' already exists for the opportunity");
 
               item.URL = item.URL.AppendPathSegment(item.Id.ToString());
               break;
