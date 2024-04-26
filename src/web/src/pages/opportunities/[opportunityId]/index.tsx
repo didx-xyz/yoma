@@ -328,6 +328,8 @@ const OpportunityDetails: NextPageWithLayout<{
           property="og:image"
           content={opportunityInfo.organizationLogoURL!}
         />
+        <meta property="og:image:width" content="60" />
+        <meta property="og:image:height" content="60" />
         <meta
           name="keywords"
           content={
