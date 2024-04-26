@@ -75,6 +75,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { AvatarImage } from "~/components/AvatarImage";
 import DashboardCarousel from "~/components/Organisation/Dashboard/DashboardCarousel";
 import { WorldMapChart } from "~/components/Organisation/Dashboard/WorldMapChart";
+import type { Organization } from "~/api/models/organisation";
 
 interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
@@ -183,10 +184,10 @@ const OrganisationDashboard: NextPageWithLayout<{
     queryFn: () => getCategoriesAdmin(id),
     enabled: !error,
   });
-  // const { data: organisation } = useQuery<Organization>({
-  //   queryKey: ["organisation", id],
-  //   enabled: !error,
-  // });
+  const { data: organisation } = useQuery<Organization>({
+    queryKey: ["organisation", id],
+    enabled: !error,
+  });
 
   // get filter parameters from route
   const {
@@ -662,14 +663,14 @@ const OrganisationDashboard: NextPageWithLayout<{
         <title>Yoma | Organisation Dashboard</title>
       </Head>
 
-      <PageBackground className="h-[305px] lg:h-[275px]" />
+      <PageBackground className="h-[350px] lg:h-[275px]" />
 
       {isSearchPerformed && isLoading && <Loading />}
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
-      <div className="container z-10 mt-[7.5rem] max-w-7xl overflow-hidden px-4 py-1 md:py-4">
+      <div className="container z-10 mt-[6rem] max-w-7xl overflow-hidden px-4 py-1 md:py-4">
         <div className="flex flex-col gap-4">
           {/* HEADER */}
           <div className="mb-4 flex flex-col">
@@ -684,9 +685,14 @@ const OrganisationDashboard: NextPageWithLayout<{
             {/* WELCOME MSG */}
             <div className="text-2xl font-semibold text-white md:text-3xl">
               <span>
-                Good {timeOfDay}, {user?.name} {timeOfDayEmoji}
+                {timeOfDayEmoji} Good {timeOfDay}
+                <span className="">{user?.name}</span>, here is your report
+                for&nbsp;
+                <span className="hidden md:block" />
+                <span className="font-light">{organisation?.name}</span>
               </span>
             </div>
+
             {/* DESCRIPTION */}
             <div className="mt-2 flex flex-col gap-1 leading-4 text-white lg:flex-row">
               <span>Your dashboard progress so far.</span>

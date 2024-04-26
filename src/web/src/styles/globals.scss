@@ -102,7 +102,13 @@ body {
   text-align: inherit !important;
 }
 
+// Gleac chat
+#hubspot-messages-iframe-container {
+  visibility: hidden !important;
+}
+
 @media (max-width: 760px) {
+  // Help scout
   #beacon-container {
     display: none !important;
   }
@@ -117,4 +123,40 @@ body {
 
 #nprogress .peg {
   display: none !important;
+}
+
+// React-Toastify
+.Toastify__toast {
+  @apply rounded-lg;
+}
+
+.Toastify__toast-theme--colored.Toastify__toast--default {
+  @apply bg-white;
+}
+.Toastify__toast-theme--colored.Toastify__toast--info {
+  @apply bg-blue;
+}
+.Toastify__toast-theme--colored.Toastify__toast--success {
+  @apply bg-green;
+}
+.Toastify__toast-theme--colored.Toastify__toast--warning {
+  @apply bg-warning;
+}
+.Toastify__toast-theme--colored.Toastify__toast--error {
+  @apply bg-error;
+}
+
+.Toastify__progress-bar-theme--colored.Toastify__progress-bar--info,
+.Toastify__progress-bar-theme--colored.Toastify__progress-bar--success,
+.Toastify__progress-bar-theme--colored.Toastify__progress-bar--warning,
+.Toastify__progress-bar-theme--colored.Toastify__progress-bar--error {
+  @apply bg-white bg-opacity-30;
+}
+
+.Toastify__close-button {
+  @apply text-white opacity-100;
+}
+.Toastify__close-button:hover,
+.Toastify__close-button:focus {
+  @apply scale-110;
 }

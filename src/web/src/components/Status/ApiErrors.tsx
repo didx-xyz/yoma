@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { type AxiosError } from "axios";
 import { type ReactElement } from "react";
-import { IoMdAlert } from "react-icons/io";
+import { IoMdFlame } from "react-icons/io";
 import { type ErrorResponseItem } from "~/api/models/common";
 
 export type Props = ({ error }: { error: any }) => ReactElement;
@@ -18,7 +18,7 @@ export const ApiErrors: Props = ({ error }) => {
               return (
                 <>
                   <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                    <IoMdAlert className="text-yellow-400 mr-2 h-10 w-10 text-xl" />
+                    <IoMdFlame className="mr-2 h-10 w-10 text-xl text-white" />
                     Access Denied
                   </div>
                   <p className="text-sm">
@@ -30,7 +30,7 @@ export const ApiErrors: Props = ({ error }) => {
               return (
                 <>
                   <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                    <IoMdAlert className="text-yellow-400 mr-2 h-10 w-10 text-xl" />
+                    <IoMdFlame className="mr-2 h-10 w-10 text-xl text-white" />
                     Access Denied
                   </div>
                   <p className="text-sm">
@@ -43,7 +43,7 @@ export const ApiErrors: Props = ({ error }) => {
               return (
                 <>
                   <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                    <IoMdAlert className="mr-2 h-10 w-10 text-xl text-red-400" />{" "}
+                    <IoMdFlame className="mr-2 h-10 w-10 text-xl text-white" />{" "}
                     Access Denied
                   </div>
                   <p className="text-sm">
@@ -57,7 +57,7 @@ export const ApiErrors: Props = ({ error }) => {
                 return (
                   <>
                     <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                      <IoMdAlert className="mr-2 h-10 w-10 text-xl text-red-400" />{" "}
+                      <IoMdFlame className="mr-2 h-10 w-10 text-xl text-white" />{" "}
                       Error
                     </div>
                     <p className="text-sm">
@@ -70,7 +70,7 @@ export const ApiErrors: Props = ({ error }) => {
               if (customErrors?.length === 1) {
                 return (
                   <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                    <IoMdAlert className="mr-2 h-10 w-10 text-xl text-red-400" />
+                    <IoMdFlame className="mr-2 h-10 w-10 text-xl text-white" />
                     {customErrors[0]?.message}
                   </div>
                 );
@@ -79,7 +79,7 @@ export const ApiErrors: Props = ({ error }) => {
                 return (
                   <>
                     <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                      <IoMdAlert className="mr-2 h-10 w-10 text-xl text-red-400" />{" "}
+                      <IoMdFlame className="mr-2 h-10 w-10 text-xl text-white" />{" "}
                       The following errors occurred:
                     </div>
                     <ul className="list-disc">
@@ -103,7 +103,7 @@ export const ApiErrors: Props = ({ error }) => {
   if (axiosErrors?.isAxiosError) {
     return (
       <div className="mb-4 flex flex-row items-center text-sm font-bold">
-        <IoMdAlert className="mr-2 text-xl text-red-400" />
+        <IoMdFlame className="mr-2 text-xl text-white" />
         {axiosErrors.message}
       </div>
     );
@@ -111,7 +111,7 @@ export const ApiErrors: Props = ({ error }) => {
 
   return (
     <div className="mb-4 flex flex-row items-center text-sm font-bold">
-      <IoMdAlert className="mr-2 text-xl text-red-400" />
+      <IoMdFlame className="mr-2 text-xl text-white" />
       Unknown error: {JSON.stringify(error)}
     </div>
   );

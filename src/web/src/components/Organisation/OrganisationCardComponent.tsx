@@ -123,7 +123,7 @@ export const OrganisationCardComponent: React.FC<{
     >
       {isLoading && <Loading />}
 
-      <div className="flex w-1/4 items-center justify-center p-2">
+      <Link href={link} className="flex w-1/4 items-center justify-center p-2">
         <div className="flex h-28 w-28 items-center justify-center">
           <AvatarImage
             icon={item.logoURL ?? null}
@@ -131,7 +131,7 @@ export const OrganisationCardComponent: React.FC<{
             size={60}
           />
         </div>
-      </div>
+      </Link>
 
       <div className="relative flex w-3/4 flex-col justify-start p-2 pr-4">
         <Link
@@ -168,15 +168,15 @@ export const OrganisationCardComponent: React.FC<{
             )}
           </div>
 
-          <div className="dropdown dropdown-left w-10">
+          <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
             <button
-              className="bg-theme hover:bg-theme w-40x flex flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 hover:brightness-110 disabled:cursor-not-allowed disabled:bg-gray-dark"
+              className="bg-theme xl:hover:bg-theme flex flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 disabled:cursor-not-allowed disabled:bg-gray-dark xl:hover:brightness-110"
               disabled={item?.status == "Deleted"}
             >
-              <IoIosSettings className="mr-1x h-5 w-5" />
+              <IoIosSettings className="h-7 w-7 md:h-5 md:w-5" />
             </button>
 
-            <ul className="menu dropdown-content z-[1] w-52 rounded-box bg-base-100 p-2 shadow">
+            <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
               {item?.status != "Deleted" && (
                 <li>
                   <Link

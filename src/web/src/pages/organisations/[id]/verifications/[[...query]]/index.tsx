@@ -19,6 +19,7 @@ import {
   IoMdAlert,
   IoMdCheckmark,
   IoMdClose,
+  IoMdFlame,
   IoMdThumbsDown,
   IoMdThumbsUp,
 } from "react-icons/io";
@@ -318,7 +319,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         toast("Please select at least one row to continue", {
           type: "error",
           toastId: "verifyCredentialError",
-          icon: true,
+          icon: <IoMdFlame />,
         });
         return;
       }
