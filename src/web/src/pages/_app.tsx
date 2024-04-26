@@ -105,6 +105,7 @@ const MyApp = ({
                     bodyClassName={"test1"}
                     toastClassName={"test2"}
                     className="mt-16 w-full md:mt-10 md:w-[340px]"
+                    theme="colored"
                   />
                   <GoogleAnalytics />
                 </ConfirmationModalContextProvider>

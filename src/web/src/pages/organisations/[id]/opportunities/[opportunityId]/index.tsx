@@ -58,7 +58,10 @@ import { Loading } from "~/components/Status/Loading";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
-import { IoMdArrowRoundBack } from "react-icons/io";
+import {
+  IoIosInformationCircleOutline,
+  IoMdArrowRoundBack,
+} from "react-icons/io";
 import CreatableSelect from "react-select/creatable";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { getSchemas } from "~/api/services/credentials";
@@ -1990,8 +1993,15 @@ const OpportunityDetails: NextPageWithLayout<{
                       </div>
                       <div className="form-control">
                         <label className="label">
-                          <span className="label-text font-bold">
+                          <span className="label-text flex items-center font-bold">
                             ZLTO Reward Pool
+                            <span
+                              className="tooltip tooltip-secondary mx-2"
+                              data-tip="A ZLTO pool is a ZLTO limit you put on your opportunity.
+                          If you set a pool, when it's finished, individuals completing will not receive any ZLTO."
+                            >
+                              <IoIosInformationCircleOutline className="h-5 w-5 text-gray-dark" />
+                            </span>
                           </span>
                           <span className="font-gray-light label-text text-xs">
                             (default limit * reward)
