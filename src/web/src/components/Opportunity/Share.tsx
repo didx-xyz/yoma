@@ -197,7 +197,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
           {/* QR CODE */}
           {showQRCode && qrCodeImageData && (
             <>
-              <h5>Scan the QR Code with your device's camera</h5>
+              <h5>Scan the QR Code with your device&apos;s camera</h5>
               <Image
                 src={qrCodeImageData}
                 alt="QR Code"

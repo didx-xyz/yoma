@@ -55,6 +55,7 @@ import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityF
 import iconBell from "public/images/icon-bell.webp";
 import { IoMdDownload, IoMdPerson } from "react-icons/io";
 import iconZlto from "public/images/icon-zlto.svg";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 // 👇 SSG
 // This function gets called at build time on server-side.
@@ -372,71 +373,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     if (!smallDisplay) setFilterFullWindowVisible(false);
   }, [smallDisplay]);
 
-  // 📜 scroll to results when search is executed
-  // useEffect(() => {
-  //   if (searchResults && !isLoading) {
-  //     setTimeout(() => {
-  //       const element = document.getElementById("results");
-
-  //       if (element) {
-  //         window.scrollTo({
-  //           top: element.offsetTop - 55,
-  //           behavior: "smooth",
-  //         });
-  //       }
-  //     }, 500);
-  //   }
-  // }, [searchResults, isLoading]);
-
-  // 🧮 CALCULATED FIELDS
-  // results info text based on filter parameters
-  // const searchFilterText = useMemo(() => {
-  //   if (!searchResults) {
-  //     return "0 results";
-  //   }
-
-  //   const { totalCount } = searchResults;
-  //   const resultText = totalCount === 1 ? "result" : "results";
-  //   const countText = `${totalCount?.toLocaleString()} ${resultText}`;
-
-  //   const filterText = [
-  //     opportunitySearchFilter.valueContains &&
-  //       `'${opportunitySearchFilter.valueContains}'`,
-  //     opportunitySearchFilter.categories?.map((c) => `'${c}'`)?.join(", "),
-  //     opportunitySearchFilter.countries?.map((c) => `'${c}'`)?.join(", "),
-  //     opportunitySearchFilter.languages?.map((c) => `'${c}'`).join(", "),
-  //     opportunitySearchFilter.types?.map((c) => `'${c}'`).join(", "),
-  //     opportunitySearchFilter.organizations?.map((c) => `'${c}'`).join(", "),
-  //     opportunitySearchFilter.statuses?.map((c) => `'${c}'`).join(", "),
-  //     opportunitySearchFilter.commitmentIntervals
-  //       ? `'${
-  //           opportunitySearchFilter.commitmentIntervals.length
-  //         } commitment interval${
-  //           opportunitySearchFilter.commitmentIntervals.length > 1 ? "s" : ""
-  //         }'`
-  //       : undefined,
-  //     opportunitySearchFilter.zltoRewardRanges
-  //       ? `'${opportunitySearchFilter.zltoRewardRanges.length} reward${
-  //           opportunitySearchFilter.zltoRewardRanges.length > 1 ? "s" : ""
-  //         }'`
-  //       : undefined,
-  //     opportunitySearchFilter.startDate
-  //       ? `'${moment(new Date(opportunitySearchFilter.startDate)).format(
-  //           DATE_FORMAT_HUMAN,
-  //         )}'`
-  //       : undefined,
-  //     opportunitySearchFilter.endDate
-  //       ? `'${moment(new Date(opportunitySearchFilter.endDate)).format(
-  //           DATE_FORMAT_HUMAN,
-  //         )}'`
-  //       : undefined,
-  //   ]
-  //     .filter(Boolean)
-  //     .join(", ");
-
-  //   return `${countText} ${filterText ? ` for ${filterText}` : ""}`;
-  // }, [opportunitySearchFilter, searchResults]);
-
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
     (opportunitySearchFilter: OpportunitySearchFilterCombined) => {
@@ -599,6 +535,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       setIsExportButtonLoading(false);
     }
   }, [opportunitySearchFilter, setIsExportButtonLoading, setExportDialogOpen]);
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(filterFullWindowVisible);
+  useDisableBodyScroll(exportDialogOpen);
 
   return (
     <>

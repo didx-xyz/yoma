@@ -73,6 +73,7 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import Badges from "~/components/Opportunity/Badges";
 import Share from "~/components/Opportunity/Share";
 import Head from "next/head";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -166,6 +167,14 @@ const OpportunityDetails: NextPageWithLayout<{
   const [shareOpportunityDialogVisible, setShareOpportunityDialogVisible] =
     useState(false);
   const [isOppSaved, setIsOppSaved] = useState(false);
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(loginDialogVisible);
+  useDisableBodyScroll(gotoOpportunityDialogVisible);
+  useDisableBodyScroll(completeOpportunityDialogVisible);
+  useDisableBodyScroll(completeOpportunitySuccessDialogVisible);
+  useDisableBodyScroll(cancelOpportunityDialogVisible);
+  useDisableBodyScroll(shareOpportunityDialogVisible);
 
   const { data: verificationStatus, isLoading: verificationStatusIsLoading } =
     useQuery<MyOpportunityResponseVerify | null>({

@@ -37,6 +37,7 @@ import {
   UserProfileForm,
 } from "./User/UserProfileForm";
 import { parseCookies } from "nookies";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 // * GLOBAL APP CONCERNS
 // * needs to be done here as jotai atoms are not available in _app.tsx
@@ -58,14 +59,19 @@ export const Global: React.FC = () => {
   );
   const setScreenWidthAtom = useSetAtom(screenWidthAtom);
 
-  const [onboardingDialogVisible, setOnboardingDialogVisible] = useState(false);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
+  const [onboardingDialogVisible, setOnboardingDialogVisible] = useState(false);
   const [updateProfileDialogVisible, setUpdateProfileDialogVisible] =
     useState(false);
 
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const [isYoIDOnboardingLoading, setIsYoIDOnboardingLoading] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(loginDialogVisible);
+  useDisableBodyScroll(onboardingDialogVisible);
+  useDisableBodyScroll(updateProfileDialogVisible);
 
   // SESSION
   useEffect(() => {

@@ -24,6 +24,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { env } from "process";
 import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 // 👇 SSG
 // This page undergoes static generation at run time on the server-side.
@@ -77,6 +78,9 @@ const Marketplace: NextPageWithLayout<{
     useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string | null>();
   const myRef = useRef<HTMLDivElement>(null);
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(countrySelectorDialogVisible);
 
   const onFilterCountry = useCallback(
     (value: string) => {

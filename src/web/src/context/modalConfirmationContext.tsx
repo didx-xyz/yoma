@@ -1,5 +1,6 @@
 import React, { useContext, useMemo, useRef, useState } from "react";
 import ReactModal from "react-modal";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 interface UseModalShowReturnType {
   show: boolean;
@@ -50,6 +51,9 @@ const ConfirmationModalContextProvider: React.FC<
   } | null>();
   //eslint-disable-next-line @typescript-eslint/ban-types
   const resolver = useRef<Function>();
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(show);
 
   const handleShow = useMemo(
     () =>

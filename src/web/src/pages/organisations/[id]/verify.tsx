@@ -51,6 +51,7 @@ import { IoIosCheckmark } from "react-icons/io";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -129,6 +130,9 @@ const OrganisationDetails: NextPageWithLayout<{
   const [approved, setApproved] = useState(false);
   const [rejected, setRejected] = useState(false);
 
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(modalVerifySingleVisible);
+
   // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
@@ -149,10 +153,6 @@ const OrganisationDetails: NextPageWithLayout<{
       const message = `Organisation ${
         verifyActionApprove ? "approved" : "declined"
       }`;
-      // toast(message, {
-      //   type: "success",
-      //   toastId: "verifyOrganisation",
-      // });
       if (verifyActionApprove) {
         setApproved(true);
       } else {

@@ -94,6 +94,7 @@ import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { IoMdWarning } from "react-icons/io";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -912,6 +913,10 @@ const OpportunityDetails: NextPageWithLayout<{
     },
     [opportunityId, queryClient],
   );
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(oppExpiredModalVisible);
+  useDisableBodyScroll(saveChangesDialogVisible);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
