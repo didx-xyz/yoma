@@ -189,13 +189,13 @@ services:
       KC_ADMIN_PASSWORD: *KCAdminPassword
       KC_ADMIN_REALM: master
       ADMIN_USER: testadminuser@gmail.com
-      ADMIN_USER_PASSWORD: P@ssword1
+      ADMIN_USER_PASSWORD: P@ssword12
       ORG_ADMIN_USER: testorgadminuser@gmail.com
-      ORG_ADMIN_USER_PASSWORD: P@ssword1
+      ORG_ADMIN_USER_PASSWORD: P@ssword12
       TEST_USER: testuser@gmail.com
-      TEST_USER_PASSWORD: P@ssword1
+      TEST_USER_PASSWORD: P@ssword12
       YOMA_SYSTEM_USER: system@yoma.world
-      YOMA_SYSTEM_USER_PASSWORD: P@ssword1
+      YOMA_SYSTEM_USER_PASSWORD: P@ssword12
 
     user: 0:0 # because we need to install jq
     command:

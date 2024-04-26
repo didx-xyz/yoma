@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { IoMdClose } from "react-icons/io";
 import {
   IoCopy,
@@ -23,12 +23,12 @@ interface SharePopupProps {
 }
 
 const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
+  const queryClient = useQueryClient();
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeImageData, setQRCodeImageData] = useState<
     string | null | undefined
   >(null);
-
-  const queryClient = useQueryClient();
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
   const { data: linkInfo, isLoading: linkInfoIsLoading } =
     useQuery<LinkInfo | null>({
@@ -58,6 +58,12 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
         // show the QR code
         setQRCodeImageData(qrCode?.qrCodeBase64);
         setShowQRCode(true);
+
+        // scroll to the cancel button
+        setTimeout(
+          () => cancelButtonRef.current?.scrollIntoView({ behavior: "smooth" }),
+          100,
+        );
       });
   }, [opportunity.id, queryClient]);
 
@@ -65,9 +71,15 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
     if (navigator.share) {
       navigator
         .share({
-          title: opportunity.title,
-          text: opportunity.description,
-          url: linkInfo?.shortURL,
+          title:
+            opportunity.title.length > 60
+              ? opportunity.title.substring(0, 57) + "..."
+              : opportunity.title,
+          text:
+            opportunity.description.length > 200
+              ? opportunity.description.substring(0, 197) + "..."
+              : opportunity.description,
+          url: linkInfo?.shortURL ?? linkInfo?.uRL ?? "",
         })
         .then(() => console.log("Successful share"))
         .catch((error) => console.log("Error sharing", error));
@@ -190,14 +202,26 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
 
           {/* QR CODE */}
           {showQRCode && qrCodeImageData && (
-            <Image
-              src={qrCodeImageData}
-              alt="QR Code"
-              width={200}
-              height={200}
-              style={{ width: 200, height: 200 }}
-            />
+            <>
+              <h5>Scan the QR Code with your device&apos;s camera</h5>
+              <Image
+                src={qrCodeImageData}
+                alt="QR Code"
+                width={200}
+                height={200}
+                style={{ width: 200, height: 200 }}
+              />
+            </>
           )}
+
+          <button
+            type="button"
+            className="btn mt-10 rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
+            onClick={onClose}
+            ref={cancelButtonRef}
+          >
+            Close
+          </button>
         </div>
       )}
     </div>

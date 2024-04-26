@@ -56,6 +56,7 @@ import { useSession } from "next-auth/react";
 import { OpportunityFilterOptions } from "~/api/models/opportunity";
 import OpportunitiesCarousel from "~/components/Opportunity/OpportunitiesCarousel";
 import FilterBadges from "~/components/FilterBadges";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 // 👇 SSG
 // This page is statically generated at build time on server-side
@@ -744,6 +745,9 @@ const Opportunities: NextPageWithLayout<{
     },
     [opportunities_allOpportunities, fetchDataAndUpdateCache],
   );
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(filterFullWindowVisible);
 
   return (
     <>

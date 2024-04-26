@@ -2,6 +2,7 @@ import ReactModal from "react-modal";
 import Image from "next/image";
 import { IoMdClose } from "react-icons/io";
 import iconZlto from "public/images/icon-zlto.svg";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 export const ZltoModal = ({
   isOpen,
@@ -10,6 +11,9 @@ export const ZltoModal = ({
   isOpen: boolean;
   onClose: () => void;
 }) => {
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(isOpen);
+
   return (
     <>
       {/* WHAT IS ZLTO DIALOG */}

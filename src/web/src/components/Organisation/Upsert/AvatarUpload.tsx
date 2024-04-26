@@ -4,6 +4,7 @@ import ReactModal from "react-modal";
 import { IoMdClose, IoMdCrop } from "react-icons/io";
 import { AvatarImage } from "~/components/AvatarImage";
 import styles from "./AvatarUpload.module.css";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 interface AvatarUploadProps {
   onUploadComplete?: (data: any[]) => void;
@@ -24,6 +25,9 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<AvatarEditor>(null);
   const [cropModalVisible, setCropModalVisible] = useState(false);
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(cropModalVisible);
 
   const handleImageUpload = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,7 +83,6 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
   return (
     <div className="form-control flex flex-col items-center justify-center rounded-lg bg-gray-light p-4">
       {/* CROPPING MODAL */}
-
       <ReactModal
         isOpen={cropModalVisible}
         shouldCloseOnOverlayClick={false}

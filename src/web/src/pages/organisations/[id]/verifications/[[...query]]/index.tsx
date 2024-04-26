@@ -63,6 +63,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import MobileCard from "~/components/Organisation/Verifications/MobileCard";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -518,6 +519,12 @@ const OpportunityVerifications: NextPageWithLayout<{
     [router, query, id, opportunity, verificationStatus, returnUrl],
   );
   //#endregion Filter Handlers
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(modalVerifySingleVisible);
+  useDisableBodyScroll(modalVerifyBulkVisible);
+  useDisableBodyScroll(modalSingleSuccessVisible);
+  useDisableBodyScroll(modalBulkSuccessVisible);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;

@@ -73,6 +73,7 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import Badges from "~/components/Opportunity/Badges";
 import Share from "~/components/Opportunity/Share";
 import Head from "next/head";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -166,6 +167,14 @@ const OpportunityDetails: NextPageWithLayout<{
   const [shareOpportunityDialogVisible, setShareOpportunityDialogVisible] =
     useState(false);
   const [isOppSaved, setIsOppSaved] = useState(false);
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(loginDialogVisible);
+  useDisableBodyScroll(gotoOpportunityDialogVisible);
+  useDisableBodyScroll(completeOpportunityDialogVisible);
+  useDisableBodyScroll(completeOpportunitySuccessDialogVisible);
+  useDisableBodyScroll(cancelOpportunityDialogVisible);
+  useDisableBodyScroll(shareOpportunityDialogVisible);
 
   const { data: verificationStatus, isLoading: verificationStatusIsLoading } =
     useQuery<MyOpportunityResponseVerify | null>({
@@ -310,24 +319,38 @@ const OpportunityDetails: NextPageWithLayout<{
         <title>
           {(opportunityInfo.title.length > 50
             ? opportunityInfo.title.substring(0, 47) + "..."
-            : opportunityInfo.title) || "Yoma"}
+            : opportunityInfo.title) || "Yoma | Opportunity"}
         </title>
         <meta
           name="description"
-          content={opportunityInfo.description.substring(0, 155)}
+          content={
+            opportunityInfo.description.length > 155
+              ? opportunityInfo.description.substring(0, 152) + "..."
+              : opportunityInfo.description
+          }
         />
         <meta
           property="og:title"
-          content={opportunityInfo.title.substring(0, 60)}
+          content={
+            opportunityInfo.title.length > 60
+              ? opportunityInfo.title.substring(0, 57) + "..."
+              : opportunityInfo.title
+          }
         />
         <meta
           property="og:description"
-          content={opportunityInfo.description.substring(0, 200)}
+          content={
+            opportunityInfo.description.length > 200
+              ? opportunityInfo.description.substring(0, 197) + "..."
+              : opportunityInfo.description
+          }
         />
         <meta
           property="og:image"
           content={opportunityInfo.organizationLogoURL!}
         />
+        <meta property="og:image:width" content="60" />
+        <meta property="og:image:height" content="60" />
         <meta
           name="keywords"
           content={

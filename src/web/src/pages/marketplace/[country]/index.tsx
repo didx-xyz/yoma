@@ -48,6 +48,7 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import { env } from "process";
 import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
 import StoreItemsCarousel from "~/components/Marketplace/StoreItemsCarousel";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 interface IParams extends ParsedUrlQuery {
   country: string;
@@ -403,6 +404,12 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       setUserProfile,
     ],
   );
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(loginDialogVisible);
+  useDisableBodyScroll(buyDialogVisible);
+  useDisableBodyScroll(buyDialogConfirmationVisible);
+  useDisableBodyScroll(buyDialogErrorVisible);
 
   if (!marketplace_enabled) return <MarketplaceDown />;
 

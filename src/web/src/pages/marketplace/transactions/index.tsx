@@ -21,6 +21,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { TransactionItemComponent } from "~/components/Marketplace/TransactionItem";
 import Link from "next/link";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -68,6 +69,9 @@ const MarketplaceTransactions: NextPageWithLayout<{
 }> = ({ page, error }) => {
   const [currentItem, setCurrentItem] = useState<WalletVoucher | null>(null);
   const [itemDialogVisible, setItemDialogVisible] = useState(false);
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(itemDialogVisible);
 
   // 👇 use prefetched queries from server
   const {

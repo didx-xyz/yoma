@@ -27,6 +27,7 @@ import { toast } from "react-toastify";
 import { config } from "~/lib/react-query-config";
 import { AvatarImage } from "~/components/AvatarImage";
 import { Loading } from "~/components/Status/Loading";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 interface IParams extends ParsedUrlQuery {
   query?: string;
@@ -85,6 +86,9 @@ const MyCredentials: NextPageWithLayout<{
   const [credentialDialogVisible, setCredentialDialogVisible] = useState(false);
   const [activeCredential, setActiveCredential] =
     useState<SSICredentialInfo | null>(null);
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(credentialDialogVisible);
 
   // 👇 use prefetched queries from server
   const {

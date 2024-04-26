@@ -60,6 +60,7 @@ import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -138,6 +139,9 @@ const OpportunityDetails: NextPageWithLayout<{
     currentOrganisationInactiveAtom,
   );
   const modalContext = useConfirmationModalContext();
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(currentOrganisationInactive);
 
   // 👇 use prefetched queries from server
   const { data: opportunity } = useQuery<OpportunityInfo>({
