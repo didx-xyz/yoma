@@ -71,8 +71,14 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
     if (navigator.share) {
       navigator
         .share({
-          title: opportunity.title,
-          text: opportunity.description,
+          title:
+            opportunity.title.length > 60
+              ? opportunity.title.substring(0, 57) + "..."
+              : opportunity.title,
+          text:
+            opportunity.description.length > 200
+              ? opportunity.description.substring(0, 197) + "..."
+              : opportunity.description,
           url: linkInfo?.shortURL ?? linkInfo?.uRL ?? "",
         })
         .then(() => console.log("Successful share"))

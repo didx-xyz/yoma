@@ -133,6 +133,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     } else errorCode = 500;
   }
 
+  if (dataOpportunityInfo) {
+    dataOpportunityInfo.title =
+      "012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
+    dataOpportunityInfo.description =
+      "012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
+  }
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
@@ -319,7 +325,7 @@ const OpportunityDetails: NextPageWithLayout<{
         <title>
           {(opportunityInfo.title.length > 50
             ? opportunityInfo.title.substring(0, 47) + "..."
-            : opportunityInfo.title) || "Yoma"}
+            : opportunityInfo.title) || "Yoma | Opportunity"}
         </title>
         <meta
           name="description"
