@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     //anonymously accessible from controller
     public OpportunityInfo GetPublishedOrExpiredByLinkInstantVerify(Guid linkId)
     {
-     var opportunity = _opportunityService.GetByLinkInstantVerify(linkId, true, true, false);
+      var opportunity = _opportunityService.GetByLinkInstantVerify(linkId, true, true, false);
 
       var (publishedOrExpiredResult, message) = opportunity.PublishedOrExpired();
 
@@ -55,7 +55,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var result = opportunity.ToOpportunityInfo(_appSettings.AppBaseURL);
       SetParticipantCounts(result);
-      return result;  
+      return result;
     }
 
     //anonymously accessible from controller

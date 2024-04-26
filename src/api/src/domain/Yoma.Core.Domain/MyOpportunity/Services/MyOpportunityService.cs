@@ -623,7 +623,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd:yyyy-MM-dd}')");
 
             //with instant-verifications ensureOrganizationAuthorization not checked as finalized immediately by the user (youth)
-            var result = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, !request.InstantVerification); 
+            var result = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, !request.InstantVerification);
             item.ZltoReward = result.ZltoReward;
             item.YomaReward = result.YomaReward;
             item.DateCompleted = DateTimeOffset.UtcNow;
