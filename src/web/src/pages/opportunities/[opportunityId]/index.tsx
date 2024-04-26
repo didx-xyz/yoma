@@ -314,15 +314,27 @@ const OpportunityDetails: NextPageWithLayout<{
         </title>
         <meta
           name="description"
-          content={opportunityInfo.description.substring(0, 155)}
+          content={
+            opportunityInfo.description.length > 155
+              ? opportunityInfo.description.substring(0, 152) + "..."
+              : opportunityInfo.description
+          }
         />
         <meta
           property="og:title"
-          content={opportunityInfo.title.substring(0, 60)}
+          content={
+            opportunityInfo.title.length > 60
+              ? opportunityInfo.title.substring(0, 57) + "..."
+              : opportunityInfo.title
+          }
         />
         <meta
           property="og:description"
-          content={opportunityInfo.description.substring(0, 200)}
+          content={
+            opportunityInfo.description.length > 200
+              ? opportunityInfo.description.substring(0, 197) + "..."
+              : opportunityInfo.description
+          }
         />
         <meta
           property="og:image"
