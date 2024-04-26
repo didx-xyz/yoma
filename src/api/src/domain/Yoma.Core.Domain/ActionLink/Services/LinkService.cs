@@ -23,7 +23,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly IShortLinkProviderClient _shortLinkProviderClient;
     private readonly IUserService _userService;
     private readonly ILinkStatusService _linkStatusService;
-    private readonly IRepository<Link> _linkRepository;
+    private readonly IRepositoryBatched<Link> _linkRepository;
     private readonly IRepository<LinkUsageLog> _linkUsageLogRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
 
@@ -38,7 +38,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       IShortLinkProviderClientFactory shortLinkProviderClientFactory,
       IUserService userService,
       ILinkStatusService linkStatusService,
-      IRepository<Link> linkRepository,
+      IRepositoryBatched<Link> linkRepository,
       IRepository<LinkUsageLog> linkUsageLogRepository,
       IExecutionStrategyService executionStrategyService,
       LinkRequestCreateValidator linkRequestCreateValidator)

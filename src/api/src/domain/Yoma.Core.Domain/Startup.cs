@@ -57,6 +57,7 @@ namespace Yoma.Core.Domain
       #endregion Lookups
 
       services.AddScoped<ILinkService, LinkService>();
+      services.AddScoped<ILinkServiceBackgroundService, LinkServiceBackgroundService>();
       #endregion ActionLink
 
       #region Analytics
@@ -161,11 +162,11 @@ namespace Yoma.Core.Domain
       foreach (var job in scheduledJobs) BackgroundJob.Delete(job.Key);
 
       //skills
-      BackgroundJob.Enqueue<ISkillService>(s => s.SeedSkills(true)); //execute on startup; seed skils
+      BackgroundJob.Enqueue<ISkillService>(s => s.SeedSkills(true)); //execute on startup; seed skills
       RecurringJob.AddOrUpdate<ISkillService>("Skill Reference Seeding", s => s.SeedSkills(false), options.SeedSkillsSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //opportunity
-      RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration ({Status.Active} or {Status.Inactive} that has ended)",
+      RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration ({Status.Active} that has ended)",
           s => s.ProcessExpiration(), options.OpportunityExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration Notifications ({Status.Active} or {Status.Inactive} ending within {options.OpportunityExpirationNotificationIntervalInDays} days)",
           s => s.ProcessExpirationNotifications(), options.OpportunityExpirationNotificationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
@@ -194,6 +195,10 @@ namespace Yoma.Core.Domain
          s => s.ProcessTenantCreation(), options.SSITenantCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<ISSIBackgroundService>($"SSI Credential Issuance",
          s => s.ProcessCredentialIssuance(), options.SSICredentialIssuanceSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+      //action link
+      RecurringJob.AddOrUpdate<ILinkServiceBackgroundService>($"Action Link Expiration ({Status.Active} that has ended)",
+          s => s.ProcessExpiration(), options.ActionLinkExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //seeding of test data
       if (!appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(environment)) return;

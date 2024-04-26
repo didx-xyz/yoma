@@ -9,5 +9,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public VerificationStatus Status { get; set; }
 
     public string Comment { get; set; }
+
+    internal bool InstantVerification { get; set; }
   }
 }

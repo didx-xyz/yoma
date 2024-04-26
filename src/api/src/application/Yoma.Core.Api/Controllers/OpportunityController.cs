@@ -52,7 +52,7 @@ namespace Yoma.Core.Api.Controllers
 
     #region Public Members
     #region Anonymous Actions
-    [SwaggerOperation(Summary = "Get the specified published or expired opportunity info by id (Anonymous)")]
+    [SwaggerOperation(Summary = "Get the published or expired opportunity info by id (Anonymous)")]
     [HttpGet("{id}/info")]
     [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
@@ -68,7 +68,25 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Create sharing link for published or expired opportunity by id (Anonymous)")]
+    [SwaggerOperation(Summary = "Get the published or expired opportunity by instant-very link id (Anonymous)")]
+    [HttpGet("info/link/{linkId}")]
+    [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [AllowAnonymous]
+    public IActionResult GetPublishedOrExpiredByLinkInstantVerify([FromRoute] Guid linkId)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(GetPublishedOrExpiredByLinkInstantVerify));
+
+      var result = _opportunityInfoService.GetPublishedOrExpiredByLinkInstantVerify(linkId);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(GetPublishedOrExpiredByLinkInstantVerify));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+
+    [SwaggerOperation(Summary = "Create sharing link for published or expired opportunity by id (Anonymous)",
+        Description = "Optionally include a QR code")]
     [HttpGet("{id}/link/sharing")]
     [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
@@ -77,7 +95,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(CreateLinkSharing));
 
-      var result = await _opportunityService.CreateLinkSharing(id, true, includeQRCode, false);
+      var result = await _opportunityService.CreateLinkSharing(id, true, false, includeQRCode);
 
       _logger.LogInformation("Request {requestName} handled", nameof(CreateLinkSharing));
 
@@ -213,7 +231,7 @@ namespace Yoma.Core.Api.Controllers
     #endregion
 
     #region Authenticated User Based Actions
-    [SwaggerOperation(Summary = "Get the specified opportunity info by id (Authenticated User)")]
+    [SwaggerOperation(Summary = "Get the opportunity info by id (Authenticated User)")]
     [HttpGet("{id}/auth/info")]
     [ProducesResponseType(typeof(OpportunityInfo), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
@@ -366,7 +384,7 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Get the specified opportunity by id")]
+    [SwaggerOperation(Summary = "Get the opportunity by id")]
     [HttpGet("{id}/admin")]
     [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
@@ -619,17 +637,33 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Get the instant-verify link by id",
+      Description = "Optionally include a QR code")]
+    [HttpGet("link/{linkId}/instantVerify")]
+    [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult GetLinkInstantVerifyById([FromRoute] Guid linkId, [FromQuery] bool? includeQRCode)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(GetLinkInstantVerifyById));
+
+      var result = _opportunityService.GetLinkInstantVerifyById(linkId, true, includeQRCode);
+      _logger.LogInformation("Request {requestName} handled", nameof(GetLinkInstantVerifyById));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Return a list of instant-verify links for the specified opportunity")]
     [HttpGet("{id}/link/instantVerify")]
     [ProducesResponseType(typeof(List<LinkInfo>), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult ListInstantVerifyLinks([FromRoute] Guid id)
+    public IActionResult ListLinksInstantVerify([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListInstantVerifyLinks));
+      _logger.LogInformation("Handling request {requestName}", nameof(ListLinksInstantVerify));
 
-      var result = _opportunityService.ListInstantVerifyLinks(id, true);
-      _logger.LogInformation("Request {requestName} handled", nameof(ListInstantVerifyLinks));
+      var result = _opportunityService.ListLinksInstantVerify(id, true);
+      _logger.LogInformation("Request {requestName} handled", nameof(ListLinksInstantVerify));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -640,12 +674,12 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(List<LinkInfo>), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> ActivateInstantVerifyLink([FromRoute] Guid linkId)
+    public async Task<IActionResult> ActivateLinkInstantVerify([FromRoute] Guid linkId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ActivateInstantVerifyLink));
+      _logger.LogInformation("Handling request {requestName}", nameof(ActivateLinkInstantVerify));
 
-      var result = await _opportunityService.UpdateStatusInstantVerifyLink(linkId, LinkStatus.Active, true);
-      _logger.LogInformation("Request {requestName} handled", nameof(ActivateInstantVerifyLink));
+      var result = await _opportunityService.UpdateLinkStatusInstantVerify(linkId, LinkStatus.Active, true);
+      _logger.LogInformation("Request {requestName} handled", nameof(ActivateLinkInstantVerify));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -656,12 +690,12 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> DeactivateInstantVerifyLink(Guid linkId)
+    public async Task<IActionResult> DeactivateLinkInstantVerify(Guid linkId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(DeactivateInstantVerifyLink));
+      _logger.LogInformation("Handling request {requestName}", nameof(DeactivateLinkInstantVerify));
 
-      var result = await _opportunityService.UpdateStatusInstantVerifyLink(linkId, LinkStatus.Inactive, true);
-      _logger.LogInformation("Request {requestName} handled", nameof(DeactivateInstantVerifyLink));
+      var result = await _opportunityService.UpdateLinkStatusInstantVerify(linkId, LinkStatus.Inactive, true);
+      _logger.LogInformation("Request {requestName} handled", nameof(DeactivateLinkInstantVerify));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

@@ -1377,7 +1377,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public async Task<LinkInfo> CreateLinkSharing(Guid id, bool publishedOrExpiredOnly, bool? includeQRCode, bool ensureOrganizationAuthorization)
+    public async Task<LinkInfo> CreateLinkSharing(Guid id, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization, bool? includeQRCode)
     {
       if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
@@ -1453,12 +1453,39 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var result = await _linkService.Create(requestLink, ensureOrganizationAuthorization);
 
-      //send emails if needed
+      //TODO: send emails if needed
 
       return result.ToLinkInfo(request.IncludeQRCode);
     }
 
-    public List<LinkInfo> ListInstantVerifyLinks(Guid id, bool ensureOrganizationAuthorization)
+    public Models.Opportunity GetByLinkInstantVerify(Guid linkId, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization)
+    {
+      var link = _linkService.GetById(linkId);
+
+      link.AssertLinkInstantVerify();
+
+      if (!link.OpportunityId.HasValue || !link.OpportunityOrganizationId.HasValue)
+        throw new DataInconsistencyException("Opportunity expected");
+
+      return GetById(link.OpportunityId.Value, includeChildItems, includeComputed, ensureOrganizationAuthorization);
+    }
+
+    public LinkInfo GetLinkInstantVerifyById(Guid linkId, bool ensureOrganizationAuthorization, bool? includeQRCode)
+    {
+      var result = _linkService.GetById(linkId);
+
+      result.AssertLinkInstantVerify();
+
+      if (!result.OpportunityId.HasValue || !result.OpportunityOrganizationId.HasValue)
+        throw new DataInconsistencyException("Opportunity expected");
+
+      if (ensureOrganizationAuthorization)
+        _organizationService.IsAdmin(result.OpportunityOrganizationId.Value, true);
+
+      return result.ToLinkInfo(includeQRCode);
+    }
+
+    public List<LinkInfo> ListLinksInstantVerify(Guid id, bool ensureOrganizationAuthorization)
     {
       var opportunity = GetById(id, false, false, ensureOrganizationAuthorization);
 
@@ -1467,19 +1494,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return results.Select(o => o.ToLinkInfo(false)).ToList();
     }
 
-    public async Task<LinkInfo> UpdateStatusInstantVerifyLink(Guid linkId, LinkStatus status, bool ensureOrganizationAuthorization)
+    public async Task<LinkInfo> UpdateLinkStatusInstantVerify(Guid linkId, LinkStatus status, bool ensureOrganizationAuthorization)
     {
-      var link = _linkService.GetById(linkId);
+      var result = _linkService.GetById(linkId);
 
-      if (link.EntityType != LinkEntityType.Opportunity.ToString() || link.Action != LinkAction.Verify.ToString())
-        throw new ValidationException($"Link is not an instant verify link");
+      result.AssertLinkInstantVerify();
 
-      if (!link.OpportunityId.HasValue)
-        throw new DataInconsistencyException("OpportunityId expected");
+      if (!result.OpportunityId.HasValue || !result.OpportunityOrganizationId.HasValue)
+        throw new DataInconsistencyException("Opportunity expected");
 
-      _ = GetById(link.OpportunityId.Value, false, false, ensureOrganizationAuthorization);
+      if (ensureOrganizationAuthorization)
+        _organizationService.IsAdmin(result.OpportunityOrganizationId.Value, true);
 
-      var result = await _linkService.UpdateStatus(linkId, status);
+      result = await _linkService.UpdateStatus(linkId, status);
       return result.ToLinkInfo(false);
     }
     #endregion

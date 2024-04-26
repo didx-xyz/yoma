@@ -16,5 +16,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public DateTimeOffset? DateStart { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }
+
+    internal bool OverridePending { get; set; }
+
+    internal bool InstantVerification { get; set; }
   }
 }

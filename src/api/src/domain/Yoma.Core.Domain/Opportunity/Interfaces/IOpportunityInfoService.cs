@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     OpportunityInfo? GetPublishedOrExpiredById(Guid id);
 
+    OpportunityInfo GetPublishedOrExpiredByLinkInstantVerify(Guid linkId);
+
     OpportunitySearchResultsInfo Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
     OpportunitySearchResultsInfo Search(OpportunitySearchFilter filter);

@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Yoma.Core.Domain.ActionLink.Models
 {
   public class Link
@@ -17,6 +19,9 @@ namespace Yoma.Core.Domain.ActionLink.Models
     public LinkStatus Status { get; set; }
 
     public Guid? OpportunityId { get; set; }
+
+    [JsonIgnore]
+    public Guid? OpportunityOrganizationId { get; set; }
 
     public string URL { get; set; }
 

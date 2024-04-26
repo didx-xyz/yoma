@@ -6,7 +6,7 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
 {
-  public class LinkRepository : BaseRepository<Entities.Link, Guid>, IRepository<Link>
+  public class LinkRepository : BaseRepository<Entities.Link, Guid>, IRepositoryBatched<Link>
   {
     #region Constructor
     public LinkRepository(ApplicationDbContext context) : base(context) { }
@@ -25,6 +25,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
         StatusId = entity.StatusId,
         Status = Enum.Parse<LinkStatus>(entity.Status.Name, true),
         OpportunityId = entity.OpportunityId,
+        OpportunityOrganizationId = entity.Opportunity == null ? null : entity.Opportunity.OrganizationId,
         URL = entity.URL,
         ShortURL = entity.ShortURL,
         UsagesLimit = entity.UsagesLimit,
@@ -69,6 +70,46 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
       return item;
     }
 
+    public async Task<List<Link>> Create(List<Link> items)
+    {
+      if (items == null || items.Count == 0)
+        throw new ArgumentNullException(nameof(items));
+
+      var entities = items.Select(item =>
+         new Entities.Link
+         {
+           Id = item.Id,
+           Name = item.Name,
+           Description = item.Description,
+           EntityType = item.EntityType,
+           Action = item.Action,
+           StatusId = item.StatusId,
+           OpportunityId = item.OpportunityId,
+           URL = item.URL,
+           ShortURL = item.ShortURL,
+           UsagesLimit = item.UsagesLimit,
+           UsagesTotal = item.UsagesTotal,
+           DateEnd = item.DateEnd,
+           DateCreated = DateTimeOffset.UtcNow,
+           CreatedByUserId = item.CreatedByUserId,
+           DateModified = DateTimeOffset.UtcNow,
+           ModifiedByUserId = item.ModifiedByUserId
+         });
+
+      _context.Link.AddRange(entities);
+      await _context.SaveChangesAsync();
+
+      items = items.Zip(entities, (item, entity) =>
+      {
+        item.Id = entity.Id;
+        item.DateCreated = entity.DateCreated;
+        item.DateModified = entity.DateModified;
+        return item;
+      }).ToList();
+
+      return items;
+    }
+
     public async Task<Link> Update(Link item)
     {
       var entity = _context.Link.Where(o => o.Id == item.Id).SingleOrDefault()
@@ -84,6 +125,32 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
       await _context.SaveChangesAsync();
 
       return item;
+    }
+
+    public async Task<List<Link>> Update(List<Link> items)
+    {
+      if (items == null || items.Count == 0)
+        throw new ArgumentNullException(nameof(items));
+
+      var itemIds = items.Select(o => o.Id).ToList();
+      var entities = _context.Link.Where(o => itemIds.Contains(o.Id));
+
+      foreach (var item in items)
+      {
+        var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Link)} with id '{item.Id}' does not exist");
+
+        item.DateModified = DateTimeOffset.UtcNow;
+
+        entity.UsagesTotal = item.UsagesTotal;
+        entity.StatusId = item.StatusId;
+        entity.DateModified = item.DateModified;
+        entity.ModifiedByUserId = item.ModifiedByUserId;
+      }
+
+      _context.Link.UpdateRange(entities);
+      await _context.SaveChangesAsync();
+
+      return items;
     }
 
     public Task Delete(Link item)

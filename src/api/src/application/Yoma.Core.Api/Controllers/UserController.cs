@@ -35,7 +35,7 @@ namespace Yoma.Core.Api.Controllers
 
     #region Public Members
     #region Administrative Actions
-    [SwaggerOperation(Summary = "Get the specified user by id (Admin role required)")]
+    [SwaggerOperation(Summary = "Get the user by id (Admin role required)")]
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(User), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]

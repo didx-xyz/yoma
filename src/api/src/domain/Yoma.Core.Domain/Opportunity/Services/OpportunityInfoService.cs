@@ -41,6 +41,24 @@ namespace Yoma.Core.Domain.Opportunity.Services
     }
 
     //anonymously accessible from controller
+    public OpportunityInfo GetPublishedOrExpiredByLinkInstantVerify(Guid linkId)
+    {
+     var opportunity = _opportunityService.GetByLinkInstantVerify(linkId, true, true, false);
+
+      var (publishedOrExpiredResult, message) = opportunity.PublishedOrExpired();
+
+      if (!publishedOrExpiredResult)
+      {
+        ArgumentException.ThrowIfNullOrEmpty(message);
+        throw new EntityNotFoundException(message);
+      }
+
+      var result = opportunity.ToOpportunityInfo(_appSettings.AppBaseURL);
+      SetParticipantCounts(result);
+      return result;  
+    }
+
+    //anonymously accessible from controller
     public OpportunityInfo GetPublishedOrExpiredById(Guid id)
     {
       var opportunity = _opportunityService.GetById(id, true, true, false);

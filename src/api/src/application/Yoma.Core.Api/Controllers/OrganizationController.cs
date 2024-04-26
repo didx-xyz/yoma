@@ -75,7 +75,7 @@ namespace Yoma.Core.Api.Controllers
     #endregion Authenticated User Based Actions
 
     #region Administrative Actions
-    [SwaggerOperation(Summary = "Get the specified organization by id")]
+    [SwaggerOperation(Summary = "Get the organization by id")]
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]

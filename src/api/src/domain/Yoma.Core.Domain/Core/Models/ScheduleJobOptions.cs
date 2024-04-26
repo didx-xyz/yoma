@@ -71,5 +71,9 @@ namespace Yoma.Core.Domain.Core.Models
     public int RewardTransactionScheduleBatchSize { get; set; }
 
     public int RewardTransactionScheduleMaxIntervalInHours { get; set; }
+
+    public string ActionLinkExpirationSchedule { get; set; }
+
+    public int ActionLinkExpirationBatchSize { get; set; }
   }
 }

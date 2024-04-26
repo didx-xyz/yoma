@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Transactions;
+using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
@@ -24,6 +25,7 @@ using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.MyOpportunity.Validators;
 using Yoma.Core.Domain.Opportunity;
+using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Reward.Interfaces;
@@ -47,6 +49,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IBlobService _blobService;
     private readonly ISSICredentialService _ssiCredentialService;
     private readonly IRewardService _rewardService;
+    private readonly ILinkService _linkService;
     private readonly IEmailURLFactory _emailURLFactory;
     private readonly IEmailProviderClient _emailProviderClient;
     private readonly MyOpportunitySearchFilterValidator _myOpportunitySearchFilterValidator;
@@ -71,6 +74,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         IBlobService blobService,
         ISSICredentialService ssiCredentialService,
         IRewardService rewardService,
+        ILinkService linkService,
         IEmailURLFactory emailURLFactory,
         IEmailProviderClientFactory emailProviderClientFactory,
         MyOpportunitySearchFilterValidator myOpportunitySearchFilterValidator,
@@ -93,6 +97,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _blobService = blobService;
       _ssiCredentialService = ssiCredentialService;
       _rewardService = rewardService;
+      _linkService = linkService;
       _emailURLFactory = emailURLFactory;
       _emailProviderClient = emailProviderClientFactory.CreateClient();
       _myOpportunitySearchFilterValidator = myOpportunitySearchFilterValidator;
@@ -429,18 +434,54 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     public async Task PerformActionSendForVerificationManual(Guid userId, Guid opportunityId, MyOpportunityRequestVerify request, bool overridePending)
     {
       var user = _userService.GetById(userId, false, false);
-      await PerformActionSendForVerificationManual(user, opportunityId, request, overridePending);
+
+      request.OverridePending = overridePending;
+
+      await PerformActionSendForVerificationManual(user, opportunityId, request);
     }
 
     public async Task PerformActionSendForVerificationManual(Guid opportunityId, MyOpportunityRequestVerify request)
     {
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-      await PerformActionSendForVerificationManual(user, opportunityId, request, false);
+
+      await PerformActionSendForVerificationManual(user, opportunityId, request);
     }
 
-    public Task PerformActionInstantVerificationManual(Guid linkId)
+    public async Task PerformActionInstantVerificationManual(Guid linkId)
     {
-      throw new NotImplementedException();
+      var link = _linkService.GetById(linkId);
+
+      link.AssertLinkInstantVerify();
+
+      if (!link.OpportunityId.HasValue)
+        throw new DataInconsistencyException("OpportunityId expected");
+
+      //ensure link is still usable
+      _linkService.AssertActive(link.Id);
+
+      //send for verification
+      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+        var request = new MyOpportunityRequestVerify { InstantVerification = true };
+        await PerformActionSendForVerificationManual(user, link.OpportunityId.Value, request);
+
+        await FinalizeVerificationManual(new MyOpportunityRequestVerifyFinalize
+        {
+          OpportunityId = link.OpportunityId.Value,
+          UserId = user.Id,
+          Status = VerificationStatus.Completed,
+          Comment = "Instant verification",
+          InstantVerification = true
+        });
+
+        await _linkService.LogUsage(link.Id);
+
+        scope.Complete();
+      });
     }
 
     public async Task PerformActionSendForVerificationManualDelete(Guid opportunityId)
@@ -581,7 +622,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (item.DateEnd.HasValue && item.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())
               throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd:yyyy-MM-dd}')");
 
-            var result = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, true);
+            //with instant-verifications ensureOrganizationAuthorization not checked as finalized immediately by the user (youth)
+            var result = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, !request.InstantVerification); 
             item.ZltoReward = result.ZltoReward;
             item.YomaReward = result.YomaReward;
             item.DateCompleted = DateTimeOffset.UtcNow;
@@ -693,7 +735,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return $"Opportunity '{opportunity.Title}' {description}, because {reasonText}. Please check these conditions and try again";
     }
 
-    private async Task PerformActionSendForVerificationManual(User user, Guid opportunityId, MyOpportunityRequestVerify request, bool overridePending)
+    private async Task PerformActionSendForVerificationManual(User user, Guid opportunityId, MyOpportunityRequestVerify request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -751,7 +793,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             throw new DataInconsistencyException($"{nameof(myOpportunity.VerificationStatus)} expected with action '{Action.Verification}'");
 
           case VerificationStatus.Pending:
-            if (overridePending) break;
+            if (request.OverridePending) break;
             throw new ValidationException($"Verification is {myOpportunity.VerificationStatus?.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
 
           case VerificationStatus.Completed:
@@ -769,7 +811,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.DateStart = request.DateStart;
       myOpportunity.DateEnd = request.DateEnd;
 
-      await PerformActionSendForVerificationManual(request, opportunity, myOpportunity, isNew);
+      await PerformActionSendForVerificationManualProcessVerificationTypes(request, opportunity, myOpportunity, isNew);
 
       //used by emailer
       myOpportunity.UserEmail = user.Email;
@@ -778,6 +820,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.OrganizationId = opportunity.OrganizationId;
       myOpportunity.ZltoReward = opportunity.ZltoReward;
       myOpportunity.YomaReward = opportunity.YomaReward;
+
+      if (request.InstantVerification) return; //with instant-verifications verification pending emails are not sent
 
       //sent to youth
       await SendEmail(myOpportunity, EmailType.Opportunity_Verification_Pending);
@@ -831,7 +875,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
     }
 
-    private async Task PerformActionSendForVerificationManual(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity myOpportunity, bool isNew)
+    private async Task PerformActionSendForVerificationManualProcessVerificationTypes(MyOpportunityRequestVerify request,
+      Opportunity.Models.Opportunity opportunity,
+      Models.MyOpportunity myOpportunity,
+      bool isNew)
     {
       var itemsExisting = new List<MyOpportunityVerification>();
       var itemsExistingDeleted = new List<MyOpportunityVerification>();
@@ -840,7 +887,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+          using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
           if (isNew)
             myOpportunity = await _myOpportunityRepository.Create(myOpportunity);
@@ -863,63 +910,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           }
 
           //new items
-          if (opportunity.VerificationTypes != null)
-            foreach (var verificationType in opportunity.VerificationTypes)
-            {
-              var itemType = new MyOpportunityVerification
-              {
-                MyOpportunityId = myOpportunity.Id,
-                VerificationTypeId = verificationType.Id
-              };
-
-              //upload new item to blob storage
-              BlobObject? blobObject = null;
-              switch (verificationType.Type)
-              {
-                case VerificationType.FileUpload:
-                  if (request.Certificate == null)
-                    throw new ValidationException($"Verification type '{verificationType.Type}': Certificate required");
-
-                  blobObject = await _blobService.Create(request.Certificate, FileType.Certificates);
-                  break;
-
-                case VerificationType.Picture:
-                  if (request.Picture == null)
-                    throw new ValidationException($"Verification type '{verificationType.Type}': Picture required");
-
-                  blobObject = await _blobService.Create(request.Picture, FileType.Photos);
-                  break;
-
-                case VerificationType.VoiceNote:
-                  if (request.VoiceNote == null)
-                    throw new ValidationException($"Verification type '{verificationType.Type}': Voice note required");
-
-                  blobObject = await _blobService.Create(request.VoiceNote, FileType.VoiceNotes);
-                  break;
-
-                case VerificationType.Location:
-                  if (request.Geometry == null)
-                    throw new ValidationException($"Verification type '{verificationType.Type}': Geometry required");
-
-                  if (request.Geometry.Type != SpatialType.Point)
-                    throw new ValidationException($"Verification type '{verificationType.Type}': Spatial type '{SpatialType.Point}' required");
-
-                  itemType.GeometryProperties = JsonConvert.SerializeObject(request.Geometry);
-                  break;
-
-                default:
-                  throw new InvalidOperationException($"Unknown / unsupported '{nameof(VerificationType)}' of '{verificationType.Type}'");
-              }
-
-              //create new item in db
-              if (blobObject != null)
-              {
-                itemType.FileId = blobObject.Id;
-                itemsNewBlobs.Add(blobObject);
-              }
-
-              await _myOpportunityVerificationRepository.Create(itemType);
-            }
+          await PerformActionSendForVerificationManualProcessVerificationTypes(request, opportunity, myOpportunity, itemsNewBlobs);
 
           //delete existing items in blob storage (deleted in db above)
           foreach (var item in itemsExisting)
@@ -948,6 +939,72 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           await _blobService.Delete(item);
 
         throw;
+      }
+    }
+
+    private async Task PerformActionSendForVerificationManualProcessVerificationTypes(MyOpportunityRequestVerify request,
+      Opportunity.Models.Opportunity opportunity,
+      Models.MyOpportunity myOpportunity,
+      List<BlobObject> itemsNewBlobs)
+    {
+      if (request.InstantVerification) return; //with instant-verifications bypass any verification type requirements
+      if (opportunity.VerificationTypes == null) return;
+
+      foreach (var verificationType in opportunity.VerificationTypes)
+      {
+        var itemType = new MyOpportunityVerification
+        {
+          MyOpportunityId = myOpportunity.Id,
+          VerificationTypeId = verificationType.Id
+        };
+
+        //upload new item to blob storage
+        BlobObject? blobObject = null;
+        switch (verificationType.Type)
+        {
+          case VerificationType.FileUpload:
+            if (request.Certificate == null)
+              throw new ValidationException($"Verification type '{verificationType.Type}': Certificate required");
+
+            blobObject = await _blobService.Create(request.Certificate, FileType.Certificates);
+            break;
+
+          case VerificationType.Picture:
+            if (request.Picture == null)
+              throw new ValidationException($"Verification type '{verificationType.Type}': Picture required");
+
+            blobObject = await _blobService.Create(request.Picture, FileType.Photos);
+            break;
+
+          case VerificationType.VoiceNote:
+            if (request.VoiceNote == null)
+              throw new ValidationException($"Verification type '{verificationType.Type}': Voice note required");
+
+            blobObject = await _blobService.Create(request.VoiceNote, FileType.VoiceNotes);
+            break;
+
+          case VerificationType.Location:
+            if (request.Geometry == null)
+              throw new ValidationException($"Verification type '{verificationType.Type}': Geometry required");
+
+            if (request.Geometry.Type != SpatialType.Point)
+              throw new ValidationException($"Verification type '{verificationType.Type}': Spatial type '{SpatialType.Point}' required");
+
+            itemType.GeometryProperties = JsonConvert.SerializeObject(request.Geometry);
+            break;
+
+          default:
+            throw new InvalidOperationException($"Unknown / unsupported '{nameof(VerificationType)}' of '{verificationType.Type}'");
+        }
+
+        //create new item in db
+        if (blobObject != null)
+        {
+          itemType.FileId = blobObject.Id;
+          itemsNewBlobs.Add(blobObject);
+        }
+
+        await _myOpportunityVerificationRepository.Create(itemType);
       }
     }
     #endregion

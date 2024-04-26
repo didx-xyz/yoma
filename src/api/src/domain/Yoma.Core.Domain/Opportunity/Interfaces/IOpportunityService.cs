@@ -67,12 +67,16 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     Task<Models.Opportunity> RemoveVerificationTypes(Guid id, List<VerificationType> verificationTypes, bool ensureOrganizationAuthorization);
 
-    Task<LinkInfo> CreateLinkSharing(Guid id, bool publishedOrExpiredOnly, bool? includeQRCode, bool ensureOrganizationAuthorization);
+    Task<LinkInfo> CreateLinkSharing(Guid id, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization, bool? includeQRCode);
 
     Task<LinkInfo> CreateLinkInstantVerify(Guid id, OpportunityRequestLinkInstantVerify request, bool ensureOrganizationAuthorization);
 
-    List<LinkInfo> ListInstantVerifyLinks(Guid id, bool ensureOrganizationAuthorization);
+    Models.Opportunity GetByLinkInstantVerify(Guid linkId, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization);
 
-    Task<LinkInfo> UpdateStatusInstantVerifyLink(Guid linkId, LinkStatus status, bool ensureOrganizationAuthorization);
+    LinkInfo GetLinkInstantVerifyById(Guid linkId, bool ensureOrganizationAuthorization, bool? includeQRCode);
+
+    List<LinkInfo> ListLinksInstantVerify(Guid id, bool ensureOrganizationAuthorization);
+
+    Task<LinkInfo> UpdateLinkStatusInstantVerify(Guid linkId, LinkStatus status, bool ensureOrganizationAuthorization);
   }
 }

@@ -76,7 +76,7 @@ namespace Yoma.Core.Infrastructure.Database
       #region Lookups
       services.AddScoped<IRepository<LinkStatus>, LinkStatusRepository>();
       #endregion Lookups
-      services.AddScoped<IRepository<Link>, LinkRepository>();
+      services.AddScoped<IRepositoryBatched<Link>, LinkRepository>();
       services.AddScoped<IRepository<LinkUsageLog>, LinkUsageLogRepository>();
       #endregion ActionLink
 
