@@ -102,15 +102,14 @@ body {
   text-align: inherit !important;
 }
 
-// Gleac chat
-#hubspot-messages-iframe-container {
-  visibility: hidden !important;
-}
-
 @media (max-width: 760px) {
   // Help scout
   #beacon-container {
     display: none !important;
+  }
+  // Gleac chat
+  .widget {
+    visibility: hidden !important;
   }
 }
 
