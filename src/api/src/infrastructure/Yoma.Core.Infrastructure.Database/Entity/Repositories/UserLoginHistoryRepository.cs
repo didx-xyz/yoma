@@ -37,7 +37,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         ClientId = item.ClientId,
         IpAddress = item.IpAddress,
         AuthMethod = item.AuthMethod,
-        AuthType = item.AuthType, 
+        AuthType = item.AuthType,
         DateCreated = item.DateCreated,
 
       };

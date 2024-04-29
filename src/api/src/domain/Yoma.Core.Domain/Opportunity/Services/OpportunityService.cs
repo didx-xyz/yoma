@@ -1523,7 +1523,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         TotalCount = items.TotalCount,
         Items = items.Items.Select(o => o.ToLinkInfo(false)).ToList()
-      };  
+      };
     }
 
     public async Task<LinkInfo> UpdateLinkStatusInstantVerify(Guid linkId, LinkStatus status, bool ensureOrganizationAuthorization)

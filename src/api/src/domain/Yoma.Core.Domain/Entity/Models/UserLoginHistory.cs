@@ -5,7 +5,7 @@ namespace Yoma.Core.Domain.Entity.Models
     public Guid Id { get; set; }
 
     public Guid UserId { get; set; }
-    
+
     public string ClientId { get; set; }
 
     public string? IpAddress { get; set; }
