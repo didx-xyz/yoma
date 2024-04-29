@@ -90,6 +90,15 @@
                                aria-invalid="<#if messagesPerField.existsError('password','password-confirm')>true</#if>"
                         />
 
+                        <div id="password-requirements">
+                          <div id="label">Password requirements:</div>
+                          <p id="length">10 characters</p>
+                          <p id="lowercase">1 lower case</p>
+                          <p id="uppercase">1 upper case</p>
+                          <p id="number">1 number</p>
+                          <p id="email">Not email</p>
+                        </div>
+
                         <#if messagesPerField.existsError('password')>
                             <span id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
                                 ${kcSanitize(messagesPerField.get('password'))?no_esc}
@@ -140,5 +149,14 @@
                 </div>
             </div>
         </form>
+
+        <link rel="stylesheet" type="text/css" href="${url.resourcesPath}/css/passwordIndicator.css">
+        <script src="${url.resourcesPath}/js/passwordIndicator.js"></script>
+        <script>
+          document.getElementById('password').addEventListener('input', function(e) {
+            var password = e.target.value;
+            passwordIndicator("${url.resourcesPath}", '#email', password);
+          });
+        </script>
     </#if>
 </@layout.registrationLayout>
