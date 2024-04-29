@@ -124,7 +124,6 @@ namespace Yoma.Core.Domain.ActionLink.Services
       }
 
       result.Items = [.. query];
-
       return result;
     }
 

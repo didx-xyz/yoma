@@ -140,7 +140,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
       query = query.Where(o => o.ActionId == actionVerificationId);
 
-      //organization (explicitly specified)
+      //organizations
       if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
       {
         //ensure the organization admin is the admin of the specified organizations
@@ -230,7 +230,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var query = _myOpportunityRepository.Query(true);
 
-      //organization (explicitly specified)
+      //organization
       if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
       {
         //ensure the organization admin is the admin of the specified organizations
@@ -250,11 +250,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //action (required)
       query = query.Where(o => o.ActionId == actionId);
 
-      //userId (explicitly specified)
+      //userId
       if (filter.UserId.HasValue)
         query = query.Where(o => o.UserId == filter.UserId);
 
-      //opportunity (explicitly specified)
+      //opportunity
       if (filter.Opportunity.HasValue)
         query = query.Where(o => o.OpportunityId == filter.Opportunity);
 

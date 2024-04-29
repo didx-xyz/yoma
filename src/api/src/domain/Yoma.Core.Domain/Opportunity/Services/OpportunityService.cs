@@ -640,7 +640,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.Where(o => o.DateEnd <= filter.EndDate.Value);
       }
 
-      //organization (explicitly specified)
+      //organizations
       if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
       {
         if (filter.Organizations != null && filter.Organizations.Count != 0)
@@ -655,14 +655,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (filter.Organizations != null && filter.Organizations.Count != 0)
         query = query.Where(o => filter.Organizations.Contains(o.OrganizationId));
 
-      //types (explicitly specified)
+      //types
       if (filter.Types != null && filter.Types.Count != 0)
       {
         filter.Types = filter.Types.Distinct().ToList();
         query = query.Where(o => filter.Types.Contains(o.TypeId));
       }
 
-      //categories (explicitly specified)
+      //categories
       if (filter.Categories != null && filter.Categories.Count != 0)
       {
         filter.Categories = filter.Categories.Distinct().ToList();
@@ -1494,7 +1494,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       _opportunitySearchFilterLinkInstantVerifyValidator.ValidateAndThrow(filter);
 
-      //organization (explicitly specified)
+      //organizations
       if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
       {
         if (filter.Organizations != null && filter.Organizations.Count != 0)
