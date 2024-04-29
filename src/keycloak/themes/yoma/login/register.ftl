@@ -90,6 +90,12 @@
                                aria-invalid="<#if messagesPerField.existsError('password','password-confirm')>true</#if>"
                         />
 
+                        <#if messagesPerField.existsError('password')>
+                            <span id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                                ${kcSanitize(messagesPerField.get('password'))?no_esc}
+                            </span>
+                        </#if>
+
                         <div id="password-requirements">
                           <div id="label">Password requirements:</div>
                           <p id="length">10 characters</p>
@@ -98,12 +104,6 @@
                           <p id="number">1 number</p>
                           <p id="email">Not email</p>
                         </div>
-
-                        <#if messagesPerField.existsError('password')>
-                            <span id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                                ${kcSanitize(messagesPerField.get('password'))?no_esc}
-                            </span>
-                        </#if>
                     </div>
                 </div>
 
@@ -153,9 +153,11 @@
         <link rel="stylesheet" type="text/css" href="${url.resourcesPath}/css/passwordIndicator.css">
         <script src="${url.resourcesPath}/js/passwordIndicator.js"></script>
         <script>
+          document.getElementById('email').addEventListener('input', function(e) {
+            passwordIndicator("${url.resourcesPath}", '#email', '#password');
+          });
           document.getElementById('password').addEventListener('input', function(e) {
-            var password = e.target.value;
-            passwordIndicator("${url.resourcesPath}", '#email', password);
+            passwordIndicator("${url.resourcesPath}", '#email', '#password');
           });
         </script>
     </#if>

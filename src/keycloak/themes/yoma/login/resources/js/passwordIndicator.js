@@ -1,12 +1,13 @@
-function passwordIndicator(resourcesPath, emailSelector, password) {
+function passwordIndicator(resourcesPath, emailSelector, passwordSelector) {
   var email = document.querySelector(emailSelector).value;
+  var password = document.querySelector(passwordSelector).value;
 
   const requirements = {
     length: password.length >= 10,
     lowercase: /[a-z]/.test(password),
     uppercase: /[A-Z]/.test(password),
     number: /\d/.test(password),
-    email: !password.includes(email),
+    email: !email || !password.includes(email),
   };
 
   const passwordRequirements = document.querySelector("#password-requirements");
@@ -29,4 +30,17 @@ function passwordIndicator(resourcesPath, emailSelector, password) {
   }
 
   passwordRequirements.style.display = "flex";
+}
+
+function togglePassword(passwordSelector, toggleSelector) {
+  var password = document.querySelector(passwordSelector);
+  var toggle = document.querySelector(toggleSelector);
+
+  if (password.type === "password") {
+    password.type = "text";
+    toggle.className = "fa fa-eye";
+  } else {
+    password.type = "password";
+    toggle.className = "fa fa-eye-slash";
+  }
 }
