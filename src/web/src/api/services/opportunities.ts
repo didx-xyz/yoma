@@ -18,6 +18,7 @@ import type {
   Status,
   OpportunitySearchFilterCriteria,
   LinkInfo,
+  OpportunityRequestLinkInstantVerify,
 } from "../models/opportunity";
 import type { Country, Language } from "../models/lookups";
 import type { OrganizationInfo } from "../models/organisation";
@@ -339,6 +340,68 @@ export const createSharingLink = async (
 
   const { data } = await instance.get<LinkInfo>(
     `/opportunity/${id}/link/sharing?${params.toString()}`,
+  );
+  return data;
+};
+
+export const createLinkInstantVerify = async (
+  id: string,
+  request: OpportunityRequestLinkInstantVerify,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<LinkInfo> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.post<LinkInfo>(
+    `/${id}/link/instantVerify`,
+    request,
+  );
+  return data;
+};
+
+export const getLinkInstantVerifyById = async (
+  linkId: string,
+  includeQRCode: boolean,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<LinkInfo> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<LinkInfo>(
+    `/link/${linkId}/instantVerify`,
+    { params: { includeQRCode } },
+  );
+  return data;
+};
+
+export const listLinksInstantVerify = async (
+  id: string,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<LinkInfo[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<LinkInfo[]>(`/${id}/link/instantVerify`);
+  return data;
+};
+
+export const activateLinkInstantVerify = async (
+  linkId: string,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<LinkInfo[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.patch<LinkInfo[]>(
+    `/link/${linkId}/instantVerify/activate`,
+  );
+  return data;
+};
+
+export const deactivateLinkInstantVerify = async (
+  linkId: string,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<LinkInfo> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.patch<LinkInfo>(
+    `/link/${linkId}/instantVerify/deactivate`,
   );
   return data;
 };

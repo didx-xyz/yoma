@@ -311,3 +311,12 @@ export enum LinkStatus {
   Expired,
   LimitReached,
 }
+
+export interface OpportunityRequestLinkInstantVerify {
+  name: string | null;
+  description: string | null;
+  usagesLimit: number | null;
+  distributionList: string[] | null;
+  dateEnd: string | null;
+  includeQRCode: boolean | null;
+}

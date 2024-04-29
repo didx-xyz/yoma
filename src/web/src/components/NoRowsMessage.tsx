@@ -18,10 +18,14 @@ const NoRowsMessage: React.FC<{
       <h2 className="text-gray-900 mb-2 mt-4 text-center text-lg font-medium">
         {title ?? "No rows found"}
       </h2>
-      <p className="text-gray-500 text-center">
-        {description ??
-          "There are no rows to display at the moment. Please check back later."}
-      </p>
+      <p
+        className="text-gray-500 text-center"
+        dangerouslySetInnerHTML={{
+          __html:
+            description ??
+            "There are no rows to display at the moment. Please check back later.",
+        }}
+      ></p>
     </div>
   );
 };
