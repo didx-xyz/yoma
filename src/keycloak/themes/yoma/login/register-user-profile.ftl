@@ -23,35 +23,44 @@
 											</div>
 											<div class="${properties.kcInputWrapperClass!}">
 												<div class="password-container">
-                          <i class="fa fa-eye-slash" id="toggle-password" onclick="togglePassword()"></i>
+                          <i class="fa fa-eye-slash" id="toggle-password" onclick="togglePassword('#register-password', '#toggle-password')"></i>
 													<input type="password" id="register-password" class="${properties.kcInputClass!}" name="password"
 													autocomplete="new-password"
-													aria-invalid="<#if messagesPerField.existsError('password','register-password-confirm')>true</#if>" />
-
+													aria-invalid="<#if messagesPerField.existsError('password','password-confirm')>true</#if>" />
 												</div>
+
 												<#if messagesPerField.existsError('password')>
 													<span id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
 														${kcSanitize(messagesPerField.get('password'))?no_esc}
 													</span>
 												</#if>
+
+                        <div id="password-requirements">
+                          <div id="label">Password requirements:</div>
+                          <p id="length">10 characters</p>
+                          <p id="lowercase">1 lower case</p>
+                          <p id="uppercase">1 upper case</p>
+                          <p id="number">1 number</p>
+                          <p id="email">Not email</p>
+                        </div>
 											</div>
 										</div>
 										<div class="${properties.kcFormGroupClass!}">
 											<div class="${properties.kcLabelWrapperClass!}">
-												<label for="register-password-confirm"
+												<label for="password-confirm"
 													class="${properties.kcLabelClass!}">
 													${msg("passwordConfirm")}
 												</label> *
 											</div>
 											<div class="${properties.kcInputWrapperClass!}">
 												<div class="password-confirm-container">
-                          <i class="fa fa-eye-slash" id="toggle-password-confirm" onclick="togglePasswordConfirm()"></i>
-													<input type="password" id="register-password-confirm" class="${properties.kcInputClass!}"
+                          <i class="fa fa-eye-slash" id="toggle-password-confirm" onclick="togglePassword('#password-confirm', '#toggle-password-confirm')"></i>
+													<input type="password" id="password-confirm" class="${properties.kcInputClass!}"
 													name="password-confirm"
-													aria-invalid="<#if messagesPerField.existsError('register-password-confirm')>true</#if>" />
+													aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>" />
 
 												</div>
-												<#if messagesPerField.existsError('register-password-confirm')>
+												<#if messagesPerField.existsError('password-confirm')>
 													<span id="input-error-password-confirm" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
 														${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}
 													</span>
@@ -105,31 +114,17 @@
 								</div>
 							</div>
 					</form>
+
+          <link rel="stylesheet" type="text/css" href="${url.resourcesPath}/css/passwordIndicator.css">
+          <script src="${url.resourcesPath}/js/passwordIndicator.js"></script>
+          <script>
+            document.getElementById('email').addEventListener('input', function(e) {
+              passwordIndicator("${url.resourcesPath}", '#email', '#register-password');
+            });
+            document.getElementById('register-password').addEventListener('input', function(e) {
+              passwordIndicator("${url.resourcesPath}", '#email', '#register-password');
+            });
+          </script>
 			</#if>
 
 		</@layout.registrationLayout>
-
-		<script>
-			function togglePassword() {
-				var password = document.getElementById("register-password");
-				var toggle = document.getElementById("toggle-password");
-				if (password.type === "password") {
-					password.type = "text";
-					toggle.className = "fa fa-eye";
-				} else {
-					password.type = "password";
-					toggle.className = "fa fa-eye-slash";
-				}
-			}
-			function togglePasswordConfirm() {
-				var passwordConfirm = document.getElementById("register-password-confirm");
-				var toggle = document.getElementById("toggle-password-confirm");
-				if (passwordConfirm.type === "password") {
-					passwordConfirm.type = "text";
-					toggle.className = "fa fa-eye";
-				} else {
-					passwordConfirm.type = "password";
-					toggle.className = "fa fa-eye-slash";
-				}
-			}
-		</script>
