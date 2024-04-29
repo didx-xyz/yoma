@@ -50,6 +50,8 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
     public DbSet<User> User { get; set; }
 
+    public DbSet<UserLoginHistory> UserLoginHistory { get; set; }
+
     public DbSet<UserSkill> UserSkills { get; set; }
 
     public DbSet<UserSkillOrganization> UserSkillOrganizations { get; set; }

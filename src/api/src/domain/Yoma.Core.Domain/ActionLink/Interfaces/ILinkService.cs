@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.ActionLink.Interfaces
 
     void AssertActive(Guid id);
 
-    List<Link> ListByEntityAndAction(LinkEntityType entityType, LinkAction action, Guid entityId);
+    LinkSearchResult Search(LinkSearchFilter filter);
 
     Task<Link> Create(LinkRequestCreate request, bool ensureOrganizationAuthorization);
 

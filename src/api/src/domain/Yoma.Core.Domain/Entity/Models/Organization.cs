@@ -59,6 +59,16 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public string? LogoURL { get; set; }
 
+    /// <summary>
+    /// Stores the Outbound SSO Client ID used for configuring SSO, enabling logins on third-party systems using Yoma credentials. 
+    /// </summary>
+    public string? SSOClientIdOutbound { get; set; }
+
+    /// <summary>
+    /// Stores the Inbound SSO Client ID used for configuring SSO, allowing logins on Yoma's site using third-party credentials
+    /// </summary>
+    public string? SSOClientIdInbound { get; set; }
+
     public DateTimeOffset DateCreated { get; set; }
 
     public Guid CreatedByUserId { get; set; }

@@ -63,6 +63,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly OpportunitySearchFilterValidator _opportunitySearchFilterValidator;
     private readonly OpportunitySearchFilterCriteriaValidator _opportunitySearchFilterCriteriaValidator;
     private readonly OpportunityRequestLinkInstantVerifyValidator _opportunityRequestLinkInstantVerifyValidator;
+    private readonly OpportunitySearchFilterLinkInstantVerifyValidator _opportunitySearchFilterLinkInstantVerifyValidator;
 
     private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
     private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
@@ -107,6 +108,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
         OpportunitySearchFilterCriteriaValidator opportunitySearchFilterCriteriaValidator,
         OpportunityRequestLinkInstantVerifyValidator opportunityRequestLinkInstantVerifyValidator,
+        OpportunitySearchFilterLinkInstantVerifyValidator opportunitySearchFilterLinkInstantVerifyValidator,
         IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
         IRepository<OpportunityCategory> opportunityCategoryRepository,
         IRepository<OpportunityCountry> opportunityCountryRepository,
@@ -142,6 +144,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _opportunitySearchFilterValidator = opportunitySearchFilterValidator;
       _opportunitySearchFilterCriteriaValidator = opportunitySearchFilterCriteriaValidator;
       _opportunityRequestLinkInstantVerifyValidator = opportunityRequestLinkInstantVerifyValidator;
+      _opportunitySearchFilterLinkInstantVerifyValidator = opportunitySearchFilterLinkInstantVerifyValidator;
 
       _opportunityRepository = opportunityRepository;
       _opportunityCategoryRepository = opportunityCategoryRepository;
@@ -1485,13 +1488,42 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result.ToLinkInfo(includeQRCode);
     }
 
-    public List<LinkInfo> ListLinksInstantVerify(Guid id, bool ensureOrganizationAuthorization)
+    public OpportunitySearchResultLinkInstantVerify SearchLinkInstantVerify(OpportunitySearchFilterLinkInstantVerify filter, bool ensureOrganizationAuthorization)
     {
-      var opportunity = GetById(id, false, false, ensureOrganizationAuthorization);
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      var results = _linkService.ListByEntityAndAction(LinkEntityType.Opportunity, LinkAction.Verify, opportunity.Id);
+      _opportunitySearchFilterLinkInstantVerifyValidator.ValidateAndThrow(filter);
 
-      return results.Select(o => o.ToLinkInfo(false)).ToList();
+      //organization (explicitly specified)
+      if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+      {
+        if (filter.Organizations != null && filter.Organizations.Count != 0)
+        {
+          filter.Organizations = filter.Organizations.Distinct().ToList();
+          _organizationService.IsAdminsOf(filter.Organizations, true);
+        }
+        else
+          filter.Organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
+      }
+
+      var linkFilter = new LinkSearchFilter
+      {
+        EntityType = LinkEntityType.Opportunity,
+        Action = LinkAction.Verify,
+        Statuses = filter.Statuses,
+        Entities = filter.Opportunities,
+        EntityParents = filter.Organizations,
+        PageNumber = filter.PageNumber,
+        PageSize = filter.PageSize
+      };
+
+      var items = _linkService.Search(linkFilter);
+
+      return new OpportunitySearchResultLinkInstantVerify
+      {
+        TotalCount = items.TotalCount,
+        Items = items.Items.Select(o => o.ToLinkInfo(false)).ToList()
+      };  
     }
 
     public async Task<LinkInfo> UpdateLinkStatusInstantVerify(Guid linkId, LinkStatus status, bool ensureOrganizationAuthorization)

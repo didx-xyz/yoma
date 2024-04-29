@@ -28,6 +28,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly IExecutionStrategyService _executionStrategyService;
 
     private readonly LinkRequestCreateValidator _linkRequestCreateValidator;
+    private readonly LinkSearchFilterValidator _linkSearchFilterValidator;
 
     private static readonly LinkStatus[] Statuses_Activatable = [LinkStatus.Inactive];
     private static readonly LinkStatus[] Statuses_DeActivatable = [LinkStatus.Active];
@@ -41,7 +42,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
       IRepositoryBatched<Link> linkRepository,
       IRepository<LinkUsageLog> linkUsageLogRepository,
       IExecutionStrategyService executionStrategyService,
-      LinkRequestCreateValidator linkRequestCreateValidator)
+      LinkRequestCreateValidator linkRequestCreateValidator,
+      LinkSearchFilterValidator linkSearchFilterValidator)
     {
       _httpContextAccessor = httpContextAccessor;
       _shortLinkProviderClient = shortLinkProviderClientFactory.CreateClient();
@@ -51,6 +53,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       _linkUsageLogRepository = linkUsageLogRepository;
       _executionStrategyService = executionStrategyService;
       _linkRequestCreateValidator = linkRequestCreateValidator;
+      _linkSearchFilterValidator = linkSearchFilterValidator;
     }
     #endregion
 
@@ -70,22 +73,59 @@ namespace Yoma.Core.Domain.ActionLink.Services
       AssertActive(link);
     }
 
-    public List<Link> ListByEntityAndAction(LinkEntityType entityType, LinkAction action, Guid entityId)
+    public LinkSearchResult Search(LinkSearchFilter filter)
     {
-      if (entityId == Guid.Empty)
-        throw new ArgumentNullException(nameof(entityId));
+      ArgumentNullException.ThrowIfNull(filter);
 
-      var query = _linkRepository.Query().Where(o => o.EntityType == entityType.ToString() && o.Action == action.ToString());
+      _linkSearchFilterValidator.ValidateAndThrow(filter);
 
-      query = entityType switch
+      //entity type and action
+      var query = _linkRepository.Query().Where(o => o.EntityType == filter.EntityType.ToString() && o.Action == filter.Action.ToString());
+
+      //statuses
+      if (filter.Statuses != null && filter.Statuses.Count != 0)
       {
-        LinkEntityType.Opportunity => query.Where(o => o.OpportunityId == entityId),
-        _ => throw new InvalidOperationException($"Invalid / unsupported entity type of '{entityType}'"),
-      };
+        filter.Statuses = filter.Statuses.Distinct().ToList();
+        var statusIds = filter.Statuses.Select(o => _linkStatusService.GetByName(o.ToString())).Select(o => o.Id).ToList();
+        query = query.Where(o => statusIds.Contains(o.StatusId));
+      }
+
+      switch (filter.EntityType)
+      {
+        case LinkEntityType.Opportunity:
+          // opportunities
+          if (filter.Entities != null && filter.Entities.Count != 0)
+          {
+            filter.Entities = filter.Entities.Distinct().ToList();
+            query = query.Where(o => filter.Entities.Contains(o.OpportunityId!.Value));
+          }
+
+          // organizations
+          if (filter.EntityParents != null && filter.EntityParents.Count != 0)
+          {
+            filter.EntityParents = filter.EntityParents.Distinct().ToList();
+            query = query.Where(o => filter.EntityParents.Contains(o.OpportunityOrganizationId!.Value));
+          }
+          break;
+
+        default:
+          throw new InvalidOperationException($"Invalid / unsupported entity type of '{filter.EntityType}'");
+      }
 
       query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);
 
-      return [.. query];
+      var result = new LinkSearchResult();
+
+      //pagination
+      if (filter.PaginationEnabled)
+      {
+        result.TotalCount = query.Count();
+        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+      }
+
+      result.Items = [.. query];
+
+      return result;
     }
 
     public async Task<Link> Create(LinkRequestCreate request, bool ensureOrganizationAuthorization)

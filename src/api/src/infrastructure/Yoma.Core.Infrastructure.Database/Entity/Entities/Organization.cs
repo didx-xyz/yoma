@@ -77,6 +77,12 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     public Guid? LogoId { get; set; }
     public BlobObject? Logo { get; set; }
 
+    [Column(TypeName = "varchar(255)")]
+    public string? SSOClientIdOutbound { get; set; }
+
+    [Column(TypeName = "varchar(255)")]
+    public string? SSOClientIdInbound { get; set; }
+
     [Required]
     public DateTimeOffset DateCreated { get; set; }
 

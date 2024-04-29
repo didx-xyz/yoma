@@ -653,17 +653,16 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Return a list of instant-verify links for the specified opportunity")]
-    [HttpGet("{id}/link/instantVerify")]
-    [ProducesResponseType(typeof(List<LinkInfo>), (int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [SwaggerOperation(Summary = "Search for instant-verify links based on the supplied filter")]
+    [HttpPost("link/instantVerify/search")]
+    [ProducesResponseType(typeof(OpportunitySearchResultLinkInstantVerify), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult ListLinksInstantVerify([FromRoute] Guid id)
+    public IActionResult SearchLinkInstantVerify([FromBody] OpportunitySearchFilterLinkInstantVerify filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListLinksInstantVerify));
+      _logger.LogInformation("Handling request {requestName}", nameof(SearchLinkInstantVerify));
 
-      var result = _opportunityService.ListLinksInstantVerify(id, true);
-      _logger.LogInformation("Request {requestName} handled", nameof(ListLinksInstantVerify));
+      var result = _opportunityService.SearchLinkInstantVerify(filter, true);
+      _logger.LogInformation("Request {requestName} handled", nameof(SearchLinkInstantVerify));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

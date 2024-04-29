@@ -75,7 +75,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     LinkInfo GetLinkInstantVerifyById(Guid linkId, bool ensureOrganizationAuthorization, bool? includeQRCode);
 
-    List<LinkInfo> ListLinksInstantVerify(Guid id, bool ensureOrganizationAuthorization);
+    OpportunitySearchResultLinkInstantVerify SearchLinkInstantVerify(OpportunitySearchFilterLinkInstantVerify filter, bool ensureOrganizationAuthorization);
 
     Task<LinkInfo> UpdateLinkStatusInstantVerify(Guid linkId, LinkStatus status, bool ensureOrganizationAuthorization);
   }
