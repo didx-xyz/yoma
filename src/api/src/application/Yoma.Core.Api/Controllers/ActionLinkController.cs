@@ -115,7 +115,7 @@ namespace Yoma.Core.Api.Controllers
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
-    #endregion
+    #endregion Administrative Actions
     #endregion
   }
 }
