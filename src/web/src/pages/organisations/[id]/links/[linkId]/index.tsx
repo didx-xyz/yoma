@@ -32,9 +32,10 @@ import z from "zod";
 import type { Skill, SelectOption } from "~/api/models/lookups";
 import { SchemaType } from "~/api/models/credential";
 import {
+  LinkInfo,
   VerificationMethod,
   type Opportunity,
-  type OpportunityRequestBase,
+  type OpportunityRequestLinkInstantVerify,
   type OpportunityVerificationType,
 } from "~/api/models/opportunity";
 import {
@@ -49,8 +50,9 @@ import {
   getOpportunityById,
   getTypes,
   getVerificationTypes,
-  createOpportunity,
+  createLinkInstantVerify,
   getCategories,
+  getLinkInstantVerifyById,
 } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -77,6 +79,8 @@ import {
   ACCEPTED_DOC_TYPES_LABEL,
   ACCEPTED_AUDIO_TYPES_LABEL,
   MAX_FILE_SIZE_LABEL,
+  GA_ACTION_OPPORTUNITY_LINK_CREATE,
+  GA_CATEGORY_OPPORTUNITY_LINK,
 } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
@@ -101,13 +105,13 @@ import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
-  opportunityId: string;
+  linkId: string;
   returnUrl?: string;
 }
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id, opportunityId } = context.params as IParams;
+  const { id, linkId } = context.params as IParams;
   const session = await getServerSession(context.req, context.res, authOptions);
   const queryClient = new QueryClient(config);
   let errorCode = null;
@@ -126,14 +130,13 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   try {
     // 👇 prefetch queries on server
-    if (opportunityId !== "create") {
-      const data = await getOpportunityById(opportunityId, context);
-
-      await queryClient.prefetchQuery({
-        queryKey: ["opportunity", opportunityId],
-        queryFn: () => data,
-      });
-    }
+    // if (opportunityId !== "create") {
+    //   const data = await getOpportunityById(opportunityId, context);
+    //   await queryClient.prefetchQuery({
+    //     queryKey: ["opportunity", opportunityId],
+    //     queryFn: () => data,
+    //   });
+    // }
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status) {
       if (error.response.status === 404) {
@@ -150,7 +153,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       id: id,
-      opportunityId: opportunityId,
+      linkId: linkId,
       theme: theme,
       error: errorCode,
     },
@@ -161,11 +164,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 // this page acts as a create (/links/create) or edit page (/links/:id) based on the [opportunityId] route param
 const LinkDetails: NextPageWithLayout<{
   id: string;
-  opportunityId: string;
+  linkId: string;
   user: User;
   theme: string;
   error?: number;
-}> = ({ id, opportunityId, error }) => {
+}> = ({ id, linkId, error }) => {
   const router = useRouter();
   const { returnUrl } = router.query;
   const queryClient = useQueryClient();
@@ -174,292 +177,137 @@ const LinkDetails: NextPageWithLayout<{
   const formRef2 = useRef<HTMLFormElement>(null);
   const formRef3 = useRef<HTMLFormElement>(null);
   const formRef4 = useRef<HTMLFormElement>(null);
-  const formRef5 = useRef<HTMLFormElement>(null);
-  const formRef6 = useRef<HTMLFormElement>(null);
-  const formRef7 = useRef<HTMLFormElement>(null);
+  // const formRef5 = useRef<HTMLFormElement>(null);
+  // const formRef6 = useRef<HTMLFormElement>(null);
+  // const formRef7 = useRef<HTMLFormElement>(null);
 
   const [saveChangesDialogVisible, setSaveChangesDialogVisible] =
     useState(false);
   const [lastStepBeforeSaveChangesDialog, setLastStepBeforeSaveChangesDialog] =
     useState<number | null>(null);
-  const [oppExpiredModalVisible, setOppExpiredModalVisible] = useState(false);
+  // const [oppExpiredModalVisible, setOppExpiredModalVisible] = useState(false);
   const [loadingUpdateInactive, setLoadingUpdateInactive] = useState(false);
 
   // 👇 use prefetched queries from server
-  const { data: categories } = useQuery<SelectOption[]>({
-    queryKey: ["categories", "selectOptions"],
-    queryFn: async () =>
-      (await getCategories()).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
-    enabled: !error,
-  });
-  const { data: countries } = useQuery<SelectOption[]>({
-    queryKey: ["countries", "selectOptions"],
-    queryFn: async () =>
-      (await getCountries()).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
-    enabled: !error,
-  });
-  const { data: languages } = useQuery<SelectOption[]>({
-    queryKey: ["languages", "selectOptions"],
-    queryFn: async () =>
-      (await getLanguages()).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
-    enabled: !error,
-  });
-  const { data: opportunityTypes } = useQuery<SelectOption[]>({
-    queryKey: ["opportunityTypes", "selectOptions"],
-    queryFn: async () =>
-      (await getTypes()).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
-    enabled: !error,
-  });
-  const { data: verificationTypes } = useQuery<OpportunityVerificationType[]>({
-    queryKey: ["verificationTypes", "selectOptions"],
-    queryFn: async () => await getVerificationTypes(),
-    enabled: !error,
-  });
-  const { data: difficulties } = useQuery<SelectOption[]>({
-    queryKey: ["difficulties", "selectOptions"],
-    queryFn: async () =>
-      (await getDifficulties()).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
-    enabled: !error,
-  });
-  const { data: timeIntervals } = useQuery<SelectOption[]>({
-    queryKey: ["timeIntervals", "selectOptions"],
-    queryFn: async () =>
-      (await getTimeIntervals()).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
-    enabled: !error,
-  });
-  const { data: schemas } = useQuery({
-    queryKey: ["schemas"],
-    queryFn: async () => getSchemas(SchemaType.Opportunity),
-    enabled: !error,
-  });
+  // const { data: categories } = useQuery<SelectOption[]>({
+  //   queryKey: ["categories", "selectOptions"],
+  //   queryFn: async () =>
+  //     (await getCategories()).map((c) => ({
+  //       value: c.id,
+  //       label: c.name,
+  //     })),
+  //   enabled: !error,
+  // });
+  // const { data: countries } = useQuery<SelectOption[]>({
+  //   queryKey: ["countries", "selectOptions"],
+  //   queryFn: async () =>
+  //     (await getCountries()).map((c) => ({
+  //       value: c.id,
+  //       label: c.name,
+  //     })),
+  //   enabled: !error,
+  // });
+  // const { data: languages } = useQuery<SelectOption[]>({
+  //   queryKey: ["languages", "selectOptions"],
+  //   queryFn: async () =>
+  //     (await getLanguages()).map((c) => ({
+  //       value: c.id,
+  //       label: c.name,
+  //     })),
+  //   enabled: !error,
+  // });
+  // const { data: opportunityTypes } = useQuery<SelectOption[]>({
+  //   queryKey: ["opportunityTypes", "selectOptions"],
+  //   queryFn: async () =>
+  //     (await getTypes()).map((c) => ({
+  //       value: c.id,
+  //       label: c.name,
+  //     })),
+  //   enabled: !error,
+  // });
+  // const { data: verificationTypes } = useQuery<OpportunityVerificationType[]>({
+  //   queryKey: ["verificationTypes", "selectOptions"],
+  //   queryFn: async () => await getVerificationTypes(),
+  //   enabled: !error,
+  // });
+  // const { data: difficulties } = useQuery<SelectOption[]>({
+  //   queryKey: ["difficulties", "selectOptions"],
+  //   queryFn: async () =>
+  //     (await getDifficulties()).map((c) => ({
+  //       value: c.id,
+  //       label: c.name,
+  //     })),
+  //   enabled: !error,
+  // });
+  // const { data: timeIntervals } = useQuery<SelectOption[]>({
+  //   queryKey: ["timeIntervals", "selectOptions"],
+  //   queryFn: async () =>
+  //     (await getTimeIntervals()).map((c) => ({
+  //       value: c.id,
+  //       label: c.name,
+  //     })),
+  //   enabled: !error,
+  // });
+  // const { data: schemas } = useQuery({
+  //   queryKey: ["schemas"],
+  //   queryFn: async () => getSchemas(SchemaType.Opportunity),
+  //   enabled: !error,
+  // });
 
-  const schemasOptions = useMemo<SelectOption[]>(
-    () =>
-      schemas?.map((c) => ({
-        value: c.name,
-        label: c.displayName,
-      })) ?? [],
-    [schemas],
-  );
+  // const schemasOptions = useMemo<SelectOption[]>(
+  //   () =>
+  //     schemas?.map((c) => ({
+  //       value: c.name,
+  //       label: c.displayName,
+  //     })) ?? [],
+  //   [schemas],
+  // );
 
-  const { data: opportunity } = useQuery<Opportunity>({
-    queryKey: ["opportunity", opportunityId],
-    queryFn: () => getOpportunityById(opportunityId),
-    enabled: opportunityId !== "create" && !error,
+  const { data: linkInfo } = useQuery<LinkInfo>({
+    queryKey: ["link", linkId],
+    queryFn: () => getLinkInstantVerifyById(linkId, false),
+    enabled: linkId !== "create" && !error,
   });
 
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [formData, setFormData] = useState<OpportunityRequestBase>({
-    id: opportunity?.id ?? null,
-    title: opportunity?.title ?? "",
-    description: opportunity?.description ?? "",
-    typeId: opportunity?.typeId ?? "",
-    categories: opportunity?.categories?.map((x) => x.id) ?? [],
-    uRL: opportunity?.url ?? "",
-
-    languages: opportunity?.languages?.map((x) => x.id) ?? [],
-    countries: opportunity?.countries?.map((x) => x.id) ?? [],
-    difficultyId: opportunity?.difficultyId ?? "",
-    commitmentIntervalCount: opportunity?.commitmentIntervalCount ?? null,
-    commitmentIntervalId: opportunity?.commitmentIntervalId ?? "",
-    dateStart: opportunity?.dateStart ?? null,
-    dateEnd: opportunity?.dateEnd ?? null,
-    participantLimit: opportunity?.participantLimit ?? null,
-
-    zltoReward: opportunity?.zltoReward ?? null,
-    zltoRewardPool: opportunity?.zltoRewardPool ?? null,
-    yomaReward: opportunity?.yomaReward ?? null,
-    yomaRewardPool: opportunity?.yomaRewardPool ?? null,
-    skills: opportunity?.skills?.map((x) => x.id) ?? [],
-    keywords: opportunity?.keywords ?? [],
-
-    verificationEnabled: opportunity?.verificationEnabled ?? null,
-    // enum value comes as string from server, convert to number
-    verificationMethod: opportunity?.verificationMethod
-      ? VerificationMethod[opportunity.verificationMethod]
-      : null,
-    verificationTypes: opportunity?.verificationTypes ?? [],
-
-    credentialIssuanceEnabled: opportunity?.credentialIssuanceEnabled ?? false,
-    ssiSchemaName: opportunity?.ssiSchemaName ?? null,
-
-    organizationId: id,
-    postAsActive: opportunity?.published ?? false,
-    instructions: opportunity?.instructions ?? "",
-  });
+  const [formData, setFormData] = useState<OpportunityRequestLinkInstantVerify>(
+    {
+      //id: linkInfo?.id ?? null,
+      name: linkInfo?.name ?? "",
+      description: linkInfo?.description ?? "",
+      usagesLimit: linkInfo?.usagesLimit ?? null,
+      distributionList: [], //linkInfo?.distributionList  ?? [],
+      dateEnd: linkInfo?.dateEnd ?? null,
+      includeQRCode: null, //linkInfo?.participantLimit ?? null,
+    },
+  );
 
   const schemaStep1 = z.object({
-    title: z
+    name: z
       .string()
-      .min(1, "Opportunity title is required.")
-      .max(255, "Opportunity title cannot exceed 255 characters."),
+      .min(1, "Name is required.")
+      .max(255, "Name cannot exceed 255 characters."),
     description: z.string().min(1, "Description is required."),
-    typeId: z.string().min(1, "Opportunity type is required."),
-    categories: z
-      .array(z.string(), { required_error: "Category is required" })
-      .min(1, "Category is required."),
-    uRL: z
-      .string()
-      .optional()
-      .refine(
-        (value) => (value ?? "") === "" || REGEX_URL_VALIDATION.test(value!),
-        "Please enter a valid URL - example.com | www.example.com | https://www.example.com",
-      ),
+    opportunityId: z.string().min(1, "Difficulty is required."),
   });
 
   const schemaStep2 = z.object({
-    difficultyId: z.string().min(1, "Difficulty is required."),
-    languages: z
-      .array(z.string(), { required_error: "Language is required" })
-      .min(1, "Language is required."),
-    countries: z
-      .array(z.string(), { required_error: "Country is required" })
-      .min(1, "Country is required."),
-    commitmentIntervalCount: z
-      .union([z.nan(), z.null(), z.number()])
-      .refine((val) => val != null && !isNaN(val), {
-        message: "Time Value is required.",
-      }),
-    commitmentIntervalId: z.string().min(1, "Time frame is required."),
-    dateStart: z
-      .union([z.null(), z.string(), z.date()])
-      .refine((val) => val !== null, {
-        message: "Start Time is required.",
-      }),
-    dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
-    participantLimit: z.union([z.nan(), z.null(), z.number()]).optional(),
-  });
-
-  const schemaStep3 = z.object({
-    zltoReward: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
+    usagesLimit: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
       // eslint-disable-next-line
       return val === null || Number.isNaN(val as any) ? null : val;
     }),
-    zltoRewardPool: z
-      .union([z.nan(), z.null(), z.number()])
-      .transform((val) => {
-        // eslint-disable-next-line
-        return val === null || Number.isNaN(val as any) ? null : val;
-      }),
-    // yomaReward: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
-    //   // eslint-disable-next-line
-    //   return val === null || Number.isNaN(val as any) ? undefined : val;
-    // }),
-    // yomaRewardPool: z
-    //   .union([z.nan(), z.null(), z.number()])
-    //   .transform((val) => {
-    //     // eslint-disable-next-line
-    //     return val === null || Number.isNaN(val as any) ? undefined : val;
-    //   }),
-    skills: z.array(z.string()).optional(),
+    dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
+    includeQRCode: z.boolean(),
+  });
+
+  const schemaStep3 = z.object({
+    distributionList: z.array(z.string().email()).optional(),
   });
 
   const schemaStep4 = z.object({
-    keywords: z.array(z.string()).min(1, "At least 1 keyword is required."),
-  });
-
-  const schemaStep5 = z
-    .object({
-      verificationEnabled: z.union([z.boolean(), z.null()]),
-      verificationMethod: z.union([z.number(), z.null()]).optional(),
-      verificationTypes: z
-        .array(
-          z.object({
-            type: z.any(),
-            description: z
-              .string({
-                required_error: "Description is required",
-              })
-              .optional(),
-          }),
-        )
-        .optional(),
-    })
-    .superRefine((values, ctx) => {
-      // verificationEnabled option is required
-      if (values.verificationEnabled == null) {
-        ctx.addIssue({
-          message: "Please select an option.",
-          code: z.ZodIssueCode.custom,
-          path: ["verificationEnabled"],
-          fatal: true,
-        });
-        return z.NEVER;
-      }
-
-      if (values.verificationEnabled == false) return;
-      if (values?.verificationMethod == VerificationMethod.Automatic) return;
-
-      // verificationTypes are required when VerificationMethod is Manual
-      if (
-        values.verificationTypes == null ||
-        values?.verificationTypes?.length === 0
-      ) {
-        ctx.addIssue({
-          message: "At least one verification type is required.",
-          code: z.ZodIssueCode.custom,
-          path: ["verificationTypes"],
-          fatal: true,
-        });
-        return z.NEVER;
-      }
-
-      for (const file of values.verificationTypes) {
-        if (file?.type && !file.description) {
-          ctx.addIssue({
-            message: "A description for each verification type is required .",
-            code: z.ZodIssueCode.custom,
-            path: ["verificationTypes"],
-          });
-        }
-      }
-    })
-    .transform((values) => {
-      // remove non-selected verification types
-      values.verificationTypes =
-        values.verificationTypes?.filter(
-          (x) => x.type != null && x.type != undefined && x.type != false,
-        ) ?? [];
-      return values;
-    });
-
-  const schemaStep6 = z
-    .object({
-      credentialIssuanceEnabled: z.boolean(),
-      ssiSchemaName: z.union([z.string(), z.null()]),
-    })
-    .superRefine((values, ctx) => {
-      if (values.credentialIssuanceEnabled && !values.ssiSchemaName) {
-        ctx.addIssue({
-          message: "Schema name is required.",
-          code: z.ZodIssueCode.custom,
-          path: ["ssiSchemaName"],
-        });
-      }
-    });
-
-  const schemaStep7 = z.object({
-    postAsActive: z.boolean(),
+    //postAsActive: z.boolean(),
   });
 
   const {
@@ -509,51 +357,51 @@ const LinkDetails: NextPageWithLayout<{
     defaultValues: formData,
   });
 
-  const {
-    handleSubmit: handleSubmitStep5,
-    getValues: getValuesStep5,
-    setValue: setValueStep5,
-    formState: formStateStep5,
-    control: controlStep5,
-    watch: watchStep5,
-    reset: resetStep5,
-  } = useForm({
-    resolver: zodResolver(schemaStep5),
-    defaultValues: formData,
-  });
-  const watchVerificationEnabled = watchStep5("verificationEnabled");
-  const watchVerificationMethod = watchStep5("verificationMethod");
-  const watchVerificationTypes = watchStep5("verificationTypes");
-  const { append, remove } = useFieldArray({
-    control: controlStep5,
-    name: "verificationTypes",
-  });
+  // const {
+  //   handleSubmit: handleSubmitStep5,
+  //   getValues: getValuesStep5,
+  //   setValue: setValueStep5,
+  //   formState: formStateStep5,
+  //   control: controlStep5,
+  //   watch: watchStep5,
+  //   reset: resetStep5,
+  // } = useForm({
+  //   resolver: zodResolver(schemaStep5),
+  //   defaultValues: formData,
+  // });
+  // const watchVerificationEnabled = watchStep5("verificationEnabled");
+  // const watchVerificationMethod = watchStep5("verificationMethod");
+  // const watchVerificationTypes = watchStep5("verificationTypes");
+  // const { append, remove } = useFieldArray({
+  //   control: controlStep5,
+  //   name: "verificationTypes",
+  // });
 
-  const {
-    register: registerStep6,
-    handleSubmit: handleSubmitStep6,
-    formState: formStateStep6,
-    control: controlStep6,
-    watch: watchStep6,
-    reset: resetStep6,
-  } = useForm({
-    resolver: zodResolver(schemaStep6),
-    defaultValues: formData,
-  });
-  const watchCredentialIssuanceEnabled = watchStep6(
-    "credentialIssuanceEnabled",
-  );
-  const watcSSISchemaName = watchStep6("ssiSchemaName");
+  // const {
+  //   register: registerStep6,
+  //   handleSubmit: handleSubmitStep6,
+  //   formState: formStateStep6,
+  //   control: controlStep6,
+  //   watch: watchStep6,
+  //   reset: resetStep6,
+  // } = useForm({
+  //   resolver: zodResolver(schemaStep6),
+  //   defaultValues: formData,
+  // });
+  // const watchCredentialIssuanceEnabled = watchStep6(
+  //   "credentialIssuanceEnabled",
+  // );
+  // const watcSSISchemaName = watchStep6("ssiSchemaName");
 
-  const {
-    register: registerStep7,
-    handleSubmit: handleSubmitStep7,
-    formState: formStateStep7,
-    reset: resetStep7,
-  } = useForm({
-    resolver: zodResolver(schemaStep7),
-    defaultValues: formData,
-  });
+  // const {
+  //   register: registerStep7,
+  //   handleSubmit: handleSubmitStep7,
+  //   formState: formStateStep7,
+  //   reset: resetStep7,
+  // } = useForm({
+  //   resolver: zodResolver(schemaStep7),
+  //   defaultValues: formData,
+  // });
 
   // scroll to top on step change
   useEffect(() => {
@@ -561,11 +409,11 @@ const LinkDetails: NextPageWithLayout<{
   }, [step]);
 
   // on schema select, show the schema attributes
-  const schemaAttributes = useMemo(() => {
-    if (watcSSISchemaName) {
-      return schemas?.find((x) => x.name === watcSSISchemaName)?.entities ?? [];
-    }
-  }, [schemas, watcSSISchemaName]);
+  // const schemaAttributes = useMemo(() => {
+  //   if (watcSSISchemaName) {
+  //     return schemas?.find((x) => x.name === watcSSISchemaName)?.entities ?? [];
+  //   }
+  // }, [schemas, watcSSISchemaName]);
 
   // memo for dirty fields
   // because the "isDirty" property on useForm is not working as expected
@@ -585,54 +433,54 @@ const LinkDetails: NextPageWithLayout<{
     () => Object.keys(formStateStep4.dirtyFields).length > 0,
     [formStateStep4],
   );
-  const isDirtyStep5 = useMemo(
-    () => Object.keys(formStateStep5.dirtyFields).length > 0,
-    [formStateStep5],
-  );
-  const isDirtyStep6 = useMemo(
-    () => Object.keys(formStateStep6.dirtyFields).length > 0,
-    [formStateStep6],
-  );
-  const isDirtyStep7 = useMemo(
-    () => Object.keys(formStateStep7.dirtyFields).length > 0,
-    [formStateStep7],
-  );
+  // const isDirtyStep5 = useMemo(
+  //   () => Object.keys(formStateStep5.dirtyFields).length > 0,
+  //   [formStateStep5],
+  // );
+  // const isDirtyStep6 = useMemo(
+  //   () => Object.keys(formStateStep6.dirtyFields).length > 0,
+  //   [formStateStep6],
+  // );
+  // const isDirtyStep7 = useMemo(
+  //   () => Object.keys(formStateStep7.dirtyFields).length > 0,
+  //   [formStateStep7],
+  // );
 
   //* SKILLS
   // cache skills for name lookups
-  const [cacheSkills, setCacheSkills] = useState<Skill[]>([]);
+  // const [cacheSkills, setCacheSkills] = useState<Skill[]>([]);
 
-  // popuplate the cache with the skills from the opportunity
-  useEffect(() => {
-    if (opportunity?.skills) {
-      setCacheSkills((prev) => [...prev, ...(opportunity.skills ?? [])]);
-    }
-  }, [opportunity?.skills, setCacheSkills]);
+  // // popuplate the cache with the skills from the opportunity
+  // useEffect(() => {
+  //   if (linkInfo?.skills) {
+  //     setCacheSkills((prev) => [...prev, ...(opportunity.skills ?? [])]);
+  //   }
+  // }, [linkInfo?.skills, setCacheSkills]);
 
   // load data asynchronously for the skills dropdown
   // debounce is used to prevent the API from being called too frequently
-  const loadSkills = debounce(
-    (inputValue: string, callback: (options: any) => void) => {
-      getSkills({
-        nameContains: (inputValue ?? []).length > 2 ? inputValue : null,
-        pageNumber: 1,
-        pageSize: PAGE_SIZE_MEDIUM,
-      }).then((data) => {
-        const options = data.items.map((item) => ({
-          value: item.id,
-          label: item.name,
-        }));
-        callback(options);
-        // add to cache
-        data.items.forEach((item) => {
-          if (!cacheSkills.some((x) => x.id === item.id)) {
-            setCacheSkills((prev) => [...prev, item]);
-          }
-        });
-      });
-    },
-    1000,
-  );
+  // const loadSkills = debounce(
+  //   (inputValue: string, callback: (options: any) => void) => {
+  //     getSkills({
+  //       nameContains: (inputValue ?? []).length > 2 ? inputValue : null,
+  //       pageNumber: 1,
+  //       pageSize: PAGE_SIZE_MEDIUM,
+  //     }).then((data) => {
+  //       const options = data.items.map((item) => ({
+  //         value: item.id,
+  //         label: item.name,
+  //       }));
+  //       callback(options);
+  //       // add to cache
+  //       data.items.forEach((item) => {
+  //         if (!cacheSkills.some((x) => x.id === item.id)) {
+  //           setCacheSkills((prev) => [...prev, item]);
+  //         }
+  //       });
+  //     });
+  //   },
+  //   1000,
+  // );
 
   //* SAVE CHANGE DIALOG
   const onClick_Menu = useCallback(
@@ -642,9 +490,9 @@ const LinkDetails: NextPageWithLayout<{
       else if (step === 2 && isDirtyStep2) isDirtyStep = true;
       else if (step === 3 && isDirtyStep3) isDirtyStep = true;
       else if (step === 4 && isDirtyStep4) isDirtyStep = true;
-      else if (step === 5 && isDirtyStep5) isDirtyStep = true;
-      else if (step === 6 && isDirtyStep6) isDirtyStep = true;
-      else if (step === 7 && isDirtyStep7) isDirtyStep = true;
+      // else if (step === 5 && isDirtyStep5) isDirtyStep = true;
+      // else if (step === 6 && isDirtyStep6) isDirtyStep = true;
+      // else if (step === 7 && isDirtyStep7) isDirtyStep = true;
 
       if (isDirtyStep) {
         setLastStepBeforeSaveChangesDialog(nextStep);
@@ -659,9 +507,9 @@ const LinkDetails: NextPageWithLayout<{
       isDirtyStep2,
       isDirtyStep3,
       isDirtyStep4,
-      isDirtyStep5,
-      isDirtyStep6,
-      isDirtyStep7,
+      // isDirtyStep5,
+      // isDirtyStep6,
+      // isDirtyStep7,
       step,
       setStep,
       setSaveChangesDialogVisible,
@@ -674,21 +522,21 @@ const LinkDetails: NextPageWithLayout<{
     resetStep2(formData);
     resetStep3(formData);
     resetStep4(formData);
-    resetStep5(formData);
-    resetStep6(formData);
-    resetStep7(formData);
+    // resetStep5(formData);
+    // resetStep6(formData);
+    // resetStep7(formData);
     setSaveChangesDialogVisible(false);
     lastStepBeforeSaveChangesDialog && setStep(lastStepBeforeSaveChangesDialog);
     setLastStepBeforeSaveChangesDialog(null);
   }, [
-    resetStep1,
     formData,
+    resetStep1,
     resetStep2,
     resetStep3,
     resetStep4,
-    resetStep5,
-    resetStep6,
-    resetStep7,
+    // resetStep5,
+    // resetStep6,
+    // resetStep7,
     setSaveChangesDialogVisible,
     lastStepBeforeSaveChangesDialog,
     setLastStepBeforeSaveChangesDialog,
@@ -714,33 +562,31 @@ const LinkDetails: NextPageWithLayout<{
       formRef4?.current?.dispatchEvent(
         new Event("submit", { cancelable: true, bubbles: true }),
       );
-    } else if (step == 5) {
-      formRef5?.current?.dispatchEvent(
-        new Event("submit", { cancelable: true, bubbles: true }),
-      );
-    } else if (step == 6) {
-      formRef6?.current?.dispatchEvent(
-        new Event("submit", { cancelable: true, bubbles: true }),
-      );
-    } else if (step == 7) {
-      formRef7?.current?.dispatchEvent(
-        new Event("submit", { cancelable: true, bubbles: true }),
-      );
     }
+    // else if (step == 5) {
+    //   formRef5?.current?.dispatchEvent(
+    //     new Event("submit", { cancelable: true, bubbles: true }),
+    //   );
+    // } else if (step == 6) {
+    //   formRef6?.current?.dispatchEvent(
+    //     new Event("submit", { cancelable: true, bubbles: true }),
+    //   );
+    // } else if (step == 7) {
+    //   formRef7?.current?.dispatchEvent(
+    //     new Event("submit", { cancelable: true, bubbles: true }),
+    //   );
+    // }
   }, [
     formRef1,
     formRef2,
     formRef3,
     formRef4,
-    formRef5,
-    formRef6,
-    formRef7,
     setSaveChangesDialogVisible,
     step,
   ]);
 
   const onSubmit = useCallback(
-    async (data: OpportunityRequestBase) => {
+    async (data: OpportunityRequestLinkInstantVerify) => {
       setIsLoading(true);
 
       try {
@@ -750,39 +596,36 @@ const LinkDetails: NextPageWithLayout<{
         toast.dismiss();
 
         //  convert dates to string in format "YYYY-MM-DD"
-        data.dateStart = data.dateStart
-          ? moment(data.dateStart).format(DATE_FORMAT_SYSTEM)
-          : null;
         data.dateEnd = data.dateEnd
           ? moment(data.dateEnd).format(DATE_FORMAT_SYSTEM)
           : null;
 
         // update api
-        if (opportunity) {
-          await updateOpportunity(data);
-          message = "Opportunity updated";
-        } else {
-          await createOpportunity(data);
-          message = "Opportunity created";
-        }
+        // if (opportunity) {
+        //   await updateOpportunity(data);
+        //   message = "Opportunity updated";
+        // } else {
+        await createLinkInstantVerify(id, data);
+        message = "Link created";
+        //}
         toast(message, {
           type: "success",
-          toastId: "opportunity",
+          toastId: "link",
         });
         console.log(message); // e2e
 
         // invalidate queries
-        await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-        await queryClient.invalidateQueries({
-          queryKey: ["opportunities", id],
-        });
-        await queryClient.invalidateQueries({
-          queryKey: ["opportunity", opportunityId],
-        });
+        // await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+        // await queryClient.invalidateQueries({
+        //   queryKey: ["opportunities", id],
+        // });
+        // await queryClient.invalidateQueries({
+        //   queryKey: ["opportunity", opportunityId],
+        // });
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
-          toastId: "opportunity",
+          toastId: "link",
           autoClose: false,
           icon: false,
         });
@@ -796,10 +639,9 @@ const LinkDetails: NextPageWithLayout<{
       setIsLoading(false);
 
       // redirect to list after create
-      if (opportunityId === "create")
-        void router.push(`/organisations/${id}/opportunities`);
+      if (linkId === "create") void router.push(`/organisations/${id}/links`);
     },
-    [setIsLoading, id, opportunityId, opportunity, queryClient, router],
+    [setIsLoading, id, queryClient, router],
   );
 
   // form submission handler
@@ -808,44 +650,40 @@ const LinkDetails: NextPageWithLayout<{
       // set form data
       const model = {
         ...formData,
-        ...(data as OpportunityRequestBase),
+        ...(data as OpportunityRequestLinkInstantVerify),
       };
 
       setFormData(model);
 
-      if (opportunityId === "create") {
+      if (linkId === "create") {
         // submit on last page when creating new opportunity
-        if (step === 8) {
+        if (step === 5) {
           await onSubmit(model);
 
           // 📊 GOOGLE ANALYTICS: track event
           trackGAEvent(
-            GA_CATEGORY_OPPORTUNITY,
-            GA_ACTION_OPPORTUNITY_CREATE,
-            `Created Opportunity: ${model.title}`,
+            GA_CATEGORY_OPPORTUNITY_LINK,
+            GA_ACTION_OPPORTUNITY_LINK_CREATE,
+            `Created Link: ${model.name}`,
           );
         }
         // move to next step
         else setStep(step);
       } else {
         // submit on each page when updating opportunity
-        await onSubmit(model);
-
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY,
-          GA_ACTION_OPPORTUNITY_UPDATE,
-          `Updated Opportunity: ${model.title}`,
-        );
+        // await onSubmit(model);
+        // // 📊 GOOGLE ANALYTICS: track event
+        // trackGAEvent(
+        //   GA_CATEGORY_OPPORTUNITY_LINK,
+        //   GA_ACTION_OPPORTUNITY_LINK_CREATE,
+        //   `Updated Opportunity: ${model.name}`,
+        // );
       }
 
       resetStep1(model);
       resetStep2(model);
       resetStep3(model);
       resetStep4(model);
-      resetStep5(model);
-      resetStep6(model);
-      resetStep7(model);
 
       // go to last step before save changes dialog
       if (lastStepBeforeSaveChangesDialog)
@@ -854,7 +692,7 @@ const LinkDetails: NextPageWithLayout<{
       setLastStepBeforeSaveChangesDialog(null);
     },
     [
-      opportunityId,
+      linkId,
       setStep,
       formData,
       setFormData,
@@ -865,17 +703,14 @@ const LinkDetails: NextPageWithLayout<{
       resetStep2,
       resetStep3,
       resetStep4,
-      resetStep5,
-      resetStep6,
-      resetStep7,
     ],
   );
 
-  useEffect(() => {
-    if ((opportunity?.status as any) == "Expired") {
-      setOppExpiredModalVisible(true);
-    }
-  }, [opportunity?.status, setOppExpiredModalVisible]);
+  // useEffect(() => {
+  //   if ((linkInfo?.status as any) == "Expired") {
+  //     setOppExpiredModalVisible(true);
+  //   }
+  // }, [linkInfo?.status, setOppExpiredModalVisible]);
 
   const updateStatus = useCallback(
     async (status: Status) => {
@@ -886,24 +721,24 @@ const LinkDetails: NextPageWithLayout<{
         await updateOpportunityStatus(opportunityId, status);
 
         // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY,
-          GA_ACTION_OPPORTUNITY_UPDATE,
-          `Opportunity Status Changed to ${status} for Opportunity ID: ${opportunityId}`,
-        );
+        // trackGAEvent(
+        //   GA_CATEGORY_OPPORTUNITY_LINK,
+        //   GA_ACTION_OPPORTUNITY_LINK_UPDATE,
+        //   `Opportunity Status Changed to ${status} for Opportunity ID: ${opportunityId}`,
+        // );
 
         // invalidate queries
-        await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-        await queryClient.invalidateQueries({
-          queryKey: ["opportunity", opportunityId],
-        });
+        // await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+        // await queryClient.invalidateQueries({
+        //   queryKey: ["opportunity", opportunityId],
+        // });
 
-        toast.success("Opportunity status updated");
-        setOppExpiredModalVisible(false);
+        toast.success("Link status updated");
+        //setOppExpiredModalVisible(false);
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
-          toastId: "opportunity",
+          toastId: "link",
           autoClose: false,
           icon: false,
         });
@@ -912,11 +747,11 @@ const LinkDetails: NextPageWithLayout<{
 
       return;
     },
-    [opportunityId, queryClient],
+    [linkId, queryClient],
   );
 
   // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(oppExpiredModalVisible);
+  //useDisableBodyScroll(oppExpiredModalVisible);
   useDisableBodyScroll(saveChangesDialogVisible);
 
   if (error) {
@@ -932,7 +767,7 @@ const LinkDetails: NextPageWithLayout<{
       <PageBackground />
 
       {/* OPPORTUNITY EXPIRED MODAL */}
-      <ReactModal
+      {/* <ReactModal
         isOpen={oppExpiredModalVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
@@ -1000,7 +835,7 @@ const LinkDetails: NextPageWithLayout<{
             </div>
           </div>
         </div>
-      </ReactModal>
+      </ReactModal> */}
 
       {/* SAVE CHANGES DIALOG */}
       <ReactModal
@@ -1073,16 +908,16 @@ const LinkDetails: NextPageWithLayout<{
             className="flex items-center justify-center font-bold hover:text-gray"
             href={getSafeUrl(
               returnUrl?.toString(),
-              `/organisations/${id}/opportunities`,
+              `/organisations/${id}/links`,
             )}
           >
             <IoMdArrowRoundBack className="bg-theme mr-2 inline-block h-4 w-4" />
-            Opportunities
+            Links
           </Link>
 
           <div className="mx-2 font-bold">|</div>
 
-          {opportunityId == "create" ? (
+          {linkId == "create" ? (
             "Create"
           ) : (
             <>
@@ -1094,7 +929,7 @@ const LinkDetails: NextPageWithLayout<{
                     : ""
                 }`}
               >
-                {opportunity?.title}
+                {linkInfo?.title}
               </Link>
               <div className="mx-2 font-bold">|</div>
               <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
@@ -1111,23 +946,23 @@ const LinkDetails: NextPageWithLayout<{
             {/* LOGO */}
             <div className="flex h-20 min-w-max items-center justify-center">
               {/* NO IMAGE */}
-              {!opportunity?.organizationLogoURL && (
+              {!linkInfo?.organizationLogoURL && (
                 <IoMdImage className="h-10 w-10 text-white" />
               )}
               {/* EXISTING IMAGE */}
-              {opportunity?.organizationLogoURL && (
+              {linkInfo?.organizationLogoURL && (
                 <div className="mr-4 h-fit">
                   <AvatarImage
                     alt="company logo"
                     size={40}
-                    icon={opportunity?.organizationLogoURL}
+                    icon={linkInfo?.organizationLogoURL}
                   />
                 </div>
               )}
             </div>
             {/* TITLE */}
             <h3 className="overflow-hidden text-ellipsis whitespace-nowrap font-bold text-white">
-              {opportunity?.title}
+              {linkInfo?.title}
             </h3>
           </div>
         )}
@@ -3205,14 +3040,14 @@ const LinkDetails: NextPageWithLayout<{
   );
 };
 
-OpportunityDetails.getLayout = function getLayout(page: ReactElement) {
+LinkDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-OpportunityDetails.theme = function getTheme(page: ReactElement) {
+LinkDetails.theme = function getTheme(page: ReactElement) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };
 
-export default OpportunityDetails;
+export default LinkDetails;

@@ -312,6 +312,12 @@ export enum LinkStatus {
   LimitReached,
 }
 
+//NB: api
+export enum LinkType {
+  Opportunity,
+  Job,
+}
+
 export interface OpportunityRequestLinkInstantVerify {
   name: string | null;
   description: string | null;
@@ -319,4 +325,18 @@ export interface OpportunityRequestLinkInstantVerify {
   distributionList: string[] | null;
   dateEnd: string | null;
   includeQRCode: boolean | null;
+  typeId: LinkType | null | string; // NB: api
+  opportunityId: string | null ;//NB: api
+}
+
+export interface OpportunitySearchFilterLinkInstantVerify
+  extends PaginationFilter {
+  statuses: LinkStatus[] | null;
+  opportunities: string[] | null;
+  organizations: string[] | null;
+}
+
+export interface OpportunitySearchResultLinkInstantVerify {
+  totalCount: number | null;
+  items: LinkInfo[];
 }

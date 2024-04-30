@@ -19,6 +19,8 @@ import type {
   OpportunitySearchFilterCriteria,
   LinkInfo,
   OpportunityRequestLinkInstantVerify,
+  OpportunitySearchFilterLinkInstantVerify,
+  OpportunitySearchResultLinkInstantVerify,
 } from "../models/opportunity";
 import type { Country, Language } from "../models/lookups";
 import type { OrganizationInfo } from "../models/organisation";
@@ -352,7 +354,7 @@ export const createLinkInstantVerify = async (
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.post<LinkInfo>(
-    `/${id}/link/instantVerify`,
+    `/opportunity/${id}/link/instantVerify`,
     request,
   );
   return data;
@@ -366,19 +368,23 @@ export const getLinkInstantVerifyById = async (
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.get<LinkInfo>(
-    `/link/${linkId}/instantVerify`,
+    `/opportunity/link/${linkId}/instantVerify`,
     { params: { includeQRCode } },
   );
   return data;
 };
 
-export const listLinksInstantVerify = async (
-  id: string,
+export const searchLinkInstantVerify = async (
+  filter: OpportunitySearchFilterLinkInstantVerify,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
-): Promise<LinkInfo[]> => {
+): Promise<OpportunitySearchResultLinkInstantVerify> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
-  const { data } = await instance.get<LinkInfo[]>(`/${id}/link/instantVerify`);
+  const { data } =
+    await instance.post<OpportunitySearchResultLinkInstantVerify>(
+      `/opportunity/link/instantVerify/search`,
+      filter,
+    );
   return data;
 };
 
@@ -389,7 +395,7 @@ export const activateLinkInstantVerify = async (
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.patch<LinkInfo[]>(
-    `/link/${linkId}/instantVerify/activate`,
+    `/opportunity/link/${linkId}/instantVerify/activate`,
   );
   return data;
 };
@@ -401,7 +407,7 @@ export const deactivateLinkInstantVerify = async (
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.patch<LinkInfo>(
-    `/link/${linkId}/instantVerify/deactivate`,
+    `/opportunity/link/${linkId}/instantVerify/deactivate`,
   );
   return data;
 };

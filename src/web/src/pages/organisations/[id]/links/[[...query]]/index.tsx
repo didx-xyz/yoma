@@ -6,12 +6,14 @@ import { useRouter } from "next/router";
 import { useCallback, type ReactElement } from "react";
 import {
   getOpportunitiesAdmin,
-  listLinksInstantVerify,
+  searchLinkInstantVerify,
 } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import { authOptions } from "~/server/auth";
 import {
   LinkInfo,
+  LinkStatus,
+  OpportunitySearchResultLinkInstantVerify,
   Status,
   type OpportunitySearchResults,
 } from "~/api/models/opportunity";
@@ -35,10 +37,11 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import iconZlto from "public/images/icon-zlto.svg";
 import Image from "next/image";
+import Opportunities from "~/pages/opportunities/[[...query]]";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
-  query?: string;
+  opportunities?: string;
   page?: string;
   status?: string;
 }
@@ -46,7 +49,7 @@ interface IParams extends ParsedUrlQuery {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
-  const { query, page, status, returnUrl } = context.query;
+  const { opportunities, page, status, returnUrl } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
   const queryClient = new QueryClient(config);
   let errorCode = null;
@@ -65,44 +68,39 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   try {
     // 👇 prefetch queries on server
-    const data = await listLinksInstantVerify(
-      id,
-      /*{
+    const data = await searchLinkInstantVerify(
+      {
         organizations: [id],
+        opportunities: [],
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
-        startDate: null,
-        endDate: null,
         statuses:
           status === "active"
-            ? [Status.Active]
+            ? [LinkStatus.Active]
             : status === "inactive"
-              ? [Status.Inactive]
+              ? [LinkStatus.Inactive]
               : status === "expired"
-                ? [Status.Expired]
-                : status === "deleted"
-                  ? [Status.Deleted]
+                ? [LinkStatus.Expired]
+                : status === "limitReached"
+                  ? [LinkStatus.LimitReached]
                   : [
-                      Status.Active,
-                      Status.Expired,
-                      Status.Inactive,
-                      Status.Deleted,
+                      LinkStatus.Active,
+                      LinkStatus.Expired,
+                      LinkStatus.Inactive,
+                      LinkStatus.LimitReached,
                     ],
-        types: null,
-        categories: null,
-        languages: null,
-        countries: null,
-        valueContains: query?.toString() ?? null,
-        commitmentIntervals: null,
-        zltoRewardRanges: null,
-      }*/ context,
+      },
+      context,
     );
 
     await queryClient.prefetchQuery({
-      queryKey: ["Links", id, query, page, status],
+      queryKey: [
+        `Links_${id}_${opportunities?.toString()}_${page?.toString()}_${status?.toString()}`,
+      ],
       queryFn: () => data,
     });
   } catch (error) {
+    console.error(error);
     if (axios.isAxiosError(error) && error.response?.status) {
       if (error.response.status === 404) {
         return {
@@ -117,7 +115,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       dehydratedState: dehydrate(queryClient),
       id: id,
-      query: query ?? null,
+      opportunities: opportunities ?? null,
       page: page ?? null,
       status: status ?? null,
       theme: theme,
@@ -129,123 +127,75 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 const Links: NextPageWithLayout<{
   id: string;
-  query?: string;
+  opportunities?: string;
   page?: string;
   theme: string;
   error?: number;
   status?: string;
   returnUrl?: string;
-}> = ({ id, query, page, status, error, returnUrl }) => {
+}> = ({ id, opportunities, page, status, error, returnUrl }) => {
   const router = useRouter();
   const currentOrganisationInactive = useAtomValue(
     currentOrganisationInactiveAtom,
   );
 
   // 👇 use prefetched queries from server
-  const { data: links } = useQuery<LinkInfo[]>({
+  const { data: links } = useQuery<OpportunitySearchResultLinkInstantVerify>({
     queryKey: [
-      `Links_${id}_${query?.toString()}_${page?.toString()}_${status?.toString()}`,
+      `Links_${id}_${opportunities?.toString()}_${page?.toString()}_${status?.toString()}`,
     ],
     queryFn: () =>
-      listLinksInstantVerify(
-        id,
-        /*{
+      searchLinkInstantVerify({
         organizations: [id],
+        opportunities: [],
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
-        startDate: null,
-        endDate: null,
         statuses:
           status === "active"
-            ? [Status.Active]
+            ? [LinkStatus.Active]
             : status === "inactive"
-              ? [Status.Inactive]
+              ? [LinkStatus.Inactive]
               : status === "expired"
-                ? [Status.Expired]
-                : status === "deleted"
-                  ? [Status.Deleted]
+                ? [LinkStatus.Expired]
+                : status === "limitReached"
+                  ? [LinkStatus.LimitReached]
                   : [
-                      Status.Active,
-                      Status.Expired,
-                      Status.Inactive,
-                      Status.Deleted,
+                      LinkStatus.Active,
+                      LinkStatus.Expired,
+                      LinkStatus.Inactive,
+                      LinkStatus.LimitReached,
                     ],
-        types: null,
-        categories: null,
-        languages: null,
-        countries: null,
-        valueContains: query?.toString() ?? null,
-        commitmentIntervals: null,
-        zltoRewardRanges: null,
-      }*/
-      ),
+      }),
     enabled: !error,
   });
 
-  // const { data: opportunities } = useQuery<OpportunitySearchResults>({
-  //   queryKey: [
-  //     `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}_${status?.toString()}`,
-  //   ],
-  //   queryFn: () =>
-  //     listLinksInstantVerify({
-  //       organizations: [id],
-  //       pageNumber: page ? parseInt(page.toString()) : 1,
-  //       pageSize: PAGE_SIZE,
-  //       startDate: null,
-  //       endDate: null,
-  //       statuses:
-  //         status === "active"
-  //           ? [Status.Active]
-  //           : status === "inactive"
-  //             ? [Status.Inactive]
-  //             : status === "expired"
-  //               ? [Status.Expired]
-  //               : status === "deleted"
-  //                 ? [Status.Deleted]
-  //                 : [
-  //                     Status.Active,
-  //                     Status.Expired,
-  //                     Status.Inactive,
-  //                     Status.Deleted,
-  //                   ],
-  //       types: null,
-  //       categories: null,
-  //       languages: null,
-  //       countries: null,
-  //       valueContains: query?.toString() ?? null,
-  //       commitmentIntervals: null,
-  //       zltoRewardRanges: null,
-  //     }),
-  //   enabled: !error,
-  // });
-
-  const onSearch = useCallback(
-    (query: string) => {
-      void router.push({
-        pathname: `/organisations/${id}/links`,
-        query: {
-          query:
-            query && query.length > 2 ? encodeURIComponent(query) : undefined,
-          status: status,
-        },
-      });
-    },
-    [router, id, status],
-  );
+  // const onSearch = useCallback(
+  //   (query: string) => {
+  //     void router.push({
+  //       pathname: `/organisations/${id}/links`,
+  //       query: {
+  //         query:
+  //           query && query.length > 2 ? encodeURIComponent(query) : undefined,
+  //         status: status,
+  //       },
+  //     });
+  //   },
+  //   [router, id, status],
+  // );
 
   // 🔔 pager change event
   const handlePagerChange = useCallback(
     (value: number) => {
       // redirect
       void router.push({
-        pathname: `/organisations/${id}/opportunities`,
-        query: { query: query, page: value, status: status },
+        pathname: `/organisations/${id}/links`,
+        query: { opportunities: opportunities, page: value, status: status },
       });
 
       // reset scroll position
       window.scrollTo(0, 0);
     },
-    [query, id, router, status],
+    [opportunities, id, router, status],
   );
 
   if (error) {
@@ -329,6 +279,19 @@ const Links: NextPageWithLayout<{
                         Expired
                       </Link>
                     </li>
+                    <li className="w-1/5 md:w-24">
+                      <Link
+                        href={`/organisations/${id}/links?status=limitReached`}
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                          status === "limitReached"
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        Limit Reached
+                      </Link>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -337,7 +300,9 @@ const Links: NextPageWithLayout<{
 
           {/* SEARCH INPUT */}
           <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
-            <SearchInput defaultValue={query} onSearch={onSearch} />
+            {/* <SearchInput defaultValue={query} onSearch={onSearch} /> */}
+
+            {/* TODO: opportunities filter */}
 
             {currentOrganisationInactive ? (
               <span className="bg-theme flex w-56 cursor-not-allowed flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-75">
@@ -360,7 +325,7 @@ const Links: NextPageWithLayout<{
 
         <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
           {/* NO ROWS */}
-          {links && links.length === 0 && !query && (
+          {links && links.items?.length === 0 && !opportunities && (
             <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
               <NoRowsMessage
                 title={"Welcome to Links!"}
