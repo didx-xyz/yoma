@@ -126,17 +126,19 @@ namespace Yoma.Core.Api.Controllers
     #region Private Members
     private async Task UpdateUserProfile(WebhookRequestEventType type, KeycloakWebhookRequest payload)
     {
-      if (string.IsNullOrEmpty(payload?.Details?.Username))
+      if (string.IsNullOrEmpty(payload.Details?.Username))
       {
         _logger.LogError("Webhook payload contains no associated Keycloak username");
         return;
       }
 
-      _logger.LogInformation("Trying to find the Keycloak user with username '{username}'", payload?.Details?.Username);
-      var kcUser = await _identityProviderClient.GetUser(payload?.Details?.Username);
+      var username = payload.Details?.Username;
+
+      _logger.LogInformation("Trying to find the Keycloak user with username '{username}'", username);
+      var kcUser = await _identityProviderClient.GetUser(username);
       if (kcUser == null)
       {
-        _logger.LogError("Failed to retrieve the Keycloak user with username '{username}'", payload?.Details.Username);
+        _logger.LogError("Failed to retrieve the Keycloak user with username '{username}'", username);
         return;
       }
 
@@ -221,20 +223,12 @@ namespace Yoma.Core.Api.Controllers
             return;
           }
 
-          //updated here after email verification a login event is raised
+          //after email verification a login event is raised
           userRequest.EmailConfirmed = kcUser.EmailVerified;
           userRequest.DateLastLogin = DateTimeOffset.UtcNow;
 
-          try
-          {
-            _logger.LogInformation("Creating or scheduling creation of rewards wallet for user with '{email}'", userRequest.Email);
-            await _walletService.CreateWalletOrScheduleCreation(userRequest.Id);
-            _logger.LogInformation("Rewards wallet created or creation scheduled for user with '{email}'", userRequest.Email);
-          }
-          catch (Exception ex)
-          {
-            _logger.LogError(ex, "Failed to create or schedule creation of rewards wallet for user with username '{email}'", userRequest.Email);
-          }
+          await CreateWalletOrScheduleCreation(userRequest);
+          await CreateLoginHistoryLog(payload, userRequest);  
 
           break;
 
@@ -246,6 +240,42 @@ namespace Yoma.Core.Api.Controllers
       userRequest.ExternalId = kcUser.Id;
 
       await _userService.Upsert(userRequest);
+    }
+
+    private async Task CreateLoginHistoryLog(KeycloakWebhookRequest payload, UserRequest userRequest)
+    {
+      try
+      {
+        _logger.LogInformation("Tracking login for user with email '{email}'", userRequest.Email);
+        await _userService.TrackLogin(new UserRequestLoginEvent
+        {
+          UserId = userRequest.Id,
+          ClientId = payload.ClientId,
+          IpAddress = payload.IpAddress,
+          AuthMethod = payload.Details?.Auth_method,
+          AuthType = payload.Details?.Auth_type
+        });
+
+        _logger.LogInformation("Tracked login for user with email '{email}'", userRequest.Email);
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to track login for user with email '{email}'", userRequest.Email);
+      }
+    }
+
+    private async Task CreateWalletOrScheduleCreation(UserRequest userRequest)
+    {
+      try
+      {
+        _logger.LogInformation("Creating or scheduling creation of rewards wallet for user with '{email}'", userRequest.Email);
+        await _walletService.CreateWalletOrScheduleCreation(userRequest.Id);
+        _logger.LogInformation("Rewards wallet created or creation scheduled for user with '{email}'", userRequest.Email);
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to create or schedule creation of rewards wallet for user with username '{email}'", userRequest.Email);
+      }
     }
   }
   #endregion
