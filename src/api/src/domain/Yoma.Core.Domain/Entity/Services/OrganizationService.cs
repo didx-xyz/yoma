@@ -237,6 +237,10 @@ namespace Yoma.Core.Domain.Entity.Services
       if (existingByNameHashValue != null)
         throw new ValidationException($"{nameof(Organization)} with the specified name '{request.Name}' was previously used.  Please choose a different name");
 
+      var ssoClientSpecified = !string.IsNullOrEmpty(request.SSOClientIdOutbound) || !string.IsNullOrEmpty(request.SSOClientIdInbound);
+      if (ssoClientSpecified && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+        throw new SecurityException("Unauthorized");
+
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var result = new Organization
@@ -260,7 +264,9 @@ namespace Yoma.Core.Domain.Entity.Services
         StatusId = _organizationStatusService.GetByName(OrganizationStatus.Inactive.ToString()).Id, //new organization defaults to inactive / unapproved
         Status = OrganizationStatus.Inactive,
         CreatedByUserId = user.Id,
-        ModifiedByUserId = user.Id
+        ModifiedByUserId = user.Id,
+        SSOClientIdOutbound = request.SSOClientIdOutbound,
+        SSOClientIdInbound = request.SSOClientIdInbound
       };
 
       var blobObjects = new List<BlobObject>();
@@ -359,6 +365,11 @@ namespace Yoma.Core.Domain.Entity.Services
       if (existingByNameHashValue != null && result.Id != existingByNameHashValue.Id)
         throw new ValidationException($"{nameof(Organization)} with the specified name '{request.Name}' was previously used. Please choose a different name");
 
+      var ssoClientUpdated = !string.Equals(result.SSOClientIdOutbound, request.SSOClientIdOutbound, StringComparison.InvariantCultureIgnoreCase);
+      if (!ssoClientUpdated) ssoClientUpdated = !string.Equals(result.SSOClientIdInbound, request.SSOClientIdInbound, StringComparison.InvariantCultureIgnoreCase);
+      if (ssoClientUpdated && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+        throw new SecurityException("Unauthorized");
+
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       result.Name = request.Name.NormalizeTrim();
@@ -377,6 +388,8 @@ namespace Yoma.Core.Domain.Entity.Services
       result.Tagline = request.Tagline;
       result.Biography = request.Biography;
       result.ModifiedByUserId = user.Id;
+      result.SSOClientIdOutbound = request.SSOClientIdOutbound;
+      result.SSOClientIdInbound = request.SSOClientIdInbound;
 
       ValidateUpdatable(result);
 
