@@ -9,11 +9,13 @@ namespace Yoma.Core.Domain.ActionLink.Extensions
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
 
-      return new LinkInfo
+      var result = new LinkInfo
       {
         Id = value.Id,
         Name = value.Name,
         Description = value.Description,
+        EntityType = Enum.Parse<LinkEntityType>(value.EntityType),
+        Action = Enum.Parse<LinkAction>(value.Action),
         StatusId = value.StatusId,
         Status = value.Status,
         URL = value.URL,
@@ -26,6 +28,22 @@ namespace Yoma.Core.Domain.ActionLink.Extensions
         DateCreated = value.DateCreated,
         DateModified = value.DateModified
       };
+
+      switch (result.EntityType)
+      {
+        case LinkEntityType.Opportunity:
+          if (!value.OpportunityId.HasValue || string.IsNullOrEmpty(value.OpportunityTitle))
+            throw new InvalidOperationException("Opportunity details expected");
+
+          result.EntityId = value.OpportunityId.Value;
+          result.EntityTitle = value.OpportunityTitle;
+          break;
+
+        default:
+          throw new InvalidOperationException($"Invalid / unsupported entity type of '{result.EntityType}'");
+      }
+
+      return result;
     }
   }
 }

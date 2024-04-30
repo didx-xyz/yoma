@@ -3,10 +3,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
-using Yoma.Core.Domain.ActionLink;
-using Yoma.Core.Domain.ActionLink.Extensions;
-using Yoma.Core.Domain.ActionLink.Interfaces;
-using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
@@ -21,7 +17,6 @@ using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
-using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.IdentityProvider.Helpers;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
@@ -53,7 +48,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IBlobService _blobService;
     private readonly IUserService _userService;
-    private readonly ILinkService _linkService;
     private readonly IEmailURLFactory _emailURLFactory;
     private readonly IEmailProviderClient _emailProviderClient;
     private readonly IIdentityProviderClient _identityProviderClient;
@@ -62,8 +56,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
     private readonly OpportunitySearchFilterValidator _opportunitySearchFilterValidator;
     private readonly OpportunitySearchFilterCriteriaValidator _opportunitySearchFilterCriteriaValidator;
-    private readonly OpportunityRequestLinkInstantVerifyValidator _opportunityRequestLinkInstantVerifyValidator;
-    private readonly OpportunitySearchFilterLinkInstantVerifyValidator _opportunitySearchFilterLinkInstantVerifyValidator;
 
     private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
     private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
@@ -99,7 +91,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ITimeIntervalService timeIntervalService,
         IBlobService blobService,
         IUserService userService,
-        ILinkService linkService,
         IEmailURLFactory emailURLFactory,
         IEmailProviderClientFactory emailProviderClientFactory,
         IIdentityProviderClientFactory identityProviderClientFactory,
@@ -107,8 +98,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
         OpportunitySearchFilterCriteriaValidator opportunitySearchFilterCriteriaValidator,
-        OpportunityRequestLinkInstantVerifyValidator opportunityRequestLinkInstantVerifyValidator,
-        OpportunitySearchFilterLinkInstantVerifyValidator opportunitySearchFilterLinkInstantVerifyValidator,
         IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
         IRepository<OpportunityCategory> opportunityCategoryRepository,
         IRepository<OpportunityCountry> opportunityCountryRepository,
@@ -134,7 +123,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _timeIntervalService = timeIntervalService;
       _blobService = blobService;
       _userService = userService;
-      _linkService = linkService;
       _emailURLFactory = emailURLFactory;
       _emailProviderClient = emailProviderClientFactory.CreateClient();
       _identityProviderClient = identityProviderClientFactory.CreateClient();
@@ -143,8 +131,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate;
       _opportunitySearchFilterValidator = opportunitySearchFilterValidator;
       _opportunitySearchFilterCriteriaValidator = opportunitySearchFilterCriteriaValidator;
-      _opportunityRequestLinkInstantVerifyValidator = opportunityRequestLinkInstantVerifyValidator;
-      _opportunitySearchFilterLinkInstantVerifyValidator = opportunitySearchFilterLinkInstantVerifyValidator;
 
       _opportunityRepository = opportunityRepository;
       _opportunityCategoryRepository = opportunityCategoryRepository;
@@ -1378,168 +1364,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       });
 
       return result;
-    }
-
-    public async Task<LinkInfo> CreateLinkSharing(Guid id, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization, bool? includeQRCode)
-    {
-      if (id == Guid.Empty)
-        throw new ArgumentNullException(nameof(id));
-
-      var opportunity = GetById(id, false, false, ensureOrganizationAuthorization);
-
-      if (publishedOrExpiredOnly)
-      {
-        var (found, message) = opportunity.PublishedOrExpired();
-
-        if (!found)
-        {
-          ArgumentException.ThrowIfNullOrEmpty(message);
-          throw new EntityNotFoundException(message);
-        }
-      }
-
-      var request = new LinkRequestCreate
-      {
-        Name = opportunity.Title.RemoveSpecialCharacters(),
-        EntityType = LinkEntityType.Opportunity,
-        Action = LinkAction.Share,
-        EntityId = opportunity.Id,
-        URL = opportunity.YomaInfoURL(_appSettings.AppBaseURL)
-      };
-
-      Link? result = null;
-      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
-      {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-
-        result = await _linkService.Create(request, ensureOrganizationAuthorization);
-        result = await _linkService.LogUsage(result.Id);
-
-        scope.Complete();
-      });
-
-      if (result == null)
-        throw new InvalidOperationException("Failed to create sharing link");
-
-      return result.ToLinkInfo(includeQRCode);
-    }
-
-    public async Task<LinkInfo> CreateLinkInstantVerify(Guid id, OpportunityRequestLinkInstantVerify request, bool ensureOrganizationAuthorization)
-    {
-      ArgumentNullException.ThrowIfNull(request, nameof(request));
-
-      var opportunity = GetById(id, false, true, ensureOrganizationAuthorization);
-
-      await _opportunityRequestLinkInstantVerifyValidator.ValidateAndThrowAsync(request);
-
-      if (!opportunity.VerificationEnabled || opportunity.VerificationMethod != VerificationMethod.Manual)
-        throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' does not support manual verification");
-
-      if (!opportunity.Published)
-        throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' has not been published");
-
-      if (string.IsNullOrEmpty(request.Name)) request.Name = opportunity.Title.RemoveSpecialCharacters();
-
-      if (request.DistributionList != null) request.DistributionList = request.DistributionList.Distinct().ToList();
-
-      var requestLink = new LinkRequestCreate
-      {
-        Name = request.Name,
-        Description = request.Description,
-        EntityType = LinkEntityType.Opportunity,
-        Action = LinkAction.Verify,
-        EntityId = opportunity.Id,
-        URL = opportunity.YomaInstantVerifyURL(_appSettings.AppBaseURL),
-        UsagesLimit = request.UsagesLimit,
-        DateEnd = request.DateEnd
-      };
-
-      var result = await _linkService.Create(requestLink, ensureOrganizationAuthorization);
-
-      //TODO: send emails if needed
-
-      return result.ToLinkInfo(request.IncludeQRCode);
-    }
-
-    public Models.Opportunity GetByLinkInstantVerify(Guid linkId, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization)
-    {
-      var link = _linkService.GetById(linkId);
-
-      link.AssertLinkInstantVerify();
-
-      if (!link.OpportunityId.HasValue || !link.OpportunityOrganizationId.HasValue)
-        throw new DataInconsistencyException("Opportunity expected");
-
-      return GetById(link.OpportunityId.Value, includeChildItems, includeComputed, ensureOrganizationAuthorization);
-    }
-
-    public LinkInfo GetLinkInstantVerifyById(Guid linkId, bool ensureOrganizationAuthorization, bool? includeQRCode)
-    {
-      var result = _linkService.GetById(linkId);
-
-      result.AssertLinkInstantVerify();
-
-      if (!result.OpportunityId.HasValue || !result.OpportunityOrganizationId.HasValue)
-        throw new DataInconsistencyException("Opportunity expected");
-
-      if (ensureOrganizationAuthorization)
-        _organizationService.IsAdmin(result.OpportunityOrganizationId.Value, true);
-
-      return result.ToLinkInfo(includeQRCode);
-    }
-
-    public OpportunitySearchResultLinkInstantVerify SearchLinkInstantVerify(OpportunitySearchFilterLinkInstantVerify filter, bool ensureOrganizationAuthorization)
-    {
-      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
-
-      _opportunitySearchFilterLinkInstantVerifyValidator.ValidateAndThrow(filter);
-
-      //organizations
-      if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
-      {
-        if (filter.Organizations != null && filter.Organizations.Count != 0)
-        {
-          filter.Organizations = filter.Organizations.Distinct().ToList();
-          _organizationService.IsAdminsOf(filter.Organizations, true);
-        }
-        else
-          filter.Organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
-      }
-
-      var linkFilter = new LinkSearchFilter
-      {
-        EntityType = LinkEntityType.Opportunity,
-        Action = LinkAction.Verify,
-        Statuses = filter.Statuses,
-        Entities = filter.Opportunities,
-        EntityParents = filter.Organizations,
-        PageNumber = filter.PageNumber,
-        PageSize = filter.PageSize
-      };
-
-      var items = _linkService.Search(linkFilter);
-
-      return new OpportunitySearchResultLinkInstantVerify
-      {
-        TotalCount = items.TotalCount,
-        Items = items.Items.Select(o => o.ToLinkInfo(false)).ToList()
-      };
-    }
-
-    public async Task<LinkInfo> UpdateLinkStatusInstantVerify(Guid linkId, LinkStatus status, bool ensureOrganizationAuthorization)
-    {
-      var result = _linkService.GetById(linkId);
-
-      result.AssertLinkInstantVerify();
-
-      if (!result.OpportunityId.HasValue || !result.OpportunityOrganizationId.HasValue)
-        throw new DataInconsistencyException("Opportunity expected");
-
-      if (ensureOrganizationAuthorization)
-        _organizationService.IsAdmin(result.OpportunityOrganizationId.Value, true);
-
-      result = await _linkService.UpdateStatus(linkId, status);
-      return result.ToLinkInfo(false);
     }
     #endregion
 

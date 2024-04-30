@@ -1,6 +1,7 @@
 using CsvHelper;
 using CsvHelper.Configuration;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
@@ -17,16 +18,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly AppSettings _appSettings;
     private readonly IOpportunityService _opportunityService;
     private readonly IMyOpportunityService _myOpportunityService;
+    private readonly ILinkService _linkService;
     #endregion
 
     #region Constructor
     public OpportunityInfoService(IOptions<AppSettings> appSettings,
       IOpportunityService opportunityService,
-      IMyOpportunityService myOpportunityService)
+      IMyOpportunityService myOpportunityService,
+      ILinkService linkService)
     {
       _appSettings = appSettings.Value;
       _opportunityService = opportunityService;
       _myOpportunityService = myOpportunityService;
+      _linkService = linkService;
     }
     #endregion
 
@@ -43,7 +47,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
     //anonymously accessible from controller
     public OpportunityInfo GetPublishedOrExpiredByLinkInstantVerify(Guid linkId)
     {
-      var opportunity = _opportunityService.GetByLinkInstantVerify(linkId, true, true, false);
+      var link = _linkService.GetById(linkId, true, false);
+
+      link.AssertLinkInstantVerify();
+
+      var opportunity = _opportunityService.GetById(link.EntityId, true, true, false); 
 
       var (publishedOrExpiredResult, message) = opportunity.PublishedOrExpired();
 

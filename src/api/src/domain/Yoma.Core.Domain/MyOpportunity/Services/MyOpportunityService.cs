@@ -449,12 +449,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     public async Task PerformActionInstantVerificationManual(Guid linkId)
     {
-      var link = _linkService.GetById(linkId);
+      var link = _linkService.GetById(linkId, false, false);
 
       link.AssertLinkInstantVerify();
-
-      if (!link.OpportunityId.HasValue)
-        throw new DataInconsistencyException("OpportunityId expected");
 
       //ensure link is still usable
       _linkService.AssertActive(link.Id);
@@ -467,11 +464,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
         var request = new MyOpportunityRequestVerify { InstantVerification = true };
-        await PerformActionSendForVerificationManual(user, link.OpportunityId.Value, request);
+        await PerformActionSendForVerificationManual(user, link.EntityId, request);
 
         await FinalizeVerificationManual(new MyOpportunityRequestVerifyFinalize
         {
-          OpportunityId = link.OpportunityId.Value,
+          OpportunityId = link.EntityId,
           UserId = user.Id,
           Status = VerificationStatus.Completed,
           Comment = "Instant verification",

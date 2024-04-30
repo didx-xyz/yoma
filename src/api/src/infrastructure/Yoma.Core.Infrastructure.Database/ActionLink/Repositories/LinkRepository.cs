@@ -25,6 +25,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
         StatusId = entity.StatusId,
         Status = Enum.Parse<LinkStatus>(entity.Status.Name, true),
         OpportunityId = entity.OpportunityId,
+        OpportunityTitle = entity.Opportunity == null ? null : entity.Opportunity.Title,
         OpportunityOrganizationId = entity.Opportunity == null ? null : entity.Opportunity.OrganizationId,
         URL = entity.URL,
         ShortURL = entity.ShortURL,

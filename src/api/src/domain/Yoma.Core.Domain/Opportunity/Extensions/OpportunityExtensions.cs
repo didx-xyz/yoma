@@ -1,10 +1,10 @@
-using FluentValidation;
 using Flurl;
-using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.ActionLink.Models;
+using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Opportunity.Models;
+using FluentValidation;
 
 namespace Yoma.Core.Domain.Opportunity.Extensions
 {
@@ -96,9 +96,9 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       return appBaseURL.AppendPathSegment("opportunities/actionLink/verify");
     }
 
-    public static void AssertLinkInstantVerify(this Link link)
+    public static void AssertLinkInstantVerify(this LinkInfo link)
     {
-      if (link.EntityType != LinkEntityType.Opportunity.ToString() || link.Action != LinkAction.Verify.ToString())
+      if (link.EntityType != LinkEntityType.Opportunity || link.Action != LinkAction.Verify)
         throw new ValidationException($"Link is not an instant verify link");
     }
 

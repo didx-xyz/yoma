@@ -1,5 +1,3 @@
-using Yoma.Core.Domain.ActionLink;
-using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Opportunity.Models;
 
@@ -66,17 +64,5 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
     Task<Models.Opportunity> AssignVerificationTypes(Guid id, List<OpportunityRequestVerificationType> verificationTypes, bool ensureOrganizationAuthorization);
 
     Task<Models.Opportunity> RemoveVerificationTypes(Guid id, List<VerificationType> verificationTypes, bool ensureOrganizationAuthorization);
-
-    Task<LinkInfo> CreateLinkSharing(Guid id, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization, bool? includeQRCode);
-
-    Task<LinkInfo> CreateLinkInstantVerify(Guid id, OpportunityRequestLinkInstantVerify request, bool ensureOrganizationAuthorization);
-
-    Models.Opportunity GetByLinkInstantVerify(Guid linkId, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization);
-
-    LinkInfo GetLinkInstantVerifyById(Guid linkId, bool ensureOrganizationAuthorization, bool? includeQRCode);
-
-    OpportunitySearchResultLinkInstantVerify SearchLinkInstantVerify(OpportunitySearchFilterLinkInstantVerify filter, bool ensureOrganizationAuthorization);
-
-    Task<LinkInfo> UpdateLinkStatusInstantVerify(Guid linkId, LinkStatus status, bool ensureOrganizationAuthorization);
   }
 }

@@ -8,9 +8,17 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public string? Description { get; set; }
 
+    public LinkEntityType EntityType { get; set; }
+
+    public LinkAction Action { get; set; }
+
     public Guid StatusId { get; set; }
 
     public LinkStatus Status { get; set; }
+
+    public Guid EntityId { get; set; }
+
+    public string EntityTitle { get; set; }
 
     public string URL { get; set; }
 

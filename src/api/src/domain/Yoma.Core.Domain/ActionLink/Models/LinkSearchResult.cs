@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.ActionLink.Models
   {
     public int? TotalCount { get; set; }
 
-    public List<Link> Items { get; set; }
+    public List<LinkInfo> Items { get; set; }
   }
 }
