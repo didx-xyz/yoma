@@ -228,7 +228,7 @@ namespace Yoma.Core.Api.Controllers
           userRequest.DateLastLogin = DateTimeOffset.UtcNow;
 
           await CreateWalletOrScheduleCreation(userRequest);
-          await CreateLoginHistoryLog(payload, userRequest);  
+          await TrackLogin(payload, userRequest);  
 
           break;
 
@@ -242,7 +242,7 @@ namespace Yoma.Core.Api.Controllers
       await _userService.Upsert(userRequest);
     }
 
-    private async Task CreateLoginHistoryLog(KeycloakWebhookRequest payload, UserRequest userRequest)
+    private async Task TrackLogin(KeycloakWebhookRequest payload, UserRequest userRequest)
     {
       try
       {
