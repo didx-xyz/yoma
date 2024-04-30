@@ -24,5 +24,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
     Task AssignSkills(User user, Opportunity.Models.Opportunity opportunity);
 
     Task<User> YoIDOnboard(string? email);
+
+    Task TrackLogin(UserRequestLoginEvent request);
   }
 }

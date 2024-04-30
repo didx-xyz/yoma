@@ -34,6 +34,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
     private readonly IRepository<UserSkill> _userSkillRepository;
     private readonly IRepository<UserSkillOrganization> _userSkillOrganizationRepository;
+    private readonly IRepository<UserLoginHistory> _userLoginHistoryRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
     #endregion
 
@@ -52,6 +53,7 @@ namespace Yoma.Core.Domain.Entity.Services
         IRepositoryValueContainsWithNavigation<User> userRepository,
         IRepository<UserSkill> userSkillRepository,
         IRepository<UserSkillOrganization> userSkillOrganizationRepository,
+        IRepository<UserLoginHistory> userLoginHistoryRepository,
         IExecutionStrategyService executionStrategyService)
     {
       _appSettings = appSettings.Value;
@@ -67,6 +69,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _userRepository = userRepository;
       _userSkillRepository = userSkillRepository;
       _userSkillOrganizationRepository = userSkillOrganizationRepository;
+      _userLoginHistoryRepository = userLoginHistoryRepository;
       _executionStrategyService = executionStrategyService;
     }
     #endregion
@@ -315,6 +318,33 @@ namespace Yoma.Core.Domain.Entity.Services
       });
 
       return result;
+    }
+
+    public async Task TrackLogin(UserRequestLoginEvent request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      if (!request.UserId.HasValue || request.UserId.Value == Guid.Empty)
+        throw new ArgumentNullException(nameof(request), "User Id required");
+
+      if (string.IsNullOrWhiteSpace(request.ClientId))
+        throw new ArgumentNullException(nameof(request), "Client Id required");
+      request.ClientId = request.ClientId.Trim();
+
+      request.IpAddress = request.IpAddress?.Trim();
+      request.AuthMethod = request.AuthMethod?.Trim();
+      request.AuthType = request.AuthType?.Trim();
+
+      var item = new UserLoginHistory
+      {
+        UserId = request.UserId.Value,
+        ClientId = request.ClientId,
+        IpAddress = request.IpAddress,
+        AuthMethod = request.AuthMethod,
+        AuthType = request.AuthType
+      };
+
+      await _userLoginHistoryRepository.Create(item);
     }
     #endregion
 

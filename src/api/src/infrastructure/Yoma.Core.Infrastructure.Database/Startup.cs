@@ -95,6 +95,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Organization>, OrganizationRepository>();
       services.AddScoped<IRepository<OrganizationUser>, OrganizationUserRepository>();
       services.AddScoped<IRepositoryValueContainsWithNavigation<User>, UserRepository>();
+      services.AddScoped<IRepository<UserLoginHistory>, UserLoginHistoryRepository>();
       services.AddScoped<IRepository<UserSkill>, UserSkillRepository>();
       services.AddScoped<IRepository<UserSkillOrganization>, UserSkillOrganizationRepository>();
       #endregion Entity
