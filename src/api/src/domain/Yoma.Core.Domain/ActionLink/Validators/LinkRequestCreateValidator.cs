@@ -22,7 +22,7 @@ namespace Yoma.Core.Domain.ActionLink.Validators
         .EmailAddress()
         .WithMessage("Distribution list contain(s) empty or invalid email address(es).");
         });
-          RuleFor(x => x.DateEnd).Must(date => !date.HasValue || date.Value > DateTimeOffset.UtcNow).WithMessage("'{PropertyName}' must be in the future.");
+      RuleFor(x => x.DateEnd).Must(date => !date.HasValue || date.Value > DateTimeOffset.UtcNow).WithMessage("'{PropertyName}' must be in the future.");
       //linkService ensure either a usage limit or an end date has been specified for link action 'Verify'
       //linkService ensure neither usage limit or end date has been specified for link action 'Share'
     }

@@ -51,7 +51,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       link.AssertLinkInstantVerify();
 
-      var opportunity = _opportunityService.GetById(link.EntityId, true, true, false); 
+      var opportunity = _opportunityService.GetById(link.EntityId, true, true, false);
 
       var (publishedOrExpiredResult, message) = opportunity.PublishedOrExpired();
 
