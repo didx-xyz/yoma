@@ -131,7 +131,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
       {!linkInfoIsLoading && (
         <div className="flex flex-col items-center justify-center gap-4 p-8">
           <div className="-mt-16 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-orange shadow-lg">
-            <IoShareSocialOutline className="h-7 w-7 text-white mr-px" />
+            <IoShareSocialOutline className="mr-px h-7 w-7 text-white" />
           </div>
 
           <h3>Share this opportunity!</h3>
@@ -139,7 +139,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
           {/* OPPORTUNITY DETAILS (smaller) */}
           <div className="flex w-full flex-col rounded-lg p-4 shadow-custom">
             <div className="flex gap-4">
-              <div className="flex items-center mb-1">
+              <div className="mb-1 flex items-center">
                 <AvatarImage
                   icon={opportunity?.organizationLogoURL ?? null}
                   alt={`${opportunity?.organizationName} Logo`}

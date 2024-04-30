@@ -17,7 +17,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
   return (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex aspect-square h-[19rem] w-max flex-col gap-1 rounded-lg bg-white p-4 shadow-sm md:ml-0 overflow-hidden"
+      className="relative flex aspect-square h-[19rem] w-max flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-sm md:ml-0"
     >
       <div className="flex flex-row">
         <div className="flex flex-row">

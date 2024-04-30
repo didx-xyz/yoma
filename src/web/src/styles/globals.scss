@@ -24,7 +24,7 @@
 }
 
 .badge {
-  @apply h-6 whitespace-nowrap rounded-md border-none text-xs font-bold overflow-hidden;
+  @apply h-6 overflow-hidden whitespace-nowrap rounded-md border-none text-xs font-bold;
 }
 
 .btn {
@@ -112,8 +112,8 @@ body {
     visibility: hidden !important;
   }
   #hubspot-messages-iframe-container {
-  visibility: hidden !important;
-}
+    visibility: hidden !important;
+  }
 }
 
 // NProgress
