@@ -130,27 +130,27 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
       {/* MAIN CONTENT */}
       {!linkInfoIsLoading && (
         <div className="flex flex-col items-center justify-center gap-4 p-8">
-          <div className="-mt-16 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-            <IoShareSocialOutline className="h-7 w-7" />
+          <div className="-mt-16 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-orange shadow-lg">
+            <IoShareSocialOutline className="h-7 w-7 text-white mr-px" />
           </div>
 
           <h3>Share this opportunity!</h3>
 
           {/* OPPORTUNITY DETAILS (smaller) */}
-          <div className="flex w-full flex-col rounded-lg border-2 border-dotted border-gray p-4">
+          <div className="flex w-full flex-col rounded-lg p-4 shadow-custom">
             <div className="flex gap-4">
-              <div className="">
+              <div className="flex items-center mb-1">
                 <AvatarImage
                   icon={opportunity?.organizationLogoURL ?? null}
                   alt={`${opportunity?.organizationName} Logo`}
                   size={60}
                 />
               </div>
-              <div className="flex max-w-[200px] flex-col gap-1 sm:max-w-[480px] md:max-w-[420px]">
-                <h4 className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold leading-7 text-black md:text-xl md:leading-8">
+              <div className="flex flex-col gap-1 md:max-w-[420px]">
+                <h4 className="line-clamp-2 max-w-[170px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight md:max-w-[420px]">
                   {opportunity?.title}
                 </h4>
-                <h6 className=" overflow-hidden text-ellipsis whitespace-nowrap text-xs text-gray-dark">
+                <h6 className="line-clamp-2 max-w-[180px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark md:max-w-[420px]">
                   By {opportunity?.organizationName}
                 </h6>
               </div>
@@ -191,52 +191,56 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
           </div>
 
           {/* BUTTONS */}
-          <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="mb-2 mt-10 grid w-full grid-cols-1 gap-4 md:mb-6 md:grid-cols-2">
             <button
               onClick={onClick_CopyToClipboard}
-              className="flex w-full items-center gap-2 rounded-xl border-[1px] border-gray px-4 py-3 text-sm font-semibold text-black hover:bg-gray-light md:text-lg"
+              className="btn btn-outline btn-primary"
             >
               <IoCopy className="mr-2 h-6 w-6" />
               Copy Link
             </button>
             <button
               onClick={onClick_GenerateQRCode}
-              className="flex w-full items-center gap-2 rounded-xl border-[1px] border-gray px-4 py-3 text-sm font-semibold text-black hover:bg-gray-light md:text-lg"
+              className="btn btn-outline btn-primary"
             >
               <IoQrCode className="mr-2 h-6 w-6" />
               Generate QR Code
             </button>
+
             <button
               onClick={onClick_MoreOptions}
-              className="flex w-full items-center gap-2 rounded-xl border-[1px] border-gray px-4 py-3 text-sm font-semibold text-black hover:bg-gray-light md:text-lg"
+              className="btn btn-outline btn-primary md:hidden"
             >
-              <IoEllipsisHorizontalOutline className="mr-2 h-6 w-6 text-black" />
+              <IoEllipsisHorizontalOutline className="mr-2 h-6 w-6" />
               More options
             </button>
           </div>
 
           {/* QR CODE */}
           {showQRCode && qrCodeImageData && (
-            <>
-              <h5>Scan the QR Code with your device&apos;s camera</h5>
+            <span className="mt-4">
+              <h5 className="text-center">
+                Scan the QR Code with your device&apos;s camera
+              </h5>
               <Image
                 src={qrCodeImageData}
                 alt="QR Code"
-                width={200}
-                height={200}
-                style={{ width: 200, height: 200 }}
+                width={320}
+                height={320}
               />
-            </>
+            </span>
           )}
 
-          <button
-            type="button"
-            className="btn mt-10 rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
-            onClick={onClose}
-            ref={cancelButtonRef}
-          >
-            Close
-          </button>
+          {showQRCode && (
+            <button
+              type="button"
+              className="btn btn-primary w-full md:w-[168px]"
+              onClick={onClose}
+              ref={cancelButtonRef}
+            >
+              Close
+            </button>
+          )}
         </div>
       )}
     </div>

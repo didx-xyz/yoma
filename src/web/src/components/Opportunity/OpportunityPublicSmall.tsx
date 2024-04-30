@@ -17,7 +17,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
   return (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex aspect-square h-[19rem] w-max flex-col gap-1 rounded-lg bg-white p-4 shadow-sm md:ml-0"
+      className="relative flex aspect-square h-[19rem] w-max flex-col gap-1 rounded-lg bg-white p-4 shadow-sm md:ml-0 overflow-hidden"
     >
       <div className="flex flex-row">
         <div className="flex flex-row">
@@ -61,7 +61,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
       )}
 
       {/* BADGES */}
-      <div className="flex flex-row flex-wrap gap-2 whitespace-nowrap pt-2 text-green-dark md:flex-nowrap">
+      <div className="flex flex-row flex-wrap gap-2 whitespace-normal pt-2 text-green-dark md:flex-nowrap md:whitespace-nowrap">
         <div className="badge bg-green-light text-green">
           <Image
             src={iconClock}

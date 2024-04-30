@@ -360,7 +360,7 @@ const OpportunityDetails: NextPageWithLayout<{
       </Head>
       <PageBackground />
 
-      <div className="container z-10 mt-16 max-w-7xl px-2 py-4 md:mt-20">
+      <div className="container z-10 mt-16 max-w-7xl overflow-hidden px-2 py-4 md:mt-20">
         <>
           {/* MAIN CONTENT */}
           <div className="flex flex-col gap-2 py-6 sm:flex-row">
@@ -686,7 +686,7 @@ const OpportunityDetails: NextPageWithLayout<{
               onRequestClose={() => {
                 setShareOpportunityDialogVisible(false);
               }}
-              className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[650px] md:w-[600px] md:rounded-3xl`}
+              className={`fixed bottom-0 left-0 right-0 top-0 w-full flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[500px] md:w-[600px] md:rounded-3xl`}
               portalClassName={"fixed z-40"}
               overlayClassName="fixed inset-0 bg-overlay"
             >
@@ -908,14 +908,13 @@ const OpportunityDetails: NextPageWithLayout<{
                           priority={true}
                           style={{ width: "20px", height: "20px" }}
                         />
-
                         <span className="ml-1">Skills you will learn</span>
                       </div>
                       <div className="my-2 flex flex-wrap gap-1">
                         {opportunityInfo.skills?.map((item) => (
                           <div
                             key={item.id}
-                            className="min-h-6 badge h-full bg-green py-1 text-white"
+                            className="badge bg-green px-2 py-1 text-white"
                           >
                             {item.name}
                           </div>
