@@ -228,7 +228,7 @@ namespace Yoma.Core.Api.Controllers
           userRequest.DateLastLogin = DateTimeOffset.UtcNow;
 
           await CreateWalletOrScheduleCreation(userRequest);
-          await TrackLogin(payload, userRequest);  
+          await TrackLogin(payload, userRequest);
 
           break;
 
