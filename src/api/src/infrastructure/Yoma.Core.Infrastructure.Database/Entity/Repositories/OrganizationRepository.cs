@@ -51,6 +51,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         LogoId = entity.LogoId,
         LogoStorageType = entity.Logo == null ? null : Enum.Parse<StorageType>(entity.Logo.StorageType, true),
         LogoKey = entity.Logo == null ? null : entity.Logo.Key,
+        SSOClientIdOutbound = entity.SSOClientIdOutbound,
+        SSOClientIdInbound = entity.SSOClientIdInbound,
         DateCreated = entity.DateCreated,
         CreatedByUserId = entity.CreatedByUserId,
         DateModified = entity.DateModified,
@@ -124,6 +126,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         CommentApproval = item.CommentApproval,
         DateStatusModified = item.DateStatusModified,
         LogoId = item.LogoId,
+        SSOClientIdOutbound = item.SSOClientIdOutbound,
+        SSOClientIdInbound = item.SSOClientIdInbound,
         DateCreated = item.DateCreated,
         CreatedByUserId = item.CreatedByUserId,
         DateModified = item.DateModified,
@@ -166,6 +170,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
            CommentApproval = item.CommentApproval,
            DateStatusModified = DateTimeOffset.UtcNow,
            LogoId = item.LogoId,
+           SSOClientIdOutbound = item.SSOClientIdOutbound,
+           SSOClientIdInbound = item.SSOClientIdInbound,  
            DateCreated = DateTimeOffset.UtcNow,
            CreatedByUserId = item.CreatedByUserId,
            DateModified = DateTimeOffset.UtcNow,
@@ -213,6 +219,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       entity.StatusId = item.StatusId;
       entity.CommentApproval = item.CommentApproval;
       entity.LogoId = item.LogoId;
+      entity.SSOClientIdOutbound = item.SSOClientIdOutbound;
+      entity.SSOClientIdInbound = item.SSOClientIdInbound;    
       entity.DateModified = item.DateModified;
       entity.ModifiedByUserId = item.ModifiedByUserId;
 
@@ -255,6 +263,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         entity.StatusId = item.StatusId;
         entity.CommentApproval = item.CommentApproval;
         entity.LogoId = item.LogoId;
+        entity.SSOClientIdOutbound = item.SSOClientIdOutbound;
+        entity.SSOClientIdInbound = item.SSOClientIdInbound;
         entity.DateModified = item.DateModified;
         entity.ModifiedByUserId = item.ModifiedByUserId;
       }
