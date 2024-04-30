@@ -725,8 +725,8 @@ const LinkDetails: NextPageWithLayout<{
         // if name & description is empty in formData, then default these values from the opportunity title & decription
         resetStep1((prev) => ({
           ...prev,
-          name: prev?.name || res.title,
-          description: prev?.description || res.description,
+          name: prev?.name ?? res.title,
+          description: prev?.description ?? res.description,
         }));
       });
     }
