@@ -171,7 +171,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
            DateStatusModified = DateTimeOffset.UtcNow,
            LogoId = item.LogoId,
            SSOClientIdOutbound = item.SSOClientIdOutbound,
-           SSOClientIdInbound = item.SSOClientIdInbound,  
+           SSOClientIdInbound = item.SSOClientIdInbound,
            DateCreated = DateTimeOffset.UtcNow,
            CreatedByUserId = item.CreatedByUserId,
            DateModified = DateTimeOffset.UtcNow,
@@ -220,7 +220,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       entity.CommentApproval = item.CommentApproval;
       entity.LogoId = item.LogoId;
       entity.SSOClientIdOutbound = item.SSOClientIdOutbound;
-      entity.SSOClientIdInbound = item.SSOClientIdInbound;    
+      entity.SSOClientIdInbound = item.SSOClientIdInbound;
       entity.DateModified = item.DateModified;
       entity.ModifiedByUserId = item.ModifiedByUserId;
 
