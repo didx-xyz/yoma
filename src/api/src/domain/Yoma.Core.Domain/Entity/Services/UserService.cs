@@ -327,7 +327,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (!request.UserId.HasValue || request.UserId.Value == Guid.Empty)
         throw new ArgumentNullException(nameof(request), "User Id required");
 
-      if(string.IsNullOrWhiteSpace(request.ClientId))
+      if (string.IsNullOrWhiteSpace(request.ClientId))
         throw new ArgumentNullException(nameof(request), "Client Id required");
       request.ClientId = request.ClientId.Trim();
 
