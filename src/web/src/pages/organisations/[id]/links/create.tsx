@@ -29,31 +29,8 @@ import {
 import Select, { ValueContainerProps, components } from "react-select";
 import { toast } from "react-toastify";
 import z from "zod";
-import type { Skill, SelectOption } from "~/api/models/lookups";
-import { SchemaType } from "~/api/models/credential";
+import type { SelectOption } from "~/api/models/lookups";
 import {
-  LinkInfo,
-  OpportunityInfo,
-  VerificationMethod,
-  type Opportunity,
-  type OpportunityRequestLinkInstantVerify,
-  type OpportunityVerificationType,
-} from "~/api/models/opportunity";
-import {
-  getCountries,
-  getLanguages,
-  getSkills,
-  getTimeIntervals,
-} from "~/api/services/lookups";
-import {
-  updateOpportunity,
-  getDifficulties,
-  getOpportunityById,
-  getTypes,
-  getVerificationTypes,
-  createLinkInstantVerify,
-  getCategories,
-  getLinkInstantVerifyById,
   searchCriteriaOpportunities,
   getOpportunityInfoByIdAdminOrgAdminOrUser,
 } from "~/api/services/opportunities";
@@ -99,13 +76,19 @@ import iconBell from "public/images/icon-bell.webp";
 import { IoMdClose, IoMdImage } from "react-icons/io";
 import { AvatarImage } from "~/components/AvatarImage";
 import { updateOpportunityStatus } from "~/api/services/opportunities";
-import { Status } from "~/api/models/opportunity";
+import {
+  OpportunityInfo,
+  OpportunitySearchResultsInfo,
+  Status,
+} from "~/api/models/opportunity";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { IoMdWarning } from "react-icons/io";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { validateEmail } from "~/lib/validate";
+import { LinkEntityType, LinkRequestCreate } from "~/api/models/actionLinks";
+import { createLinkInstantVerify } from "~/api/services/actionLinks";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -133,10 +116,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   try {
     // 👇 prefetch queries on server
-    // if (opportunityId !== "create") {
-    //   const data = await getOpportunityById(opportunityId, context);
+    // if (entityId !== "create") {
+    //   const data = await getOpportunityById(entityId, context);
     //   await queryClient.prefetchQuery({
-    //     queryKey: ["opportunity", opportunityId],
+    //     queryKey: ["opportunity", entityId],
     //     queryFn: () => data,
     //   });
     // }
@@ -162,43 +145,42 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-const ValueContainer = ({
-  children,
-  ...props
-}: ValueContainerProps<SelectOption>) => {
-  // eslint-disable-next-line prefer-const
-  let [values, input] = children as any[];
-  if (Array.isArray(values)) {
-    if (
-      values.length > 0 &&
-      "props" in values[0] &&
-      "selectProps" in values[0].props &&
-      values[0].props.selectProps.placeholder
-    ) {
-      const pluralMapping: Record<string, string> = {
-        Category: "Categories",
-        Opportunity: "Opportunities",
-      };
+// const ValueContainer = ({
+//   children,
+//   ...props
+// }: ValueContainerProps<SelectOption>) => {
+//   // eslint-disable-next-line prefer-const
+//   let [values, input] = children as any[];
+//   if (Array.isArray(values)) {
+//     if (
+//       values.length > 0 &&
+//       "props" in values[0] &&
+//       "selectProps" in values[0].props &&
+//       values[0].props.selectProps.placeholder
+//     ) {
+//       const pluralMapping: Record<string, string> = {
+//         Opportunity: "Opportunities",
+//       };
 
-      const pluralize = (word: string, count: number): string => {
-        if (count === 1) return word;
-        return pluralMapping[word] ?? `${word}s`;
-      };
+//       const pluralize = (word: string, count: number): string => {
+//         if (count === 1) return word;
+//         return pluralMapping[word] ?? `${word}s`;
+//       };
 
-      const placeholder: string = values[0].props.selectProps.placeholder;
-      values = `${values.length} ${pluralize(placeholder, values.length)}`;
-    }
-  }
-  return (
-    <components.ValueContainer {...props}>
-      {values}
-      {input}
-    </components.ValueContainer>
-  );
-};
+//       const placeholder: string = values[0].props.selectProps.placeholder;
+//       values = `${values.length} ${pluralize(placeholder, values.length)}`;
+//     }
+//   }
+//   return (
+//     <components.ValueContainer {...props}>
+//       {values}
+//       {input}
+//     </components.ValueContainer>
+//   );
+// };
 
 // 👇 PAGE COMPONENT: Link Create/Edit
-// this page acts as a create (/links/create) or edit page (/links/:id) based on the [opportunityId] route param
+// this page acts as a create (/links/create) or edit page (/links/:id) based on the [entityId] route param
 const LinkDetails: NextPageWithLayout<{
   id: string;
   user: User;
@@ -224,9 +206,15 @@ const LinkDetails: NextPageWithLayout<{
   // const [oppExpiredModalVisible, setOppExpiredModalVisible] = useState(false);
   const [loadingUpdateInactive, setLoadingUpdateInactive] = useState(false);
 
-  const lookups_linkTypes: SelectOption[] = [
+  // const linkEntityTypes: SelectOption[] = Object.entries(LinkEntityType).map(
+  //   ([label, value]) => ({
+  //     label,
+  //     value: value.toString(),
+  //   }),
+  // );
+
+  const linkEntityTypes: SelectOption[] = [
     { value: "0", label: "Opportunity" },
-    { value: "1", label: "Job" },
   ];
 
   // 👇 use prefetched queries from server
@@ -313,27 +301,34 @@ const LinkDetails: NextPageWithLayout<{
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [formData, setFormData] = useState<OpportunityRequestLinkInstantVerify>(
-    {
-      typeId: null,
-      opportunityId: null,
-      name: "",
-      description: "",
-      usagesLimit: null,
-      distributionList: [],
-      dateEnd: null,
-      includeQRCode: null,
-    },
-  );
+  /*  name: string | null;
+  description: string | null;
+  entityType: LinkEntityType;
+  entityId: string;
+  usagesLimit: number | null;
+  dateEnd: string | null;
+  distributionList: string[] | null;
+  includeQRCode: boolean | null;*/
+
+  const [formData, setFormData] = useState<LinkRequestCreate>({
+    name: "",
+    description: "",
+    entityType: null,
+    entityId: null,
+    usagesLimit: null,
+    dateEnd: null,
+    distributionList: [],
+    includeQRCode: null,
+  });
 
   const schemaStep1 = z.object({
-    typeId: z.string().min(1, "Type is required."),
     name: z
       .string()
       .min(1, "Name is required.")
       .max(255, "Name cannot exceed 255 characters."),
     description: z.string().min(1, "Description is required."),
-    opportunityId: z.string().min(1, "Difficulty is required."),
+    entityType: z.string().min(1, "Type is required."),
+    entityId: z.string().min(1, "Difficulty is required."),
   });
 
   const schemaStep2 = z.object({
@@ -342,14 +337,13 @@ const LinkDetails: NextPageWithLayout<{
       return val === null || Number.isNaN(val as any) ? null : val;
     }),
     dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
-    includeQRCode: z.boolean(),
+    includeQRCode: z.union([z.boolean(), z.null()]).optional(),
   });
 
   const schemaStep3 = z
     .object({
       distributionList: z.array(z.string().email()).optional(),
     })
-
     .refine(
       (data) => {
         // validate all items are valid email addresses
@@ -377,8 +371,8 @@ const LinkDetails: NextPageWithLayout<{
     resolver: zodResolver(schemaStep1),
     defaultValues: formData,
   });
-  const watchTypeId = watchStep1("typeId");
-  const watchOpportunityId = watchStep1("opportunityId");
+  const watchEntityType = watchStep1("entityType");
+  const watchEntityId = watchStep1("entityId");
 
   const {
     register: registerStep2,
@@ -565,7 +559,7 @@ const LinkDetails: NextPageWithLayout<{
   ]);
 
   const onSubmit = useCallback(
-    async (data: OpportunityRequestLinkInstantVerify) => {
+    async (data: LinkRequestCreate) => {
       setIsLoading(true);
 
       try {
@@ -580,8 +574,7 @@ const LinkDetails: NextPageWithLayout<{
           : null;
 
         // update api
-
-        await createLinkInstantVerify(id, data);
+        await createLinkInstantVerify(data);
         message = "Link created";
         //}
         toast(message, {
@@ -596,7 +589,7 @@ const LinkDetails: NextPageWithLayout<{
         //   queryKey: ["opportunities", id],
         // });
         // await queryClient.invalidateQueries({
-        //   queryKey: ["opportunity", opportunityId],
+        //   queryKey: ["opportunity", entityId],
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
@@ -625,7 +618,7 @@ const LinkDetails: NextPageWithLayout<{
       // set form data
       const model = {
         ...formData,
-        ...(data as OpportunityRequestLinkInstantVerify),
+        ...(data as LinkRequestCreate),
       };
 
       setFormData(model);
@@ -669,7 +662,6 @@ const LinkDetails: NextPageWithLayout<{
     ],
   );
 
-  // useEffect(() => {
   //   if ((linkInfo?.status as any) == "Expired") {
   //     setOppExpiredModalVisible(true);
   //   }
@@ -681,19 +673,19 @@ const LinkDetails: NextPageWithLayout<{
 
   //     try {
   //       // call api
-  //       await updateOpportunityStatus(opportunityId, status);
+  //       await updateOpportunityStatus(entityId, status);
 
   //       // 📊 GOOGLE ANALYTICS: track event
   //       // trackGAEvent(
   //       //   GA_CATEGORY_OPPORTUNITY_LINK,
   //       //   GA_ACTION_OPPORTUNITY_LINK_UPDATE,
-  //       //   `Opportunity Status Changed to ${status} for Opportunity ID: ${opportunityId}`,
+  //       //   `Opportunity Status Changed to ${status} for Opportunity ID: ${entityId}`,
   //       // );
 
   //       // invalidate queries
   //       // await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
   //       // await queryClient.invalidateQueries({
-  //       //   queryKey: ["opportunity", opportunityId],
+  //       //   queryKey: ["opportunity", entityId],
   //       // });
 
   //       toast.success("Link status updated");
@@ -717,19 +709,28 @@ const LinkDetails: NextPageWithLayout<{
   //useDisableBodyScroll(oppExpiredModalVisible);
   useDisableBodyScroll(saveChangesDialogVisible);
 
-  //  look up an opportunity when watchOpportunityId changes (for link preview)
+  //  look up the opportunity when watchEntityId changes (for link preview)
   const [selectedOpportuntity, setSelectedOpportuntity] =
     useState<OpportunityInfo | null>(null);
 
   useEffect(() => {
-    if (!watchOpportunityId) return;
+    if (!watchEntityId) return;
 
-    getOpportunityInfoByIdAdminOrgAdminOrUser(watchOpportunityId).then(
-      (res) => {
+    if (watchEntityType == "0") {
+      // opportunity
+      getOpportunityInfoByIdAdminOrgAdminOrUser(watchEntityId).then((res) => {
+        // set state
         setSelectedOpportuntity(res);
-      },
-    );
-  }, [watchOpportunityId, setSelectedOpportuntity]);
+
+        // if name & description is empty in formData, then default these values from the opportunity title & decription
+        resetStep1((prev) => ({
+          ...prev,
+          name: prev?.name || res.title,
+          description: prev?.description || res.description,
+        }));
+      });
+    }
+  }, [watchEntityId, watchEntityType, setSelectedOpportuntity, resetStep1]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -737,42 +738,68 @@ const LinkDetails: NextPageWithLayout<{
     else return <InternalServerError />;
   }
 
-  //
   // load data asynchronously for the opportunities dropdown
   // debounce is used to prevent the API from being called too frequently
+  // const loadOpportunities = debounce(
+  //   (inputValue: string, callback: (options: any) => void) => {
+  //     searchCriteriaOpportunities({
+  //       opportunities: [],
+  //       organization: id,
+  //       titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
+  //       pageNumber: 1,
+  //       pageSize: PAGE_SIZE_MEDIUM,
+  //     }).then((data) => {
+  //       const options = data.items.map((item) => ({
+  //         value: item.id,
+  //         label: item.title,
+  //       }));
+  //       callback(options);
+  //     });
+  //   },
+  //   1000,
+  // );
+
   const loadOpportunities = debounce(
     (inputValue: string, callback: (options: any) => void) => {
-      searchCriteriaOpportunities({
-        opportunities: [],
-        organization: id,
-        titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
-        pageNumber: 1,
-        pageSize: PAGE_SIZE_MEDIUM,
-      }).then((data) => {
-        const options = data.items.map((item) => ({
+      if (inputValue.length < 3) inputValue = "";
+
+      const cacheKey = [
+        "opportunities",
+        { organization: id, titleContains: inputValue },
+      ];
+
+      // Try to get data from cache
+      const cachedData =
+        queryClient.getQueryData<OpportunitySearchResultsInfo>(cacheKey);
+
+      if (cachedData) {
+        const options = cachedData.items.map((item) => ({
           value: item.id,
           label: item.title,
         }));
         callback(options);
-      });
+      } else {
+        // If not in cache, fetch data
+        searchCriteriaOpportunities({
+          opportunities: [],
+          organization: id,
+          titleContains: inputValue,
+          pageNumber: 1,
+          pageSize: PAGE_SIZE_MEDIUM,
+        }).then((data) => {
+          const options = data.items.map((item) => ({
+            value: item.id,
+            label: item.title,
+          }));
+          callback(options);
+
+          // Save data to cache
+          queryClient.setQueryData(cacheKey, data);
+        });
+      }
     },
     1000,
   );
-
-  // the AsyncSelect component requires the defaultOptions to be set in the state
-  //   const [defaultOpportunityOptions, setdefaultOpportunityOptions] =
-  //   useState<any>([]);
-
-  // useEffect(() => {
-  //   if (searchFilter?.opportunities) {
-  //     setdefaultOpportunityOptions(
-  //       searchFilter?.opportunities?.map((c: any) => ({
-  //         value: c,
-  //         label: c,
-  //       })),
-  //     );
-  //   }
-  // }, [setdefaultOpportunityOptions, searchFilter?.opportunities]);
 
   return (
     <>
@@ -997,21 +1024,25 @@ const LinkDetails: NextPageWithLayout<{
                     )} // eslint-disable-line @typescript-eslint/no-misused-promises
                   >
                     <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">Type</span>
+                      <label className="flex flex-col">
+                        <div className="label-text font-bold">Type</div>
+                        <div className="label-text-alt my-2">
+                          Select the type of entity you want to create a link
+                          for.
+                        </div>
                       </label>
                       <Controller
                         control={controlStep1}
-                        name="typeId"
+                        name="entityType"
                         render={({ field: { onChange, value } }) => (
                           <Select
-                            instanceId="typeId"
+                            instanceId="entityType"
                             classNames={{
                               control: () => "input !border-gray",
                             }}
-                            options={lookups_linkTypes}
+                            options={linkEntityTypes}
                             onChange={(val) => onChange(val?.value)}
-                            value={lookups_linkTypes?.find(
+                            value={linkEntityTypes?.find(
                               (c) => c.value === value,
                             )}
                             styles={{
@@ -1020,80 +1051,76 @@ const LinkDetails: NextPageWithLayout<{
                                 color: "#A3A6AF",
                               }),
                             }}
-                            inputId="input_typeid" // e2e
+                            inputId="input_entityType" // e2e
                           />
                         )}
                       />
 
-                      {formStateStep1.errors.typeId && (
+                      {formStateStep1.errors.entityType && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.typeId.message}`}
+                            {`${formStateStep1.errors.entityType.message}`}
                           </span>
                         </label>
                       )}
                     </div>
 
-                    {watchTypeId == "0" && (
+                    {watchEntityType == "0" && (
                       <div className="form-control">
-                        <label className="label">
-                          <span className="label-text font-bold">
+                        <label className="flex flex-col">
+                          <div className="label-text font-bold">
                             Opportunity
-                          </span>
+                          </div>
+                          <div className="label-text-alt my-2">
+                            Which opportunity do you want to create a link for?
+                          </div>
                         </label>
+
                         <Controller
-                          name="opportunityId"
+                          name="entityId"
                           control={controlStep1}
                           render={({ field: { onChange } }) => (
                             <Async
-                              instanceId="opportunityId"
+                              instanceId="entityId"
                               classNames={{
-                                control: () =>
-                                  "input input-xs h-fit !border-none w-full md:w-72",
+                                control: () => "input",
                               }}
                               isMulti={false}
                               defaultOptions={true} // calls loadOpportunities for initial results when clicking on the dropdown
                               cacheOptions
                               loadOptions={loadOpportunities}
-                              // menuPortalTarget={htmlRef} // fix menu z-index issue
-                              // styles={{
-                              //   menuPortal: (base) => ({
-                              //     ...base,
-                              //     zIndex: 9999,
-                              //   }),
-                              // }}
-                              // onChange={(val) => {
-                              //   // clear categories
-                              //   setValue("categories", []);
-
-                              //   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                              //   onChange(val.map((c: any) => c.value));
-                              //   void handleSubmit(onSubmitHandler)();
-                              // }}
                               onChange={(val) => onChange(val?.value)}
-                              //value={defaultOpportunityOptions}
+                              value={
+                                selectedOpportuntity
+                                  ? {
+                                      value: selectedOpportuntity.id,
+                                      label: selectedOpportuntity.title,
+                                    }
+                                  : []
+                              }
                               placeholder="Opportunity"
-                              components={{
-                                ValueContainer,
-                              }}
                             />
                           )}
                         />
-                        {formStateStep1.errors.opportunityId && (
+                        {formStateStep1.errors.entityId && (
                           <label className="label font-bold">
                             <span className="label-text-alt italic text-red-500">
-                              {`${formStateStep1.errors.opportunityId.message}`}
+                              {`${formStateStep1.errors.entityId.message}`}
                             </span>
                           </label>
                         )}
                       </div>
                     )}
 
-                    {watchTypeId == "1" && <>Job TODO</>}
+                    {watchEntityType == "1" && <>Job TODO</>}
 
                     <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">Name</span>
+                      <label className="flex flex-col">
+                        <div className="label-text font-bold">Name</div>
+                        <div className="label-text-alt my-2">
+                          This name will be visible to you, and in the link
+                          preview.
+                        </div>
                       </label>
                       <input
                         type="text"
@@ -1112,14 +1139,16 @@ const LinkDetails: NextPageWithLayout<{
                     </div>
 
                     <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">
-                          Description
-                        </span>
+                      <label className="flex flex-col">
+                        <div className="label-text font-bold">Description</div>
+                        <div className="label-text-alt my-2">
+                          This description will be visible to you, and in the
+                          link preview.
+                        </div>
                       </label>
                       <textarea
                         className="input textarea textarea-bordered h-32 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
-                        // placeholder="Description"
+                        placeholder="Description"
                         {...registerStep1("description")}
                       />
                       {formStateStep1.errors.description && (
@@ -1130,72 +1159,6 @@ const LinkDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-
-                    {/* <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">
-                          Under which categories does your opportunity belong
-                        </span>
-                      </label>
-                      <Controller
-                        control={controlStep1}
-                        name="categories"
-                        render={({ field: { onChange, value } }) => (
-                          <Select
-                            instanceId="categories"
-                            classNames={{
-                              control: () => "input !border-gray py-1 h-fit",
-                            }}
-                            isMulti={true}
-                            options={categories}
-                            onChange={(val) =>
-                              onChange(val?.map((c) => c.value ?? ""))
-                            }
-                            value={categories?.filter(
-                              (c) => value?.includes(c.value),
-                            )}
-                            styles={{
-                              placeholder: (base) => ({
-                                ...base,
-                                color: "#A3A6AF",
-                              }),
-                            }}
-                            inputId="input_categories" // e2e
-                          />
-                        )}
-                      />
-
-                      {formStateStep1.errors.categories && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.categories.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">
-                          Opportunity link
-                        </span>
-                      </label>
-
-                      <input
-                        type="text"
-                        className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                        placeholder="Opportunity Link"
-                        {...registerStep1("uRL")}
-                        contentEditable
-                      />
-                      {formStateStep1.errors.uRL && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.uRL.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div> */}
 
                     {/* BUTTONS */}
                     <div className="my-4 flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
@@ -1238,8 +1201,11 @@ const LinkDetails: NextPageWithLayout<{
                     )}
                   >
                     <div className="form-control">
-                      <label className="label font-bold">
-                        <span className="label-text">Usage limit</span>
+                      <label className="flex flex-col">
+                        <div className="label-text font-bold">Usage limit</div>
+                        <div className="label-text-alt my-2">
+                          Limit the number of times the link can be used.
+                        </div>
                       </label>
                       <input
                         type="number"
@@ -1259,6 +1225,9 @@ const LinkDetails: NextPageWithLayout<{
                     </div>
 
                     <div className="form-control">
+                      <label className="flex flex-col">
+                        <div className="label-text font-bold">QR code</div>
+                      </label>
                       <label
                         htmlFor="includeQRCode"
                         className="label w-full cursor-pointer justify-normal"
@@ -1267,7 +1236,7 @@ const LinkDetails: NextPageWithLayout<{
                           {...registerStep2(`includeQRCode`)}
                           type="checkbox"
                           id="includeQRCode"
-                          className="checkbox-primary checkbox"
+                          className="checkbox-secondary checkbox"
                         />
                         <span className="label-text ml-4">
                           Create a QR code for participants to scan
@@ -1284,8 +1253,11 @@ const LinkDetails: NextPageWithLayout<{
                     </div>
 
                     <div className="form-control">
-                      <label className="label font-bold">
-                        <span className="label-text">Expiry date</span>
+                      <label className="flex flex-col">
+                        <div className="label-text font-bold">Expiry date</div>
+                        <div className="label-text-alt my-2">
+                          Choose a date you want this link to expire.
+                        </div>
                       </label>
 
                       <Controller
@@ -1364,14 +1336,9 @@ const LinkDetails: NextPageWithLayout<{
                       <Controller
                         name="distributionList"
                         control={controlStep3}
-                        //defaultValue={organisation?.distributionList}
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         render={({ field: { onChange, value } }) => (
                           <CreatableSelect
-                            // options={organisation?.distributionList?.map((val) => ({
-                            //   label: val,
-                            //   value: val,
-                            // }))}
                             isMulti
                             className="form-control mb-2 w-full"
                             // eslint-disable-next-line
@@ -1436,45 +1403,57 @@ const LinkDetails: NextPageWithLayout<{
                     )}
                   >
                     {/* TYPE */}
-                    <div className="form-control">
+                    {/* <div className="form-control">
                       <label className="label">
                         <span className="label-text font-semibold">Type</span>
                       </label>
+
                       <label className="label label-text pt-0 text-sm ">
                         {
-                          lookups_linkTypes?.find(
-                            (x) => x.value == formData.typeId,
+                          linkEntityTypes?.find(
+                            (x) => x.value == formData.entityType,
                           )?.label
                         }
                       </label>
-                      {formStateStep1.errors.typeId && (
+                      {formStateStep1.errors.entityType && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.typeId.message}`}
+                            {`${formStateStep1.errors.entityType.message}`}
                           </span>
                         </label>
                       )}
-                    </div>
+                    </div> */}
 
                     {/* LINK PREVIEW */}
-                    {formData.typeId == "0" && (
-                      <div className="flex w-full flex-col rounded-lg border-2 border-dotted border-gray p-4">
-                        <div className="flex gap-4">
-                          <AvatarImage
-                            icon={
-                              selectedOpportuntity?.organizationLogoURL ?? null
-                            }
-                            alt={`${selectedOpportuntity?.organizationName} Logo`}
-                            size={60}
-                          />
+                    {formData.entityType == "0" && (
+                      <div className="form-control">
+                        <label className="flex flex-col">
+                          <div className="label-text font-bold">
+                            Social Preview
+                          </div>
+                          <div className="label-text-alt my-2">
+                            This is how your link will look on social media.
+                          </div>
+                        </label>
+                        <div className="flex w-full flex-col rounded-lg border-2 border-dotted border-gray p-4">
+                          <div className="flex gap-4">
+                            <AvatarImage
+                              icon={
+                                selectedOpportuntity?.organizationLogoURL ??
+                                null
+                              }
+                              alt={`${selectedOpportuntity?.organizationName} Logo`}
+                              size={60}
+                            />
 
-                          <div className="flex max-w-[200px] flex-col gap-1 sm:max-w-[480px] md:max-w-[420px]">
-                            <h4 className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold leading-7 text-black md:text-xl md:leading-8">
-                              {formData.name}
-                            </h4>
-                            <h6 className=" overflow-hidden text-ellipsis whitespace-nowrap text-xs text-gray-dark">
-                              {formData.description}
-                            </h6>
+                            <div className="flex max-w-[200px] flex-col gap-1 sm:max-w-[480px] md:max-w-[420px]">
+                              <h4 className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold leading-7 text-black md:text-xl md:leading-8">
+                                {formData.name}
+                              </h4>
+                              <h6 className=" overflow-hidden text-ellipsis whitespace-nowrap text-xs text-gray-dark">
+                                {formData.description}
+                              </h6>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1485,8 +1464,20 @@ const LinkDetails: NextPageWithLayout<{
                       <label className="label">
                         <span className="label-text font-semibold">Usage</span>
                       </label>
-                      <label className="label label-text pt-0 text-sm">
-                        {formData.usagesLimit}
+
+                      {/* LIMIT */}
+                      <label className="label label-text text-sm">
+                        {formData.usagesLimit ? (
+                          <div className="flex flex-row gap-1">
+                            Limited to
+                            <div className="font-semibold text-black">
+                              {formData.usagesLimit}
+                            </div>
+                            participants
+                          </div>
+                        ) : (
+                          "No limit"
+                        )}
                       </label>
                       {formStateStep2.errors.usagesLimit && (
                         <label className="label -mb-5">
@@ -1495,19 +1486,21 @@ const LinkDetails: NextPageWithLayout<{
                           </span>
                         </label>
                       )}
-                    </div>
 
-                    {/* EXPIRY DATE */}
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">
-                          Expiry date&#58;
-                        </span>
-                      </label>
+                      {/* EXPIRY DATE */}
                       <label className="label label-text text-sm">
-                        <Moment format={DATE_FORMAT_HUMAN}>
-                          {formData.dateEnd!}
-                        </Moment>
+                        {formData.dateEnd && (
+                          <div className="flex flex-row gap-1">
+                            Expires on
+                            <Moment
+                              format={DATE_FORMAT_HUMAN}
+                              className="font-semibold text-black"
+                            >
+                              {formData.dateEnd}
+                            </Moment>
+                          </div>
+                        )}
+                        {!formData.dateEnd && "No expiry date"}
                       </label>
                       {formStateStep1.errors.dateEnd && (
                         <label className="label -mb-5">
@@ -1516,20 +1509,55 @@ const LinkDetails: NextPageWithLayout<{
                           </span>
                         </label>
                       )}
+
+                      {/* QR CODE */}
+                      <label className="label label-text text-sm">
+                        <div className="flex flex-row gap-1">
+                          QR code
+                          <div className="font-semibold text-black">
+                            {formData.includeQRCode ? "enabled" : "not enabled"}
+                          </div>
+                        </div>
+                      </label>
+                      {formStateStep2.errors.includeQRCode && (
+                        <label className="label -mb-5">
+                          <span className="label-text-alt italic text-red-500">
+                            {`${formStateStep2.errors.includeQRCode.message}`}
+                          </span>
+                        </label>
+                      )}
                     </div>
 
                     {/* SHARING */}
                     <div className="form-control">
-                      <label className="label">
-                        <h5 className="font-bold">Sharing</h5>
+                      <label className="flex flex-col">
+                        <div className="label-text font-bold">Sharing</div>
+                        <div className="label-text-alt my-2">
+                          {(formData.distributionList?.length ?? 0) > 0 && (
+                            <>
+                              This link will be emailed to{" "}
+                              {formData.distributionList?.length} participant
+                              {formData.distributionList?.length !== 1
+                                ? "s"
+                                : ""}
+                              :
+                            </>
+                          )}
+                          {(formData.distributionList?.length ?? 0) === 0 &&
+                            "No sharing"}
+                        </div>
                       </label>
-                      <label className="label label-text pt-0 text-sm ">
-                        <ul className="list-disc">
-                          {formData.distributionList?.map((item, index) => (
-                            <li key={index}>{item}</li>
-                          ))}
-                        </ul>
-                      </label>
+
+                      {(formData.distributionList?.length ?? 0) > 0 && (
+                        <label className="label label-text pt-0 text-sm ">
+                          <ul className="list-none">
+                            {formData.distributionList?.map((item, index) => (
+                              <li key={index}>{item}</li>
+                            ))}
+                          </ul>
+                        </label>
+                      )}
+
                       {formStateStep3.errors.distributionList && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">

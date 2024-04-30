@@ -4,25 +4,13 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, type ReactElement } from "react";
-import {
-  getOpportunitiesAdmin,
-  searchLinkInstantVerify,
-} from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import { authOptions } from "~/server/auth";
-import {
-  LinkInfo,
-  LinkStatus,
-  OpportunitySearchResultLinkInstantVerify,
-  Status,
-  type OpportunitySearchResults,
-} from "~/api/models/opportunity";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { type ParsedUrlQuery } from "querystring";
 import Link from "next/link";
 import { PageBackground } from "~/components/PageBackground";
 import { IoIosAdd, IoMdPerson, IoIosLink } from "react-icons/io";
-import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PAGE_SIZE } from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -35,21 +23,27 @@ import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import iconZlto from "public/images/icon-zlto.svg";
-import Image from "next/image";
-import Opportunities from "~/pages/opportunities/[[...query]]";
+import { searchLinks } from "~/api/services/actionLinks";
+import {
+  LinkAction,
+  LinkEntityType,
+  LinkSearchResult,
+  LinkStatus,
+} from "~/api/models/actionLinks";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
-  opportunities?: string;
-  page?: string;
+  type?: string;
+  action?: string;
   status?: string;
+  entities?: string;
+  page?: string;
 }
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
-  const { opportunities, page, status, returnUrl } = context.query;
+  const { type, action, status, entities, page, returnUrl } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
   const queryClient = new QueryClient(config);
   let errorCode = null;
@@ -66,12 +60,22 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
+  /*export interface LinkSearchFilter extends PaginationFilter {
+  entityType: LinkEntityType;
+  action: LinkAction | null;
+  statuses: LinkStatus[] | null;
+  entities: string[] | null;
+  organizations: string[] | null;
+}*/
+
   try {
     // 👇 prefetch queries on server
-    const data = await searchLinkInstantVerify(
+    const data = await searchLinks(
       {
+        entityType: type?.toString() ?? LinkEntityType.Opportunity,
+        action: action?.toString() ?? LinkAction.Verify,
+        entities: entities ? entities.toString().split(",") : null,
         organizations: [id],
-        opportunities: [],
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
         statuses:
@@ -83,19 +87,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
                 ? [LinkStatus.Expired]
                 : status === "limitReached"
                   ? [LinkStatus.LimitReached]
-                  : [
-                      LinkStatus.Active,
-                      LinkStatus.Expired,
-                      LinkStatus.Inactive,
-                      LinkStatus.LimitReached,
-                    ],
+                  : null,
       },
       context,
     );
 
     await queryClient.prefetchQuery({
       queryKey: [
-        `Links_${id}_${opportunities?.toString()}_${page?.toString()}_${status?.toString()}`,
+        `Links_${id}_${type?.toString()}_${action?.toString()}_${status?.toString()}_${entities?.toString()}_${page?.toString()}`,
       ],
       queryFn: () => data,
     });
@@ -115,9 +114,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       dehydratedState: dehydrate(queryClient),
       id: id,
-      opportunities: opportunities ?? null,
-      page: page ?? null,
+      type: type ?? null,
+      action: action ?? null,
       status: status ?? null,
+      entities: entities ?? null,
+      page: page ?? null,
       theme: theme,
       error: errorCode,
       returnUrl: returnUrl ?? null,
@@ -127,27 +128,31 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 const Links: NextPageWithLayout<{
   id: string;
-  opportunities?: string;
+  type?: string;
+  action?: string;
+  status?: string;
+  entities?: string;
   page?: string;
   theme: string;
   error?: number;
-  status?: string;
   returnUrl?: string;
-}> = ({ id, opportunities, page, status, error, returnUrl }) => {
+}> = ({ id, type, action, status, entities, page, error, returnUrl }) => {
   const router = useRouter();
   const currentOrganisationInactive = useAtomValue(
     currentOrganisationInactiveAtom,
   );
 
   // 👇 use prefetched queries from server
-  const { data: links } = useQuery<OpportunitySearchResultLinkInstantVerify>({
+  const { data: links } = useQuery<LinkSearchResult>({
     queryKey: [
-      `Links_${id}_${opportunities?.toString()}_${page?.toString()}_${status?.toString()}`,
+      `Links_${id}_${type?.toString()}_${action?.toString()}_${status?.toString()}_${entities?.toString()}_${page?.toString()}`,
     ],
     queryFn: () =>
-      searchLinkInstantVerify({
+      searchLinks({
+        entityType: type?.toString() ?? LinkEntityType.Opportunity,
+        action: action?.toString() ?? LinkAction.Verify,
+        entities: entities ? entities.toString().split(",") : null,
         organizations: [id],
-        opportunities: [],
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
         statuses:
@@ -159,12 +164,7 @@ const Links: NextPageWithLayout<{
                 ? [LinkStatus.Expired]
                 : status === "limitReached"
                   ? [LinkStatus.LimitReached]
-                  : [
-                      LinkStatus.Active,
-                      LinkStatus.Expired,
-                      LinkStatus.Inactive,
-                      LinkStatus.LimitReached,
-                    ],
+                  : null,
       }),
     enabled: !error,
   });
@@ -189,13 +189,19 @@ const Links: NextPageWithLayout<{
       // redirect
       void router.push({
         pathname: `/organisations/${id}/links`,
-        query: { opportunities: opportunities, page: value, status: status },
+        query: {
+          type: type,
+          action: action,
+          status: status,
+          entities: entities,
+          page: value,
+        },
       });
 
       // reset scroll position
       window.scrollTo(0, 0);
     },
-    [opportunities, id, router, status],
+    [id, type, action, status, page, router],
   );
 
   if (error) {
@@ -325,7 +331,7 @@ const Links: NextPageWithLayout<{
 
         <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
           {/* NO ROWS */}
-          {links && links.items?.length === 0 && !opportunities && (
+          {links && links.items?.length === 0 && !entities && (
             <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
               <NoRowsMessage
                 title={"Welcome to Links!"}
@@ -352,15 +358,14 @@ const Links: NextPageWithLayout<{
             </div>
           )}
 
-          {/*
-          {opportunities && opportunities.items?.length === 0 && query && (
+          {links && links.items?.length === 0 && entities && (
             <div className="flex flex-col place-items-center py-32">
               <NoRowsMessage
-                title={"No opportunities found"}
+                title={"No links found"}
                 description={"Please try refining your search query."}
               />
             </div>
-          )} */}
+          )}
 
           {/* GRID */}
           {/* {opportunities && opportunities.items?.length > 0 && (

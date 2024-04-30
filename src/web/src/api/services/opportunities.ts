@@ -17,10 +17,6 @@ import type {
   OpportunitySearchCriteriaCommitmentInterval,
   Status,
   OpportunitySearchFilterCriteria,
-  LinkInfo,
-  OpportunityRequestLinkInstantVerify,
-  OpportunitySearchFilterLinkInstantVerify,
-  OpportunitySearchResultLinkInstantVerify,
 } from "../models/opportunity";
 import type { Country, Language } from "../models/lookups";
 import type { OrganizationInfo } from "../models/organisation";
@@ -325,89 +321,6 @@ export const searchCriteriaOpportunities = async (
   const { data } = await instance.post<OpportunitySearchResultsInfo>(
     `/opportunity/search/filter/opportunity`,
     filter,
-  );
-  return data;
-};
-
-export const createSharingLink = async (
-  id: string,
-  includeQRCode?: boolean,
-  context?: GetServerSidePropsContext | GetStaticPropsContext,
-): Promise<LinkInfo> => {
-  const instance = context ? ApiServer(context) : await ApiClient;
-
-  // construct querystring parameters from filter
-  const params = new URLSearchParams();
-  if (includeQRCode) params.append("includeQRCode", includeQRCode.toString());
-
-  const { data } = await instance.get<LinkInfo>(
-    `/opportunity/${id}/link/sharing?${params.toString()}`,
-  );
-  return data;
-};
-
-export const createLinkInstantVerify = async (
-  id: string,
-  request: OpportunityRequestLinkInstantVerify,
-  context?: GetServerSidePropsContext | GetStaticPropsContext,
-): Promise<LinkInfo> => {
-  const instance = context ? ApiServer(context) : await ApiClient;
-
-  const { data } = await instance.post<LinkInfo>(
-    `/opportunity/${id}/link/instantVerify`,
-    request,
-  );
-  return data;
-};
-
-export const getLinkInstantVerifyById = async (
-  linkId: string,
-  includeQRCode: boolean,
-  context?: GetServerSidePropsContext | GetStaticPropsContext,
-): Promise<LinkInfo> => {
-  const instance = context ? ApiServer(context) : await ApiClient;
-
-  const { data } = await instance.get<LinkInfo>(
-    `/opportunity/link/${linkId}/instantVerify`,
-    { params: { includeQRCode } },
-  );
-  return data;
-};
-
-export const searchLinkInstantVerify = async (
-  filter: OpportunitySearchFilterLinkInstantVerify,
-  context?: GetServerSidePropsContext | GetStaticPropsContext,
-): Promise<OpportunitySearchResultLinkInstantVerify> => {
-  const instance = context ? ApiServer(context) : await ApiClient;
-
-  const { data } =
-    await instance.post<OpportunitySearchResultLinkInstantVerify>(
-      `/opportunity/link/instantVerify/search`,
-      filter,
-    );
-  return data;
-};
-
-export const activateLinkInstantVerify = async (
-  linkId: string,
-  context?: GetServerSidePropsContext | GetStaticPropsContext,
-): Promise<LinkInfo[]> => {
-  const instance = context ? ApiServer(context) : await ApiClient;
-
-  const { data } = await instance.patch<LinkInfo[]>(
-    `/opportunity/link/${linkId}/instantVerify/activate`,
-  );
-  return data;
-};
-
-export const deactivateLinkInstantVerify = async (
-  linkId: string,
-  context?: GetServerSidePropsContext | GetStaticPropsContext,
-): Promise<LinkInfo> => {
-  const instance = context ? ApiServer(context) : await ApiClient;
-
-  const { data } = await instance.patch<LinkInfo>(
-    `/opportunity/link/${linkId}/instantVerify/deactivate`,
   );
   return data;
 };
