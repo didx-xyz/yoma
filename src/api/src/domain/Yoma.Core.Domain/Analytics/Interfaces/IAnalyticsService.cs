@@ -9,5 +9,7 @@ namespace Yoma.Core.Domain.Analytics.Interfaces
     OrganizationSearchResultsOpportunity SearchOrganizationOpportunities(OrganizationSearchFilterOpportunity filter);
 
     OrganizationSearchResultsYouth SearchOrganizationYouth(OrganizationSearchFilterYouth filter);
+
+    OrganizationSearchResultsSSO SearchOrganizationSSO(OrganizationSearchFilterSSO filter);
   }
 }

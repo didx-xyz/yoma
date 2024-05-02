@@ -326,6 +326,21 @@ namespace Yoma.Core.Api.Controllers
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
+
+    [SwaggerOperation(Summary = "Search for SSO analytics based on the supplied filter")]
+    [HttpPost("search/analytics/sso")]
+    [ProducesResponseType(typeof(OrganizationSearchResultsSSO), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult SearchOrganizationSSO([FromBody] OrganizationSearchFilterSSO filter)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationSSO));
+
+      var result = _analyticsService.SearchOrganizationSSO(filter);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationSSO));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
     #endregion Administrative Actions
     #endregion
   }
