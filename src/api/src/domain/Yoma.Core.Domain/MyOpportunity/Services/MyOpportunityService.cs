@@ -463,6 +463,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
+        await _linkService.LogUsage(link.Id);
+
         var request = new MyOpportunityRequestVerify { InstantVerification = true };
         await PerformActionSendForVerificationManual(user, link.EntityId, request);
 
@@ -474,8 +476,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           Comment = "Instant verification",
           InstantVerification = true
         });
-
-        await _linkService.LogUsage(link.Id);
 
         scope.Complete();
       });

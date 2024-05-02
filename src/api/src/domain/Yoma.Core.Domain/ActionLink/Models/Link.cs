@@ -35,6 +35,10 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public DateTimeOffset? DateEnd { get; set; }
 
+    public string? DistributionList { get; set; }
+
+    public bool? LockToDistributionList { get; set; }
+
     public DateTimeOffset DateCreated { get; set; }
 
     public Guid CreatedByUserId { get; set; }

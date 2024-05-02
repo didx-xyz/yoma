@@ -2,6 +2,7 @@ using FluentValidation;
 using Flurl;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System.Transactions;
 using Yoma.Core.Domain.ActionLink.Extensions;
 using Yoma.Core.Domain.ActionLink.Interfaces;
@@ -165,7 +166,12 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       await _linkRequestCreateValidator.ValidateAndThrowAsync(request);
 
-      if (request.DistributionList != null) request.DistributionList = request.DistributionList.Distinct().ToList();
+      if (request.DistributionList != null)
+      {
+        request.DistributionList = request.DistributionList.Distinct().ToList();
+        //with LockToDistributionList, DistributionList is required and usage limit is set to the count of the distribution list
+        if (request.LockToDistributionList == true) request.UsagesLimit = request.DistributionList.Count;
+      }
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -179,6 +185,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
         StatusId = _linkStatusService.GetByName(LinkStatus.Active.ToString()).Id,
         UsagesLimit = request.UsagesLimit,
         DateEnd = request.DateEnd.HasValue ? request.DateEnd.Value.ToEndOfDay() : null,
+        DistributionList = request.DistributionList == null ? null : JsonConvert.SerializeObject(request.DistributionList),
+        LockToDistributionList = request.LockToDistributionList,
         CreatedByUserId = user.Id,
         ModifiedByUserId = user.Id,
       };
@@ -215,8 +223,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
             case LinkAction.Share:
               logUsage = true;
 
+              if (request.LockToDistributionList == true)
+                throw new ValidationException($"Locking to distribution list is not supported by a link with action '{request.Action}'");
+
               if (request.UsagesLimit.HasValue || request.DateEnd.HasValue)
-                throw new ValidationException($"Neither a usage limit nor an end date is supported by the link with action '{request.Action}'.");
+                throw new ValidationException($"Neither a usage limit nor an end date is supported by a link with action '{request.Action}'");
 
               item.URL = opportunity.YomaInfoURL(_appSettings.AppBaseURL);
 
@@ -224,7 +235,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
               if (itemExisting == null) break;
 
               if (!string.Equals(itemExisting.URL, item.URL))
-                throw new DataInconsistencyException($"URL mismatch detected for link with id '{itemExisting.Id}'");
+                throw new DataInconsistencyException($"URL mismatch detected for existing link with id '{itemExisting.Id}'");
 
               //sharing links should always remain active; they cannot be deactivated, have no end date, and are not subject to usage limits
               AssertActive(itemExisting);
@@ -292,13 +303,42 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       AssertActive(link);
 
-      //only track unique usages provided authenticated
-      if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor)) return link.ToLinkInfo(false);
+      var action = Enum.Parse<LinkAction>(link.Action);
+
+      switch (action)
+      {
+        case LinkAction.Share:
+          //user context optional; only tracked provided context
+          if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor)) return link.ToLinkInfo(false);
+          break;
+
+        case LinkAction.Verify:
+          //user context required
+          if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor)) throw new ValidationException($"User context required for link with action '{action}'");
+          break;
+
+        default:
+          throw new InvalidOperationException($"Invalid / unsupported action of '{action}'");
+      }
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var item = _linkUsageLogRepository.Query().SingleOrDefault(o => o.LinkId == id && o.UserId == user.Id);
       if (item != null) return link.ToLinkInfo(false); //already used by the user
+
+      if (link.LockToDistributionList == true)
+      {
+        if (link.DistributionList == null)
+          throw new DataInconsistencyException("Link is locked to a distribution list but no distribution list is defined");
+
+        var emails = JsonConvert.DeserializeObject<List<string>>(link.DistributionList);
+
+        if (emails == null || emails.Count == 0)
+          throw new DataInconsistencyException("Link is locked to a distribution list but no distribution list is defined");
+
+        if (!emails.Contains(user.Email, StringComparer.InvariantCultureIgnoreCase))
+          throw new SecurityException("Unauthorized");
+      }
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -363,6 +403,9 @@ namespace Yoma.Core.Domain.ActionLink.Services
               throw new InvalidOperationException($"Invalid / unsupported status of '{status}'");
           }
           break;
+
+        default:
+          throw new InvalidOperationException($"Invalid / unsupported action of '{action}'");
       }
 
       link = await _linkRepository.Update(link);
