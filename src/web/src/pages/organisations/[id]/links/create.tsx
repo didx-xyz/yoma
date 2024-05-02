@@ -61,6 +61,7 @@ import {
   MAX_FILE_SIZE_LABEL,
   GA_ACTION_OPPORTUNITY_LINK_CREATE,
   GA_CATEGORY_OPPORTUNITY_LINK,
+  MAX_INT32,
 } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
@@ -313,12 +314,13 @@ const LinkDetails: NextPageWithLayout<{
   const [formData, setFormData] = useState<LinkRequestCreate>({
     name: "",
     description: "",
-    entityType: null,
-    entityId: null,
+    entityType: "",
+    entityId: "",
     usagesLimit: null,
     dateEnd: null,
     distributionList: [],
     includeQRCode: null,
+    lockToDistributionList: false,
   });
 
   const schemaStep1 = z.object({
@@ -330,20 +332,50 @@ const LinkDetails: NextPageWithLayout<{
     entityType: z.string().min(1, "Type is required."),
     entityId: z.string().min(1, "Difficulty is required."),
   });
-
+  // .refine(
+  //   (data) => {
+  //     debugger;
+  //     // validate that selected opportunity supports manual verification
+  //     return (
+  //       data.entityId &&
+  //       selectedOpportuntity?.verificationEnabled &&
+  //       selectedOpportuntity.verificationMethod == "Manual"
+  //     );
+  //   },
+  //   {
+  //     message:
+  //       "This opportunity does not support manual verification. Please select another opportunity.",
+  //     path: ["entityId"],
+  //   },
+  // )
   const schemaStep2 = z.object({
     usagesLimit: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
       // eslint-disable-next-line
       return val === null || Number.isNaN(val as any) ? null : val;
     }),
+    lockToDistributionList: z.boolean().optional(),
     dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
     includeQRCode: z.union([z.boolean(), z.null()]).optional(),
   });
 
   const schemaStep3 = z
     .object({
+      // lockToDistributionList: z.boolean().optional(),
       distributionList: z.array(z.string().email()).optional(),
     })
+    .refine(
+      (data) => {
+        // distributionList is required if lockToDistributionList is true
+        return (
+          !formData.lockToDistributionList ||
+          (data.distributionList?.length ?? 0) > 0
+        );
+      },
+      {
+        message: "Please enter at least one email address.",
+        path: ["distributionList"],
+      },
+    )
     .refine(
       (data) => {
         // validate all items are valid email addresses
@@ -381,10 +413,12 @@ const LinkDetails: NextPageWithLayout<{
     control: controlStep2,
     getValues: getValuesStep2,
     reset: resetStep2,
+    watch: watchStep2,
   } = useForm({
     resolver: zodResolver(schemaStep2),
     defaultValues: formData,
   });
+  const watchLockToDistributionList = watchStep2("lockToDistributionList");
 
   const {
     register: registerStep3,
@@ -723,14 +757,18 @@ const LinkDetails: NextPageWithLayout<{
         setSelectedOpportuntity(res);
 
         // if name & description is empty in formData, then default these values from the opportunity title & decription
-        resetStep1((prev) => ({
-          ...prev,
-          name: prev?.name ?? res.title,
-          description: prev?.description ?? res.description,
-        }));
+        // resetStep1((prev) => ({
+        //   ...prev,
+        //   name: prev?.name || res.title,
+        //   description: prev?.description || res.description,
+        // }));
       });
     }
-  }, [watchEntityId, watchEntityType, setSelectedOpportuntity, resetStep1]);
+  }, [
+    watchEntityId,
+    watchEntityType,
+    setSelectedOpportuntity /*, resetStep1*/,
+  ]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -1089,7 +1127,9 @@ const LinkDetails: NextPageWithLayout<{
                               defaultOptions={true} // calls loadOpportunities for initial results when clicking on the dropdown
                               cacheOptions
                               loadOptions={loadOpportunities}
-                              onChange={(val) => onChange(val?.value)}
+                              onChange={(val) => {
+                                onChange(val?.value);
+                              }}
                               value={
                                 selectedOpportuntity
                                   ? {
@@ -1102,13 +1142,27 @@ const LinkDetails: NextPageWithLayout<{
                             />
                           )}
                         />
+
                         {formStateStep1.errors.entityId && (
-                          <label className="label font-bold">
+                          <label className="label">
                             <span className="label-text-alt italic text-red-500">
                               {`${formStateStep1.errors.entityId.message}`}
                             </span>
                           </label>
                         )}
+
+                        {selectedOpportuntity &&
+                          !(
+                            selectedOpportuntity.verificationEnabled &&
+                            selectedOpportuntity.verificationMethod == "Manual"
+                          ) && (
+                            <label className="label">
+                              <span className="label-text-alt italic text-red-500">
+                                This opportunity does not support manual
+                                verification. Please select another opportunity.
+                              </span>
+                            </label>
+                          )}
                       </div>
                     )}
 
@@ -1209,11 +1263,13 @@ const LinkDetails: NextPageWithLayout<{
                       </label>
                       <input
                         type="number"
-                        className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+                        className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none disabled:border-gray-light disabled:text-gray"
                         placeholder="Enter number"
                         {...registerStep2("usagesLimit", {
                           valueAsNumber: true,
                         })}
+                        disabled={watchLockToDistributionList ?? false}
+                        max={MAX_INT32}
                       />
                       {formStateStep2.errors.usagesLimit && (
                         <label className="label -mb-5">
@@ -1224,6 +1280,31 @@ const LinkDetails: NextPageWithLayout<{
                       )}
                     </div>
 
+                    {/* LOCK TO DISTRIBUTION LIST */}
+                    <div className="form-control">
+                      <label
+                        htmlFor="lockToDistributionList"
+                        className="label w-full cursor-pointer justify-normal"
+                      >
+                        <input
+                          {...registerStep2(`lockToDistributionList`)}
+                          type="checkbox"
+                          id="lockToDistributionList"
+                          className="checkbox-secondary checkbox"
+                        />
+                        <span className="label-text ml-4">
+                          Limit to a specific distribution list (Step 3)
+                        </span>
+                      </label>
+
+                      {formStateStep2.errors.lockToDistributionList && (
+                        <label className="label -mb-5">
+                          <span className="label-text-alt italic text-red-500">
+                            {`${formStateStep2.errors.lockToDistributionList.message}`}
+                          </span>
+                        </label>
+                      )}
+                    </div>
                     <div className="form-control">
                       <label className="flex flex-col">
                         <div className="label-text font-bold">QR code</div>
@@ -1251,7 +1332,6 @@ const LinkDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-
                     <div className="form-control">
                       <label className="flex flex-col">
                         <div className="label-text font-bold">Expiry date</div>
@@ -1282,7 +1362,6 @@ const LinkDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2 md:justify-end md:gap-4">
                       <button
@@ -1362,7 +1441,6 @@ const LinkDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       <button
@@ -1466,19 +1544,38 @@ const LinkDetails: NextPageWithLayout<{
                       </label>
 
                       {/* LIMIT */}
-                      <label className="label label-text text-sm">
-                        {formData.usagesLimit ? (
+                      {!formData.lockToDistributionList && (
+                        <label className="label label-text text-sm">
+                          {formData.usagesLimit ? (
+                            <div className="flex flex-row gap-1">
+                              Limited to
+                              <div className="font-semibold text-black">
+                                {formData.usagesLimit}
+                              </div>
+                              participant{formData.usagesLimit !== 1 ? "s" : ""}
+                            </div>
+                          ) : (
+                            "No limit"
+                          )}
+                        </label>
+                      )}
+
+                      {formData.lockToDistributionList && (
+                        <label className="label label-text text-sm">
                           <div className="flex flex-row gap-1">
                             Limited to
                             <div className="font-semibold text-black">
-                              {formData.usagesLimit}
+                              {formData.distributionList?.length}
                             </div>
-                            participants
+                            participant
+                            {formData.distributionList?.length !== 1
+                              ? "s"
+                              : ""}{" "}
+                            in the distribution list (see Sharing)
                           </div>
-                        ) : (
-                          "No limit"
-                        )}
-                      </label>
+                        </label>
+                      )}
+
                       {formStateStep2.errors.usagesLimit && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
@@ -1530,9 +1627,10 @@ const LinkDetails: NextPageWithLayout<{
 
                     {/* SHARING */}
                     <div className="form-control">
-                      <label className="flex flex-col">
-                        <div className="label-text font-bold">Sharing</div>
-                        <div className="label-text-alt my-2">
+                      <div className="flex flex-col">
+                        <label className="label-text font-bold">Sharing</label>
+
+                        <label className="label label-text text-sm">
                           {(formData.distributionList?.length ?? 0) > 0 && (
                             <>
                               This link will be emailed to{" "}
@@ -1545,11 +1643,11 @@ const LinkDetails: NextPageWithLayout<{
                           )}
                           {(formData.distributionList?.length ?? 0) === 0 &&
                             "No sharing"}
-                        </div>
-                      </label>
+                        </label>
+                      </div>
 
                       {(formData.distributionList?.length ?? 0) > 0 && (
-                        <label className="label label-text pt-0 text-sm ">
+                        <label className="label label-text pt-0 text-xs ">
                           <ul className="list-none">
                             {formData.distributionList?.map((item, index) => (
                               <li key={index}>{item}</li>

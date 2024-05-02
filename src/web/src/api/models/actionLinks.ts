@@ -9,6 +9,7 @@ export interface LinkRequestCreate {
   dateEnd: string | null;
   distributionList: string[] | null;
   includeQRCode: boolean | null;
+  lockToDistributionList: boolean | null; //TODO: check on api
 }
 
 export interface LinkInfo {
