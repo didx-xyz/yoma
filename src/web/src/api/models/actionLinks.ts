@@ -8,8 +8,8 @@ export interface LinkRequestCreate {
   usagesLimit: number | null;
   dateEnd: string | null;
   distributionList: string[] | null;
+  lockToDistributionList: boolean | null;
   includeQRCode: boolean | null;
-  lockToDistributionList: boolean | null; //TODO: check on api
 }
 
 export interface LinkInfo {
@@ -19,16 +19,18 @@ export interface LinkInfo {
   entityType: LinkEntityType;
   action: LinkAction;
   statusId: string;
-  status: LinkStatus;
+  status: LinkStatus | string; //NB: string is not in the original model
   entityId: string;
   entityTitle: string;
   uRL: string;
   shortURL: string;
-  qRCodeBase64: string | null;
+  qrCodeBase64: string | null; // NB: casing not the same as api
   usagesLimit: number | null;
   usagesTotal: number | null;
   usagesAvailable: number | null;
   dateEnd: string | null;
+  distributionList: string[] | null;
+  lockToDistributionList: boolean | null;
   dateCreated: string;
   dateModified: string;
 }
@@ -52,7 +54,7 @@ export enum LinkStatus {
 export interface LinkSearchFilter extends PaginationFilter {
   entityType: LinkEntityType | string | null; // NB: string | null is not in the original model
   action: LinkAction | string | null; // NB: string | null is not in the original model
-  statuses: LinkStatus[] | null;
+  statuses: LinkStatus[] | null | string[]; // NB: string[] null is not in the original model
   entities: string[] | null;
   organizations: string[] | null;
 }

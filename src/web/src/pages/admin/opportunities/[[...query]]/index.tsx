@@ -856,6 +856,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                       </Link>
                     ))}
                   </div>
+
                   {/* DESKTOP */}
                   <table className="hidden md:table">
                     <thead>

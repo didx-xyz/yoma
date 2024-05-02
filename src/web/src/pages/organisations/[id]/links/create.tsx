@@ -360,7 +360,6 @@ const LinkDetails: NextPageWithLayout<{
 
   const schemaStep3 = z
     .object({
-      // lockToDistributionList: z.boolean().optional(),
       distributionList: z.array(z.string().email()).optional(),
     })
     .refine(
@@ -609,21 +608,24 @@ const LinkDetails: NextPageWithLayout<{
 
         // update api
         await createLinkInstantVerify(data);
+
+        // invalidate cache
+        // this will match all queries with the following prefixes ['Links', id] (list data) & ['Links_TotalCount', id] (tab counts)
+        await queryClient.invalidateQueries({
+          queryKey: ["Links", id],
+          exact: false,
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ["Links_TotalCount", id],
+          exact: false,
+        });
+
         message = "Link created";
-        //}
         toast(message, {
           type: "success",
           toastId: "link",
         });
         console.log(message); // e2e
-
-        // invalidate queries
-        // await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-        // await queryClient.invalidateQueries({
-        //   queryKey: ["opportunities", id],
-        // });
-        // await queryClient.invalidateQueries({
-        //   queryKey: ["opportunity", entityId],
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
@@ -696,51 +698,7 @@ const LinkDetails: NextPageWithLayout<{
     ],
   );
 
-  //   if ((linkInfo?.status as any) == "Expired") {
-  //     setOppExpiredModalVisible(true);
-  //   }
-  // }, [linkInfo?.status, setOppExpiredModalVisible]);
-
-  // const updateStatus = useCallback(
-  //   async (status: Status) => {
-  //     setLoadingUpdateInactive(true);
-
-  //     try {
-  //       // call api
-  //       await updateOpportunityStatus(entityId, status);
-
-  //       // 📊 GOOGLE ANALYTICS: track event
-  //       // trackGAEvent(
-  //       //   GA_CATEGORY_OPPORTUNITY_LINK,
-  //       //   GA_ACTION_OPPORTUNITY_LINK_UPDATE,
-  //       //   `Opportunity Status Changed to ${status} for Opportunity ID: ${entityId}`,
-  //       // );
-
-  //       // invalidate queries
-  //       // await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-  //       // await queryClient.invalidateQueries({
-  //       //   queryKey: ["opportunity", entityId],
-  //       // });
-
-  //       toast.success("Link status updated");
-  //       //setOppExpiredModalVisible(false);
-  //     } catch (error) {
-  //       toast(<ApiErrors error={error as AxiosError} />, {
-  //         type: "error",
-  //         toastId: "link",
-  //         autoClose: false,
-  //         icon: false,
-  //       });
-  //     }
-  //     setLoadingUpdateInactive(false);
-
-  //     return;
-  //   },
-  //   [  queryClient],
-  // );
-
   // 👇 prevent scrolling on the page when the dialogs are open
-  //useDisableBodyScroll(oppExpiredModalVisible);
   useDisableBodyScroll(saveChangesDialogVisible);
 
   //  look up the opportunity when watchEntityId changes (for link preview)
@@ -776,27 +734,7 @@ const LinkDetails: NextPageWithLayout<{
     else return <InternalServerError />;
   }
 
-  // load data asynchronously for the opportunities dropdown
-  // debounce is used to prevent the API from being called too frequently
-  // const loadOpportunities = debounce(
-  //   (inputValue: string, callback: (options: any) => void) => {
-  //     searchCriteriaOpportunities({
-  //       opportunities: [],
-  //       organization: id,
-  //       titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
-  //       pageNumber: 1,
-  //       pageSize: PAGE_SIZE_MEDIUM,
-  //     }).then((data) => {
-  //       const options = data.items.map((item) => ({
-  //         value: item.id,
-  //         label: item.title,
-  //       }));
-  //       callback(options);
-  //     });
-  //   },
-  //   1000,
-  // );
-
+  // load data asynchronously for the opportunities dropdown (debounced)
   const loadOpportunities = debounce(
     (inputValue: string, callback: (options: any) => void) => {
       if (inputValue.length < 3) inputValue = "";
@@ -1163,6 +1101,15 @@ const LinkDetails: NextPageWithLayout<{
                               </span>
                             </label>
                           )}
+
+                        {selectedOpportuntity?.published === false && (
+                          <label className="label">
+                            <span className="label-text-alt italic text-red-500">
+                              This opportunity has not been published. Please
+                              select another opportunity.
+                            </span>
+                          </label>
+                        )}
                       </div>
                     )}
 
@@ -1510,7 +1457,7 @@ const LinkDetails: NextPageWithLayout<{
                             Social Preview
                           </div>
                           <div className="label-text-alt my-2">
-                            This is how your link will look on social media.
+                            This is how your link will look on social media:
                           </div>
                         </label>
                         <div className="flex w-full flex-col rounded-lg border-2 border-dotted border-gray p-4">
