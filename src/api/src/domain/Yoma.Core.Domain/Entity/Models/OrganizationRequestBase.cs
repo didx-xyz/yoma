@@ -53,7 +53,7 @@ namespace Yoma.Core.Domain.Entity.Models
     public List<string>? AdminEmails { get; set; }
 
     /// <summary>
-    /// Outbound SSO Client ID used for configuring SSO, enabling logins on third-party systems using Yoma credentials
+    /// Outbound SSO Client ID used for configuring SSO, allowing logins on third-party systems using Yoma credentials
     /// </summary>
     public string? SSOClientIdOutbound { get; set; }
 
