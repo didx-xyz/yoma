@@ -50,6 +50,11 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
 
     public DateTimeOffset? DateEnd { get; set; }
 
+    [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
+    public string? DistributionList { get; set; }
+
+    public bool? LockToDistributionList { get; set; }
+
     [Required]
     public DateTimeOffset DateCreated { get; set; }
 

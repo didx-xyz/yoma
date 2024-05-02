@@ -11,7 +11,7 @@ namespace Yoma.Core.Domain.ActionLink.Models
     public LinkEntityType EntityType { get; set; }
 
     [JsonIgnore]
-    public LinkAction Action { get; set; } = LinkAction.Verify;
+    public LinkAction Action { get; set; }
 
     public Guid EntityId { get; set; }
 
@@ -20,6 +20,8 @@ namespace Yoma.Core.Domain.ActionLink.Models
     public DateTimeOffset? DateEnd { get; set; }
 
     public List<string>? DistributionList { get; set; }
+
+    public bool? LockToDistributionList { get; set; }
 
     public bool? IncludeQRCode { get; set; }
   }
