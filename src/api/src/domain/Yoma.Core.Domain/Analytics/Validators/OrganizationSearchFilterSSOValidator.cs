@@ -11,7 +11,7 @@ namespace Yoma.Core.Domain.Analytics.Validators
     #endregion
 
     #region Constructor
-    public OrganizationSearchFilterSSOValidator(IOrganizationService organizationService) 
+    public OrganizationSearchFilterSSOValidator(IOrganizationService organizationService)
     {
       _organizationService = organizationService;
 
