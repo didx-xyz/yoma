@@ -156,7 +156,7 @@ const LinkDetails: NextPageWithLayout<{
     entityId: "",
     usagesLimit: null,
     dateEnd: null,
-    distributionList: null,
+    distributionList: [],
     includeQRCode: null,
     lockToDistributionList: false,
   });
@@ -375,6 +375,9 @@ const LinkDetails: NextPageWithLayout<{
         data.dateEnd = data.dateEnd
           ? moment(data.dateEnd).format(DATE_FORMAT_SYSTEM)
           : null;
+
+        //HACK: api want nulls and not empty arrays...
+        if (data.distributionList?.length == 0) data.distributionList = null;
 
         // update api
         await createLinkInstantVerify(data);
