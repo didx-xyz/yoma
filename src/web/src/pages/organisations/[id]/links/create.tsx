@@ -63,7 +63,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { validateEmail } from "~/lib/validate";
-import type { LinkRequestCreate } from "~/api/models/actionLinks";
+import type { LinkRequestCreateVerify } from "~/api/models/actionLinks";
 import { createLinkInstantVerify } from "~/api/services/actionLinks";
 
 interface IParams extends ParsedUrlQuery {
@@ -121,40 +121,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-// const ValueContainer = ({
-//   children,
-//   ...props
-// }: ValueContainerProps<SelectOption>) => {
-//   // eslint-disable-next-line prefer-const
-//   let [values, input] = children as any[];
-//   if (Array.isArray(values)) {
-//     if (
-//       values.length > 0 &&
-//       "props" in values[0] &&
-//       "selectProps" in values[0].props &&
-//       values[0].props.selectProps.placeholder
-//     ) {
-//       const pluralMapping: Record<string, string> = {
-//         Opportunity: "Opportunities",
-//       };
-
-//       const pluralize = (word: string, count: number): string => {
-//         if (count === 1) return word;
-//         return pluralMapping[word] ?? `${word}s`;
-//       };
-
-//       const placeholder: string = values[0].props.selectProps.placeholder;
-//       values = `${values.length} ${pluralize(placeholder, values.length)}`;
-//     }
-//   }
-//   return (
-//     <components.ValueContainer {...props}>
-//       {values}
-//       {input}
-//     </components.ValueContainer>
-//   );
-// };
-
 // 👇 PAGE COMPONENT: Link Create/Edit
 // this page acts as a create (/links/create) or edit page (/links/:id) based on the [entityId] route param
 const LinkDetails: NextPageWithLayout<{
@@ -183,7 +149,7 @@ const LinkDetails: NextPageWithLayout<{
 
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<LinkRequestCreate>({
+  const [formData, setFormData] = useState<LinkRequestCreateVerify>({
     name: "",
     description: "",
     entityType: "",
@@ -396,7 +362,7 @@ const LinkDetails: NextPageWithLayout<{
   ]);
 
   const onSubmit = useCallback(
-    async (data: LinkRequestCreate) => {
+    async (data: LinkRequestCreateVerify) => {
       setIsLoading(true);
 
       try {
@@ -458,7 +424,7 @@ const LinkDetails: NextPageWithLayout<{
       // set form data
       const model = {
         ...formData,
-        ...(data as LinkRequestCreate),
+        ...(data as LinkRequestCreateVerify),
       };
 
       setFormData(model);

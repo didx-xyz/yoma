@@ -3,14 +3,15 @@ import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type {
   LinkInfo,
-  LinkRequestCreate,
+  LinkRequestCreateShare,
+  LinkRequestCreateVerify,
   LinkSearchFilter,
   LinkSearchResult,
   LinkStatus,
 } from "../models/actionLinks";
 
 export const createLinkSharing = async (
-  request: LinkRequestCreate,
+  request: LinkRequestCreateShare,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<LinkInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
@@ -22,7 +23,7 @@ export const createLinkSharing = async (
 };
 
 export const createLinkInstantVerify = async (
-  request: LinkRequestCreate,
+  request: LinkRequestCreateVerify,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<LinkInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;

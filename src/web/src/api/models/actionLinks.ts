@@ -1,15 +1,20 @@
 import type { PaginationFilter } from "./common";
 
-export interface LinkRequestCreate {
+export interface LinkRequestCreateBase {
   name: string | null;
   description: string | null;
   entityType: LinkEntityType | string | null; // NB: string | null is not in the original model
-  entityId: string | null; // NB: string | null is not in the original model
+  entityId: string | null; // NB: null is not in the original model
+  includeQRCode: boolean | null;
+}
+
+export interface LinkRequestCreateShare extends LinkRequestCreateBase {}
+
+export interface LinkRequestCreateVerify extends LinkRequestCreateBase {
   usagesLimit: number | null;
   dateEnd: string | null;
   distributionList: string[] | null;
   lockToDistributionList: boolean | null;
-  includeQRCode: boolean | null;
 }
 
 export interface LinkInfo {

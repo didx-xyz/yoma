@@ -439,10 +439,6 @@ const Links: NextPageWithLayout<{
               description: null,
               entityType: item.entityType,
               entityId: item.entityId,
-              usagesLimit: null,
-              dateEnd: null,
-              distributionList: null,
-              lockToDistributionList: null,
               includeQRCode: true,
             }),
         })
