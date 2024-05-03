@@ -211,6 +211,9 @@ namespace Yoma.Core.Domain.ActionLink.Services
         if (request.LockToDistributionList == true) request.UsagesLimit = request.DistributionList.Count;
       }
 
+      if (!request.UsagesLimit.HasValue && !request.DateEnd.HasValue)
+        throw new ValidationException($"Either a usage limit or an end date is required");
+
       var item = ParseLink(request, ensureOrganizationAuthorization);
       item.UsagesLimit = request.UsagesLimit;
       item.DateEnd = request.DateEnd.HasValue ? request.DateEnd.Value.ToEndOfDay() : null;

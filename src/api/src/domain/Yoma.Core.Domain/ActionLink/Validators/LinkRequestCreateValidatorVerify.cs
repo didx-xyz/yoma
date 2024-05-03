@@ -9,10 +9,7 @@ namespace Yoma.Core.Domain.ActionLink.Validators
     public LinkRequestCreateValidatorVerify()
     {
       // linkService: When LockToDistributionList is enabled, the usage limit is set to the number of items in the DistributionList
-
-      RuleFor(request => request)
-           .Must(request => request.UsagesLimit.HasValue || request.DateEnd.HasValue)
-           .WithMessage(request => $"Either a usage limit or an end date is required.");
+      // linkService: Ensure either a usage limit or an end date is specified
 
       RuleFor(x => x.UsagesLimit)
         .Must(x => !x.HasValue || x > 0)
