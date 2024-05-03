@@ -97,112 +97,111 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const theme = getThemeFromRole(session, id);
 
   try {
+    // NB: disabled as we getting 502 bat gateway error on stage
     // 👇 prefetch queries on server
-    const data = await searchLinks(
-      {
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type?.toString() ?? LinkEntityType.Opportunity,
-        action: action?.toString() ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split(",") : null,
-        organizations: [id],
-        statuses: statuses ? statuses.toString().split(",") : null,
-      },
-      context,
-    );
-
-    await queryClient.prefetchQuery({
-      queryKey: [
-        "Links",
-        id,
-        `${type?.toString()}_${action?.toString()}_${statuses?.toString()}_${entities?.toString()}_${page?.toString()}`,
-      ],
-      queryFn: () => data,
-    });
-
-    // get the totalCount for each status from the searchLinks function
-    await Promise.all([
-      queryClient.prefetchQuery({
-        queryKey: ["Links_TotalCount", id, null],
-        queryFn: () =>
-          searchLinks(
-            {
-              pageNumber: 1,
-              pageSize: 1,
-              entityType: type?.toString() ?? LinkEntityType.Opportunity,
-              action: action?.toString() ?? LinkAction.Verify,
-              entities: null,
-              organizations: [id],
-              statuses: null,
-            },
-            context,
-          ).then((data) => data.totalCount ?? 0),
-      }),
-      queryClient.prefetchQuery({
-        queryKey: ["Links_TotalCount", id, LinkStatus.Active],
-        queryFn: () =>
-          searchLinks(
-            {
-              pageNumber: 1,
-              pageSize: 1,
-              entityType: type?.toString() ?? LinkEntityType.Opportunity,
-              action: action?.toString() ?? LinkAction.Verify,
-              entities: null,
-              organizations: [id],
-              statuses: [LinkStatus.Active],
-            },
-            context,
-          ).then((data) => data.totalCount ?? 0),
-      }),
-      queryClient.prefetchQuery({
-        queryKey: ["Links_TotalCount", id, LinkStatus.Inactive],
-        queryFn: () =>
-          searchLinks(
-            {
-              pageNumber: 1,
-              pageSize: 1,
-              entityType: type?.toString() ?? LinkEntityType.Opportunity,
-              action: action?.toString() ?? LinkAction.Verify,
-              entities: null,
-              organizations: [id],
-              statuses: [LinkStatus.Inactive],
-            },
-            context,
-          ).then((data) => data.totalCount ?? 0),
-      }),
-      queryClient.prefetchQuery({
-        queryKey: ["Links_TotalCount", id, LinkStatus.Expired],
-        queryFn: () =>
-          searchLinks(
-            {
-              pageNumber: 1,
-              pageSize: 1,
-              entityType: type?.toString() ?? LinkEntityType.Opportunity,
-              action: action?.toString() ?? LinkAction.Verify,
-              entities: null,
-              organizations: [id],
-              statuses: [LinkStatus.Expired],
-            },
-            context,
-          ).then((data) => data.totalCount ?? 0),
-      }),
-      queryClient.prefetchQuery({
-        queryKey: ["Links_TotalCount", id, LinkStatus.LimitReached],
-        queryFn: () =>
-          searchLinks(
-            {
-              pageNumber: 1,
-              pageSize: 1,
-              entityType: type?.toString() ?? LinkEntityType.Opportunity,
-              action: action?.toString() ?? LinkAction.Verify,
-              entities: null,
-              organizations: [id],
-              statuses: [LinkStatus.LimitReached],
-            },
-            context,
-          ).then((data) => data.totalCount ?? 0),
-      }),
-    ]);
+    // const data = await searchLinks(
+    //   {
+    //     pageNumber: page ? parseInt(page.toString()) : 1,
+    //     pageSize: PAGE_SIZE,
+    //     entityType: type?.toString() ?? LinkEntityType.Opportunity,
+    //     action: action?.toString() ?? LinkAction.Verify,
+    //     entities: entities ? entities.toString().split(",") : null,
+    //     organizations: [id],
+    //     statuses: statuses ? statuses.toString().split(",") : null,
+    //   },
+    //   context,
+    // );
+    // await queryClient.prefetchQuery({
+    //   queryKey: [
+    //     "Links",
+    //     id,
+    //     `${type?.toString()}_${action?.toString()}_${statuses?.toString()}_${entities?.toString()}_${page?.toString()}`,
+    //   ],
+    //   queryFn: () => data,
+    // });
+    // // get the totalCount for each status from the searchLinks function
+    // await Promise.all([
+    //   queryClient.prefetchQuery({
+    //     queryKey: ["Links_TotalCount", id, null],
+    //     queryFn: () =>
+    //       searchLinks(
+    //         {
+    //           pageNumber: 1,
+    //           pageSize: 1,
+    //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
+    //           action: action?.toString() ?? LinkAction.Verify,
+    //           entities: null,
+    //           organizations: [id],
+    //           statuses: null,
+    //         },
+    //         context,
+    //       ).then((data) => data.totalCount ?? 0),
+    //   }),
+    //   queryClient.prefetchQuery({
+    //     queryKey: ["Links_TotalCount", id, LinkStatus.Active],
+    //     queryFn: () =>
+    //       searchLinks(
+    //         {
+    //           pageNumber: 1,
+    //           pageSize: 1,
+    //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
+    //           action: action?.toString() ?? LinkAction.Verify,
+    //           entities: null,
+    //           organizations: [id],
+    //           statuses: [LinkStatus.Active],
+    //         },
+    //         context,
+    //       ).then((data) => data.totalCount ?? 0),
+    //   }),
+    //   queryClient.prefetchQuery({
+    //     queryKey: ["Links_TotalCount", id, LinkStatus.Inactive],
+    //     queryFn: () =>
+    //       searchLinks(
+    //         {
+    //           pageNumber: 1,
+    //           pageSize: 1,
+    //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
+    //           action: action?.toString() ?? LinkAction.Verify,
+    //           entities: null,
+    //           organizations: [id],
+    //           statuses: [LinkStatus.Inactive],
+    //         },
+    //         context,
+    //       ).then((data) => data.totalCount ?? 0),
+    //   }),
+    //   queryClient.prefetchQuery({
+    //     queryKey: ["Links_TotalCount", id, LinkStatus.Expired],
+    //     queryFn: () =>
+    //       searchLinks(
+    //         {
+    //           pageNumber: 1,
+    //           pageSize: 1,
+    //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
+    //           action: action?.toString() ?? LinkAction.Verify,
+    //           entities: null,
+    //           organizations: [id],
+    //           statuses: [LinkStatus.Expired],
+    //         },
+    //         context,
+    //       ).then((data) => data.totalCount ?? 0),
+    //   }),
+    //   queryClient.prefetchQuery({
+    //     queryKey: ["Links_TotalCount", id, LinkStatus.LimitReached],
+    //     queryFn: () =>
+    //       searchLinks(
+    //         {
+    //           pageNumber: 1,
+    //           pageSize: 1,
+    //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
+    //           action: action?.toString() ?? LinkAction.Verify,
+    //           entities: null,
+    //           organizations: [id],
+    //           statuses: [LinkStatus.LimitReached],
+    //         },
+    //         context,
+    //       ).then((data) => data.totalCount ?? 0),
+    //   }),
+    // ]);
   } catch (error) {
     console.error(error);
     if (axios.isAxiosError(error) && error.response?.status) {
@@ -439,10 +438,6 @@ const Links: NextPageWithLayout<{
               description: null,
               entityType: item.entityType,
               entityId: item.entityId,
-              usagesLimit: null,
-              dateEnd: null,
-              distributionList: null,
-              lockToDistributionList: null,
               includeQRCode: true,
             }),
         })
@@ -952,7 +947,7 @@ const Links: NextPageWithLayout<{
                     <th className="border-b-2 border-gray-light">Status</th>
                     <th className="border-b-2 border-gray-light">Link</th>
                     <th className="border-b-2 border-gray-light">QR</th>
-                    <th className="border-b-2 border-gray-light"></th>
+                    <th className="border-b-2 border-gray-light">Actions</th>
                   </tr>
                 </thead>
                 <tbody>

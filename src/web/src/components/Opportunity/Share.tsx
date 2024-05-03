@@ -40,10 +40,6 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
           description: null,
           entityType: "Opportunity",
           entityId: opportunity.id,
-          usagesLimit: null,
-          dateEnd: null,
-          distributionList: null,
-          lockToDistributionList: null,
           includeQRCode: false,
         }),
     });
@@ -64,10 +60,6 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
             description: null,
             entityType: "Opportunity",
             entityId: opportunity.id,
-            usagesLimit: null,
-            dateEnd: null,
-            distributionList: null,
-            lockToDistributionList: null,
             includeQRCode: true,
           }),
       })
