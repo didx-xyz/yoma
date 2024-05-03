@@ -170,7 +170,7 @@ export const OrganisationCardComponent: React.FC<{
 
           <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
             <button
-              className="bg-theme xl:hover:bg-theme z-50 flex flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 disabled:cursor-not-allowed disabled:bg-gray-dark xl:hover:brightness-110"
+              className="bg-theme xl:hover:bg-theme !z-50 flex flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 disabled:bg-gray-dark xl:hover:brightness-110"
               disabled={item?.status == "Deleted"}
             >
               <IoIosSettings className="h-7 w-7 md:h-5 md:w-5" />

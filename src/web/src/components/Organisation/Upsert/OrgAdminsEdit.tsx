@@ -12,6 +12,7 @@ export interface InputProps {
   onCancel?: (fieldValues: FieldValues) => void;
   cancelButtonText?: string;
   submitButtonText?: string;
+  isAdmin?: boolean;
 }
 
 export const OrgAdminsEdit: React.FC<InputProps> = ({
@@ -20,11 +21,14 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
   onCancel,
   cancelButtonText = "Cancel",
   submitButtonText = "Submit",
+  isAdmin = false,
 }) => {
   const schema = zod
     .object({
       addCurrentUserAsAdmin: zod.boolean().optional(),
       adminEmails: zod.array(zod.string().email()).optional(),
+      ssoClientIdInbound: zod.string().optional(),
+      ssoClientIdOutbound: zod.string().optional(),
     })
     .nonstrict()
 
@@ -140,6 +144,54 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
             </label>
           )}
         </div>
+
+        {isAdmin && (
+          <>
+            <div className="form-control">
+              <label className="label font-bold">
+                <span className="label-text">SSO Client Id Inbound</span>
+              </label>
+              <p className="-mt-1 mb-2 ml-1 text-sm text-gray-dark">
+                Your organisation&apos;s SSO client inbound id
+              </p>
+              <input
+                type="text"
+                className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+                {...register("ssoClientIdInbound")}
+                data-autocomplete="sso-client-id-inbound"
+              />
+              {formState.errors.ssoClientIdInbound && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {`${formState.errors.ssoClientIdInbound.message}`}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            <div className="form-control">
+              <label className="label font-bold">
+                <span className="label-text">SSO Client Id Outbound</span>
+              </label>
+              <p className="-mt-1 mb-2 ml-1 text-sm text-gray-dark">
+                Your organisation&apos;s SSO client outbound id
+              </p>
+              <input
+                type="text"
+                className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+                {...register("ssoClientIdOutbound")}
+                data-autocomplete="sso-client-id-outbound"
+              />
+              {formState.errors.ssoClientIdOutbound && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {`${formState.errors.ssoClientIdOutbound.message}`}
+                  </span>
+                </label>
+              )}
+            </div>
+          </>
+        )}
 
         {/* BUTTONS */}
         <div className="mt-4 flex flex-row items-center justify-end gap-4">

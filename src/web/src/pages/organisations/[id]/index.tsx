@@ -29,6 +29,7 @@ import {
   searchOrganizationEngagement,
   searchOrganizationOpportunities,
   searchOrganizationYouth,
+  searchOrganizationSso,
 } from "~/api/services/organizationDashboard";
 import type { GetServerSidePropsContext } from "next";
 import type {
@@ -51,6 +52,7 @@ import {
   DATETIME_FORMAT_HUMAN,
   PAGE_SIZE,
   PAGE_SIZE_MINIMUM,
+  ROLE_ADMIN,
 } from "~/lib/constants";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -59,6 +61,7 @@ import type {
   OrganizationSearchResultsOpportunity,
   OrganizationSearchResultsSummary,
   OrganizationSearchResultsYouth,
+  OrganizationSearchSso,
 } from "~/api/models/organizationDashboard";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import moment from "moment";
@@ -76,7 +79,7 @@ import { AvatarImage } from "~/components/AvatarImage";
 import DashboardCarousel from "~/components/Organisation/Dashboard/DashboardCarousel";
 import { WorldMapChart } from "~/components/Organisation/Dashboard/WorldMapChart";
 import type { Organization } from "~/api/models/organisation";
-
+import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
   opportunities: string[] | null;
@@ -177,6 +180,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     useState(0);
   const [expiredOpportunitiesCount, setExpiredOpportunitiesCount] = useState(0);
   const queryClient = useQueryClient();
+  const isAdmin = user?.roles?.includes(ROLE_ADMIN);
 
   // 👇 use prefetched queries from server
   const { data: lookups_categories } = useQuery<OpportunityCategory[]>({
@@ -323,6 +327,34 @@ const OrganisationDashboard: NextPageWithLayout<{
             ? parseInt(pageCompletedYouth.toString())
             : 1,
           pageSize: PAGE_SIZE,
+        }),
+    });
+
+  // QUERY: SSO
+  const { data: ssoData, isLoading: ssoDataIsLoading } =
+    useQuery<OrganizationSearchSso>({
+      queryKey: ["searchOrganizationSso", id, startDate, endDate],
+      queryFn: () =>
+        searchOrganizationSso({
+          organization: id,
+          categories:
+            categories != undefined
+              ? categories
+                  ?.toString()
+                  .split(",")
+                  .map((x) => {
+                    const item = lookups_categories?.find((y) => y.name === x);
+                    return item ? item?.id : "";
+                  })
+                  .filter((x) => x != "")
+              : null,
+          opportunities: opportunities
+            ? opportunities?.toString().split(",")
+            : null,
+          startDate: startDate ? startDate.toString() : "",
+          endDate: endDate ? endDate.toString() : "",
+          pageNumber: null,
+          pageSize: null,
         }),
     });
 
@@ -685,11 +717,13 @@ const OrganisationDashboard: NextPageWithLayout<{
             {/* WELCOME MSG */}
             <div className="text-2xl font-semibold text-white md:text-3xl">
               <span>
-                {timeOfDayEmoji} Good {timeOfDay}
-                <span className="">{user?.name}</span>, here is your report
+                {timeOfDayEmoji} Good {timeOfDay}&nbsp;
+                <span className="">{user?.name}</span>, here is your reports
                 for&nbsp;
                 <span className="hidden md:block" />
-                <span className="font-light">{organisation?.name}</span>
+                <span className="line-clamp-2 font-semibold">
+                  {organisation?.name}
+                </span>
               </span>
             </div>
 
@@ -1318,6 +1352,52 @@ const OrganisationDashboard: NextPageWithLayout<{
               </div>
             )}
           </div>
+
+          {/* DIVIDER */}
+          {isAdmin && ssoData && (
+            <div className="border-px my-8 border-t border-gray" />
+          )}
+
+          {/* SSO */}
+          {isAdmin && (
+            <div className="my-8 flex flex-col gap-4">
+              <div className="text-2xl font-semibold">Single Sign On</div>
+              {ssoDataIsLoading && <LoadingSkeleton />}
+              {ssoData && (
+                <div className="grid grid-rows-2 gap-4 md:grid-cols-2">
+                  <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
+                    <div className="mb-2 flex items-center gap-2 text-lg font-semibold">
+                      <div>Outbound</div>{" "}
+                      <IoIosArrowForward className="rounded-lg bg-green-light p-px pl-[2px] text-2xl text-green" />
+                    </div>
+                    {ssoData?.inbound?.enabled ? (
+                      <>
+                        {" "}
+                        <div>Client Id: {ssoData?.inbound?.clientId}</div>
+                        <div>Login count: {ssoData?.inbound?.loginCount}</div>
+                      </>
+                    ) : (
+                      <div>Disabled</div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
+                    <div className="mb-2 flex items-center gap-2 text-lg font-semibold">
+                      <div>Inbound</div>{" "}
+                      <IoIosArrowBack className="rounded-lg bg-green-light p-px pr-[2px] text-2xl text-green" />
+                    </div>
+                    {ssoData?.inbound?.enabled ? (
+                      <>
+                        <div>Client Id: {ssoData?.outbound?.clientId}</div>
+                        <div>Login count: {ssoData?.outbound?.loginCount}</div>
+                      </>
+                    ) : (
+                      <div>Disabled</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </>

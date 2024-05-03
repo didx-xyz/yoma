@@ -27,6 +27,8 @@ export interface OrganizationRequestBase {
   registrationDocumentsDelete: string[] | null;
   educationProviderDocumentsDelete: string[] | null;
   businessDocumentsDelete: string[] | null;
+  ssoClientIdInbound: string | null;
+  ssoClientIdOutbound: string | null;
 }
 
 export interface OrganizationProviderType {
@@ -63,6 +65,8 @@ export interface Organization {
   documents: OrganizationDocument[] | null;
   providerTypes: OrganizationProviderType[] | null;
   administrators: UserInfo[] | null;
+  ssoClientIdInbound: string | null;
+  ssoClientIdOutbound: string | null;
 }
 
 export interface UserInfo {

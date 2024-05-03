@@ -140,3 +140,15 @@ export interface OrganizationSearchResultsYouth {
   totalCount: number;
   dateStamp: string;
 }
+
+export interface OrganizationSearchSso {
+  outbound: SsoInfo;
+  inbound: SsoInfo;
+  dateStamp: string;
+}
+
+export interface SsoInfo {
+  enabled: boolean;
+  clientId: string;
+  loginCount: number;
+}

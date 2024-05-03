@@ -39,6 +39,7 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   GA_ACTION_ORGANISATION_UPATE,
   GA_CATEGORY_ORGANISATION,
+  ROLE_ADMIN,
 } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getCountries } from "~/api/services/lookups";
@@ -132,7 +133,7 @@ const OrganisationUpdate: NextPageWithLayout<{
   const setCurrentOrganisationInactiveAtom = useSetAtom(
     currentOrganisationInactiveAtom,
   );
-
+  const isAdmin = user?.roles?.includes(ROLE_ADMIN);
   const isUserAdminOfCurrentOrg =
     userProfile?.adminsOf?.find((x) => x.id == id) != null;
 
@@ -173,6 +174,8 @@ const OrganisationUpdate: NextPageWithLayout<{
       registrationDocumentsDelete: [],
       educationProviderDocumentsDelete: [],
       businessDocumentsDelete: [],
+      ssoClientIdInbound: organisation?.ssoClientIdInbound ?? "",
+      ssoClientIdOutbound: organisation?.ssoClientIdOutbound ?? "",
     });
 
   const onSubmit = useCallback(
@@ -421,6 +424,7 @@ const OrganisationUpdate: NextPageWithLayout<{
                 <OrgAdminsEdit
                   organisation={OrganizationRequestBase}
                   onSubmit={(data) => onSubmitStep(4, data)}
+                  isAdmin={isAdmin}
                 />
               </>
             )}
