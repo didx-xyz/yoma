@@ -37,7 +37,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly IRepository<LinkUsageLog> _linkUsageLogRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
 
-    private readonly LinkRequestCreateValidator _linkRequestCreateValidator;
+    private readonly LinkRequestCreateValidatorShare _linkRequestCreateValidatorShare;
+    private readonly LinkRequestCreateValidatorVerify _linkRequestCreateValidatorVerify;
     private readonly LinkSearchFilterValidator _linkSearchFilterValidator;
 
     private static readonly LinkStatus[] Statuses_Activatable = [LinkStatus.Inactive];
@@ -55,7 +56,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
       IRepositoryBatched<Link> linkRepository,
       IRepository<LinkUsageLog> linkUsageLogRepository,
       IExecutionStrategyService executionStrategyService,
-      LinkRequestCreateValidator linkRequestCreateValidator,
+      LinkRequestCreateValidatorShare linkRequestCreateValidatorShare,
+      LinkRequestCreateValidatorVerify linkRequestCreateValidatorVerify,
       LinkSearchFilterValidator linkSearchFilterValidator)
     {
       _appSettings = appSettings.Value;
@@ -68,7 +70,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
       _linkRepository = linkRepository;
       _linkUsageLogRepository = linkUsageLogRepository;
       _executionStrategyService = executionStrategyService;
-      _linkRequestCreateValidator = linkRequestCreateValidator;
+      _linkRequestCreateValidatorShare = linkRequestCreateValidatorShare;
+      _linkRequestCreateValidatorVerify = linkRequestCreateValidatorVerify;
       _linkSearchFilterValidator = linkSearchFilterValidator;
     }
     #endregion
@@ -160,11 +163,46 @@ namespace Yoma.Core.Domain.ActionLink.Services
       return result;
     }
 
-    public async Task<LinkInfo> Create(LinkRequestCreate request, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization)
+    public async Task<LinkInfo> GetOrCreateShare(LinkRequestCreateShare request, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(request);
 
-      await _linkRequestCreateValidator.ValidateAndThrowAsync(request);
+      await _linkRequestCreateValidatorShare.ValidateAndThrowAsync(request);
+
+      var item = ParseLink(request, ensureOrganizationAuthorization);
+
+      switch (request.EntityType)
+      {
+        case LinkEntityType.Opportunity:
+          var opportunity = ParseOpportunity(request, publishedOrExpiredOnly, ensureOrganizationAuthorization, item);
+          item.URL = opportunity.YomaInfoURL(_appSettings.AppBaseURL);
+
+          var itemExisting = _linkRepository.Query().Where(o => o.EntityType == item.EntityType && o.Action == item.Action && o.OpportunityId == item.OpportunityId).SingleOrDefault();
+          if (itemExisting == null) break;
+
+          if (!string.Equals(itemExisting.URL, item.URL))
+            throw new DataInconsistencyException($"URL mismatch detected for existing link with id '{itemExisting.Id}'");
+
+          //sharing links should always remain active; they cannot be deactivated, have no end date, and are not subject to usage limits
+          AssertActive(itemExisting);
+
+          await LogUsage(itemExisting.Id);
+
+          return itemExisting.ToLinkInfo(request.IncludeQRCode);
+
+        default:
+          throw new InvalidOperationException($"Invalid / unsupported entity type of '{request.EntityType}'");
+      }
+
+      item = await CreateLink(request, item, true);
+      return item.ToLinkInfo(request.IncludeQRCode);
+    }
+
+    public async Task<LinkInfo> CreateVerify(LinkRequestCreateVerify request, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization)
+    {
+      ArgumentNullException.ThrowIfNull(request);
+
+      await _linkRequestCreateValidatorVerify.ValidateAndThrowAsync(request);
 
       if (request.DistributionList != null)
       {
@@ -173,124 +211,40 @@ namespace Yoma.Core.Domain.ActionLink.Services
         if (request.LockToDistributionList == true) request.UsagesLimit = request.DistributionList.Count;
       }
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var item = ParseLink(request, ensureOrganizationAuthorization);
+      item.UsagesLimit = request.UsagesLimit;
+      item.DateEnd = request.DateEnd.HasValue ? request.DateEnd.Value.ToEndOfDay() : null;
+      item.DistributionList = request.DistributionList == null ? null : JsonConvert.SerializeObject(request.DistributionList);
+      item.LockToDistributionList = request.LockToDistributionList;
 
-      var item = new Link
-      {
-        Id = Guid.NewGuid(),
-        Description = request.Description,
-        EntityType = request.EntityType.ToString(),
-        Action = request.Action.ToString(),
-        Status = LinkStatus.Active,
-        StatusId = _linkStatusService.GetByName(LinkStatus.Active.ToString()).Id,
-        UsagesLimit = request.UsagesLimit,
-        DateEnd = request.DateEnd.HasValue ? request.DateEnd.Value.ToEndOfDay() : null,
-        DistributionList = request.DistributionList == null ? null : JsonConvert.SerializeObject(request.DistributionList),
-        LockToDistributionList = request.LockToDistributionList,
-        CreatedByUserId = user.Id,
-        ModifiedByUserId = user.Id,
-      };
-
-      Link? itemExisting = null;
-      IQueryable<Link>? queryItemExisting = null;
-      bool logUsage = false;
       switch (request.EntityType)
       {
         case LinkEntityType.Opportunity:
-          var opportunity = _opportunityService.GetById(request.EntityId, false, true, ensureOrganizationAuthorization);
-          item.OpportunityId = opportunity.Id;
-          item.OpportunityOrganizationId = opportunity.OrganizationId;
-          item.OpportunityTitle = opportunity.Title;
+          var opportunity = ParseOpportunity(request, publishedOrExpiredOnly, ensureOrganizationAuthorization, item);
 
-          if (string.IsNullOrEmpty(request.Name)) request.Name = opportunity.Title.RemoveSpecialCharacters();
-          item.Name = request.Name;
+          if (!opportunity.VerificationEnabled || opportunity.VerificationMethod != VerificationMethod.Manual)
+            throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' does not support manual verification");
 
-          if (publishedOrExpiredOnly)
-          {
-            var (found, message) = opportunity.PublishedOrExpired();
+          if (!opportunity.Published)
+            throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' has not been published");
 
-            if (!found)
-            {
-              ArgumentException.ThrowIfNullOrEmpty(message);
-              throw new EntityNotFoundException(message);
-            }
-          }
-
-          queryItemExisting = _linkRepository.Query().Where(o => o.EntityType == item.EntityType && o.Action == item.Action && o.OpportunityId == item.OpportunityId);
-
-          switch (request.Action)
-          {
-            case LinkAction.Share:
-              logUsage = true;
-
-              if (request.LockToDistributionList == true)
-                throw new ValidationException($"Locking to distribution list is not supported by a link with action '{request.Action}'");
-
-              if (request.UsagesLimit.HasValue || request.DateEnd.HasValue)
-                throw new ValidationException($"Neither a usage limit nor an end date is supported by a link with action '{request.Action}'");
-
-              item.URL = opportunity.YomaInfoURL(_appSettings.AppBaseURL);
-
-              itemExisting = queryItemExisting.SingleOrDefault();
-              if (itemExisting == null) break;
-
-              if (!string.Equals(itemExisting.URL, item.URL))
-                throw new DataInconsistencyException($"URL mismatch detected for existing link with id '{itemExisting.Id}'");
-
-              //sharing links should always remain active; they cannot be deactivated, have no end date, and are not subject to usage limits
-              AssertActive(itemExisting);
-
-              await LogUsage(itemExisting.Id);
-
-              return itemExisting.ToLinkInfo(request.IncludeQRCode);
-
-            case LinkAction.Verify:
-              if (!request.UsagesLimit.HasValue && !request.DateEnd.HasValue)
-                throw new ValidationException($"Either a usage limit or an end date is required for the link with action '{request.Action}'.");
-
-              if (!opportunity.VerificationEnabled || opportunity.VerificationMethod != VerificationMethod.Manual)
-                throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' does not support manual verification");
-
-              if (!opportunity.Published)
-                throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' has not been published");
-
-              item.URL = opportunity.YomaInstantVerifyURL(_appSettings.AppBaseURL).AppendPathSegment(item.Id.ToString());
+          item.URL = opportunity.YomaInstantVerifyURL(_appSettings.AppBaseURL).AppendPathSegment(item.Id.ToString());
 
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-              itemExisting = queryItemExisting.Where(o => o.Name.ToLower() == item.Name.ToLower()).SingleOrDefault();
+          var itemExisting = _linkRepository.Query()
+            .Where(o => o.EntityType == item.EntityType && o.Action == item.Action && o.OpportunityId == item.OpportunityId && o.Name.ToLower() == item.Name.ToLower()).SingleOrDefault();
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-              if (itemExisting != null)
-                throw new ValidationException($"Link with name '{item.Name}' already exists for the opportunity");
-              break;
 
-            default:
-              throw new InvalidOperationException($"Invalid / unsupported action of '{request.Action}' for entity type of '{request.EntityType}'");
-          }
+          if (itemExisting != null)
+            throw new ValidationException($"Link with name '{item.Name}' already exists for the opportunity");
+
           break;
 
         default:
           throw new InvalidOperationException($"Invalid / unsupported entity type of '{request.EntityType}'");
       }
 
-      var responseShortLink = await _shortLinkProviderClient.CreateShortLink(new ShortLinkRequest
-      {
-        Type = request.EntityType,
-        Action = request.Action,
-        Title = request.Name,
-        URL = item.URL
-      });
-
-      item.ShortURL = responseShortLink.Link;
-
-      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
-      {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-
-        item = await _linkRepository.Create(item);
-        if (logUsage) await LogUsage(item.Id);
-
-        scope.Complete();
-      });
+      item = await CreateLink(request, item, false);
 
       //TODO: send emails if needed
 
@@ -458,6 +412,73 @@ namespace Yoma.Core.Domain.ActionLink.Services
         default:
           throw new InvalidOperationException($"Invalid / unsupported status of '{link.Status}'");
       }
+    }
+
+    private Opportunity.Models.Opportunity ParseOpportunity(LinkRequestCreateBase request, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization, Link item)
+    {
+      var opportunity = _opportunityService.GetById(request.EntityId, false, true, ensureOrganizationAuthorization);
+
+      if (publishedOrExpiredOnly)
+      {
+        var (found, message) = opportunity.PublishedOrExpired();
+
+        if (!found)
+        {
+          ArgumentException.ThrowIfNullOrEmpty(message);
+          throw new EntityNotFoundException(message);
+        }
+      }
+
+      item.OpportunityId = opportunity.Id;
+      item.OpportunityOrganizationId = opportunity.OrganizationId;
+      item.OpportunityTitle = opportunity.Title;
+      if (string.IsNullOrEmpty(request.Name)) request.Name = opportunity.Title.RemoveSpecialCharacters();
+      item.Name = request.Name;
+      return opportunity;
+    }
+
+    private Link ParseLink(LinkRequestCreateBase request, bool ensureOrganizationAuthorization)
+    {
+      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+
+      var item = new Link
+      {
+        Id = Guid.NewGuid(),
+        Description = request.Description,
+        EntityType = request.EntityType.ToString(),
+        Action = request.Action.ToString(),
+        Status = LinkStatus.Active,
+        StatusId = _linkStatusService.GetByName(LinkStatus.Active.ToString()).Id,
+        CreatedByUserId = user.Id,
+        ModifiedByUserId = user.Id,
+      };
+
+      return item;
+    }
+
+    private async Task<Link> CreateLink(LinkRequestCreateBase request, Link item, bool logUsage)
+    {
+      var responseShortLink = await _shortLinkProviderClient.CreateShortLink(new ShortLinkRequest
+      {
+        Type = request.EntityType,
+        Action = request.Action,
+        Title = item.Name,
+        URL = item.URL
+      });
+
+      item.ShortURL = responseShortLink.Link;
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+        item = await _linkRepository.Create(item);
+        if (logUsage) await LogUsage(item.Id);
+
+        scope.Complete();
+      });
+
+      return item;
     }
     #endregion
   }

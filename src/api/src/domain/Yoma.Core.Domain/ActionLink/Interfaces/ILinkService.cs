@@ -10,7 +10,9 @@ namespace Yoma.Core.Domain.ActionLink.Interfaces
 
     LinkSearchResult Search(LinkSearchFilter filter, bool ensureOrganizationAuthorization);
 
-    Task<LinkInfo> Create(LinkRequestCreate request, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization);
+    Task<LinkInfo> GetOrCreateShare(LinkRequestCreateShare request, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization);
+
+    Task<LinkInfo> CreateVerify(LinkRequestCreateVerify request, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization);
 
     Task<LinkInfo> LogUsage(Guid id);
 

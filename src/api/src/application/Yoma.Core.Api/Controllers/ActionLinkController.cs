@@ -33,20 +33,19 @@ namespace Yoma.Core.Api.Controllers
 
     #region Public Members
     #region Anonymous Actions
-    [SwaggerOperation(Summary = "Create a sharing link for a published or expired entity by id (Anonymous)",
+    [SwaggerOperation(Summary = "Get or create a sharing link for a published or expired entity by id (Anonymous)",
      Description = "Optionally include a QR code")]
     [HttpPost("create/sharing")]
     [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [AllowAnonymous]
-    public async Task<IActionResult> CreateLinkSharing([FromBody] LinkRequestCreate request)
+    public async Task<IActionResult> GetOrCreateLinkSharing([FromBody] LinkRequestCreateShare request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(CreateLinkSharing));
+      _logger.LogInformation("Handling request {requestName}", nameof(GetOrCreateLinkSharing));
 
-      request.Action = LinkAction.Share;
-      var result = await _linkService.Create(request, true, false);
+      var result = await _linkService.GetOrCreateShare(request, true, false);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(CreateLinkSharing));
+      _logger.LogInformation("Request {requestName} handled", nameof(GetOrCreateLinkSharing));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -58,12 +57,11 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> CreateLinkInstantVerify([FromBody] LinkRequestCreate request)
+    public async Task<IActionResult> CreateLinkInstantVerify([FromBody] LinkRequestCreateVerify request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(CreateLinkInstantVerify));
 
-      request.Action = LinkAction.Verify;
-      var result = await _linkService.Create(request, false, true);
+      var result = await _linkService.CreateVerify(request, false, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(CreateLinkInstantVerify));
 

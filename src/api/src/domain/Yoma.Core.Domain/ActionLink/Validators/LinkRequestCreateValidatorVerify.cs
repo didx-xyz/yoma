@@ -3,16 +3,16 @@ using Yoma.Core.Domain.ActionLink.Models;
 
 namespace Yoma.Core.Domain.ActionLink.Validators
 {
-  public class LinkRequestCreateValidator : AbstractValidator<LinkRequestCreate>
+  public class LinkRequestCreateValidatorVerify : LinkRequestCreateValidatorBase<LinkRequestCreateVerify>
   {
     #region Public Members
-    public LinkRequestCreateValidator()
+    public LinkRequestCreateValidatorVerify()
     {
-      RuleFor(x => x.Name).Length(1, 255).When(x => !string.IsNullOrEmpty(x.Name)).WithMessage("'{PropertyName}' must be between 1 and 255 characters long.");
-      RuleFor(x => x.Description).Length(1, 500).When(x => !string.IsNullOrEmpty(x.Description)).WithMessage("'{PropertyName}' must be between 1 and 500 characters.");
-      RuleFor(x => x.EntityId).Must(x => x != Guid.Empty).WithMessage("'{PropertyName}' is required.");
-
       // linkService: When LockToDistributionList is enabled, the usage limit is set to the number of items in the DistributionList
+
+      RuleFor(request => request)
+           .Must(request => request.UsagesLimit.HasValue || request.DateEnd.HasValue)
+           .WithMessage(request => $"Either a usage limit or an end date is required.");
 
       RuleFor(x => x.UsagesLimit)
         .Must(x => !x.HasValue || x > 0)
@@ -36,10 +36,6 @@ namespace Yoma.Core.Domain.ActionLink.Validators
         });
 
       RuleFor(x => x.DateEnd).Must(date => !date.HasValue || date.Value > DateTimeOffset.UtcNow).WithMessage("'{PropertyName}' must be in the future.");
-
-      //linkService ensure neither usage limit or end date has been specified for link action 'Share'
-      //linkService ensure that LockToDistributionList is not enabled for link action 'Share'
-      //linkService ensure either a usage limit or an end date has been specified for link action 'Verify'
     }
     #endregion
   }

@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Yoma.Core.Domain.MyOpportunity.Models
 {
   public class MyOpportunityRequestVerifyFinalize
@@ -10,6 +12,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public string Comment { get; set; }
 
+    [JsonIgnore]
     internal bool InstantVerification { get; set; }
   }
 }
