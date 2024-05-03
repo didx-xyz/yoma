@@ -1,11 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { captureException } from "@sentry/nextjs";
-import {
-  QueryClient,
-  dehydrate,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
 import { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -20,13 +15,8 @@ import {
 } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import {
-  Controller,
-  useForm,
-  type FieldValues,
-  useFieldArray,
-} from "react-hook-form";
-import Select, { ValueContainerProps, components } from "react-select";
+import { Controller, useForm, type FieldValues } from "react-hook-form";
+import Select from "react-select";
 import { toast } from "react-toastify";
 import z from "zod";
 import type { SelectOption } from "~/api/models/lookups";
@@ -40,25 +30,13 @@ import { Loading } from "~/components/Status/Loading";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
-import {
-  IoIosInformationCircleOutline,
-  IoMdArrowRoundBack,
-} from "react-icons/io";
+import { IoMdArrowRoundBack } from "react-icons/io";
 import CreatableSelect from "react-select/creatable";
 import type { NextPageWithLayout } from "~/pages/_app";
-import { getSchemas } from "~/api/services/credentials";
 import {
-  REGEX_URL_VALIDATION,
-  GA_CATEGORY_OPPORTUNITY,
-  GA_ACTION_OPPORTUNITY_CREATE,
-  GA_ACTION_OPPORTUNITY_UPDATE,
   DATE_FORMAT_HUMAN,
   DATE_FORMAT_SYSTEM,
   PAGE_SIZE_MEDIUM,
-  ACCEPTED_IMAGE_TYPES_LABEL,
-  ACCEPTED_DOC_TYPES_LABEL,
-  ACCEPTED_AUDIO_TYPES_LABEL,
-  MAX_FILE_SIZE_LABEL,
   GA_ACTION_OPPORTUNITY_LINK_CREATE,
   GA_CATEGORY_OPPORTUNITY_LINK,
   MAX_INT32,
@@ -74,21 +52,18 @@ import { useRouter } from "next/router";
 import ReactModal from "react-modal";
 import Image from "next/image";
 import iconBell from "public/images/icon-bell.webp";
-import { IoMdClose, IoMdImage } from "react-icons/io";
+import { IoMdClose } from "react-icons/io";
 import { AvatarImage } from "~/components/AvatarImage";
-import { updateOpportunityStatus } from "~/api/services/opportunities";
-import {
+import type {
   OpportunityInfo,
   OpportunitySearchResultsInfo,
-  Status,
 } from "~/api/models/opportunity";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { IoMdWarning } from "react-icons/io";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { validateEmail } from "~/lib/validate";
-import { LinkEntityType, LinkRequestCreate } from "~/api/models/actionLinks";
+import type { LinkRequestCreate } from "~/api/models/actionLinks";
 import { createLinkInstantVerify } from "~/api/services/actionLinks";
 
 interface IParams extends ParsedUrlQuery {
@@ -196,121 +171,18 @@ const LinkDetails: NextPageWithLayout<{
   const formRef2 = useRef<HTMLFormElement>(null);
   const formRef3 = useRef<HTMLFormElement>(null);
   const formRef4 = useRef<HTMLFormElement>(null);
-  // const formRef5 = useRef<HTMLFormElement>(null);
-  // const formRef6 = useRef<HTMLFormElement>(null);
-  // const formRef7 = useRef<HTMLFormElement>(null);
 
   const [saveChangesDialogVisible, setSaveChangesDialogVisible] =
     useState(false);
   const [lastStepBeforeSaveChangesDialog, setLastStepBeforeSaveChangesDialog] =
     useState<number | null>(null);
-  // const [oppExpiredModalVisible, setOppExpiredModalVisible] = useState(false);
-  const [loadingUpdateInactive, setLoadingUpdateInactive] = useState(false);
-
-  // const linkEntityTypes: SelectOption[] = Object.entries(LinkEntityType).map(
-  //   ([label, value]) => ({
-  //     label,
-  //     value: value.toString(),
-  //   }),
-  // );
 
   const linkEntityTypes: SelectOption[] = [
     { value: "0", label: "Opportunity" },
   ];
 
-  // 👇 use prefetched queries from server
-  // const { data: categories } = useQuery<SelectOption[]>({
-  //   queryKey: ["categories", "selectOptions"],
-  //   queryFn: async () =>
-  //     (await getCategories()).map((c) => ({
-  //       value: c.id,
-  //       label: c.name,
-  //     })),
-  //   enabled: !error,
-  // });
-  // const { data: countries } = useQuery<SelectOption[]>({
-  //   queryKey: ["countries", "selectOptions"],
-  //   queryFn: async () =>
-  //     (await getCountries()).map((c) => ({
-  //       value: c.id,
-  //       label: c.name,
-  //     })),
-  //   enabled: !error,
-  // });
-  // const { data: languages } = useQuery<SelectOption[]>({
-  //   queryKey: ["languages", "selectOptions"],
-  //   queryFn: async () =>
-  //     (await getLanguages()).map((c) => ({
-  //       value: c.id,
-  //       label: c.name,
-  //     })),
-  //   enabled: !error,
-  // });
-  // const { data: opportunityTypes } = useQuery<SelectOption[]>({
-  //   queryKey: ["opportunityTypes", "selectOptions"],
-  //   queryFn: async () =>
-  //     (await getTypes()).map((c) => ({
-  //       value: c.id,
-  //       label: c.name,
-  //     })),
-  //   enabled: !error,
-  // });
-  // const { data: verificationTypes } = useQuery<OpportunityVerificationType[]>({
-  //   queryKey: ["verificationTypes", "selectOptions"],
-  //   queryFn: async () => await getVerificationTypes(),
-  //   enabled: !error,
-  // });
-  // const { data: difficulties } = useQuery<SelectOption[]>({
-  //   queryKey: ["difficulties", "selectOptions"],
-  //   queryFn: async () =>
-  //     (await getDifficulties()).map((c) => ({
-  //       value: c.id,
-  //       label: c.name,
-  //     })),
-  //   enabled: !error,
-  // });
-  // const { data: timeIntervals } = useQuery<SelectOption[]>({
-  //   queryKey: ["timeIntervals", "selectOptions"],
-  //   queryFn: async () =>
-  //     (await getTimeIntervals()).map((c) => ({
-  //       value: c.id,
-  //       label: c.name,
-  //     })),
-  //   enabled: !error,
-  // });
-  // const { data: schemas } = useQuery({
-  //   queryKey: ["schemas"],
-  //   queryFn: async () => getSchemas(SchemaType.Opportunity),
-  //   enabled: !error,
-  // });
-
-  // const schemasOptions = useMemo<SelectOption[]>(
-  //   () =>
-  //     schemas?.map((c) => ({
-  //       value: c.name,
-  //       label: c.displayName,
-  //     })) ?? [],
-  //   [schemas],
-  // );
-
-  // const { data: linkInfo } = useQuery<LinkInfo>({
-  //   queryKey: ["link", linkId],
-  //   queryFn: () => getLinkInstantVerifyById(linkId, false),
-  //   enabled: linkId !== "create" && !error,
-  // });
-
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-
-  /*  name: string | null;
-  description: string | null;
-  entityType: LinkEntityType;
-  entityId: string;
-  usagesLimit: number | null;
-  dateEnd: string | null;
-  distributionList: string[] | null;
-  includeQRCode: boolean | null;*/
-
   const [formData, setFormData] = useState<LinkRequestCreate>({
     name: "",
     description: "",
@@ -332,22 +204,7 @@ const LinkDetails: NextPageWithLayout<{
     entityType: z.string().min(1, "Type is required."),
     entityId: z.string().min(1, "Difficulty is required."),
   });
-  // .refine(
-  //   (data) => {
-  //     debugger;
-  //     // validate that selected opportunity supports manual verification
-  //     return (
-  //       data.entityId &&
-  //       selectedOpportuntity?.verificationEnabled &&
-  //       selectedOpportuntity.verificationMethod == "Manual"
-  //     );
-  //   },
-  //   {
-  //     message:
-  //       "This opportunity does not support manual verification. Please select another opportunity.",
-  //     path: ["entityId"],
-  //   },
-  // )
+
   const schemaStep2 = z.object({
     usagesLimit: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
       // eslint-disable-next-line
@@ -387,9 +244,7 @@ const LinkDetails: NextPageWithLayout<{
       },
     );
 
-  const schemaStep4 = z.object({
-    //postAsActive: z.boolean(),
-  });
+  const schemaStep4 = z.object({});
 
   const {
     register: registerStep1,
@@ -410,7 +265,6 @@ const LinkDetails: NextPageWithLayout<{
     handleSubmit: handleSubmitStep2,
     formState: formStateStep2,
     control: controlStep2,
-    getValues: getValuesStep2,
     reset: resetStep2,
     watch: watchStep2,
   } = useForm({
@@ -420,12 +274,9 @@ const LinkDetails: NextPageWithLayout<{
   const watchLockToDistributionList = watchStep2("lockToDistributionList");
 
   const {
-    register: registerStep3,
     handleSubmit: handleSubmitStep3,
     formState: formStateStep3,
     control: controlStep3,
-    getValues: getValuesStep3,
-    setValue: setValueStep3,
     reset: resetStep3,
   } = useForm({
     resolver: zodResolver(schemaStep3),
@@ -437,57 +288,10 @@ const LinkDetails: NextPageWithLayout<{
     formState: formStateStep4,
 
     reset: resetStep4,
-    control: controlStep4,
   } = useForm({
     resolver: zodResolver(schemaStep4),
     defaultValues: formData,
   });
-
-  // const {
-  //   handleSubmit: handleSubmitStep5,
-  //   getValues: getValuesStep5,
-  //   setValue: setValueStep5,
-  //   formState: formStateStep5,
-  //   control: controlStep5,
-  //   watch: watchStep5,
-  //   reset: resetStep5,
-  // } = useForm({
-  //   resolver: zodResolver(schemaStep5),
-  //   defaultValues: formData,
-  // });
-  // const watchVerificationEnabled = watchStep5("verificationEnabled");
-  // const watchVerificationMethod = watchStep5("verificationMethod");
-  // const watchVerificationTypes = watchStep5("verificationTypes");
-  // const { append, remove } = useFieldArray({
-  //   control: controlStep5,
-  //   name: "verificationTypes",
-  // });
-
-  // const {
-  //   register: registerStep6,
-  //   handleSubmit: handleSubmitStep6,
-  //   formState: formStateStep6,
-  //   control: controlStep6,
-  //   watch: watchStep6,
-  //   reset: resetStep6,
-  // } = useForm({
-  //   resolver: zodResolver(schemaStep6),
-  //   defaultValues: formData,
-  // });
-  // const watchCredentialIssuanceEnabled = watchStep6(
-  //   "credentialIssuanceEnabled",
-  // );
-  // const watcSSISchemaName = watchStep6("ssiSchemaName");
-
-  // const {
-  //   register: registerStep7,
-  //   handleSubmit: handleSubmitStep7,
-  //   formState: formStateStep7,
-  //   reset: resetStep7,
-  // } = useForm({
-  //   resolver: zodResolver(schemaStep7),
-  //   defaultValues: formData,
-  // });
 
   // scroll to top on step change
   useEffect(() => {
@@ -1216,6 +1020,7 @@ const LinkDetails: NextPageWithLayout<{
                           valueAsNumber: true,
                         })}
                         disabled={watchLockToDistributionList ?? false}
+                        min={1}
                         max={MAX_INT32}
                       />
                       {formStateStep2.errors.usagesLimit && (

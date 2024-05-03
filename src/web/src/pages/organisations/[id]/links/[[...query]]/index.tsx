@@ -22,6 +22,7 @@ import {
   IoMdClose,
   IoIosSettings,
   IoMdWarning,
+  IoMdCalendar,
 } from "react-icons/io";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import {
@@ -37,7 +38,7 @@ import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { useAtomValue } from "jotai";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
-import axios, { AxiosError } from "axios";
+import axios, { type AxiosError } from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import {
@@ -49,9 +50,9 @@ import Image from "next/image";
 import {
   LinkAction,
   LinkEntityType,
-  LinkInfo,
-  LinkSearchFilter,
-  LinkSearchResult,
+  type LinkInfo,
+  type LinkSearchFilter,
+  type LinkSearchResult,
   LinkStatus,
 } from "~/api/models/actionLinks";
 import Moment from "react-moment";
@@ -64,6 +65,7 @@ import { useConfirmationModalContext } from "~/context/modalConfirmationContext"
 import { trackGAEvent } from "~/lib/google-analytics";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -123,67 +125,82 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       queryClient.prefetchQuery({
         queryKey: ["Links_TotalCount", id, null],
         queryFn: () =>
-          searchLinks({
-            pageNumber: 1,
-            pageSize: 1,
-            entityType: type?.toString() ?? LinkEntityType.Opportunity,
-            action: action?.toString() ?? LinkAction.Verify,
-            entities: null,
-            organizations: [id],
-            statuses: null,
-          }).then((data) => data.totalCount ?? 0),
+          searchLinks(
+            {
+              pageNumber: 1,
+              pageSize: 1,
+              entityType: type?.toString() ?? LinkEntityType.Opportunity,
+              action: action?.toString() ?? LinkAction.Verify,
+              entities: null,
+              organizations: [id],
+              statuses: null,
+            },
+            context,
+          ).then((data) => data.totalCount ?? 0),
       }),
       queryClient.prefetchQuery({
         queryKey: ["Links_TotalCount", id, LinkStatus.Active],
         queryFn: () =>
-          searchLinks({
-            pageNumber: 1,
-            pageSize: 1,
-            entityType: type?.toString() ?? LinkEntityType.Opportunity,
-            action: action?.toString() ?? LinkAction.Verify,
-            entities: null,
-            organizations: [id],
-            statuses: [LinkStatus.Active],
-          }).then((data) => data.totalCount ?? 0),
+          searchLinks(
+            {
+              pageNumber: 1,
+              pageSize: 1,
+              entityType: type?.toString() ?? LinkEntityType.Opportunity,
+              action: action?.toString() ?? LinkAction.Verify,
+              entities: null,
+              organizations: [id],
+              statuses: [LinkStatus.Active],
+            },
+            context,
+          ).then((data) => data.totalCount ?? 0),
       }),
       queryClient.prefetchQuery({
         queryKey: ["Links_TotalCount", id, LinkStatus.Inactive],
         queryFn: () =>
-          searchLinks({
-            pageNumber: 1,
-            pageSize: 1,
-            entityType: type?.toString() ?? LinkEntityType.Opportunity,
-            action: action?.toString() ?? LinkAction.Verify,
-            entities: null,
-            organizations: [id],
-            statuses: [LinkStatus.Inactive],
-          }).then((data) => data.totalCount ?? 0),
+          searchLinks(
+            {
+              pageNumber: 1,
+              pageSize: 1,
+              entityType: type?.toString() ?? LinkEntityType.Opportunity,
+              action: action?.toString() ?? LinkAction.Verify,
+              entities: null,
+              organizations: [id],
+              statuses: [LinkStatus.Inactive],
+            },
+            context,
+          ).then((data) => data.totalCount ?? 0),
       }),
       queryClient.prefetchQuery({
         queryKey: ["Links_TotalCount", id, LinkStatus.Expired],
         queryFn: () =>
-          searchLinks({
-            pageNumber: 1,
-            pageSize: 1,
-            entityType: type?.toString() ?? LinkEntityType.Opportunity,
-            action: action?.toString() ?? LinkAction.Verify,
-            entities: null,
-            organizations: [id],
-            statuses: [LinkStatus.Expired],
-          }).then((data) => data.totalCount ?? 0),
+          searchLinks(
+            {
+              pageNumber: 1,
+              pageSize: 1,
+              entityType: type?.toString() ?? LinkEntityType.Opportunity,
+              action: action?.toString() ?? LinkAction.Verify,
+              entities: null,
+              organizations: [id],
+              statuses: [LinkStatus.Expired],
+            },
+            context,
+          ).then((data) => data.totalCount ?? 0),
       }),
       queryClient.prefetchQuery({
         queryKey: ["Links_TotalCount", id, LinkStatus.LimitReached],
         queryFn: () =>
-          searchLinks({
-            pageNumber: 1,
-            pageSize: 1,
-            entityType: type?.toString() ?? LinkEntityType.Opportunity,
-            action: action?.toString() ?? LinkAction.Verify,
-            entities: null,
-            organizations: [id],
-            statuses: [LinkStatus.LimitReached],
-          }).then((data) => data.totalCount ?? 0),
+          searchLinks(
+            {
+              pageNumber: 1,
+              pageSize: 1,
+              entityType: type?.toString() ?? LinkEntityType.Opportunity,
+              action: action?.toString() ?? LinkAction.Verify,
+              entities: null,
+              organizations: [id],
+              statuses: [LinkStatus.LimitReached],
+            },
+            context,
+          ).then((data) => data.totalCount ?? 0),
       }),
     ]);
   } catch (error) {
@@ -236,6 +253,9 @@ const Links: NextPageWithLayout<{
   >(null);
   const modalContext = useConfirmationModalContext();
   const [isLoading, setIsLoading] = useState(false);
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(showQRCode);
 
   // 👇 use prefetched queries from server
   const { data: links } = useQuery<LinkSearchResult>({
@@ -328,7 +348,7 @@ const Links: NextPageWithLayout<{
   });
 
   // search filter state
-  const [searchFilter, setSearchFilter] = useState<LinkSearchFilter>({
+  const [searchFilter] = useState<LinkSearchFilter>({
     pageNumber: page ? parseInt(page.toString()) : 1,
     pageSize: PAGE_SIZE,
     entityType: type ?? LinkEntityType.Opportunity,
@@ -390,47 +410,16 @@ const Links: NextPageWithLayout<{
     (val: LinkSearchFilter) => {
       redirectWithSearchFilterParams(val);
     },
-    [
-      // id,
-      redirectWithSearchFilterParams,
-      // pageSelectedOpportunities,
-      //  pageCompletedYouth,
-    ],
+    [redirectWithSearchFilterParams],
   );
-
-  // const onSearch = useCallback(
-  //   (query: string) => {
-  //     void router.push({
-  //       pathname: `/organisations/${id}/links`,
-  //       query: {
-  //         query:
-  //           query && query.length > 2 ? encodeURIComponent(query) : undefined,
-  //         status: status,
-  //       },
-  //     });
-  //   },
-  //   [router, id, status],
-  // );
 
   // 🔔 pager change event
   const handlePagerChange = useCallback(
     (value: number) => {
-      // redirect
-      void router.push({
-        pathname: `/organisations/${id}/links`,
-        query: {
-          type: type,
-          action: action,
-          statuses: statuses,
-          entities: entities,
-          page: value,
-        },
-      });
-
-      // reset scroll position
-      window.scrollTo(0, 0);
+      searchFilter.pageNumber = value;
+      redirectWithSearchFilterParams(searchFilter);
     },
-    [id, type, action, statuses, page, router],
+    [searchFilter, redirectWithSearchFilterParams],
   );
 
   const onClick_CopyToClipboard = useCallback((url: string) => {
@@ -438,42 +427,39 @@ const Links: NextPageWithLayout<{
     toast.success("URL copied to clipboard!", { autoClose: 2000 });
   }, []);
 
-  const onClick_GenerateQRCode = useCallback((item: LinkInfo) => {
-    // fetch the QR code
-    queryClient
-      .fetchQuery({
-        queryKey: ["OpportunitySharingLinkQR", item.entityId],
-        queryFn: () =>
-          createLinkSharing({
-            name: null,
-            description: null,
-            entityType: item.entityType,
-            entityId: item.entityId,
-            usagesLimit: null,
-            dateEnd: null,
-            distributionList: null,
-            lockToDistributionList: null,
-            includeQRCode: true,
-          }),
-      })
-      .then(() => {
-        // get the QR code from the cache
-        const qrCode = queryClient.getQueryData<LinkInfo | null>([
-          "OpportunitySharingLinkQR",
-          item.entityId,
-        ]);
+  const onClick_GenerateQRCode = useCallback(
+    (item: LinkInfo) => {
+      // fetch the QR code
+      queryClient
+        .fetchQuery({
+          queryKey: ["OpportunitySharingLinkQR", item.entityId],
+          queryFn: () =>
+            createLinkSharing({
+              name: null,
+              description: null,
+              entityType: item.entityType,
+              entityId: item.entityId,
+              usagesLimit: null,
+              dateEnd: null,
+              distributionList: null,
+              lockToDistributionList: null,
+              includeQRCode: true,
+            }),
+        })
+        .then(() => {
+          // get the QR code from the cache
+          const qrCode = queryClient.getQueryData<LinkInfo | null>([
+            "OpportunitySharingLinkQR",
+            item.entityId,
+          ]);
 
-        // show the QR code
-        setQRCodeImageData(qrCode?.qrCodeBase64);
-        setShowQRCode(true);
-
-        // scroll to the cancel button
-        // setTimeout(
-        //   () => cancelButtonRef.current?.scrollIntoView({ behavior: "smooth" }),
-        //   100,
-        // );
-      });
-  }, []);
+          // show the QR code
+          setQRCodeImageData(qrCode?.qrCodeBase64);
+          setShowQRCode(true);
+        });
+    },
+    [queryClient],
+  );
 
   const renderAddLinkButton = useCallback(() => {
     if (currentOrganisationInactive) {
@@ -568,7 +554,7 @@ const Links: NextPageWithLayout<{
 
       return;
     },
-    [modalContext, setIsLoading],
+    [id, queryClient, modalContext, setIsLoading],
   );
 
   if (error) {
@@ -646,19 +632,6 @@ const Links: NextPageWithLayout<{
             </button>
           </div>
         </div>
-
-        {/* {qrCodeImageData && (
-          <>
-            <h5>Scan the QR Code with your device&apos;s camera</h5>
-            <Image
-              src={qrCodeImageData}
-              alt="QR Code"
-              width={200}
-              height={200}
-              style={{ width: 200, height: 200 }}
-            />
-          </>
-        )} */}
       </ReactModal>
 
       <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
@@ -817,62 +790,149 @@ const Links: NextPageWithLayout<{
 
           {/* GRID */}
           {links && links.items?.length > 0 && (
-            <div className="md:overflow-x-auto">
-              {/* MOBIlE */}
+            <div className="">
+              {/* MOBILE */}
               <div className="flex flex-col gap-4 md:hidden">
                 {links.items.map((item) => (
-                  <Link
+                  <div
                     key={`grid_xs_${item.id}`}
                     className="rounded-lg bg-white p-4 shadow-custom"
-                    href={`/organisations/${id}/opportunities/${
-                      item.id
-                    }/info${`?returnUrl=${encodeURIComponent(
-                      getSafeUrl(returnUrl?.toString(), router.asPath),
-                    )}`}`}
                   >
-                    <div className="flex flex-col gap-1">
-                      <span className="mb-4 line-clamp-2 font-semibold text-gray-dark">
+                    <Link
+                      href={`/organisations/${id}/opportunities/${
+                        item.entityId
+                      }/info${`?returnUrl=${encodeURIComponent(
+                        getSafeUrl(returnUrl?.toString(), router.asPath),
+                      )}`}`}
+                      className="max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark"
+                    >
+                      {item.entityTitle}
+                    </Link>
+
+                    <div className="mb-2 flex flex-col">
+                      <span className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark">
                         {item.name}
                       </span>
-                    </div>
 
-                    <div className="flex justify-between">
-                      <p className="text-sm tracking-wider">Participants</p>
-                      <span className="badge bg-green-light text-green">
-                        <IoMdPerson className="h-4 w-4" />
-                        <span className="ml-1 text-xs">
-                          {item.usagesAvailable}
-                        </span>
+                      <span className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-semibold text-gray-dark">
+                        {item.description}
                       </span>
                     </div>
 
-                    <div className="flex justify-between">
-                      <p className="text-sm tracking-wider">Status</p>
-                      {item.status == "Active" && (
-                        <>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex justify-between">
+                        <p className="text-sm tracking-wider">Usage</p>
+                        <span className="badge bg-green-light text-green">
+                          <IoMdPerson className="h-4 w-4" />
+                          <span className="ml-1 text-xs">
+                            {item.usagesTotal ?? "0"} /{" "}
+                            {item.usagesLimit ?? "0"}
+                          </span>
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <p className="text-sm tracking-wider">Expires</p>
+                        {item.dateEnd ? (
+                          <span className="badge bg-yellow-light text-yellow">
+                            <IoMdCalendar className="h-4 w-4" />
+                            <span className="ml-1 text-xs">
+                              <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                                {item.dateEnd}
+                              </Moment>
+                            </span>
+                          </span>
+                        ) : (
+                          "N/A"
+                        )}
+                      </div>
+
+                      <div className="flex justify-between">
+                        <p className="text-sm tracking-wider">Status</p>
+                        {item.status == "Active" && (
                           <span className="badge bg-blue-light text-blue">
                             Active
                           </span>
-                        </>
-                      )}
-                      {item?.status == "Inactive" && (
-                        <span className="badge bg-yellow-tint text-yellow">
-                          Inactive
-                        </span>
-                      )}
-                      {item?.status == "Expired" && (
-                        <span className="badge bg-green-light text-yellow">
-                          Expired
-                        </span>
-                      )}
+                        )}
+                        {item.status == "Expired" && (
+                          <span className="badge bg-green-light text-yellow">
+                            Expired
+                          </span>
+                        )}
+                        {item.status == "Inactive" && (
+                          <span className="badge bg-yellow-tint text-yellow">
+                            Inactive
+                          </span>
+                        )}
+                        {item.status == "LimitReached" && (
+                          <span className="badge bg-green-light text-red-400">
+                            Limit Reached
+                          </span>
+                        )}
+                      </div>
 
-                      {item?.status == "LimitReached" && (
-                        <span className="badge bg-green-light text-red-400">
-                          Limit Reached
-                        </span>
-                      )}
+                      <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() =>
+                            onClick_CopyToClipboard(
+                              item?.shortURL ?? item?.uRL ?? "",
+                            )
+                          }
+                          className="badge bg-green-light text-green"
+                        >
+                          <IoIosLink className="h-4 w-4" />
+                        </button>
+
+                        <button
+                          onClick={() => onClick_GenerateQRCode(item)}
+                          className="badge bg-green-light text-green"
+                        >
+                          <IoQrCode className="h-4 w-4" />
+                        </button>
+
+                        <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
+                          <button
+                            //className="bg-theme xl:hover:bg-theme flex flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 disabled:cursor-not-allowed disabled:bg-gray-dark xl:hover:brightness-110"
+
+                            className="badge bg-green-light text-green"
+                            disabled={item?.status == "Deleted"}
+                          >
+                            <IoIosSettings className="h-4 w-4" />
+                          </button>
+
+                          <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
+                            {item?.status == "Active" && (
+                              <li>
+                                <button
+                                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                  onClick={() =>
+                                    updateStatus(item, LinkStatus.Inactive)
+                                  }
+                                >
+                                  <FaClock className="mr-2 h-3 w-3" />
+                                  Make Inactive
+                                </button>
+                              </li>
+                            )}
+
+                            {item?.status == "Inactive" && (
+                              <li>
+                                <button
+                                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                  onClick={() =>
+                                    updateStatus(item, LinkStatus.Active)
+                                  }
+                                >
+                                  <FaClock className="mr-2 h-3 w-3" />
+                                  Make Active
+                                </button>
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      </div>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
 
@@ -880,6 +940,9 @@ const Links: NextPageWithLayout<{
               <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table">
                 <thead>
                   <tr className="border-gray text-gray-dark">
+                    <th className="border-b-2 border-gray-light !py-4">
+                      Entity
+                    </th>
                     <th className="border-b-2 border-gray-light !py-4">Name</th>
                     <th className="border-b-2 border-gray-light">
                       Description
@@ -895,14 +958,26 @@ const Links: NextPageWithLayout<{
                 <tbody>
                   {links.items.map((item) => (
                     <tr key={`grid_md_${item.id}`} className="">
-                      <td className="max-w-[600px] truncate border-b-2 border-gray-light !py-4">
-                        <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[150px]">
+                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4">
+                        <Link
+                          href={`/organisations/${id}/opportunities/${
+                            item.entityId
+                          }/info${`?returnUrl=${encodeURIComponent(
+                            getSafeUrl(returnUrl?.toString(), router.asPath),
+                          )}`}`}
+                        >
+                          {item.entityTitle}
+                        </Link>
+                      </td>
+
+                      <td className="max-w-[100px] truncate border-b-2 border-gray-light !py-4">
+                        <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.name}
                         </div>
                       </td>
 
-                      <td className="border-b-2 border-gray-light">
-                        <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[200px]">
+                      <td className="max-w-[100px] border-b-2 border-gray-light">
+                        <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.description}
                         </div>
                       </td>
@@ -919,9 +994,14 @@ const Links: NextPageWithLayout<{
 
                       <td className="border-b-2 border-gray-light">
                         {item.dateEnd ? (
-                          <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                            {item.dateEnd}
-                          </Moment>
+                          <span className="badge bg-yellow-light text-yellow">
+                            <IoMdCalendar className="h-4 w-4" />
+                            <span className="ml-1 text-xs">
+                              <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                                {item.dateEnd}
+                              </Moment>
+                            </span>
+                          </span>
                         ) : (
                           "N/A"
                         )}
@@ -967,24 +1047,22 @@ const Links: NextPageWithLayout<{
 
                       {/* QR */}
                       <td className="border-b-2 border-gray-light">
-                        {/* {item.qRCodeBase64 && ( */}
                         <button
                           onClick={() => onClick_GenerateQRCode(item)}
                           className="badge bg-green-light text-green"
                         >
                           <IoQrCode className="h-4 w-4" />
                         </button>
-                        {/* )} */}
                       </td>
 
                       {/* ACTIONS */}
                       <td className="border-b-2 border-gray-light">
                         <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
                           <button
-                            className="bg-theme xl:hover:bg-theme flex flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 disabled:cursor-not-allowed disabled:bg-gray-dark xl:hover:brightness-110"
+                            className="badge bg-green-light text-green"
                             disabled={item?.status == "Deleted"}
                           >
-                            <IoIosSettings className="h-7 w-7 md:h-5 md:w-5" />
+                            <IoIosSettings className="h-4 w-4" />
                           </button>
 
                           <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">

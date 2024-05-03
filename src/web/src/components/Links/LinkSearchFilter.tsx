@@ -4,13 +4,12 @@ import { type FieldValues, Controller, useForm } from "react-hook-form";
 import zod from "zod";
 import type { SelectOption } from "~/api/models/lookups";
 import "react-datepicker/dist/react-datepicker.css";
-import type { OrganizationSearchFilterBase } from "~/api/models/organizationDashboard";
 import { searchCriteriaOpportunities } from "~/api/services/opportunities";
 import { components, type ValueContainerProps } from "react-select";
 import Async from "react-select/async";
 import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
 import { debounce } from "~/lib/utils";
-import { LinkSearchFilter } from "~/api/models/actionLinks";
+import type { LinkSearchFilter } from "~/api/models/actionLinks";
 
 const ValueContainer = ({
   children,
@@ -80,7 +79,7 @@ export const LinkSearchFilters: React.FC<{
     (data: FieldValues) => {
       if (onSubmit) onSubmit({ ...searchFilter, ...data } as LinkSearchFilter);
     },
-    [onSubmit],
+    [searchFilter, onSubmit],
   );
 
   // load data asynchronously for the opportunities dropdown
@@ -125,50 +124,48 @@ export const LinkSearchFilters: React.FC<{
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
         className="flex flex-col gap-2"
       >
-        <div className="flex w-full flex-col items-center justify-center gap-2 md:justify-start lg:flex-row">
-          <div className="flex w-full flex-grow flex-col flex-wrap items-center gap-2 md:w-fit lg:flex-row">
-            <div className="mr-4 text-sm font-bold">Search by:</div>
-            {/* OPPORTUNITIES */}
-            <span className="w-full md:w-72">
-              <Controller
-                name="entities"
-                control={form.control}
-                render={({ field: { onChange } }) => (
-                  <Async
-                    instanceId="entities"
-                    classNames={{
-                      control: () =>
-                        "input input-xs h-fit !border-none w-full md:w-72",
-                    }}
-                    isMulti={true}
-                    defaultOptions={true} // calls loadOpportunities for initial results when clicking on the dropdown
-                    cacheOptions
-                    loadOptions={loadOpportunities}
-                    onChange={(val) => {
-                      // clear categories
-                      setValue("categories", []);
+        <div className="flex w-full flex-grow flex-col flex-wrap gap-2 md:w-fit lg:flex-row">
+          {/* <div className="mr-4 text-sm font-bold">Search by:</div> */}
+          {/* OPPORTUNITIES */}
+          <span className="w-full md:w-72">
+            <Controller
+              name="entities"
+              control={form.control}
+              render={({ field: { onChange } }) => (
+                <Async
+                  instanceId="entities"
+                  classNames={{
+                    control: () =>
+                      "input input-xs h-fit !border-none w-full md:w-72",
+                  }}
+                  isMulti={true}
+                  defaultOptions={true} // calls loadOpportunities for initial results when clicking on the dropdown
+                  cacheOptions
+                  loadOptions={loadOpportunities}
+                  onChange={(val) => {
+                    // clear categories
+                    setValue("categories", []);
 
-                      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                      onChange(val.map((c: any) => c.value));
-                      void handleSubmit(onSubmitHandler)();
-                    }}
-                    value={defaultOpportunityOptions}
-                    placeholder="Opportunity"
-                    components={{
-                      ValueContainer,
-                    }}
-                  />
-                )}
-              />
-              {formState.errors.entities && (
-                <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {`${formState.errors.entities.message}`}
-                  </span>
-                </label>
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                    onChange(val.map((c: any) => c.value));
+                    void handleSubmit(onSubmitHandler)();
+                  }}
+                  value={defaultOpportunityOptions}
+                  placeholder="Opportunity"
+                  components={{
+                    ValueContainer,
+                  }}
+                />
               )}
-            </span>
-          </div>
+            />
+            {formState.errors.entities && (
+              <label className="label font-bold">
+                <span className="label-text-alt italic text-red-500">
+                  {`${formState.errors.entities.message}`}
+                </span>
+              </label>
+            )}
+          </span>
         </div>
       </form>
     </div>

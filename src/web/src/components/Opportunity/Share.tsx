@@ -16,7 +16,7 @@ import Moment from "react-moment";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoadingInline } from "../Status/LoadingInline";
 import { createLinkSharing } from "~/api/services/actionLinks";
-import { LinkInfo } from "~/api/models/actionLinks";
+import type { LinkInfo } from "~/api/models/actionLinks";
 
 interface SharePopupProps {
   opportunity: OpportunityInfo;
