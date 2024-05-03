@@ -10,12 +10,13 @@ import { toast } from "react-toastify";
 import { AvatarImage } from "../AvatarImage";
 import Badges from "./Badges";
 import Image from "next/image";
-import type { LinkInfo, OpportunityInfo } from "~/api/models/opportunity";
+import type { OpportunityInfo } from "~/api/models/opportunity";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import Moment from "react-moment";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createSharingLink } from "~/api/services/opportunities";
 import { LoadingInline } from "../Status/LoadingInline";
+import { createLinkSharing } from "~/api/services/actionLinks";
+import type { LinkInfo } from "~/api/models/actionLinks";
 
 interface SharePopupProps {
   opportunity: OpportunityInfo;
@@ -33,7 +34,18 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
   const { data: linkInfo, isLoading: linkInfoIsLoading } =
     useQuery<LinkInfo | null>({
       queryKey: ["OpportunitySharingLink", opportunity.id],
-      queryFn: () => createSharingLink(opportunity.id),
+      queryFn: () =>
+        createLinkSharing({
+          name: null,
+          description: null,
+          entityType: "Opportunity",
+          entityId: opportunity.id,
+          usagesLimit: null,
+          dateEnd: null,
+          distributionList: null,
+          lockToDistributionList: null,
+          includeQRCode: false,
+        }),
     });
 
   const onClick_CopyToClipboard = useCallback(() => {
@@ -46,7 +58,18 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
     queryClient
       .fetchQuery({
         queryKey: ["OpportunitySharingLinkQR", opportunity.id],
-        queryFn: () => createSharingLink(opportunity.id, true),
+        queryFn: () =>
+          createLinkSharing({
+            name: null,
+            description: null,
+            entityType: "Opportunity",
+            entityId: opportunity.id,
+            usagesLimit: null,
+            dateEnd: null,
+            distributionList: null,
+            lockToDistributionList: null,
+            includeQRCode: true,
+          }),
       })
       .then(() => {
         // get the QR code from the cache

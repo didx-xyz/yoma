@@ -287,27 +287,3 @@ export interface OpportunitySearchFilterCriteria extends PaginationFilter {
   titleContains: string | null;
   opportunities: string[] | null;
 }
-
-export interface LinkInfo {
-  id: string;
-  name: string;
-  description: string | null;
-  statusId: string;
-  status: LinkStatus;
-  uRL: string;
-  shortURL: string;
-  qrCodeBase64: string | null; // NB: casing wrong
-  usagesLimit: number | null;
-  usagesTotal: number | null;
-  usagesAvailable: number | null;
-  dateEnd: string | null;
-  dateCreated: string;
-  dateModified: string;
-}
-
-export enum LinkStatus {
-  Active,
-  Inactive,
-  Expired,
-  LimitReached,
-}

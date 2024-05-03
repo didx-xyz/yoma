@@ -65,6 +65,7 @@ export const GA_CATEGORY_USER = "User";
 export const GA_CATEGORY_ORGANISATION = "Organisation";
 export const GA_CATEGORY_OPPORTUNITY = "Opportunity";
 export const GA_CATEGORY_SCHEMA = "Schema";
+export const GA_CATEGORY_OPPORTUNITY_LINK = "Opportunity Link";
 
 export const GA_ACTION_USER_YOIDONBOARDINGCONFIRMED =
   "YoID Onboarding Confirmed";
@@ -92,6 +93,10 @@ export const GA_ACTION_USER_LOGIN_BEFORE = "User Logging In";
 export const GA_ACTION_USER_LOGIN_AFTER = "User Logged In";
 export const GA_ACTION_USER_LOGOUT = "User Logged Out";
 export const GA_ACTION_USER_PROFILE_UPDATE = "User Updated Profile";
+
+export const GA_ACTION_OPPORTUNITY_LINK_CREATE = "Created Opportunity Link";
+export const GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS =
+  "Updated Status for Opportunity Link";
 
 // colors for green, organge, purple, blue, red, pink, teal, indigo, cyan
 export const CHART_COLORS = [
