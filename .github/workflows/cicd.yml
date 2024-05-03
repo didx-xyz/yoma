@@ -427,6 +427,8 @@ jobs:
               --selector=app=postgresql-keycloak \
               --selector=app=postgresql \
               --selector=app=redis
+          helmfile-version: ${{ env.HELMFILE_VERSION }}
+          helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: |
             https://github.com/databus23/helm-diff,
             https://github.com/jkroepke/helm-secrets,
