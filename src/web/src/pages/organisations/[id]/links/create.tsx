@@ -190,7 +190,7 @@ const LinkDetails: NextPageWithLayout<{
     entityId: "",
     usagesLimit: null,
     dateEnd: null,
-    distributionList: [],
+    distributionList: null,
     includeQRCode: null,
     lockToDistributionList: false,
   });
