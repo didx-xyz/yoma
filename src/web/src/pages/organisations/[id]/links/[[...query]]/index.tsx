@@ -935,6 +935,7 @@ const Links: NextPageWithLayout<{
               <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table">
                 <thead>
                   <tr className="border-gray text-gray-dark">
+                    <th className="border-b-2 border-gray-light !py-4">ID</th>
                     <th className="border-b-2 border-gray-light !py-4">
                       Entity
                     </th>
@@ -953,6 +954,10 @@ const Links: NextPageWithLayout<{
                 <tbody>
                   {links.items.map((item) => (
                     <tr key={`grid_md_${item.id}`} className="">
+                      <td className="  truncate border-b-2 border-gray-light !py-4">
+                        <div className=" ">{item.id}</div>
+                      </td>
+
                       <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4">
                         <Link
                           href={`/organisations/${id}/opportunities/${

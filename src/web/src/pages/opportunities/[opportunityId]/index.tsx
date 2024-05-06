@@ -17,7 +17,6 @@ import { PageBackground } from "~/components/PageBackground";
 import {
   IoMdCheckmark,
   IoMdClose,
-  IoMdFingerPrint,
   IoMdArrowRoundBack,
   IoMdBookmark,
   IoMdShare,
@@ -45,8 +44,6 @@ import {
 } from "~/api/services/myOpportunities";
 import { toast } from "react-toastify";
 import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityCompletionEdit";
-import { signIn } from "next-auth/react";
-import { fetchClientEnv } from "~/lib/utils";
 import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
 import { getServerSession } from "next-auth";
 import { type User, authOptions } from "~/server/auth";
@@ -59,9 +56,7 @@ import {
   GA_ACTION_OPPORTUNITY_CANCELED,
   GA_ACTION_OPPORTUNITY_COMPLETED,
   GA_ACTION_OPPORTUNITY_FOLLOWEXTERNAL,
-  GA_ACTION_USER_LOGIN_BEFORE,
   GA_CATEGORY_OPPORTUNITY,
-  GA_CATEGORY_USER,
 } from "~/lib/constants";
 import Moment from "react-moment";
 import { config } from "~/lib/react-query-config";
@@ -74,6 +69,7 @@ import Badges from "~/components/Opportunity/Badges";
 import Share from "~/components/Opportunity/Share";
 import Head from "next/head";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { SignInButon } from "~/components/SigninButton";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -253,25 +249,6 @@ const OpportunityDetails: NextPageWithLayout<{
     );
   }, [opportunityInfo.url]);
 
-  const [isButtonLoading, setIsButtonLoading] = useState(false);
-  const onLogin = useCallback(async () => {
-    setIsButtonLoading(true);
-
-    // 📊 GOOGLE ANALYTICS: track event
-    trackGAEvent(
-      GA_CATEGORY_USER,
-      GA_ACTION_USER_LOGIN_BEFORE,
-      "User Logging In. Redirected to External Authentication Provider",
-    );
-
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    signIn(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
-        "") as string,
-    );
-  }, [setIsButtonLoading]);
-
   const onOpportunityCompleted = useCallback(async () => {
     setCompleteOpportunityDialogVisible(false);
     setCompleteOpportunitySuccessDialogVisible(true);
@@ -435,19 +412,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     <IoMdClose className="h-5 w-5 text-purple" /> Cancel
                   </button>
 
-                  <button
-                    type="button"
-                    className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light md:w-[150px]"
-                    onClick={onLogin}
-                  >
-                    {isButtonLoading && (
-                      <span className="loading loading-spinner loading-md mr-2 text-warning"></span>
-                    )}
-                    {!isButtonLoading && (
-                      <IoMdFingerPrint className="h-5 w-5 text-white" />
-                    )}
-                    <p className="text-white">Sign-in</p>
-                  </button>
+                  <SignInButon />
                 </div>
               </div>
             </div>

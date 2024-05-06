@@ -1,6 +1,6 @@
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import Image from "next/image";
-import iconSuccess from "public/images/icon-success.webp";
+import iconSuccess from "public/images/icon-success.png";
 import iconClock from "public/images/icon-clock.svg";
 import iconCertificate from "public/images/icon-certificate.svg";
 import iconPicture from "public/images/icon-picture.svg";

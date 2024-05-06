@@ -146,3 +146,11 @@ export const performActionCancel = async (
   const instance = context ? ApiServer(context) : await ApiClient;
   await instance.delete(`/myopportunity/action/${opportunityId}/verify/delete`);
 };
+
+export const performActionInstantVerificationManual = async (
+  linkId: string,
+  context?: GetServerSidePropsContext,
+): Promise<void> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  await instance.put(`/myopportunity/action/link/${linkId}/verify`);
+};

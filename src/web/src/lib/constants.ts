@@ -121,5 +121,5 @@ export const VIEWPORT_SIZE = {
 
 export const COUNTRY_WW = "WW";
 export const COOKIE_KEYCLOAK_SESSION = "KEYCLOAK_SESSION";
-export const SLOW_NETWORK_MESSAGE_TIMEOUT = 5000; // 5 seconds
-export const SLOW_NETWORK_ABORT_TIMEOUT = 20000; // 20 seconds
+export const SLOW_NETWORK_MESSAGE_TIMEOUT = 10000; // 10 seconds
+export const SLOW_NETWORK_ABORT_TIMEOUT = 45000; // 45 seconds
