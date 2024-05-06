@@ -803,7 +803,6 @@ const Links: NextPageWithLayout<{
                     >
                       {item.entityTitle}
                     </Link>
-
                     <div className="mb-2 flex flex-col">
                       <span className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark">
                         {item.name}
@@ -817,13 +816,16 @@ const Links: NextPageWithLayout<{
                     <div className="flex flex-col gap-1">
                       <div className="flex justify-between">
                         <p className="text-sm tracking-wider">Usage</p>
-                        <span className="badge bg-green-light text-green">
-                          <IoMdPerson className="h-4 w-4" />
-                          <span className="ml-1 text-xs">
-                            {item.usagesTotal ?? "0"} /{" "}
-                            {item.usagesLimit ?? "0"}
+                        {item.usagesLimit == null && <>N/A</>}
+                        {item.usagesLimit != null && (
+                          <span className="badge bg-green-light text-green">
+                            <IoMdPerson className="h-4 w-4" />
+                            <span className="ml-1 text-xs">
+                              {item.usagesTotal ?? "0"} /{" "}
+                              {item.usagesLimit ?? "0"}
+                            </span>
                           </span>
-                        </span>
+                        )}
                       </div>
 
                       <div className="flex justify-between">
@@ -983,13 +985,16 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       <td className="border-b-2 border-gray-light">
-                        <span className="badge bg-green-light text-green">
-                          <IoMdPerson className="h-4 w-4" />
-                          <span className="ml-1 text-xs">
-                            {item.usagesTotal ?? "0"} /{" "}
-                            {item.usagesLimit ?? "0"}
+                        {item.usagesLimit == null && <>N/A</>}
+                        {item.usagesLimit != null && (
+                          <span className="badge bg-green-light text-green">
+                            <IoMdPerson className="h-4 w-4" />
+                            <span className="ml-1 text-xs">
+                              {item.usagesTotal ?? "0"} /{" "}
+                              {item.usagesLimit ?? "0"}
+                            </span>
                           </span>
-                        </span>
+                        )}
                       </td>
 
                       <td className="border-b-2 border-gray-light">

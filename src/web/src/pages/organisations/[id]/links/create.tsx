@@ -166,20 +166,38 @@ const LinkDetails: NextPageWithLayout<{
       .string()
       .min(1, "Name is required.")
       .max(255, "Name cannot exceed 255 characters."),
-    description: z.string().min(1, "Description is required."),
+    description: z
+      .string()
+      .max(500, "Description cannot exceed 500 characters.")
+      .optional(),
     entityType: z.string().min(1, "Type is required."),
-    entityId: z.string().min(1, "Difficulty is required."),
+    entityId: z.string().min(1, "Entity is required."),
   });
 
-  const schemaStep2 = z.object({
-    usagesLimit: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
-      // eslint-disable-next-line
-      return val === null || Number.isNaN(val as any) ? null : val;
-    }),
-    lockToDistributionList: z.boolean().optional(),
-    dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
-    includeQRCode: z.union([z.boolean(), z.null()]).optional(),
-  });
+  const schemaStep2 = z
+    .object({
+      usagesLimit: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
+        // eslint-disable-next-line
+        return val === null || Number.isNaN(val as any) ? null : val;
+      }),
+      dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
+      lockToDistributionList: z.boolean().optional(),
+    })
+    .refine(
+      (data) => {
+        // if not locked to the distribution list, you must specify either a usage limit or an end date.
+        return (
+          data.lockToDistributionList ||
+          (data.usagesLimit !== null && data.usagesLimit > 0) ||
+          data.dateEnd
+        );
+      },
+      {
+        message:
+          "If not limited to the distribution list, you must specify either a usage limit or an expiry date.",
+        path: ["lockToDistributionList"],
+      },
+    );
 
   const schemaStep3 = z
     .object({
@@ -209,7 +227,16 @@ const LinkDetails: NextPageWithLayout<{
         path: ["distributionList"],
       },
     );
+  // .transform((val) => {
+  //   // If lockToDistributionList is true, set usagesLimit to the count of the distribution list
 
+  //   if (formData.lockToDistributionList) {
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       usagesLimit: val.distributionList?.length ?? 0,
+  //     }));
+  //   }
+  // });
   const schemaStep4 = z.object({});
 
   const {
@@ -974,6 +1001,7 @@ const LinkDetails: NextPageWithLayout<{
                       onSubmitStep(3, data),
                     )}
                   >
+                    {/* USAGE LIMIT */}
                     <div className="form-control">
                       <label className="flex flex-col">
                         <div className="label-text font-bold">Usage limit</div>
@@ -1001,58 +1029,7 @@ const LinkDetails: NextPageWithLayout<{
                       )}
                     </div>
 
-                    {/* LOCK TO DISTRIBUTION LIST */}
-                    <div className="form-control">
-                      <label
-                        htmlFor="lockToDistributionList"
-                        className="label w-full cursor-pointer justify-normal"
-                      >
-                        <input
-                          {...registerStep2(`lockToDistributionList`)}
-                          type="checkbox"
-                          id="lockToDistributionList"
-                          className="checkbox-secondary checkbox"
-                        />
-                        <span className="label-text ml-4">
-                          Limit to a specific distribution list (Step 3)
-                        </span>
-                      </label>
-
-                      {formStateStep2.errors.lockToDistributionList && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.lockToDistributionList.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                    <div className="form-control">
-                      <label className="flex flex-col">
-                        <div className="label-text font-bold">QR code</div>
-                      </label>
-                      <label
-                        htmlFor="includeQRCode"
-                        className="label w-full cursor-pointer justify-normal"
-                      >
-                        <input
-                          {...registerStep2(`includeQRCode`)}
-                          type="checkbox"
-                          id="includeQRCode"
-                          className="checkbox-secondary checkbox"
-                        />
-                        <span className="label-text ml-4">
-                          Create a QR code for participants to scan
-                        </span>
-                      </label>
-
-                      {formStateStep2.errors.includeQRCode && (
-                        <label className="label -mb-5 font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.includeQRCode.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
+                    {/* EXPIRY DATE */}
                     <div className="form-control">
                       <label className="flex flex-col">
                         <div className="label-text font-bold">Expiry date</div>
@@ -1083,6 +1060,33 @@ const LinkDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
+
+                    {/* LOCK TO DISTRIBUTION LIST */}
+                    <div className="form-control">
+                      <label
+                        htmlFor="lockToDistributionList"
+                        className="label w-full cursor-pointer justify-normal"
+                      >
+                        <input
+                          {...registerStep2(`lockToDistributionList`)}
+                          type="checkbox"
+                          id="lockToDistributionList"
+                          className="checkbox-secondary checkbox"
+                        />
+                        <span className="label-text ml-4">
+                          Limit to a specific distribution list (Step 3)
+                        </span>
+                      </label>
+
+                      {formStateStep2.errors.lockToDistributionList && (
+                        <label className="label -mb-5">
+                          <span className="label-text-alt italic text-red-500">
+                            {`${formStateStep2.errors.lockToDistributionList.message}`}
+                          </span>
+                        </label>
+                      )}
+                    </div>
+
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2 md:justify-end md:gap-4">
                       <button
@@ -1202,7 +1206,7 @@ const LinkDetails: NextPageWithLayout<{
                     )}
                   >
                     {/* TYPE */}
-                    {/* <div className="form-control">
+                    <div className="form-control">
                       <label className="label">
                         <span className="label-text font-semibold">Type</span>
                       </label>
@@ -1215,25 +1219,25 @@ const LinkDetails: NextPageWithLayout<{
                         }
                       </label>
                       {formStateStep1.errors.entityType && (
-                        <label className="label -mb-5">
+                        <label className="label">
                           <span className="label-text-alt italic text-red-500">
                             {`${formStateStep1.errors.entityType.message}`}
                           </span>
                         </label>
                       )}
-                    </div> */}
+                    </div>
 
                     {/* LINK PREVIEW */}
-                    {formData.entityType == "0" && (
-                      <div className="form-control">
-                        <label className="flex flex-col">
-                          <div className="label-text font-bold">
-                            Social Preview
-                          </div>
-                          <div className="label-text-alt my-2">
-                            This is how your link will look on social media:
-                          </div>
-                        </label>
+                    <div className="form-control">
+                      <label className="flex flex-col">
+                        <div className="label-text font-semibold">
+                          Social Preview
+                        </div>
+                        <div className="label-text-alt my-2">
+                          This is how your link will look on social media:
+                        </div>
+                      </label>
+                      {formData.entityType == "0" && (
                         <div className="flex w-full flex-col rounded-lg border-2 border-dotted border-gray p-4">
                           <div className="flex gap-4">
                             <AvatarImage
@@ -1255,8 +1259,15 @@ const LinkDetails: NextPageWithLayout<{
                             </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                      {formStateStep1.errors.entityId && (
+                        <label className="label">
+                          <span className="label-text-alt italic text-red-500">
+                            {`${formStateStep1.errors.entityId.message}`}
+                          </span>
+                        </label>
+                      )}
+                    </div>
 
                     {/* USAGE */}
                     <div className="form-control">
@@ -1298,7 +1309,7 @@ const LinkDetails: NextPageWithLayout<{
                       )}
 
                       {formStateStep2.errors.usagesLimit && (
-                        <label className="label -mb-5">
+                        <label className="label">
                           <span className="label-text-alt italic text-red-500">
                             {`${formStateStep2.errors.usagesLimit.message}`}
                           </span>
@@ -1321,26 +1332,9 @@ const LinkDetails: NextPageWithLayout<{
                         {!formData.dateEnd && "No expiry date"}
                       </label>
                       {formStateStep1.errors.dateEnd && (
-                        <label className="label -mb-5">
+                        <label className="label">
                           <span className="label-text-alt italic text-red-500">
                             {`${formStateStep1.errors.dateEnd.message}`}
-                          </span>
-                        </label>
-                      )}
-
-                      {/* QR CODE */}
-                      <label className="label label-text text-sm">
-                        <div className="flex flex-row gap-1">
-                          QR code
-                          <div className="font-semibold text-black">
-                            {formData.includeQRCode ? "enabled" : "not enabled"}
-                          </div>
-                        </div>
-                      </label>
-                      {formStateStep2.errors.includeQRCode && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.includeQRCode.message}`}
                           </span>
                         </label>
                       )}
