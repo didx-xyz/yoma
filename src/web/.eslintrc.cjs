@@ -35,6 +35,7 @@ const config = {
     "@typescript-eslint/no-unsafe-argument": "off",
     "@typescript-eslint/no-floating-promises": "off",
     "@typescript-eslint/no-unsafe-return": "off",
+    "@typescript-eslint/prefer-nullish-coalescing": "off",
     "prefer-spread": "off",
   },
 };
