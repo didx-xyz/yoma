@@ -7,6 +7,9 @@ namespace Yoma.Core.Domain.EmailProvider.Models
     [JsonProperty("entityTypeDesc")]
     public string EntityTypeDesc { get; set; }
 
+    [JsonProperty("yoIDURL")]
+    public string? YoIDURL { get; set; }
+
     [JsonProperty("items")]
     public List<EmailActionLinkVerifyItem> Items { get; set; }
   }

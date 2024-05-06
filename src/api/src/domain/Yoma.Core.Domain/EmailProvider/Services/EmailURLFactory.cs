@@ -72,6 +72,7 @@ namespace Yoma.Core.Domain.EmailProvider.Services
           break;
 
         case EmailType.Opportunity_Verification_Completed:
+        case EmailType.ActionLink_Verify_Created:
           result = result.AppendPathSegment("completed").ToString();
           break;
 
