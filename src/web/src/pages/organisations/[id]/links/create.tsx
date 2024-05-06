@@ -187,11 +187,13 @@ const LinkDetails: NextPageWithLayout<{
     .refine(
       (data) => {
         // if not locked to the distribution list, you must specify either a usage limit or an end date.
+        // eslint-disable @typescript-eslint/prefer-nullish-coalescing
         return (
           data.lockToDistributionList ||
           data.usagesLimit !== null ||
           data.dateEnd !== null
         );
+        // eslint-enable @typescript-eslint/prefer-nullish-coalescing
       },
       {
         message:
