@@ -244,11 +244,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       item.DistributionList = request.DistributionList == null ? null : JsonConvert.SerializeObject(request.DistributionList);
       item.LockToDistributionList = request.LockToDistributionList;
 
-      var data = new EmailActionLinkVerify
-      {
-        YoIDURL = _emailURLFactory.OpportunityVerificationYoIDURL(EmailType.ActionLink_Verify_Created)
-      };
-
+      EmailActionLinkVerify? emailData = null;
       switch (request.EntityType)
       {
         case LinkEntityType.Opportunity:
@@ -270,21 +266,27 @@ namespace Yoma.Core.Domain.ActionLink.Services
           if (itemExisting != null)
             throw new ValidationException($"Link with name '{item.Name}' already exists for the opportunity");
 
+          item = await GenerateShortLinkAndCreate(request, item);
+
           if (request.DistributionList == null) break;
+
+          emailData = new EmailActionLinkVerify
           {
-            data.EntityTypeDesc = $"{request.EntityType.ToString().ToLower()}(ies)";
-            data.Items = [
-            new()
-            {
-              Title = opportunity.Title,
-              DateStart = opportunity.DateStart,
-              DateEnd = opportunity.DateEnd,
-              URL = item.URL,
-              ZltoReward = opportunity.ZltoReward,
-              YomaReward = opportunity.YomaReward
-            }
-            ];
-          }
+            EntityTypeDesc = $"{request.EntityType.ToString().ToLower()}(ies)",
+            YoIDURL = _emailURLFactory.OpportunityVerificationYoIDURL(EmailType.ActionLink_Verify_Created),
+            Items =
+            [
+              new EmailActionLinkVerifyItem
+              {
+                Title = opportunity.Title,
+                DateStart = opportunity.DateStart,
+                DateEnd = opportunity.DateEnd,
+                URL = item.ShortURL,
+                ZltoReward = opportunity.ZltoReward,
+                YomaReward = opportunity.YomaReward
+              }
+            ]
+          };
 
           break;
 
@@ -292,16 +294,14 @@ namespace Yoma.Core.Domain.ActionLink.Services
           throw new InvalidOperationException($"Invalid / unsupported entity type of '{request.EntityType}'");
       }
 
-      item = await GenerateShortLinkAndCreate(request, item);
-
       if (request.DistributionList != null)
       {
         try
         {
-          if (data == null) throw new InvalidOperationException("Email data not initialized");
+          if (emailData == null) throw new InvalidOperationException("Email data not initialized");
 
           var recipients = request.DistributionList.Select(o => new EmailRecipient { Email = o }).ToList();
-          await _emailProviderClient.Send(EmailType.ActionLink_Verify_Created, recipients, data);
+          await _emailProviderClient.Send(EmailType.ActionLink_Verify_Created, recipients, emailData);
           _logger.LogInformation("Successfully send '{emailType}' email", EmailType.ActionLink_Verify_Created);
         }
         catch (Exception ex)
