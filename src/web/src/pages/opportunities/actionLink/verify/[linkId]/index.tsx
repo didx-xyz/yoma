@@ -1,8 +1,8 @@
 import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
-import { GetServerSidePropsContext } from "next";
+import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
-import { ParsedUrlQuery } from "querystring";
+import type { ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
 import { performActionInstantVerificationManual } from "~/api/services/myOpportunities";
 import MainLayout from "~/components/Layout/Main";
