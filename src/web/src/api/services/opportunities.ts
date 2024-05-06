@@ -324,3 +324,14 @@ export const searchCriteriaOpportunities = async (
   );
   return data;
 };
+
+export const getPublishedOrExpiredByLinkInstantVerify = async (
+  linkId: string,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<OpportunityInfo> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<OpportunityInfo>(
+    `/opportunity/info/link/${linkId}`,
+  );
+  return data;
+};

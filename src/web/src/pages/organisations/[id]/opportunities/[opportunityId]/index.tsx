@@ -1834,7 +1834,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           type="button"
                           className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                           onClick={() => {
-                            setStep(1);
+                            onClick_Menu(1);
                           }}
                         >
                           Back
@@ -2102,7 +2102,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           type="button"
                           className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                           onClick={() => {
-                            setStep(2);
+                            onClick_Menu(2);
                           }}
                         >
                           Back
@@ -2186,7 +2186,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           type="button"
                           className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                           onClick={() => {
-                            setStep(3);
+                            onClick_Menu(3);
                           }}
                         >
                           Back
@@ -2526,7 +2526,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           type="button"
                           className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                           onClick={() => {
-                            setStep(4);
+                            onClick_Menu(4);
                           }}
                         >
                           Back
@@ -2674,7 +2674,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           type="button"
                           className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                           onClick={() => {
-                            setStep(5);
+                            onClick_Menu(5);
                           }}
                         >
                           Back
@@ -3173,7 +3173,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         type="button"
                         className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                         onClick={() => {
-                          setStep(6);
+                          onClick_Menu(6);
                         }}
                       >
                         Back

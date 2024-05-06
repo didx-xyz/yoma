@@ -67,9 +67,9 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import Badges from "~/components/Opportunity/Badges";
 import Share from "~/components/Opportunity/Share";
-import Head from "next/head";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { SignInButon } from "~/components/SigninButton";
+import OpportunityMetaTags from "~/components/Opportunity/OpportunityMetaTags";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -292,7 +292,8 @@ const OpportunityDetails: NextPageWithLayout<{
 
   return (
     <>
-      <Head>
+      <OpportunityMetaTags opportunityInfo={opportunityInfo} />
+      {/* <Head>
         <title>
           {(opportunityInfo.title.length > 50
             ? opportunityInfo.title.substring(0, 47) + "..."
@@ -334,7 +335,7 @@ const OpportunityDetails: NextPageWithLayout<{
             opportunityInfo.keywords ? opportunityInfo.keywords.join(", ") : ""
           }
         />
-      </Head>
+      </Head> */}
       <PageBackground />
 
       <div className="container z-10 mt-16 max-w-7xl overflow-hidden px-2 py-4 md:mt-20">

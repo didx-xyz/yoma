@@ -889,8 +889,6 @@ const Links: NextPageWithLayout<{
 
                         <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
                           <button
-                            //className="bg-theme xl:hover:bg-theme flex flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 disabled:cursor-not-allowed disabled:bg-gray-dark xl:hover:brightness-110"
-
                             className="badge bg-green-light text-green"
                             disabled={item?.status == "Deleted"}
                           >
@@ -937,9 +935,8 @@ const Links: NextPageWithLayout<{
               <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table">
                 <thead>
                   <tr className="border-gray text-gray-dark">
-                    <th className="border-b-2 border-gray-light !py-4">ID</th>
                     <th className="border-b-2 border-gray-light !py-4">
-                      Entity
+                      Opportunity
                     </th>
                     <th className="border-b-2 border-gray-light !py-4">Name</th>
                     <th className="border-b-2 border-gray-light">
@@ -956,10 +953,6 @@ const Links: NextPageWithLayout<{
                 <tbody>
                   {links.items.map((item) => (
                     <tr key={`grid_md_${item.id}`} className="">
-                      <td className="  truncate border-b-2 border-gray-light !py-4">
-                        <div className=" ">{item.id}</div>
-                      </td>
-
                       <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4">
                         <Link
                           href={`/organisations/${id}/opportunities/${

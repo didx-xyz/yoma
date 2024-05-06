@@ -53,10 +53,10 @@ import ReactModal from "react-modal";
 import Image from "next/image";
 import iconBell from "public/images/icon-bell.webp";
 import { IoMdClose } from "react-icons/io";
-import { AvatarImage } from "~/components/AvatarImage";
-import type {
-  OpportunityInfo,
-  OpportunitySearchResultsInfo,
+import {
+  VerificationMethod,
+  type OpportunityInfo,
+  type OpportunitySearchResultsInfo,
 } from "~/api/models/opportunity";
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -65,6 +65,7 @@ import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { validateEmail } from "~/lib/validate";
 import type { LinkRequestCreateVerify } from "~/api/models/actionLinks";
 import { createLinkInstantVerify } from "~/api/services/actionLinks";
+import SocialPreview from "~/components/Opportunity/SocialPreview";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -188,8 +189,8 @@ const LinkDetails: NextPageWithLayout<{
         // if not locked to the distribution list, you must specify either a usage limit or an end date.
         return (
           data.lockToDistributionList ||
-          (data.usagesLimit !== null && data.usagesLimit > 0) ||
-          data.dateEnd
+          data.usagesLimit !== null ||
+          data.dateEnd !== null
         );
       },
       {
@@ -271,10 +272,12 @@ const LinkDetails: NextPageWithLayout<{
     formState: formStateStep3,
     control: controlStep3,
     reset: resetStep3,
+    watch: watchStep3,
   } = useForm({
     resolver: zodResolver(schemaStep3),
     defaultValues: formData,
   });
+  const watchDistributionList = watchStep3("distributionList");
 
   const {
     handleSubmit: handleSubmitStep4,
@@ -528,11 +531,15 @@ const LinkDetails: NextPageWithLayout<{
     setSelectedOpportuntity /*, resetStep1*/,
   ]);
 
-  if (error) {
-    if (error === 401) return <Unauthenticated />;
-    else if (error === 403) return <Unauthorized />;
-    else return <InternalServerError />;
-  }
+  // update the usage limit to the count of the distribution list (if lockToDistributionList=true)
+  useEffect(() => {
+    if (watchLockToDistributionList) {
+      setFormData((prev) => ({
+        ...prev,
+        usagesLimit: watchDistributionList?.length ?? 0,
+      }));
+    }
+  }, [watchLockToDistributionList, watchDistributionList, setFormData]);
 
   // load data asynchronously for the opportunities dropdown (debounced)
   const loadOpportunities = debounce(
@@ -541,10 +548,15 @@ const LinkDetails: NextPageWithLayout<{
 
       const cacheKey = [
         "opportunities",
-        { organization: id, titleContains: inputValue },
+        {
+          organization: id,
+          titleContains: inputValue,
+          published: true,
+          verificationMethod: VerificationMethod.Manual,
+        },
       ];
 
-      // Try to get data from cache
+      // try to get data from cache
       const cachedData =
         queryClient.getQueryData<OpportunitySearchResultsInfo>(cacheKey);
 
@@ -555,11 +567,13 @@ const LinkDetails: NextPageWithLayout<{
         }));
         callback(options);
       } else {
-        // If not in cache, fetch data
+        // if not in cache, fetch data
         searchCriteriaOpportunities({
           opportunities: [],
           organization: id,
           titleContains: inputValue,
+          published: true,
+          verificationMethod: VerificationMethod.Manual,
           pageNumber: 1,
           pageSize: PAGE_SIZE_MEDIUM,
         }).then((data) => {
@@ -569,13 +583,19 @@ const LinkDetails: NextPageWithLayout<{
           }));
           callback(options);
 
-          // Save data to cache
+          // save data to cache
           queryClient.setQueryData(cacheKey, data);
         });
       }
     },
     1000,
   );
+
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>
@@ -851,7 +871,6 @@ const LinkDetails: NextPageWithLayout<{
                             Which opportunity do you want to create a link for?
                           </div>
                         </label>
-
                         <Controller
                           name="entityId"
                           control={controlStep1}
@@ -880,33 +899,16 @@ const LinkDetails: NextPageWithLayout<{
                             />
                           )}
                         />
-
+                        <label className="label">
+                          <span className="label-text-alt italic text-yellow">
+                            Note that only published opportunities with manual
+                            verification are supported.
+                          </span>
+                        </label>
                         {formStateStep1.errors.entityId && (
                           <label className="label">
                             <span className="label-text-alt italic text-red-500">
                               {`${formStateStep1.errors.entityId.message}`}
-                            </span>
-                          </label>
-                        )}
-
-                        {selectedOpportuntity &&
-                          !(
-                            selectedOpportuntity.verificationEnabled &&
-                            selectedOpportuntity.verificationMethod == "Manual"
-                          ) && (
-                            <label className="label">
-                              <span className="label-text-alt italic text-red-500">
-                                This opportunity does not support manual
-                                verification. Please select another opportunity.
-                              </span>
-                            </label>
-                          )}
-
-                        {selectedOpportuntity?.published === false && (
-                          <label className="label">
-                            <span className="label-text-alt italic text-red-500">
-                              This opportunity has not been published. Please
-                              select another opportunity.
                             </span>
                           </label>
                         )}
@@ -1093,7 +1095,7 @@ const LinkDetails: NextPageWithLayout<{
                         type="button"
                         className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                         onClick={() => {
-                          setStep(1);
+                          onClick_Menu(1);
                         }}
                       >
                         Back
@@ -1172,7 +1174,7 @@ const LinkDetails: NextPageWithLayout<{
                         type="button"
                         className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                         onClick={() => {
-                          setStep(2);
+                          onClick_Menu(2);
                         }}
                       >
                         Back
@@ -1238,27 +1240,14 @@ const LinkDetails: NextPageWithLayout<{
                         </div>
                       </label>
                       {formData.entityType == "0" && (
-                        <div className="flex w-full flex-col rounded-lg border-2 border-dotted border-gray p-4">
-                          <div className="flex gap-4">
-                            <AvatarImage
-                              icon={
-                                selectedOpportuntity?.organizationLogoURL ??
-                                null
-                              }
-                              alt={`${selectedOpportuntity?.organizationName} Logo`}
-                              size={60}
-                            />
-
-                            <div className="flex max-w-[200px] flex-col gap-1 sm:max-w-[480px] md:max-w-[420px]">
-                              <h4 className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold leading-7 text-black md:text-xl md:leading-8">
-                                {formData.name}
-                              </h4>
-                              <h6 className=" overflow-hidden text-ellipsis whitespace-nowrap text-xs text-gray-dark">
-                                {formData.description}
-                              </h6>
-                            </div>
-                          </div>
-                        </div>
+                        <SocialPreview
+                          name={formData?.name}
+                          description={formData?.description}
+                          logoURL={selectedOpportuntity?.organizationLogoURL}
+                          organizationName={
+                            selectedOpportuntity?.organizationName
+                          }
+                        />
                       )}
                       {formStateStep1.errors.entityId && (
                         <label className="label">
@@ -1386,7 +1375,7 @@ const LinkDetails: NextPageWithLayout<{
                         type="button"
                         className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                         onClick={() => {
-                          setStep(3);
+                          onClick_Menu(3);
                         }}
                       >
                         Back
