@@ -90,6 +90,8 @@ export const LinkSearchFilters: React.FC<{
         opportunities: [],
         organization: organisationId,
         titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
+        published: null,
+        verificationMethod: null,
         pageNumber: 1,
         pageSize: PAGE_SIZE_MEDIUM,
       }).then((data) => {
