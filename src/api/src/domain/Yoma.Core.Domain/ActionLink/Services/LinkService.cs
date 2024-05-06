@@ -267,8 +267,9 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
           data = new EmailActionLinkVerify
           {
-            Items = [ new()
-            {
+            Items = [
+              new()
+              {
                 OrganizationName = opportunity.OrganizationName,
                 Title = opportunity.Title,
                 DateStart = opportunity.DateStart,
@@ -276,7 +277,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
                 URL = item.URL,
                 ZltoReward = opportunity.ZltoReward,
                 YomaReward = opportunity.YomaReward
-            } ]
+              }
+              ]
           };
 
           break;
