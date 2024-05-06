@@ -1,6 +1,7 @@
 using FluentValidation;
 using Flurl;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Transactions;
@@ -13,7 +14,11 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.EmailProvider;
+using Yoma.Core.Domain.EmailProvider.Interfaces;
+using Yoma.Core.Domain.EmailProvider.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Extensions;
@@ -26,6 +31,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
   public class LinkService : ILinkService
   {
     #region Class Variables
+    private readonly ILogger<LinkService> _logger;
     private readonly AppSettings _appSettings;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IShortLinkProviderClient _shortLinkProviderClient;
@@ -36,6 +42,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly IRepositoryBatched<Link> _linkRepository;
     private readonly IRepository<LinkUsageLog> _linkUsageLogRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly IEmailProviderClient _emailProviderClient;
 
     private readonly LinkRequestCreateValidatorShare _linkRequestCreateValidatorShare;
     private readonly LinkRequestCreateValidatorVerify _linkRequestCreateValidatorVerify;
@@ -46,7 +53,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
     #endregion
 
     #region Constructor
-    public LinkService(IOptions<AppSettings> appSettings,
+    public LinkService(ILogger<LinkService> logger,
+      IOptions<AppSettings> appSettings,
       IHttpContextAccessor httpContextAccessor,
       IShortLinkProviderClientFactory shortLinkProviderClientFactory,
       IUserService userService,
@@ -56,10 +64,12 @@ namespace Yoma.Core.Domain.ActionLink.Services
       IRepositoryBatched<Link> linkRepository,
       IRepository<LinkUsageLog> linkUsageLogRepository,
       IExecutionStrategyService executionStrategyService,
+      IEmailProviderClientFactory emailProviderClientFactory,
       LinkRequestCreateValidatorShare linkRequestCreateValidatorShare,
       LinkRequestCreateValidatorVerify linkRequestCreateValidatorVerify,
       LinkSearchFilterValidator linkSearchFilterValidator)
     {
+      _logger = logger;
       _appSettings = appSettings.Value;
       _httpContextAccessor = httpContextAccessor;
       _shortLinkProviderClient = shortLinkProviderClientFactory.CreateClient();
@@ -70,6 +80,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       _linkRepository = linkRepository;
       _linkUsageLogRepository = linkUsageLogRepository;
       _executionStrategyService = executionStrategyService;
+      _emailProviderClient = emailProviderClientFactory.CreateClient();
       _linkRequestCreateValidatorShare = linkRequestCreateValidatorShare;
       _linkRequestCreateValidatorVerify = linkRequestCreateValidatorVerify;
       _linkSearchFilterValidator = linkSearchFilterValidator;
@@ -169,12 +180,12 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       await _linkRequestCreateValidatorShare.ValidateAndThrowAsync(request);
 
-      var item = ParseLink(request, ensureOrganizationAuthorization);
+      var item = LinkFromRequest(request, ensureOrganizationAuthorization);
 
       switch (request.EntityType)
       {
         case LinkEntityType.Opportunity:
-          var opportunity = ParseOpportunity(request, publishedOrExpiredOnly, ensureOrganizationAuthorization, item);
+          var opportunity = ValidateAndInitializeOpportunity(request, item, publishedOrExpiredOnly, ensureOrganizationAuthorization);
           item.URL = opportunity.YomaInfoURL(_appSettings.AppBaseURL);
 
           var itemExisting = _linkRepository.Query().Where(o => o.EntityType == item.EntityType && o.Action == item.Action && o.OpportunityId == item.OpportunityId).SingleOrDefault();
@@ -186,7 +197,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           //sharing links should always remain active; they cannot be deactivated, have no end date, and are not subject to usage limits
           AssertActive(itemExisting);
 
-          await LogUsage(itemExisting.Id);
+          await LogUsage(itemExisting);
 
           return itemExisting.ToLinkInfo(request.IncludeQRCode);
 
@@ -194,7 +205,17 @@ namespace Yoma.Core.Domain.ActionLink.Services
           throw new InvalidOperationException($"Invalid / unsupported entity type of '{request.EntityType}'");
       }
 
-      item = await CreateLink(request, item, true);
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+        item = await GenerateShortLinkAndCreate(request, item);
+
+        await LogUsage(item);
+
+        scope.Complete();
+      });
+
       return item.ToLinkInfo(request.IncludeQRCode);
     }
 
@@ -214,16 +235,17 @@ namespace Yoma.Core.Domain.ActionLink.Services
       if (!request.UsagesLimit.HasValue && !request.DateEnd.HasValue)
         throw new ValidationException($"Either a usage limit or an end date is required");
 
-      var item = ParseLink(request, ensureOrganizationAuthorization);
+      var item = LinkFromRequest(request, ensureOrganizationAuthorization);
       item.UsagesLimit = request.UsagesLimit;
       item.DateEnd = request.DateEnd.HasValue ? request.DateEnd.Value.ToEndOfDay() : null;
       item.DistributionList = request.DistributionList == null ? null : JsonConvert.SerializeObject(request.DistributionList);
       item.LockToDistributionList = request.LockToDistributionList;
 
+      EmailActionLinkVerify? data = null;
       switch (request.EntityType)
       {
         case LinkEntityType.Opportunity:
-          var opportunity = ParseOpportunity(request, publishedOrExpiredOnly, ensureOrganizationAuthorization, item);
+          var opportunity = ValidateAndInitializeOpportunity(request, item, publishedOrExpiredOnly, ensureOrganizationAuthorization);
 
           if (!opportunity.VerificationEnabled || opportunity.VerificationMethod != VerificationMethod.Manual)
             throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' does not support manual verification");
@@ -241,15 +263,45 @@ namespace Yoma.Core.Domain.ActionLink.Services
           if (itemExisting != null)
             throw new ValidationException($"Link with name '{item.Name}' already exists for the opportunity");
 
+          if (request.DistributionList == null) break;
+
+          data = new EmailActionLinkVerify
+          {
+            Items = [ new()
+            {
+                OrganizationName = opportunity.OrganizationName,
+                Title = opportunity.Title,
+                DateStart = opportunity.DateStart,
+                DateEnd = opportunity.DateEnd,
+                URL = item.URL,
+                ZltoReward = opportunity.ZltoReward,
+                YomaReward = opportunity.YomaReward
+            } ]
+          };
+
           break;
 
         default:
           throw new InvalidOperationException($"Invalid / unsupported entity type of '{request.EntityType}'");
       }
 
-      item = await CreateLink(request, item, false);
+      item = await GenerateShortLinkAndCreate(request, item);
 
-      //TODO: send emails if needed
+      if (request.DistributionList != null)
+      {
+        try
+        {
+          if (data == null) throw new InvalidOperationException("Email data not initialized");
+
+          var recipients = request.DistributionList.Select(o => new EmailRecipient { Email = o }).ToList();
+          await _emailProviderClient.Send(EmailType.ActionLink_Verify_Created, recipients, data);
+          _logger.LogInformation("Successfully send '{emailType}' email", EmailType.ActionLink_Verify_Created);
+        }
+        catch (Exception ex)
+        {
+          _logger.LogError(ex, "Failed to send '{emailType}' email", EmailType.ActionLink_Verify_Created);
+        }
+      }
 
       return item.ToLinkInfo(request.IncludeQRCode);
     }
@@ -258,63 +310,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
     {
       var link = GetById(id);
 
-      AssertActive(link);
-
-      var action = Enum.Parse<LinkAction>(link.Action);
-
-      switch (action)
-      {
-        case LinkAction.Share:
-          //user context optional; only tracked provided context
-          if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor)) return link.ToLinkInfo(false);
-          break;
-
-        case LinkAction.Verify:
-          //user context required
-          if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor)) throw new ValidationException($"User context required for link with action '{action}'");
-          break;
-
-        default:
-          throw new InvalidOperationException($"Invalid / unsupported action of '{action}'");
-      }
-
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-
-      var item = _linkUsageLogRepository.Query().SingleOrDefault(o => o.LinkId == id && o.UserId == user.Id);
-      if (item != null) return link.ToLinkInfo(false); //already used by the user
-
-      if (link.LockToDistributionList == true)
-      {
-        if (link.DistributionList == null)
-          throw new DataInconsistencyException("Link is locked to a distribution list but no distribution list is defined");
-
-        var emails = JsonConvert.DeserializeObject<List<string>>(link.DistributionList);
-
-        if (emails == null || emails.Count == 0)
-          throw new DataInconsistencyException("Link is locked to a distribution list but no distribution list is defined");
-
-        if (!emails.Contains(user.Email, StringComparer.InvariantCultureIgnoreCase))
-          throw new SecurityException("Unauthorized");
-      }
-
-      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
-      {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-
-        item = await _linkUsageLogRepository.Create(new LinkUsageLog
-        {
-          LinkId = id,
-          UserId = user.Id,
-        });
-
-        link.UsagesTotal = (link.UsagesTotal ?? 0) + 1;
-        if (link.UsagesLimit.HasValue && link.UsagesTotal == link.UsagesLimit) link.Status = LinkStatus.LimitReached;
-        link = await _linkRepository.Update(link);
-
-        scope.Complete();
-      });
-
-      return link.ToLinkInfo(false);
+      return await LogUsage(link);
     }
 
     public async Task<LinkInfo> UpdateStatus(Guid id, LinkStatus status, bool ensureOrganizationAuthorization)
@@ -417,7 +413,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       }
     }
 
-    private Opportunity.Models.Opportunity ParseOpportunity(LinkRequestCreateBase request, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization, Link item)
+    private Opportunity.Models.Opportunity ValidateAndInitializeOpportunity(LinkRequestCreateBase request, Link item, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization)
     {
       var opportunity = _opportunityService.GetById(request.EntityId, false, true, ensureOrganizationAuthorization);
 
@@ -435,12 +431,12 @@ namespace Yoma.Core.Domain.ActionLink.Services
       item.OpportunityId = opportunity.Id;
       item.OpportunityOrganizationId = opportunity.OrganizationId;
       item.OpportunityTitle = opportunity.Title;
-      if (string.IsNullOrEmpty(request.Name)) request.Name = opportunity.Title.RemoveSpecialCharacters();
+      request.Name ??= opportunity.Title.RemoveSpecialCharacters();
       item.Name = request.Name;
       return opportunity;
     }
 
-    private Link ParseLink(LinkRequestCreateBase request, bool ensureOrganizationAuthorization)
+    private Link LinkFromRequest(LinkRequestCreateBase request, bool ensureOrganizationAuthorization)
     {
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -459,7 +455,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       return item;
     }
 
-    private async Task<Link> CreateLink(LinkRequestCreateBase request, Link item, bool logUsage)
+    private async Task<Link> GenerateShortLinkAndCreate(LinkRequestCreateBase request, Link item)
     {
       var responseShortLink = await _shortLinkProviderClient.CreateShortLink(new ShortLinkRequest
       {
@@ -471,17 +467,76 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       item.ShortURL = responseShortLink.Link;
 
+      return await _linkRepository.Create(item);
+    }
+
+    private async Task<LinkInfo> LogUsage(Link link)
+    {
+      AssertActive(link);
+
+      var action = Enum.Parse<LinkAction>(link.Action);
+      LinkUsageLog? usageLog = null;
+      User? user = null;
+
+      switch (action)
+      {
+        case LinkAction.Share:
+          //user context optional; only tracked provided executed with context
+          if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor)) return link.ToLinkInfo(false);
+
+          user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+          usageLog = _linkUsageLogRepository.Query().SingleOrDefault(o => o.LinkId == link.Id && o.UserId == user.Id);
+          if (usageLog != null) return link.ToLinkInfo(false);
+          break;
+
+        case LinkAction.Verify:
+          //user context required
+          if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor)) throw new InvalidOperationException($"User context required for link with action '{action}'");
+
+          user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+          usageLog = _linkUsageLogRepository.Query().SingleOrDefault(o => o.LinkId == link.Id && o.UserId == user.Id);
+          if (usageLog != null) throw new ValidationException($"This link has already been claimed or used on '{usageLog.DateCreated:yyyy-MM-dd HH:mm:ss}'");
+
+          break;
+
+        default:
+          throw new InvalidOperationException($"Invalid / unsupported action of '{action}'");
+      }
+
+      if (link.LockToDistributionList == true)
+      {
+        if (link.DistributionList == null)
+          throw new DataInconsistencyException("Link is locked to a distribution list but no distribution list is defined");
+
+        var emails = JsonConvert.DeserializeObject<List<string>>(link.DistributionList);
+
+        if (emails == null || emails.Count == 0)
+          throw new DataInconsistencyException("Link is locked to a distribution list but no distribution list is defined");
+
+        if (!emails.Contains(user.Email, StringComparer.InvariantCultureIgnoreCase))
+          throw new SecurityException("Unauthorized");
+      }
+
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
-        item = await _linkRepository.Create(item);
-        if (logUsage) await LogUsage(item.Id);
+        usageLog = await _linkUsageLogRepository.Create(new LinkUsageLog
+        {
+          LinkId = link.Id,
+          UserId = user.Id,
+        });
+
+        link.UsagesTotal = (link.UsagesTotal ?? 0) + 1;
+        if (link.UsagesLimit.HasValue && link.UsagesTotal == link.UsagesLimit) link.Status = LinkStatus.LimitReached;
+        link = await _linkRepository.Update(link);
 
         scope.Complete();
       });
 
-      return item;
+      return link.ToLinkInfo(false);
     }
     #endregion
   }

@@ -242,6 +242,16 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.Where(o => filter.Opportunities.Contains(o.Id));
       }
 
+      if (filter.Published.HasValue)
+      {
+        var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+        var statusOrganizationActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+        query = query.Where(o => o.StatusId == statusActiveId && o.OrganizationStatusId == statusOrganizationActiveId);
+      }
+
+      if (filter.VerificationMethod.HasValue)
+        query = query.Where(o => o.VerificationEnabled && o.VerificationMethodValue == filter.VerificationMethod.ToString());
+
       var results = new OpportunitySearchResultsCriteria();
       query = query.OrderBy(o => o.Title).ThenBy(o => o.Id); //ensure deterministic sorting / consistent pagination results
 
@@ -852,6 +862,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ZltoRewardPool = request.ZltoRewardPool,
         YomaRewardPool = request.YomaRewardPool,
         VerificationEnabled = request.VerificationEnabled,
+        VerificationMethodValue = request.VerificationMethod?.ToString(),
         VerificationMethod = request.VerificationMethod,
         DifficultyId = request.DifficultyId,
         Difficulty = _opportunityDifficultyService.GetById(request.DifficultyId).Name,

@@ -55,6 +55,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public bool VerificationEnabled { get; set; }
 
+    [JsonIgnore]
+    public string? VerificationMethodValue { get; set; }
+
     public VerificationMethod? VerificationMethod { get; set; }
 
     public Guid DifficultyId { get; set; }

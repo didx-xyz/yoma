@@ -9,5 +9,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string? TitleContains { get; set; }
 
     public List<Guid>? Opportunities { get; set; }
+
+    public bool? Published { get; set; }
+
+    public VerificationMethod? VerificationMethod { get; set; }
   }
 }
