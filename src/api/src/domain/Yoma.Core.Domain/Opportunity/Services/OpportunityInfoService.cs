@@ -47,7 +47,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     //anonymously accessible from controller
     public OpportunityInfo GetPublishedOrExpiredByLinkInstantVerify(Guid linkId)
     {
-      var link = _linkService.GetById(linkId, true, false);
+      var link = _linkService.GetById(linkId, false, false);
 
       link.AssertLinkInstantVerify();
 

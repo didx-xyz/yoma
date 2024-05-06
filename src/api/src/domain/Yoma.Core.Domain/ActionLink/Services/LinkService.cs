@@ -267,19 +267,18 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
           data = new EmailActionLinkVerify
           {
+            EntityTypeDesc = $"an {request.EntityType.ToString().ToLower()}",
             Items = [
-              new()
-              {
-                EntityType = request.EntityType.ToString(),
-                OrganizationName = opportunity.OrganizationName,
-                Title = opportunity.Title,
-                DateStart = opportunity.DateStart,
-                DateEnd = opportunity.DateEnd,
-                URL = item.URL,
-                ZltoReward = opportunity.ZltoReward,
-                YomaReward = opportunity.YomaReward
-              }
-              ]
+            new()
+            {
+              Title = opportunity.Title,
+              DateStart = opportunity.DateStart,
+              DateEnd = opportunity.DateEnd,
+              URL = item.URL,
+              ZltoReward = opportunity.ZltoReward,
+              YomaReward = opportunity.YomaReward
+            }
+            ]
           };
 
           break;
