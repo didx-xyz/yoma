@@ -294,20 +294,19 @@ namespace Yoma.Core.Domain.ActionLink.Services
           throw new InvalidOperationException($"Invalid / unsupported entity type of '{request.EntityType}'");
       }
 
-      if (request.DistributionList != null)
-      {
-        try
-        {
-          if (emailData == null) throw new InvalidOperationException("Email data not initialized");
+      if (request.DistributionList == null) return item.ToLinkInfo(request.IncludeQRCode);
 
-          var recipients = request.DistributionList.Select(o => new EmailRecipient { Email = o }).ToList();
-          await _emailProviderClient.Send(EmailType.ActionLink_Verify_Created, recipients, emailData);
-          _logger.LogInformation("Successfully send '{emailType}' email", EmailType.ActionLink_Verify_Created);
-        }
-        catch (Exception ex)
-        {
-          _logger.LogError(ex, "Failed to send '{emailType}' email", EmailType.ActionLink_Verify_Created);
-        }
+      try
+      {
+        if (emailData == null) throw new InvalidOperationException("Email data not initialized");
+
+        var recipients = request.DistributionList.Select(o => new EmailRecipient { Email = o }).ToList();
+        await _emailProviderClient.Send(EmailType.ActionLink_Verify_Created, recipients, emailData);
+        _logger.LogInformation("Successfully send '{emailType}' email", EmailType.ActionLink_Verify_Created);
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to send '{emailType}' email", EmailType.ActionLink_Verify_Created);
       }
 
       return item.ToLinkInfo(request.IncludeQRCode);
