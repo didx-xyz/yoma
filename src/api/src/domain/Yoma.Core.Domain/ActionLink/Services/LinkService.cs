@@ -499,7 +499,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
           usageLog = _linkUsageLogRepository.Query().SingleOrDefault(o => o.LinkId == link.Id && o.UserId == user.Id);
-          if (usageLog != null) throw new ValidationException($"This link has already been claimed or used on '{usageLog.DateCreated:yyyy-MM-dd HH:mm:ss}'");
+          if (usageLog != null) throw new ValidationException($"This link has already been used / claimed on '{usageLog.DateCreated:yyyy-MM-dd HH:mm:ss}'");
 
           break;
 
