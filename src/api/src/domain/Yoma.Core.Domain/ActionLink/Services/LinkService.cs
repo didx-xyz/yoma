@@ -533,7 +533,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
         });
 
         link.UsagesTotal = (link.UsagesTotal ?? 0) + 1;
-        if (link.UsagesLimit.HasValue && link.UsagesTotal == link.UsagesLimit) link.Status = LinkStatus.LimitReached;
+        if (link.UsagesLimit.HasValue && link.UsagesTotal >= link.UsagesLimit)
+        {
+          link.StatusId = _linkStatusService.GetByName(LinkStatus.LimitReached.ToString()).Id;
+          link.Status = LinkStatus.LimitReached;
+        }
         link = await _linkRepository.Update(link);
 
         scope.Complete();
