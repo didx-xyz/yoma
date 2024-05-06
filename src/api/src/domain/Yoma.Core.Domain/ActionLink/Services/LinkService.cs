@@ -270,6 +270,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
             Items = [
               new()
               {
+                EntityType = request.EntityType.ToString(),
                 OrganizationName = opportunity.OrganizationName,
                 Title = opportunity.Title,
                 DateStart = opportunity.DateStart,

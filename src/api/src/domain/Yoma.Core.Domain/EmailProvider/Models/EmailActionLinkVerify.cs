@@ -10,6 +10,9 @@ namespace Yoma.Core.Domain.EmailProvider.Models
 
   public class EmailActionLinkVerifyItem
   {
+    [JsonProperty("entityType")]
+    public string EntityType { get; set; }
+
     [JsonProperty("organizationName")]
     public string OrganizationName { get; set; }
 
