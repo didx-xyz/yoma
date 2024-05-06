@@ -49,7 +49,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         ZltoRewardCumulative = entity.ZltoRewardCumulative,
         YomaRewardCumulative = entity.YomaRewardCumulative,
         VerificationEnabled = entity.VerificationEnabled,
-        VerificationMethodValue = entity.VerificationMethod,  
+        VerificationMethodValue = entity.VerificationMethod,
         VerificationMethod = string.IsNullOrEmpty(entity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(entity.VerificationMethod, true),
         DifficultyId = entity.DifficultyId,
         Difficulty = entity.Difficulty.Name,
