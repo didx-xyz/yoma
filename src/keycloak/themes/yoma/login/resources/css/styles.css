@@ -80,16 +80,15 @@ h1#kc-page-title {
 
 #password-instructions {
   width: 85%;
-  color: #cccccc;
+  color: #72767b;
   margin-inline: auto;
   padding-left: 2px;
+  margin-bottom: 0.5rem;
 }
 
-#toggle-password,
+/* #toggle-password,
 #toggle-password-confirm {
-  margin-right: 15px !important;
-  /* margin-left: calc(1px + 1%); */
-}
+} */
 
 #register-password,
 #password-confirm {
@@ -110,11 +109,11 @@ h1#kc-page-title {
 }
 
 .fa-eye-slash::before {
-  font-size: 15px;
+  font-size: 20px;
 }
 
 .fa-eye::before {
-  font-size: 15px;
+  font-size: 20px;
 }
 
 .alert-warning {
@@ -482,8 +481,28 @@ input[type="checkbox"] {
   }
 
   #password-instructions {
-    padding-left: 7px;
+    padding-left: 0.5rem;
     text-align: left !important;
     display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .fa-eye-slash::before {
+    margin-left: -.5rem !important;
+  }
+
+  .fa-eye::before {
+    margin-left: -.5rem !important;
+  }
+
+  #register-password,
+  #password-confirm {
+    padding-left: calc(1px + 15%);
+  }
+}
+
+@media screen and (max-width: 375) {
+  #password-instructions {
+    padding-left: 0.7rem;
   }
 }

@@ -37,11 +37,11 @@
 
                         <div id="password-requirements">
                           <div id="label">Password requirements:</div>
-                          <p id="length">10 characters</p>
+                          <p id="length">10 Characters Long</p>
                           <p id="lowercase">1 lower case</p>
-                          <p id="uppercase">1 upper case</p>
-                          <p id="number">1 number</p>
-                          <p id="email">Not email</p>
+                          <p id="uppercase">1 UPPER CASE</p>
+                          <p id="number">1 Numb3r</p>
+                          <p id="email">Different from email</p>
                         </div>
 											</div>
 										</div>

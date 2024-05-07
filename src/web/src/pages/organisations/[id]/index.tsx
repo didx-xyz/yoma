@@ -1372,11 +1372,11 @@ const OrganisationDashboard: NextPageWithLayout<{
                       <div>Outbound</div>{" "}
                       <IoIosArrowForward className="rounded-lg bg-green-light p-px pl-[2px] text-2xl text-green" />
                     </div>
-                    {ssoData?.inbound?.enabled ? (
+                    {ssoData?.outbound?.enabled ? (
                       <>
                         {" "}
-                        <div>Client Id: {ssoData?.inbound?.clientId}</div>
-                        <div>Login count: {ssoData?.inbound?.loginCount}</div>
+                        <div>Client Id: {ssoData?.outbound?.clientId}</div>
+                        <div>Login count: {ssoData?.outbound?.loginCount}</div>
                       </>
                     ) : (
                       <div>Disabled</div>
@@ -1389,8 +1389,8 @@ const OrganisationDashboard: NextPageWithLayout<{
                     </div>
                     {ssoData?.inbound?.enabled ? (
                       <>
-                        <div>Client Id: {ssoData?.outbound?.clientId}</div>
-                        <div>Login count: {ssoData?.outbound?.loginCount}</div>
+                        <div>Client Id: {ssoData?.inbound?.clientId}</div>
+                        <div>Login count: {ssoData?.inbound?.loginCount}</div>
                       </>
                     ) : (
                       <div>Disabled</div>
