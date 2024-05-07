@@ -515,8 +515,8 @@ namespace Yoma.Core.Domain.Analytics.Services
               .Where(mo => mo.OpportunityId == opportunity.Id &&
                            mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id &&
                            mo.VerificationStatusId == _myOpportunityVerificationStatusService.GetByName(MyOpportunity.VerificationStatus.Completed.ToString()).Id &&
-                           (!filter.StartDate.HasValue || mo.DateCompleted.HasValue || mo.DateCompleted >= filter.StartDate.RemoveTime()) &&
-                           (!filter.EndDate.HasValue || mo.DateCompleted.HasValue || mo.DateCompleted <= filter.EndDate.ToEndOfDay()))
+                           (!filter.StartDate.HasValue || !mo.DateCompleted.HasValue || mo.DateCompleted >= filter.StartDate.RemoveTime()) &&
+                           (!filter.EndDate.HasValue || !mo.DateCompleted.HasValue || mo.DateCompleted <= filter.EndDate.ToEndOfDay()))
               .Count()
           })
           .Select(result => new OpportunityInfoAnalytics
