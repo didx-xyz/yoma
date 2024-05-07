@@ -533,8 +533,8 @@ export const OpportunityFilterHorizontal: React.FC<{
                             onChange(val.map((c) => c.label));
                             void handleSubmit(onSubmitHandler)();
                           }}
-                          value={lookups_publishedStates.filter((c) =>
-                            value?.includes(c.label),
+                          value={lookups_publishedStates.filter(
+                            (c) => value?.includes(c.label),
                           )}
                           placeholder="Status"
                           components={{
@@ -577,8 +577,8 @@ export const OpportunityFilterHorizontal: React.FC<{
                             onChange(val.map((c) => c.label));
                             void handleSubmit(onSubmitHandler)();
                           }}
-                          value={lookups_statuses.filter((c) =>
-                            value?.includes(c.label),
+                          value={lookups_statuses.filter(
+                            (c) => value?.includes(c.label),
                           )}
                           placeholder="Status"
                           components={{
@@ -608,7 +608,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                       name="startDate"
                       render={({ field: { onChange, value } }) => (
                         <DatePicker
-                          className="input input-sm input-bordered w-32 rounded border-gray !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none"
+                          className="input input-bordered input-sm w-32 rounded border-gray !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none"
                           onChange={(date) => {
                             onChange(toISOStringForTimezone(date));
                             void handleSubmit(onSubmitHandler)();
@@ -637,7 +637,7 @@ export const OpportunityFilterHorizontal: React.FC<{
                       name="endDate"
                       render={({ field: { onChange, value } }) => (
                         <DatePicker
-                          className="input input-sm input-bordered w-32 rounded border-gray !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none"
+                          className="input input-bordered input-sm w-32 rounded border-gray !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none"
                           onChange={(date) => {
                             onChange(toISOStringForTimezone(date));
                             void handleSubmit(onSubmitHandler)();

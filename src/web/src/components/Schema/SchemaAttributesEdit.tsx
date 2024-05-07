@@ -55,8 +55,8 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
     reset({
       attributes: defaultValue?.map((x) => ({
         attribute: x,
-        dataSource: schemaEntities?.find((a) =>
-          a.properties?.find((y) => y.attributeName == x),
+        dataSource: schemaEntities?.find(
+          (a) => a.properties?.find((y) => y.attributeName == x),
         )?.id,
         attributes: schemaEntities
           ?.find((a) => a.properties?.find((y) => y.attributeName == x))

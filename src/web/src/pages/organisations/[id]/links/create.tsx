@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { captureException } from "@sentry/nextjs";
 import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
 import { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
@@ -428,6 +429,7 @@ const LinkDetails: NextPageWithLayout<{
           icon: false,
         });
 
+        captureException(error);
         setIsLoading(false);
 
         return;

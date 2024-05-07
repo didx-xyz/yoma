@@ -1,11 +1,14 @@
 import Image from "next/image";
+import { shimmer, toBase64 } from "~/lib/image";
 import { IoMdPerson } from "react-icons/io";
 
-export const AvatarImage: React.FC<{
+interface InputProps {
   icon?: any;
   alt: string;
   size: number;
-}> = ({ icon, alt, size }) => {
+}
+
+export const AvatarImage: React.FC<InputProps> = ({ icon, alt, size }) => {
   const sizePixels: string = size + "px";
   return (
     <div
@@ -23,6 +26,10 @@ export const AvatarImage: React.FC<{
           height={size}
           sizes="100vw"
           priority={true}
+          placeholder="blur"
+          blurDataURL={`data:image/svg+xml;base64,${toBase64(
+            shimmer(size, size),
+          )}`}
           style={{
             width: sizePixels,
             height: sizePixels,
