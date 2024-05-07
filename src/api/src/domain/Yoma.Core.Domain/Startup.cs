@@ -168,7 +168,7 @@ namespace Yoma.Core.Domain
       //opportunity
       RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration ({Status.Active} that has ended)",
           s => s.ProcessExpiration(), options.OpportunityExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-      RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration Notifications ({Status.Active} or {Status.Inactive} ending within {options.OpportunityExpirationNotificationIntervalInDays} days)",
+      RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration Notifications ({Status.Active} ending within {options.OpportunityExpirationNotificationIntervalInDays} days)",
           s => s.ProcessExpirationNotifications(), options.OpportunityExpirationNotificationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Deletion ({Status.Inactive} or {Status.Expired} for more than {options.OpportunityDeletionIntervalInDays} days)",
           s => s.ProcessDeletion(), options.OpportunityDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
