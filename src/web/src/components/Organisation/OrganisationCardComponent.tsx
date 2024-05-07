@@ -107,7 +107,6 @@ export const OrganisationCardComponent: React.FC<{
           autoClose: false,
           icon: false,
         });
-        //captureException(error);
       }
       setIsLoading(false);
 
