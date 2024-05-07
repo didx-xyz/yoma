@@ -30,7 +30,7 @@ import { Loading } from "~/components/Status/Loading";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
-import { IoMdArrowRoundBack } from "react-icons/io";
+import { IoMdArrowRoundBack, IoMdWarning } from "react-icons/io";
 import CreatableSelect from "react-select/creatable";
 import type { NextPageWithLayout } from "~/pages/_app";
 import {
@@ -66,6 +66,7 @@ import { validateEmail } from "~/lib/validate";
 import type { LinkRequestCreateVerify } from "~/api/models/actionLinks";
 import { createLinkInstantVerify } from "~/api/services/actionLinks";
 import SocialPreview from "~/components/Opportunity/SocialPreview";
+import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -137,12 +138,12 @@ const LinkDetails: NextPageWithLayout<{
   const formRef1 = useRef<HTMLFormElement>(null);
   const formRef2 = useRef<HTMLFormElement>(null);
   const formRef3 = useRef<HTMLFormElement>(null);
-  const formRef4 = useRef<HTMLFormElement>(null);
 
   const [saveChangesDialogVisible, setSaveChangesDialogVisible] =
     useState(false);
   const [lastStepBeforeSaveChangesDialog, setLastStepBeforeSaveChangesDialog] =
     useState<number | null>(null);
+  const modalContext = useConfirmationModalContext();
 
   const linkEntityTypes: SelectOption[] = [
     { value: "0", label: "Opportunity" },
@@ -183,32 +184,38 @@ const LinkDetails: NextPageWithLayout<{
       }),
       dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
       lockToDistributionList: z.boolean().optional(),
+      distributionList: z.array(z.string().email()).optional(),
     })
     .refine(
       (data) => {
         // if not locked to the distribution list, you must specify either a usage limit or an end date.
-        return (
-          data.lockToDistributionList ||
-          data.usagesLimit !== null ||
-          data.dateEnd !== null
-        );
+        // return (
+        //   data.lockToDistributionList ||
+        //   data.usagesLimit !== null ||
+        //   data.dateEnd !== null
+        // );
+
+        if (
+          !data.lockToDistributionList &&
+          data.usagesLimit == null &&
+          data.dateEnd == null
+        ) {
+          return false;
+        }
+
+        return true;
       },
       {
         message:
           "If not limited to the distribution list, you must specify either a usage limit or an expiry date.",
         path: ["lockToDistributionList"],
       },
-    );
-
-  const schemaStep3 = z
-    .object({
-      distributionList: z.array(z.string().email()).optional(),
-    })
+    )
     .refine(
       (data) => {
         // distributionList is required if lockToDistributionList is true
         return (
-          !formData.lockToDistributionList ||
+          !data.lockToDistributionList ||
           (data.distributionList?.length ?? 0) > 0
         );
       },
@@ -228,17 +235,8 @@ const LinkDetails: NextPageWithLayout<{
         path: ["distributionList"],
       },
     );
-  // .transform((val) => {
-  //   // If lockToDistributionList is true, set usagesLimit to the count of the distribution list
 
-  //   if (formData.lockToDistributionList) {
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       usagesLimit: val.distributionList?.length ?? 0,
-  //     }));
-  //   }
-  // });
-  const schemaStep4 = z.object({});
+  const schemaStep3 = z.object({});
 
   const {
     register: registerStep1,
@@ -270,22 +268,10 @@ const LinkDetails: NextPageWithLayout<{
   const {
     handleSubmit: handleSubmitStep3,
     formState: formStateStep3,
-    control: controlStep3,
+
     reset: resetStep3,
-    watch: watchStep3,
   } = useForm({
     resolver: zodResolver(schemaStep3),
-    defaultValues: formData,
-  });
-  const watchDistributionList = watchStep3("distributionList");
-
-  const {
-    handleSubmit: handleSubmitStep4,
-    formState: formStateStep4,
-
-    reset: resetStep4,
-  } = useForm({
-    resolver: zodResolver(schemaStep4),
     defaultValues: formData,
   });
 
@@ -308,10 +294,6 @@ const LinkDetails: NextPageWithLayout<{
     () => Object.keys(formStateStep3.dirtyFields).length > 0,
     [formStateStep3],
   );
-  const isDirtyStep4 = useMemo(
-    () => Object.keys(formStateStep4.dirtyFields).length > 0,
-    [formStateStep4],
-  );
 
   //* SAVE CHANGE DIALOG
   const onClick_Menu = useCallback(
@@ -320,7 +302,6 @@ const LinkDetails: NextPageWithLayout<{
       if (step === 1 && isDirtyStep1) isDirtyStep = true;
       else if (step === 2 && isDirtyStep2) isDirtyStep = true;
       else if (step === 3 && isDirtyStep3) isDirtyStep = true;
-      else if (step === 4 && isDirtyStep4) isDirtyStep = true;
 
       if (isDirtyStep) {
         setLastStepBeforeSaveChangesDialog(nextStep);
@@ -334,7 +315,6 @@ const LinkDetails: NextPageWithLayout<{
       isDirtyStep1,
       isDirtyStep2,
       isDirtyStep3,
-      isDirtyStep4,
       step,
       setStep,
       setSaveChangesDialogVisible,
@@ -346,7 +326,6 @@ const LinkDetails: NextPageWithLayout<{
     resetStep1(formData);
     resetStep2(formData);
     resetStep3(formData);
-    resetStep4(formData);
     setSaveChangesDialogVisible(false);
     lastStepBeforeSaveChangesDialog && setStep(lastStepBeforeSaveChangesDialog);
     setLastStepBeforeSaveChangesDialog(null);
@@ -355,7 +334,6 @@ const LinkDetails: NextPageWithLayout<{
     resetStep1,
     resetStep2,
     resetStep3,
-    resetStep4,
     setSaveChangesDialogVisible,
     lastStepBeforeSaveChangesDialog,
     setLastStepBeforeSaveChangesDialog,
@@ -377,22 +355,33 @@ const LinkDetails: NextPageWithLayout<{
       formRef3?.current?.dispatchEvent(
         new Event("submit", { cancelable: true, bubbles: true }),
       );
-    } else if (step == 4) {
-      formRef4?.current?.dispatchEvent(
-        new Event("submit", { cancelable: true, bubbles: true }),
-      );
     }
-  }, [
-    formRef1,
-    formRef2,
-    formRef3,
-    formRef4,
-    setSaveChangesDialogVisible,
-    step,
-  ]);
+  }, [formRef1, formRef2, formRef3, setSaveChangesDialogVisible, step]);
 
   const onSubmit = useCallback(
     async (data: LinkRequestCreateVerify) => {
+      // confirm dialog
+      const result = await modalContext.showConfirmation(
+        "",
+        <div
+          key="confirm-dialog-content"
+          className="text-gray-500 flex h-full flex-col space-y-2"
+        >
+          <div className="flex flex-row items-center gap-2">
+            <IoMdWarning className="h-6 w-6 text-warning" />
+            <p className="text-lg">Confirm</p>
+          </div>
+
+          <div>
+            <p className="text-sm leading-6">
+              Are you sure you want to <i>create</i> this link? These details
+              cannot be changed afterwards.
+            </p>
+          </div>
+        </div>,
+      );
+      if (!result) return;
+
       setIsLoading(true);
 
       try {
@@ -406,8 +395,11 @@ const LinkDetails: NextPageWithLayout<{
           ? moment(data.dateEnd).format(DATE_FORMAT_SYSTEM)
           : null;
 
-        //HACK: api want nulls and not empty arrays...
+        // HACK: api want nulls and not empty arrays...
         if (data.distributionList?.length == 0) data.distributionList = null;
+
+        //  clear distributionList if not locked
+        if (!data.lockToDistributionList) data.distributionList = null;
 
         // update api
         await createLinkInstantVerify(data);
@@ -448,7 +440,7 @@ const LinkDetails: NextPageWithLayout<{
       // redirect to list after create
       void router.push(`/organisations/${id}/links`);
     },
-    [setIsLoading, id, queryClient, router],
+    [setIsLoading, id, queryClient, router, modalContext],
   );
 
   // form submission handler
@@ -463,7 +455,7 @@ const LinkDetails: NextPageWithLayout<{
       setFormData(model);
 
       // submit on last page when creating new opportunity
-      if (step === 5) {
+      if (step === 4) {
         await onSubmit(model);
 
         // 📊 GOOGLE ANALYTICS: track event
@@ -479,7 +471,6 @@ const LinkDetails: NextPageWithLayout<{
       resetStep1(model);
       resetStep2(model);
       resetStep3(model);
-      resetStep4(model);
 
       // go to last step before save changes dialog
       if (lastStepBeforeSaveChangesDialog)
@@ -497,7 +488,6 @@ const LinkDetails: NextPageWithLayout<{
       resetStep1,
       resetStep2,
       resetStep3,
-      resetStep4,
     ],
   );
 
@@ -512,34 +502,13 @@ const LinkDetails: NextPageWithLayout<{
     if (!watchEntityId) return;
 
     if (watchEntityType == "0") {
-      // opportunity
+      // get opportunity
       getOpportunityInfoByIdAdminOrgAdminOrUser(watchEntityId).then((res) => {
         // set state
         setSelectedOpportuntity(res);
-
-        // if name & description is empty in formData, then default these values from the opportunity title & decription
-        // resetStep1((prev) => ({
-        //   ...prev,
-        //   name: prev?.name || res.title,
-        //   description: prev?.description || res.description,
-        // }));
       });
     }
-  }, [
-    watchEntityId,
-    watchEntityType,
-    setSelectedOpportuntity /*, resetStep1*/,
-  ]);
-
-  // update the usage limit to the count of the distribution list (if lockToDistributionList=true)
-  useEffect(() => {
-    if (watchLockToDistributionList) {
-      setFormData((prev) => ({
-        ...prev,
-        usagesLimit: watchDistributionList?.length ?? 0,
-      }));
-    }
-  }, [watchLockToDistributionList, watchDistributionList, setFormData]);
+  }, [watchEntityId, watchEntityType, setSelectedOpportuntity]);
 
   // load data asynchronously for the opportunities dropdown (debounced)
   const loadOpportunities = debounce(
@@ -722,7 +691,7 @@ const LinkDetails: NextPageWithLayout<{
                 >
                   2
                 </span>
-                Usage
+                Limits
               </a>
             </li>
             <li onClick={() => onClick_Menu(3)}>
@@ -734,35 +703,15 @@ const LinkDetails: NextPageWithLayout<{
                 } py-3`}
               >
                 <span
-                  className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    formStateStep3.isValid ? "bg-green" : "bg-gray-dark"
-                  }`}
-                >
-                  3
-                </span>
-                Share
-              </a>
-            </li>
-
-            <li onClick={() => onClick_Menu(4)}>
-              <a
-                className={`${
-                  step === 4
-                    ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray-light text-gray-dark hover:bg-gray"
-                } py-3`}
-              >
-                <span
                   className={`mr-2 rounded-full bg-gray-dark px-1.5 py-0.5 text-xs font-medium text-white ${
                     formStateStep1.isValid &&
                     formStateStep2.isValid &&
-                    formStateStep3.isValid &&
-                    formStateStep4.isValid
+                    formStateStep3.isValid
                       ? "bg-green"
                       : "bg-gray-dark"
                   }`}
                 >
-                  4
+                  3
                 </span>
                 Preview
               </a>
@@ -777,14 +726,11 @@ const LinkDetails: NextPageWithLayout<{
                 case "General":
                   onClick_Menu(1);
                   break;
-                case "Usage":
+                case "Limits":
                   onClick_Menu(2);
                   break;
-                case "Share":
-                  onClick_Menu(3);
-                  break;
                 case "Preview":
-                  onClick_Menu(4);
+                  onClick_Menu(3);
                   break;
 
                 default:
@@ -794,8 +740,7 @@ const LinkDetails: NextPageWithLayout<{
             }}
           >
             <option>General</option>
-            <option>Usage</option>
-            <option>Share</option>
+            <option>Limits</option>
             <option>Preview</option>
           </select>
 
@@ -899,12 +844,7 @@ const LinkDetails: NextPageWithLayout<{
                             />
                           )}
                         />
-                        <label className="label">
-                          <span className="label-text-alt italic text-yellow">
-                            Note that only published opportunities with manual
-                            verification are supported.
-                          </span>
-                        </label>
+
                         {formStateStep1.errors.entityId && (
                           <label className="label">
                             <span className="label-text-alt italic text-red-500">
@@ -989,10 +929,10 @@ const LinkDetails: NextPageWithLayout<{
               {step === 2 && (
                 <>
                   <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold tracking-wider">Usage</h5>
+                    <h5 className="font-bold tracking-wider">Limit</h5>
                     <p className="my-2 text-sm">
-                      This section pertains to how many times the link can be
-                      used, and when it will expire.
+                      Set limits on the link, ensure it is not scanned by
+                      incorrect participants.
                     </p>
                   </div>
 
@@ -1003,68 +943,10 @@ const LinkDetails: NextPageWithLayout<{
                       onSubmitStep(3, data),
                     )}
                   >
-                    {/* USAGE LIMIT */}
-                    <div className="form-control">
-                      <label className="flex flex-col">
-                        <div className="label-text font-bold">Usage limit</div>
-                        <div className="label-text-alt my-2">
-                          Limit the number of times the link can be used.
-                        </div>
-                      </label>
-                      <input
-                        type="number"
-                        className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none disabled:border-gray-light disabled:text-gray"
-                        placeholder="Enter number"
-                        {...registerStep2("usagesLimit", {
-                          valueAsNumber: true,
-                        })}
-                        disabled={watchLockToDistributionList ?? false}
-                        min={1}
-                        max={MAX_INT32}
-                      />
-                      {formStateStep2.errors.usagesLimit && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.usagesLimit.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    {/* EXPIRY DATE */}
-                    <div className="form-control">
-                      <label className="flex flex-col">
-                        <div className="label-text font-bold">Expiry date</div>
-                        <div className="label-text-alt my-2">
-                          Choose a date you want this link to expire.
-                        </div>
-                      </label>
-
-                      <Controller
-                        control={controlStep2}
-                        name="dateEnd"
-                        render={({ field: { onChange, value } }) => (
-                          <DatePicker
-                            className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
-                            onChange={(date) => onChange(date)}
-                            selected={value ? new Date(value) : null}
-                            placeholderText="Select End Date"
-                            id="input_dateEnd" // e2e
-                          />
-                        )}
-                      />
-
-                      {formStateStep2.errors.dateEnd && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.dateEnd.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
                     {/* LOCK TO DISTRIBUTION LIST */}
                     <div className="form-control">
+                      {" "}
+                      <div className="label-text font-bold">Limited Link</div>
                       <label
                         htmlFor="lockToDistributionList"
                         className="label w-full cursor-pointer justify-normal"
@@ -1076,10 +958,9 @@ const LinkDetails: NextPageWithLayout<{
                           className="checkbox-secondary checkbox"
                         />
                         <span className="label-text ml-4">
-                          Limit to a specific distribution list (Step 3)
+                          Only emails entered below can use this link.
                         </span>
                       </label>
-
                       {formStateStep2.errors.lockToDistributionList && (
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
@@ -1088,6 +969,130 @@ const LinkDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
+
+                    {!watchLockToDistributionList && (
+                      <>
+                        {/* USAGE LIMIT */}
+                        <div className="form-control">
+                          <label className="flex flex-col">
+                            <div className="label-text font-bold">
+                              Number of participants
+                            </div>
+                            <div className="label-text-alt my-2">
+                              Limit the number of times the link can be used.
+                            </div>
+                          </label>
+                          <input
+                            type="number"
+                            className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none disabled:border-gray-light disabled:text-gray"
+                            placeholder="Enter number"
+                            {...registerStep2("usagesLimit", {
+                              valueAsNumber: true,
+                            })}
+                            disabled={watchLockToDistributionList ?? false}
+                            min={1}
+                            max={MAX_INT32}
+                          />
+
+                          <label className="label">
+                            <span className="label-text-alt italic text-yellow">
+                              Note: This link can be claimed by anyone who
+                              receives it. Participants can send between one
+                              another to claim. Consider using a limited link,
+                              or create multiple links to reduce risk.
+                            </span>
+                          </label>
+
+                          {formStateStep2.errors.usagesLimit && (
+                            <label className="label -mb-5">
+                              <span className="label-text-alt italic text-red-500">
+                                {`${formStateStep2.errors.usagesLimit.message}`}
+                              </span>
+                            </label>
+                          )}
+                        </div>
+
+                        {/* EXPIRY DATE */}
+                        <div className="form-control">
+                          <label className="flex flex-col">
+                            <div className="label-text font-bold">
+                              Expiry date
+                            </div>
+                            <div className="label-text-alt my-2">
+                              Choose a date you want this link to expire.
+                            </div>
+                          </label>
+
+                          <Controller
+                            control={controlStep2}
+                            name="dateEnd"
+                            render={({ field: { onChange, value } }) => (
+                              <DatePicker
+                                className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                                onChange={(date) => onChange(date)}
+                                selected={value ? new Date(value) : null}
+                                placeholderText="Select End Date"
+                                id="input_dateEnd" // e2e
+                              />
+                            )}
+                          />
+
+                          {formStateStep2.errors.dateEnd && (
+                            <label className="label -mb-5">
+                              <span className="label-text-alt italic text-red-500">
+                                {`${formStateStep2.errors.dateEnd.message}`}
+                              </span>
+                            </label>
+                          )}
+                        </div>
+                      </>
+                    )}
+
+                    {watchLockToDistributionList && (
+                      <>
+                        <div className="form-control">
+                          <label className="label font-bold">
+                            <span className="label-text">Participants</span>
+                          </label>
+
+                          <Controller
+                            name="distributionList"
+                            control={controlStep2}
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            render={({ field: { onChange, value } }) => (
+                              <CreatableSelect
+                                isMulti
+                                className="form-control mb-2 w-full"
+                                // eslint-disable-next-line
+                                onChange={(val) =>
+                                  onChange(val.map((c) => c.value))
+                                }
+                                value={value?.map((val: any) => ({
+                                  label: val,
+                                  value: val,
+                                }))}
+                              />
+                            )}
+                          />
+
+                          <label className="label">
+                            <span className="label-text-alt italic text-yellow">
+                              Note: Participants will have to click on the link
+                              in the email and claim their completion.
+                            </span>
+                          </label>
+
+                          {formStateStep2.errors.distributionList && (
+                            <label className="label font-bold">
+                              <span className="label-text-alt italic text-red-500">
+                                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                                {`${formStateStep2.errors.distributionList.message}`}
+                              </span>
+                            </label>
+                          )}
+                        </div>
+                      </>
+                    )}
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2 md:justify-end md:gap-4">
@@ -1115,15 +1120,9 @@ const LinkDetails: NextPageWithLayout<{
               {step === 3 && (
                 <>
                   <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold tracking-wider">Share</h5>
+                    <h5 className="font-bold">Preview</h5>
                     <p className="my-2 text-sm">
-                      Share this link via email with Youth! This will send an
-                      email to Youth with the ability for them to click and
-                      receive the credential.
-                    </p>{" "}
-                    <p className="my-2 text-sm">
-                      Note: Participants will have to click on the link in the
-                      email and claim their completion.
+                      Review your link before publishing it.
                     </p>
                   </div>
 
@@ -1132,79 +1131,6 @@ const LinkDetails: NextPageWithLayout<{
                     className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep3((data) =>
                       onSubmitStep(4, data),
-                    )}
-                  >
-                    <div className="form-control">
-                      <label className="label font-bold">
-                        <span className="label-text">Participants</span>
-                      </label>
-
-                      <Controller
-                        name="distributionList"
-                        control={controlStep3}
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        render={({ field: { onChange, value } }) => (
-                          <CreatableSelect
-                            isMulti
-                            className="form-control mb-2 w-full"
-                            // eslint-disable-next-line
-                            onChange={(val) =>
-                              onChange(val.map((c) => c.value))
-                            }
-                            value={value?.map((val: any) => ({
-                              label: val,
-                              value: val,
-                            }))}
-                          />
-                        )}
-                      />
-
-                      {formStateStep3.errors.distributionList && (
-                        <label className="label font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                            {`${formStateStep3.errors.distributionList.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                    {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
-                      <button
-                        type="button"
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                        onClick={() => {
-                          onClick_Menu(2);
-                        }}
-                      >
-                        Back
-                      </button>
-
-                      <button
-                        type="submit"
-                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </form>
-                </>
-              )}
-
-              {step === 4 && (
-                <>
-                  <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold">Preview</h5>
-                    <p className="my-2 text-sm">
-                      Review your link before publishing it.
-                    </p>
-                  </div>
-
-                  <form
-                    ref={formRef4}
-                    className="flex flex-col gap-4"
-                    onSubmit={handleSubmitStep4((data) =>
-                      onSubmitStep(5, data),
                     )}
                   >
                     {/* TYPE */}
@@ -1261,111 +1187,73 @@ const LinkDetails: NextPageWithLayout<{
                     {/* USAGE */}
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-semibold">Usage</span>
+                        <span className="label-text font-semibold">Limits</span>
                       </label>
 
-                      {/* LIMIT */}
                       {!formData.lockToDistributionList && (
-                        <label className="label label-text text-sm">
-                          {formData.usagesLimit ? (
-                            <div className="flex flex-row gap-1">
-                              Limited to
-                              <div className="font-semibold text-black">
-                                {formData.usagesLimit}
+                        <>
+                          {/* USAGES LIMIT */}
+                          <label className="label label-text text-sm">
+                            {formData.usagesLimit ? (
+                              <div className="flex flex-row gap-1">
+                                Limited to
+                                <div className="font-semibold text-black">
+                                  {formData.usagesLimit}
+                                </div>
+                                participant
+                                {formData.usagesLimit !== 1 ? "s" : ""}
                               </div>
-                              participant{formData.usagesLimit !== 1 ? "s" : ""}
-                            </div>
-                          ) : (
-                            "No limit"
-                          )}
-                        </label>
+                            ) : (
+                              "No limit"
+                            )}
+                          </label>
+
+                          {/* EXPIRY DATE */}
+                          <label className="label label-text text-sm">
+                            {formData.dateEnd && (
+                              <div className="flex flex-row gap-1">
+                                Expires on
+                                <Moment
+                                  format={DATE_FORMAT_HUMAN}
+                                  className="font-semibold text-black"
+                                >
+                                  {formData.dateEnd}
+                                </Moment>
+                              </div>
+                            )}
+                            {!formData.dateEnd && "No expiry date"}
+                          </label>
+                        </>
                       )}
 
                       {formData.lockToDistributionList && (
-                        <label className="label label-text text-sm">
-                          <div className="flex flex-row gap-1">
-                            Limited to
-                            <div className="font-semibold text-black">
-                              {formData.distributionList?.length}
-                            </div>
-                            participant
-                            {formData.distributionList?.length !== 1
-                              ? "s"
-                              : ""}{" "}
-                            in the distribution list (see Sharing)
-                          </div>
-                        </label>
-                      )}
-
-                      {formStateStep2.errors.usagesLimit && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.usagesLimit.message}`}
-                          </span>
-                        </label>
-                      )}
-
-                      {/* EXPIRY DATE */}
-                      <label className="label label-text text-sm">
-                        {formData.dateEnd && (
-                          <div className="flex flex-row gap-1">
-                            Expires on
-                            <Moment
-                              format={DATE_FORMAT_HUMAN}
-                              className="font-semibold text-black"
-                            >
-                              {formData.dateEnd}
-                            </Moment>
-                          </div>
-                        )}
-                        {!formData.dateEnd && "No expiry date"}
-                      </label>
-                      {formStateStep1.errors.dateEnd && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.dateEnd.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    {/* SHARING */}
-                    <div className="form-control">
-                      <div className="flex flex-col">
-                        <label className="label-text font-bold">Sharing</label>
-
-                        <label className="label label-text text-sm">
-                          {(formData.distributionList?.length ?? 0) > 0 && (
-                            <>
-                              This link will be emailed to{" "}
-                              {formData.distributionList?.length} participant
+                        <>
+                          {/* LIMITED TO PARTICIPANTS */}
+                          <label className="label label-text text-sm">
+                            <div className="flex flex-row gap-1">
+                              Limited to the following
+                              <div className="font-semibold text-black">
+                                {formData.distributionList?.length}
+                              </div>
+                              participant
                               {formData.distributionList?.length !== 1
                                 ? "s"
                                 : ""}
-                              :
-                            </>
+                              {": "}
+                            </div>
+                          </label>
+
+                          {/* PARTICIPANTS */}
+                          {(formData.distributionList?.length ?? 0) > 0 && (
+                            <label className="label label-text pt-0 text-xs ">
+                              <ul className="list-none">
+                                {formData.distributionList?.map(
+                                  (item, index) => <li key={index}>{item}</li>,
+                                )}
+                              </ul>
+                            </label>
                           )}
-                          {(formData.distributionList?.length ?? 0) === 0 &&
-                            "No sharing"}
-                        </label>
-                      </div>
-
-                      {(formData.distributionList?.length ?? 0) > 0 && (
-                        <label className="label label-text pt-0 text-xs ">
-                          <ul className="list-none">
-                            {formData.distributionList?.map((item, index) => (
-                              <li key={index}>{item}</li>
-                            ))}
-                          </ul>
-                        </label>
-                      )}
-
-                      {formStateStep3.errors.distributionList && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep3.errors.distributionList.message}`}
-                          </span>
-                        </label>
+                        </>
                       )}
                     </div>
 
@@ -1375,7 +1263,7 @@ const LinkDetails: NextPageWithLayout<{
                         type="button"
                         className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                         onClick={() => {
-                          onClick_Menu(3);
+                          onClick_Menu(2);
                         }}
                       >
                         Back
@@ -1387,8 +1275,7 @@ const LinkDetails: NextPageWithLayout<{
                           !(
                             formStateStep1.isValid &&
                             formStateStep2.isValid &&
-                            formStateStep3.isValid &&
-                            formStateStep4.isValid
+                            formStateStep3.isValid
                           )
                         }
                       >
