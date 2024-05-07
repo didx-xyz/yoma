@@ -62,25 +62,6 @@ export const searchStoreItemCategories = async (
     filter,
   );
   return data;
-
-  // TODO: hardcoded data based on the filter.pageNumber
-  // const { pageNumber } = filter;
-  // const items = Array.from({ length: 4 }, (_, index) => {
-  //   return {
-  //     id: `id-${pageNumber}-${index}`,
-  //     name: `Item ${pageNumber}-${index}`,
-  //     description: `Description ${pageNumber}-${index}`,
-  //     amount: 100,
-  //     count: 100,
-  //     imageURL:
-  //       "https://s3-eu-west-1.amazonaws.com/media.zlto.cloud/store/store_front/50a0338879e04c619ade3d989b727e9f_sfd/Electricity.png",
-  //     storeId: filter.storeId,
-  //     summary: `summary ${pageNumber}-${index}`,
-  //   };
-  // });
-  // return {
-  //   items: items,
-  // };
 };
 
 export const searchStoreItems = async (
