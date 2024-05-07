@@ -248,7 +248,7 @@ export const OrganisationRowFilter: React.FC<{
             </div>
           </div>
 
-          <div className="mt-6 flex hidden w-full justify-between gap-4 md:mt-0 md:w-fit lg:justify-end">
+          <div className="mt-6 flex w-full justify-between gap-4 md:mt-0 md:w-fit lg:justify-end">
             {/* DATE START */}
             <span className="flex">
               <Controller

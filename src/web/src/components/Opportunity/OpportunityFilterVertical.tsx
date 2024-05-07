@@ -610,9 +610,9 @@ export const OpportunityFilterVertical: React.FC<{
                             selected={value ? new Date(value) : null}
                             placeholderText="End Date"
                             // calendarClassName="z-50"
-                            // popperProps={{
-                            //   positionFixed: true,
-                            // }}
+                            popperProps={{
+                              positionFixed: true,
+                            }}
                             popperPlacement="top-end"
                           />
                         )}

@@ -44,7 +44,7 @@ const MobileCard: React.FC<MobileCardProps> = ({
         <h3 className="text-base font-semibold">{item.userDisplayName}</h3>
       </div>
       <div>
-        <div className="mb-1 text-sm">
+        <p className="mb-1 text-sm">
           <strong>Opportunity:</strong>{" "}
           <Link
             className="line-clamp-2"
@@ -56,16 +56,16 @@ const MobileCard: React.FC<MobileCardProps> = ({
           >
             {item.opportunityTitle}
           </Link>
-        </div>
-        <div className="mb-1 text-sm">
+        </p>
+        <p className="mb-1 text-sm">
           <strong>Date connected:</strong>{" "}
           {item.dateStart && (
             <Moment format={DATE_FORMAT_HUMAN} utc={true}>
               {item.dateStart}
             </Moment>
           )}
-        </div>
-        <div className="flex flex-row items-center text-sm">
+        </p>
+        <p className="flex flex-row items-center text-sm">
           <div className="mr-2 font-bold">Verified:</div>
           {item.verificationStatus && (
             <>
@@ -97,7 +97,7 @@ const MobileCard: React.FC<MobileCardProps> = ({
               )}
             </>
           )}
-        </div>
+        </p>
       </div>
     </div>
   );
