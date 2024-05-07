@@ -473,7 +473,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           OpportunityId = link.EntityId,
           UserId = user.Id,
           Status = VerificationStatus.Completed,
-          Comment = "Instant verification",
+          Comment = "Auto-verification",
           InstantVerification = true
         });
 
