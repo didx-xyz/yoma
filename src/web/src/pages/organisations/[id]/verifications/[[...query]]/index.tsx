@@ -426,9 +426,8 @@ const OpportunityVerifications: NextPageWithLayout<{
           row,
         ]);
       } else {
-        setSelectedRows(
-          (prev: MyOpportunityInfo[] | undefined) =>
-            prev?.filter((item) => item.id !== row.id),
+        setSelectedRows((prev: MyOpportunityInfo[] | undefined) =>
+          prev?.filter((item) => item.id !== row.id),
         );
       }
     },

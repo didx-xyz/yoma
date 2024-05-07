@@ -493,8 +493,8 @@ export const OpportunityFilterVertical: React.FC<{
                           menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                         }}
                         onChange={(val) => onChange(val.map((c) => c.label))}
-                        value={lookups_publishedStates.filter(
-                          (c) => value?.includes(c.label),
+                        value={lookups_publishedStates.filter((c) =>
+                          value?.includes(c.label),
                         )}
                         placeholder="Status"
                       />
@@ -535,8 +535,8 @@ export const OpportunityFilterVertical: React.FC<{
                           menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                         }}
                         onChange={(val) => onChange(val.map((c) => c.label))}
-                        value={lookups_statuses.filter(
-                          (c) => value?.includes(c.label),
+                        value={lookups_statuses.filter((c) =>
+                          value?.includes(c.label),
                         )}
                         placeholder="Status"
                       />
@@ -571,7 +571,7 @@ export const OpportunityFilterVertical: React.FC<{
                         name="startDate"
                         render={({ field: { onChange, value } }) => (
                           <DatePicker
-                            className="input input-bordered input-sm w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                            className="input input-sm input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                             onChange={(date) => {
                               onChange(toISOStringForTimezone(date));
                               void handleSubmit(onSubmitHandler)();
@@ -602,7 +602,7 @@ export const OpportunityFilterVertical: React.FC<{
                         name="endDate"
                         render={({ field: { onChange, value } }) => (
                           <DatePicker
-                            className="input input-bordered input-sm z-50 w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                            className="input input-sm input-bordered z-50 w-full rounded-md border-gray focus:border-gray focus:outline-none"
                             onChange={(date) => {
                               onChange(toISOStringForTimezone(date));
                               void handleSubmit(onSubmitHandler)();
