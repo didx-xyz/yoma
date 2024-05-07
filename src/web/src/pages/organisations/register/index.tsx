@@ -1,3 +1,4 @@
+import { captureException } from "@sentry/nextjs";
 import { QueryClient, dehydrate } from "@tanstack/react-query";
 import { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
@@ -164,6 +165,7 @@ const OrganisationCreate: NextPageWithLayout<{
           icon: false,
         });
 
+        captureException(error);
         setIsLoading(false);
 
         return;

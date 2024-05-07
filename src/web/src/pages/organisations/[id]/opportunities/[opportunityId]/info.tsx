@@ -215,6 +215,7 @@ const OpportunityDetails: NextPageWithLayout<{
           autoClose: false,
           icon: false,
         });
+        //captureException(error);
       }
       setIsLoading(false);
 

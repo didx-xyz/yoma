@@ -12,6 +12,7 @@ import {
   getEducations,
   getGenders,
 } from "~/api/services/lookups";
+import { captureException } from "@sentry/nextjs";
 import type { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import type { UserProfile, UserRequestProfile } from "~/api/models/user";
@@ -198,6 +199,7 @@ export const UserProfileForm: React.FC<{
           icon: false,
         });
 
+        captureException(error);
         setIsLoading(false);
 
         return;

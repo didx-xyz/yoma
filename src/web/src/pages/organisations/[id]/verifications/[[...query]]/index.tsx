@@ -126,13 +126,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     await Promise.all([
       await queryClient.prefetchQuery({
         queryKey: [
-          "Verifications",
-          id,
-          `${query?.toString()}_${opportunity}_${page?.toString()}`,
+          `Verifications_${id}_${query?.toString()}_${opportunity}_${page?.toString()}`,
         ],
         queryFn: () => dataVerifications,
       }),
-
       await queryClient.prefetchQuery({
         queryKey: ["OpportunitiesForVerification", id],
         queryFn: () => dataOpportunitiesForVerification,
@@ -181,9 +178,7 @@ const OpportunityVerifications: NextPageWithLayout<{
   // 👇 use prefetched queries from server
   const { data: data } = useQuery<MyOpportunitySearchResults>({
     queryKey: [
-      "Verifications",
-      id,
-      `${query?.toString()}_${opportunity?.toString()}_${verificationStatus}_${page?.toString()}`,
+      `Verifications_${id}_${query?.toString()}_${opportunity?.toString()}_${verificationStatus}_${page?.toString()}`,
     ],
     queryFn: () =>
       searchMyOpportunitiesAdmin({
@@ -205,7 +200,7 @@ const OpportunityVerifications: NextPageWithLayout<{
     enabled: !error,
   });
   const { data: dataOpportunitiesForVerification } = useQuery<SelectOption[]>({
-    queryKey: ["OpportunitiesForVerification", id],
+    queryKey: [`OpportunitiesForVerification_${id}`],
     queryFn: async () =>
       (await getOpportunitiesForVerification([id])).map((x) => ({
         value: x.id,
@@ -238,21 +233,6 @@ const OpportunityVerifications: NextPageWithLayout<{
   const [modalBulkSuccessVisible, setModalBulkSuccessVisible] = useState(false);
   const [approved, setApproved] = useState(false);
 
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(modalVerifySingleVisible);
-  useDisableBodyScroll(modalVerifyBulkVisible);
-  useDisableBodyScroll(modalSingleSuccessVisible);
-  useDisableBodyScroll(modalBulkSuccessVisible);
-
-  const inValidateQueries = useCallback(async () => {
-    await queryClient.invalidateQueries({
-      queryKey: ["Verifications", id],
-    });
-    await queryClient.invalidateQueries({
-      queryKey: ["OpportunitiesForVerification", id],
-    });
-  }, [queryClient, id]);
-
   //#region Click Handlers
   const onVerifySingle = useCallback(
     async (row: MyOpportunityInfo, approved: boolean) => {
@@ -278,7 +258,15 @@ const OpportunityVerifications: NextPageWithLayout<{
           `Organisation ${approved ? "approved" : "rejected"}`,
         );
 
-        await inValidateQueries();
+        // invalidate query
+        await queryClient.invalidateQueries({
+          queryKey: ["opportunityParticipants", id],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: [
+            `Verifications_${id}_${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
+          ],
+        });
       } catch (error) {
         toast(<ApiErrors error={error} />, {
           type: "error",
@@ -287,6 +275,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           icon: false,
         });
 
+        //captureException(error);
         setIsLoading(false);
 
         return;
@@ -310,10 +299,14 @@ const OpportunityVerifications: NextPageWithLayout<{
       setModalSingleSuccessVisible(true);
     },
     [
+      id,
+      queryClient,
       verifyComments,
       setIsLoading,
       setModalVerifySingleVisible,
-      inValidateQueries,
+      query,
+      opportunity,
+      page,
     ],
   );
 
@@ -372,7 +365,15 @@ const OpportunityVerifications: NextPageWithLayout<{
           }`,
         );
 
-        await inValidateQueries();
+        // invalidate query
+        await queryClient.invalidateQueries({
+          queryKey: ["opportunityParticipants", id],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: [
+            `Verifications_${id}_${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
+          ],
+        });
       } catch (error) {
         toast(<ApiErrors error={error} />, {
           type: "error",
@@ -381,6 +382,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           icon: false,
         });
 
+        //captureException(error);
         setIsLoading(false);
 
         return;
@@ -404,11 +406,15 @@ const OpportunityVerifications: NextPageWithLayout<{
       setModalBulkSuccessVisible(true);
     },
     [
+      id,
+      opportunity,
+      page,
+      query,
+      queryClient,
       verifyComments,
       selectedRows,
       setIsLoading,
       setModalVerifyBulkVisible,
-      inValidateQueries,
     ],
   );
 
@@ -448,25 +454,6 @@ const OpportunityVerifications: NextPageWithLayout<{
     setModalBulkSuccessVisible(false);
     setApproved(false);
   };
-
-  const handlePagerChange = useCallback(
-    (value: number) => {
-      void router.push({
-        pathname: `/organisations/${id}/verifications`,
-        query: {
-          ...(query && { query }),
-          ...(opportunity && { opportunity }),
-          ...(verificationStatus && { verificationStatus }),
-          ...(value && { page: value }),
-          ...(returnUrl && { returnUrl }),
-        },
-      });
-
-      // reset scroll position
-      window.scrollTo(0, 0);
-    },
-    [router, query, id, opportunity, verificationStatus, returnUrl],
-  );
   //#endregion Click Handlers
 
   //#region Filter Handlers
@@ -513,7 +500,31 @@ const OpportunityVerifications: NextPageWithLayout<{
     [router, id, query, returnUrl, opportunity],
   );
 
+  const handlePagerChange = useCallback(
+    (value: number) => {
+      void router.push({
+        pathname: `/organisations/${id}/verifications`,
+        query: {
+          ...(query && { query }),
+          ...(opportunity && { opportunity }),
+          ...(verificationStatus && { verificationStatus }),
+          ...(value && { page: value }),
+          ...(returnUrl && { returnUrl }),
+        },
+      });
+
+      // reset scroll position
+      window.scrollTo(0, 0);
+    },
+    [router, query, id, opportunity, verificationStatus, returnUrl],
+  );
   //#endregion Filter Handlers
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(modalVerifySingleVisible);
+  useDisableBodyScroll(modalVerifyBulkVisible);
+  useDisableBodyScroll(modalSingleSuccessVisible);
+  useDisableBodyScroll(modalBulkSuccessVisible);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
