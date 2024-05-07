@@ -1,4 +1,3 @@
-import { captureException } from "@sentry/nextjs";
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -220,7 +219,6 @@ const OrganisationUpdate: NextPageWithLayout<{
           icon: false,
         });
 
-        captureException(error);
         setIsLoading(false);
 
         return;

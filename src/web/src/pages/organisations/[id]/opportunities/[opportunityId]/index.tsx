@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { captureException } from "@sentry/nextjs";
 import {
   QueryClient,
   dehydrate,
@@ -789,7 +788,6 @@ const OpportunityDetails: NextPageWithLayout<{
           icon: false,
         });
 
-        captureException(error);
         setIsLoading(false);
 
         return;
@@ -1421,8 +1419,8 @@ const OpportunityDetails: NextPageWithLayout<{
                             onChange={(val) =>
                               onChange(val?.map((c) => c.value ?? ""))
                             }
-                            value={categories?.filter(
-                              (c) => value?.includes(c.value),
+                            value={categories?.filter((c) =>
+                              value?.includes(c.value),
                             )}
                             styles={{
                               placeholder: (base) => ({
@@ -1546,8 +1544,8 @@ const OpportunityDetails: NextPageWithLayout<{
                             onChange={(val) =>
                               onChange(val.map((c) => c.value))
                             }
-                            value={languages?.filter(
-                              (c) => value?.includes(c.value),
+                            value={languages?.filter((c) =>
+                              value?.includes(c.value),
                             )}
                             styles={{
                               placeholder: (base) => ({
@@ -1589,8 +1587,8 @@ const OpportunityDetails: NextPageWithLayout<{
                             onChange={(val) =>
                               onChange(val.map((c) => c.value))
                             }
-                            value={countries?.filter(
-                              (c) => value?.includes(c.value),
+                            value={countries?.filter((c) =>
+                              value?.includes(c.value),
                             )}
                             styles={{
                               placeholder: (base) => ({
@@ -2645,19 +2643,18 @@ const OpportunityDetails: NextPageWithLayout<{
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {schemaAttributes?.map(
-                                    (attribute) =>
-                                      attribute.properties?.map(
-                                        (property, index) => (
-                                          <tr
-                                            key={`schemaAttributes_${attribute.id}_${index}_${property.id}`}
-                                            className="border-gray text-gray-dark"
-                                          >
-                                            <td>{attribute?.name}</td>
-                                            <td>{property.nameDisplay}</td>
-                                          </tr>
-                                        ),
+                                  {schemaAttributes?.map((attribute) =>
+                                    attribute.properties?.map(
+                                      (property, index) => (
+                                        <tr
+                                          key={`schemaAttributes_${attribute.id}_${index}_${property.id}`}
+                                          className="border-gray text-gray-dark"
+                                        >
+                                          <td>{attribute?.name}</td>
+                                          <td>{property.nameDisplay}</td>
+                                        </tr>
                                       ),
+                                    ),
                                   )}
                                 </tbody>
                               </table>
@@ -3121,19 +3118,16 @@ const OpportunityDetails: NextPageWithLayout<{
                               </tr>
                             </thead>
                             <tbody>
-                              {schemaAttributes?.map(
-                                (attribute) =>
-                                  attribute.properties?.map(
-                                    (property, index) => (
-                                      <tr
-                                        key={`schemaAttributesPreview_${attribute.id}_${index}_${property.id}`}
-                                        className="border-gray text-gray-dark"
-                                      >
-                                        <td>{attribute?.name}</td>
-                                        <td>{property.nameDisplay}</td>
-                                      </tr>
-                                    ),
-                                  ),
+                              {schemaAttributes?.map((attribute) =>
+                                attribute.properties?.map((property, index) => (
+                                  <tr
+                                    key={`schemaAttributesPreview_${attribute.id}_${index}_${property.id}`}
+                                    className="border-gray text-gray-dark"
+                                  >
+                                    <td>{attribute?.name}</td>
+                                    <td>{property.nameDisplay}</td>
+                                  </tr>
+                                )),
                               )}
                             </tbody>
                           </table>
