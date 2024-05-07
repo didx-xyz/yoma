@@ -522,7 +522,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           throw new DataInconsistencyException("Link is locked to a distribution list but no distribution list is defined");
 
         if (!emails.Contains(user.Email, StringComparer.InvariantCultureIgnoreCase))
-          throw new SecurityException("Unauthorized");
+          throw new SecurityException("Unauthorized: You do not have access to this link because your email address is not included in the distribution list");
       }
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
