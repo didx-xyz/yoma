@@ -623,17 +623,19 @@ namespace Yoma.Core.Domain.Analytics.Services
             opportunityCategory => filter.Categories.Contains(opportunityCategory.CategoryId) && opportunityCategory.OpportunityId == opportunity.Id));
       }
 
-      //date range
+      //date range include any opportunity that was active at any time within this period
       if (filter.StartDate.HasValue)
       {
-        filter.StartDate = filter.StartDate.RemoveTime();
-        query = query.Where(o => o.DateStart >= filter.StartDate);
+        var startDate = filter.StartDate.Value.RemoveTime();
+        // include opportunities where the end date is on or after the start date of the filter
+        query = query.Where(o => !o.DateEnd.HasValue || o.DateEnd >= startDate);
       }
 
       if (filter.EndDate.HasValue)
       {
-        filter.EndDate = filter.EndDate.ToEndOfDay();
-        query = query.Where(o => !o.DateEnd.HasValue || o.DateEnd.Value <= filter.EndDate);
+        var endDate = filter.EndDate.Value.ToEndOfDay();
+        // include opportunities where the start date is on or before the end date of the filter
+        query = query.Where(o => o.DateStart <= endDate);
       }
 
       return query;
