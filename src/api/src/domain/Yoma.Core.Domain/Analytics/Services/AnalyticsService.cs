@@ -150,7 +150,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       var queryBase = MyOpportunityQueryBase(filter);
 
       //'my' opportunities: viewed
-      var queryViewed = MyOpportunityQueryViewed(queryBase);
+      var queryViewed = MyOpportunityQueryViewed(filter, queryBase);
 
       var itemsViewed = queryViewed
           .Select(opportunity => new { opportunity.DateModified })
@@ -172,7 +172,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       itemsViewed.ForEach(o => { resultsViewed.Add(new TimeValueEntry(o.WeekEnding, o.Count, default(int))); });
 
       //'my' opportunities: completed
-      var queryCompleted = MyOpportunityQueryCompleted(queryBase);
+      var queryCompleted = MyOpportunityQueryCompleted(filter, queryBase);
 
       var itemsCompleted = queryCompleted
         .Select(opportunity => new { opportunity.DateModified })
@@ -407,7 +407,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
       _organizationService.IsAdmin(filter.Organization, true);
 
-      var query = MyOpportunityQueryCompleted(MyOpportunityQueryBase(filter))
+      var query = MyOpportunityQueryCompleted(filter, MyOpportunityQueryBase(filter))
           .Select(o => new YouthInfo
           {
             UserId = o.UserId,
@@ -508,15 +508,15 @@ namespace Yoma.Core.Domain.Analytics.Services
             ViewedCount = _myOpportunityRepository.Query()
               .Where(mo => mo.OpportunityId == opportunity.Id &&
                            mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Viewed.ToString()).Id &&
-                           (!filter.StartDate.HasValue || mo.OpportunityDateStart >= filter.StartDate.RemoveTime()) &&
-                           (!filter.EndDate.HasValue || !mo.OpportunityDateEnd.HasValue || mo.OpportunityDateEnd <= filter.EndDate.ToEndOfDay()))
+                           (!filter.StartDate.HasValue || mo.DateModified >= filter.StartDate.RemoveTime()) &&
+                           (!filter.EndDate.HasValue || mo.DateModified <= filter.EndDate.ToEndOfDay()))
               .Count(),
             CompletedCount = _myOpportunityRepository.Query()
               .Where(mo => mo.OpportunityId == opportunity.Id &&
                            mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id &&
                            mo.VerificationStatusId == _myOpportunityVerificationStatusService.GetByName(MyOpportunity.VerificationStatus.Completed.ToString()).Id &&
-                           (!filter.StartDate.HasValue || mo.OpportunityDateStart >= filter.StartDate.RemoveTime()) &&
-                           (!filter.EndDate.HasValue || !mo.OpportunityDateEnd.HasValue || mo.OpportunityDateEnd <= filter.EndDate.ToEndOfDay()))
+                           (!filter.StartDate.HasValue || mo.DateCompleted.HasValue || mo.DateCompleted >= filter.StartDate.RemoveTime()) &&
+                           (!filter.EndDate.HasValue || mo.DateCompleted.HasValue || mo.DateCompleted <= filter.EndDate.ToEndOfDay()))
               .Count()
           })
           .Select(result => new OpportunityInfoAnalytics
@@ -553,32 +553,32 @@ namespace Yoma.Core.Domain.Analytics.Services
             opportunityCategory => filter.Categories.Contains(opportunityCategory.CategoryId) && opportunityCategory.OpportunityId == opportunity.OpportunityId));
       }
 
-      //date range
-      if (filter.StartDate.HasValue)
-      {
-        var startDate = filter.StartDate.Value.RemoveTime();
-        query = query.Where(o => o.OpportunityDateStart >= startDate);
-      }
-
-      if (filter.EndDate.HasValue)
-      {
-        var endDate = filter.EndDate.Value.ToEndOfDay();
-        query = query.Where(o => !o.OpportunityDateEnd.HasValue || o.OpportunityDateEnd.Value <= endDate);
-      }
-
       return query;
     }
 
-    private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryViewed(IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
+    private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryViewed(IOrganizationSearchFilterBase filter, IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
     {
       var actionId = _myOpportunityActionService.GetByName(MyOpportunity.Action.Viewed.ToString()).Id;
 
       var query = queryBase.Where(o => o.ActionId == actionId);
 
+      //date range
+      if (filter.StartDate.HasValue)
+      {
+        var startDate = filter.StartDate.Value.RemoveTime();
+        query = query.Where(o => o.DateModified >= startDate);
+      }
+
+      if (filter.EndDate.HasValue)
+      {
+        var endDate = filter.EndDate.Value.ToEndOfDay();
+        query = query.Where(o => o.DateModified <= endDate);
+      }
+
       return query;
     }
 
-    private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryCompleted(IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
+    private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryCompleted(IOrganizationSearchFilterBase filter, IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
     {
       var actionId = _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id;
       var verificationStatusId = _myOpportunityVerificationStatusService.GetByName(MyOpportunity.VerificationStatus.Completed.ToString()).Id;
@@ -586,6 +586,19 @@ namespace Yoma.Core.Domain.Analytics.Services
       var query = queryBase.Where(o => o.ActionId == actionId);
 
       query = query.Where(o => o.VerificationStatusId == verificationStatusId);
+
+      //date range
+      if (filter.StartDate.HasValue)
+      {
+        var startDate = filter.StartDate.Value.RemoveTime();
+        query = query.Where(o => !o.DateCompleted.HasValue || o.DateCompleted >= startDate);
+      }
+
+      if (filter.EndDate.HasValue)
+      {
+        var endDate = filter.EndDate.Value.ToEndOfDay();
+        query = query.Where(o => !o.DateCompleted.HasValue || o.DateCompleted <= endDate);
+      }
 
       return query;
     }
