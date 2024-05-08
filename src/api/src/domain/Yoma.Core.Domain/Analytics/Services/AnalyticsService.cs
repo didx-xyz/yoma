@@ -248,11 +248,11 @@ namespace Yoma.Core.Domain.Analytics.Services
         ViewedCount = viewedCount,
         CompletedCount = completedCount,
         //calculate average percentage based on individual opportunity conversion ratio rather than global counts (more accurate)
-        Percentage = viewedCount > 0 ? Math.Min(100M, Math.Round((decimal)completedCount / viewedCount * 100, 2)) : 0
-        //Percentage = items.Count != 0
-        //      ? Math.Min(100M, Math.Round(items.Sum(o => o.ConversionRatioPercentage) / items.Count))
-        //      : 0M
-      };
+        Percentage = viewedCount > 0 ? Math.Min(100M, Math.Round((decimal)completedCount / viewedCount * 100, 2)) : (completedCount > 0 ? 100M : 0M)
+      //Percentage = items.Count != 0
+      //      ? Math.Min(100M, Math.Round(items.Sum(o => o.ConversionRatioPercentage) / items.Count))
+      //      : 0M
+    };
 
       //zlto rewards
       var totalRewards = queryCompleted.Sum(o => o.ZltoReward ?? 0);
@@ -530,7 +530,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             OrganizationLogoKey = result.Opportunity.OrganizationLogoKey,
             ViewedCount = result.ViewedCount,
             CompletedCount = result.CompletedCount,
-            ConversionRatioPercentage = (result.ViewedCount > 0) ? Math.Min(100, Math.Round((decimal)result.CompletedCount / result.ViewedCount * 100, 2)) : 0
+            ConversionRatioPercentage = (result.ViewedCount > 0) ? Math.Min(100, Math.Round((decimal)result.CompletedCount / result.ViewedCount * 100, 2)) : (result.CompletedCount > 0 ? 100 : 0)
           });
     }
 
