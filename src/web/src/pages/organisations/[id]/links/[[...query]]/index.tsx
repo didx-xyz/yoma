@@ -897,12 +897,10 @@ const Links: NextPageWithLayout<{
                           <IoQrCode className="h-4 w-4" />
                         </button>
 
-                        {item.status !== "LimitReached" && (
+                        {(item.status == "Active" ||
+                          item.status == "Inactive") && (
                           <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
-                            <button
-                              className="badge bg-green-light text-green"
-                              disabled={item?.status == "Deleted"}
-                            >
+                            <button className="badge bg-green-light text-green">
                               <IoIosSettings className="h-4 w-4" />
                             </button>
 
@@ -1076,44 +1074,44 @@ const Links: NextPageWithLayout<{
 
                       {/* ACTIONS */}
                       <td className="border-b-2 border-gray-light">
-                        <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
-                          <button
-                            className="badge bg-green-light text-green"
-                            disabled={item?.status == "Deleted"}
-                          >
-                            <IoIosSettings className="h-4 w-4" />
-                          </button>
+                        {(item.status == "Active" ||
+                          item.status == "Inactive") && (
+                          <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
+                            <button className="badge bg-green-light text-green">
+                              <IoIosSettings className="h-4 w-4" />
+                            </button>
 
-                          <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
-                            {item?.status == "Active" && (
-                              <li>
-                                <button
-                                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                                  onClick={() =>
-                                    updateStatus(item, LinkStatus.Inactive)
-                                  }
-                                >
-                                  <FaClock className="mr-2 h-3 w-3" />
-                                  Make Inactive
-                                </button>
-                              </li>
-                            )}
+                            <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
+                              {item?.status == "Active" && (
+                                <li>
+                                  <button
+                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    onClick={() =>
+                                      updateStatus(item, LinkStatus.Inactive)
+                                    }
+                                  >
+                                    <FaClock className="mr-2 h-3 w-3" />
+                                    Make Inactive
+                                  </button>
+                                </li>
+                              )}
 
-                            {item?.status == "Inactive" && (
-                              <li>
-                                <button
-                                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                                  onClick={() =>
-                                    updateStatus(item, LinkStatus.Active)
-                                  }
-                                >
-                                  <FaClock className="mr-2 h-3 w-3" />
-                                  Make Active
-                                </button>
-                              </li>
-                            )}
-                          </ul>
-                        </div>
+                              {item?.status == "Inactive" && (
+                                <li>
+                                  <button
+                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    onClick={() =>
+                                      updateStatus(item, LinkStatus.Active)
+                                    }
+                                  >
+                                    <FaClock className="mr-2 h-3 w-3" />
+                                    Make Active
+                                  </button>
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
