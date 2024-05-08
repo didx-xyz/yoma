@@ -232,7 +232,7 @@ keycloak:
     - name: JAVA_OPTS_APPEND
       value: >-
         -XX:+UseContainerSupport
-        -XX:MaxRAMPercentage=50.0
+        -XX:MaxRAMPercentage=75.0
         -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless
         -Djava.awt.headless=true
         -Dkeycloak.profile.feature.upload_scripts=enabled

@@ -31,11 +31,11 @@ keycloak:
   replicas: 2
   resources:
     requests:
-      cpu: 10m
-      memory: 1024Mi
+      cpu: 100m
+      memory: 1536Mi
     limits:
-      cpu: 2500m
-      memory: 1024Mi
+      cpu: 4000m
+      memory: 1536Mi
 
   themes:
     enabled: true
