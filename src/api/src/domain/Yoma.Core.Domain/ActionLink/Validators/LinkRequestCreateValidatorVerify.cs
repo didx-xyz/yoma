@@ -1,5 +1,6 @@
 using FluentValidation;
 using Yoma.Core.Domain.ActionLink.Models;
+using Yoma.Core.Domain.Core.Extensions;
 
 namespace Yoma.Core.Domain.ActionLink.Validators
 {
@@ -32,7 +33,7 @@ namespace Yoma.Core.Domain.ActionLink.Validators
         .WithMessage("'Distribution List' contain(s) empty or invalid email address(es).");
         });
 
-      RuleFor(x => x.DateEnd).Must(date => !date.HasValue || date.Value > DateTimeOffset.UtcNow).WithMessage("'{PropertyName}' must be in the future.");
+      RuleFor(x => x.DateEnd).Must(date => !date.HasValue || date.Value.ToEndOfDay() > DateTimeOffset.UtcNow).WithMessage("'{PropertyName}' must be in the future.");
     }
     #endregion
   }

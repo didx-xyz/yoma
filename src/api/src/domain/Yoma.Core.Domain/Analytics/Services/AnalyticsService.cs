@@ -232,15 +232,15 @@ namespace Yoma.Core.Domain.Analytics.Services
       result.Opportunities.Completion = new OpportunityCompletion { Legend = "Average time (days)", AverageTimeInDays = (int)Math.Round(averageCompletionTimeInDays) };
 
       //average conversation rate
-      var items = SearchOrganizationOpportunitiesQueryBase(new OrganizationSearchFilterOpportunity
-      {
-        Organization = filter.Organization,
-        Opportunities = filter.Opportunities,
-        Categories = filter.Categories,
-        StartDate = filter.StartDate,
-        EndDate = filter.EndDate
+      //var items = SearchOrganizationOpportunitiesQueryBase(new OrganizationSearchFilterOpportunity
+      //{
+      //  Organization = filter.Organization,
+      //  Opportunities = filter.Opportunities,
+      //  Categories = filter.Categories,
+      //  StartDate = filter.StartDate,
+      //  EndDate = filter.EndDate
 
-      }).ToList();
+      //}).ToList();
 
       result.Opportunities.ConversionRate = new OpportunityConversionRatio
       {
@@ -248,9 +248,10 @@ namespace Yoma.Core.Domain.Analytics.Services
         ViewedCount = viewedCount,
         CompletedCount = completedCount,
         //calculate average percentage based on individual opportunity conversion ratio rather than global counts (more accurate)
-        Percentage = items.Count != 0
-              ? Math.Min(100M, Math.Round(items.Sum(o => o.ConversionRatioPercentage) / items.Count))
-              : 0M
+        Percentage = viewedCount > 0 ? Math.Min(100M, Math.Round((decimal)completedCount / viewedCount * 100, 2)) : 0
+        //Percentage = items.Count != 0
+        //      ? Math.Min(100M, Math.Round(items.Sum(o => o.ConversionRatioPercentage) / items.Count))
+        //      : 0M
       };
 
       //zlto rewards
