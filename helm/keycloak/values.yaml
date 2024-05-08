@@ -233,6 +233,7 @@ keycloak:
       value: >-
         -XX:+UseContainerSupport
         -XX:MaxRAMPercentage=75.0
+        -Xmx{{ .Values.resources.limits.memory | lower | replace "mi" "" }}m
         -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless
         -Djava.awt.headless=true
         -Dkeycloak.profile.feature.upload_scripts=enabled
@@ -334,6 +335,7 @@ keycloak:
       memory: 1536Mi
     limits:
       cpu: 3000m
+      # This must _always_ be in `Mi` to calculate the max JVM size
       memory: 1536Mi
 
   extraVolumes: |-
