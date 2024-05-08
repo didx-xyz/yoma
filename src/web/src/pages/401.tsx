@@ -25,7 +25,7 @@ const Status401: NextPageWithLayout = () => {
           Please sign in to view this page.
         </p>
 
-        <SignInButton />
+        <SignInButton className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light disabled:border-0 disabled:bg-purple-light md:w-[150px]" />
       </div>
     </div>
   );

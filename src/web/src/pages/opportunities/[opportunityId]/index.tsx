@@ -413,7 +413,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     <IoMdClose className="h-5 w-5 text-purple" /> Cancel
                   </button>
 
-                  <SignInButton />
+                  <SignInButton className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light disabled:border-0 disabled:bg-purple-light md:w-[150px]" />
                 </div>
               </div>
             </div>
