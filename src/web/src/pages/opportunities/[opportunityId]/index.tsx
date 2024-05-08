@@ -69,7 +69,7 @@ import Badges from "~/components/Opportunity/Badges";
 import Share from "~/components/Opportunity/Share";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import OpportunityMetaTags from "~/components/Opportunity/OpportunityMetaTags";
-import { SignInButton } from "~/components/SignInButton";
+import { SignInButton } from "~/components/SignInButton2";
 
 interface IParams extends ParsedUrlQuery {
   id: string;

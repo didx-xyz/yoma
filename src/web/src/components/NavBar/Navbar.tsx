@@ -13,7 +13,7 @@ import {
 } from "~/lib/store";
 import type { TabItem } from "~/api/models/common";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { SignInButton } from "../SignInButton";
+import { SignInButton } from "../SignInButton2";
 
 const navBarLinksUser: TabItem[] = [
   {

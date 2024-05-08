@@ -19,7 +19,7 @@ import { getPublishedOrExpiredByLinkInstantVerify } from "~/api/services/opportu
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import SocialPreview from "~/components/Opportunity/SocialPreview";
 import OpportunityMetaTags from "~/components/Opportunity/OpportunityMetaTags";
-import { SignInButton } from "~/components/SignInButton";
+import { SignInButton } from "~/components/SignInButton2";
 
 interface IParams extends ParsedUrlQuery {
   id: string;

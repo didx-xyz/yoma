@@ -3,7 +3,7 @@ import MainLayout from "~/components/Layout/Main";
 import { type NextPageWithLayout } from "./_app";
 import Image from "next/image";
 import IconRingBuoy from "/public/images/icon-ring-buoy.svg";
-import { SignInButton } from "~/components/SignInButton";
+import { SignInButton } from "~/components/SignInButton2";
 
 const Status401: NextPageWithLayout = () => {
   return (
