@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { IoMdMenu } from "react-icons/io";
 import ReactModal from "react-modal";
 import { LogoImage } from "./LogoImage";
-import { SignInButton } from "./SignInButton";
 import { UserMenu } from "./UserMenu";
 import { useAtomValue } from "jotai";
 import {
@@ -14,6 +13,7 @@ import {
 } from "~/lib/store";
 import type { TabItem } from "~/api/models/common";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { SignInButton } from "../SignInButton";
 
 const navBarLinksUser: TabItem[] = [
   {

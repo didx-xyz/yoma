@@ -11,7 +11,6 @@ import { authOptions } from "~/server/auth";
 import { type ErrorResponseItem } from "~/api/models/common";
 import { config } from "~/lib/react-query-config";
 import { IoMdFlame } from "react-icons/io";
-import { SignInButon } from "~/components/SigninButton";
 import Image from "next/image";
 import IconRingBuoy from "/public/images/icon-ring-buoy.svg";
 import IconSuccess from "/public/images/icon-success.png";
@@ -20,6 +19,7 @@ import { getPublishedOrExpiredByLinkInstantVerify } from "~/api/services/opportu
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import SocialPreview from "~/components/Opportunity/SocialPreview";
 import OpportunityMetaTags from "~/components/Opportunity/OpportunityMetaTags";
+import { SignInButton } from "~/components/SignInButton";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -123,7 +123,7 @@ const OpportunityActionLinkVerify: NextPageWithLayout<{
               organizationName={opportunityInfo?.organizationName}
             />
 
-            <SignInButon />
+            <SignInButton className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light disabled:border-0 disabled:bg-purple-light md:w-[150px]" />
           </div>
         )}
 

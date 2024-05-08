@@ -3,7 +3,7 @@ import MainLayout from "~/components/Layout/Main";
 import { type NextPageWithLayout } from "./_app";
 import Image from "next/image";
 import IconRingBuoy from "/public/images/icon-ring-buoy.svg";
-import { SignInButon } from "~/components/SigninButton";
+import { SignInButton } from "~/components/SignInButton";
 
 const Status401: NextPageWithLayout = () => {
   return (
@@ -25,7 +25,7 @@ const Status401: NextPageWithLayout = () => {
           Please sign in to view this page.
         </p>
 
-        <SignInButon />
+        <SignInButton />
       </div>
     </div>
   );

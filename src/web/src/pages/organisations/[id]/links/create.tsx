@@ -40,6 +40,7 @@ import {
   GA_ACTION_OPPORTUNITY_LINK_CREATE,
   GA_CATEGORY_OPPORTUNITY_LINK,
   MAX_INT32,
+  DELIMETER_PASTE_MULTI,
 } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
@@ -1074,15 +1075,19 @@ const LinkDetails: NextPageWithLayout<{
                           <Controller
                             name="distributionList"
                             control={controlStep2}
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             render={({ field: { onChange, value } }) => (
                               <CreatableSelect
                                 isMulti
                                 className="form-control mb-2 w-full"
-                                // eslint-disable-next-line
-                                onChange={(val) =>
-                                  onChange(val.map((c) => c.value))
-                                }
+                                onChange={(val) => {
+                                  // when pasting multiple values, split them by DELIMETER_PASTE_MULTI
+                                  const emails = val
+                                    .flatMap((item) =>
+                                      item.value.split(DELIMETER_PASTE_MULTI),
+                                    )
+                                    .filter((email) => email.trim() !== "");
+                                  onChange(emails);
+                                }}
                                 value={value?.map((val: any) => ({
                                   label: val,
                                   value: val,

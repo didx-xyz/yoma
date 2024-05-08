@@ -68,8 +68,8 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import Badges from "~/components/Opportunity/Badges";
 import Share from "~/components/Opportunity/Share";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-import { SignInButon } from "~/components/SigninButton";
 import OpportunityMetaTags from "~/components/Opportunity/OpportunityMetaTags";
+import { SignInButton } from "~/components/SignInButton";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -413,7 +413,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     <IoMdClose className="h-5 w-5 text-purple" /> Cancel
                   </button>
 
-                  <SignInButon />
+                  <SignInButton />
                 </div>
               </div>
             </div>

@@ -1,13 +1,19 @@
+import { useAtomValue } from "jotai";
 import { signIn } from "next-auth/react";
-import { useState, useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { IoMdFingerPrint } from "react-icons/io";
-import { GA_CATEGORY_USER, GA_ACTION_USER_LOGIN_BEFORE } from "~/lib/constants";
+import { GA_ACTION_USER_LOGIN_BEFORE, GA_CATEGORY_USER } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
+import { currentLanguageAtom } from "~/lib/store";
 import { fetchClientEnv } from "~/lib/utils";
 
-export const SignInButon: React.FC = () => {
+export const SignInButton: React.FC<{ className?: string }> = ({
+  className = "btn gap-2 border-0 border-none bg-transparent px-2 disabled:brightness-50",
+}) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
-  const onLogin = useCallback(async () => {
+  const currentLanguage = useAtomValue(currentLanguageAtom);
+
+  const handleLogin = useCallback(async () => {
     setIsButtonLoading(true);
 
     // 📊 GOOGLE ANALYTICS: track event
@@ -22,20 +28,24 @@ export const SignInButon: React.FC = () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
         "") as string,
+      undefined,
+      { ui_locales: currentLanguage }, // pass the current language to the keycloak provider
     );
-  }, [setIsButtonLoading]);
+  }, [currentLanguage]);
 
   return (
     <button
       type="button"
-      className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light md:w-[150px]"
-      onClick={onLogin}
+      className={className}
+      onClick={handleLogin}
+      disabled={isButtonLoading}
+      id="btnSignIn"
     >
       {isButtonLoading && (
         <span className="loading loading-spinner loading-md mr-2 text-warning"></span>
       )}
-      {!isButtonLoading && <IoMdFingerPrint className="h-5 w-5 text-white" />}
-      <p className="text-white">Sign In</p>
+      {!isButtonLoading && <IoMdFingerPrint className="h-6 w-6 text-white" />}
+      <p className="uppercase text-white">Sign In</p>
     </button>
   );
 };
