@@ -23,6 +23,7 @@ import {
   IoIosSettings,
   IoMdWarning,
   IoMdCalendar,
+  IoMdLock,
 } from "react-icons/io";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import {
@@ -543,7 +544,6 @@ const Links: NextPageWithLayout<{
           autoClose: false,
           icon: false,
         });
-        //captureException(error);
       }
       setIsLoading(false);
 
@@ -816,8 +816,18 @@ const Links: NextPageWithLayout<{
                     <div className="flex flex-col gap-1">
                       <div className="flex justify-between">
                         <p className="text-sm tracking-wider">Usage</p>
-                        {item.usagesLimit == null && <>N/A</>}
-                        {item.usagesLimit != null && (
+
+                        {item.lockToDistributionList && (
+                          <span className="badge bg-green-light text-yellow">
+                            <IoMdLock className="h-4 w-4" />
+                            <span className="ml-1 text-xs">
+                              {item.usagesTotal ?? "0"} /{" "}
+                              {item.usagesLimit ?? "0"}
+                            </span>
+                          </span>
+                        )}
+
+                        {!item.lockToDistributionList && (
                           <span className="badge bg-green-light text-green">
                             <IoMdPerson className="h-4 w-4" />
                             <span className="ml-1 text-xs">
@@ -887,44 +897,46 @@ const Links: NextPageWithLayout<{
                           <IoQrCode className="h-4 w-4" />
                         </button>
 
-                        <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
-                          <button
-                            className="badge bg-green-light text-green"
-                            disabled={item?.status == "Deleted"}
-                          >
-                            <IoIosSettings className="h-4 w-4" />
-                          </button>
+                        {item.status !== "LimitReached" && (
+                          <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
+                            <button
+                              className="badge bg-green-light text-green"
+                              disabled={item?.status == "Deleted"}
+                            >
+                              <IoIosSettings className="h-4 w-4" />
+                            </button>
 
-                          <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
-                            {item?.status == "Active" && (
-                              <li>
-                                <button
-                                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                                  onClick={() =>
-                                    updateStatus(item, LinkStatus.Inactive)
-                                  }
-                                >
-                                  <FaClock className="mr-2 h-3 w-3" />
-                                  Make Inactive
-                                </button>
-                              </li>
-                            )}
+                            <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
+                              {item?.status == "Active" && (
+                                <li>
+                                  <button
+                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    onClick={() =>
+                                      updateStatus(item, LinkStatus.Inactive)
+                                    }
+                                  >
+                                    <FaClock className="mr-2 h-3 w-3" />
+                                    Make Inactive
+                                  </button>
+                                </li>
+                              )}
 
-                            {item?.status == "Inactive" && (
-                              <li>
-                                <button
-                                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                                  onClick={() =>
-                                    updateStatus(item, LinkStatus.Active)
-                                  }
-                                >
-                                  <FaClock className="mr-2 h-3 w-3" />
-                                  Make Active
-                                </button>
-                              </li>
-                            )}
-                          </ul>
-                        </div>
+                              {item?.status == "Inactive" && (
+                                <li>
+                                  <button
+                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    onClick={() =>
+                                      updateStatus(item, LinkStatus.Active)
+                                    }
+                                  >
+                                    <FaClock className="mr-2 h-3 w-3" />
+                                    Make Active
+                                  </button>
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -978,8 +990,17 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       <td className="border-b-2 border-gray-light">
-                        {item.usagesLimit == null && <>N/A</>}
-                        {item.usagesLimit != null && (
+                        {item.lockToDistributionList && (
+                          <span className="badge bg-green-light text-yellow">
+                            <IoMdLock className="h-4 w-4" />
+                            <span className="ml-1 text-xs">
+                              {item.usagesTotal ?? "0"} /{" "}
+                              {item.usagesLimit ?? "0"}
+                            </span>
+                          </span>
+                        )}
+
+                        {!item.lockToDistributionList && (
                           <span className="badge bg-green-light text-green">
                             <IoMdPerson className="h-4 w-4" />
                             <span className="ml-1 text-xs">

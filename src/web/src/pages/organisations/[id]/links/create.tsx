@@ -184,17 +184,13 @@ const LinkDetails: NextPageWithLayout<{
       }),
       dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
       lockToDistributionList: z.boolean().optional(),
-      distributionList: z.array(z.string().email()).optional(),
+      distributionList: z
+        .union([z.array(z.string().email()), z.null()])
+        .optional(),
     })
     .refine(
       (data) => {
         // if not locked to the distribution list, you must specify either a usage limit or an end date.
-        // return (
-        //   data.lockToDistributionList ||
-        //   data.usagesLimit !== null ||
-        //   data.dateEnd !== null
-        // );
-
         if (
           !data.lockToDistributionList &&
           data.usagesLimit == null &&
@@ -213,7 +209,7 @@ const LinkDetails: NextPageWithLayout<{
     )
     .refine(
       (data) => {
-        // distributionList is required if lockToDistributionList is true
+        // if lockToDistributionList is true, then distributionList is required
         return (
           !data.lockToDistributionList ||
           (data.distributionList?.length ?? 0) > 0
@@ -227,12 +223,30 @@ const LinkDetails: NextPageWithLayout<{
     .refine(
       (data) => {
         // validate all items are valid email addresses
-        return data.distributionList?.every((email) => validateEmail(email));
+        return (
+          data.distributionList == null ||
+          data.distributionList?.every((email) => validateEmail(email))
+        );
       },
       {
         message:
           "Please enter valid email addresses e.g. name@domain.com. One or more email address are wrong.",
         path: ["distributionList"],
+      },
+    )
+    .refine(
+      (data) => {
+        // if lockToDistributionList is false and dateEnd is not null, then validate that the dateEnd is not in the past.
+        if (!data.lockToDistributionList && data.dateEnd !== null) {
+          const now = new Date();
+          const dateEnd = data.dateEnd ? new Date(data.dateEnd) : undefined;
+          return dateEnd ? dateEnd >= now : true;
+        }
+        return true;
+      },
+      {
+        message: "The expiry date must be in the future.",
+        path: ["dateEnd"],
       },
     );
 
@@ -400,6 +414,10 @@ const LinkDetails: NextPageWithLayout<{
 
         //  clear distributionList if not locked
         if (!data.lockToDistributionList) data.distributionList = null;
+        else {
+          data.usagesLimit = null;
+          data.dateEnd = null;
+        }
 
         // update api
         await createLinkInstantVerify(data);
@@ -935,7 +953,6 @@ const LinkDetails: NextPageWithLayout<{
                       incorrect participants.
                     </p>
                   </div>
-
                   <form
                     ref={formRef2}
                     className="flex flex-col gap-4"
@@ -945,7 +962,6 @@ const LinkDetails: NextPageWithLayout<{
                   >
                     {/* LOCK TO DISTRIBUTION LIST */}
                     <div className="form-control">
-                      {" "}
                       <div className="label-text font-bold">Limited Link</div>
                       <label
                         htmlFor="lockToDistributionList"
