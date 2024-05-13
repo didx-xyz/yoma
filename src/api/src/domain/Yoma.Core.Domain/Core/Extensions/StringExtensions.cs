@@ -129,7 +129,8 @@ namespace Yoma.Core.Domain.Core.Extensions
       var asciiOnly = stringBuilder.ToString().Normalize(NormalizationForm.FormC);
 
       // remove all non-alphanumeric characters
-      return NonAplhaNumberic().Replace(asciiOnly, string.Empty);
+      var result = NonAplhaNumberic().Replace(asciiOnly, string.Empty);
+      return result.Trim(); // remove leading and trailing spaces
     }
     #endregion
 
