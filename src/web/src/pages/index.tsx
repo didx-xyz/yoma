@@ -46,29 +46,8 @@ import { useRouter } from "next/router";
 import stamps from "public/images/stamps.svg";
 import MarketplaceCard from "~/components/Home/MarketplaceCard";
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const queryClient = new QueryClient(config);
-  const session = await getServerSession(context.req, context.res, authOptions);
-
-  return {
-    props: {
-      dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null,
-    },
-  };
-}
-
-const Home: NextPageWithLayout<{
-  id: string;
-  user: User;
-}> = () => {
+const Home: NextPageWithLayout = () => {
   const router = useRouter();
-  // const [email, setEmail] = useState("");
-
-  // 🔔 CHANGE EVENTS
-  // const onSubscribe = useCallback(() => {
-  //   alert("TODO: API - " + email);
-  // }, [email]);
 
   const onSearchInputSubmit = useCallback(
     (query: string) => {
