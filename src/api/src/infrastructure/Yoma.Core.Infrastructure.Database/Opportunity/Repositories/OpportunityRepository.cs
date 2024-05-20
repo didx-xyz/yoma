@@ -112,7 +112,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 DisplayName = o.VerificationType.DisplayName,
                 Description = o.Description ?? o.VerificationType.Description
               }).OrderBy(o => o.DisplayName).ToList() : null,
-      }).AsSplitQuery(); //AsSingleQuery() causes bottlenecks;
+      }).AsSplitQuery();
     }
 
     public Expression<Func<Domain.Opportunity.Models.Opportunity, bool>> Contains(Expression<Func<Domain.Opportunity.Models.Opportunity, bool>> predicate, string value)
