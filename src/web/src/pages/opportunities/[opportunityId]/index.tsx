@@ -722,27 +722,28 @@ const OpportunityDetails: NextPageWithLayout<{
                     {/* BUTTONS */}
                     <div className="mt-4 flex flex-col gap-4 md:flex-row">
                       <div className="flex flex-grow flex-col gap-4 md:flex-row">
-                        {opportunityInfo.url && (
-                          <button
-                            type="button"
-                            className="btn btn-sm h-10 w-full rounded-full bg-green normal-case text-white hover:bg-green-dark md:w-[250px]"
-                            onClick={() =>
-                              setGotoOpportunityDialogVisible(true)
-                            }
-                          >
-                            <Image
-                              src={iconOpen}
-                              alt="Icon Open"
-                              width={20}
-                              height={20}
-                              sizes="100vw"
-                              priority={true}
-                              style={{ width: "20px", height: "20px" }}
-                            />
+                        {opportunityInfo.url &&
+                          opportunityInfo.status !== "Expired" && (
+                            <button
+                              type="button"
+                              className="btn btn-sm h-10 w-full rounded-full bg-green normal-case text-white hover:bg-green-dark md:w-[250px]"
+                              onClick={() =>
+                                setGotoOpportunityDialogVisible(true)
+                              }
+                            >
+                              <Image
+                                src={iconOpen}
+                                alt="Icon Open"
+                                width={20}
+                                height={20}
+                                sizes="100vw"
+                                priority={true}
+                                style={{ width: "20px", height: "20px" }}
+                              />
 
-                            <span className="ml-1">Go to opportunity</span>
-                          </button>
-                        )}
+                              <span className="ml-1">Go to opportunity</span>
+                            </button>
+                          )}
 
                         {/* only show upload button if verification is enabled and method is manual */}
                         {opportunityInfo.verificationEnabled &&
@@ -756,6 +757,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                   verificationStatus == undefined ||
                                   verificationStatus.status == "None" ||
                                   verificationStatus.status == "Rejected") &&
+                                !opportunityInfo.participantLimitReached &&
                                 !verificationStatusIsLoading && (
                                   <button
                                     type="button"
@@ -786,6 +788,7 @@ const OpportunityDetails: NextPageWithLayout<{
                                     </span>
                                   </button>
                                 )}
+
                               {verificationStatus &&
                                 verificationStatus.status == "Pending" && (
                                   <button
@@ -820,7 +823,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         <button
                           type="button"
                           className={
-                            "btn btn-sm h-10 w-full flex-shrink flex-nowrap rounded-full border-gray-dark normal-case text-gray-dark md:max-w-[120px]" +
+                            "btn btn-sm h-10 w-full flex-shrink flex-nowrap rounded-full border-gray-dark normal-case text-gray-dark disabled:text-gray-dark md:max-w-[120px] " +
                             ` ${
                               isOppSaved
                                 ? "border-yellow bg-yellow-light text-yellow"
@@ -828,6 +831,12 @@ const OpportunityDetails: NextPageWithLayout<{
                             }`
                           }
                           onClick={onUpdateSavedOpportunity}
+                          disabled={
+                            !(
+                              opportunityInfo.published &&
+                              opportunityInfo.status == "Active"
+                            )
+                          }
                         >
                           <IoMdBookmark className="mr-1 h-5 w-5" />
 
@@ -836,7 +845,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                         <button
                           type="button"
-                          className="btn btn-sm h-10 w-full flex-shrink flex-nowrap rounded-full border-gray-dark bg-white normal-case text-gray-dark hover:bg-green-dark hover:text-white md:max-w-[120px]"
+                          className="btn btn-sm h-10 w-full flex-shrink flex-nowrap rounded-full border-gray-dark bg-white normal-case text-gray-dark hover:bg-green-dark hover:text-white disabled:text-gray-dark md:max-w-[120px]"
                           onClick={onShareOpportunity}
                           // ensure opportunity is published and active (user logged in check is done in function)
                           disabled={

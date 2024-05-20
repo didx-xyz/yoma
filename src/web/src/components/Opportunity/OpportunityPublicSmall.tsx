@@ -6,7 +6,12 @@ import iconUser from "public/images/icon-user.svg";
 import iconZlto from "public/images/icon-zlto.svg";
 import Moment from "react-moment";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
-import { IoMdCalendar, IoMdPlay, IoMdCloudUpload } from "react-icons/io";
+import {
+  IoMdCalendar,
+  IoMdPlay,
+  IoMdCloudUpload,
+  IoMdWarning,
+} from "react-icons/io";
 import { AvatarImage } from "../AvatarImage";
 interface InputProps {
   data: OpportunityInfo;
@@ -127,10 +132,22 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
           </>
         )}
         {data.status == "Expired" && (
-          <div className="badge bg-red-100 text-error">
-            <IoMdCloudUpload className="h-4 w-4" />
-            <span className="ml-1">Upload Only</span>
-          </div>
+          <>
+            {data.verificationEnabled &&
+              data.verificationMethod === "Manual" && (
+                <div className="badge bg-red-100 text-error">
+                  <IoMdCloudUpload className="h-4 w-4" />
+                  <span className="ml-1">Upload Only</span>
+                </div>
+              )}
+            {!data.verificationEnabled &&
+              data.verificationMethod !== "Manual" && (
+                <div className="badge bg-red-100 text-error">
+                  <IoMdWarning className="h-4 w-4" />
+                  <span className="ml-1">Expired</span>
+                </div>
+              )}
+          </>
         )}
       </div>
     </Link>

@@ -5,6 +5,7 @@ import {
   IoMdPlay,
   IoMdCalendar,
   IoMdCloudUpload,
+  IoMdWarning,
 } from "react-icons/io";
 import iconClock from "public/images/icon-clock.svg";
 import iconZlto from "public/images/icon-zlto.svg";
@@ -94,10 +95,22 @@ const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
         </>
       )}
       {opportunity?.status == "Expired" && (
-        <div className="badge bg-red-100 text-error">
-          <IoMdCloudUpload className="h-4 w-4" />
-          <span className="ml-1">Upload Only</span>
-        </div>
+        <>
+          {opportunity.verificationEnabled &&
+            opportunity.verificationMethod === "Manual" && (
+              <div className="badge bg-red-100 text-error">
+                <IoMdCloudUpload className="h-4 w-4" />
+                <span className="ml-1">Upload Only</span>
+              </div>
+            )}
+          {!opportunity.verificationEnabled &&
+            opportunity.verificationMethod !== "Manual" && (
+              <div className="badge bg-red-100 text-error">
+                <IoMdWarning className="h-4 w-4" />
+                <span className="ml-1">Expired</span>
+              </div>
+            )}
+        </>
       )}
     </div>
   );

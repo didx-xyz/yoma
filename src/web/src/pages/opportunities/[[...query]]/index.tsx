@@ -204,7 +204,7 @@ const Opportunities: NextPageWithLayout<{
   const lookups_publishedStates: SelectOption[] = [
     { value: "0", label: "Not started" },
     { value: "1", label: "Ongoing" },
-    ...(session ? [{ value: "2", label: "Upload Only" }] : []), // logged in users can see expired
+    ...(session ? [{ value: "2", label: "Expired / Upload Only" }] : []), // logged in users can see expired
   ];
 
   // get filter parameters from route
