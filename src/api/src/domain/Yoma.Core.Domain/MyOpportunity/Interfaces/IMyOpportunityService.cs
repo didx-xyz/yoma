@@ -28,7 +28,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     Task PerformActionSendForVerificationManualDelete(Guid opportunityId);
 
-    Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalizeBatch request);
+    Task<MyOpportunityResponseVerifyFinalizeBatch> FinalizeVerificationManual(MyOpportunityRequestVerifyFinalizeBatch request);
 
     Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalize request);
 

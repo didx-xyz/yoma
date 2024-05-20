@@ -1057,7 +1057,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var count = (opportunity.ParticipantCount ?? 0) + 1;
       if (opportunity.ParticipantLimit.HasValue && count > opportunity.ParticipantLimit.Value)
-        throw new ValidationException($"Increment will exceed limit (current count '{opportunity.ParticipantCount ?? 0}' vs current limit '{opportunity.ParticipantLimit.Value}')");
+        throw new ValidationException($"The number of participants cannot exceed the limit. The current count is '{opportunity.ParticipantCount ?? 0}', and the limit is '{opportunity.ParticipantLimit.Value}'. Please edit the opportunity to increase or remove the limit, or reject the verification request");
 
       var user = _userService.GetById(userId, false, false);
 
