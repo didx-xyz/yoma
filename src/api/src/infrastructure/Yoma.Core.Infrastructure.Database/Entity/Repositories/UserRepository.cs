@@ -64,7 +64,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 }).OrderBy(o => o.Name).ToList()
 
               }).OrderBy(o => o.Name).ToList() : null
-      }).AsSingleQuery(); //Pefroms better than .AsSplitQuery();
+      }).AsSplitQuery();
     }
 
     public Expression<Func<Domain.Entity.Models.User, bool>> Contains(Expression<Func<Domain.Entity.Models.User, bool>> predicate, string value)
