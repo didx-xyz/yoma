@@ -1,13 +1,8 @@
-import { QueryClient, dehydrate } from "@tanstack/react-query";
-import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
 import { type ReactElement, useCallback } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import MainLayout from "~/components/Layout/Main";
-import { authOptions, type User } from "~/server/auth";
 import type { NextPageWithLayout } from "./_app";
 import Link from "next/link";
-import { config } from "~/lib/react-query-config";
 import { PageBackground } from "~/components/PageBackground";
 import { RoundedImage } from "~/components/RoundedImage";
 import { THEME_ORANGE } from "~/lib/constants";

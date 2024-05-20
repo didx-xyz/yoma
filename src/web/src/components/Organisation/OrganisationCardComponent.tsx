@@ -168,70 +168,76 @@ export const OrganisationCardComponent: React.FC<{
             )}
           </div>
 
-          <div className="dropdown dropdown-left -mr-0 w-10 md:-mr-4">
-            <button
-              className="bg-theme xl:hover:bg-theme !z-50 rounded-full p-1 text-xs text-white brightness-105 disabled:cursor-not-allowed disabled:bg-gray-dark xl:hover:brightness-110"
-              disabled={item?.status == "Deleted"}
-            >
-              <IoIosSettings className="!z-50 h-7 w-7 md:h-5 md:w-5" />
-            </button>
+          {item?.status != "Deleted" && (
+            <div className="dropdown dropdown-end dropdown-left">
+              <div
+                role="button"
+                aria-label="Settings"
+                tabIndex={0}
+                className="bg-theme rounded-full p-1 text-white"
+              >
+                <IoIosSettings className="h-7 w-7 md:h-5 md:w-5" />
+              </div>
 
-            <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
-              {item?.status != "Deleted" && (
-                <li>
-                  <Link
-                    href={`/organisations/${item?.id}/edit${_returnUrl}`}
-                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                  >
-                    <FaPencilAlt className="mr-2 h-3 w-3" />
-                    Edit
-                  </Link>
-                </li>
-              )}
+              <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
+                {item?.status != "Deleted" && (
+                  <li>
+                    <Link
+                      href={`/organisations/${item?.id}/edit${_returnUrl}`}
+                      className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                    >
+                      <FaPencilAlt className="mr-2 h-3 w-3" />
+                      Edit
+                    </Link>
+                  </li>
+                )}
 
-              {isAdmin && (
-                <>
-                  {item?.status == "Active" && (
-                    <li>
-                      <button
-                        className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                        onClick={() =>
-                          updateStatus(OrganizationStatus.Inactive)
-                        }
-                      >
-                        <FaClock className="mr-2 h-3 w-3" />
-                        Make Inactive
-                      </button>
-                    </li>
-                  )}
+                {isAdmin && (
+                  <>
+                    {item?.status == "Active" && (
+                      <li>
+                        <button
+                          className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                          onClick={() =>
+                            updateStatus(OrganizationStatus.Inactive)
+                          }
+                        >
+                          <FaClock className="mr-2 h-3 w-3" />
+                          Make Inactive
+                        </button>
+                      </li>
+                    )}
 
-                  {item?.status == "Inactive" && (
-                    <li>
-                      <button
-                        className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                        onClick={() => updateStatus(OrganizationStatus.Active)}
-                      >
-                        <FaClock className="mr-2 h-3 w-3" />
-                        Make Active
-                      </button>
-                    </li>
-                  )}
-                </>
-              )}
+                    {item?.status == "Inactive" && (
+                      <li>
+                        <button
+                          className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                          onClick={() =>
+                            updateStatus(OrganizationStatus.Active)
+                          }
+                        >
+                          <FaClock className="mr-2 h-3 w-3" />
+                          Make Active
+                        </button>
+                      </li>
+                    )}
+                  </>
+                )}
 
-              {item?.status != "Deleted" && (
-                <li>
-                  <button
-                    className="flex flex-row items-center text-red-500 hover:brightness-50"
-                    onClick={() => updateStatus(OrganizationStatus.Deleted)}
-                  >
-                    <FaTrash className="mr-2 h-3 w-3" />
-                    Delete
-                  </button>
-                </li>
-              )}
-            </ul>
-          </div>
+                {item?.status != "Deleted" && (
+                  <li>
+                    <button
+                      className="flex flex-row items-center text-red-500 hover:brightness-50"
+                      onClick={() => updateStatus(OrganizationStatus.Deleted)}
+                    >
+                      <FaTrash className="mr-2 h-3 w-3" />
+                      Delete
+                    </button>
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>
