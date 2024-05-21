@@ -544,28 +544,23 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
     }
 
-    //supported statuses: Rejected or Completed
     public async Task<MyOpportunityResponseVerifyFinalizeBatch> FinalizeVerificationManual(MyOpportunityRequestVerifyFinalizeBatch request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      await _myOpportunityRequestValidatorVerifyFinalizeBatch.ValidateAndThrowAsync(request); 
+      await _myOpportunityRequestValidatorVerifyFinalizeBatch.ValidateAndThrowAsync(request);
 
       request.Items = request.Items.GroupBy(i => new { i.OpportunityId, i.UserId }).Select(g => g.First()).ToList();
 
-      var result = new MyOpportunityResponseVerifyFinalizeBatch() { Items = [] };
-
-      var lockObj = new object();
-
-      await Parallel.ForEachAsync(request.Items, async (item, cancellationToken) =>
+      User? user = null;
+      Opportunity.Models.Opportunity? opportunity = null;
+      var resultItems = new List<MyOpportunityResponseVerifyFinalizeBatchItem>();
+      foreach (var item in request.Items)
       {
-        User? user = null;
-        Opportunity.Models.Opportunity? opportunity = null;
-
         try
         {
-          user = await Task.Run(() => _userService.GetById(item.UserId, false, false));
-          opportunity = await Task.Run(() => _opportunityService.GetById(item.OpportunityId, true, true, false));
+          user = _userService.GetById(item.UserId, false, false);
+          opportunity = _opportunityService.GetById(item.OpportunityId, true, true, false);
 
           await FinalizeVerificationManual(user, opportunity, request.Status, false, request.Comment);
 
@@ -577,11 +572,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             UserDisplayName = user.DisplayName,
             Failure = null
           };
-
-          lock (lockObj)
-          {
-            result.Items.Add(successItem);
-          }
+          resultItems.Add(successItem);
         }
         catch (Exception ex)
         {
@@ -597,18 +588,18 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               Message = ex.Message
             }
           };
+          resultItems.Add(failedItem);
 
-          lock (lockObj)
-          {
-            result.Items.Add(failedItem);
-          }
+          _logger.LogError(ex, "Failed to finalizing verification for opportunity '{OpportunityTitle}' and user '{UserDisplayName}'", failedItem.OpportunityTitle, failedItem.UserDisplayName);
         }
-      });
+      }
 
-      return result;
+      return new MyOpportunityResponseVerifyFinalizeBatch()
+      {
+        Items = [.. resultItems.OrderBy(o => o.UserDisplayName).ThenBy(o => o.OpportunityTitle)]
+      };
     }
 
-    //supported statuses: Rejected or Completed
     public async Task FinalizeVerificationManual(MyOpportunityRequestVerifyFinalize request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
@@ -650,6 +641,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #endregion
 
     #region Private Members
+    //supported statuses: Rejected or Completed
     private async Task FinalizeVerificationManual(User user, Opportunity.Models.Opportunity opportunity, VerificationStatus status, bool instantVerification, string? comment)
     {
       //can complete, provided opportunity is published (and started) or expired (actioned prior to expiration)

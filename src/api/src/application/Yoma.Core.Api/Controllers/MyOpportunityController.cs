@@ -89,11 +89,11 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(FinalizeVerificationManual));
 
-      await _myOpportunityService.FinalizeVerificationManual(request);
+      var result = await _myOpportunityService.FinalizeVerificationManual(request);
 
       _logger.LogInformation("Request {requestName} handled", nameof(FinalizeVerificationManual));
 
-      return StatusCode((int)HttpStatusCode.OK);
+      return StatusCode((int)HttpStatusCode.OK, result);
     }
 
     [SwaggerOperation(Summary = "Complete or reject manual verification for the specified 'my' opportunity (Admin or Organization Admin roles required)")]
