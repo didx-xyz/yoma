@@ -1,4 +1,9 @@
-import type { FormFile, Geometry, PaginationFilter } from "./common";
+import type {
+  ErrorResponseItem,
+  FormFile,
+  Geometry,
+  PaginationFilter,
+} from "./common";
 import type { VerificationType } from "./opportunity";
 
 export interface MyOpportunityRequestVerify {
@@ -107,6 +112,19 @@ export interface MyOpportunityRequestVerifyFinalizeBatch {
 export interface MyOpportunityRequestVerifyFinalizeBatchItem {
   opportunityId: string;
   userId: string;
+}
+
+export interface MyOpportunityResponseVerifyFinalizeBatch {
+  items: MyOpportunityResponseVerifyFinalizeBatchItem[];
+}
+
+export interface MyOpportunityResponseVerifyFinalizeBatchItem {
+  opportunityId: string;
+  opportunityTitle: string;
+  userId: string;
+  userDisplayName: string | null;
+  success: boolean;
+  failure: ErrorResponseItem | null;
 }
 
 export interface MyOpportunityResponseVerify {

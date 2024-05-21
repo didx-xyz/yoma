@@ -5,6 +5,7 @@ import type {
   MyOpportunityRequestVerifyFinalize,
   MyOpportunityRequestVerifyFinalizeBatch,
   MyOpportunityResponseVerify,
+  MyOpportunityResponseVerifyFinalizeBatch,
   MyOpportunitySearchCriteriaOpportunity,
   MyOpportunitySearchFilter,
   MyOpportunitySearchFilterAdmin,
@@ -93,18 +94,15 @@ export const searchMyOpportunitiesAdmin = async (
   return data;
 };
 
-export const performActionVerifyManual = async (
-  model: MyOpportunityRequestVerifyFinalize,
-): Promise<any> => {
-  await (await ApiClient).patch(`/myopportunity/verification/finalize`, model);
-};
-
 export const performActionVerifyBulk = async (
   model: MyOpportunityRequestVerifyFinalizeBatch,
-): Promise<any> => {
-  await (
-    await ApiClient
-  ).patch(`/myopportunity/verification/finalize/batch`, model);
+  context?: GetServerSidePropsContext,
+): Promise<MyOpportunityResponseVerifyFinalizeBatch> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  return await instance.patch(
+    `/myopportunity/verification/finalize/batch`,
+    model,
+  );
 };
 
 export const performActionViewed = async (
