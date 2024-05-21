@@ -228,9 +228,11 @@ const OpportunityVerifications: NextPageWithLayout<{
   const [currentRow, setCurrentRow] = useState<MyOpportunityInfo>();
   const [selectedRows, setSelectedRows] = useState<MyOpportunityInfo[]>();
   const [bulkActionApprove, setBulkActionApprove] = useState(false);
-  const [modalSingleSuccessVisible, setModalSingleSuccessVisible] =
+  //const [modalSingleSuccessVisible, setModalSingleSuccessVisible] =
+  //useState(false);
+  //const [modalBulkSuccessVisible, setModalBulkSuccessVisible] = useState(false);
+  const [modalVerificationResultVisible, setModalVerificationResultVisible] =
     useState(false);
-  const [modalBulkSuccessVisible, setModalBulkSuccessVisible] = useState(false);
   const [approved, setApproved] = useState(false);
 
   //#region Click Handlers
@@ -249,7 +251,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         };
 
         // update api
-        await performActionVerifyManual(model);
+        //await performActionVerifyManual(model);
 
         // 📊 GOOGLE ANALYTICS: track event
         trackGAEvent(
@@ -278,6 +280,9 @@ const OpportunityVerifications: NextPageWithLayout<{
         //captureException(error);
         setIsLoading(false);
 
+        // show verification result dialog
+        setModalVerificationResultVisible(true);
+
         return;
       }
 
@@ -296,7 +301,10 @@ const OpportunityVerifications: NextPageWithLayout<{
       if (approved) {
         setApproved(true);
       }
-      setModalSingleSuccessVisible(true);
+      //setModalSingleSuccessVisible(true);
+
+      // show verification result dialog
+      setModalVerificationResultVisible(true);
     },
     [
       id,
@@ -354,7 +362,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         };
 
         // update api
-        await performActionVerifyBulk(model);
+        //await performActionVerifyBulk(model);
 
         // 📊 GOOGLE ANALYTICS: track event
         trackGAEvent(
@@ -375,15 +383,18 @@ const OpportunityVerifications: NextPageWithLayout<{
           ],
         });
       } catch (error) {
-        toast(<ApiErrors error={error} />, {
-          type: "error",
-          toastId: "verifyCredential",
-          autoClose: 2000,
-          icon: false,
-        });
+        // toast(<ApiErrors error={error} />, {
+        //   type: "error",
+        //   toastId: "verifyCredential",
+        //   autoClose: 2000,
+        //   icon: false,
+        // });
 
         //captureException(error);
         setIsLoading(false);
+
+        // show verification result dialog
+        setModalVerificationResultVisible(true);
 
         return;
       }
@@ -403,7 +414,10 @@ const OpportunityVerifications: NextPageWithLayout<{
       if (approved) {
         setApproved(true);
       }
-      setModalBulkSuccessVisible(true);
+      //setModalBulkSuccessVisible(true);
+
+      // show verification result dialog
+      setModalVerificationResultVisible(true);
     },
     [
       id,
@@ -446,15 +460,20 @@ const OpportunityVerifications: NextPageWithLayout<{
     [data, setSelectedRows],
   );
 
-  const handleCloseSingleSuccessModal = () => {
-    setModalSingleSuccessVisible(false);
-    setApproved(false);
-  };
+  const handleCloseVerificationResultModal = useCallback(() => {
+    setModalVerificationResultVisible(false);
+    //setApproved(false);
+  }, [setModalVerificationResultVisible]);
 
-  const handleCloseBulkSuccessModal = () => {
-    setModalBulkSuccessVisible(false);
-    setApproved(false);
-  };
+  // const handleCloseSingleSuccessModal = () => {
+  //   setModalSingleSuccessVisible(false);
+  //   setApproved(false);
+  // };
+
+  // const handleCloseBulkSuccessModal = () => {
+  //   setModalBulkSuccessVisible(false);
+  //   setApproved(false);
+  // };
   //#endregion Click Handlers
 
   //#region Filter Handlers
@@ -524,8 +543,9 @@ const OpportunityVerifications: NextPageWithLayout<{
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(modalVerifySingleVisible);
   useDisableBodyScroll(modalVerifyBulkVisible);
-  useDisableBodyScroll(modalSingleSuccessVisible);
-  useDisableBodyScroll(modalBulkSuccessVisible);
+  useDisableBodyScroll(modalVerificationResultVisible);
+  // useDisableBodyScroll(modalSingleSuccessVisible);
+  // useDisableBodyScroll(modalBulkSuccessVisible);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -703,13 +723,11 @@ const OpportunityVerifications: NextPageWithLayout<{
         </div>
       </ReactModal>
 
-      {/* MODAL DIALOG FOR VERIFICATION SUCCESS (SINGLE) */}
+      {/* MODAL DIALOG FOR VERIFICATION RESULT (SINGLE/BULK) */}
       <ReactModal
-        isOpen={modalSingleSuccessVisible}
+        isOpen={modalVerificationResultVisible}
         shouldCloseOnOverlayClick={true}
-        onRequestClose={() => {
-          handleCloseSingleSuccessModal();
-        }}
+        onRequestClose={handleCloseVerificationResultModal}
         className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:rounded-lg`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
@@ -720,7 +738,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             <button
               type="button"
               className="btn scale-[0.55] rounded-full border-green-dark bg-green-dark p-[7px] text-white hover:text-green"
-              onClick={() => handleCloseSingleSuccessModal()}
+              onClick={handleCloseVerificationResultModal}
             >
               <IoMdClose className="h-8 w-8"></IoMdClose>
             </button>
@@ -759,7 +777,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           <div className=" flex flex-row place-items-center justify-end px-6 py-4 pt-2">
             <button
               className="btn btn-outline btn-sm flex-nowrap rounded-full px-10 py-5 text-green hover:border-green hover:bg-green hover:text-white"
-              onClick={() => handleCloseSingleSuccessModal()}
+              onClick={handleCloseVerificationResultModal}
             >
               Close
             </button>
@@ -850,7 +868,6 @@ const OpportunityVerifications: NextPageWithLayout<{
               />
 
               {/* OPPORTUNITIES FILTER */}
-              {/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */}
               <Select
                 classNames={{
                   control: () =>
@@ -866,7 +883,6 @@ const OpportunityVerifications: NextPageWithLayout<{
               />
 
               {/* BULK ACTIONS */}
-              {/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */}
               <Select
                 classNames={{
                   control: () =>
@@ -879,7 +895,6 @@ const OpportunityVerifications: NextPageWithLayout<{
                 value={selectedOption}
                 placeholder="Bulk Actions"
               />
-              {/* eslint-enable @typescript-eslint/no-non-null-asserted-optional-chain */}
 
               <SearchInput defaultValue={query} onSearch={onSearch} />
             </div>
