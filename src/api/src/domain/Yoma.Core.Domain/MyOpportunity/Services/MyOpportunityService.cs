@@ -596,6 +596,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       return new MyOpportunityResponseVerifyFinalizeBatch()
       {
+        Status = request.Status,
         Items = [.. resultItems.OrderBy(o => o.UserDisplayName).ThenBy(o => o.OpportunityTitle)]
       };
     }

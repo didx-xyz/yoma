@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 {
   public class MyOpportunityResponseVerifyFinalizeBatch
   {
+    public VerificationStatus Status { get; set; }
+
     public List<MyOpportunityResponseVerifyFinalizeBatchItem> Items { get; set; }
   }
 
