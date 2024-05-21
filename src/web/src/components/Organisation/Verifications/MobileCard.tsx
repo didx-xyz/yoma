@@ -15,9 +15,7 @@ interface MobileCardProps {
   selectedRows: MyOpportunityInfo[] | undefined;
   returnUrl: string | string[] | undefined;
   id: string;
-  setCurrentRow: (item: any) => void;
-  setVerifyComments: (value: string) => void;
-  setModalVerifySingleVisible: (value: boolean) => void;
+  onVerify: (item: any) => void;
 }
 
 const MobileCard: React.FC<MobileCardProps> = ({
@@ -26,9 +24,7 @@ const MobileCard: React.FC<MobileCardProps> = ({
   selectedRows,
   returnUrl,
   id,
-  setCurrentRow,
-  setVerifyComments,
-  setModalVerifySingleVisible,
+  onVerify,
 }) => {
   const router = useRouter();
 
@@ -74,9 +70,7 @@ const MobileCard: React.FC<MobileCardProps> = ({
                   type="button"
                   className="flex flex-row"
                   onClick={() => {
-                    setCurrentRow(item);
-                    setVerifyComments("");
-                    setModalVerifySingleVisible(true);
+                    onVerify(item);
                   }}
                 >
                   <IoMdAlert className="mr-2 inline-block h-6 w-6 text-yellow" />

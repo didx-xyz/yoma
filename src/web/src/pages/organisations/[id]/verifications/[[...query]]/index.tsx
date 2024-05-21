@@ -16,6 +16,8 @@ import { type ParsedUrlQuery } from "querystring";
 import Link from "next/link";
 import { PageBackground } from "~/components/PageBackground";
 import {
+  IoIosClose,
+  IoIosWarning,
   IoMdAlert,
   IoMdCheckmark,
   IoMdClose,
@@ -26,7 +28,9 @@ import {
 import NoRowsMessage from "~/components/NoRowsMessage";
 import {
   DATE_FORMAT_HUMAN,
+  GA_ACTION_OPPORTUNITY_COMPLETION_VERIFY,
   GA_ACTION_ORGANISATION_VERIFY,
+  GA_CATEGORY_OPPORTUNITY,
   GA_CATEGORY_ORGANISATION,
   PAGE_SIZE,
 } from "~/lib/constants";
@@ -42,7 +46,7 @@ import {
   type MyOpportunityRequestVerifyFinalizeBatch,
   type MyOpportunitySearchResults,
   VerificationStatus,
-  MyOpportunityResponseVerifyFinalizeBatch,
+  type MyOpportunityResponseVerifyFinalizeBatch,
 } from "~/api/models/myOpportunity";
 import ReactModal from "react-modal";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -125,7 +129,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     await Promise.all([
       await queryClient.prefetchQuery({
         queryKey: [
-          `Verifications_${id}_${query?.toString()}_${opportunity}_${page?.toString()}`,
+          "Verifications",
+          id,
+          `${query?.toString()}_${opportunity?.toString()}_${verificationStatus}_${page?.toString()}`,
         ],
         queryFn: () => dataVerifications,
       }),
@@ -177,7 +183,9 @@ const OpportunityVerifications: NextPageWithLayout<{
   // 👇 use prefetched queries from server
   const { data: data } = useQuery<MyOpportunitySearchResults>({
     queryKey: [
-      `Verifications_${id}_${query?.toString()}_${opportunity?.toString()}_${verificationStatus}_${page?.toString()}`,
+      "Verifications",
+      id,
+      `${query?.toString()}_${opportunity?.toString()}_${verificationStatus}_${page?.toString()}`,
     ],
     queryFn: () =>
       searchMyOpportunitiesAdmin({
@@ -199,7 +207,7 @@ const OpportunityVerifications: NextPageWithLayout<{
     enabled: !error,
   });
   const { data: dataOpportunitiesForVerification } = useQuery<SelectOption[]>({
-    queryKey: [`OpportunitiesForVerification_${id}`],
+    queryKey: ["OpportunitiesForVerification", id],
     queryFn: async () =>
       (await getOpportunitiesForVerification([id])).map((x) => ({
         value: x.id,
@@ -223,11 +231,17 @@ const OpportunityVerifications: NextPageWithLayout<{
   const [modalVerifyVisible, setModalVerifyVisible] = useState(false);
   //const [modalVerifyBulkVisible, setModalVerifyBulkVisible] = useState(false);
   const [verifyComments, setVerifyComments] = useState("");
-  const [currentRow, setCurrentRow] = useState<MyOpportunityInfo>();
+  //const [currentRow, setCurrentRow] = useState<MyOpportunityInfo>();
+
   const [selectedRows, setSelectedRows] = useState<MyOpportunityInfo[]>(); // grid selected rows
   const [tempSelectedRows, setTempSelectedRows] =
     useState<MyOpportunityInfo[]>(); // temp rows for single/bulk verification
-  const [bulkActionApprove, setBulkActionApprove] = useState(false);
+
+  // controls the visibility of the verification approve/reject buttons
+  const [bulkActionApprove, setBulkActionApprove] = useState<boolean | null>(
+    false,
+  );
+
   //const [modalSingleSuccessVisible, setModalSingleSuccessVisible] =
   //useState(false);
   //const [modalBulkSuccessVisible, setModalBulkSuccessVisible] = useState(false);
@@ -235,34 +249,34 @@ const OpportunityVerifications: NextPageWithLayout<{
     useState(false);
   const [verificationResponse, setVerificationResponse] =
     useState<MyOpportunityResponseVerifyFinalizeBatch | null>(null);
-  const [approved, setApproved] = useState(false);
+  // const [approved, setApproved] = useState(false);
 
   //#region Click Handlers
-  const onVerifySingle = useCallback(
-    async (row: MyOpportunityInfo, approved: boolean) => {
-      const model: MyOpportunityRequestVerifyFinalizeBatch = {
-        status: approved
-          ? VerificationStatus.Completed
-          : VerificationStatus.Rejected,
-        comment: verifyComments,
-        items: [{ opportunityId: row.opportunityId, userId: row.userId }],
-      };
+  // const onVerifySingle = useCallback(
+  //   async (row: MyOpportunityInfo, approved: boolean) => {
+  //     const model: MyOpportunityRequestVerifyFinalizeBatch = {
+  //       status: approved
+  //         ? VerificationStatus.Completed
+  //         : VerificationStatus.Rejected,
+  //       comment: verifyComments,
+  //       items: [{ opportunityId: row.opportunityId, userId: row.userId }],
+  //     };
 
-      await onVerifyBulkFunction(model);
-    },
-    [
-      id,
-      queryClient,
-      verifyComments,
-      setIsLoading,
-      setModalVerifyVisible,
-      query,
-      opportunity,
-      page,
-    ],
-  );
+  //     await onVerifyBulkFunction(model);
+  //   },
+  //   [
+  //     id,
+  //     queryClient,
+  //     verifyComments,
+  //     setIsLoading,
+  //     setModalVerifyVisible,
+  //     query,
+  //     opportunity,
+  //     page,
+  //   ],
+  // );
 
-  const onVerifyBulkValidate = useCallback(
+  const onChangeBulkAction = useCallback(
     (approve: boolean) => {
       setSelectedOption(null);
       setVerifyComments("");
@@ -290,7 +304,25 @@ const OpportunityVerifications: NextPageWithLayout<{
     ],
   );
 
-  const onVerifyBulk = useCallback(
+  const handleCloseVerificationModal = useCallback(() => {
+    setTempSelectedRows([]);
+    setVerifyComments("");
+    setBulkActionApprove(false);
+    setModalVerifyVisible(false);
+  }, [
+    setTempSelectedRows,
+    setVerifyComments,
+    setBulkActionApprove,
+    setModalVerifyVisible,
+  ]);
+
+  //??
+  const handleCloseVerificationResultModal = useCallback(() => {
+    setModalVerificationResultVisible(false);
+    setSelectedRows([]);
+  }, [setModalVerificationResultVisible, setSelectedRows]);
+
+  const onVerify = useCallback(
     async (approved: boolean) => {
       const model: MyOpportunityRequestVerifyFinalizeBatch = {
         status: approved
@@ -304,48 +336,49 @@ const OpportunityVerifications: NextPageWithLayout<{
           })) ?? [],
       };
 
-      await onVerifyBulkFunction(model);
-    },
-    [
-      id,
-      opportunity,
-      page,
-      query,
-      queryClient,
-      verifyComments,
-      selectedRows,
-      setIsLoading,
-      setModalVerifyVisible,
-    ],
-  );
+      console.table(model);
 
-  const onVerifyBulkFunction = useCallback(
-    async (model: MyOpportunityRequestVerifyFinalizeBatch) => {
       setIsLoading(true);
 
       try {
         // update api
-        const result = await performActionVerifyBulk(model);
+        // const result = await performActionVerifyBulk(model);
 
-        setVerificationResponse(result);
+        // setVerificationResponse(result);
+
+        setVerificationResponse({
+          items:
+            tempSelectedRows?.map((item) => ({
+              success: true,
+              opportunityId: item.opportunityId,
+              opportunityTitle: item.opportunityTitle,
+              userId: item.userId,
+              userDisplayName: item.userDisplayName,
+              status: approved
+                ? VerificationStatus.Completed
+                : VerificationStatus.Rejected,
+              failure: {
+                type: "error",
+                message: "An error occurred while processing the request.",
+              },
+            })) ?? [],
+        });
 
         // 📊 GOOGLE ANALYTICS: track event
         trackGAEvent(
-          GA_CATEGORY_ORGANISATION,
-          GA_ACTION_ORGANISATION_VERIFY,
-          `${selectedRows?.length ?? 0} Organisations ${
+          GA_CATEGORY_OPPORTUNITY,
+          GA_ACTION_OPPORTUNITY_COMPLETION_VERIFY,
+          `${tempSelectedRows?.length ?? 0} Opportunity Completions ${
             approved ? "approved" : "rejected"
           }`,
         );
 
-        // invalidate query
+        // invalidate queries
         await queryClient.invalidateQueries({
-          queryKey: ["opportunityParticipants", id],
+          queryKey: ["Verifications", id],
         });
         await queryClient.invalidateQueries({
-          queryKey: [
-            `Verifications_${id}_${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
-          ],
+          queryKey: ["OpportunitiesForVerification", id],
         });
       } catch (error) {
         toast(<ApiErrors error={error} />, {
@@ -367,18 +400,23 @@ const OpportunityVerifications: NextPageWithLayout<{
       //captureException(error);
       setIsLoading(false);
 
-      setModalVerifyVisible(false);
+      handleCloseVerificationModal();
 
       // show verification result dialog
       setModalVerificationResultVisible(true);
-
-      setTempSelectedRows([]);
     },
     [
+      id,
+      opportunity,
+      page,
+      query,
+      queryClient,
+      verifyComments,
+      tempSelectedRows,
       setIsLoading,
-      setModalVerifyVisible,
+      handleCloseVerificationModal,
       setModalVerificationResultVisible,
-      setTempSelectedRows,
+      setVerificationResponse,
     ],
   );
 
@@ -409,16 +447,6 @@ const OpportunityVerifications: NextPageWithLayout<{
     },
     [data, setSelectedRows],
   );
-
-  const handleCloseVerificationResultModal = useCallback(() => {
-    setModalVerificationResultVisible(false);
-    //setApproved(false);
-  }, [setModalVerificationResultVisible]);
-
-  // const handleCloseSingleSuccessModal = () => {
-  //   setModalSingleSuccessVisible(false);
-  //   setApproved(false);
-  // };
 
   // const handleCloseBulkSuccessModal = () => {
   //   setModalBulkSuccessVisible(false);
@@ -516,9 +544,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       <ReactModal
         isOpen={modalVerifyVisible}
         shouldCloseOnOverlayClick={true}
-        onRequestClose={() => {
-          setModalVerifyVisible(false);
-        }}
+        onRequestClose={handleCloseVerificationModal}
         className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[600px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
@@ -532,7 +558,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             <button
               type="button"
               className="btn scale-[0.55] rounded-full border-green-dark bg-green-dark p-[7px] text-white hover:text-green"
-              onClick={() => setModalVerifyVisible(false)}
+              onClick={handleCloseVerificationModal}
             >
               <IoMdClose className="h-8 w-8"></IoMdClose>
             </button>
@@ -565,27 +591,27 @@ const OpportunityVerifications: NextPageWithLayout<{
             <div className="flex flex-grow">
               <button
                 className="btn-default btn btn-sm flex-nowrap rounded-full py-5"
-                onClick={() => setModalVerifyVisible(false)}
+                onClick={handleCloseVerificationModal}
               >
                 <IoMdClose className="h-6 w-6" />
                 Close
               </button>
             </div>
             <div className="flex gap-4">
-              {!bulkActionApprove && (
+              {(bulkActionApprove == null || !bulkActionApprove) && (
                 <button
                   className="btn btn-sm flex-nowrap rounded-full border-red-500 bg-white py-5 text-red-500"
-                  onClick={() => onVerifyBulk(false)}
+                  onClick={() => onVerify(false)}
                 >
                   <IoMdThumbsDown className="h-6 w-6" />
                   Reject
                 </button>
               )}
 
-              {bulkActionApprove && (
+              {(bulkActionApprove == null || bulkActionApprove) && (
                 <button
                   className="btn btn-sm flex-nowrap rounded-full bg-green py-5 text-white hover:text-green"
-                  onClick={() => onVerifyBulk(true)}
+                  onClick={() => onVerify(true)}
                 >
                   <IoMdThumbsUp className="h-6 w-6" />
                   Approve
@@ -607,7 +633,10 @@ const OpportunityVerifications: NextPageWithLayout<{
       >
         <div className="flex h-full flex-col space-y-2 overflow-y-auto">
           <div className="flex flex-row items-center bg-white px-4 pt-2">
-            <h4 className="flex-grow pl-2 font-semibold">Participant</h4>
+            <h4 className="flex-grow pl-2 font-semibold">
+              {verificationResponse?.items?.length} Participant
+              {(verificationResponse?.items?.length ?? 0) > 1 ? "s" : ""}
+            </h4>
             <button
               type="button"
               className="btn scale-[0.55] rounded-full border-green-dark bg-green-dark p-[7px] text-white hover:text-green"
@@ -618,30 +647,74 @@ const OpportunityVerifications: NextPageWithLayout<{
           </div>
           <div className="flex flex-grow flex-col overflow-x-hidden overflow-y-scroll bg-gray">
             <div className="flex flex-grow flex-col place-items-center justify-center bg-gray-light px-6 py-8">
-              <div className="flex h-full w-full flex-col place-items-center justify-center rounded-lg bg-white py-8 text-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-green-dark bg-green-light">
-                  <IoIosCheckmark className="h-16 w-16 text-green" />
-                </div>
-                {approved ? (
-                  <>
-                    {currentRow && (
-                      <h4 className="font-bold">
-                        {currentRow.userDisplayName}&apos;s credential has been
-                        approved.
-                      </h4>
-                    )}
-                    <p>We&apos;ve sent them an email to share the good news.</p>
-                  </>
-                ) : (
-                  <>
-                    {currentRow && (
-                      <h4 className="font-bold">
-                        {currentRow.userDisplayName}&apos;s credential has been
-                        rejected.
-                      </h4>
-                    )}
-                  </>
-                )}
+              <div className="flex h-full w-full flex-col place-items-center justify-center rounded-lg bg-white px-4 py-8 text-center">
+                <table className="table bg-white md:rounded-lg">
+                  <thead className="text-sm">
+                    <tr className="!border-gray text-gray-dark">
+                      <th></th>
+                      <th className="pl-0">Student</th>
+                      <th>Opportunity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {verificationResponse?.items.map((item) => (
+                      <>
+                        <tr
+                          key={`verificationResult_${item.userId}-${item.opportunityId}`}
+                          className="!h-[70px] border-0 text-gray-dark"
+                        >
+                          <td>
+                            {item.success && (
+                              <IoIosCheckmark className="h-16 w-16 text-green" />
+                            )}
+                            {!item.success && (
+                              <IoIosClose className="h-16 w-16 text-red-400" />
+                            )}
+                          </td>
+                          <td className="w-[200px] pl-0">
+                            {item.userDisplayName}
+                          </td>
+                          <td className="w-[420px]">{item.opportunityTitle}</td>
+                        </tr>
+                        <tr className="border-gray">
+                          <td colSpan={3}>
+                            <div className="flex flex-row items-center gap-2">
+                              {item.success && (
+                                <>
+                                  {item.status ==
+                                    VerificationStatus.Completed && (
+                                    <p>
+                                      This participant was successfully
+                                      <strong className="ml-1">approved</strong>
+                                      . We&apos;ve sent them an email to share
+                                      the good news!
+                                    </p>
+                                  )}
+                                  {item.status ==
+                                    VerificationStatus.Rejected && (
+                                    <p>
+                                      This participant was successfully
+                                      <strong className="ml-1">rejected</strong>
+                                      . We&apos;ve sent them an email with your
+                                      comments.
+                                    </p>
+                                  )}
+                                </>
+                              )}
+                              {!item.success && (
+                                <p className="text-red-400">
+                                  {item.failure?.message
+                                    ? item.failure?.message
+                                    : "An error occurred while processing the request."}
+                                </p>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      </>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -689,7 +762,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                     "input input-xs md:w-[330px] !border-0 !rounded-lg",
                 }}
                 options={dataOpportunitiesForVerification}
-                onChange={(val) => onFilterOpportunity(val?.value!)}
+                onChange={(val) => onFilterOpportunity(val?.value ?? "")}
                 value={dataOpportunitiesForVerification?.find(
                   (c) => c.value === opportunity,
                 )}
@@ -705,7 +778,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                 }}
                 options={dataBulkActions}
                 onChange={(val) => {
-                  onVerifyBulkValidate(val?.value == "Approve");
+                  onChangeBulkAction(val?.value == "Approve");
                 }}
                 value={selectedOption}
                 placeholder="Bulk Actions"
@@ -786,10 +859,8 @@ const OpportunityVerifications: NextPageWithLayout<{
                                 type="button"
                                 className="flex flex-row"
                                 onClick={() => {
-                                  // setCurrentRow(item);
-                                  // setVerifyComments("");
-                                  setTempSelectedRows([item]); //*
-
+                                  setBulkActionApprove(null);
+                                  setTempSelectedRows([item]);
                                   setModalVerifyVisible(true);
                                 }}
                               >
@@ -830,9 +901,10 @@ const OpportunityVerifications: NextPageWithLayout<{
                     selectedRows={selectedRows}
                     returnUrl={returnUrl}
                     id={id}
-                    setCurrentRow={setCurrentRow}
-                    setVerifyComments={setVerifyComments}
-                    setModalVerifySingleVisible={setModalVerifyVisible}
+                    onVerify={() => {
+                      setTempSelectedRows([item]);
+                      setModalVerifyVisible(true);
+                    }}
                   />
                 ))}
               </div>
