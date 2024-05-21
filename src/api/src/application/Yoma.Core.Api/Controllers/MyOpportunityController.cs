@@ -80,9 +80,9 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Reject or complete manual verification for the specified 'my' opportunity batch (Admin or Organization Admin roles required)")]
+    [SwaggerOperation(Summary = "Complete or reject manual verification for the specified 'my' opportunity batch (Admin or Organization Admin roles required)")]
     [HttpPatch("verification/finalize/batch")]
-    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(MyOpportunityResponseVerifyFinalizeBatch), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> FinalizeVerificationManual([FromBody] MyOpportunityRequestVerifyFinalizeBatch request)
@@ -96,7 +96,7 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK);
     }
 
-    [SwaggerOperation(Summary = "Reject or complete manual verification for the specified 'my' opportunity (Admin or Organization Admin roles required)")]
+    [SwaggerOperation(Summary = "Complete or reject manual verification for the specified 'my' opportunity (Admin or Organization Admin roles required)")]
     [HttpPatch("verification/finalize")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
