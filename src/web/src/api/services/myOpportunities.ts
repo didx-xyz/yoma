@@ -98,10 +98,13 @@ export const performActionVerifyBulk = async (
   context?: GetServerSidePropsContext,
 ): Promise<MyOpportunityResponseVerifyFinalizeBatch> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  return await instance.patch(
+
+  const { data } = await instance.patch(
     `/myopportunity/verification/finalize/batch`,
     model,
   );
+
+  return data;
 };
 
 export const performActionViewed = async (

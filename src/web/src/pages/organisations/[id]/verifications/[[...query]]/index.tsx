@@ -8,7 +8,7 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useCallback, type ReactElement, useState } from "react";
+import { useCallback, type ReactElement, useState, Fragment } from "react";
 import MainLayout from "~/components/Layout/Main";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -17,7 +17,6 @@ import Link from "next/link";
 import { PageBackground } from "~/components/PageBackground";
 import {
   IoIosClose,
-  IoIosWarning,
   IoMdAlert,
   IoMdCheckmark,
   IoMdClose,
@@ -29,9 +28,7 @@ import NoRowsMessage from "~/components/NoRowsMessage";
 import {
   DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_COMPLETION_VERIFY,
-  GA_ACTION_ORGANISATION_VERIFY,
   GA_CATEGORY_OPPORTUNITY,
-  GA_CATEGORY_ORGANISATION,
   PAGE_SIZE,
 } from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -68,6 +65,7 @@ import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import MobileCard from "~/components/Organisation/Verifications/MobileCard";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import React from "react";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -229,9 +227,7 @@ const OpportunityVerifications: NextPageWithLayout<{
 
   const [isLoading, setIsLoading] = useState(false);
   const [modalVerifyVisible, setModalVerifyVisible] = useState(false);
-  //const [modalVerifyBulkVisible, setModalVerifyBulkVisible] = useState(false);
   const [verifyComments, setVerifyComments] = useState("");
-  //const [currentRow, setCurrentRow] = useState<MyOpportunityInfo>();
 
   const [selectedRows, setSelectedRows] = useState<MyOpportunityInfo[]>(); // grid selected rows
   const [tempSelectedRows, setTempSelectedRows] =
@@ -241,41 +237,12 @@ const OpportunityVerifications: NextPageWithLayout<{
   const [bulkActionApprove, setBulkActionApprove] = useState<boolean | null>(
     false,
   );
-
-  //const [modalSingleSuccessVisible, setModalSingleSuccessVisible] =
-  //useState(false);
-  //const [modalBulkSuccessVisible, setModalBulkSuccessVisible] = useState(false);
   const [modalVerificationResultVisible, setModalVerificationResultVisible] =
     useState(false);
   const [verificationResponse, setVerificationResponse] =
     useState<MyOpportunityResponseVerifyFinalizeBatch | null>(null);
-  // const [approved, setApproved] = useState(false);
 
   //#region Click Handlers
-  // const onVerifySingle = useCallback(
-  //   async (row: MyOpportunityInfo, approved: boolean) => {
-  //     const model: MyOpportunityRequestVerifyFinalizeBatch = {
-  //       status: approved
-  //         ? VerificationStatus.Completed
-  //         : VerificationStatus.Rejected,
-  //       comment: verifyComments,
-  //       items: [{ opportunityId: row.opportunityId, userId: row.userId }],
-  //     };
-
-  //     await onVerifyBulkFunction(model);
-  //   },
-  //   [
-  //     id,
-  //     queryClient,
-  //     verifyComments,
-  //     setIsLoading,
-  //     setModalVerifyVisible,
-  //     query,
-  //     opportunity,
-  //     page,
-  //   ],
-  // );
-
   const onChangeBulkAction = useCallback(
     (approve: boolean) => {
       setSelectedOption(null);
@@ -304,7 +271,7 @@ const OpportunityVerifications: NextPageWithLayout<{
     ],
   );
 
-  const handleCloseVerificationModal = useCallback(() => {
+  const onCloseVerificationModal = useCallback(() => {
     setTempSelectedRows([]);
     setVerifyComments("");
     setBulkActionApprove(false);
@@ -316,8 +283,7 @@ const OpportunityVerifications: NextPageWithLayout<{
     setModalVerifyVisible,
   ]);
 
-  //??
-  const handleCloseVerificationResultModal = useCallback(() => {
+  const onCloseVerificationResultModal = useCallback(() => {
     setModalVerificationResultVisible(false);
     setSelectedRows([]);
   }, [setModalVerificationResultVisible, setSelectedRows]);
@@ -336,33 +302,14 @@ const OpportunityVerifications: NextPageWithLayout<{
           })) ?? [],
       };
 
-      console.table(model);
-
       setIsLoading(true);
 
       try {
         // update api
-        // const result = await performActionVerifyBulk(model);
+        const result = await performActionVerifyBulk(model);
 
-        // setVerificationResponse(result);
-
-        setVerificationResponse({
-          items:
-            tempSelectedRows?.map((item) => ({
-              success: true,
-              opportunityId: item.opportunityId,
-              opportunityTitle: item.opportunityTitle,
-              userId: item.userId,
-              userDisplayName: item.userDisplayName,
-              status: approved
-                ? VerificationStatus.Completed
-                : VerificationStatus.Rejected,
-              failure: {
-                type: "error",
-                message: "An error occurred while processing the request.",
-              },
-            })) ?? [],
-        });
+        // show the results in modal
+        setVerificationResponse(result);
 
         // 📊 GOOGLE ANALYTICS: track event
         trackGAEvent(
@@ -388,21 +335,14 @@ const OpportunityVerifications: NextPageWithLayout<{
           icon: false,
         });
 
-        //captureException(error);
         setIsLoading(false);
-
-        // show verification result dialog
-        //setModalVerificationResultVisible(true);
 
         return;
       }
 
-      //captureException(error);
+      // close and open results
       setIsLoading(false);
-
-      handleCloseVerificationModal();
-
-      // show verification result dialog
+      onCloseVerificationModal();
       setModalVerificationResultVisible(true);
     },
     [
@@ -414,7 +354,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       verifyComments,
       tempSelectedRows,
       setIsLoading,
-      handleCloseVerificationModal,
+      onCloseVerificationModal,
       setModalVerificationResultVisible,
       setVerificationResponse,
     ],
@@ -447,11 +387,6 @@ const OpportunityVerifications: NextPageWithLayout<{
     },
     [data, setSelectedRows],
   );
-
-  // const handleCloseBulkSuccessModal = () => {
-  //   setModalBulkSuccessVisible(false);
-  //   setApproved(false);
-  // };
   //#endregion Click Handlers
 
   //#region Filter Handlers
@@ -520,10 +455,7 @@ const OpportunityVerifications: NextPageWithLayout<{
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(modalVerifyVisible);
-  //useDisableBodyScroll(modalVerifyBulkVisible);
   useDisableBodyScroll(modalVerificationResultVisible);
-  // useDisableBodyScroll(modalSingleSuccessVisible);
-  // useDisableBodyScroll(modalBulkSuccessVisible);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -544,7 +476,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       <ReactModal
         isOpen={modalVerifyVisible}
         shouldCloseOnOverlayClick={true}
-        onRequestClose={handleCloseVerificationModal}
+        onRequestClose={onCloseVerificationModal}
         className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[600px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
@@ -558,7 +490,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             <button
               type="button"
               className="btn scale-[0.55] rounded-full border-green-dark bg-green-dark p-[7px] text-white hover:text-green"
-              onClick={handleCloseVerificationModal}
+              onClick={onCloseVerificationModal}
             >
               <IoMdClose className="h-8 w-8"></IoMdClose>
             </button>
@@ -591,7 +523,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             <div className="flex flex-grow">
               <button
                 className="btn-default btn btn-sm flex-nowrap rounded-full py-5"
-                onClick={handleCloseVerificationModal}
+                onClick={onCloseVerificationModal}
               >
                 <IoMdClose className="h-6 w-6" />
                 Close
@@ -626,7 +558,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       <ReactModal
         isOpen={modalVerificationResultVisible}
         shouldCloseOnOverlayClick={true}
-        onRequestClose={handleCloseVerificationResultModal}
+        onRequestClose={onCloseVerificationResultModal}
         className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:rounded-lg`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
@@ -640,7 +572,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             <button
               type="button"
               className="btn scale-[0.55] rounded-full border-green-dark bg-green-dark p-[7px] text-white hover:text-green"
-              onClick={handleCloseVerificationResultModal}
+              onClick={onCloseVerificationResultModal}
             >
               <IoMdClose className="h-8 w-8"></IoMdClose>
             </button>
@@ -658,11 +590,10 @@ const OpportunityVerifications: NextPageWithLayout<{
                   </thead>
                   <tbody>
                     {verificationResponse?.items.map((item) => (
-                      <>
-                        <tr
-                          key={`verificationResult_${item.userId}-${item.opportunityId}`}
-                          className="!h-[70px] border-0 text-gray-dark"
-                        >
+                      <Fragment
+                        key={`verificationResult_${item.userId}-${item.opportunityId}`}
+                      >
+                        <tr className="!h-[70px] border-0 text-gray-dark">
                           <td>
                             {item.success && (
                               <IoIosCheckmark className="h-16 w-16 text-green" />
@@ -681,37 +612,37 @@ const OpportunityVerifications: NextPageWithLayout<{
                             <div className="flex flex-row items-center gap-2">
                               {item.success && (
                                 <>
-                                  {item.status ==
-                                    VerificationStatus.Completed && (
-                                    <p>
+                                  {verificationResponse.status ==
+                                    "Completed" && (
+                                    <div>
                                       This participant was successfully
                                       <strong className="ml-1">approved</strong>
                                       . We&apos;ve sent them an email to share
                                       the good news!
-                                    </p>
+                                    </div>
                                   )}
-                                  {item.status ==
-                                    VerificationStatus.Rejected && (
-                                    <p>
+                                  {verificationResponse.status ==
+                                    "Rejected" && (
+                                    <div>
                                       This participant was successfully
                                       <strong className="ml-1">rejected</strong>
                                       . We&apos;ve sent them an email with your
                                       comments.
-                                    </p>
+                                    </div>
                                   )}
                                 </>
                               )}
                               {!item.success && (
-                                <p className="text-red-400">
+                                <div className="text-red-400">
                                   {item.failure?.message
                                     ? item.failure?.message
                                     : "An error occurred while processing the request."}
-                                </p>
+                                </div>
                               )}
                             </div>
                           </td>
                         </tr>
-                      </>
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -723,7 +654,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           <div className=" flex flex-row place-items-center justify-end px-6 py-4 pt-2">
             <button
               className="btn btn-outline btn-sm flex-nowrap rounded-full px-10 py-5 text-green hover:border-green hover:bg-green hover:text-white"
-              onClick={handleCloseVerificationResultModal}
+              onClick={onCloseVerificationResultModal}
             >
               Close
             </button>
@@ -895,13 +826,14 @@ const OpportunityVerifications: NextPageWithLayout<{
               <div className="my-4 space-y-4 md:hidden">
                 {data.items.map((item) => (
                   <MobileCard
-                    key={item.id}
+                    key={`MobileCard_${item.id}`}
                     item={item}
                     handleRowSelect={handleRowSelect}
                     selectedRows={selectedRows}
                     returnUrl={returnUrl}
                     id={id}
                     onVerify={() => {
+                      setBulkActionApprove(null);
                       setTempSelectedRows([item]);
                       setModalVerifyVisible(true);
                     }}

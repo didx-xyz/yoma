@@ -116,6 +116,7 @@ export interface MyOpportunityRequestVerifyFinalizeBatchItem {
 
 export interface MyOpportunityResponseVerifyFinalizeBatch {
   items: MyOpportunityResponseVerifyFinalizeBatchItem[];
+  status: VerificationStatus | string;
 }
 
 export interface MyOpportunityResponseVerifyFinalizeBatchItem {
@@ -125,7 +126,6 @@ export interface MyOpportunityResponseVerifyFinalizeBatchItem {
   userDisplayName: string | null;
   success: boolean;
   failure: ErrorResponseItem | null;
-  status: VerificationStatus | string; //NB:TODO
 }
 
 export interface MyOpportunityResponseVerify {
