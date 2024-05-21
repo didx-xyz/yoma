@@ -347,9 +347,6 @@ const OpportunityVerifications: NextPageWithLayout<{
     },
     [
       id,
-      opportunity,
-      page,
-      query,
       queryClient,
       verifyComments,
       tempSelectedRows,
