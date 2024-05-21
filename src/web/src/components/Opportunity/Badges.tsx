@@ -6,6 +6,7 @@ import {
   IoMdCalendar,
   IoMdCloudUpload,
   IoMdWarning,
+  IoMdAlert,
 } from "react-icons/io";
 import iconClock from "public/images/icon-clock.svg";
 import iconZlto from "public/images/icon-zlto.svg";
@@ -47,19 +48,30 @@ const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
           }`}</span>
         </div>
       )}
+
       {spotsLeft > 0 && (
         <div className="badge bg-blue-light text-blue">
-          <IoMdPerson />
+          <IoMdPerson className="h-4 w-4" />
 
           <span className="ml-1 text-xs">{spotsLeft} Spots left</span>
         </div>
       )}
+
+      {spotsLeft === 0 && (
+        <div className="badge bg-red-200 text-red-400">
+          <IoMdWarning className="h-4 w-4" />
+
+          <span className="ml-1 text-xs">Limit Reached</span>
+        </div>
+      )}
+
       {opportunity?.type && (
         <div className="badge bg-[#E7E8F5] text-[#5F65B9]">
           <IoIosBook />
           <span className="ml-1 text-xs">{opportunity.type}</span>
         </div>
       )}
+
       {(opportunity?.zltoReward ?? 0) > 0 && (
         <div className="badge bg-orange-light text-orange">
           <Image
