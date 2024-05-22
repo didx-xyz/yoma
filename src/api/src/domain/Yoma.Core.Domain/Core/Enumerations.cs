@@ -47,6 +47,7 @@ namespace Yoma.Core.Domain.Core
 
   public enum TimeInterval
   {
+    Minute,
     Hour,
     Day,
     Week,

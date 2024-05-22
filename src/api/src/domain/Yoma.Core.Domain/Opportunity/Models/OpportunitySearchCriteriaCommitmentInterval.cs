@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Yoma.Core.Domain.Opportunity.Models
 {
   public class OpportunitySearchCriteriaCommitmentInterval
@@ -5,5 +7,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string Id { get; set; }
 
     public string Name { get; set; }
+
+    [JsonIgnore]
+    public short Order { get; set; }
+
+    [JsonIgnore]
+    public short Count { get; set; }
   }
 }

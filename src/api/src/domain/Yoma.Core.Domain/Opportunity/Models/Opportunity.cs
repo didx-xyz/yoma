@@ -93,6 +93,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public string? SSISchemaName { get; set; }
 
+    public bool? Featured { get; set; }
+
     public DateTimeOffset DateCreated { get; set; }
 
     public Guid CreatedByUserId { get; set; }

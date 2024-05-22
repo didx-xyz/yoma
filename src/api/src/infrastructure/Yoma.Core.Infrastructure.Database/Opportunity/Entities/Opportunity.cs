@@ -105,6 +105,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [Column(TypeName = "varchar(255)")]
     public string? SSISchemaName { get; set; }
 
+    public bool? Featured { get; set; }
+
     [Required]
     public DateTimeOffset DateCreated { get; set; }
 

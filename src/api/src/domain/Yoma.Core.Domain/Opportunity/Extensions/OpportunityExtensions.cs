@@ -20,6 +20,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       var hours = 0;
       hours = interval switch
       {
+        TimeInterval.Minute => (int)Math.Ceiling(opportunity.CommitmentIntervalCount / 60m),
         TimeInterval.Hour => opportunity.CommitmentIntervalCount,
         TimeInterval.Day => opportunity.CommitmentIntervalCount * 24,
         TimeInterval.Week => opportunity.CommitmentIntervalCount * 24 * 7,
@@ -40,6 +41,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       var days = 0;
       days = interval switch
       {
+        TimeInterval.Minute => (int)Math.Ceiling(opportunity.CommitmentIntervalCount / (60m * 24)),
         TimeInterval.Hour => (int)Math.Ceiling((double)opportunity.CommitmentIntervalCount / 24),
         TimeInterval.Day => opportunity.CommitmentIntervalCount,
         TimeInterval.Week => opportunity.CommitmentIntervalCount * 7,
@@ -137,6 +139,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Keywords = value.Keywords,
         DateStart = value.DateStart,
         DateEnd = value.DateEnd,
+        Featured = value.Featured ?? false,
         Published = value.Published,
         YomaInfoURL = value.YomaInfoURL(appBaseURL),
         Categories = value.Categories,
