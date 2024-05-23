@@ -23,13 +23,6 @@ postInstallHook:
 
 keycloak:
   replicas: 2
-  resources:
-    requests:
-      cpu: 10m
-      memory: 512Mi
-    limits:
-      cpu: 2500m
-      memory: 512Mi
 
   themes:
     enabled: true

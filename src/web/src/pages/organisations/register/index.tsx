@@ -72,7 +72,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     }),
     await queryClient.prefetchQuery({
       queryKey: ["countries"],
-      queryFn: async () => await getCountries(),
+      queryFn: async () => await getCountries(context),
     }),
   ]);
 
