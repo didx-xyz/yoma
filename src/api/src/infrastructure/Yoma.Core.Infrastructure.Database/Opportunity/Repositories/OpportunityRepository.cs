@@ -316,7 +316,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         entity.DateEnd = item.DateEnd;
         entity.CredentialIssuanceEnabled = item.CredentialIssuanceEnabled;
         entity.SSISchemaName = item.SSISchemaName;
-        entity.Featured = item.Featured;  
+        entity.Featured = item.Featured;
         entity.DateModified = item.DateModified;
         entity.ModifiedByUserId = item.ModifiedByUserId;
       }
