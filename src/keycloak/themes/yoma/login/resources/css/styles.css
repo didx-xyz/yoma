@@ -91,7 +91,8 @@ h1#kc-page-title {
 } */
 
 #register-password,
-#password-confirm {
+#password-confirm,
+#password-new {
   padding-left: calc(1px + 10%);
 }
 
@@ -497,7 +498,8 @@ input[type="checkbox"] {
   }
 
   #register-password,
-  #password-confirm {
+  #password-confirm,
+  #password-new {
     padding-left: calc(1px + 15%);
   }
 }
