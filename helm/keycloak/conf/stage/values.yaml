@@ -82,7 +82,7 @@ config-cli:
     # SMTP_PASSWORD: SG.xxx
     CLIENT_YOMA_API_URL: https://v3api.stage.yoma.world
     CLIENT_YOMA_WEB_URL: https://stage.yoma.world
-    CLIENT_ATINGI_URL: https://preprod.atingi.org/
+    CLIENT_ATINGI_URL: https://preprod.atingi.org
     CLIENT_ATINGI_URL_REDIRECT: https://keycloak-preprod.enovationaws.com/realms/master/broker/yoma-prod/endpoint
     CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT: https://keycloak-preprod.enovationaws.com/realms/master/broker/yoma-prod/endpoint
     CLIENT_GOODWALL_URL: https://dev.goodlab.io

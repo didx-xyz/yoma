@@ -1,4 +1,3 @@
-version: "3"
 name: yoma-v3
 services:
   yoma-web:

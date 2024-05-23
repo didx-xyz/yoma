@@ -1,4 +1,3 @@
-version: "3"
 name: yoma-v3
 services:
   postgres:
@@ -145,9 +144,9 @@ services:
       # Templating variables
       CLIENT_YOMA_API_URL: "http://localhost:5000"
       CLIENT_YOMA_WEB_URL: "http://localhost:3000"
-      CLIENT_ATINGI_URL: "https://sandbox.atingi.org"
-      CLIENT_ATINGI_URL_REDIRECT: "https://keycloak-uat.enovationaws.com/realms/master/broker/yoma-prod/endpoint"
-      CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT: "https://keycloak-uat.enovationaws.com/realms/master/broker/yoma-prod/endpoint"
+      CLIENT_ATINGI_URL: "https://preprod.atingi.org"
+      CLIENT_ATINGI_URL_REDIRECT: "https://keycloak-preprod.enovationaws.com/realms/master/broker/yoma-prod/endpoint"
+      CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT: "https://keycloak-preprod.enovationaws.com/realms/master/broker/yoma-prod/endpoint"
       CLIENT_GOODWALL_URL: "https://www.goodwall.io"
       CLIENT_GOODWALL_URL_REDIRECT: "goodwallauth://yomaredirect"
       CLIENT_YOMA_API_SECRET: superSecretYomaApiClientSecret

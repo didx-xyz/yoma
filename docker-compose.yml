@@ -1,4 +1,3 @@
-version: "3"
 name: yoma-v3
 # https://docs.docker.com/compose/multiple-compose-files/include/
 include:
