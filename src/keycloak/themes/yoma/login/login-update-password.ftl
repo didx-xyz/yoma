@@ -14,10 +14,10 @@
                 </div>
                 <div class="${properties.kcInputWrapperClass!}">
                     <div class="password-container">
-                      <i class="fa fa-eye-slash" id="toggle-password" onclick="togglePassword('#register-password', '#toggle-password')"></i>
+                      <i class="fa fa-eye-slash" id="toggle-password" onclick="togglePassword('#password-new', '#toggle-password')"></i>
                       <input type="password" id="password-new" name="password-new" class="${properties.kcInputClass!}"
                            autofocus autocomplete="new-password"
-                           aria-invalid="<#if messagesPerField.existsError('password','password-confirm')>true</#if>"
+                           aria-invalid="<#if messagesPerField.existsError('password','password-new')>true</#if>"
                     />
                     </div>
 
