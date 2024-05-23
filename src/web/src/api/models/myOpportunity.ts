@@ -33,7 +33,7 @@ export interface MyOpportunitySearchFilter
 
 export interface MyOpportunitySearchFilterBase extends PaginationFilter {
   action: Action;
-  verificationStatuses: VerificationStatus[] | null;
+  verificationStatuses: VerificationStatus[] | null | string[]; //NB
 }
 
 export interface MyOpportunitySearchFilterAdmin
