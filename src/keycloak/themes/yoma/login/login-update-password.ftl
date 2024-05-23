@@ -1,7 +1,7 @@
 <#import "template.ftl" as layout>
 <@layout.registrationLayout displayMessage=!messagesPerField.existsError('password','password-confirm'); section>
     <#if section = "header">
-        ${msg("updatePasswordTitle")}
+        <h1>${msg("updatePasswordTitle")}</h1>
     <#elseif section = "form">
         <form id="kc-passwd-update-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
             <input type="text" id="username" name="username" value="${username}" autocomplete="username"
