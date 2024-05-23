@@ -274,7 +274,7 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Return a list of active organizations associated with opportunities")]
+    [SwaggerOperation(Summary = "Return a list of active organizations associated with opportunities (Admin role required)")]
     [HttpGet("search/filter/organization/admin")]
     [ProducesResponseType(typeof(List<Domain.Entity.Models.OrganizationInfo>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
@@ -423,6 +423,22 @@ namespace Yoma.Core.Api.Controllers
       var result = await _opportunityService.UpdateStatus(id, status, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Update opportunity featured state (Admin role required)")]
+    [HttpPatch("{id}/featured/{featured}")]
+    [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<IActionResult> UpdateFeatured([FromRoute] Guid id, [FromRoute] bool featured)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(UpdateFeatured));
+
+      var result = await _opportunityService.UpdateFeatured(id, featured);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(UpdateFeatured));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

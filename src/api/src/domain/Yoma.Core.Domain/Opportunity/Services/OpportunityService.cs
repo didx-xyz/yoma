@@ -781,6 +781,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.Where(predicate);
       }
 
+      //featured
+      if (filter.Featured == true)
+        query = query.Where(o => o.Featured == true);
+
       //valueContains (includes organizations, types, categories, opportunities and skills)
       if (!string.IsNullOrEmpty(filter.ValueContains))
       {
@@ -1137,6 +1141,23 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       //modifiedBy preserved
       await _opportunityRepository.Update(opportunity);
+
+      return result;
+    }
+
+    //administrative action only
+    public async Task<Models.Opportunity> UpdateFeatured(Guid id, bool featured)
+    {
+      var result = GetById(id, true, true, false);
+
+      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      AssertUpdatable(result);
+
+      result.Featured = featured;
+      result.ModifiedByUserId = user.Id;
+
+      result = await _opportunityRepository.Update(result);
 
       return result;
     }

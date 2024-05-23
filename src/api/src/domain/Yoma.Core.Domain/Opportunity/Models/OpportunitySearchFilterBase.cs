@@ -25,6 +25,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [JsonIgnore]
     internal List<OpportunitySearchFilterZltoReward>? ZltoRewardRangesParsed { get; set; }
 
+    public bool? Featured { get; set; }
+
     /// <summary>
     /// Includes organizations (name), opportunities (title, keywords, description), opportunity types (name), opportunity categories (name) and skills (name) matched on search text
     /// </summary>

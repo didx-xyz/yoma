@@ -43,6 +43,8 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     Task<OpportunityAllocateRewardResponse> AllocateRewards(Guid id, Guid userId, bool ensureOrganizationAuthorization);
 
+    Task<Models.Opportunity> UpdateFeatured(Guid id, bool featured);
+
     Task<Models.Opportunity> UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization);
 
     Task<Models.Opportunity> AssignCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization);
