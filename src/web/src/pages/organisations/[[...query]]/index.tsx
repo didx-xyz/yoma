@@ -76,52 +76,67 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       queryClient.prefetchQuery({
         queryKey: ["Organisations_TotalCount", null],
         queryFn: () =>
-          getOrganisations({
-            pageNumber: 1,
-            pageSize: 1,
-            valueContains: null,
-            statuses: null,
-          }).then((data) => data.totalCount ?? 0),
+          getOrganisations(
+            {
+              pageNumber: 1,
+              pageSize: 1,
+              valueContains: null,
+              statuses: null,
+            },
+            context,
+          ).then((data) => data.totalCount ?? 0),
       }),
       queryClient.prefetchQuery({
         queryKey: ["Organisations_TotalCount", OrganizationStatus.Active],
         queryFn: () =>
-          getOrganisations({
-            pageNumber: 1,
-            pageSize: 1,
-            valueContains: null,
-            statuses: [OrganizationStatus.Active],
-          }).then((data) => data.totalCount ?? 0),
+          getOrganisations(
+            {
+              pageNumber: 1,
+              pageSize: 1,
+              valueContains: null,
+              statuses: [OrganizationStatus.Active],
+            },
+            context,
+          ).then((data) => data.totalCount ?? 0),
       }),
       queryClient.prefetchQuery({
         queryKey: ["Organisations_TotalCount", OrganizationStatus.Inactive],
         queryFn: () =>
-          getOrganisations({
-            pageNumber: 1,
-            pageSize: 1,
-            valueContains: null,
-            statuses: [OrganizationStatus.Inactive],
-          }).then((data) => data.totalCount ?? 0),
+          getOrganisations(
+            {
+              pageNumber: 1,
+              pageSize: 1,
+              valueContains: null,
+              statuses: [OrganizationStatus.Inactive],
+            },
+            context,
+          ).then((data) => data.totalCount ?? 0),
       }),
       queryClient.prefetchQuery({
         queryKey: ["Organisations_TotalCount", OrganizationStatus.Declined],
         queryFn: () =>
-          getOrganisations({
-            pageNumber: 1,
-            pageSize: 1,
-            valueContains: null,
-            statuses: [OrganizationStatus.Declined],
-          }).then((data) => data.totalCount ?? 0),
+          getOrganisations(
+            {
+              pageNumber: 1,
+              pageSize: 1,
+              valueContains: null,
+              statuses: [OrganizationStatus.Declined],
+            },
+            context,
+          ).then((data) => data.totalCount ?? 0),
       }),
       queryClient.prefetchQuery({
         queryKey: ["Organisations_TotalCount", OrganizationStatus.Deleted],
         queryFn: () =>
-          getOrganisations({
-            pageNumber: 1,
-            pageSize: 1,
-            valueContains: null,
-            statuses: [OrganizationStatus.Deleted],
-          }).then((data) => data.totalCount ?? 0),
+          getOrganisations(
+            {
+              pageNumber: 1,
+              pageSize: 1,
+              valueContains: null,
+              statuses: [OrganizationStatus.Deleted],
+            },
+            context,
+          ).then((data) => data.totalCount ?? 0),
       }),
     ]);
   } catch (error) {

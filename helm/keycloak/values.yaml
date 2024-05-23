@@ -331,12 +331,12 @@ keycloak:
 
   resources:
     requests:
-      cpu: 500m
-      memory: 1536Mi
+      cpu: 100m
+      memory: 768Mi
     limits:
       cpu: 3000m
       # This must _always_ be in `Mi` to calculate the max JVM size
-      memory: 1536Mi
+      memory: 768Mi
 
   extraVolumes: |-
     - name: providers
