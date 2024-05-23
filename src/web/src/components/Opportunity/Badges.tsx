@@ -48,20 +48,24 @@ const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
         </div>
       )}
 
-      {opportunity?.participantLimitReached && (
-        <div className="badge bg-red-200 text-red-400">
-          <IoMdWarning className="h-4 w-4" />
+      {opportunity?.participantLimit != null && (
+        <>
+          {opportunity?.participantLimitReached && (
+            <div className="badge bg-red-200 text-red-400">
+              <IoMdWarning className="h-4 w-4" />
 
-          <span className="ml-1 text-xs">Limit Reached</span>
-        </div>
-      )}
+              <span className="ml-1 text-xs">Limit Reached</span>
+            </div>
+          )}
 
-      {!opportunity?.participantLimitReached && (
-        <div className="badge bg-blue-light text-blue">
-          <IoMdPerson className="h-4 w-4" />
+          {!opportunity?.participantLimitReached && (
+            <div className="badge bg-blue-light text-blue">
+              <IoMdPerson className="h-4 w-4" />
 
-          <span className="ml-1 text-xs">{spotsLeft} Spots left</span>
-        </div>
+              <span className="ml-1 text-xs">{spotsLeft} Spots left</span>
+            </div>
+          )}
+        </>
       )}
 
       {opportunity?.type && (
