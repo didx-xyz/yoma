@@ -50,6 +50,7 @@ import {
   type MyOpportunitySearchResults,
   VerificationStatus,
   type MyOpportunityResponseVerifyFinalizeBatch,
+  type MyOpportunitySearchFilterAdmin,
 } from "~/api/models/myOpportunity";
 import ReactModal from "react-modal";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -72,6 +73,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import MobileCard from "~/components/Organisation/Verifications/MobileCard";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import React from "react";
+import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -103,48 +105,49 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const theme = getThemeFromRole(session, id);
 
   try {
+    // NB: disabled as we getting 502 bat gateway error on stage
     // 👇 prefetch queries on server
-    const dataVerifications = await searchMyOpportunitiesAdmin(
-      {
-        organizations: [id],
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        opportunity: opportunity?.toString() ?? null,
-        userId: null,
-        valueContains: query?.toString() ?? null,
-        action: Action.Verification,
-        verificationStatuses: verificationStatus
-          ? [parseInt(verificationStatus.toString())]
-          : [
-              VerificationStatus.Pending,
-              VerificationStatus.Completed,
-              VerificationStatus.Rejected,
-            ],
-      },
-      context,
-    );
-    const dataOpportunitiesForVerification = (
-      await getOpportunitiesForVerification([id], undefined, context)
-    ).map((x) => ({
-      value: x.id,
-      label: x.title,
-    }));
-
-    await Promise.all([
-      await queryClient.prefetchQuery({
-        queryKey: [
-          "Verifications",
-          id,
-          `${query?.toString()}_${opportunity?.toString()}_${verificationStatus}_${page?.toString()}`,
-        ],
-        queryFn: () => dataVerifications,
-      }),
-      await queryClient.prefetchQuery({
-        queryKey: ["OpportunitiesForVerification", id],
-        queryFn: () => dataOpportunitiesForVerification,
-      }),
-    ]);
+    // const dataVerifications = await searchMyOpportunitiesAdmin(
+    //   {
+    //     organizations: [id],
+    //     pageNumber: page ? parseInt(page.toString()) : 1,
+    //     pageSize: PAGE_SIZE,
+    //     opportunity: opportunity?.toString() ?? null,
+    //     userId: null,
+    //     valueContains: query?.toString() ?? null,
+    //     action: Action.Verification,
+    //     verificationStatuses: verificationStatus
+    //       ? [parseInt(verificationStatus.toString())]
+    //       : [
+    //           VerificationStatus.Pending,
+    //           VerificationStatus.Completed,
+    //           VerificationStatus.Rejected,
+    //         ],
+    //   },
+    //   context,
+    // );
+    // const dataOpportunitiesForVerification = (
+    //   await getOpportunitiesForVerification([id], undefined, context)
+    // ).map((x) => ({
+    //   value: x.id,
+    //   label: x.title,
+    // }));
+    // await Promise.all([
+    //   await queryClient.prefetchQuery({
+    //     queryKey: [
+    //       "Verifications",
+    //       id,
+    //       `${query?.toString()}_${opportunity?.toString()}_${verificationStatus}_${page?.toString()}`,
+    //     ],
+    //     queryFn: () => dataVerifications,
+    //   }),
+    //   await queryClient.prefetchQuery({
+    //     queryKey: ["OpportunitiesForVerification", id],
+    //     queryFn: () => dataOpportunitiesForVerification,
+    //   }),
+    // ]);
   } catch (error) {
+    console.error(error);
     if (axios.isAxiosError(error) && error.response?.status) {
       if (error.response.status === 404) {
         return {
@@ -162,6 +165,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       id: id ?? null,
       query: query ?? null,
       opportunity: opportunity ?? null,
+      verificationStatus: verificationStatus ?? null,
       page: page ?? "1",
       theme: theme,
       error: errorCode,
@@ -184,7 +188,6 @@ const OpportunityVerifications: NextPageWithLayout<{
   const router = useRouter();
   const { returnUrl } = router.query;
   const queryClient = useQueryClient();
-  const [selectedOption, setSelectedOption] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [modalVerifyVisible, setModalVerifyVisible] = useState(false);
@@ -203,68 +206,38 @@ const OpportunityVerifications: NextPageWithLayout<{
   const [verificationResponse, setVerificationResponse] =
     useState<MyOpportunityResponseVerifyFinalizeBatch | null>(null);
 
-  const dataBulkActions: SelectOption[] = [
-    { value: "Approve", label: "Approve" },
-    { value: "Reject", label: "Reject" },
-  ];
-  const lookups_verificationStatuses: SelectOption[] = [
-    { value: "1", label: "Pending" },
-    { value: "2", label: "Rejected" },
-    { value: "3", label: "Completed" },
-  ];
-
   // search filter state
-  const searchFilter = useMemo(
+  const searchFilter = useMemo<MyOpportunitySearchFilterAdmin>(
     () => ({
-      pageNumber: 1,
-      pageSize: 1,
-      valueContains: null,
+      pageNumber: page ? parseInt(page.toString()) : 1,
+      pageSize: PAGE_SIZE,
+      valueContains: query?.toString() ?? null,
       organizations: [id],
       opportunity: opportunity?.toString() ?? null,
       userId: null,
       action: Action.Verification,
-      verificationStatuses:
-        verificationStatus != undefined
-          ? lookups_verificationStatuses
-              .filter(
-                (y) =>
-                  y.label.toLowerCase() === verificationStatus.toLowerCase(),
-              )
-              .map((item) => item.value)
-          : null,
+      verificationStatuses: verificationStatus
+        ? verificationStatus.toString().split(",")
+        : [
+            VerificationStatus.Pending,
+            VerificationStatus.Completed,
+            VerificationStatus.Rejected,
+          ],
     }),
-    [page, query, verificationStatus, lookups_verificationStatuses],
+    [id, opportunity, page, query, verificationStatus],
   );
 
   // 👇 use prefetched queries from server
-  const { data: data } = useQuery<MyOpportunitySearchResults>({
-    queryKey: [
-      "Verifications",
-      id,
-      `${query?.toString()}_${opportunity?.toString()}_${verificationStatus}_${page?.toString()}`,
-    ],
-    queryFn: () =>
-      searchMyOpportunitiesAdmin(
-        searchFilter,
-        //   {
-        //   organizations: [id],
-        //   pageNumber: page ? parseInt(page.toString()) : 1,
-        //   pageSize: PAGE_SIZE,
-        //   opportunity: opportunity?.toString() ?? null,
-        //   userId: null,
-        //   valueContains: query?.toString() ?? null,
-        //   action: Action.Verification,
-        //   verificationStatuses: verificationStatus
-        //     ? [parseInt(verificationStatus.toString())]
-        //     : [
-        //         VerificationStatus.Pending,
-        //         VerificationStatus.Completed,
-        //         VerificationStatus.Rejected,
-        //       ],
-        // }
-      ),
-    enabled: !error,
-  });
+  const { data: data, isLoading: isLoadingData } =
+    useQuery<MyOpportunitySearchResults>({
+      queryKey: [
+        "Verifications",
+        id,
+        `${query?.toString()}_${opportunity?.toString()}_${verificationStatus}_${page?.toString()}`,
+      ],
+      queryFn: () => searchMyOpportunitiesAdmin(searchFilter),
+      enabled: !error,
+    });
   const { data: dataOpportunitiesForVerification } = useQuery<SelectOption[]>({
     queryKey: ["OpportunitiesForVerification", id],
     queryFn: async () =>
@@ -276,27 +249,43 @@ const OpportunityVerifications: NextPageWithLayout<{
   });
 
   const { data: totalCountAll } = useQuery<number>({
-    queryKey: ["Verifications", id, "TotalCount", null],
+    queryKey: [
+      "Verifications",
+      id,
+      "TotalCount",
+      null,
+      `${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
+    ],
     queryFn: () =>
       searchMyOpportunitiesAdmin({
         pageNumber: 1,
         pageSize: 1,
-        valueContains: null,
+        valueContains: query?.toString() ?? null,
         organizations: [id],
         opportunity: opportunity?.toString() ?? null,
         userId: null,
         action: Action.Verification,
-        verificationStatuses: null,
+        verificationStatuses: [
+          VerificationStatus.Pending,
+          VerificationStatus.Completed,
+          VerificationStatus.Rejected,
+        ],
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountPending } = useQuery<number>({
-    queryKey: ["Verifications", id, "TotalCount", VerificationStatus.Pending],
+    queryKey: [
+      "Verifications",
+      id,
+      "TotalCount",
+      VerificationStatus.Pending,
+      `${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
+    ],
     queryFn: () =>
       searchMyOpportunitiesAdmin({
         pageNumber: 1,
         pageSize: 1,
-        valueContains: null,
+        valueContains: query?.toString() ?? null,
         organizations: [id],
         opportunity: opportunity?.toString() ?? null,
         userId: null,
@@ -306,12 +295,18 @@ const OpportunityVerifications: NextPageWithLayout<{
     enabled: !error,
   });
   const { data: totalCountCompleted } = useQuery<number>({
-    queryKey: ["Verifications", id, "TotalCount", VerificationStatus.Completed],
+    queryKey: [
+      "Verifications",
+      id,
+      "TotalCount",
+      VerificationStatus.Completed,
+      `${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
+    ],
     queryFn: () =>
       searchMyOpportunitiesAdmin({
         pageNumber: 1,
         pageSize: 1,
-        valueContains: null,
+        valueContains: query?.toString() ?? null,
         organizations: [id],
         opportunity: opportunity?.toString() ?? null,
         userId: null,
@@ -321,12 +316,18 @@ const OpportunityVerifications: NextPageWithLayout<{
     enabled: !error,
   });
   const { data: totalCountRejected } = useQuery<number>({
-    queryKey: ["Verifications", id, "TotalCount", VerificationStatus.Rejected],
+    queryKey: [
+      "Verifications",
+      id,
+      "TotalCount",
+      VerificationStatus.Rejected,
+      `${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
+    ],
     queryFn: () =>
       searchMyOpportunitiesAdmin({
         pageNumber: 1,
         pageSize: 1,
-        valueContains: null,
+        valueContains: query?.toString() ?? null,
         organizations: [id],
         opportunity: opportunity?.toString() ?? null,
         userId: null,
@@ -336,10 +337,66 @@ const OpportunityVerifications: NextPageWithLayout<{
     enabled: !error,
   });
 
+  // 🎈 FUNCTIONS
+  const getSearchFilterAsQueryString = useCallback(
+    (searchFilter: MyOpportunitySearchFilterAdmin) => {
+      if (!searchFilter) return null;
+
+      // construct querystring parameters from filter
+      const params = new URLSearchParams();
+
+      if (
+        searchFilter.valueContains !== undefined &&
+        searchFilter.valueContains !== null &&
+        searchFilter.valueContains.length > 0
+      )
+        params.append("query", searchFilter.valueContains);
+
+      if (
+        searchFilter?.opportunity?.length !== undefined &&
+        searchFilter.opportunity.length > 0
+      )
+        params.append("opportunity", searchFilter.opportunity);
+
+      if (
+        searchFilter?.verificationStatuses !== undefined &&
+        searchFilter?.verificationStatuses !== null &&
+        searchFilter?.verificationStatuses.length > 0
+      )
+        params.append(
+          "verificationStatus",
+          searchFilter?.verificationStatuses.join(","),
+        );
+
+      if (
+        searchFilter.pageNumber !== null &&
+        searchFilter.pageNumber !== undefined &&
+        searchFilter.pageNumber !== 1
+      )
+        params.append("page", searchFilter.pageNumber.toString());
+
+      if (params.size === 0) return null;
+      return params;
+    },
+    [],
+  );
+
+  const redirectWithSearchFilterParams = useCallback(
+    (filter: MyOpportunitySearchFilterAdmin) => {
+      let url = `/organisations/${id}/verifications`;
+      const params = getSearchFilterAsQueryString(filter);
+      if (params != null && params.size > 0)
+        url = `${url}?${params.toString()}`;
+
+      if (url != router.asPath)
+        void router.push(url, undefined, { scroll: false });
+    },
+    [id, router, getSearchFilterAsQueryString],
+  );
+
   //#region Click Handlers
   const onChangeBulkAction = useCallback(
     (approve: boolean) => {
-      setSelectedOption(null);
       setVerifyComments("");
 
       if (selectedRows == null || selectedRows.length === 0) {
@@ -358,7 +415,6 @@ const OpportunityVerifications: NextPageWithLayout<{
     [
       selectedRows,
       setModalVerifyVisible,
-      setSelectedOption,
       setBulkActionApprove,
       setTempSelectedRows,
       setVerifyComments,
@@ -483,64 +539,37 @@ const OpportunityVerifications: NextPageWithLayout<{
   //#region Filter Handlers
   const onSearch = useCallback(
     (query: string) => {
-      void router.push({
-        pathname: `/organisations/${id}/verifications`,
-        query: {
-          ...(query && query.length > 2 && { query }),
-          ...(opportunity && { opportunity }),
-          ...(verificationStatus && { verificationStatus }),
-          ...(returnUrl && { returnUrl }),
-        },
-      });
+      searchFilter.pageNumber = 1;
+      searchFilter.valueContains = query.length > 2 ? query : null;
+      redirectWithSearchFilterParams(searchFilter);
     },
-    [router, id, opportunity, returnUrl, verificationStatus],
+    [searchFilter, redirectWithSearchFilterParams],
   );
   const onFilterOpportunity = useCallback(
     (opportunityId: string) => {
-      void router.push({
-        pathname: `/organisations/${id}/verifications`,
-        query: {
-          ...(query && { query }),
-          ...(opportunityId && { opportunity: opportunityId }),
-          ...(verificationStatus && { verificationStatus }),
-          ...(returnUrl && { returnUrl }),
-        },
-      });
+      searchFilter.pageNumber = 1;
+      searchFilter.opportunity = opportunityId;
+      redirectWithSearchFilterParams(searchFilter);
     },
-    [router, id, query, returnUrl, verificationStatus],
+    [searchFilter, redirectWithSearchFilterParams],
   );
   const onFilterVerificationStatus = useCallback(
     (verificationStatus: string) => {
-      void router.push({
-        pathname: `/organisations/${id}/verifications`,
-        query: {
-          ...(query && { query }),
-          ...(opportunity && { opportunity }),
-          ...(verificationStatus && { verificationStatus }),
-          ...(returnUrl && { returnUrl }),
-        },
-      });
+      searchFilter.pageNumber = 1;
+      searchFilter.verificationStatuses = verificationStatus
+        ? verificationStatus.split(",")
+        : null;
+      redirectWithSearchFilterParams(searchFilter);
     },
-    [router, id, query, returnUrl, opportunity],
+    [searchFilter, redirectWithSearchFilterParams],
   );
 
   const handlePagerChange = useCallback(
     (value: number) => {
-      void router.push({
-        pathname: `/organisations/${id}/verifications`,
-        query: {
-          ...(query && { query }),
-          ...(opportunity && { opportunity }),
-          ...(verificationStatus && { verificationStatus }),
-          ...(value && { page: value }),
-          ...(returnUrl && { returnUrl }),
-        },
-      });
-
-      // reset scroll position
-      window.scrollTo(0, 0);
+      searchFilter.pageNumber = value;
+      redirectWithSearchFilterParams(searchFilter);
     },
-    [router, query, id, opportunity, verificationStatus, returnUrl],
+    [searchFilter, redirectWithSearchFilterParams],
   );
   //#endregion Filter Handlers
 
@@ -562,7 +591,7 @@ const OpportunityVerifications: NextPageWithLayout<{
 
       {isLoading && <Loading />}
 
-      <PageBackground className="h-[14.5rem] md:h-[18rem]" />
+      <PageBackground className="h-[21rem] md:h-[17rem]" />
 
       {/* MODAL DIALOG FOR VERIFY */}
       <ReactModal
@@ -611,10 +640,10 @@ const OpportunityVerifications: NextPageWithLayout<{
           </div>
 
           {/* BUTTONS */}
-          <div className=" flex flex-row place-items-center justify-center px-6 py-4 pt-2">
+          <div className="flex flex-row place-items-center justify-center px-6 py-4 pt-2">
             <div className="flex flex-grow">
               <button
-                className="btn-default btn btn-sm flex-nowrap rounded-full py-5"
+                className="btn btn-sm flex-nowrap border-black bg-white py-5 text-black hover:bg-black hover:text-white"
                 onClick={onCloseVerificationModal}
               >
                 <IoMdClose className="h-6 w-6" />
@@ -624,7 +653,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             <div className="flex gap-4">
               {(bulkActionApprove == null || !bulkActionApprove) && (
                 <button
-                  className="btn btn-sm flex-nowrap rounded-full border-red-500 bg-white py-5 text-red-500"
+                  className="btn btn-sm flex-nowrap border-red-500 bg-white py-5 text-red-500 hover:bg-red-500 hover:text-white"
                   onClick={() => onVerify(false)}
                 >
                   <IoMdThumbsDown className="h-6 w-6" />
@@ -634,7 +663,7 @@ const OpportunityVerifications: NextPageWithLayout<{
 
               {(bulkActionApprove == null || bulkActionApprove) && (
                 <button
-                  className="btn btn-sm flex-nowrap rounded-full bg-green py-5 text-white hover:text-green"
+                  className="btn btn-sm flex-nowrap border-green bg-white py-5 text-green hover:bg-green hover:text-white"
                   onClick={() => onVerify(true)}
                 >
                   <IoMdThumbsUp className="h-6 w-6" />
@@ -755,14 +784,62 @@ const OpportunityVerifications: NextPageWithLayout<{
       </ReactModal>
 
       {/* PAGE */}
-      <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
+      <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[4.9rem]">
         <div className="flex flex-col gap-4 py-4">
-          <h3 className="mb-6 mt-3 flex items-center text-3xl font-semibold tracking-normal text-white md:mb-9 md:mt-0">
+          <h3 className="flex items-center text-3xl font-semibold tracking-normal text-white">
             Verifications <LimitedFunctionalityBadge />
           </h3>
+          {/* FILTERS */}
+          <div>
+            <div className="flex flex-col gap-4 md:flex-row">
+              <div className="flex flex-grow flex-col items-center justify-start gap-4 md:flex-row">
+                <div className="text-sm font-semibold text-white">
+                  Filter by:
+                </div>
 
+                {/* OPPORTUNITIES FILTER */}
+                <div className="w-full md:w-72">
+                  <Select
+                    instanceId={"opportunities"}
+                    classNames={{
+                      control: () =>
+                        "input input-xs md:w-[330px] !border-0 !rounded-lg",
+                    }}
+                    options={dataOpportunitiesForVerification}
+                    onChange={(val) => onFilterOpportunity(val?.value ?? "")}
+                    value={dataOpportunitiesForVerification?.find(
+                      (c) => c.value === opportunity,
+                    )}
+                    placeholder="Opportunities"
+                    isClearable={true}
+                  />
+                </div>
+              </div>
+
+              {/* SEARCH INPUT */}
+              <SearchInput defaultValue={query} onSearch={onSearch} />
+            </div>
+          </div>
+          {/* FILTER BADGES */}
+          {/* <FilterBadges
+            searchFilter={searchFilter}
+            excludeKeys={[
+              "pageNumber",
+              "pageSize",
+              "userId",
+              "organizations",
+              "action",
+              "verificationStatuses",
+            ]}
+            resolveValue={(key, value) => {
+
+              return value;
+            }}
+            //onSubmit={(e) => onSubmitFilter(e)}
+            onSubmit={(e) => {}}
+          /> */}
           {/* TABBED NAVIGATION */}
-          <div className="z-10 flex justify-center md:justify-start">
+          <div className="z-10x flex justify-center md:justify-start">
             <div className="flex w-full gap-2">
               {/* LEFT BUTTON MOBILE */}
               <div className="-ml-1 mb-1 flex items-center md:hidden">
@@ -791,6 +868,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                   </svg>
                 </button>
               </div>
+
               {/* TABS */}
               <div
                 className="tabs tabs-bordered w-full gap-2 overflow-x-scroll md:overflow-hidden"
@@ -798,9 +876,9 @@ const OpportunityVerifications: NextPageWithLayout<{
               >
                 <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
                   <ul className="-mb-px flex w-full justify-between gap-4 overflow-x-auto md:justify-start md:gap-0">
-                    <li className=" md:w-24">
-                      <Link
-                        href={`/organisations/${id}/verifications`}
+                    <li className="w-1/4 md:w-20">
+                      <button
+                        onClick={() => onFilterVerificationStatus("")}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           !verificationStatus
                             ? "active border-orange"
@@ -814,11 +892,11 @@ const OpportunityVerifications: NextPageWithLayout<{
                             {totalCountAll}
                           </div>
                         )}
-                      </Link>
+                      </button>
                     </li>
-                    <li className=" md:w-24">
-                      <Link
-                        href={`/organisations/${id}/verifications?verificationStatus=Pending`}
+                    <li className="w-1/4 md:w-28">
+                      <button
+                        onClick={() => onFilterVerificationStatus("Pending")}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           verificationStatus === "Pending"
                             ? "active border-orange"
@@ -832,11 +910,11 @@ const OpportunityVerifications: NextPageWithLayout<{
                             {totalCountPending}
                           </div>
                         )}
-                      </Link>
+                      </button>
                     </li>
-                    <li className=" md:w-24">
-                      <Link
-                        href={`/organisations/${id}/verifications?verificationStatus=Completed`}
+                    <li className="w-1/4 md:w-28">
+                      <button
+                        onClick={() => onFilterVerificationStatus("Completed")}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           verificationStatus === "Completed"
                             ? "active border-orange"
@@ -850,11 +928,11 @@ const OpportunityVerifications: NextPageWithLayout<{
                             {totalCountCompleted}
                           </div>
                         )}
-                      </Link>
+                      </button>
                     </li>
-                    <li className=" md:w-24">
-                      <Link
-                        href={`/organisations/${id}/verifications?verificationStatus=Rejected`}
+                    <li className="w-1/4 md:w-28">
+                      <button
+                        onClick={() => onFilterVerificationStatus("Rejected")}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           verificationStatus === "Rejected"
                             ? "active border-orange"
@@ -868,7 +946,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                             {totalCountRejected}
                           </div>
                         )}
-                      </Link>
+                      </button>
                     </li>
                   </ul>
                 </div>
@@ -904,408 +982,181 @@ const OpportunityVerifications: NextPageWithLayout<{
             </div>
           </div>
 
-          {/* SEARCH INPUT */}
-          <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
-            {/* <SearchInput defaultValue={query} onSearch={onSearchInputSubmit} /> */}
-
-            <div className="mb-4 flex flex-grow flex-col flex-wrap justify-end gap-4 md:flex-row">
-              {/* STATUS FILTER */}
-              <Select
-                classNames={{
-                  control: () =>
-                    "input input-xs md:w-[160px] !border-0 !rounded-lg",
-                }}
-                options={lookups_verificationStatuses}
-                onChange={(val) => onFilterVerificationStatus(val?.value ?? "")}
-                value={lookups_verificationStatuses?.find(
-                  (c) => c.value === verificationStatus,
-                )}
-                placeholder="Status"
-                isClearable={true}
-              />
-
-              {/* OPPORTUNITIES FILTER */}
-              <Select
-                classNames={{
-                  control: () =>
-                    "input input-xs md:w-[330px] !border-0 !rounded-lg",
-                }}
-                options={dataOpportunitiesForVerification}
-                onChange={(val) => onFilterOpportunity(val?.value ?? "")}
-                value={dataOpportunitiesForVerification?.find(
-                  (c) => c.value === opportunity,
-                )}
-                placeholder="Opportunities"
-                isClearable={true}
-              />
-
-              {/* BULK ACTIONS */}
-              <Select
-                classNames={{
-                  control: () =>
-                    "input input-xs md:w-[160px] !border-0 !rounded-lg",
-                }}
-                options={dataBulkActions}
-                onChange={(val) => {
-                  onChangeBulkAction(val?.value == "Approve");
-                }}
-                value={selectedOption}
-                placeholder="Bulk Actions"
-              />
-
-              <SearchInput defaultValue={query} onSearch={onSearch} />
-            </div>
-          </div>
+          {/* BUTTONS */}
+          {(!verificationStatus || verificationStatus === "Pending") &&
+            !isLoadingData &&
+            data &&
+            data.items?.length > 0 && (
+              <div className="flex flex-row justify-center gap-2 md:justify-end">
+                <button
+                  className="btn btn-sm flex-nowrap border-green bg-white text-green hover:bg-green hover:text-white"
+                  onClick={() => onChangeBulkAction(true)}
+                >
+                  <IoMdThumbsUp className="h-6 w-6" />
+                  Approve
+                </button>
+                <button
+                  className="btn btn-sm flex-nowrap border-red-500 bg-white text-red-500 hover:bg-red-500 hover:text-white"
+                  onClick={() => onChangeBulkAction(false)}
+                >
+                  <IoMdThumbsDown className="h-6 w-6" />
+                  Reject
+                </button>
+              </div>
+            )}
         </div>
 
-        <div className="rounded-lg md:p-4">
-          {/* NO RESULTS */}
-          {data && data.totalCount === 0 && (
-            <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
-              <NoRowsMessage
-                title={"No results found"}
-                description={"Please try refining your search query."}
-              />
-            </div>
-          )}
-          {/* RESULTS */}
-          {/* {data && data.items.length > 0 && (
-            <div className="grid w-full place-items-center">
-              <div className="xs:grid-cols-1 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {data.items.map((item: any) => (
-                  <OrganisationCardComponent
-                    key={`OrganisationCardComponent_${item.id}`}
-                    item={item}
-                    user={user}
-                    onUpdateStatus={updateStatus}
-                    returnUrl={router.asPath}
-                  />
-                ))}
+        {isLoadingData && (
+          <div className="flex h-fit flex-col items-center rounded-lg bg-white p-8 md:pb-16">
+            <LoadingSkeleton />
+          </div>
+        )}
+
+        {/* MAIN CONTENT */}
+        {!isLoadingData && (
+          <div>
+            {/* NO RESULTS */}
+            {data && data.totalCount === 0 && (
+              <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
+                <NoRowsMessage
+                  title={"No results found"}
+                  description={"Please try refining your search query."}
+                />
               </div>
-            </div>
-          )} */}
-          verificationStatus: [{verificationStatus}]{/* RESULTS */}
-          {data && data.items?.length > 0 && (
-            <div className="overflow-x-auto md:rounded-lg md:shadow-custom">
-              {/* DESKTOP */}
-              <table className="hidden bg-white md:table md:rounded-lg">
-                <thead className="text-sm">
-                  <tr className="!border-gray bg-gray-light text-gray-dark">
-                    <th className="w-[35px] !py-6 pr-4">
-                      <input
-                        type="checkbox"
-                        className="checkbox-primary checkbox checkbox-sm rounded border-gray-dark bg-white"
-                        checked={selectedRows?.length === data.items?.length}
-                        onChange={handleAllSelect}
-                      />
-                    </th>
-                    <th className="pl-0">Student</th>
-                    <th>Opportunity</th>
-                    <th className="w-[195px]">Date connected</th>
-                    <th className="">Verified</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.items.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="!h-[70px] !border-gray bg-white text-gray-dark"
-                    >
-                      <td className="w-[35px] pt-4">
+            )}
+
+            {/* RESULTS */}
+            {data && data.items?.length > 0 && (
+              <div className="overflow-x-auto md:rounded-lg md:shadow-custom">
+                {/* DESKTOP */}
+                <table className="hidden bg-white md:table md:rounded-lg">
+                  <thead className="text-sm">
+                    <tr className="!border-gray bg-gray-light text-gray-dark">
+                      <th className="w-[35px] !py-6 pr-4">
                         <input
                           type="checkbox"
                           className="checkbox-primary checkbox checkbox-sm rounded border-gray-dark bg-white"
-                          checked={selectedRows?.some((x) => x.id == item.id)}
-                          onChange={(e) => handleRowSelect(e, item)}
+                          checked={selectedRows?.length === data.items?.length}
+                          onChange={handleAllSelect}
                         />
-                      </td>
-                      <td className="w-[200px] pl-0">{item.userDisplayName}</td>
-                      <td className="w-[420px]">
-                        <Link
-                          className="line-clamp-2"
-                          href={`/organisations/${id}/opportunities/${
-                            item.opportunityId
-                          }/info${`?returnUrl=${encodeURIComponent(
-                            getSafeUrl(returnUrl?.toString(), router.asPath),
-                          )}`}`}
-                        >
-                          {item.opportunityTitle}
-                        </Link>
-                      </td>
-                      <td className="w-[185px]">
-                        {item.dateStart && (
-                          <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                            {item.dateStart}
-                          </Moment>
-                        )}
-                      </td>
-                      <td className="w-[120px]">
-                        <div className="flex justify-start">
-                          {item.verificationStatus &&
-                            item.verificationStatus == "Pending" && (
-                              <button
-                                type="button"
-                                className="flex flex-row"
-                                onClick={() => {
-                                  setBulkActionApprove(null);
-                                  setTempSelectedRows([item]);
-                                  setModalVerifyVisible(true);
-                                }}
-                              >
-                                <IoMdAlert className="mr-2 h-6 w-6 text-yellow" />
-                                Pending
-                              </button>
-                            )}
-
-                          {/* Status Badges */}
-                          {item.verificationStatus &&
-                            item.verificationStatus == "Completed" && (
-                              <div className="flex flex-row">
-                                <IoMdCheckmark className="mr-2 h-6 w-6  text-green" />
-                                Completed
-                              </div>
-                            )}
-                          {item.verificationStatus &&
-                            item.verificationStatus == "Rejected" && (
-                              <div className="flex flex-row">
-                                <IoMdClose className="mr-2 h-6 w-6  text-red-400" />
-                                Rejected
-                              </div>
-                            )}
-                        </div>
-                      </td>
+                      </th>
+                      <th className="pl-0">Student</th>
+                      <th>Opportunity</th>
+                      <th className="w-[195px]">Date connected</th>
+                      <th className="">Verified</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {data.items.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="!h-[70px] !border-gray bg-white text-gray-dark"
+                      >
+                        <td className="w-[35px] pt-4">
+                          <input
+                            type="checkbox"
+                            className="checkbox-primary checkbox checkbox-sm rounded border-gray-dark bg-white"
+                            checked={selectedRows?.some((x) => x.id == item.id)}
+                            onChange={(e) => handleRowSelect(e, item)}
+                          />
+                        </td>
+                        <td className="w-[200px] pl-0">
+                          {item.userDisplayName}
+                        </td>
+                        <td className="w-[420px]">
+                          <Link
+                            className="line-clamp-2"
+                            href={`/organisations/${id}/opportunities/${
+                              item.opportunityId
+                            }/info${`?returnUrl=${encodeURIComponent(
+                              getSafeUrl(returnUrl?.toString(), router.asPath),
+                            )}`}`}
+                          >
+                            {item.opportunityTitle}
+                          </Link>
+                        </td>
+                        <td className="w-[185px]">
+                          {item.dateStart && (
+                            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                              {item.dateStart}
+                            </Moment>
+                          )}
+                        </td>
+                        <td className="w-[120px]">
+                          <div className="flex justify-start">
+                            {item.verificationStatus &&
+                              item.verificationStatus == "Pending" && (
+                                <button
+                                  type="button"
+                                  className="btn btn-sm flex-nowrap border-gray bg-white text-gray-dark hover:bg-gray hover:text-white"
+                                  onClick={() => {
+                                    setBulkActionApprove(null);
+                                    setTempSelectedRows([item]);
+                                    setModalVerifyVisible(true);
+                                  }}
+                                >
+                                  <IoMdAlert className="mr-2 h-6 w-6 text-yellow" />
+                                  Pending
+                                </button>
+                              )}
 
-              {/* MOBILE */}
-              <div className="my-4 space-y-4 md:hidden">
-                {data.items.map((item) => (
-                  <MobileCard
-                    key={`MobileCard_${item.id}`}
-                    item={item}
-                    handleRowSelect={handleRowSelect}
-                    selectedRows={selectedRows}
-                    returnUrl={returnUrl}
-                    id={id}
-                    onVerify={() => {
-                      setBulkActionApprove(null);
-                      setTempSelectedRows([item]);
-                      setModalVerifyVisible(true);
-                    }}
-                  />
-                ))}
+                            {/* Status Badges */}
+                            {item.verificationStatus &&
+                              item.verificationStatus == "Completed" && (
+                                <div className="flex flex-row">
+                                  <IoMdCheckmark className="mr-2 h-6 w-6  text-green" />
+                                  Completed
+                                </div>
+                              )}
+                            {item.verificationStatus &&
+                              item.verificationStatus == "Rejected" && (
+                                <div className="flex flex-row">
+                                  <IoMdClose className="mr-2 h-6 w-6  text-red-400" />
+                                  Rejected
+                                </div>
+                              )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* MOBILE */}
+                <div className="my-4 space-y-4 md:hidden">
+                  {data.items.map((item) => (
+                    <MobileCard
+                      key={`MobileCard_${item.id}`}
+                      item={item}
+                      handleRowSelect={handleRowSelect}
+                      selectedRows={selectedRows}
+                      returnUrl={returnUrl}
+                      id={id}
+                      onVerify={() => {
+                        setBulkActionApprove(null);
+                        setTempSelectedRows([item]);
+                        setModalVerifyVisible(true);
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
+            )}
+
+            {/* PAGINATION */}
+            <div className="mt-2 grid place-items-center justify-center">
+              <PaginationButtons
+                currentPage={page ? parseInt(page) : 1}
+                totalItems={data?.totalCount ?? 0}
+                pageSize={PAGE_SIZE}
+                onClick={handlePagerChange}
+                showPages={false}
+                showInfo={true}
+              />
             </div>
-          )}
-          {/* PAGINATION */}
-          <div className="mt-2 grid place-items-center justify-center">
-            <PaginationButtons
-              currentPage={page ? parseInt(page) : 1}
-              totalItems={data?.totalCount ?? 0}
-              pageSize={PAGE_SIZE}
-              onClick={handlePagerChange}
-              showPages={false}
-              showInfo={true}
-            />
           </div>
-        </div>
+        )}
       </div>
-
-      {/* PAGE */}
-      {/* <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[8rem]">
-        <div className="px-2 md:px-0">
-          <h3 className="mb-6 mt-3 flex items-center text-3xl font-semibold tracking-normal text-white md:mt-0">
-            Verifications <LimitedFunctionalityBadge />
-          </h3>
-
-          <div className="mt-4 flex flex-row items-center">
-            <div className="mb-4 flex flex-grow flex-col flex-wrap justify-end gap-4 md:flex-row">
-              {  STATUS FILTER
-              <Select
-                classNames={{
-                  control: () =>
-                    "input input-xs md:w-[160px] !border-0 !rounded-lg",
-                }}
-                options={lookups_verificationStatuses}
-                onChange={(val) => onFilterVerificationStatus(val?.value ?? "")}
-                value={lookups_verificationStatuses?.find(
-                  (c) => c.value === verificationStatus,
-                )}
-                placeholder="Status"
-                isClearable={true}
-              />
-
-               OPPORTUNITIES FILTER
-              <Select
-                classNames={{
-                  control: () =>
-                    "input input-xs md:w-[330px] !border-0 !rounded-lg",
-                }}
-                options={dataOpportunitiesForVerification}
-                onChange={(val) => onFilterOpportunity(val?.value ?? "")}
-                value={dataOpportunitiesForVerification?.find(
-                  (c) => c.value === opportunity,
-                )}
-                placeholder="Opportunities"
-                isClearable={true}
-              />
-
-                BULK ACTIONS
-              <Select
-                classNames={{
-                  control: () =>
-                    "input input-xs md:w-[160px] !border-0 !rounded-lg",
-                }}
-                options={dataBulkActions}
-                onChange={(val) => {
-                  onChangeBulkAction(val?.value == "Approve");
-                }}
-                value={selectedOption}
-                placeholder="Bulk Actions"
-              />
-
-              <SearchInput defaultValue={query} onSearch={onSearch} />
-            </div>
-          </div>
-
-          NO ROWS
-          {data && data.totalCount === 0 && (
-            <NoRowsMessage
-              title={"No results found"}
-              description={"Please try refining your search query."}
-            />
-          )}
-
-           GRID
-          {data && data.items?.length > 0 && (
-            <div className="overflow-x-auto md:rounded-lg md:shadow-custom">
-              DESKTOP
-              <table className="hidden bg-white md:table md:rounded-lg">
-                <thead className="text-sm">
-                  <tr className="!border-gray bg-gray-light text-gray-dark">
-                    <th className="w-[35px] !py-6 pr-4">
-                      <input
-                        type="checkbox"
-                        className="checkbox-primary checkbox checkbox-sm rounded border-gray-dark bg-white"
-                        checked={selectedRows?.length === data.items?.length}
-                        onChange={handleAllSelect}
-                      />
-                    </th>
-                    <th className="pl-0">Student</th>
-                    <th>Opportunity</th>
-                    <th className="w-[195px]">Date connected</th>
-                    <th className="">Verified</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.items.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="!h-[70px] !border-gray bg-white text-gray-dark"
-                    >
-                      <td className="w-[35px] pt-4">
-                        <input
-                          type="checkbox"
-                          className="checkbox-primary checkbox checkbox-sm rounded border-gray-dark bg-white"
-                          checked={selectedRows?.some((x) => x.id == item.id)}
-                          onChange={(e) => handleRowSelect(e, item)}
-                        />
-                      </td>
-                      <td className="w-[200px] pl-0">{item.userDisplayName}</td>
-                      <td className="w-[420px]">
-                        <Link
-                          className="line-clamp-2"
-                          href={`/organisations/${id}/opportunities/${
-                            item.opportunityId
-                          }/info${`?returnUrl=${encodeURIComponent(
-                            getSafeUrl(returnUrl?.toString(), router.asPath),
-                          )}`}`}
-                        >
-                          {item.opportunityTitle}
-                        </Link>
-                      </td>
-                      <td className="w-[185px]">
-                        {item.dateStart && (
-                          <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                            {item.dateStart}
-                          </Moment>
-                        )}
-                      </td>
-                      <td className="w-[120px]">
-                        <div className="flex justify-start">
-                          {item.verificationStatus &&
-                            item.verificationStatus == "Pending" && (
-                              <button
-                                type="button"
-                                className="flex flex-row"
-                                onClick={() => {
-                                  setBulkActionApprove(null);
-                                  setTempSelectedRows([item]);
-                                  setModalVerifyVisible(true);
-                                }}
-                              >
-                                <IoMdAlert className="mr-2 h-6 w-6 text-yellow" />
-                                Pending
-                              </button>
-                            )}
-
-                            Status Badges
-                          {item.verificationStatus &&
-                            item.verificationStatus == "Completed" && (
-                              <div className="flex flex-row">
-                                <IoMdCheckmark className="mr-2 h-6 w-6  text-green" />
-                                Completed
-                              </div>
-                            )}
-                          {item.verificationStatus &&
-                            item.verificationStatus == "Rejected" && (
-                              <div className="flex flex-row">
-                                <IoMdClose className="mr-2 h-6 w-6  text-red-400" />
-                                Rejected
-                              </div>
-                            )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-                MOBILE
-              <div className="my-4 space-y-4 md:hidden">
-                {data.items.map((item) => (
-                  <MobileCard
-                    key={`MobileCard_${item.id}`}
-                    item={item}
-                    handleRowSelect={handleRowSelect}
-                    selectedRows={selectedRows}
-                    returnUrl={returnUrl}
-                    id={id}
-                    onVerify={() => {
-                      setBulkActionApprove(null);
-                      setTempSelectedRows([item]);
-                      setModalVerifyVisible(true);
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-           PAGINATION
-          <div className="mt-2 grid place-items-center justify-center">
-            <PaginationButtons
-              currentPage={page ? parseInt(page) : 1}
-              totalItems={data?.totalCount ?? 0}
-              pageSize={PAGE_SIZE}
-              onClick={handlePagerChange}
-              showPages={false}
-            />
-          </div>
-        </div>
-      </div> */}
     </>
   );
 };
