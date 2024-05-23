@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.Extensions.Logging;
 
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {

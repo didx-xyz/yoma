@@ -2,6 +2,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Lookups.Helpers;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Models;
 
@@ -59,13 +60,17 @@ namespace Yoma.Core.Domain.Lookups.Services
     public List<TimeInterval> List()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return [.. _timeIntervalRepository.Query().OrderBy(o => o.Name)];
+      {
+        var items = _timeIntervalRepository.Query().ToList();
+        return items.OrderBy(o => TimeIntervalHelper.GetOrder(o.Name)).ToList();
+      }
 
       var result = _memoryCache.GetOrCreate(nameof(TimeInterval), entry =>
       {
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-        return _timeIntervalRepository.Query().OrderBy(o => o.Name).ToList();
+        var items = _timeIntervalRepository.Query().ToList();
+        return items.OrderBy(o => TimeIntervalHelper.GetOrder(o.Name)).ToList();
       }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(TimeInterval)}s'");
       return result;
     }

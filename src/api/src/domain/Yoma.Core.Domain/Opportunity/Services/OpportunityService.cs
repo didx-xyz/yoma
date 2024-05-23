@@ -1024,7 +1024,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (result.DateEnd.HasValue)
       {
         var commitmentIntervalInDays = result.TimeIntervalToDays();
-        var dateEndMin = result.DateStart.AddDays(commitmentIntervalInDays);
+        var dateEndMin = result.DateStart.AddDays(commitmentIntervalInDays - 1); //count today as the 1st day
         if (dateEndMin > result.DateEnd.Value)
           throw new ValidationException($"The end date for the opportunity must be on or after {dateEndMin.Date}, based on the specified start date and commitment interval");
       }
