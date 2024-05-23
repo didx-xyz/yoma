@@ -646,7 +646,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     public Dictionary<Guid, int>? ListAggregatedOpportunityByCompleted(bool includeExpired)
     {
       var actionId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
-      var verificationStatusId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Completed.ToString()).Id; 
+      var verificationStatusId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Completed.ToString()).Id;
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var statuses = new List<Status> { Status.Active };
       if (includeExpired) statuses.Add(Status.Expired);
@@ -654,8 +654,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var query = _myOpportunityRepository.Query();
 
       query = query.Where(o => o.ActionId == actionId);
-      query = query.Where(o => o.VerificationStatusId == verificationStatusId); 
-      query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId); 
+      query = query.Where(o => o.VerificationStatusId == verificationStatusId);
+      query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
 
       var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
       query = query.Where(o => statusIds.Contains(o.OpportunityStatusId));
