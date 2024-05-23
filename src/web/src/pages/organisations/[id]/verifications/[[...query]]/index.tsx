@@ -700,73 +700,64 @@ const OpportunityVerifications: NextPageWithLayout<{
           </div>
           <div className="flex flex-grow flex-col overflow-x-hidden overflow-y-scroll bg-gray">
             <div className="flex flex-grow flex-col place-items-center justify-center bg-gray-light px-6 py-8">
-              <div className="flex h-full w-full flex-col place-items-center justify-center rounded-lg bg-white px-4 py-8 text-center">
-                <table className="table bg-white md:rounded-lg">
-                  <thead className="text-sm">
-                    <tr className="!border-gray text-gray-dark">
-                      <th></th>
-                      <th className="pl-0">Student</th>
-                      <th>Opportunity</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {verificationResponse?.items.map((item) => (
-                      <Fragment
-                        key={`verificationResult_${item.userId}-${item.opportunityId}`}
-                      >
-                        <tr className="!h-[70px] border-0 text-gray-dark">
-                          <td>
-                            {item.success && (
-                              <IoIosCheckmark className="h-16 w-16 text-green" />
-                            )}
-                            {!item.success && (
-                              <IoIosClose className="h-16 w-16 text-red-400" />
-                            )}
-                          </td>
-                          <td className="w-[200px] pl-0">
-                            {item.userDisplayName}
-                          </td>
-                          <td className="w-[420px]">{item.opportunityTitle}</td>
-                        </tr>
-                        <tr className="border-gray">
-                          <td colSpan={3}>
-                            <div className="flex flex-row items-center gap-2">
-                              {item.success && (
-                                <>
-                                  {verificationResponse.status ==
-                                    "Completed" && (
-                                    <div>
-                                      This participant was successfully
-                                      <strong className="ml-1">approved</strong>
-                                      . We&apos;ve sent them an email to share
-                                      the good news!
-                                    </div>
-                                  )}
-                                  {verificationResponse.status ==
-                                    "Rejected" && (
-                                    <div>
-                                      This participant was successfully
-                                      <strong className="ml-1">rejected</strong>
-                                      . We&apos;ve sent them an email with your
-                                      comments.
-                                    </div>
-                                  )}
-                                </>
-                              )}
-                              {!item.success && (
-                                <div className="text-red-400">
-                                  {item.failure?.message
-                                    ? item.failure?.message
-                                    : "An error occurred while processing the request."}
+              <div className="flex h-full w-full flex-col place-items-center justify-center gap-4 rounded-lg bg-white p-4 text-center">
+                {verificationResponse?.items.map((item) => (
+                  <div
+                    key={`verificationResult_${item.userId}-${item.opportunityId}`}
+                    className="space-y-2 rounded-lg border-2 border-gray-light p-4 md:space-y-0"
+                  >
+                    <div className="flex h-fit flex-col items-center gap-4 border-0 text-gray-dark md:!h-[75px] md:flex-row">
+                      <div className="h-fit rounded-full bg-green-light">
+                        {item.success && (
+                          <IoIosCheckmark className="h-8 w-8 text-green md:h-10 md:w-10" />
+                        )}
+                        {!item.success && (
+                          <IoIosClose className="h-8 w-8 text-red-400 md:h-10 md:w-10" />
+                        )}
+                      </div>
+                      <p className="line-clamp-2 w-full text-ellipsis text-center text-sm font-normal leading-5 tracking-wide md:w-[420px] md:text-left md:font-semibold">
+                        {item.opportunityTitle}
+                      </p>
+                    </div>
+                    <div className="border-gray">
+                      <div>
+                        <div className="flex flex-row items-center gap-2 text-center text-sm text-gray-dark md:text-left md:text-base">
+                          {item.success && (
+                            <>
+                              {verificationResponse.status == "Completed" && (
+                                <div>
+                                  <strong>{item.userDisplayName}</strong> was
+                                  successfully
+                                  <strong className="mx-1">approved.</strong>
+                                  <br className="hidden md:block" />
+                                  We&apos;ve sent them an email to share the
+                                  good news!
                                 </div>
                               )}
+                              {verificationResponse.status == "Rejected" && (
+                                <div>
+                                  <strong>{item.userDisplayName}</strong> was
+                                  successfully
+                                  <strong className="mx-1">rejected.</strong>
+                                  <br className="hidden md:block" />
+                                  We&apos;ve sent them an email with your
+                                  comments.
+                                </div>
+                              )}
+                            </>
+                          )}
+                          {!item.success && (
+                            <div className="text-red-400">
+                              {item.failure?.message
+                                ? item.failure?.message
+                                : "An error occurred while processing the request."}
                             </div>
-                          </td>
-                        </tr>
-                      </Fragment>
-                    ))}
-                  </tbody>
-                </table>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

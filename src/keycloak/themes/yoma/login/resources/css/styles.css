@@ -265,6 +265,7 @@ h1#kc-page-title {
   width: 90%;
   position: relative;
   line-height: 1.8;
+  color: #461d4d;
 }
 
 #kc-registration a {
@@ -488,11 +489,11 @@ input[type="checkbox"] {
   }
 
   .fa-eye-slash::before {
-    margin-left: -.5rem !important;
+    margin-left: -0.5rem !important;
   }
 
   .fa-eye::before {
-    margin-left: -.5rem !important;
+    margin-left: -0.5rem !important;
   }
 
   #register-password,
