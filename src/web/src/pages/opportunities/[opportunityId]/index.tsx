@@ -757,7 +757,6 @@ const OpportunityDetails: NextPageWithLayout<{
                                   verificationStatus == undefined ||
                                   verificationStatus.status == "None" ||
                                   verificationStatus.status == "Rejected") &&
-                                !opportunityInfo.participantLimitReached &&
                                 !verificationStatusIsLoading && (
                                   <button
                                     type="button"

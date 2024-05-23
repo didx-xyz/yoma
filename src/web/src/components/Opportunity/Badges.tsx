@@ -19,13 +19,6 @@ interface BadgesProps {
 }
 
 const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
-  // memo for spots left i.e participantLimit - participantCountTotal
-  const spotsLeft = useMemo(() => {
-    const participantLimit = opportunity?.participantLimit ?? 0;
-    const participantCountTotal = opportunity?.participantCountTotal ?? 0;
-    return Math.max(participantLimit - participantCountTotal, 0);
-  }, [opportunity]);
-
   return (
     <div className="mb-2 mt-4 flex flex-row flex-wrap gap-1 text-xs font-bold text-green-dark md:my-2">
       {opportunity?.commitmentIntervalCount && (
@@ -46,26 +39,6 @@ const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
             opportunity.commitmentIntervalCount > 1 ? "s" : ""
           }`}</span>
         </div>
-      )}
-
-      {opportunity?.participantLimit != null && (
-        <>
-          {opportunity?.participantLimitReached && (
-            <div className="badge bg-red-200 text-red-400">
-              <IoMdWarning className="h-4 w-4" />
-
-              <span className="ml-1 text-xs">Limit Reached</span>
-            </div>
-          )}
-
-          {!opportunity?.participantLimitReached && (
-            <div className="badge bg-blue-light text-blue">
-              <IoMdPerson className="h-4 w-4" />
-
-              <span className="ml-1 text-xs">{spotsLeft} Spots left</span>
-            </div>
-          )}
-        </>
       )}
 
       {opportunity?.type && (

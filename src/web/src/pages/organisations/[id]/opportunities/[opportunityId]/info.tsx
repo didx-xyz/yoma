@@ -7,7 +7,7 @@ import {
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { type ParsedUrlQuery } from "querystring";
-import { useState, type ReactElement, useCallback } from "react";
+import { useState, type ReactElement, useCallback, useMemo } from "react";
 import { type OpportunityInfo, Status } from "~/api/models/opportunity";
 import {
   getOpportunityInfoByIdAdminOrgAdminOrUser,
@@ -224,6 +224,13 @@ const OpportunityDetails: NextPageWithLayout<{
     [opportunityId, queryClient, setManageOpportunityMenuVisible, modalContext],
   );
 
+  // memo for spots left i.e participantLimit - participantCountTotal
+  const spotsLeft = useMemo(() => {
+    const participantLimit = opportunity?.participantLimit ?? 0;
+    const participantCountTotal = opportunity?.participantCountTotal ?? 0;
+    return Math.max(participantLimit - participantCountTotal, 0);
+  }, [opportunity]);
+
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -403,14 +410,37 @@ const OpportunityDetails: NextPageWithLayout<{
                     }`}</span>
                   </div>
 
-                  <div className="badge h-6 rounded-md border-none bg-blue-light text-xs text-blue">
+                  {/* LIMITS */}
+                  {opportunity?.participantLimit != null && (
+                    <>
+                      {opportunity?.participantLimitReached && (
+                        <div className="badge h-6 rounded-md border-none bg-red-200 text-red-400">
+                          <IoMdWarning className="h-4 w-4" />
+
+                          <span className="ml-1 text-xs">Limit Reached</span>
+                        </div>
+                      )}
+
+                      {!opportunity?.participantLimitReached && (
+                        <div className="badge h-6 rounded-md border-none bg-blue-light text-blue ">
+                          <IoMdPerson className="h-4 w-4" />
+
+                          <span className="ml-1 text-xs">
+                            {spotsLeft} Spots left
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* <div className="badge h-6 rounded-md border-none bg-blue-light text-xs text-blue">
                     <IoMdPerson className="h-4 w-4" />
 
                     <span className="ml-1">
                       {opportunity?.participantCountVerificationCompleted}{" "}
                       enrolled
                     </span>
-                  </div>
+                  </div> */}
 
                   {opportunity?.type && (
                     <div className="badge h-6 rounded-md border-none bg-[#E7E8F5] text-[#5F65B9]">

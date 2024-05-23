@@ -82,22 +82,6 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
           }${data.commitmentIntervalCount > 1 ? "s" : ""}`}</span>
         </div>
 
-        {(data?.participantCountTotal ?? 0) > 0 && (
-          <div className="badge bg-green-light text-green">
-            <Image
-              src={iconUser}
-              alt="Icon User"
-              width={16}
-              height={16}
-              sizes="100vw"
-              priority={true}
-              style={{ width: "16px", height: "16px" }}
-              className="mr-1"
-            />
-            {data?.participantCountTotal}
-          </div>
-        )}
-
         {data.zltoReward && (
           <div className="badge bg-[#FEF4D9] text-[#F6B700]">
             <Image
@@ -135,21 +119,10 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
           <>
             {data.verificationEnabled &&
               data.verificationMethod === "Manual" && (
-                <>
-                  {data?.participantLimit != null &&
-                    data.participantLimitReached && (
-                      <div className="badge bg-red-200 text-red-400">
-                        <IoMdWarning className="h-4 w-4" />
-                        <span className="ml-1">Limit Reached</span>
-                      </div>
-                    )}
-                  {!data.participantLimitReached && (
-                    <div className="badge bg-red-100 text-error">
-                      <IoMdCloudUpload className="h-4 w-4" />
-                      <span className="ml-1">Upload Only</span>
-                    </div>
-                  )}
-                </>
+                <div className="badge bg-red-100 text-error">
+                  <IoMdCloudUpload className="h-4 w-4" />
+                  <span className="ml-1">Upload Only</span>
+                </div>
               )}
             {!data.verificationEnabled &&
               data.verificationMethod !== "Manual" && (
