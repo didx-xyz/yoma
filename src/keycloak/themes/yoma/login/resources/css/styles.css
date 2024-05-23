@@ -65,7 +65,8 @@
   color: #0a0c0d;
 }
 
-h1#kc-page-title {
+h1,
+#kc-page-title {
   color: #020304;
   font-size: 28px;
   font-weight: 600;
@@ -91,7 +92,8 @@ h1#kc-page-title {
 } */
 
 #register-password,
-#password-confirm {
+#password-confirm,
+#password-new {
   padding-left: calc(1px + 10%);
 }
 
@@ -265,6 +267,7 @@ h1#kc-page-title {
   width: 90%;
   position: relative;
   line-height: 1.8;
+  color: #461d4d;
 }
 
 #kc-registration a {
@@ -488,15 +491,16 @@ input[type="checkbox"] {
   }
 
   .fa-eye-slash::before {
-    margin-left: -.5rem !important;
+    margin-left: -0.5rem !important;
   }
 
   .fa-eye::before {
-    margin-left: -.5rem !important;
+    margin-left: -0.5rem !important;
   }
 
   #register-password,
-  #password-confirm {
+  #password-confirm,
+  #password-new {
     padding-left: calc(1px + 15%);
   }
 }
