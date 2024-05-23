@@ -127,18 +127,29 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ]
       };
 
+      //either MostViewed or MostCompleted can be requested, but not both at the same time; they are mutually exclusive
       var mostViewed = filter.MostViewed.HasValue && filter.MostViewed.Value;
-      Dictionary<Guid, int>? aggregatedByViewed = null;
+      var mostCompleted = filter.MostCompleted.HasValue && filter.MostCompleted.Value;
+
+      if (mostViewed && mostCompleted)
+        throw new FluentValidation.ValidationException("'Most Viewed' and 'Most Completed' filters are mutually exclusive and cannot be used together");
+
+      Dictionary<Guid, int>? aggregatedByViewedOrCompleted = null;
       if (mostViewed)
       {
-        aggregatedByViewed = _myOpportunityService.ListAggregatedOpportunityByViewed(filterInternal.PublishedStates.Contains(PublishedState.Expired));
-        filterInternal.Opportunities = aggregatedByViewed?.Keys.ToList() ?? [];
+        aggregatedByViewedOrCompleted = _myOpportunityService.ListAggregatedOpportunityByViewed(filterInternal.PublishedStates.Contains(PublishedState.Expired));
+        filterInternal.Opportunities = aggregatedByViewedOrCompleted?.Keys.ToList() ?? [];
+      }
+      else if (mostCompleted)
+      {
+        aggregatedByViewedOrCompleted = _myOpportunityService.ListAggregatedOpportunityByCompleted(filterInternal.PublishedStates.Contains(PublishedState.Expired));
+        filterInternal.Opportunities = aggregatedByViewedOrCompleted?.Keys.ToList() ?? [];
       }
 
       var searchResult = _opportunityService.Search(filterInternal, false);
 
-      if (mostViewed)
-        searchResult.Items = [.. searchResult.Items.OrderBy(opportunity => aggregatedByViewed?.Keys.ToList().IndexOf(opportunity.Id))];
+      if (mostViewed || mostCompleted)
+        searchResult.Items = [.. searchResult.Items.OrderBy(opportunity => aggregatedByViewedOrCompleted?.Keys.ToList().IndexOf(opportunity.Id))];
 
       var results = new OpportunitySearchResultsInfo
       {

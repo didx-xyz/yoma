@@ -59,6 +59,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
+
+    private const int List_Aggregated_Opportunity_By_Limit = 100;
     #endregion
 
     #region Constructor
@@ -636,6 +638,37 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         MaxDateModified = group.Max(o => o.DateModified) //max last viewed date
       });
       queryGrouped = queryGrouped.OrderByDescending(result => result.Count).ThenByDescending(result => result.MaxDateModified); //ordered by count and then by max last viewed date
+      queryGrouped = queryGrouped.Take(List_Aggregated_Opportunity_By_Limit); //limit
+
+      return queryGrouped.ToDictionary(o => o.OpportunityId, o => o.Count);
+    }
+
+    public Dictionary<Guid, int>? ListAggregatedOpportunityByCompleted(bool includeExpired)
+    {
+      var actionId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+      var verificationStatusId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Completed.ToString()).Id; 
+      var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+      var statuses = new List<Status> { Status.Active };
+      if (includeExpired) statuses.Add(Status.Expired);
+
+      var query = _myOpportunityRepository.Query();
+
+      query = query.Where(o => o.ActionId == actionId);
+      query = query.Where(o => o.VerificationStatusId == verificationStatusId); 
+      query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId); 
+
+      var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+      query = query.Where(o => statusIds.Contains(o.OpportunityStatusId));
+
+      var queryGrouped = query.GroupBy(o => o.OpportunityId)
+      .Select(group => new
+      {
+        OpportunityId = group.Key,
+        Count = group.Count(),
+        MaxDateModified = group.Max(o => o.DateModified) //max last viewed date
+      });
+      queryGrouped = queryGrouped.OrderByDescending(result => result.Count).ThenByDescending(result => result.MaxDateModified); //ordered by count and then by max last viewed date
+      queryGrouped = queryGrouped.Take(List_Aggregated_Opportunity_By_Limit); //limit
 
       return queryGrouped.ToDictionary(o => o.OpportunityId, o => o.Count);
     }

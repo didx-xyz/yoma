@@ -12,5 +12,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// Filter results by the most viewed / popular opportunities
     /// </summary>
     public bool? MostViewed { get; set; }
+
+    /// <summary>
+    /// Filter results by the most completed opportunities
+    /// </summary>
+    public bool? MostCompleted { get; set; }
   }
 }
