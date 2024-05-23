@@ -468,7 +468,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     </div>
                   )}
                   {opportunity?.status == "Deleted" && (
-                    <div className="badge bg-green-light  text-red-400">
+                    <div className="badge bg-green-light text-red-400">
                       Deleted
                     </div>
                   )}

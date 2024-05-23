@@ -6,7 +6,6 @@ import {
   IoMdCalendar,
   IoMdCloudUpload,
   IoMdWarning,
-  IoMdAlert,
 } from "react-icons/io";
 import iconClock from "public/images/icon-clock.svg";
 import iconZlto from "public/images/icon-zlto.svg";
@@ -49,19 +48,19 @@ const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
         </div>
       )}
 
-      {spotsLeft > 0 && (
-        <div className="badge bg-blue-light text-blue">
-          <IoMdPerson className="h-4 w-4" />
-
-          <span className="ml-1 text-xs">{spotsLeft} Spots left</span>
-        </div>
-      )}
-
-      {spotsLeft === 0 && (
+      {opportunity?.participantLimitReached && (
         <div className="badge bg-red-200 text-red-400">
           <IoMdWarning className="h-4 w-4" />
 
           <span className="ml-1 text-xs">Limit Reached</span>
+        </div>
+      )}
+
+      {!opportunity?.participantLimitReached && (
+        <div className="badge bg-blue-light text-blue">
+          <IoMdPerson className="h-4 w-4" />
+
+          <span className="ml-1 text-xs">{spotsLeft} Spots left</span>
         </div>
       )}
 
@@ -106,10 +105,12 @@ const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
           )}
         </>
       )}
+
       {opportunity?.status == "Expired" && (
         <>
           {opportunity.verificationEnabled &&
-            opportunity.verificationMethod === "Manual" && (
+            opportunity.verificationMethod === "Manual" &&
+            !opportunity?.participantLimitReached && (
               <div className="badge bg-red-100 text-error">
                 <IoMdCloudUpload className="h-4 w-4" />
                 <span className="ml-1">Upload Only</span>

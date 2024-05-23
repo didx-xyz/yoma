@@ -135,10 +135,20 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({ data }) => {
           <>
             {data.verificationEnabled &&
               data.verificationMethod === "Manual" && (
-                <div className="badge bg-red-100 text-error">
-                  <IoMdCloudUpload className="h-4 w-4" />
-                  <span className="ml-1">Upload Only</span>
-                </div>
+                <>
+                  {data.participantLimitReached && (
+                    <div className="badge bg-red-200 text-red-400">
+                      <IoMdWarning className="h-4 w-4" />
+                      <span className="ml-1">Limit Reached</span>
+                    </div>
+                  )}
+                  {!data.participantLimitReached && (
+                    <div className="badge bg-red-100 text-error">
+                      <IoMdCloudUpload className="h-4 w-4" />
+                      <span className="ml-1">Upload Only</span>
+                    </div>
+                  )}
+                </>
               )}
             {!data.verificationEnabled &&
               data.verificationMethod !== "Manual" && (
