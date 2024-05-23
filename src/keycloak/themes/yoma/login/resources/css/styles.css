@@ -65,7 +65,8 @@
   color: #0a0c0d;
 }
 
-h1#kc-page-title {
+h1,
+#kc-page-title {
   color: #020304;
   font-size: 28px;
   font-weight: 600;

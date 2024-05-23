@@ -6,7 +6,7 @@
 
 <@layout.registrationLayout displayInfo=(realm.password && realm.registrationAllowed && !registrationDisabled??); section>
   <#if section == "header">
-   <h1>${msg("loginAccountTitle")}</h1>
+   <h1 id="kc-page-title">${msg("loginAccountTitle")}</h1>
   <#elseif section == "form">
     <form id="kc-form-login" onsubmit="login.disabled = true; return true;" action="${url.loginAction}" method="post">
       <#if !usernameHidden??>
