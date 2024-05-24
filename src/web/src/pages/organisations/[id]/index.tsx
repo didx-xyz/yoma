@@ -160,7 +160,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     }
     console.log("🚀 ~ file: [id].tsx ~  DONE!", id); //**
   } catch (error) {
-    console.error("🚀 ~ file: [id].tsx ~ ERROR '...." + error, id); //**
+    console.error("🚀 ~ file: [id].tsx ~ ERROR '....", error, id); //**
 
     //console.error(error);
     if (axios.isAxiosError(error) && error.response?.status) {
