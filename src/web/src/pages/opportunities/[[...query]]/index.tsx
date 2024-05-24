@@ -64,6 +64,26 @@ import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 // after that, client side queries are executed & cached via the queryClient, whenever a search is performed (selecting a filter, clicked most viewed link etc)
 // or when more data is requested in the carousels (paging)
 export const getStaticProps: GetStaticProps = async (context) => {
+  const opportunities_featured = await searchOpportunities(
+    {
+      pageNumber: 1,
+      pageSize: PAGE_SIZE_MINIMUM,
+      categories: null,
+      countries: null,
+      languages: null,
+      types: null,
+      valueContains: null,
+      commitmentIntervals: null,
+      mostViewed: null,
+      mostCompleted: null,
+      organizations: null,
+      zltoRewardRanges: null,
+      publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      featured: true,
+    },
+    context,
+  );
+
   const opportunities_trending = await searchOpportunities(
     {
       pageNumber: 1,
@@ -75,12 +95,35 @@ export const getStaticProps: GetStaticProps = async (context) => {
       valueContains: null,
       commitmentIntervals: null,
       mostViewed: true,
+      mostCompleted: false,
       organizations: null,
       zltoRewardRanges: null,
       publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      featured: null,
     },
     context,
   );
+
+  const opportunities_mostCompleted = await searchOpportunities(
+    {
+      pageNumber: 1,
+      pageSize: PAGE_SIZE_MINIMUM,
+      categories: null,
+      countries: null,
+      languages: null,
+      types: null,
+      valueContains: null,
+      commitmentIntervals: null,
+      mostViewed: null,
+      mostCompleted: true,
+      organizations: null,
+      zltoRewardRanges: null,
+      publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      featured: null,
+    },
+    context,
+  );
+
   const opportunities_learning = await searchOpportunities(
     {
       pageNumber: 1,
@@ -92,9 +135,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
       valueContains: null,
       commitmentIntervals: null,
       mostViewed: null,
+      mostCompleted: false,
       organizations: null,
       zltoRewardRanges: null,
       publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      featured: null,
     },
     context,
   );
@@ -109,9 +154,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
       valueContains: null,
       commitmentIntervals: null,
       mostViewed: null,
+      mostCompleted: false,
       organizations: null,
       zltoRewardRanges: null,
       publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      featured: null,
     },
     context,
   );
@@ -126,12 +173,15 @@ export const getStaticProps: GetStaticProps = async (context) => {
       valueContains: null,
       commitmentIntervals: null,
       mostViewed: null,
+      mostCompleted: false,
       organizations: null,
       zltoRewardRanges: null,
       publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      featured: null,
     },
     context,
   );
+
   const lookups_categories = await getOpportunityCategories(context);
   const lookups_countries = await getOpportunityCountries(context);
   const lookups_languages = await getOpportunityLanguages(context);
@@ -142,7 +192,9 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   return {
     props: {
+      opportunities_featured,
       opportunities_trending,
+      opportunities_mostCompleted,
       opportunities_learning,
       opportunities_tasks,
       opportunities_allOpportunities,
@@ -170,7 +222,9 @@ export const getStaticPaths: GetStaticPaths = () => {
 };
 
 const Opportunities: NextPageWithLayout<{
+  opportunities_featured: OpportunitySearchResultsInfo;
   opportunities_trending: OpportunitySearchResultsInfo;
+  opportunities_mostCompleted: OpportunitySearchResultsInfo;
   opportunities_learning: OpportunitySearchResultsInfo;
   opportunities_tasks: OpportunitySearchResultsInfo;
   opportunities_allOpportunities: OpportunitySearchResultsInfo;
@@ -182,7 +236,9 @@ const Opportunities: NextPageWithLayout<{
   lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
   lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
 }> = ({
+  opportunities_featured,
   opportunities_trending,
+  opportunities_mostCompleted,
   opportunities_learning,
   opportunities_tasks,
   opportunities_allOpportunities,
@@ -219,6 +275,8 @@ const Opportunities: NextPageWithLayout<{
     organizations,
     zltoRewardRanges,
     mostViewed,
+    mostCompleted,
+    featured,
     publishedStates,
   } = router.query;
 
@@ -235,6 +293,8 @@ const Opportunities: NextPageWithLayout<{
       organizations != undefined ||
       zltoRewardRanges != undefined ||
       mostViewed != undefined ||
+      mostCompleted != undefined ||
+      featured != undefined ||
       publishedStates != undefined
     );
   }, [
@@ -248,6 +308,8 @@ const Opportunities: NextPageWithLayout<{
     organizations,
     zltoRewardRanges,
     mostViewed,
+    mostCompleted,
+    featured,
     publishedStates,
   ]);
 
@@ -267,6 +329,8 @@ const Opportunities: NextPageWithLayout<{
         organizations,
         zltoRewardRanges,
         mostViewed,
+        mostCompleted,
+        featured,
         publishedStates,
       ],
       queryFn: async () =>
@@ -275,6 +339,8 @@ const Opportunities: NextPageWithLayout<{
           pageSize: PAGE_SIZE,
           valueContains: query ? decodeURIComponent(query.toString()) : null,
           mostViewed: mostViewed ? Boolean(mostViewed) : null,
+          mostCompleted: mostCompleted ? Boolean(mostCompleted) : null,
+          featured: featured ? Boolean(featured) : null,
           publishedStates:
             publishedStates != undefined
               ? // if set, map to id
@@ -375,6 +441,8 @@ const Opportunities: NextPageWithLayout<{
       valueContains: null,
       commitmentIntervals: null,
       mostViewed: null,
+      mostCompleted: null,
+      featured: null,
       organizations: null,
       zltoRewardRanges: null,
       publishedStates: null,
@@ -391,6 +459,8 @@ const Opportunities: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         valueContains: query ? decodeURIComponent(query.toString()) : null,
         mostViewed: mostViewed ? Boolean(mostViewed) : null,
+        mostCompleted: mostCompleted ? Boolean(mostCompleted) : null,
+        featured: featured ? Boolean(featured) : null,
         types: types != undefined ? types?.toString().split(",") : null,
         categories:
           categories != undefined ? categories?.toString().split(",") : null,
@@ -433,6 +503,8 @@ const Opportunities: NextPageWithLayout<{
     organizations,
     zltoRewardRanges,
     mostViewed,
+    mostCompleted,
+    featured,
     publishedStates,
   ]);
 
@@ -528,6 +600,24 @@ const Opportunities: NextPageWithLayout<{
         params.append(
           "mostViewed",
           opportunitySearchFilter?.mostViewed ? "true" : "false",
+        );
+
+      if (
+        opportunitySearchFilter?.mostCompleted !== undefined &&
+        opportunitySearchFilter?.mostCompleted !== null
+      )
+        params.append(
+          "mostCompleted",
+          opportunitySearchFilter?.mostCompleted ? "true" : "false",
+        );
+
+      if (
+        opportunitySearchFilter?.featured !== undefined &&
+        opportunitySearchFilter?.featured !== null
+      )
+        params.append(
+          "featured",
+          opportunitySearchFilter?.featured ? "true" : "false",
         );
 
       if (
@@ -648,6 +738,8 @@ const Opportunities: NextPageWithLayout<{
         valueContains: null,
         commitmentIntervals: null,
         mostViewed: true,
+        mostCompleted: null,
+        featured: null,
         organizations: null,
         zltoRewardRanges: null,
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
@@ -677,6 +769,8 @@ const Opportunities: NextPageWithLayout<{
         valueContains: null,
         commitmentIntervals: null,
         mostViewed: null,
+        mostCompleted: null,
+        featured: null,
         organizations: null,
         zltoRewardRanges: null,
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
@@ -706,6 +800,8 @@ const Opportunities: NextPageWithLayout<{
         valueContains: null,
         commitmentIntervals: null,
         mostViewed: null,
+        mostCompleted: null,
+        featured: null,
         organizations: null,
         zltoRewardRanges: null,
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
@@ -737,6 +833,8 @@ const Opportunities: NextPageWithLayout<{
           valueContains: null,
           commitmentIntervals: null,
           mostViewed: null,
+          mostCompleted: null,
+          featured: null,
           organizations: null,
           zltoRewardRanges: null,
           publishedStates: [PublishedState.Active, PublishedState.NotStarted],
@@ -744,6 +842,68 @@ const Opportunities: NextPageWithLayout<{
       );
     },
     [opportunities_allOpportunities, fetchDataAndUpdateCache],
+  );
+
+  const loadDataMostCompleted = useCallback(
+    async (startRow: number) => {
+      if (startRow >= (opportunities_mostCompleted?.totalCount ?? 0)) {
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache(["mostCompleted", pageNumber.toString()], {
+        pageNumber: pageNumber,
+        pageSize: PAGE_SIZE_MINIMUM,
+        categories: null,
+        countries: null,
+        languages: null,
+        types: null,
+        valueContains: null,
+        commitmentIntervals: null,
+        mostViewed: null,
+        mostCompleted: true,
+        featured: null,
+        organizations: null,
+        zltoRewardRanges: null,
+        publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      });
+    },
+    [opportunities_mostCompleted, fetchDataAndUpdateCache],
+  );
+
+  const loadDataFeatured = useCallback(
+    async (startRow: number) => {
+      if (startRow >= (opportunities_featured?.totalCount ?? 0)) {
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache(["featured", pageNumber.toString()], {
+        pageNumber: pageNumber,
+        pageSize: PAGE_SIZE_MINIMUM,
+        categories: null,
+        countries: null,
+        languages: null,
+        types: null,
+        valueContains: null,
+        commitmentIntervals: null,
+        mostViewed: null,
+        mostCompleted: null,
+        featured: true,
+        organizations: null,
+        zltoRewardRanges: null,
+        publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      });
+    },
+    [opportunities_featured, fetchDataAndUpdateCache],
   );
 
   // 👇 prevent scrolling on the page when the dialogs are open
@@ -856,7 +1016,7 @@ const Opportunities: NextPageWithLayout<{
             OpportunityFilterOptions.ORGANIZATIONS,
             OpportunityFilterOptions.PUBLISHEDSTATES,
           ]}
-          totalCount={searchResults?.totalCount ?? 0}
+          totalCount={isSearchPerformed ? searchResults?.totalCount ?? 0 : 0}
         />
 
         {/* FILTER BADGES */}
@@ -876,6 +1036,10 @@ const Opportunities: NextPageWithLayout<{
               return lookup?.name;
             } else if (key === "mostViewed") {
               return "Trending";
+            } else if (key === "mostCompleted") {
+              return "Most Completed";
+            } else if (key === "featured") {
+              return "Featured";
             }
             return value;
           }}
@@ -885,6 +1049,18 @@ const Opportunities: NextPageWithLayout<{
         {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
         {!isSearchPerformed && (
           <div className="-mt-4 gap-6 px-2 pb-4 md:p-0 md:pb-0">
+            {/* FEATURED */}
+            {(opportunities_featured?.totalCount ?? 0) > 0 && (
+              <OpportunitiesCarousel
+                id={`opportunities_featured`}
+                title="Featured"
+                description="Explore our featured opportunities"
+                data={opportunities_featured}
+                loadData={loadDataFeatured}
+                viewAllUrl="/opportunities?featured=true"
+              />
+            )}
+
             {/* TRENDING */}
             {(opportunities_trending?.totalCount ?? 0) > 0 && (
               <OpportunitiesCarousel
@@ -894,6 +1070,18 @@ const Opportunities: NextPageWithLayout<{
                 data={opportunities_trending}
                 loadData={loadDataTrending}
                 viewAllUrl="/opportunities?mostViewed=true"
+              />
+            )}
+
+            {/* MOST COMPLETED */}
+            {(opportunities_mostCompleted?.totalCount ?? 0) > 0 && (
+              <OpportunitiesCarousel
+                id={`opportunities_mostCompleted`}
+                title="Most completed"
+                description="The most completed opportunities"
+                data={opportunities_mostCompleted}
+                loadData={loadDataMostCompleted}
+                viewAllUrl="/opportunities?mostCompleted=true"
               />
             )}
 

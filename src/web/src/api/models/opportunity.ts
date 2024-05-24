@@ -12,6 +12,7 @@ export interface OpportunitySearchFilterAdmin
   endDate: string | null;
   organizations: string[] | null;
   statuses: Status[] | null | string[];
+  featured: boolean | null;
 }
 
 export interface OpportunitySearchResults extends OpportunitySearchResultsBase {
@@ -106,11 +107,14 @@ export interface OpportunityInfo {
   verificationEnabled: boolean;
   verificationMethod: /*VerificationMethod*/ string | null; //ISSUE: comes back as string
   verificationTypes: OpportunityVerificationType[] | null;
+  featured: boolean;
 }
 
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
   publishedStates: PublishedState[] | null | string[]; //NB
   mostViewed: boolean | null;
+  mostCompleted: boolean | null;
+  featured: boolean | null;
 }
 
 export interface OpportunitySearchFilterBase extends PaginationFilter {

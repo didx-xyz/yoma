@@ -335,3 +335,13 @@ export const getPublishedOrExpiredByLinkInstantVerify = async (
   );
   return data;
 };
+
+export const updateFeatured = async (
+  id: string,
+  featured: boolean,
+): Promise<Opportunity> => {
+  const { data } = await (
+    await ApiClient
+  ).patch<Opportunity>(`/opportunity/${id}/featured/${featured}`);
+  return data;
+};
