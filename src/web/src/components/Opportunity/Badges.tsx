@@ -1,7 +1,6 @@
 import Image from "next/image";
 import {
   IoMdPerson,
-  IoIosBook,
   IoMdPlay,
   IoMdCalendar,
   IoMdCloudUpload,
@@ -73,10 +72,28 @@ const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
       )}
 
       {opportunity?.type && (
-        <div className="badge bg-[#E7E8F5] text-[#5F65B9]">
-          <IoIosBook />
-          <span className="ml-1 text-xs">{opportunity.type}</span>
-        </div>
+        <>
+          {opportunity?.type === "Learning" && (
+            <div className="badge bg-[#E7E8F5] text-[#5F65B9]">
+              📚 {opportunity.type}
+            </div>
+          )}
+          {opportunity?.type === "Micro-task" && (
+            <div className="badge bg-yellow-tint text-yellow">
+              ⚡ {opportunity.type}
+            </div>
+          )}
+          {opportunity?.type === "Event" && (
+            <div className="badge bg-[#E7E8F5] text-[#5F65B9]">
+              🎉 {opportunity.type}
+            </div>
+          )}
+          {opportunity?.type === "Other" && (
+            <div className="badge bg-[#fda6d3] text-[#ad3f7c]">
+              💡 {opportunity.type}
+            </div>
+          )}
+        </>
       )}
 
       {(opportunity?.zltoReward ?? 0) > 0 && (

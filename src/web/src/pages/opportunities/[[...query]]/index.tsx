@@ -46,6 +46,8 @@ import {
   OPPORTUNITY_TYPES_TASK,
   PAGE_SIZE_MINIMUM,
   VIEWPORT_SIZE,
+  OPPORTUNITY_TYPES_EVENT,
+  OPPORTUNITY_TYPES_OTHER,
 } from "~/lib/constants";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -143,6 +145,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     },
     context,
   );
+
   const opportunities_tasks = await searchOpportunities(
     {
       pageNumber: 1,
@@ -162,6 +165,47 @@ export const getStaticProps: GetStaticProps = async (context) => {
     },
     context,
   );
+
+  const opportunities_events = await searchOpportunities(
+    {
+      pageNumber: 1,
+      pageSize: PAGE_SIZE_MINIMUM,
+      categories: null,
+      countries: null,
+      languages: null,
+      types: OPPORTUNITY_TYPES_EVENT,
+      valueContains: null,
+      commitmentIntervals: null,
+      mostViewed: null,
+      mostCompleted: false,
+      organizations: null,
+      zltoRewardRanges: null,
+      publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      featured: null,
+    },
+    context,
+  );
+
+  const opportunities_other = await searchOpportunities(
+    {
+      pageNumber: 1,
+      pageSize: PAGE_SIZE_MINIMUM,
+      categories: null,
+      countries: null,
+      languages: null,
+      types: OPPORTUNITY_TYPES_OTHER,
+      valueContains: null,
+      commitmentIntervals: null,
+      mostViewed: null,
+      mostCompleted: false,
+      organizations: null,
+      zltoRewardRanges: null,
+      publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      featured: null,
+    },
+    context,
+  );
+
   const opportunities_allOpportunities = await searchOpportunities(
     {
       pageNumber: 1,
@@ -197,6 +241,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
       opportunities_mostCompleted,
       opportunities_learning,
       opportunities_tasks,
+      opportunities_events,
+      opportunities_other,
       opportunities_allOpportunities,
       lookups_categories,
       lookups_countries,
@@ -227,6 +273,8 @@ const Opportunities: NextPageWithLayout<{
   opportunities_mostCompleted: OpportunitySearchResultsInfo;
   opportunities_learning: OpportunitySearchResultsInfo;
   opportunities_tasks: OpportunitySearchResultsInfo;
+  opportunities_events: OpportunitySearchResultsInfo;
+  opportunities_other: OpportunitySearchResultsInfo;
   opportunities_allOpportunities: OpportunitySearchResultsInfo;
   lookups_categories: OpportunityCategory[];
   lookups_countries: Country[];
@@ -241,6 +289,8 @@ const Opportunities: NextPageWithLayout<{
   opportunities_mostCompleted,
   opportunities_learning,
   opportunities_tasks,
+  opportunities_events,
+  opportunities_other,
   opportunities_allOpportunities,
   lookups_categories,
   lookups_countries,
@@ -810,6 +860,68 @@ const Opportunities: NextPageWithLayout<{
     [opportunities_tasks, fetchDataAndUpdateCache],
   );
 
+  const loadDataEvents = useCallback(
+    async (startRow: number) => {
+      if (startRow >= (opportunities_events?.totalCount ?? 0)) {
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache(["events", pageNumber.toString()], {
+        pageNumber: pageNumber,
+        pageSize: PAGE_SIZE_MINIMUM,
+        categories: null,
+        countries: null,
+        languages: null,
+        types: OPPORTUNITY_TYPES_EVENT,
+        valueContains: null,
+        commitmentIntervals: null,
+        mostViewed: null,
+        mostCompleted: null,
+        featured: null,
+        organizations: null,
+        zltoRewardRanges: null,
+        publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      });
+    },
+    [opportunities_events, fetchDataAndUpdateCache],
+  );
+
+  const loadDataOther = useCallback(
+    async (startRow: number) => {
+      if (startRow >= (opportunities_other?.totalCount ?? 0)) {
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache(["other", pageNumber.toString()], {
+        pageNumber: pageNumber,
+        pageSize: PAGE_SIZE_MINIMUM,
+        categories: null,
+        countries: null,
+        languages: null,
+        types: OPPORTUNITY_TYPES_OTHER,
+        valueContains: null,
+        commitmentIntervals: null,
+        mostViewed: null,
+        mostCompleted: null,
+        featured: null,
+        organizations: null,
+        zltoRewardRanges: null,
+        publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      });
+    },
+    [opportunities_other, fetchDataAndUpdateCache],
+  );
+
   const loadDataOpportunities = useCallback(
     async (startRow: number) => {
       if (startRow >= (opportunities_allOpportunities?.totalCount ?? 0)) {
@@ -1097,15 +1209,39 @@ const Opportunities: NextPageWithLayout<{
               />
             )}
 
-            {/* IMPACT TASKS */}
+            {/* TASKS */}
             {(opportunities_tasks?.totalCount ?? 0) > 0 && (
               <OpportunitiesCarousel
                 id={`opportunities_tasks`}
-                title="Impact Tasks ⚡"
+                title="Micro-tasks ⚡"
                 description="Contribute to real-world projects"
                 data={opportunities_tasks}
                 loadData={loadDataTasks}
-                viewAllUrl="/opportunities?types=Task"
+                viewAllUrl="/opportunities?types=Micro-task"
+              />
+            )}
+
+            {/* EVENTS */}
+            {(opportunities_events?.totalCount ?? 0) > 0 && (
+              <OpportunitiesCarousel
+                id={`opportunities_events`}
+                title="Events 🎉"
+                description="Explore events to attend"
+                data={opportunities_events}
+                loadData={loadDataEvents}
+                viewAllUrl="/opportunities?types=Event"
+              />
+            )}
+
+            {/* OTHER */}
+            {(opportunities_other?.totalCount ?? 0) > 0 && (
+              <OpportunitiesCarousel
+                id={`opportunities_other`}
+                title="Other 💡"
+                description="Explore other opportunities"
+                data={opportunities_other}
+                loadData={loadDataOther}
+                viewAllUrl="/opportunities?types=Other"
               />
             )}
 

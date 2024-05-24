@@ -24,7 +24,6 @@ import {
   IoMdPerson,
   IoMdPause,
   IoMdPlay,
-  IoIosBook,
   IoMdWarning,
 } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
@@ -451,7 +450,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   By {opportunity.organizationName}
                 </h6>
                 <div className="flex flex-row flex-wrap gap-2 border-none font-bold text-green-dark">
-                  <div className="badge h-6 rounded-md border-none bg-green-light text-xs text-green">
+                  <div className="badge rounded-md border-none bg-green-light text-xs text-green">
                     <Image
                       src={iconClock}
                       alt="Icon Clock"
@@ -469,7 +468,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     }`}</span>
                   </div>
 
-                  <div className="badge h-6 rounded-md border-none bg-blue-light text-xs text-blue">
+                  <div className="badge border-none bg-blue-light text-xs text-blue">
                     <IoMdPerson className="h-4 w-4" />
 
                     <span className="ml-1">
@@ -478,15 +477,40 @@ const OpportunityDetails: NextPageWithLayout<{
                     </span>
                   </div>
 
-                  {opportunity?.type && (
-                    <div className="badge h-6 rounded-md border-none bg-[#E7E8F5] text-[#5F65B9]">
+                  {/* {opportunity?.type && (
+                    <div className="badge border-none bg-[#E7E8F5] text-[#5F65B9]">
                       <IoIosBook />
                       <span className="ml-1 text-xs">{opportunity.type}</span>
                     </div>
+                  )} */}
+
+                  {opportunity?.type && (
+                    <>
+                      {opportunity?.type === "Learning" && (
+                        <div className="badge bg-[#E7E8F5] text-[#5F65B9]">
+                          📚 {opportunity.type}
+                        </div>
+                      )}
+                      {opportunity?.type === "Micro-task" && (
+                        <div className="badge bg-yellow-tint text-yellow">
+                          ⚡ {opportunity.type}
+                        </div>
+                      )}
+                      {opportunity?.type === "Event" && (
+                        <div className="badge bg-[#E7E8F5] text-[#5F65B9]">
+                          🎉 {opportunity.type}
+                        </div>
+                      )}
+                      {opportunity?.type === "Other" && (
+                        <div className="badge bg-[#fda6d3] text-[#ad3f7c]">
+                          💡 {opportunity.type}
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {(opportunity.zltoReward ?? 0) > 0 && (
-                    <div className="badge h-6 whitespace-nowrap rounded-md border-none bg-orange-light text-orange">
+                    <div className="badge whitespace-nowrap border-none bg-orange-light text-orange">
                       <Image
                         src={iconZlto}
                         alt="Icon Zlto"
