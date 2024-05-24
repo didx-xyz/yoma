@@ -23,10 +23,10 @@ export default function Document() {
           strategy="afterInteractive"
         />
         <Script src="/scripts/help-scout.js" strategy="afterInteractive" />
-        <Script
+        {/* <Script
           src="//js.hs-scripts.com/20355202.js"
           strategy="afterInteractive"
-        />
+        /> */}
       </Head>
       <body>
         <Main />
