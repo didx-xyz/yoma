@@ -213,7 +213,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           pageNumber: page ? parseInt(page.toString()) : 1,
           pageSize: PAGE_SIZE,
           valueContains: query ? decodeURIComponent(query.toString()) : null,
-
+          featured: null,
           types:
             types != undefined
               ? types
@@ -308,6 +308,8 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       valueContains: null,
       commitmentIntervals: null,
       mostViewed: null,
+      mostCompleted: null,
+      featured: null,
       organizations: null,
       zltoRewardRanges: null,
       publishedStates: null,
