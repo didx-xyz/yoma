@@ -124,13 +124,13 @@ const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
                 <span className="ml-1">Upload Only</span>
               </div>
             )}
-          {!opportunity.verificationEnabled &&
-            opportunity.verificationMethod !== "Manual" && (
-              <div className="badge bg-red-100 text-error">
-                <IoMdWarning className="h-4 w-4" />
-                <span className="ml-1">Expired</span>
-              </div>
-            )}
+          {(!opportunity.verificationEnabled ||
+            opportunity.verificationMethod !== "Manual") && (
+            <div className="badge bg-red-100 text-error">
+              <IoMdWarning className="h-4 w-4" />
+              <span className="ml-1">Expired</span>
+            </div>
+          )}
         </>
       )}
     </div>

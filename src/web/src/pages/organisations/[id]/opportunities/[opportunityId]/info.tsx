@@ -11,6 +11,7 @@ import { useState, type ReactElement, useCallback } from "react";
 import { type OpportunityInfo, Status } from "~/api/models/opportunity";
 import {
   getOpportunityInfoByIdAdminOrgAdminOrUser,
+  updateFeatured,
   updateOpportunityStatus,
 } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
@@ -28,7 +29,7 @@ import {
 } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
-import { FaClock, FaPencilAlt, FaTrash } from "react-icons/fa";
+import { FaClock, FaExclamation, FaPencilAlt, FaTrash } from "react-icons/fa";
 import Image from "next/image";
 import iconClock from "public/images/icon-clock.svg";
 import iconDifficulty from "public/images/icon-difficulty.svg";
@@ -46,6 +47,7 @@ import {
   DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_UPDATE,
   GA_CATEGORY_OPPORTUNITY,
+  ROLE_ADMIN,
 } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { useAtomValue } from "jotai";
@@ -139,6 +141,7 @@ const OpportunityDetails: NextPageWithLayout<{
     currentOrganisationInactiveAtom,
   );
   const modalContext = useConfirmationModalContext();
+  const isAdmin = user?.roles.includes(ROLE_ADMIN);
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(currentOrganisationInactive);
@@ -224,6 +227,49 @@ const OpportunityDetails: NextPageWithLayout<{
     [opportunityId, queryClient, setManageOpportunityMenuVisible, modalContext],
   );
 
+  const updateFeaturedFlag = useCallback(
+    async (featured: boolean) => {
+      setManageOpportunityMenuVisible(false);
+
+      setIsLoading(true);
+
+      try {
+        // call api
+        await updateFeatured(opportunityId, featured);
+
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_OPPORTUNITY,
+          GA_ACTION_OPPORTUNITY_UPDATE,
+          `Opportunity Featured Changed to ${featured} for Opportunity ID: ${opportunityId}`,
+        );
+
+        // invalidate cache
+        await queryClient.invalidateQueries({
+          queryKey: ["opportunityInfo", opportunityId],
+        });
+
+        toast.success(
+          featured
+            ? "Opportunity marked Featured"
+            : "Opportunity unmarked as Featured",
+        );
+      } catch (error) {
+        toast(<ApiErrors error={error as AxiosError} />, {
+          type: "error",
+          toastId: "opportunity",
+          autoClose: false,
+          icon: false,
+        });
+        //captureException(error);
+      }
+      setIsLoading(false);
+
+      return;
+    },
+    [opportunityId, queryClient, setManageOpportunityMenuVisible],
+  );
+
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -302,14 +348,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   Edit
                 </Link>
               )}
-              {/* TODO */}
-              {/* <Link
-                href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
-                className="flex flex-row items-center text-gray-dark hover:brightness-50"
-              >
-                <FaClipboard className="mr-2 h-3 w-3" />
-                Duplicate
-              </Link> */}
+
               {/* if active or expired, then org admins can make it inactive
                   if deleted, admins can make it inactive */}
               {(opportunity?.status == "Active" ||
@@ -324,6 +363,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   Make Inactive
                 </button>
               )}
+
               {opportunity?.status == "Inactive" && (
                 <button
                   className="flex flex-row items-center text-gray-dark hover:brightness-50"
@@ -333,6 +373,32 @@ const OpportunityDetails: NextPageWithLayout<{
                   Make Active
                 </button>
               )}
+
+              {/* ADMINS CAN CHANGE THE FEATURED FLAG */}
+              {isAdmin && (
+                <>
+                  {opportunity?.featured && (
+                    <button
+                      className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                      onClick={() => updateFeaturedFlag(false)}
+                    >
+                      <FaExclamation className="mr-2 h-3 w-3" />
+                      Unmark as Featured
+                    </button>
+                  )}
+
+                  {!opportunity?.featured && (
+                    <button
+                      className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                      onClick={() => updateFeaturedFlag(true)}
+                    >
+                      <FaExclamation className="mr-2 h-3 w-3" />
+                      Mark as Featured
+                    </button>
+                  )}
+                </>
+              )}
+
               {/* TODO */}
               {/* <Link
                 href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
@@ -470,6 +536,13 @@ const OpportunityDetails: NextPageWithLayout<{
                   {opportunity?.status == "Deleted" && (
                     <div className="badge bg-green-light text-red-400">
                       Deleted
+                    </div>
+                  )}
+
+                  {/* ADMINS CAN SEE THE FEATURED FLAG */}
+                  {isAdmin && opportunity?.featured && (
+                    <div className="badge bg-blue-light text-blue ">
+                      Featured
                     </div>
                   )}
                 </div>
