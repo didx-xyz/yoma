@@ -80,6 +80,7 @@ import DashboardCarousel from "~/components/Organisation/Dashboard/DashboardCaro
 import { WorldMapChart } from "~/components/Organisation/Dashboard/WorldMapChart";
 import type { Organization } from "~/api/models/organisation";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
+
 interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
   opportunities: string[] | null;
@@ -97,7 +98,10 @@ interface IParams extends ParsedUrlQuery {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
+  console.log("🚀 ~ file: [id].tsx ~ STARTED", id); //**
   const { opportunities } = context.query;
+
+  console.log("🚀 ~ file: [id].tsx ~ getting user session....", id); //**
   const session = await getServerSession(context.req, context.res, authOptions);
   let errorCode = null;
 
@@ -110,13 +114,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
   // 👇 set theme based on role
+  console.log("🚀 ~ file: [id].tsx ~ getting theme from role....", id); //**
   const theme = getThemeFromRole(session, id);
 
   const queryClient = new QueryClient(config);
   let lookups_selectedOpportunities;
 
   try {
+    console.log("🚀 ~ file: [id].tsx ~ getting 'getCategoriesAdmin'....", id); //**
     const dataCategories = await getCategoriesAdmin(id, context);
+    console.log("🚀 ~ file: [id].tsx ~ getting 'getOrganisationById'....", id); //**
     const dataOrganisation = await getOrganisationById(id, context);
 
     // 👇 prefetch queries on server
@@ -132,7 +139,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     ]);
 
     // HACK: lookup each of the opportunities (to resolve ids to titles)
-    if (opportunities)
+    if (opportunities) {
+      console.log(
+        "🚀 ~ file: [id].tsx ~ getting 'searchCriteriaOpportunities'....",
+        id,
+      ); //**
+
       lookups_selectedOpportunities = await searchCriteriaOpportunities(
         {
           opportunities: opportunities.toString().split(",") ?? [],
@@ -145,8 +157,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         },
         context,
       );
+    }
+    console.log("🚀 ~ file: [id].tsx ~  DONE!", id); //**
   } catch (error) {
-    console.error(error);
+    console.error("🚀 ~ file: [id].tsx ~ ERROR '...." + error, id); //**
+
+    //console.error(error);
     if (axios.isAxiosError(error) && error.response?.status) {
       if (error.response.status === 404) {
         return {
