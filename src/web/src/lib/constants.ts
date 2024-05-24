@@ -130,4 +130,4 @@ export const SLOW_NETWORK_ABORT_TIMEOUT = 45000; // 45 seconds
 
 export const DELIMETER_PASTE_MULTI = /\s|\||,|;/;
 
-export const SSG_REVALIDATE = 30; // 30 seconds // 300; // 5 minutes
+export const SSG_REVALIDATE = 5; // 5 seconds // 300; // 5 minutes
