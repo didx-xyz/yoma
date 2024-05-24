@@ -326,6 +326,8 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         valueContains: query ? decodeURIComponent(query.toString()) : null,
         mostViewed: null,
+        mostCompleted: null,
+        featured: null,
         types: types != undefined ? types?.toString().split(",") : null,
         categories:
           categories != undefined ? categories?.toString().split(",") : null,
