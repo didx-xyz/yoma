@@ -76,7 +76,14 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       RuleFor(x => x.DifficultyId).NotEmpty().Must(DifficultyExists).WithMessage($"Specified difficulty is invalid / does not exist.");
       RuleFor(x => x.CommitmentIntervalId).NotEmpty().Must(TimeIntervalExists).WithMessage($"Specified time interval is invalid / does not exist.");
       RuleFor(x => x.CommitmentIntervalCount).Must(x => x > 0).WithMessage("'{PropertyName}' must be greater than 0.");
+
+      RuleFor(x => x.ParticipantLimit)
+          .Must(o => !o.HasValue)
+          .When(x => !x.VerificationEnabled)
+          .WithMessage("'{PropertyName}' is not supported when verification is not enabled. Please remove the specified value.");
+
       RuleFor(x => x.ParticipantLimit).Must(x => x.HasValue && x > 0).When(x => x.ParticipantLimit.HasValue).WithMessage("'{PropertyName}' must be greater than 0.");
+
       RuleFor(x => x.Keywords).Must(keywords => keywords == null || keywords.All(x => !string.IsNullOrWhiteSpace(x) && !x.Contains(OpportunityService.Keywords_Separator))).WithMessage("{PropertyName} contains empty value(s) or keywords with ',' character.");
       RuleFor(model => model.Keywords).Must(list => list == null || CalculateCombinedLength(list) >= 1 && CalculateCombinedLength(list) <= OpportunityService.Keywords_CombinedMaxLength).WithMessage("The combined length of keywords must be between 1 and 500 characters.");
       RuleFor(x => x.DateStart).NotEmpty(); //start date can be in the past
