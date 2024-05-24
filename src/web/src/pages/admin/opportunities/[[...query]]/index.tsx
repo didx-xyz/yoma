@@ -17,7 +17,12 @@ import type { OrganizationInfo } from "~/api/models/organisation";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { SearchInputLarge } from "~/components/SearchInputLarge";
-import { PAGE_SIZE, PAGE_SIZE_MAXIMUM, THEME_BLUE } from "~/lib/constants";
+import {
+  PAGE_SIZE,
+  PAGE_SIZE_MAXIMUM,
+  THEME_BLUE,
+  SSG_REVALIDATE,
+} from "~/lib/constants";
 import { type NextPageWithLayout } from "~/pages/_app";
 import {
   getCommitmentIntervals,
@@ -84,7 +89,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     // Next.js will attempt to re-generate the page:
     // - When a request comes in
     // - At most once every 300 seconds
-    revalidate: 300,
+    revalidate: SSG_REVALIDATE,
   };
 };
 

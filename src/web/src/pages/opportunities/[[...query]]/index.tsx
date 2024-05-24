@@ -48,6 +48,7 @@ import {
   VIEWPORT_SIZE,
   OPPORTUNITY_TYPES_EVENT,
   OPPORTUNITY_TYPES_OTHER,
+  SSG_REVALIDATE,
 } from "~/lib/constants";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -256,7 +257,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     // Next.js will attempt to re-generate the page:
     // - When a request comes in
     // - At most once every 300 seconds
-    revalidate: 300,
+    revalidate: SSG_REVALIDATE,
   };
 };
 

@@ -24,6 +24,7 @@ import {
   GA_CATEGORY_OPPORTUNITY,
   PAGE_SIZE_MINIMUM,
   THEME_BLUE,
+  SSG_REVALIDATE,
 } from "~/lib/constants";
 import type { Country } from "~/api/models/lookups";
 import Select from "react-select";
@@ -167,7 +168,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     // Next.js will attempt to re-generate the page:
     // - When a request comes in
     // - At most once every 300 seconds
-    revalidate: 300,
+    revalidate: SSG_REVALIDATE,
   };
 };
 

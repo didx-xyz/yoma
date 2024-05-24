@@ -10,7 +10,7 @@ import React, {
 import { type NextPageWithLayout } from "~/pages/_app";
 import { listSearchCriteriaCountries } from "~/api/services/marketplace";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
-import { COUNTRY_WW, THEME_BLUE } from "~/lib/constants";
+import { COUNTRY_WW, THEME_BLUE, SSG_REVALIDATE } from "~/lib/constants";
 import type { Country } from "~/api/models/lookups";
 import Select from "react-select";
 import { useRouter } from "next/router";
@@ -40,7 +40,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       // Next.js will attempt to re-generate the page:
       // - When a request comes in
       // - At most once every 300 seconds
-      revalidate: 300,
+      revalidate: SSG_REVALIDATE,
     };
   }
 
@@ -61,7 +61,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     // Next.js will attempt to re-generate the page:
     // - When a request comes in
     // - At most once every 300 seconds
-    revalidate: 300,
+    revalidate: SSG_REVALIDATE,
   };
 };
 
