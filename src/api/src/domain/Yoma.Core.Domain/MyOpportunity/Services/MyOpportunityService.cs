@@ -637,9 +637,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         OpportunityId = group.Key,
         Title = group.First().OpportunityTitle,
         Count = group.Count(),
-        MaxDateModified = group.Max(o => o.DateModified) //max last viewed date
+        MaxDateModified = group.Max(o => o.DateModified) //max date viewed
       });
-      queryGrouped = queryGrouped.OrderByDescending(result => result.Count).ThenByDescending(result => result.MaxDateModified).ThenBy(o => o.Title). //ordered by count, then by max last completed date and then by title
+      queryGrouped = queryGrouped.OrderByDescending(result => result.Count).ThenByDescending(result => result.MaxDateModified).ThenBy(o => o.Title). //ordered by count, then by max date modified and then by title
         ThenBy(o => o.OpportunityId); //ensure deterministic sorting / consistent pagination results
       queryGrouped = queryGrouped.Take(List_Aggregated_Opportunity_By_Limit); //limit
 
@@ -669,9 +669,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         OpportunityId = group.Key,
         Title = group.First().OpportunityTitle, 
         Count = group.Count(),
-        MaxDateModified = group.Max(o => o.DateCompleted) //max last completed date
+        MaxDateCompleted = group.Max(o => o.DateCompleted) //max date completed
       });
-      queryGrouped = queryGrouped.OrderByDescending(result => result.Count).ThenByDescending(result => result.MaxDateModified).ThenBy(o => o.Title). //ordered by count, then by max last completed date and then by title
+      queryGrouped = queryGrouped.OrderByDescending(result => result.Count).ThenByDescending(result => result.MaxDateCompleted).ThenBy(o => o.Title). //ordered by count, then by max date completed and then by title
         ThenBy(o => o.OpportunityId); //ensure deterministic sorting / consistent pagination results
       queryGrouped = queryGrouped.Take(List_Aggregated_Opportunity_By_Limit); 
 
