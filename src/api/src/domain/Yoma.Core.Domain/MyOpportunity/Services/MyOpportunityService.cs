@@ -758,7 +758,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           case VerificationStatus.Completed:
             if (item.DateEnd.HasValue && item.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())
               throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd:yyyy-MM-dd}')");
-            
+
             if (!instantVerification && opportunity.ParticipantLimit.HasValue)
             {
               //ensure no pending verifications for other students who applied earlier
