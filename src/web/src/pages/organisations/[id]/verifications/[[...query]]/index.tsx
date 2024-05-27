@@ -8,13 +8,7 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import {
-  useCallback,
-  type ReactElement,
-  useState,
-  Fragment,
-  useMemo,
-} from "react";
+import { useCallback, type ReactElement, useState, useMemo } from "react";
 import MainLayout from "~/components/Layout/Main";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -239,9 +233,14 @@ const OpportunityVerifications: NextPageWithLayout<{
       enabled: !error,
     });
   const { data: dataOpportunitiesForVerification } = useQuery<SelectOption[]>({
-    queryKey: ["OpportunitiesForVerification", id],
+    queryKey: ["OpportunitiesForVerification", id, verificationStatus],
     queryFn: async () =>
-      (await getOpportunitiesForVerification([id])).map((x) => ({
+      (
+        await getOpportunitiesForVerification(
+          [id],
+          verificationStatus ? verificationStatus.split(",") : null,
+        )
+      ).map((x) => ({
         value: x.id,
         label: x.title,
       })),
@@ -559,6 +558,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       searchFilter.verificationStatuses = verificationStatus
         ? verificationStatus.split(",")
         : null;
+      searchFilter.opportunity = null; // reset opportunity filter
       redirectWithSearchFilterParams(searchFilter);
     },
     [searchFilter, redirectWithSearchFilterParams],

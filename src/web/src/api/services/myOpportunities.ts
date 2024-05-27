@@ -117,14 +117,14 @@ export const performActionViewed = async (
 
 export const getOpportunitiesForVerification = async (
   organisations?: string[],
-  verificationStatuses?: VerificationStatus[],
+  verificationStatuses?: VerificationStatus[] | string[] | null,
   context?: GetServerSidePropsContext,
 ): Promise<MyOpportunitySearchCriteriaOpportunity[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
   let querystring = "";
   if (organisations) {
-    querystring += `organisations=${organisations.join(",")}`;
+    querystring += `organizations=${organisations.join(",")}`;
   }
   if (verificationStatuses) {
     querystring += `&verificationStatuses=${verificationStatuses.join(",")}`;
