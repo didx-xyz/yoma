@@ -4,8 +4,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using StackExchange.Redis;
-using System.Collections.Generic;
-using System.Runtime.ConstrainedExecution;
 using System.Transactions;
 using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.BlobProvider;
@@ -33,7 +31,6 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
