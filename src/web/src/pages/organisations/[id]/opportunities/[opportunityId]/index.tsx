@@ -186,6 +186,12 @@ const OpportunityDetails: NextPageWithLayout<{
     useState<number | null>(null);
   const [oppExpiredModalVisible, setOppExpiredModalVisible] = useState(false);
   const [loadingUpdateInactive, setLoadingUpdateInactive] = useState(false);
+  const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(oppExpiredModalVisible);
+  useDisableBodyScroll(saveChangesDialogVisible);
 
   // 👇 use prefetched queries from server
   const { data: categories } = useQuery<SelectOption[]>({
@@ -267,9 +273,6 @@ const OpportunityDetails: NextPageWithLayout<{
     queryFn: () => getOpportunityById(opportunityId),
     enabled: opportunityId !== "create" && !error,
   });
-
-  const [step, setStep] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState<OpportunityRequestBase>({
     id: opportunity?.id ?? null,
@@ -759,6 +762,12 @@ const OpportunityDetails: NextPageWithLayout<{
           ? moment(data.dateEnd).format(DATE_FORMAT_SYSTEM)
           : null;
 
+        // if verification is disabled, uncheck credential issuance and clear verification method
+        if (!data.verificationEnabled) {
+          data.credentialIssuanceEnabled = false;
+          data.verificationMethod = null;
+        }
+
         // update api
         if (opportunity) {
           await updateOpportunity(data);
@@ -769,7 +778,6 @@ const OpportunityDetails: NextPageWithLayout<{
         }
         toast(message, {
           type: "success",
-          toastId: "opportunity",
         });
         console.log(message); // e2e
 
@@ -784,7 +792,6 @@ const OpportunityDetails: NextPageWithLayout<{
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
-          toastId: "opportunity",
           autoClose: false,
           icon: false,
         });
@@ -916,10 +923,6 @@ const OpportunityDetails: NextPageWithLayout<{
     },
     [opportunityId, queryClient],
   );
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(oppExpiredModalVisible);
-  useDisableBodyScroll(saveChangesDialogVisible);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
