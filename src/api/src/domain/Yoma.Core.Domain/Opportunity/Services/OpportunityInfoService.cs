@@ -146,7 +146,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         filterInternal.Opportunities = aggregatedByViewedOrCompleted?.Keys.ToList() ?? [];
       }
 
-      //ordering based aggregatedByViewedOrCompleted ordering; if null will result in no results, thus no ordering applied
+      //ordering based on aggregatedByViewedOrCompleted ordering; if null will result in no results, thus no ordering applied
       if (mostViewed || mostCompleted)
       {
         filterInternal.OrderInstructions = aggregatedByViewedOrCompleted == null ? null :
