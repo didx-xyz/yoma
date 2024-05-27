@@ -138,8 +138,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     }
 
     public List<MyOpportunitySearchCriteriaOpportunity> ListMyOpportunityVerificationSearchCriteriaOpportunity(List<Guid>? organizations,
-        List<VerificationStatus>? verificationStatuses,
-        bool ensureOrganizationAuthorization)
+       List<VerificationStatus>? verificationStatuses,
+       bool ensureOrganizationAuthorization)
     {
       var query = _myOpportunityRepository.Query(false);
 
@@ -163,22 +163,47 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (organizations != null && organizations.Count != 0)
         query = query.Where(o => organizations.Contains(o.OrganizationId));
 
-      if (verificationStatuses != null && verificationStatuses.Count != 0)
+      if (verificationStatuses == null || verificationStatuses.Count == 0) //default to all if not explicitly specified
+        verificationStatuses = [VerificationStatus.Pending, VerificationStatus.Completed, VerificationStatus.Rejected]; //all
+      verificationStatuses = verificationStatuses.Distinct().ToList();
+
+      var opportunityStatusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+      var opportunityStatusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+      var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+
+      var predicate = PredicateBuilder.False<Models.MyOpportunity>();
+
+      foreach (var status in verificationStatuses)
       {
-        verificationStatuses = verificationStatuses.Distinct().ToList();
-        var verificationStatusIds = new List<Guid>();
-        verificationStatuses.ForEach(o => verificationStatusIds.Add(_myOpportunityVerificationStatusService.GetByName(o.ToString()).Id));
-        query = query.Where(o => o.VerificationStatusId.HasValue && verificationStatusIds.Contains(o.VerificationStatusId.Value));
+        var verificationStatusId = _myOpportunityVerificationStatusService.GetByName(status.ToString()).Id;
+
+        predicate = status switch
+        {
+          // items that can be completed, thus started opportunities (active) or expired opportunities that relate to active organizations
+          VerificationStatus.Pending =>
+              predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.UtcNow) ||
+              o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId),
+
+          // all, irrespective of related opportunity and organization status
+          VerificationStatus.Completed => predicate.Or(o => o.VerificationStatusId == verificationStatusId),
+
+          // all, irrespective of related opportunity and organization status
+          VerificationStatus.Rejected => predicate.Or(o => o.VerificationStatusId == verificationStatusId),
+
+          _ => throw new InvalidOperationException($"Unknown / unsupported '{nameof(status)}' of '{status}'"),
+        };
       }
 
+      query = query.Where(predicate);
+
       var results = query
-          .GroupBy(o => o.OpportunityId)
-          .Select(group => new MyOpportunitySearchCriteriaOpportunity
-          {
-            Id = group.Key,
-            Title = group.First().OpportunityTitle
-          })
-          .ToList();
+        .GroupBy(o => o.OpportunityId)
+        .Select(group => new MyOpportunitySearchCriteriaOpportunity
+        {
+          Id = group.Key,
+          Title = group.First().OpportunityTitle
+        })
+        .ToList();
 
       results.ForEach(o => o.Title = o.Title.RemoveSpecialCharacters());
       results = [.. results.OrderBy(o => o.Title)];
