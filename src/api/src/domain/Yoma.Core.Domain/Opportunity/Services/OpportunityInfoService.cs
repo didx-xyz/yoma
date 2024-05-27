@@ -151,7 +151,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         filterInternal.OrderInstructions = aggregatedByViewedOrCompleted == null ? null :
         [
-          new() { OrderBy = opportunity => aggregatedByViewedOrCompleted.Keys.ToList().IndexOf(opportunity.Id) }
+          new() { OrderBy = opportunity => aggregatedByViewedOrCompleted.Keys.ToList().IndexOf(opportunity.Id), SortOrder = Core.FilterSortOrder.Ascending }
         ];
       }
 
