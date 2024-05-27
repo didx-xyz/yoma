@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Models
@@ -11,5 +12,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     [JsonIgnore]
     internal bool TotalCountOnly { get; set; }
+
+    [JsonIgnore]
+    internal abstract FilterSortOrder SortOrder { get; set; }
   }
 }

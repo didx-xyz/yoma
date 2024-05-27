@@ -242,7 +242,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         VerificationStatuses = filter.VerificationStatuses,
         TotalCountOnly = filter.TotalCountOnly,
         PageNumber = filter.PageNumber,
-        PageSize = filter.PageSize
+        PageSize = filter.PageSize,
+        SortOrder = filter.SortOrder
       };
 
       return Search(filterInternal, false);
@@ -303,14 +304,17 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         query = query.Where(predicate);
       }
 
+      var orderInstructions = new List<FilterOrdering<Models.MyOpportunity>>();
       switch (filter.Action)
       {
         case Action.Saved:
         case Action.Viewed:
+          orderInstructions.Add(new() { OrderBy = o => o.DateModified, SortOrder = filter.SortOrder });
+
           //published: relating to active opportunities (irrespective of started) that relates to active organizations
           query = query.Where(o => o.OpportunityStatusId == opportunityStatusActiveId);
           query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
-          query = query.OrderByDescending(o => o.DateModified).ThenBy(o => o.Id); //ensure deterministic sorting / consistent pagination results
+
           break;
 
         case Action.Verification:
@@ -318,32 +322,40 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             throw new ArgumentNullException(nameof(filter), "One or more verification status(es) required");
           filter.VerificationStatuses = filter.VerificationStatuses.Distinct().ToList();
 
+          orderInstructions.Add(new() { OrderBy = o => o.DateModified, SortOrder = filter.SortOrder });
+
           var predicate = PredicateBuilder.False<Models.MyOpportunity>();
 
           foreach (var status in filter.VerificationStatuses)
           {
             var verificationStatusId = _myOpportunityVerificationStatusService.GetByName(status.ToString()).Id;
 
-            predicate = status switch
+            switch (status)
             {
-              //items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
-              VerificationStatus.Pending =>
-                  predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.UtcNow) ||
-                  o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId),
+              case VerificationStatus.Pending:
+                //items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
+                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.UtcNow) ||
+                    o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId);
+                break;
 
-              //all, irrespective of related opportunity and organization status
-              VerificationStatus.Completed => predicate.Or(o => o.VerificationStatusId == verificationStatusId),
+              case VerificationStatus.Completed:
+                //all, irrespective of related opportunity and organization status
+                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId);
 
-              //all, irrespective of related opportunity and organization status
-              VerificationStatus.Rejected => predicate.Or(o => o.VerificationStatusId == verificationStatusId),
+                orderInstructions.Add(new() { OrderBy = o => o.DateCompleted ?? DateTime.MaxValue, SortOrder = filter.SortOrder });
 
-              _ => throw new InvalidOperationException($"Unknown / unsupported '{nameof(filter.VerificationStatuses)}' of '{status}'"),
-            };
+                break;
+              case VerificationStatus.Rejected:
+                //all, irrespective of related opportunity and organization status
+                predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId);
+                break;
+
+              default:
+                throw new InvalidOperationException($"Unknown / unsupported '{nameof(filter.VerificationStatuses)}' of '{status}'");
+            }
           }
 
           query = query.Where(predicate);
-          query = query.OrderByDescending(o => o.DateModified).ThenByDescending(o => o.DateCompleted).ThenBy(o => o.Id); //ensure deterministic sorting / consistent pagination results
-
           break;
 
         default:
@@ -357,6 +369,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         result.TotalCount = query.Count();
         return result;
       }
+
+      orderInstructions.Add(new() { OrderBy = o => o.Id, SortOrder = FilterSortOrder.Ascending }); //ensure deterministic sorting / consistent pagination results 
+
+      query = query.ApplyFiltersAndOrdering(orderInstructions);
 
       //pagination
       if (filter.PaginationEnabled)
@@ -742,6 +758,18 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           case VerificationStatus.Completed:
             if (item.DateEnd.HasValue && item.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())
               throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd:yyyy-MM-dd}')");
+            
+            if (!instantVerification && opportunity.ParticipantLimit.HasValue)
+            {
+              //ensure no pending verifications for other students who applied earlier
+              var statusIdPending = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
+              var itemsOlder = _myOpportunityRepository.Query(false).
+                Where(o => o.UserId != user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId && o.VerificationStatusId == statusIdPending &&
+                o.DateModified < item.DateModified).OrderBy(o => o.DateModified).ThenBy(o => o.Id).ToList();
+
+              if (itemsOlder.Count != 0)
+                throw new ValidationException($"Please complete the pending verifications for '{opportunity.Title}' for the following students who applied earlier: '{string.Join(", ", itemsOlder.Select(o => $"{o.UserDisplayName} ({o.DateModified.ToString("dd MMM yyyy")})"))}'");
+            }
 
             //with instant-verifications ensureOrganizationAuthorization not checked as finalized immediately by the user (youth)
             var result = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, !instantVerification);

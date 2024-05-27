@@ -1,3 +1,6 @@
+using Newtonsoft.Json;
+using Yoma.Core.Domain.Core;
+
 namespace Yoma.Core.Domain.MyOpportunity.Models
 {
   public class MyOpportunitySearchFilterAdmin : MyOpportunitySearchFilterBase
@@ -9,5 +12,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public List<Guid>? Organizations { get; set; }
 
     public string? ValueContains { get; set; }
+
+    [JsonIgnore]
+    internal override FilterSortOrder SortOrder { get; set; } = FilterSortOrder.Ascending;
   }
 }
