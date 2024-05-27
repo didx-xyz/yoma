@@ -667,13 +667,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       .Select(group => new
       {
         OpportunityId = group.Key,
-        Title = group.First().OpportunityTitle, 
+        Title = group.First().OpportunityTitle,
         Count = group.Count(),
         MaxDateCompleted = group.Max(o => o.DateCompleted) //max date completed
       });
       queryGrouped = queryGrouped.OrderByDescending(result => result.Count).ThenByDescending(result => result.MaxDateCompleted).ThenBy(o => o.Title). //ordered by count, then by max date completed and then by title
         ThenBy(o => o.OpportunityId); //ensure deterministic sorting / consistent pagination results
-      queryGrouped = queryGrouped.Take(List_Aggregated_Opportunity_By_Limit); 
+      queryGrouped = queryGrouped.Take(List_Aggregated_Opportunity_By_Limit);
 
       return queryGrouped.ToDictionary(o => o.OpportunityId, o => o.Count);
     }
