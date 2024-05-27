@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using StackExchange.Redis;
+using System.Collections.Generic;
+using System.Runtime.ConstrainedExecution;
 using System.Transactions;
 using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.BlobProvider;
@@ -30,6 +33,7 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
@@ -634,10 +638,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       .Select(group => new
       {
         OpportunityId = group.Key,
+        Title = group.First().OpportunityTitle,
         Count = group.Count(),
         MaxDateModified = group.Max(o => o.DateModified) //max last viewed date
       });
-      queryGrouped = queryGrouped.OrderByDescending(result => result.Count).ThenByDescending(result => result.MaxDateModified); //ordered by count and then by max last viewed date
+      queryGrouped = queryGrouped.OrderByDescending(result => result.Count).ThenByDescending(result => result.MaxDateModified).ThenBy(o => o.Title). //ordered by count, then by max last completed date and then by title
+        ThenBy(o => o.OpportunityId); //ensure deterministic sorting / consistent pagination results
       queryGrouped = queryGrouped.Take(List_Aggregated_Opportunity_By_Limit); //limit
 
       return queryGrouped.ToDictionary(o => o.OpportunityId, o => o.Count);
@@ -664,11 +670,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       .Select(group => new
       {
         OpportunityId = group.Key,
+        Title = group.First().OpportunityTitle, 
         Count = group.Count(),
-        MaxDateModified = group.Max(o => o.DateModified) //max last viewed date
+        MaxDateModified = group.Max(o => o.DateCompleted) //max last completed date
       });
-      queryGrouped = queryGrouped.OrderByDescending(result => result.Count).ThenByDescending(result => result.MaxDateModified); //ordered by count and then by max last viewed date
-      queryGrouped = queryGrouped.Take(List_Aggregated_Opportunity_By_Limit); //limit
+      queryGrouped = queryGrouped.OrderByDescending(result => result.Count).ThenByDescending(result => result.MaxDateModified).ThenBy(o => o.Title). //ordered by count, then by max last completed date and then by title
+        ThenBy(o => o.OpportunityId); //ensure deterministic sorting / consistent pagination results
+      queryGrouped = queryGrouped.Take(List_Aggregated_Opportunity_By_Limit); 
 
       return queryGrouped.ToDictionary(o => o.OpportunityId, o => o.Count);
     }

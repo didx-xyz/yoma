@@ -146,10 +146,16 @@ namespace Yoma.Core.Domain.Opportunity.Services
         filterInternal.Opportunities = aggregatedByViewedOrCompleted?.Keys.ToList() ?? [];
       }
 
-      var searchResult = _opportunityService.Search(filterInternal, false);
-
+      //ordering based aggregatedByViewedOrCompleted ordering; if null will result in no results, thus no ordering applied
       if (mostViewed || mostCompleted)
-        searchResult.Items = [.. searchResult.Items.OrderBy(opportunity => aggregatedByViewedOrCompleted?.Keys.ToList().IndexOf(opportunity.Id))];
+      {
+        filterInternal.OrderInstructions = aggregatedByViewedOrCompleted == null ? null :
+        [
+          new() { OrderBy = opportunity => aggregatedByViewedOrCompleted.Keys.ToList().IndexOf(opportunity.Id) }
+        ];
+      }
+
+      var searchResult = _opportunityService.Search(filterInternal, false);
 
       var results = new OpportunitySearchResultsInfo
       {
