@@ -770,7 +770,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 o.DateModified < item.DateModified).OrderBy(o => o.DateModified).ThenBy(o => o.Id).ToList();
 
               if (itemsOlder.Count != 0)
-                throw new ValidationException($"Please complete the pending verifications for '{opportunity.Title}' for the following students who applied earlier: '{string.Join(", ", itemsOlder.Select(o => $"{o.UserDisplayName} ({o.DateModified.ToString("dd MMM yyyy")})"))}'");
+                throw new ValidationException($"Please complete the pending verifications for '{opportunity.Title}' for the following students who applied earlier: '{string.Join(", ", itemsOlder.Select(o => $"{o.UserDisplayName} ({o.DateModified:dd MMM yyyy})"))}'");
             }
 
             //with instant-verifications ensureOrganizationAuthorization not checked as finalized immediately by the user (youth)
