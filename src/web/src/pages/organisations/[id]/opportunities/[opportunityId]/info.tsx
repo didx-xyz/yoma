@@ -620,7 +620,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     {opportunity?.participantCountVerificationPending &&
                       opportunity?.participantCountVerificationPending > 0 && (
                         <Link
-                          href={`/organisations/${id}/verifications?opportunity=${opportunityId}${
+                          href={`/organisations/${id}/verifications?opportunity=${opportunityId}&verificationStatus=Pending${
                             returnUrl
                               ? `&returnUrl=${encodeURIComponent(
                                   returnUrl.toString(),

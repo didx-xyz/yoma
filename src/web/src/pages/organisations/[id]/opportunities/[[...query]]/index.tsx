@@ -15,7 +15,7 @@ import { type NextPageWithLayout } from "~/pages/_app";
 import { type ParsedUrlQuery } from "querystring";
 import Link from "next/link";
 import { PageBackground } from "~/components/PageBackground";
-import { IoIosAdd, IoMdPerson, IoIosLink } from "react-icons/io";
+import { IoIosAdd, IoMdPerson, IoIosLink, IoIosWarning } from "react-icons/io";
 import { SearchInput } from "~/components/SearchInput";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PAGE_SIZE } from "~/lib/constants";
@@ -210,9 +210,6 @@ const Opportunities: NextPageWithLayout<{
         pathname: `/organisations/${id}/opportunities`,
         query: { query: query, page: value, status: status },
       });
-
-      // reset scroll position
-      window.scrollTo(0, 0);
     },
     [query, id, router, status],
   );
@@ -474,6 +471,9 @@ const Opportunities: NextPageWithLayout<{
                     <th className="border-b-2 border-gray-light">Url</th>
                     <th className="border-b-2 border-gray-light">
                       Participants
+                    </th>{" "}
+                    <th className="border-b-2 border-gray-light">
+                      Pending Verifications
                     </th>
                   </tr>
                 </thead>
@@ -536,6 +536,20 @@ const Opportunities: NextPageWithLayout<{
                             {opportunity.participantCountTotal}
                           </span>
                         </span>
+                      </td>
+                      <td className="border-b-2 border-gray-light">
+                        {opportunity.participantCountVerificationPending >
+                          0 && (
+                          <Link
+                            href={`/organisations/${id}/verifications?opportunity=${opportunity.id}&verificationStatus=Pending`}
+                            className="badge bg-orange-light text-orange"
+                          >
+                            <IoIosWarning className="h-4 w-4" />
+                            <span className="ml-1 text-xs">
+                              {opportunity.participantCountVerificationPending}
+                            </span>
+                          </Link>
+                        )}
                       </td>
                     </tr>
                   ))}
