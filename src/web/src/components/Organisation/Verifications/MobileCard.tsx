@@ -55,9 +55,9 @@ const MobileCard: React.FC<MobileCardProps> = ({
         </div>
         <div className="mb-1 text-sm">
           <strong>Date connected:</strong>{" "}
-          {item.dateStart && (
+          {item.dateModified && (
             <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-              {item.dateStart}
+              {item.dateModified}
             </Moment>
           )}
         </div>

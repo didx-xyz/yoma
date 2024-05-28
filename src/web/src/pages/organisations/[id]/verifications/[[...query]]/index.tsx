@@ -1067,9 +1067,9 @@ const OpportunityVerifications: NextPageWithLayout<{
                           </Link>
                         </td>
                         <td className="w-[185px]">
-                          {item.dateStart && (
+                          {item.dateModified && (
                             <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                              {item.dateStart}
+                              {item.dateModified}
                             </Moment>
                           )}
                         </td>

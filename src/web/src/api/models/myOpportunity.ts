@@ -77,7 +77,7 @@ export interface MyOpportunityInfo {
   dateStart: string | null;
   dateEnd: string | null;
   dateCompleted: string | null;
-  dateModified: string | null; //TODO: add to api
+  dateModified: string | null;
   zltoReward: number | null;
   yomaReward: number | null;
   verifications: MyOpportunityInfoVerification[] | null;
