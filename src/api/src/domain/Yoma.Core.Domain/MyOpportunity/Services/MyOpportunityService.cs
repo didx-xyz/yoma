@@ -322,6 +322,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             throw new ArgumentNullException(nameof(filter), "One or more verification status(es) required");
           filter.VerificationStatuses = filter.VerificationStatuses.Distinct().ToList();
 
+          orderInstructions.Add(new() { OrderBy = o => o.DateModified, SortOrder = filter.SortOrder });
+
           var predicate = PredicateBuilder.False<Models.MyOpportunity>();
 
           foreach (var status in filter.VerificationStatuses)
@@ -334,8 +336,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 //items that can be completed, thus started opportunities (active) or expired opportunities that relates to active organizations
                 predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId && ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.UtcNow) ||
                     o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId);
-
-                orderInstructions.Add(new() { OrderBy = o => o.DateModified, SortOrder = filter.SortOrder });
                 break;
 
               case VerificationStatus.Completed:
@@ -348,8 +348,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               case VerificationStatus.Rejected:
                 //all, irrespective of related opportunity and organization status
                 predicate = predicate.Or(o => o.VerificationStatusId == verificationStatusId);
-
-                orderInstructions.Add(new() { OrderBy = o => o.DateModified, SortOrder = filter.SortOrder });
                 break;
 
               default:
