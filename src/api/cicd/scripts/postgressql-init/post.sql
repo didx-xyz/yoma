@@ -157,14 +157,51 @@ DECLARE
     V_RandomLengthName INT := ABS(FLOOR(RANDOM() * 5) + 5);
     V_RandomLengthOther INT := ABS(FLOOR(RANDOM() * 101) + 100);
     V_DateCreated TIMESTAMP := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC');
-    V_DateStart TIMESTAMP := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '2 day';
+    V_DateStartRunning TIMESTAMP := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '2 day';
     V_Iterations INT := 50000;
     V_RowCount INT := 0;
     V_VerificationEnabled BOOLEAN := false;
+    V_CommitmentIntervalId UUID;
+    V_CommitmentIntervalName VARCHAR(100);
+    V_CommitmentIntervalCount INT;
+    V_CommitmentIntervalDays INT;
+    V_DateStart TIMESTAMP;
+    V_DateEnd TIMESTAMP;
 BEGIN
     -- Opportunities
 	WHILE V_RowCount < V_Iterations LOOP
-      V_VerificationEnabled := CAST(RANDOM() < 0.5 AS BOOLEAN);
+        V_VerificationEnabled := CAST(RANDOM() < 0.5 AS BOOLEAN);
+
+        --commitment interval, count and end date
+        SELECT "Id" FROM "Lookup"."TimeInterval" ORDER BY RANDOM() LIMIT 1 INTO V_CommitmentIntervalId;
+
+        --determine CommitmentIntervalCount for this iteration
+        V_CommitmentIntervalCount := 1 + ABS(FLOOR(RANDOM() * 10));
+
+        --lookup CommitmentIntervalName based on CommitmentIntervalId
+        SELECT "Name" FROM "Lookup"."TimeInterval" WHERE "Id" = V_CommitmentIntervalId INTO V_CommitmentIntervalName;
+
+        --calculate CommitmentIntervalDays based on CommitmentIntervalName
+        V_CommitmentIntervalDays := CASE
+            WHEN V_CommitmentIntervalName = 'Minute' THEN CEIL(V_CommitmentIntervalCount / (60.0 * 24))
+            WHEN V_CommitmentIntervalName = 'Hour' THEN CEIL(V_CommitmentIntervalCount / 24.0)
+            WHEN V_CommitmentIntervalName = 'Day' THEN V_CommitmentIntervalCount
+            WHEN V_CommitmentIntervalName = 'Week' THEN V_CommitmentIntervalCount * 7
+            WHEN V_CommitmentIntervalName = 'Month' THEN V_CommitmentIntervalCount * 30
+            ELSE NULL -- Placeholder for unsupported intervals
+        END;
+
+         -- Check if the interval was unsupported
+        IF V_CommitmentIntervalDays IS NULL THEN
+            RAISE EXCEPTION 'Unsupported TimeInterval: %', V_CommitmentIntervalName;
+        END IF;
+
+        --start date
+        V_DateStart := date_trunc('day', V_DateStartRunning);
+
+        --calculate DateEnd based on CommitmentIntervalDays
+        V_DateEnd := V_DateStart + INTERVAL '1 DAY' * (V_CommitmentIntervalDays - 1);
+        V_DateEnd := date_trunc('day', V_DateEnd) + INTERVAL '1 DAY' - INTERVAL '1 millisecond';
 
 	    -- Insert into the Opportunity table
 	    INSERT INTO "Opportunity"."Opportunity"(
@@ -175,7 +212,7 @@ BEGIN
 	        "DateModified", "ModifiedByUserId"
 	    )
 	    SELECT
-	        gen_random_uuid(),
+	        gen_random_uuid() as "Id",
 	        (
 	            SELECT ARRAY_TO_STRING(ARRAY_AGG(Word), ' ')
 	            FROM (
@@ -183,7 +220,7 @@ BEGIN
 	                ORDER BY RANDOM()
 	                LIMIT ABS(FLOOR(RANDOM() * 10) + 5)
 	            ) AS RandomTitleWords
-	        ) || ' ' || CAST(ABS(FLOOR(RANDOM() * 2147483647)) AS VARCHAR(10)),
+	        ) || ' ' || CAST(ABS(FLOOR(RANDOM() * 2147483647)) AS VARCHAR(10)) as "Title",
 	        (
 	            SELECT ARRAY_TO_STRING(ARRAY_AGG(Word), ' ')
 	            FROM (
@@ -191,13 +228,9 @@ BEGIN
 	                ORDER BY RANDOM()
 	                LIMIT ABS(FLOOR(RANDOM() * 101) + 100)
 	            ) AS RandomDescriptionWords
-	        ),
-	        (
-	            SELECT "Id" FROM "Opportunity"."OpportunityType" ORDER BY RANDOM() LIMIT 1
-	        ),
-	        (
-	            SELECT "Id" FROM "Entity"."Organization" ORDER BY RANDOM() LIMIT 1
-	        ),
+	        ) as "Description",
+	        (SELECT "Id" FROM "Opportunity"."OpportunityType" ORDER BY RANDOM() LIMIT 1) as "TypeId",
+	        (SELECT "Id" FROM "Entity"."Organization" ORDER BY RANDOM() LIMIT 1) as "OrganizationId",
 	        (
 	            SELECT ARRAY_TO_STRING(ARRAY_AGG(Word), ' ')
 	            FROM (
@@ -205,7 +238,7 @@ BEGIN
 	                ORDER BY RANDOM()
 	                LIMIT ABS(FLOOR(RANDOM() * 101) + 100)
 	            ) AS RandomSummaryWords
-	        ),
+	        ) as "Summary",
 	        (
 	            SELECT ARRAY_TO_STRING(ARRAY_AGG(Word), ' ')
 	            FROM (
@@ -213,28 +246,22 @@ BEGIN
 	                ORDER BY RANDOM()
 	                LIMIT ABS(FLOOR(RANDOM() * 101) + 100)
 	            ) AS RandomInstructionsWords
-	        ),
-	        'https://www.google.com/',
-          (SELECT ROUND((100 + (350 - 100) * RANDOM()))::numeric),
-          (SELECT ROUND((1000 + (3500 - 1000) * RANDOM()))::numeric),
-	        NULL,
-	        NULL,
-	        NULL,
-	        NULL,
-	        V_VerificationEnabled,
-	        CASE WHEN V_VerificationEnabled = true THEN 'Manual' ELSE NULL END,
-	        (
-	            SELECT "Id" FROM "Opportunity"."OpportunityDifficulty" ORDER BY RANDOM() LIMIT 1
-	        ),
-	        (
-	            SELECT "Id" FROM "Lookup"."TimeInterval" ORDER BY RANDOM() LIMIT 1
-	        ),
-	        1 + ABS(FLOOR(RANDOM() * 10)),
-	        100 + ABS(FLOOR(RANDOM() * 901)),
-	        NULL,
-	        (
-	            SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" IN ('Active', 'Inactive') ORDER BY RANDOM() LIMIT 1
-	        ),
+	        ) as "Instructions",
+	        'https://www.google.com/' as "URL",
+            (SELECT ROUND((100 + (350 - 100) * RANDOM()))::numeric) as "ZltoReward",
+            (SELECT ROUND((1000 + (3500 - 1000) * RANDOM()))::numeric) as "ZltoRewardPool",
+	        NULL as "ZltoRewardCumulative",
+	        NULL as "YomaReward",
+	        NULL as "YomaRewardPool",
+	        NULL as "YomaRewardCumulative",
+	        V_VerificationEnabled as "VerificationEnabled",
+	        CASE WHEN V_VerificationEnabled = true THEN 'Manual' ELSE NULL END as "VerificationMethod",
+	        (SELECT "Id" FROM "Opportunity"."OpportunityDifficulty" ORDER BY RANDOM() LIMIT 1) as "DifficultyId",
+	        V_CommitmentIntervalId as "CommitmentIntervalId",
+	        V_CommitmentIntervalCount as "CommitmentIntervalCount",
+            CASE WHEN V_VerificationEnabled = true THEN 100 + ABS(FLOOR(RANDOM() * 901)) ELSE NULL END as "ParticipantLimit",
+	        NULL as "ParticipantCount",
+	        (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" IN ('Active', 'Inactive') ORDER BY RANDOM() LIMIT 1) as "StatusId",
 	        (
 	            SELECT ARRAY_TO_STRING(ARRAY_AGG(Word), ',')
 	            FROM (
@@ -242,25 +269,26 @@ BEGIN
 	                ORDER BY RANDOM()
 	                LIMIT ABS(FLOOR(RANDOM() * 101) + 100)
 	            ) AS RandomKeywordsWords
-	        ),
-	        (date_trunc('day', V_DateStart::timestamp AT TIME ZONE 'UTC')),
-	        (date_trunc('day', V_DateStart::timestamp AT TIME ZONE 'UTC') + INTERVAL '1 DAY' - INTERVAL '1 millisecond'),
-	        CAST(CASE WHEN RANDOM() < 0.5 THEN 1 ELSE 0 END AS BOOLEAN),
-	        NULL,
-	        V_DateCreated,
-	        (
-	            SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testorgadminuser@gmail.com'
-	        ),
-	        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
-	        (
-	            SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testorgadminuser@gmail.com'
-	        )
+	        ) as "Keywords",
+	        (V_DateStart::timestamp AT TIME ZONE 'UTC') as "DateStart",
+	        (V_DateEnd::timestamp AT TIME ZONE 'UTC') as "DateEnd",
+            CASE
+            WHEN V_VerificationEnabled = true THEN
+                CAST(CASE WHEN RANDOM() < 0.5 THEN 1 ELSE 0 END AS BOOLEAN)
+            ELSE
+                FALSE
+            END as "CredentialIssuanceEnabled",
+	        NULL as "SSISchemaName",
+	        V_DateCreated as "DateCreated",
+	        (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testorgadminuser@gmail.com') as "CreatedByUserId",
+	        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') as "DateModified",
+	        (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testorgadminuser@gmail.com') as "ModifiedByUserId"
 	    FROM pg_tables
 	    LIMIT 1;
 
 	    V_RowCount := V_RowCount + 1;
 	    V_DateCreated := V_DateCreated + INTERVAL '1 second';
-	    V_DateStart := V_DateStart + INTERVAL '8.64 second';
+	    V_DateStartRunning := V_DateStartRunning + INTERVAL '8.64 second';
 	END LOOP;
 END $$ LANGUAGE plpgsql;
 
