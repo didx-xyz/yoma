@@ -759,17 +759,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (item.DateEnd.HasValue && item.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())
               throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd:yyyy-MM-dd}')");
 
-            if (!instantVerification && opportunity.ParticipantLimit.HasValue)
-            {
-              //ensure no pending verifications for other students who applied earlier
-              var statusIdPending = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
-              var itemsOlder = _myOpportunityRepository.Query(false).
-                Where(o => o.UserId != user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId && o.VerificationStatusId == statusIdPending &&
-                o.DateModified < item.DateModified).OrderBy(o => o.DateModified).ThenBy(o => o.Id).ToList();
-
-              if (itemsOlder.Count != 0)
-                throw new ValidationException($"Please complete the pending verifications for '{opportunity.Title}' for the following students who applied earlier: '{string.Join(", ", itemsOlder.Select(o => $"{o.UserDisplayName} ({o.DateModified:dd MMM yyyy})"))}'");
-            }
+            EnsureNoEarlierPendingVerificationsForOtherStudents(user, opportunity, item, instantVerification);
 
             //with instant-verifications ensureOrganizationAuthorization not checked as finalized immediately by the user (youth)
             var result = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, !instantVerification);
@@ -808,6 +798,32 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         throw new InvalidOperationException($"Email type expected");
 
       await SendEmail(item, emailType.Value);
+    }
+
+
+    private void EnsureNoEarlierPendingVerificationsForOtherStudents(User user, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity currentItem, bool instantVerification)
+    {
+      //ensure no pending verifications for other students who applied earlier
+
+      if (instantVerification) return;
+
+      var proceed = opportunity.ParticipantLimit.HasValue;
+      if (!proceed) proceed = opportunity.ZltoRewardPool.HasValue;
+      if (!proceed) return;
+
+      var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+      var statusIdPending = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
+
+      var itemsOlder = _myOpportunityRepository.Query(false)
+        .Where(o => o.UserId != user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId && o.VerificationStatusId == statusIdPending &&
+                    o.DateModified < currentItem.DateModified)
+        .OrderBy(o => o.DateModified)
+        .ThenBy(o => o.Id)
+        .ToList();
+
+      if (itemsOlder.Count == 0) return;
+
+      throw new ValidationException($"Please complete the pending verifications for '{opportunity.Title}' for the following students who applied earlier: '{string.Join(", ", itemsOlder.Select(o => $"{o.UserDisplayName} ({o.DateModified:dd MMM yyyy})"))}'");
     }
 
     private static string CommentVerificationAppendInfo(string? currentComment, string info)
