@@ -62,7 +62,7 @@ namespace Yoma.Core.Domain.Lookups.Services
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
       {
         var items = _timeIntervalRepository.Query().ToList();
-        return items.OrderBy(o => TimeIntervalHelper.GetOrder(o.Name)).ToList();
+        return [.. items.OrderBy(o => TimeIntervalHelper.GetOrder(o.Name))];
       }
 
       var result = _memoryCache.GetOrCreate(nameof(TimeInterval), entry =>

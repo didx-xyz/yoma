@@ -1,3 +1,4 @@
+using CsvHelper.Configuration;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -392,6 +393,25 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       result.Items.ForEach(o => SetParticipantCounts(o));
       return result;
+    }
+
+    public (string fileName, byte[] bytes) SearchAndExportToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
+    {
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+
+      var result = Search(filter, ensureOrganizationAuthorization);
+
+      var config = new CsvConfiguration(System.Globalization.CultureInfo.CurrentCulture);
+
+      using var stream = new MemoryStream();
+      using (var streamWriter = new StreamWriter(stream: stream, encoding: System.Text.Encoding.UTF8))
+      {
+        using var writer = new CsvHelper.CsvWriter(streamWriter, config);
+        writer.WriteRecords(result.Items);
+      }
+
+      var fileName = $"Verifications_{DateTimeOffset.UtcNow:yyyy-dd-M--HH-mm-ss}.csv";
+      return (fileName, stream.ToArray());
     }
 
     public async Task PerformActionViewed(Guid opportunityId)

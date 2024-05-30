@@ -167,22 +167,22 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return results;
     }
 
-    public (string fileName, byte[] bytes) ExportToCSVOpportunitySearch(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
+    public (string fileName, byte[] bytes) SearchAndExportToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       var result = Search(filter, ensureOrganizationAuthorization);
 
-      var cc = new CsvConfiguration(System.Globalization.CultureInfo.CurrentCulture);
+      var config = new CsvConfiguration(System.Globalization.CultureInfo.CurrentCulture);
 
       using var stream = new MemoryStream();
-      using (var sw = new StreamWriter(stream: stream, encoding: System.Text.Encoding.UTF8))
+      using (var streamWriter = new StreamWriter(stream: stream, encoding: System.Text.Encoding.UTF8))
       {
-        using var cw = new CsvWriter(sw, cc);
-        cw.WriteRecords(result.Items);
+        using var writer = new CsvWriter(streamWriter, config);
+        writer.WriteRecords(result.Items);
       }
 
-      var fileName = $"Transactions_{DateTimeOffset.UtcNow:yyyy-dd-M--HH-mm-ss}.csv";
+      var fileName = $"Opportunities_{DateTimeOffset.UtcNow:yyyy-dd-M--HH-mm-ss}.csv";
       return (fileName, stream.ToArray());
     }
     #endregion

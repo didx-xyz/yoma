@@ -14,6 +14,6 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     OpportunitySearchResultsInfo Search(OpportunitySearchFilter filter);
 
-    (string fileName, byte[] bytes) ExportToCSVOpportunitySearch(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
+    (string fileName, byte[] bytes) SearchAndExportToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
   }
 }

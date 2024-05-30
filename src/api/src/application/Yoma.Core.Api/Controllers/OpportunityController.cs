@@ -364,6 +364,21 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter, and export the results to a CSV file")]
+    [HttpPost("search/admin/csv")]
+    [Produces("text/csv")]
+    [ProducesResponseType(typeof(FileStreamResult), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult SearchAndExportToCSV([FromBody] OpportunitySearchFilterAdmin filter)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SearchAndExportToCSV));
+
+      var (fileName, bytes) = _opportunityInfoService.SearchAndExportToCSV(filter, true);
+      _logger.LogInformation("Request {requestName} handled", nameof(SearchAndExportToCSV));
+
+      return File(bytes, "text/csv", fileName);
+    }
+
     [SwaggerOperation(Summary = "Get the opportunity by id")]
     [HttpGet("{id}/admin")]
     [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
@@ -603,20 +618,6 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK);
     }
     #endregion Administrative Actions
-
-    [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter, and export the results to a CSV file")]
-    [HttpPost("search/csv")]
-    [ProducesResponseType(typeof(FileStreamResult), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult ExportToCsvOpportunitySearch([FromBody] OpportunitySearchFilterAdmin filter)
-    {
-      _logger.LogInformation("Handling request {requestName}", nameof(ExportToCsvOpportunitySearch));
-
-      var (fileName, bytes) = _opportunityInfoService.ExportToCSVOpportunitySearch(filter, true);
-      _logger.LogInformation("Request {requestName} handled", nameof(ExportToCsvOpportunitySearch));
-
-      return File(bytes, "text/csv", fileName);
-    }
     #endregion
   }
 }
