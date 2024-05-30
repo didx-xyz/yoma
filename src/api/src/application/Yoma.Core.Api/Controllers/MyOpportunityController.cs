@@ -83,7 +83,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter, and export the results to a CSV file (Admin or Organization Admin roles required)")]
     [HttpPost("search/admin/csv")]
     [Produces("text/csv")]
-    [ProducesResponseType(typeof(FileStreamResult), (int)HttpStatusCode.OK)] 
+    [ProducesResponseType(typeof(FileStreamResult), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult SearchAndExportToCSV([FromBody] MyOpportunitySearchFilterAdmin filter)
     {
