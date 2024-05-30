@@ -11,6 +11,8 @@ namespace Yoma.Core.Domain.Analytics.Models
 
     public List<Guid>? Categories { get; set; }
 
+    public List<Guid>? Countries { get; set; }
+
     public DateTimeOffset? StartDate { get; set; }
 
     public DateTimeOffset? EndDate { get; set; }

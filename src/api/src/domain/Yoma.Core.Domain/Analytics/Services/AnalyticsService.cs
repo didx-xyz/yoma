@@ -35,6 +35,7 @@ namespace Yoma.Core.Domain.Analytics.Services
     private readonly IRepositoryBatchedValueContainsWithNavigation<Opportunity.Models.Opportunity> _opportunityRepository;
     private readonly IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
+    private readonly IRepository<OpportunityCountry> _opportunityCountryRepository;
     private readonly IRepository<UserLoginHistory> _userLoginHistoryRepository;
 
     private const int Skill_Count = 10;
@@ -59,6 +60,7 @@ namespace Yoma.Core.Domain.Analytics.Services
         IRepositoryBatchedValueContainsWithNavigation<Opportunity.Models.Opportunity> opportunityRepository,
         IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
         IRepository<OpportunityCategory> opportunityCategoryRepository,
+        IRepository<OpportunityCountry> opportunityCountryRepository,
         IRepository<UserLoginHistory> userLoginHistoryRepository)
     {
       _appSettings = appSettings.Value;
@@ -74,6 +76,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       _opportunityRepository = opportunityRepository;
       _myOpportunityRepository = myOpportunityRepository;
       _opportunityCategoryRepository = opportunityCategoryRepository;
+      _opportunityCountryRepository = opportunityCountryRepository;
       _userLoginHistoryRepository = userLoginHistoryRepository;
     }
     #endregion
@@ -554,6 +557,14 @@ namespace Yoma.Core.Domain.Analytics.Services
             opportunityCategory => filter.Categories.Contains(opportunityCategory.CategoryId) && opportunityCategory.OpportunityId == opportunity.OpportunityId));
       }
 
+      //countries
+      if (filter.Countries != null && filter.Countries.Count != 0)
+      {
+        filter.Countries = filter.Countries.Distinct().ToList();
+        query = query.Where(opportunity => _opportunityCountryRepository.Query().Any(
+            opportunityCountry => filter.Countries.Contains(opportunityCountry.CountryId) && opportunityCountry.OpportunityId == opportunity.OpportunityId));
+      }
+
       return query;
     }
 
@@ -622,6 +633,14 @@ namespace Yoma.Core.Domain.Analytics.Services
         filter.Categories = filter.Categories.Distinct().ToList();
         query = query.Where(opportunity => _opportunityCategoryRepository.Query().Any(
             opportunityCategory => filter.Categories.Contains(opportunityCategory.CategoryId) && opportunityCategory.OpportunityId == opportunity.Id));
+      }
+
+      //countries
+      if (filter.Countries != null && filter.Countries.Count != 0)
+      {
+        filter.Countries = filter.Countries.Distinct().ToList();
+        query = query.Where(opportunity => _opportunityCountryRepository.Query().Any(
+            opportunityCountry => filter.Countries.Contains(opportunityCountry.CountryId) && opportunityCountry.OpportunityId == opportunity.Id));
       }
 
       //date range include any opportunity that was active at any time within this period
