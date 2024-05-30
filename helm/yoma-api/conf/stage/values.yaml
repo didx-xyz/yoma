@@ -1,4 +1,4 @@
-replicaCount: 2
+replicaCount: 1
 
 image:
   repository: ghcr.io/didx-xyz/yoma-api
@@ -12,7 +12,7 @@ ingress:
     className: nginx-internal
     annotations:
       nginx.ingress.kubernetes.io/enable-cors: "true"
-      nginx.ingress.kubernetes.io/cors-allow-origin: "https://stage.yoma.world"
+      nginx.ingress.kubernetes.io/cors-allow-origin: "https://stage.yoma.world,https://yoma-six.vercel.app"
     rules:
       - host: v3api.stage.yoma.world
   external:
@@ -20,7 +20,7 @@ ingress:
     className: nginx-external
     annotations:
       nginx.ingress.kubernetes.io/enable-cors: "true"
-      nginx.ingress.kubernetes.io/cors-allow-origin: "https://stage.yoma.world"
+      nginx.ingress.kubernetes.io/cors-allow-origin: "https://stage.yoma.world,https://yoma-six.vercel.app"
       nginx.ingress.kubernetes.io/server-snippet: |
         location /hangfire {
           deny all;
