@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { type FieldValues, Controller, useForm } from "react-hook-form";
 import zod from "zod";
 import type { OpportunityCategory } from "~/api/models/opportunity";
-import type { SelectOption } from "~/api/models/lookups";
+import type { Country, SelectOption } from "~/api/models/lookups";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
@@ -13,6 +13,8 @@ import Select, { components, type ValueContainerProps } from "react-select";
 import Async from "react-select/async";
 import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
 import { debounce } from "~/lib/utils";
+import { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/[id]";
+import { count } from "console";
 
 const ValueContainer = ({
   children,
@@ -54,12 +56,14 @@ export const OrganisationRowFilter: React.FC<{
   htmlRef: HTMLDivElement;
   searchFilter: OrganizationSearchFilterBase | null;
   lookups_categories?: OpportunityCategory[];
-  onSubmit?: (fieldValues: OrganizationSearchFilterBase) => void;
+  lookups_countries?: Country[];
+  onSubmit?: (fieldValues: OrganizationSearchFilterSummaryViewModel) => void;
 }> = ({
   organisationId,
   htmlRef,
   searchFilter,
   lookups_categories,
+  lookups_countries,
   onSubmit,
 }) => {
   const schema = zod.object({
@@ -68,6 +72,7 @@ export const OrganisationRowFilter: React.FC<{
     categories: zod.array(zod.string()).optional().nullable(),
     startDate: zod.string().optional().nullable(),
     endDate: zod.string().optional().nullable(),
+    countries: zod.array(zod.string()).optional().nullable(),
   });
 
   const form = useForm({
@@ -92,7 +97,7 @@ export const OrganisationRowFilter: React.FC<{
   // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      if (onSubmit) onSubmit(data as OrganizationSearchFilterBase);
+      if (onSubmit) onSubmit(data as OrganizationSearchFilterSummaryViewModel);
     },
     [onSubmit],
   );

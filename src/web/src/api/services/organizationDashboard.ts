@@ -2,7 +2,10 @@ import { type GetServerSidePropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type {
-  OrganizationSearchFilterBase,
+  OrganizationSearchFilterEngagement,
+  OrganizationSearchFilterOpportunity,
+  OrganizationSearchFilterSSO,
+  OrganizationSearchFilterYouth,
   OrganizationSearchResultsOpportunity,
   OrganizationSearchResultsSummary,
   OrganizationSearchResultsYouth,
@@ -10,7 +13,7 @@ import type {
 } from "../models/organizationDashboard";
 
 export const searchOrganizationEngagement = async (
-  filter: OrganizationSearchFilterBase,
+  filter: OrganizationSearchFilterEngagement,
   context?: GetServerSidePropsContext,
 ): Promise<OrganizationSearchResultsSummary> => {
   const instance = context ? ApiServer(context) : await ApiClient;
@@ -143,7 +146,7 @@ export const searchOrganizationEngagement = async (
 };
 
 export const searchOrganizationOpportunities = async (
-  filter: OrganizationSearchFilterBase,
+  filter: OrganizationSearchFilterOpportunity,
   context?: GetServerSidePropsContext,
 ): Promise<OrganizationSearchResultsOpportunity> => {
   const instance = context ? ApiServer(context) : await ApiClient;
@@ -155,7 +158,7 @@ export const searchOrganizationOpportunities = async (
 };
 
 export const searchOrganizationYouth = async (
-  filter: OrganizationSearchFilterBase,
+  filter: OrganizationSearchFilterYouth,
   context?: GetServerSidePropsContext,
 ): Promise<OrganizationSearchResultsYouth> => {
   const instance = context ? ApiServer(context) : await ApiClient;
@@ -167,7 +170,7 @@ export const searchOrganizationYouth = async (
 };
 
 export const searchOrganizationSso = async (
-  filter: OrganizationSearchFilterBase,
+  filter: OrganizationSearchFilterSSO,
   context?: GetServerSidePropsContext,
 ): Promise<OrganizationSearchSso> => {
   const instance = context ? ApiServer(context) : await ApiClient;

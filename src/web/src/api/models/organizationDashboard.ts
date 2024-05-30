@@ -6,6 +6,28 @@ export interface OrganizationSearchFilterBase extends PaginationFilter {
   organization: string;
   opportunities: string[] | null;
   categories: string[] | null;
+  countries: string[] | null;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export interface OrganizationSearchFilterYouth
+  extends OrganizationSearchFilterBase {}
+
+export interface OrganizationSearchFilterOpportunity
+  extends OrganizationSearchFilterBase {}
+
+export interface OrganizationSearchFilterEngagement {
+  organization: string;
+  opportunities: string[] | null;
+  categories: string[] | null;
+  countries: string[] | null;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export interface OrganizationSearchFilterSSO {
+  organization: string;
   startDate: string | null;
   endDate: string | null;
 }
@@ -131,6 +153,7 @@ export interface OrganizationSearchFilterEngagement {
   organization: string;
   opportunities: string[] | null;
   categories: string[] | null;
+  countries: string[] | null;
   startDate: string | null;
   endDate: string | null;
 }

@@ -57,7 +57,6 @@ import {
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import type {
-  OrganizationSearchFilterSummary,
   OrganizationSearchResultsOpportunity,
   OrganizationSearchResultsSummary,
   OrganizationSearchResultsYouth,
@@ -82,7 +81,7 @@ import type { Organization } from "~/api/models/organisation";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { SsoChart } from "~/components/Organisation/Dashboard/SsoChart";
 
-interface OrganizationSearchFilterSummaryViewModel {
+export interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
   opportunities: string[] | null;
   categories: string[] | null;
@@ -90,6 +89,7 @@ interface OrganizationSearchFilterSummaryViewModel {
   endDate: string | null;
   pageSelectedOpportunities: number;
   pageCompletedYouth: number;
+  countries: string[] | null;
 }
 
 interface IParams extends ParsedUrlQuery {
@@ -220,6 +220,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     opportunities,
     startDate,
     endDate,
+    countries,
   } = router.query;
 
   // memo for isSearchPerformed based on filter parameters
@@ -243,6 +244,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         opportunities,
         startDate,
         endDate,
+        countries,
       ],
       queryFn: async () => {
         return await searchOrganizationEngagement({
@@ -263,8 +265,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             : null,
           startDate: startDate ? startDate.toString() : "",
           endDate: endDate ? endDate.toString() : "",
-          pageNumber: null,
-          pageSize: null,
+          countries: countries ? countries?.toString().split(",") : null,
         });
       },
       enabled: !error,
@@ -307,6 +308,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           ? parseInt(pageSelectedOpportunities.toString())
           : 1,
         pageSize: PAGE_SIZE,
+        countries: countries ? countries?.toString().split(",") : null,
       }),
     enabled: !error,
   });
@@ -346,6 +348,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             ? parseInt(pageCompletedYouth.toString())
             : 1,
           pageSize: PAGE_SIZE,
+          countries: countries ? countries?.toString().split(",") : null,
         }),
     });
 
@@ -356,24 +359,25 @@ const OrganisationDashboard: NextPageWithLayout<{
       queryFn: () =>
         searchOrganizationSso({
           organization: id,
-          categories:
-            categories != undefined
-              ? categories
-                  ?.toString()
-                  .split(",")
-                  .map((x) => {
-                    const item = lookups_categories?.find((y) => y.name === x);
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
-          opportunities: opportunities
-            ? opportunities?.toString().split(",")
-            : null,
+          // categories:
+          //   categories != undefined
+          //     ? categories
+          //         ?.toString()
+          //         .split(",")
+          //         .map((x) => {
+          //           const item = lookups_categories?.find((y) => y.name === x);
+          //           return item ? item?.id : "";
+          //         })
+          //         .filter((x) => x != "")
+          //     : null,
+          // opportunities: opportunities
+          //   ? opportunities?.toString().split(",")
+          //   : null,
           startDate: startDate ? startDate.toString() : "",
           endDate: endDate ? endDate.toString() : "",
-          pageNumber: null,
-          pageSize: null,
+          // pageNumber: null,
+          // pageSize: null,
+          //countries: countries ? countries?.toString().split(",") : null,
         }),
     });
 
@@ -391,6 +395,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       opportunities: null,
       startDate: "",
       endDate: "",
+      countries: null,
     });
 
   // sets the filter values from the querystring to the filter state
@@ -412,6 +417,8 @@ const OrganisationDashboard: NextPageWithLayout<{
             : null,
         startDate: startDate != undefined ? startDate.toString() : "",
         endDate: endDate != undefined ? endDate.toString() : "",
+        countries:
+          countries != undefined ? countries?.toString().split(",") : null,
       });
   }, [
     setSearchFilter,
@@ -640,7 +647,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
   // filter popup handlers
   const onSubmitFilter = useCallback(
-    (val: OrganizationSearchFilterSummary) => {
+    (val: OrganizationSearchFilterSummaryViewModel) => {
       redirectWithSearchFilterParams({
         categories: val.categories,
         opportunities: val.opportunities,
@@ -652,8 +659,8 @@ const OrganisationDashboard: NextPageWithLayout<{
         pageCompletedYouth: pageCompletedYouth
           ? parseInt(pageCompletedYouth.toString())
           : 1,
-
         organization: id,
+        countries: val.countries,
       });
     },
     [
@@ -780,6 +787,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     organization: id,
                     pageNumber: null,
                     pageSize: null,
+                    countries: searchFilter.countries,
                   }}
                   lookups_categories={lookups_categories}
                   onSubmit={(e) => onSubmitFilter(e)}
