@@ -62,11 +62,14 @@ export const getCategoriesAdmin = async (
 
 // this is used for orgAdmin dashboards, admin pages etc
 export const getCountriesAdmin = async (
+  organisationId: string | null,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Country[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<Country[]>(
-    `/opportunity/search/filter/country/admin`,
+    `/opportunity/search/filter/country/admin${
+      organisationId ? `?organizationId=${organisationId}` : ""
+    }`,
   );
   return data;
 };

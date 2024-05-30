@@ -32,6 +32,7 @@ const ValueContainer = ({
       const pluralMapping: Record<string, string> = {
         Category: "Categories",
         Opportunity: "Opportunities",
+        Country: "Countries",
       };
 
       const pluralize = (word: string, count: number): string => {
@@ -245,6 +246,57 @@ export const OrganisationRowFilter: React.FC<{
                     <label className="label font-bold">
                       <span className="label-text-alt italic text-red-500">
                         {`${formState.errors.categories.message}`}
+                      </span>
+                    </label>
+                  )}
+                </span>
+              )}
+            </div>
+
+            <div>
+              {/* COUNTRIES */}
+              {lookups_countries && (
+                <span className="w-full md:w-72">
+                  <Controller
+                    name="countries"
+                    control={form.control}
+                    defaultValue={searchFilter?.countries}
+                    render={({ field: { onChange, value } }) => (
+                      <Select
+                        instanceId="countries"
+                        classNames={{
+                          control: () =>
+                            "input input-xs h-fit !border-none w-full md:w-72",
+                        }}
+                        isMulti={true}
+                        options={lookups_countries.map((c) => ({
+                          value: c.name,
+                          label: c.name,
+                        }))}
+                        // fix menu z-index issue
+                        menuPortalTarget={htmlRef}
+                        styles={{
+                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                        }}
+                        onChange={(val) => {
+                          onChange(val.map((c) => c.value));
+                          void handleSubmit(onSubmitHandler)();
+                        }}
+                        value={lookups_countries
+                          .filter((c) => value?.includes(c.name))
+                          .map((c) => ({ value: c.name, label: c.name }))}
+                        placeholder="Country"
+                        components={{
+                          ValueContainer,
+                        }}
+                      />
+                    )}
+                  />
+
+                  {formState.errors.countries && (
+                    <label className="label font-bold">
+                      <span className="label-text-alt italic text-red-500">
+                        {`${formState.errors.countries.message}`}
                       </span>
                     </label>
                   )}
