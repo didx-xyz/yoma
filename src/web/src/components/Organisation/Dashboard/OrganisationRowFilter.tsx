@@ -10,7 +10,6 @@ import type { SelectOption } from "~/api/models/lookups";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
-import type { OrganizationSearchFilterBase } from "~/api/models/organizationDashboard";
 import { searchCriteriaOpportunities } from "~/api/services/opportunities";
 import Select, { components, type ValueContainerProps } from "react-select";
 import Async from "react-select/async";

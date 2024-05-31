@@ -66,7 +66,6 @@ import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import moment from "moment";
 import {
   getCategoriesAdmin,
-  getCountriesAdmin,
   searchCriteriaOpportunities,
 } from "~/api/services/opportunities";
 import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
@@ -506,11 +505,9 @@ const OrganisationDashboard: NextPageWithLayout<{
       opportunities,
       startDate,
       endDate,
-      countries,
       searchFilter,
       id,
       lookups_categories,
-      lookups_countries,
     ],
   );
 

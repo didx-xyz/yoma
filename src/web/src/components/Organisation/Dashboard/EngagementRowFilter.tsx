@@ -4,7 +4,6 @@ import { type FieldValues, Controller, useForm } from "react-hook-form";
 import zod from "zod";
 import type { Country, SelectOption } from "~/api/models/lookups";
 import "react-datepicker/dist/react-datepicker.css";
-import type { OrganizationSearchFilterBase } from "~/api/models/organizationDashboard";
 import Select, { components, type ValueContainerProps } from "react-select";
 import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/[id]";
 import FilterBadges from "~/components/FilterBadges";
