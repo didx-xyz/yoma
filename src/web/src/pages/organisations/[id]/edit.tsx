@@ -398,7 +398,7 @@ const OrganisationUpdate: NextPageWithLayout<{
                   </h5>
                 </div>
 
-                <p className="my-2 flex flex-row items-center gap-4 rounded-xl bg-green px-4 py-2 text-sm text-white">
+                <p className="my-2 flex flex-row items-center gap-4 rounded-lg bg-green px-4 py-2 text-sm text-white">
                   <IoIosWarning className="inline-block h-6 w-6" />
                   Kindly note that expanding the roles your organization plays
                   in Yoma will necessitate re-verification of your organization.

@@ -2422,8 +2422,8 @@ const OpportunityDetails: NextPageWithLayout<{
 
                                     {/* file types and file size message */}
                                     {item.displayName === "File Upload" && (
-                                      <div className="my-2 flex flex-row border-2 border-dotted border-warning p-2 text-warning">
-                                        <IoMdWarning className="mr-2 inline-block h-12 w-12" />
+                                      <div className="my-2 flex flex-row items-center gap-2 rounded-lg bg-green p-2 px-4 text-sm text-white">
+                                        <IoMdWarning className="mr-2 hidden h-6 w-6 md:inline-block" />
                                         <p>
                                           Kindly note that candidates are
                                           required to upload a file (max{" "}
@@ -2454,8 +2454,8 @@ const OpportunityDetails: NextPageWithLayout<{
                                       </div>
                                     )}
                                     {item.displayName === "Location" && (
-                                      <div className="my-2 flex flex-row items-center border-2 border-dotted border-warning p-2 text-warning">
-                                        <IoMdWarning className="mr-2 inline-block h-12 w-12" />
+                                      <div className="my-2 flex flex-row items-center gap-2 rounded-lg bg-green p-2 px-4 text-sm text-white">
+                                        <IoMdWarning className="mr-2 hidden h-6 w-6 md:inline-block" />
                                         <p>
                                           Kindly note that candidates are
                                           required to choose their location from
@@ -2464,8 +2464,8 @@ const OpportunityDetails: NextPageWithLayout<{
                                       </div>
                                     )}
                                     {item.displayName === "Picture" && (
-                                      <div className="my-2 flex flex-row border-2 border-dotted border-warning p-2 text-warning">
-                                        <IoMdWarning className="mr-2 inline-block h-12 w-12" />
+                                      <div className="my-2 flex flex-row items-center gap-2 rounded-lg bg-green p-2 px-4 text-sm text-white">
+                                        <IoMdWarning className="mr-2 hidden h-6 w-6 md:inline-block" />
                                         <p>
                                           Kindly note that candidates are
                                           required to upload a file (max{" "}
@@ -2486,8 +2486,8 @@ const OpportunityDetails: NextPageWithLayout<{
                                       </div>
                                     )}
                                     {item.displayName === "Voice Note" && (
-                                      <div className="my-2 flex flex-row border-2 border-dotted border-warning p-2 text-warning">
-                                        <IoMdWarning className="mr-2 inline-block h-12 w-12" />
+                                      <div className="my-2 flex flex-row items-center gap-2 rounded-lg bg-green p-2 px-4 text-sm text-white">
+                                        <IoMdWarning className="mr-2 hidden h-6 w-6 md:inline-block" />
                                         <p>
                                           Kindly note that candidates are
                                           required to upload a file (max{" "}

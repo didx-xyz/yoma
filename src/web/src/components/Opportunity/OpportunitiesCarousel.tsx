@@ -140,7 +140,7 @@ const OpportunitiesCarousel: React.FC<{
             }`,
           );
 
-          loadData(emblaApi.slideNodes().length + 1).then((data) => {
+          loadData(emblaApi.slideNodes().length).then((data) => {
             // debugger;
             if (data.items.length == 0) {
               setHasMoreToLoad(false);

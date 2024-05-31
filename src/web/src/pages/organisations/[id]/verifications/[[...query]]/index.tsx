@@ -973,28 +973,36 @@ const OpportunityVerifications: NextPageWithLayout<{
             </div>
           </div>
 
-          {/* BUTTONS */}
-          {(!verificationStatus || verificationStatus === "Pending") &&
-            !isLoadingData &&
-            data &&
-            data.items?.length > 0 && (
-              <div className="flex flex-row justify-center gap-2 md:justify-end">
-                <button
-                  className="btn btn-sm flex-nowrap border-green bg-white text-green hover:bg-green hover:text-white"
-                  onClick={() => onChangeBulkAction(true)}
-                >
-                  <IoMdThumbsUp className="h-6 w-6" />
-                  Approve
-                </button>
-                <button
-                  className="btn btn-sm flex-nowrap border-red-500 bg-white text-red-500 hover:bg-red-500 hover:text-white"
-                  onClick={() => onChangeBulkAction(false)}
-                >
-                  <IoMdThumbsDown className="h-6 w-6" />
-                  Reject
-                </button>
-              </div>
-            )}
+          <div className="my-4 flex flex-col items-center justify-between gap-6 md:flex-row">
+            {/* WARNING MSG */}
+            <div className="w-full max-w-5xl rounded-lg bg-orange p-2 text-xs font-semibold text-white md:w-fit">
+              Bulk verifications are processed in the order in which you select
+              them, we encourage selecting from top to bottom, as that is the
+              order in which Youth applied.
+            </div>
+            {/* BUTTONS */}
+            {(!verificationStatus || verificationStatus === "Pending") &&
+              !isLoadingData &&
+              data &&
+              data.items?.length > 0 && (
+                <div className="flex w-full flex-row justify-around gap-2 md:w-fit md:justify-end">
+                  <button
+                    className="btn btn-sm flex-nowrap border-green bg-white text-green hover:bg-green hover:text-white"
+                    onClick={() => onChangeBulkAction(true)}
+                  >
+                    <IoMdThumbsUp className="h-6 w-6" />
+                    Approve
+                  </button>
+                  <button
+                    className="btn btn-sm flex-nowrap border-red-500 bg-white text-red-500 hover:bg-red-500 hover:text-white"
+                    onClick={() => onChangeBulkAction(false)}
+                  >
+                    <IoMdThumbsDown className="h-6 w-6" />
+                    Reject
+                  </button>
+                </div>
+              )}
+          </div>
         </div>
 
         {isLoadingData && (

@@ -132,6 +132,12 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
                   label: val,
                   value: val,
                 }))}
+                styles={{
+                  control: (baseStyles) => ({
+                    ...baseStyles,
+                    minHeight: "3rem",
+                  }),
+                }}
               />
             )}
           />

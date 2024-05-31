@@ -150,5 +150,6 @@ export interface OrganizationSearchSso {
 export interface SsoInfo {
   enabled: boolean;
   clientId: string;
-  loginCount: number;
+  legend: string;
+  logins: TimeIntervalSummary;
 }

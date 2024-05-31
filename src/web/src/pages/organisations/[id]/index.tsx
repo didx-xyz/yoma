@@ -80,6 +80,7 @@ import DashboardCarousel from "~/components/Organisation/Dashboard/DashboardCaro
 import { WorldMapChart } from "~/components/Organisation/Dashboard/WorldMapChart";
 import type { Organization } from "~/api/models/organisation";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
+import { SsoChart } from "~/components/Organisation/Dashboard/SsoChart";
 
 interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
@@ -1390,9 +1391,10 @@ const OrganisationDashboard: NextPageWithLayout<{
                     </div>
                     {ssoData?.outbound?.enabled ? (
                       <>
-                        {" "}
-                        <div>Client Id: {ssoData?.outbound?.clientId}</div>
-                        <div>Login count: {ssoData?.outbound?.loginCount}</div>
+                        <div className="font-semibold">
+                          {ssoData?.outbound?.clientId}
+                        </div>
+                        <SsoChart data={ssoData?.outbound?.logins} />
                       </>
                     ) : (
                       <div>Disabled</div>
@@ -1405,8 +1407,10 @@ const OrganisationDashboard: NextPageWithLayout<{
                     </div>
                     {ssoData?.inbound?.enabled ? (
                       <>
-                        <div>Client Id: {ssoData?.inbound?.clientId}</div>
-                        <div>Login count: {ssoData?.inbound?.loginCount}</div>
+                        <div className="font-semibold">
+                          {ssoData?.inbound?.clientId}
+                        </div>
+                        <SsoChart data={ssoData?.inbound?.logins} />
                       </>
                     ) : (
                       <div>Disabled</div>
