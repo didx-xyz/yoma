@@ -9,6 +9,7 @@ namespace Yoma.Core.Domain.Analytics.Validators
     #region Constructor
     public OrganizationSearchFilterYouthValidator(IOrganizationService organizationService) : base(organizationService)
     {
+      RuleFor(x => x.Countries).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
       RuleFor(x => x.PaginationEnabled).Equal(true).WithMessage("Pagination required");
     }
     #endregion

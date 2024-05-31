@@ -282,6 +282,22 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Return a list of countries associated with users that engaged with opportunities (viewed and / or completed) for the specified organization")]
+    [HttpGet("search/analytics/country")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.Country>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult ListSearchCriteriaCountriesEngaged([FromQuery] Guid organizationId)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaCountriesEngaged));
+
+      var result = _analyticsService.ListSearchCriteriaCountriesEngaged(organizationId);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaCountriesEngaged));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+
     [SwaggerOperation(Summary = "Search for engagement analytics based on the supplied filter")]
     [HttpPost("search/analytics/engagement")]
     [ProducesResponseType(typeof(OrganizationSearchResultsEngagement), (int)HttpStatusCode.OK)]

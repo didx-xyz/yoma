@@ -19,6 +19,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public string? UserGender { get; set; }
 
+    public Guid? UserCountryId { get; set; }
+
     public string? UserCountry { get; set; }
 
     public string? UserEducation { get; set; }
