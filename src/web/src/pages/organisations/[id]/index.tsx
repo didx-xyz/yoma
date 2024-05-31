@@ -1385,13 +1385,13 @@ const OrganisationDashboard: NextPageWithLayout<{
               {ssoData && (
                 <div className="grid grid-rows-2 gap-4 md:grid-cols-2">
                   <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
-                    <div className="mb-2 flex items-center gap-2 text-lg font-semibold">
+                    <div className="flex items-center gap-2 text-lg font-semibold">
                       <div>Outbound</div>{" "}
                       <IoIosArrowForward className="rounded-lg bg-green-light p-px pl-[2px] text-2xl text-green" />
                     </div>
                     {ssoData?.outbound?.enabled ? (
                       <>
-                        <div className="font-semibold">
+                        <div className="-mb-4 font-semibold">
                           {ssoData?.outbound?.clientId}
                         </div>
                         <SsoChart data={ssoData?.outbound?.logins} />
@@ -1401,13 +1401,13 @@ const OrganisationDashboard: NextPageWithLayout<{
                     )}
                   </div>
                   <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
-                    <div className="mb-2 flex items-center gap-2 text-lg font-semibold">
+                    <div className="flex items-center gap-2 text-lg font-semibold">
                       <div>Inbound</div>{" "}
                       <IoIosArrowBack className="rounded-lg bg-green-light p-px pr-[2px] text-2xl text-green" />
                     </div>
                     {ssoData?.inbound?.enabled ? (
                       <>
-                        <div className="font-semibold">
+                        <div className="-mb-4 font-semibold">
                           {ssoData?.inbound?.clientId}
                         </div>
                         <SsoChart data={ssoData?.inbound?.logins} />

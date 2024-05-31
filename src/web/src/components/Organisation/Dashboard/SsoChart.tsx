@@ -37,7 +37,7 @@ export const SsoChart: React.FC<{
     return (
       <div className="flex flex-row gap-2">
         {data?.legend.map((name, index) => (
-          <div key={index} className="mt-4 flex flex-col gap-4">
+          <div key={index} className="mt-4 flex flex-col gap-2">
             <div className="flex flex-row items-center gap-3">
               <span className="rounded-lg bg-green-light p-1">
                 <Image
@@ -61,7 +61,7 @@ export const SsoChart: React.FC<{
   };
 
   return (
-    <div className="h-44 w-full overflow-hidden rounded-lg bg-white">
+    <div className="h-44 w-full overflow-hidden">
       <Legend />
       <div className="flex w-full justify-center pt-2">
         {showChart ? (
