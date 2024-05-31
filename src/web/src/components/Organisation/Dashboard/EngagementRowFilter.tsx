@@ -6,7 +6,7 @@ import type { Country, SelectOption } from "~/api/models/lookups";
 import "react-datepicker/dist/react-datepicker.css";
 import type { OrganizationSearchFilterBase } from "~/api/models/organizationDashboard";
 import Select, { components, type ValueContainerProps } from "react-select";
-import { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/[id]";
+import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/[id]";
 import FilterBadges from "~/components/FilterBadges";
 
 const ValueContainer = ({
@@ -62,7 +62,7 @@ export const EngagementRowFilter: React.FC<{
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { handleSubmit, formState, reset, setValue } = form;
+  const { handleSubmit, formState, reset } = form;
 
   // set default values
   useEffect(() => {

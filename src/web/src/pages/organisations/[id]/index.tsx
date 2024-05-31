@@ -9,7 +9,6 @@ import { type ParsedUrlQuery } from "querystring";
 import {
   useRef,
   type ReactElement,
-  useMemo,
   useState,
   useEffect,
   useCallback,
@@ -39,8 +38,6 @@ import type {
 import { getServerSession } from "next-auth";
 import { Loading } from "~/components/Status/Loading";
 import { OrganisationRowFilter } from "~/components/Organisation/Dashboard/OrganisationRowFilter";
-import FilterBadges from "~/components/FilterBadges";
-import { toISOStringForTimezone } from "~/lib/utils";
 import Link from "next/link";
 import { getThemeFromRole } from "~/lib/utils";
 import Image from "next/image";
@@ -83,7 +80,7 @@ import { WorldMapChart } from "~/components/Organisation/Dashboard/WorldMapChart
 import type { Organization } from "~/api/models/organisation";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { SsoChart } from "~/components/Organisation/Dashboard/SsoChart";
-import { Country } from "~/api/models/lookups";
+import type { Country } from "~/api/models/lookups";
 import { EngagementRowFilter } from "~/components/Organisation/Dashboard/EngagementRowFilter";
 
 export interface OrganizationSearchFilterSummaryViewModel {
@@ -530,6 +527,8 @@ const OrganisationDashboard: NextPageWithLayout<{
       opportunities,
       startDate,
       endDate,
+      countries,
+      searchFilter,
       id,
       lookups_categories,
       lookups_countries,
@@ -598,6 +597,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       opportunities,
       startDate,
       endDate,
+      countries,
       id,
       lookups_categories,
       lookups_countries,
@@ -797,7 +797,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
             {/* DESCRIPTION */}
             <div className="gap-2 overflow-hidden text-ellipsis whitespace-nowrap text-white">
-              Here's your reports for{" "}
+              Here&apos;s your reports for{" "}
               <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap font-bold">
                 {organisation?.name}
               </span>

@@ -6,7 +6,7 @@ import type {
   OpportunityCategory,
   OpportunitySearchResultsInfo,
 } from "~/api/models/opportunity";
-import type { Country, SelectOption } from "~/api/models/lookups";
+import type { SelectOption } from "~/api/models/lookups";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
@@ -16,7 +16,7 @@ import Select, { components, type ValueContainerProps } from "react-select";
 import Async from "react-select/async";
 import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
 import { debounce } from "~/lib/utils";
-import { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/[id]";
+import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/[id]";
 import FilterBadges from "~/components/FilterBadges";
 
 const ValueContainer = ({
