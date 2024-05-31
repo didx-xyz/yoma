@@ -537,16 +537,16 @@ namespace Yoma.Core.Domain.Analytics.Services
         .Count();
 
       var loginsUniqueWeekly = query
-          .Where(o => o.ClientId.ToLower() == clientId.ToLower())
-          .Select(o => new { o.DateCreated, o.UserId })
-          .GroupBy(x => x.DateCreated.AddDays(-(int)x.DateCreated.DayOfWeek).AddDays(7).Date)
-          .Select(group => new
-          {
-            WeekEnding = group.Key,
-            Count = group.Select(x => x.UserId).Distinct().Count()
-          })
-          .OrderBy(result => result.WeekEnding)
-          .ToList();
+        .Where(o => o.ClientId.ToLower() == clientId.ToLower())
+        .Select(o => new { o.DateCreated, o.UserId })
+        .GroupBy(x => x.DateCreated.AddDays(-(int)x.DateCreated.DayOfWeek).AddDays(7).Date)
+        .Select(group => new
+        {
+          WeekEnding = group.Key,
+          Count = group.Select(x => x.UserId).Distinct().Count()
+        })
+        .OrderBy(result => result.WeekEnding)
+        .ToList();
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
 
       var resultsLogins = new List<TimeValueEntry>();
