@@ -29,6 +29,7 @@ import {
   searchOrganizationOpportunities,
   searchOrganizationYouth,
   searchOrganizationSso,
+  getCountries,
 } from "~/api/services/organizationDashboard";
 import type { GetServerSidePropsContext } from "next";
 import type {
@@ -198,7 +199,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   });
   const { data: lookups_countries } = useQuery<Country[]>({
     queryKey: ["OrganisationDashboardCountries", id],
-    queryFn: () => getCountriesAdmin(id),
+    queryFn: () => getCountries(id),
     enabled: !error,
   });
   const { data: organisation } = useQuery<Organization>({

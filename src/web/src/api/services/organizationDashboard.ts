@@ -1,4 +1,4 @@
-import { type GetServerSidePropsContext } from "next";
+import { GetStaticPropsContext, type GetServerSidePropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type {
@@ -11,6 +11,7 @@ import type {
   OrganizationSearchResultsYouth,
   OrganizationSearchSso,
 } from "../models/organizationDashboard";
+import type { Country } from "../models/lookups";
 
 export const searchOrganizationEngagement = async (
   filter: OrganizationSearchFilterEngagement,
@@ -56,6 +57,19 @@ export const searchOrganizationSso = async (
   const { data } = await instance.post<OrganizationSearchSso>(
     "/organization/search/analytics/sso",
     filter,
+  );
+  return data;
+};
+
+export const getCountries = async (
+  organisationId: string | null,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<Country[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<Country[]>(
+    `/organization/search/analytics/country${
+      organisationId ? `?organizationId=${organisationId}` : ""
+    }`,
   );
   return data;
 };
