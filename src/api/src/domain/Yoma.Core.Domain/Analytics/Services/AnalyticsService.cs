@@ -530,7 +530,13 @@ namespace Yoma.Core.Domain.Analytics.Services
       ArgumentException.ThrowIfNullOrEmpty(clientId, nameof(clientId));
 
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-      var itemLogins = query
+      var loginsUniqueCount = query
+        .Where(o => o.ClientId.ToLower() == clientId.ToLower())
+        .Select(o => o.UserId)
+        .Distinct()
+        .Count();
+
+      var loginsUniqueWeekly = query
           .Where(o => o.ClientId.ToLower() == clientId.ToLower())
           .Select(o => new { o.DateCreated, o.UserId })
           .GroupBy(x => x.DateCreated.AddDays(-(int)x.DateCreated.DayOfWeek).AddDays(7).Date)
@@ -544,9 +550,9 @@ namespace Yoma.Core.Domain.Analytics.Services
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
 
       var resultsLogins = new List<TimeValueEntry>();
-      itemLogins.ForEach(o => { resultsLogins.Add(new TimeValueEntry(o.WeekEnding, o.Count)); });
+      loginsUniqueWeekly.ForEach(o => { resultsLogins.Add(new TimeValueEntry(o.WeekEnding, o.Count)); });
 
-      return new TimeIntervalSummary { Legend = ["Login count"], Data = resultsLogins, Count = [itemLogins.Sum(o => o.Count)] };
+      return new TimeIntervalSummary { Legend = ["Login count"], Data = resultsLogins, Count = [loginsUniqueCount] };
     }
 
     private IQueryable<OpportunityInfoAnalytics> SearchOrganizationOpportunitiesQueryBase(OrganizationSearchFilterOpportunity filter)
