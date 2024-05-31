@@ -45,7 +45,7 @@ const ValueContainer = ({
 
 export const EngagementRowFilter: React.FC<{
   htmlRef: HTMLDivElement;
-  searchFilter: OrganizationSearchFilterBase | null;
+  searchFilter: OrganizationSearchFilterSummaryViewModel | null;
   lookups_countries?: Country[];
   onSubmit?: (fieldValues: OrganizationSearchFilterSummaryViewModel) => void;
 }> = ({ htmlRef, searchFilter, lookups_countries, onSubmit }) => {

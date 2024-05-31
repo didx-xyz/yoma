@@ -57,7 +57,7 @@ const ValueContainer = ({
 export const OrganisationRowFilter: React.FC<{
   organisationId: string;
   htmlRef: HTMLDivElement;
-  searchFilter: OrganizationSearchFilterBase | null;
+  searchFilter: OrganizationSearchFilterSummaryViewModel | null;
   lookups_categories?: OpportunityCategory[];
   lookups_selectedOpportunities?: OpportunitySearchResultsInfo;
   onSubmit?: (fieldValues: OrganizationSearchFilterSummaryViewModel) => void;

@@ -265,59 +265,6 @@ const OrganisationDashboard: NextPageWithLayout<{
       enabled: !error,
     });
 
-  // QUERY: SELECTED OPPORTUNITIES
-  const {
-    data: selectedOpportunities,
-    isLoading: selectedOpportunitiesIsLoading,
-  } = useQuery<OrganizationSearchResultsOpportunity>({
-    queryKey: [
-      "OrganizationSearchResultsSelectedOpportunities",
-      id,
-      pageSelectedOpportunities,
-      categories,
-      opportunities,
-      startDate,
-      endDate,
-      countries,
-    ],
-    queryFn: () =>
-      searchOrganizationOpportunities({
-        organization: id,
-        categories:
-          categories != undefined
-            ? categories
-                ?.toString()
-                .split(",")
-                .map((x) => {
-                  const item = lookups_categories?.find((y) => y.name === x);
-                  return item ? item?.id : "";
-                })
-                .filter((x) => x != "")
-            : null,
-        opportunities: opportunities
-          ? opportunities?.toString().split(",")
-          : null,
-        startDate: startDate ? startDate.toString() : "",
-        endDate: endDate ? endDate.toString() : "",
-        pageNumber: pageSelectedOpportunities
-          ? parseInt(pageSelectedOpportunities.toString())
-          : 1,
-        pageSize: PAGE_SIZE,
-        countries:
-          countries != undefined
-            ? countries
-                ?.toString()
-                .split(",")
-                .map((x) => {
-                  const item = lookups_countries?.find((y) => y.name === x);
-                  return item ? item?.id : "";
-                })
-                .filter((x) => x != "")
-            : null,
-      }),
-    enabled: !error,
-  });
-
   // QUERY: COMPLETED YOUTH
   const { data: completedYouth, isLoading: completedYouthIsLoading } =
     useQuery<OrganizationSearchResultsYouth>({
@@ -367,6 +314,48 @@ const OrganisationDashboard: NextPageWithLayout<{
               : null,
         }),
     });
+
+  // QUERY: SELECTED OPPORTUNITIES
+  const {
+    data: selectedOpportunities,
+    isLoading: selectedOpportunitiesIsLoading,
+  } = useQuery<OrganizationSearchResultsOpportunity>({
+    queryKey: [
+      "OrganizationSearchResultsSelectedOpportunities",
+      id,
+      pageSelectedOpportunities,
+      categories,
+      opportunities,
+      startDate,
+      endDate,
+      countries,
+    ],
+    queryFn: () =>
+      searchOrganizationOpportunities({
+        organization: id,
+        categories:
+          categories != undefined
+            ? categories
+                ?.toString()
+                .split(",")
+                .map((x) => {
+                  const item = lookups_categories?.find((y) => y.name === x);
+                  return item ? item?.id : "";
+                })
+                .filter((x) => x != "")
+            : null,
+        opportunities: opportunities
+          ? opportunities?.toString().split(",")
+          : null,
+        startDate: startDate ? startDate.toString() : "",
+        endDate: endDate ? endDate.toString() : "",
+        pageNumber: pageSelectedOpportunities
+          ? parseInt(pageSelectedOpportunities.toString())
+          : 1,
+        pageSize: PAGE_SIZE,
+      }),
+    enabled: !error,
+  });
 
   // QUERY: SSO
   const { data: ssoData, isLoading: ssoDataIsLoading } =
@@ -506,17 +495,6 @@ const OrganisationDashboard: NextPageWithLayout<{
             : null,
           startDate: startDate ? startDate.toString() : "",
           endDate: endDate ? endDate.toString() : "",
-          countries:
-            countries != undefined
-              ? countries
-                  ?.toString()
-                  .split("|")
-                  .map((x) => {
-                    const item = lookups_countries?.find((y) => y.name === x);
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
         },
       );
     },
@@ -818,22 +796,13 @@ const OrganisationDashboard: NextPageWithLayout<{
           </div>
 
           {/* FILTERS */}
-          <div className="">
+          <div>
             {!lookups_categories && <div>Loading...</div>}
             {lookups_categories && (
               <OrganisationRowFilter
                 organisationId={id}
                 htmlRef={myRef.current!}
-                searchFilter={{
-                  categories: searchFilter.categories,
-                  opportunities: searchFilter.opportunities,
-                  startDate: searchFilter.startDate,
-                  endDate: searchFilter.endDate,
-                  organization: id,
-                  pageNumber: null,
-                  pageSize: null,
-                  countries: searchFilter.countries,
-                }}
+                searchFilter={searchFilter}
                 lookups_categories={lookups_categories}
                 lookups_selectedOpportunities={lookups_selectedOpportunities}
                 onSubmit={(e) => onSubmitFilter(e)}
@@ -855,16 +824,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   {lookups_countries && (
                     <EngagementRowFilter
                       htmlRef={myRef.current!}
-                      searchFilter={{
-                        categories: searchFilter.categories,
-                        opportunities: searchFilter.opportunities,
-                        startDate: searchFilter.startDate,
-                        endDate: searchFilter.endDate,
-                        organization: id,
-                        pageNumber: null,
-                        pageSize: null,
-                        countries: searchFilter.countries,
-                      }}
+                      searchFilter={searchFilter}
                       lookups_countries={lookups_countries}
                       onSubmit={(e) => onSubmitFilter(e)}
                     />
@@ -1117,6 +1077,122 @@ const OrganisationDashboard: NextPageWithLayout<{
             </div>
           )}
 
+          {/* COMPLETED YOUTH */}
+          <div className="flex flex-col">
+            <div className="text-xl font-semibold">Completed by Youth</div>
+
+            {completedYouthIsLoading && <LoadingSkeleton />}
+
+            {/* COMPLETED YOUTH */}
+            {!completedYouthIsLoading && (
+              <div id="results">
+                <div className="mb-6 flex flex-row items-center justify-end"></div>
+                <div className="rounded-lg bg-transparent p-0 shadow-none md:bg-white md:p-4 md:shadow">
+                  {/* NO ROWS */}
+                  {(!completedYouth || completedYouth.items?.length === 0) && (
+                    <div className="flex flex-col place-items-center py-16">
+                      <NoRowsMessage
+                        title={"No completed opportunities found"}
+                        description={
+                          "Opportunities completed by youth will be displayed here."
+                        }
+                      />
+                    </div>
+                  )}
+
+                  {/* GRID */}
+                  {completedYouth && completedYouth.items?.length > 0 && (
+                    <div>
+                      {/* DESKTOP */}
+                      <div className="hidden overflow-x-auto md:block">
+                        <table className="table">
+                          <thead>
+                            <tr className="border-gray-light text-gray-dark">
+                              <th>Student</th>
+                              <th>Opportunity</th>
+                              <th>Date completed</th>
+                              <th className="text-center">Verified</th>
+                              <th className="text-center">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {completedYouth.items.map((opportunity) => (
+                              <tr
+                                key={`completedYouth_${opportunity.opportunityId}_${opportunity.userId}`}
+                                className="border-gray-light"
+                              >
+                                <td>
+                                  <div className="w-max py-2">
+                                    {opportunity.userDisplayName}
+                                  </div>
+                                </td>
+                                <td>
+                                  <Link
+                                    href={`/organisations/${id}/opportunities/${
+                                      opportunity.opportunityId
+                                    }/info?returnUrl=${encodeURIComponent(
+                                      router.asPath,
+                                    )}`}
+                                    className="text-center"
+                                  >
+                                    {opportunity.opportunityTitle}
+                                  </Link>
+                                </td>
+                                <td className="whitespace-nowrap text-center">
+                                  {opportunity.dateCompleted
+                                    ? moment(
+                                        new Date(opportunity.dateCompleted),
+                                      ).format("MMM D YYYY")
+                                    : ""}
+                                </td>
+                                <td className="whitespace-nowrap text-center">
+                                  {opportunity.verified
+                                    ? "Verified"
+                                    : "Not verified"}
+                                </td>
+                                <td className="text-center">
+                                  {opportunity.opportunityStatus}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* MOBILE */}
+                      <div className="flex flex-col gap-2 md:hidden">
+                        <DashboardCarousel
+                          orgId={id}
+                          slides={completedYouth.items}
+                          totalSildes={completedYouth?.totalCount}
+                          loadData={loadData_Youth}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PAGINATION */}
+                  {completedYouth && completedYouth.totalCount > 0 && (
+                    <div className="mt-2 grid place-items-center justify-center">
+                      <PaginationButtons
+                        currentPage={
+                          pageCompletedYouth
+                            ? parseInt(pageCompletedYouth.toString())
+                            : 1
+                        }
+                        totalItems={completedYouth.totalCount}
+                        pageSize={PAGE_SIZE}
+                        showPages={false}
+                        showInfo={true}
+                        onClick={handlePagerChangeCompletedYouth}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* DIVIDER */}
           <div className="border-px mb-2 mt-8 border-t border-gray" />
 
@@ -1307,122 +1383,6 @@ const OrganisationDashboard: NextPageWithLayout<{
               />
             </div>
           )}
-
-          {/* COMPLETED YOUTH */}
-          <div className="my-8 flex flex-col">
-            <div className="text-xl font-semibold">Completed by Youth</div>
-
-            {completedYouthIsLoading && <LoadingSkeleton />}
-
-            {/* COMPLETED YOUTH */}
-            {!completedYouthIsLoading && (
-              <div id="results">
-                <div className="mb-6 flex flex-row items-center justify-end"></div>
-                <div className="rounded-lg bg-transparent p-0 shadow-none md:bg-white md:p-4 md:shadow">
-                  {/* NO ROWS */}
-                  {(!completedYouth || completedYouth.items?.length === 0) && (
-                    <div className="flex flex-col place-items-center py-16">
-                      <NoRowsMessage
-                        title={"No completed opportunities found"}
-                        description={
-                          "Opportunities completed by youth will be displayed here."
-                        }
-                      />
-                    </div>
-                  )}
-
-                  {/* GRID */}
-                  {completedYouth && completedYouth.items?.length > 0 && (
-                    <div>
-                      {/* DESKTOP */}
-                      <div className="hidden overflow-x-auto md:block">
-                        <table className="table">
-                          <thead>
-                            <tr className="border-gray-light text-gray-dark">
-                              <th>Student</th>
-                              <th>Opportunity</th>
-                              <th>Date completed</th>
-                              <th className="text-center">Verified</th>
-                              <th className="text-center">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {completedYouth.items.map((opportunity) => (
-                              <tr
-                                key={`completedYouth_${opportunity.opportunityId}_${opportunity.userId}`}
-                                className="border-gray-light"
-                              >
-                                <td>
-                                  <div className="w-max py-2">
-                                    {opportunity.userDisplayName}
-                                  </div>
-                                </td>
-                                <td>
-                                  <Link
-                                    href={`/organisations/${id}/opportunities/${
-                                      opportunity.opportunityId
-                                    }/info?returnUrl=${encodeURIComponent(
-                                      router.asPath,
-                                    )}`}
-                                    className="text-center"
-                                  >
-                                    {opportunity.opportunityTitle}
-                                  </Link>
-                                </td>
-                                <td className="whitespace-nowrap text-center">
-                                  {opportunity.dateCompleted
-                                    ? moment(
-                                        new Date(opportunity.dateCompleted),
-                                      ).format("MMM D YYYY")
-                                    : ""}
-                                </td>
-                                <td className="whitespace-nowrap text-center">
-                                  {opportunity.verified
-                                    ? "Verified"
-                                    : "Not verified"}
-                                </td>
-                                <td className="text-center">
-                                  {opportunity.opportunityStatus}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {/* MOBILE */}
-                      <div className="flex flex-col gap-2 md:hidden">
-                        <DashboardCarousel
-                          orgId={id}
-                          slides={completedYouth.items}
-                          totalSildes={completedYouth?.totalCount}
-                          loadData={loadData_Youth}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* PAGINATION */}
-                  {completedYouth && completedYouth.totalCount > 0 && (
-                    <div className="mt-2 grid place-items-center justify-center">
-                      <PaginationButtons
-                        currentPage={
-                          pageCompletedYouth
-                            ? parseInt(pageCompletedYouth.toString())
-                            : 1
-                        }
-                        totalItems={completedYouth.totalCount}
-                        pageSize={PAGE_SIZE}
-                        showPages={false}
-                        showInfo={true}
-                        onClick={handlePagerChangeCompletedYouth}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
 
           {/* DIVIDER */}
           {isAdmin && ssoData && (

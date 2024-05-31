@@ -6,13 +6,14 @@ export interface OrganizationSearchFilterBase extends PaginationFilter {
   organization: string;
   opportunities: string[] | null;
   categories: string[] | null;
-  countries: string[] | null;
   startDate: string | null;
   endDate: string | null;
 }
 
 export interface OrganizationSearchFilterYouth
-  extends OrganizationSearchFilterBase {}
+  extends OrganizationSearchFilterBase {
+  countries: string[] | null;
+}
 
 export interface OrganizationSearchFilterOpportunity
   extends OrganizationSearchFilterBase {}
@@ -147,15 +148,6 @@ export interface YouthInfo {
   organizationLogoURL: string | null;
   dateCompleted: string | null;
   verified: boolean;
-}
-
-export interface OrganizationSearchFilterEngagement {
-  organization: string;
-  opportunities: string[] | null;
-  categories: string[] | null;
-  countries: string[] | null;
-  startDate: string | null;
-  endDate: string | null;
 }
 
 export interface OrganizationSearchResultsYouth {
