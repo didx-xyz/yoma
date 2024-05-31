@@ -2,7 +2,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useState } from "react";
 import { type FieldValues, Controller, useForm } from "react-hook-form";
 import zod from "zod";
-import type { OpportunityCategory } from "~/api/models/opportunity";
+import type {
+  OpportunityCategory,
+  OpportunitySearchResultsInfo,
+} from "~/api/models/opportunity";
 import type { Country, SelectOption } from "~/api/models/lookups";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -14,7 +17,7 @@ import Async from "react-select/async";
 import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
 import { debounce } from "~/lib/utils";
 import { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/[id]";
-import { count } from "console";
+import FilterBadges from "~/components/FilterBadges";
 
 const ValueContainer = ({
   children,
@@ -32,7 +35,6 @@ const ValueContainer = ({
       const pluralMapping: Record<string, string> = {
         Category: "Categories",
         Opportunity: "Opportunities",
-        Country: "Countries",
       };
 
       const pluralize = (word: string, count: number): string => {
@@ -57,14 +59,14 @@ export const OrganisationRowFilter: React.FC<{
   htmlRef: HTMLDivElement;
   searchFilter: OrganizationSearchFilterBase | null;
   lookups_categories?: OpportunityCategory[];
-  lookups_countries?: Country[];
+  lookups_selectedOpportunities?: OpportunitySearchResultsInfo;
   onSubmit?: (fieldValues: OrganizationSearchFilterSummaryViewModel) => void;
 }> = ({
   organisationId,
   htmlRef,
   searchFilter,
   lookups_categories,
-  lookups_countries,
+  lookups_selectedOpportunities,
   onSubmit,
 }) => {
   const schema = zod.object({
@@ -142,14 +144,17 @@ export const OrganisationRowFilter: React.FC<{
   }, [setdefaultOpportunityOptions, searchFilter?.opportunities]);
 
   return (
-    <div className="flex flex-grow flex-col">
+    <div className="flex flex-grow flex-col gap-3">
       <form
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
         className="flex flex-col gap-2"
       >
-        <div className="flex w-full flex-col items-center justify-center gap-2 md:justify-start lg:flex-row">
-          <div className="flex w-full flex-grow flex-col flex-wrap items-center gap-2 md:w-fit lg:flex-row">
-            <div className="mr-4 text-sm font-bold">Search by:</div>
+        <div className="flex w-full flex-col items-center justify-center gap-2 lg:flex-row lg:justify-start">
+          <div className="flex w-full flex-grow flex-col flex-wrap items-center gap-2 lg:w-fit lg:flex-row">
+            <div className="mr-4 flex text-sm font-bold text-gray">
+              Search by:
+            </div>
+
             {/* OPPORTUNITIES */}
             <span className="w-full md:w-72">
               <Controller
@@ -195,8 +200,8 @@ export const OrganisationRowFilter: React.FC<{
               )}
             </span>
 
-            <div className="flex w-full flex-grow flex-col items-center gap-2 md:w-fit md:flex-row">
-              <div className="mx-auto flex items-center text-center text-xs font-bold md:mx-1 md:text-left">
+            <div className="flex w-full flex-grow flex-col items-center gap-2 lg:w-fit lg:flex-row">
+              <div className="mx-auto flex items-center text-center text-xs font-bold text-gray md:mx-1 md:text-left">
                 or
               </div>
 
@@ -252,60 +257,9 @@ export const OrganisationRowFilter: React.FC<{
                 </span>
               )}
             </div>
-
-            <div>
-              {/* COUNTRIES */}
-              {lookups_countries && (
-                <span className="w-full md:w-72">
-                  <Controller
-                    name="countries"
-                    control={form.control}
-                    defaultValue={searchFilter?.countries}
-                    render={({ field: { onChange, value } }) => (
-                      <Select
-                        instanceId="countries"
-                        classNames={{
-                          control: () =>
-                            "input input-xs h-fit !border-none w-full md:w-72",
-                        }}
-                        isMulti={true}
-                        options={lookups_countries.map((c) => ({
-                          value: c.name,
-                          label: c.name,
-                        }))}
-                        // fix menu z-index issue
-                        menuPortalTarget={htmlRef}
-                        styles={{
-                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                        }}
-                        onChange={(val) => {
-                          onChange(val.map((c) => c.value));
-                          void handleSubmit(onSubmitHandler)();
-                        }}
-                        value={lookups_countries
-                          .filter((c) => value?.includes(c.name))
-                          .map((c) => ({ value: c.name, label: c.name }))}
-                        placeholder="Country"
-                        components={{
-                          ValueContainer,
-                        }}
-                      />
-                    )}
-                  />
-
-                  {formState.errors.countries && (
-                    <label className="label font-bold">
-                      <span className="label-text-alt italic text-red-500">
-                        {`${formState.errors.countries.message}`}
-                      </span>
-                    </label>
-                  )}
-                </span>
-              )}
-            </div>
           </div>
 
-          <div className="mt-6 flex w-full justify-between gap-4 md:mt-0 md:w-fit lg:justify-end">
+          <div className="flex w-full justify-center gap-4 lg:w-fit lg:justify-end">
             {/* DATE START */}
             <span className="flex">
               <Controller
@@ -313,7 +267,7 @@ export const OrganisationRowFilter: React.FC<{
                 name="startDate"
                 render={({ field: { onChange, value } }) => (
                   <DatePicker
-                    className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none md:w-32"
+                    className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none lg:w-32"
                     onChange={(date) => {
                       onChange(toISOStringForTimezone(date));
                       void handleSubmit(onSubmitHandler)();
@@ -340,7 +294,7 @@ export const OrganisationRowFilter: React.FC<{
                 name="endDate"
                 render={({ field: { onChange, value } }) => (
                   <DatePicker
-                    className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none md:w-32"
+                    className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none lg:w-32"
                     onChange={(date) => {
                       // change time to 1 second to midnight
                       if (date) date.setHours(23, 59, 59, 999);
@@ -378,6 +332,36 @@ export const OrganisationRowFilter: React.FC<{
           </div>
         </div>
       </form>
+
+      {/* FILTER BADGES */}
+      <div className="h-10">
+        <FilterBadges
+          searchFilter={searchFilter}
+          excludeKeys={[
+            "pageSelectedOpportunities",
+            "pageCompletedYouth",
+            "pageSize",
+            "organization",
+            "countries",
+          ]}
+          resolveValue={(key, value) => {
+            if (key === "startDate" || key === "endDate")
+              return value
+                ? toISOStringForTimezone(new Date(value)).split("T")[0]
+                : "";
+            else if (key === "opportunities") {
+              // HACK: resolve opportunity ids to titles
+              const lookup = lookups_selectedOpportunities?.items.find(
+                (x) => x.id === value,
+              );
+              return lookup?.title ?? value;
+            } else {
+              return value;
+            }
+          }}
+          onSubmit={(e) => onSubmitHandler(e)}
+        />
+      </div>
     </div>
   );
 };

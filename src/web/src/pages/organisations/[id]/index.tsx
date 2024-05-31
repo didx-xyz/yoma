@@ -84,6 +84,7 @@ import type { Organization } from "~/api/models/organisation";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { SsoChart } from "~/components/Organisation/Dashboard/SsoChart";
 import { Country } from "~/api/models/lookups";
+import { EngagementRowFilter } from "~/components/Organisation/Dashboard/EngagementRowFilter";
 
 export interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
@@ -698,6 +699,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   // filter popup handlers
   const onSubmitFilter = useCallback(
     (val: OrganizationSearchFilterSummaryViewModel) => {
+      console.table(val);
       redirectWithSearchFilterParams({
         categories: val.categories,
         opportunities: val.opportunities,
@@ -771,7 +773,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         <title>Yoma | Organisation Dashboard</title>
       </Head>
 
-      <PageBackground className="h-[350px] lg:h-[275px]" />
+      <PageBackground className="h-[450px] lg:h-[320px]" />
 
       {(isLoading ||
         selectedOpportunitiesIsLoading ||
@@ -784,107 +786,90 @@ const OrganisationDashboard: NextPageWithLayout<{
       <div className="container z-10 mt-[6rem] max-w-7xl overflow-hidden px-4 py-1 md:py-4">
         <div className="flex flex-col gap-4">
           {/* HEADER */}
-          <div className="mb-4 flex flex-col">
-            {/* LOGO & TITLE */}
-            {/* <div className="-mb-4 -mt-2 flex flex-row font-semibold text-white">
-              <LogoTitle
-                logoUrl={organisation?.logoURL}
-                title={organisation?.name}
-              />
-              <LimitedFunctionalityBadge />
-            </div> */}
+          <div className="flex flex-col gap-2">
             {/* WELCOME MSG */}
-            <div className="text-2xl font-semibold text-white md:text-3xl">
+            <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-white md:text-2xl">
               <span>
                 {timeOfDayEmoji} Good {timeOfDay}&nbsp;
-                <span className="">{user?.name}</span>, here is your reports
-                for&nbsp;
-                <span className="hidden md:block" />
-                <span className="line-clamp-2 font-semibold">
-                  {organisation?.name}
-                </span>
+                <span className="">{user?.name}!</span>
               </span>
             </div>
 
             {/* DESCRIPTION */}
-            <div className="mt-2 flex flex-col gap-1 leading-4 text-white lg:flex-row">
-              <span>Your dashboard progress so far.</span>
-
-              {searchResults?.dateStamp && (
-                <span>
-                  Last updated on{" "}
-                  <span className="font-semibold">
-                    {moment(new Date(searchResults?.dateStamp)).format(
-                      DATETIME_FORMAT_HUMAN,
-                    )}
-                  </span>
-                </span>
-              )}
+            <div className="gap-2 overflow-hidden text-ellipsis whitespace-nowrap text-white">
+              Here's your reports for{" "}
+              <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap font-bold">
+                {organisation?.name}
+              </span>
             </div>
+
+            {searchResults?.dateStamp && (
+              <div className="text-sm">
+                Last updated on{" "}
+                <span className="font-semibold">
+                  {moment(new Date(searchResults?.dateStamp)).format(
+                    DATETIME_FORMAT_HUMAN,
+                  )}
+                </span>
+              </div>
+            )}
+
             <LimitedFunctionalityBadge />
           </div>
 
           {/* FILTERS */}
-          <div className="mt-16 flex lg:mt-16">
-            {(!lookups_categories || !lookups_countries) && (
-              <div>Loading...</div>
-            )}
-            {lookups_categories && lookups_countries && (
-              <div className="flex flex-grow flex-col gap-3">
-                <OrganisationRowFilter
-                  organisationId={id}
-                  htmlRef={myRef.current!}
-                  searchFilter={{
-                    categories: searchFilter.categories,
-                    opportunities: searchFilter.opportunities,
-                    startDate: searchFilter.startDate,
-                    endDate: searchFilter.endDate,
-                    organization: id,
-                    pageNumber: null,
-                    pageSize: null,
-                    countries: searchFilter.countries,
-                  }}
-                  lookups_categories={lookups_categories}
-                  lookups_countries={lookups_countries}
-                  onSubmit={(e) => onSubmitFilter(e)}
-                />
-
-                {/* FILTER BADGES */}
-                <FilterBadges
-                  searchFilter={searchFilter}
-                  excludeKeys={[
-                    "pageSelectedOpportunities",
-                    "pageCompletedYouth",
-                    "pageSize",
-                    "organization",
-                  ]}
-                  resolveValue={(key, value) => {
-                    if (key === "startDate" || key === "endDate")
-                      return value
-                        ? toISOStringForTimezone(new Date(value)).split("T")[0]
-                        : "";
-                    else if (key === "opportunities") {
-                      // HACK: resolve opportunity ids to titles
-                      const lookup = lookups_selectedOpportunities?.items.find(
-                        (x) => x.id === value,
-                      );
-                      return lookup?.title ?? value;
-                    } else {
-                      return value;
-                    }
-                  }}
-                  onSubmit={(e) => onSubmitFilter(e)}
-                />
-              </div>
+          <div className="">
+            {!lookups_categories && <div>Loading...</div>}
+            {lookups_categories && (
+              <OrganisationRowFilter
+                organisationId={id}
+                htmlRef={myRef.current!}
+                searchFilter={{
+                  categories: searchFilter.categories,
+                  opportunities: searchFilter.opportunities,
+                  startDate: searchFilter.startDate,
+                  endDate: searchFilter.endDate,
+                  organization: id,
+                  pageNumber: null,
+                  pageSize: null,
+                  countries: searchFilter.countries,
+                }}
+                lookups_categories={lookups_categories}
+                lookups_selectedOpportunities={lookups_selectedOpportunities}
+                onSubmit={(e) => onSubmitFilter(e)}
+              />
             )}
           </div>
 
           {/* SUMMARY */}
           {searchResults ? (
-            <div className="flex flex-col gap-4 md:-mt-2">
+            <div className="mt-4 flex flex-col gap-4">
               {/* ENGAGEMENT */}
               <div className="flex flex-col gap-2">
                 <div className="text-3xl font-semibold">Engagement</div>
+
+                {/* FILTERS */}
+                <div className="">
+                  {!lookups_countries && <div>Loading...</div>}
+
+                  {lookups_countries && (
+                    <EngagementRowFilter
+                      htmlRef={myRef.current!}
+                      searchFilter={{
+                        categories: searchFilter.categories,
+                        opportunities: searchFilter.opportunities,
+                        startDate: searchFilter.startDate,
+                        endDate: searchFilter.endDate,
+                        organization: id,
+                        pageNumber: null,
+                        pageSize: null,
+                        countries: searchFilter.countries,
+                      }}
+                      lookups_countries={lookups_countries}
+                      onSubmit={(e) => onSubmitFilter(e)}
+                    />
+                  )}
+                </div>
 
                 <div className="mt-2 flex flex-col gap-4 md:flex-row">
                   {/* VIEWED COMPLETED */}
@@ -962,7 +947,7 @@ const OrganisationDashboard: NextPageWithLayout<{
               </div>
 
               <div className="flex flex-col">
-                <div className="mb-4 flex gap-4">
+                <div className="flex gap-4">
                   <div className="text-xl font-semibold">Countries</div>
                 </div>
                 <div className="flex flex-col gap-4 md:flex-row">
