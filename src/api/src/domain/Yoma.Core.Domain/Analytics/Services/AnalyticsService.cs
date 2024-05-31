@@ -516,10 +516,10 @@ namespace Yoma.Core.Domain.Analytics.Services
       }
 
       if (result.Outbound.Enabled)
-        result.Inbound.Logins = GetSSODistinctLoginSummary(query, result.Inbound.ClientId);
+        result.Outbound.Logins = GetSSODistinctLoginSummary(query, result.Outbound.ClientId);
 
       if (result.Inbound.Enabled)
-        result.Outbound.Logins = GetSSODistinctLoginSummary(query, result.Outbound.ClientId);
+        result.Inbound.Logins = GetSSODistinctLoginSummary(query, result.Inbound.ClientId);
 
       result.DateStamp = DateTimeOffset.UtcNow;
       return result;
