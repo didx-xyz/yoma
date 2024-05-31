@@ -9,7 +9,7 @@ interface InputProps {
   imageURL: string | null;
   company: string;
   name: string;
-  summary: string;
+  //summary: string;
   amount: number | null;
   count?: number;
   href?: string;
@@ -21,7 +21,7 @@ const ItemCardComponent: React.FC<InputProps> = ({
   imageURL,
   company,
   name,
-  summary,
+  //summary,
   amount,
   count,
   href,
@@ -84,7 +84,7 @@ const ItemCardComponent: React.FC<InputProps> = ({
 
         {/* DESCRIPTION */}
         <div className="my-2x h-[100px] max-w-[200px] overflow-hidden text-start text-sm font-light md:max-w-full">
-          {summary}
+          {/* {summary} */}Click to purchase this item.
         </div>
 
         {/* BADGES */}

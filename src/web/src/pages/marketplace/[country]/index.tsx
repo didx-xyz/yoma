@@ -606,10 +606,10 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
               )}
 
               <div className="h-[180px] overflow-y-scroll text-ellipsis">
-                <div className=" rounded-lg p-4 text-center">
+                <div className="rounded-lg p-4 text-center">
                   {currentItem.description}
                 </div>
-                <div className="  rounded-lg p-4 text-center">
+                <div className="rounded-lg p-4 text-center">
                   {currentItem.summary}
                 </div>
               </div>
@@ -619,7 +619,6 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                   type="button"
                   className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
                   onClick={() => {
-                    //setBuyDialogConfirmationVisible(false);
                     // reload the page to refresh the data
                     router.reload();
                   }}
