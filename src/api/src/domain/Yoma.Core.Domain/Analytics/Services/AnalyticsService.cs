@@ -321,7 +321,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       {
         TopCompleted = new OpportunitySkillTopCompleted { Legend = "Most completed skills", TopCompleted = [.. flattenedSkills.Take(Skill_Count).Select(g => g.Skill).OrderBy(s => s.Name)] },
         Items = new TimeIntervalSummary()
-        { Legend = ["Total unique skills",], Data = resultsSkills, Count = [flattenedSkills.Count] }
+        { Legend = ["Total unique skills"], Data = resultsSkills, Count = [flattenedSkills.Count] }
       };
 
       //demographics
@@ -490,10 +490,12 @@ namespace Yoma.Core.Domain.Analytics.Services
       {
         Outbound = new OrganizationSSO
         {
+          Legend = "Outbound",
           ClientId = organization.SSOClientIdOutbound
         },
         Inbound = new OrganizationSSO
         {
+          Legend = "Inbound",
           ClientId = organization.SSOClientIdInbound
         },
       };
@@ -514,26 +516,37 @@ namespace Yoma.Core.Domain.Analytics.Services
       }
 
       if (result.Outbound.Enabled)
-        result.Outbound.LoginCount = GetSSODistinctLoginCount(query, result.Outbound.ClientId);
+        result.Inbound.Logins = GetSSODistinctLoginSummary(query, result.Outbound.ClientId);
 
       if (result.Inbound.Enabled)
-        result.Inbound.LoginCount = GetSSODistinctLoginCount(query, result.Inbound.ClientId);
+        result.Outbound.Logins = GetSSODistinctLoginSummary(query, result.Inbound.ClientId);
 
       result.DateStamp = DateTimeOffset.UtcNow;
       return result;
     }
 
-    private static int GetSSODistinctLoginCount(IQueryable<UserLoginHistory> query, string? clientId)
+    private static TimeIntervalSummary GetSSODistinctLoginSummary(IQueryable<UserLoginHistory> query, string? clientId)
     {
       ArgumentException.ThrowIfNullOrEmpty(clientId, nameof(clientId));
 
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-      return query
+      var itemLogins = query
           .Where(o => o.ClientId.ToLower() == clientId.ToLower())
-          .Select(o => o.UserId)
-          .Distinct()
-          .Count();
+          .Select(o => new { o.DateCreated, o.UserId })
+          .GroupBy(x => x.DateCreated.AddDays(-(int)x.DateCreated.DayOfWeek).AddDays(7).Date)
+          .Select(group => new
+          {
+            WeekEnding = group.Key,
+            Count = group.Select(x => x.UserId).Distinct().Count()
+          })
+          .OrderBy(result => result.WeekEnding)
+          .ToList();
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+
+      var resultsLogins = new List<TimeValueEntry>();
+      itemLogins.ForEach(o => { resultsLogins.Add(new TimeValueEntry(o.WeekEnding, o.Count)); });
+
+      return new TimeIntervalSummary { Legend = ["Login count"], Data = resultsLogins, Count = [itemLogins.Sum(o => o.Count)] };
     }
 
     private IQueryable<OpportunityInfoAnalytics> SearchOrganizationOpportunitiesQueryBase(OrganizationSearchFilterOpportunity filter)
