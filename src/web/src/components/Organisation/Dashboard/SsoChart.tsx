@@ -105,8 +105,8 @@ export const SsoChart: React.FC<{
                 left: 0,
                 top: 0,
                 right: 0,
-                width: "94%",
-                height: "38%",
+                width: "100%",
+                height: "45%",
               },
             }}
           />
