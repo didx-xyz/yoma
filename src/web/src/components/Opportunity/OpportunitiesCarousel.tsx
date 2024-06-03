@@ -43,7 +43,7 @@ const OpportunitiesCarousel: React.FC<{
   const [loadingMore, setLoadingMore] = useState(false);
   const screenWidth = useAtomValue(screenWidthAtom);
   const [options, setOptions] = useState<EmblaOptionsType>({
-    dragFree: false,
+    dragFree: true,
     containScroll: "trimSnaps",
     watchSlides: true,
     watchResize: true,
