@@ -835,7 +835,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     <LineChart
                       data={searchResults.opportunities.viewedCompleted}
                       opportunityCount={
-                        searchResults?.opportunities?.selected?.count ?? 0
+                        searchResults?.opportunities?.engaged?.count ?? 0
                       }
                     />
                   )}

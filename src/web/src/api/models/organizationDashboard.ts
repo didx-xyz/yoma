@@ -53,7 +53,7 @@ export interface OrganizationOpportunity {
   completion: OpportunityCompletion;
   conversionRate: OpportunityConversionRatio;
   reward: OpportunityReward;
-  selected: OpportunitySelected;
+  engaged: OpportunitySelected;
 }
 
 export interface OpportunitySelected {
