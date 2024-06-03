@@ -754,12 +754,12 @@ const OpportunityDetails: NextPageWithLayout<{
         // dismiss all toasts
         toast.dismiss();
 
-        //  convert dates to string in format "YYYY-MM-DD"
+        // convert dates to string in format "YYYY-MM-DD"
         data.dateStart = data.dateStart
-          ? moment(data.dateStart).format(DATE_FORMAT_SYSTEM)
+          ? moment.utc(data.dateStart).format(DATE_FORMAT_SYSTEM)
           : null;
         data.dateEnd = data.dateEnd
-          ? moment(data.dateEnd).format(DATE_FORMAT_SYSTEM)
+          ? moment.utc(data.dateEnd).format(DATE_FORMAT_SYSTEM)
           : null;
 
         // if verification is disabled, uncheck credential issuance, clear verification method, clear schema
