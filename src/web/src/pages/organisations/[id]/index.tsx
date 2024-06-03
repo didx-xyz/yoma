@@ -121,18 +121,23 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   let lookups_selectedOpportunities;
 
   try {
-    const dataCategories = await getCategoriesAdmin(id, context);
     const dataOrganisation = await getOrganisationById(id, context);
+    const dataCategories = await getCategoriesAdmin(id, context);
+    const dataCountries = await getCountries(id, context);
 
     // 👇 prefetch queries on server
     await Promise.all([
       await queryClient.prefetchQuery({
-        queryKey: ["OrganisationDashboardCategories", id],
+        queryKey: ["organisation", id],
+        queryFn: () => dataOrganisation,
+      }),
+      await queryClient.prefetchQuery({
+        queryKey: ["organisationCategories", id],
         queryFn: () => dataCategories,
       }),
       await queryClient.prefetchQuery({
-        queryKey: ["organisation", id],
-        queryFn: () => dataOrganisation,
+        queryKey: ["organisationCountries", id],
+        queryFn: () => dataCountries,
       }),
     ]);
 
@@ -191,18 +196,18 @@ const OrganisationDashboard: NextPageWithLayout<{
   const isAdmin = user?.roles?.includes(ROLE_ADMIN);
 
   // 👇 use prefetched queries from server
+  const { data: organisation } = useQuery<Organization>({
+    queryKey: ["organisation", id],
+    enabled: !error,
+  });
   const { data: lookups_categories } = useQuery<OpportunityCategory[]>({
-    queryKey: ["OrganisationDashboardCategories", id],
+    queryKey: ["organisationCategories", id],
     queryFn: () => getCategoriesAdmin(id),
     enabled: !error,
   });
   const { data: lookups_countries } = useQuery<Country[]>({
-    queryKey: ["OrganisationDashboardCountries", id],
+    queryKey: ["organisationCountries", id],
     queryFn: () => getCountries(id),
-    enabled: !error,
-  });
-  const { data: organisation } = useQuery<Organization>({
-    queryKey: ["organisation", id],
     enabled: !error,
   });
 
@@ -218,11 +223,10 @@ const OrganisationDashboard: NextPageWithLayout<{
   } = router.query;
 
   // QUERY: SEARCH RESULTS
-  // the filter values from the querystring are mapped to it's corresponding id
-  const { data: searchResults, isLoading } =
+  const { data: dataEngagement, isLoading: isLoadingEngagement } =
     useQuery<OrganizationSearchResultsSummary>({
       queryKey: [
-        "OrganizationSearchResultsSummary",
+        "organisationEngagement",
         id,
         categories,
         opportunities,
@@ -266,10 +270,10 @@ const OrganisationDashboard: NextPageWithLayout<{
     });
 
   // QUERY: COMPLETED YOUTH
-  const { data: completedYouth, isLoading: completedYouthIsLoading } =
+  const { data: dataCompletedYouth, isLoading: isLoadingCompletedYouth } =
     useQuery<OrganizationSearchResultsYouth>({
       queryKey: [
-        "OrganizationSearchResultsCompletedYouth",
+        "organisationCompletedYouth",
         id,
         pageCompletedYouth,
         categories,
@@ -317,18 +321,17 @@ const OrganisationDashboard: NextPageWithLayout<{
 
   // QUERY: SELECTED OPPORTUNITIES
   const {
-    data: selectedOpportunities,
-    isLoading: selectedOpportunitiesIsLoading,
+    data: dataSelectedOpportunities,
+    isLoading: isLoadingSelectedOpportunities,
   } = useQuery<OrganizationSearchResultsOpportunity>({
     queryKey: [
-      "OrganizationSearchResultsSelectedOpportunities",
+      "organisationSelectedOpportunities",
       id,
       pageSelectedOpportunities,
       categories,
       opportunities,
       startDate,
       endDate,
-      countries,
     ],
     queryFn: () =>
       searchOrganizationOpportunities({
@@ -358,9 +361,9 @@ const OrganisationDashboard: NextPageWithLayout<{
   });
 
   // QUERY: SSO
-  const { data: ssoData, isLoading: ssoDataIsLoading } =
+  const { data: dataSSO, isLoading: isLoadingSSO } =
     useQuery<OrganizationSearchSso>({
-      queryKey: ["searchOrganizationSso", id, startDate, endDate],
+      queryKey: ["organisationSSO", id, startDate, endDate],
       queryFn: () =>
         searchOrganizationSso({
           organization: id,
@@ -462,10 +465,9 @@ const OrganisationDashboard: NextPageWithLayout<{
     },
     [queryClient],
   );
-
   const loadData_Opportunities = useCallback(
     async (startRow: number) => {
-      if (startRow >= (selectedOpportunities?.totalCount ?? 0)) {
+      if (startRow >= (dataSelectedOpportunities?.totalCount ?? 0)) {
         return {
           items: [],
           totalCount: 0,
@@ -474,7 +476,15 @@ const OrganisationDashboard: NextPageWithLayout<{
       const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
 
       return fetchDataAndUpdateCache_Opportunities(
-        ["OrganizationSearchResultsSelectedOpportunities", searchFilter],
+        [
+          "OrganizationSearchResultsSelectedOpportunities",
+          pageNumber,
+          id,
+          categories,
+          opportunities,
+          startDate,
+          endDate,
+        ],
         {
           pageNumber: pageNumber,
           pageSize: PAGE_SIZE_MINIMUM,
@@ -499,7 +509,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       );
     },
     [
-      selectedOpportunities,
+      dataSelectedOpportunities,
       fetchDataAndUpdateCache_Opportunities,
       categories,
       opportunities,
@@ -510,10 +520,9 @@ const OrganisationDashboard: NextPageWithLayout<{
       lookups_categories,
     ],
   );
-
   const loadData_Youth = useCallback(
     async (startRow: number) => {
-      if (startRow >= (completedYouth?.totalCount ?? 0)) {
+      if (startRow >= (dataCompletedYouth?.totalCount ?? 0)) {
         return {
           items: [],
           totalCount: 0,
@@ -524,8 +533,8 @@ const OrganisationDashboard: NextPageWithLayout<{
       return fetchDataAndUpdateCache_Youth(
         [
           "OrganizationSearchResultsCompletedYouth",
-          id,
           pageNumber,
+          id,
           categories,
           opportunities,
           startDate,
@@ -567,7 +576,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       );
     },
     [
-      completedYouth,
+      dataCompletedYouth,
       fetchDataAndUpdateCache_Youth,
       categories,
       opportunities,
@@ -582,18 +591,18 @@ const OrganisationDashboard: NextPageWithLayout<{
 
   // calculate counts
   useEffect(() => {
-    if (!selectedOpportunities?.items) return;
+    if (!dataSelectedOpportunities?.items) return;
 
-    const inactiveCount = selectedOpportunities.items.filter(
+    const inactiveCount = dataSelectedOpportunities.items.filter(
       (opportunity) => opportunity.status === ("Inactive" as any),
     ).length;
-    const expiredCount = selectedOpportunities.items.filter(
+    const expiredCount = dataSelectedOpportunities.items.filter(
       (opportunity) => opportunity.status === ("Expired" as any),
     ).length;
 
     setInactiveOpportunitiesCount(inactiveCount);
     setExpiredOpportunitiesCount(expiredCount);
-  }, [selectedOpportunities]);
+  }, [dataSelectedOpportunities]);
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
@@ -658,7 +667,6 @@ const OrganisationDashboard: NextPageWithLayout<{
     },
     [],
   );
-
   const redirectWithSearchFilterParams = useCallback(
     (filter: OrganizationSearchFilterSummaryViewModel) => {
       let url = `/organisations/${id}`;
@@ -671,8 +679,26 @@ const OrganisationDashboard: NextPageWithLayout<{
     },
     [id, router, getSearchFilterAsQueryString],
   );
+  const getTimeOfDayAndEmoji = (): [string, string] => {
+    const hour = new Date().getHours();
+    let timeOfDay: string;
+    let timeOfDayEmoji: string;
 
-  // filter popup handlers
+    if (hour < 12) {
+      timeOfDay = "morning";
+      timeOfDayEmoji = "☀️";
+    } else if (hour < 18) {
+      timeOfDay = "afternoon";
+      timeOfDayEmoji = "☀️";
+    } else {
+      timeOfDay = "evening";
+      timeOfDayEmoji = "🌙";
+    }
+
+    return [timeOfDay, timeOfDayEmoji];
+  };
+
+  // 🔔 EVENTS
   const onSubmitFilter = useCallback(
     (val: OrganizationSearchFilterSummaryViewModel) => {
       console.table(val);
@@ -698,8 +724,6 @@ const OrganisationDashboard: NextPageWithLayout<{
       pageCompletedYouth,
     ],
   );
-
-  // 🔔 CHANGE EVENTS
   const handlePagerChangeSelectedOpportunities = useCallback(
     (value: number) => {
       searchFilter.pageSelectedOpportunities = value;
@@ -714,26 +738,6 @@ const OrganisationDashboard: NextPageWithLayout<{
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
-
-  // Function to get the current time of day and the corresponding emoji
-  const getTimeOfDayAndEmoji = (): [string, string] => {
-    const hour = new Date().getHours();
-    let timeOfDay: string;
-    let timeOfDayEmoji: string;
-
-    if (hour < 12) {
-      timeOfDay = "morning";
-      timeOfDayEmoji = "☀️";
-    } else if (hour < 18) {
-      timeOfDay = "afternoon";
-      timeOfDayEmoji = "☀️";
-    } else {
-      timeOfDay = "evening";
-      timeOfDayEmoji = "🌙";
-    }
-
-    return [timeOfDay, timeOfDayEmoji];
-  };
 
   const [timeOfDay, timeOfDayEmoji] = getTimeOfDayAndEmoji();
 
@@ -751,10 +755,10 @@ const OrganisationDashboard: NextPageWithLayout<{
 
       <PageBackground className="h-[450px] lg:h-[320px]" />
 
-      {(isLoading ||
-        selectedOpportunitiesIsLoading ||
-        completedYouthIsLoading ||
-        ssoDataIsLoading) && <Loading />}
+      {(isLoadingEngagement ||
+        isLoadingSelectedOpportunities ||
+        isLoadingCompletedYouth ||
+        isLoadingSSO) && <Loading />}
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
@@ -779,11 +783,11 @@ const OrganisationDashboard: NextPageWithLayout<{
               </span>
             </div>
 
-            {searchResults?.dateStamp && (
+            {dataEngagement?.dateStamp && (
               <div className="text-sm">
                 Last updated on{" "}
                 <span className="font-semibold">
-                  {moment(new Date(searchResults?.dateStamp)).format(
+                  {moment(new Date(dataEngagement?.dateStamp)).format(
                     DATETIME_FORMAT_HUMAN,
                   )}
                 </span>
@@ -809,7 +813,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           </div>
 
           {/* SUMMARY */}
-          {searchResults ? (
+          {dataEngagement ? (
             <div className="mt-4 flex flex-col gap-4">
               {/* ENGAGEMENT */}
               <div className="flex flex-col gap-2">
@@ -831,9 +835,9 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 <div className="mt-2 flex flex-col gap-4 md:flex-row">
                   {/* VIEWED COMPLETED */}
-                  {searchResults?.opportunities?.viewedCompleted && (
+                  {dataEngagement?.opportunities?.viewedCompleted && (
                     <LineChart
-                      data={searchResults.opportunities.viewedCompleted}
+                      data={dataEngagement.opportunities.viewedCompleted}
                       opportunityCount={
                         searchResults?.opportunities?.engaged?.count ?? 0
                       }
@@ -865,7 +869,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                         <div className="flex flex-grow flex-col">
                           <div className="flex-grow text-4xl font-semibold">
                             {`${
-                              searchResults?.opportunities?.conversionRate
+                              dataEngagement?.opportunities?.conversionRate
                                 ?.percentage ?? 0
                             } %`}
                           </div>
@@ -877,7 +881,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                       </div>
 
                       {/* Overall ratio */}
-                      {searchResults?.opportunities?.conversionRate && (
+                      {dataEngagement?.opportunities?.conversionRate && (
                         <PieChart
                           id="conversionRate"
                           title="Overall ratio"
@@ -887,12 +891,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                             ["Completed", "Viewed"],
                             [
                               "Completed",
-                              searchResults.opportunities.conversionRate
+                              dataEngagement.opportunities.conversionRate
                                 .completedCount,
                             ],
                             [
                               "Viewed",
-                              searchResults.opportunities.conversionRate
+                              dataEngagement.opportunities.conversionRate
                                 .viewedCount,
                             ],
                           ]}
@@ -911,12 +915,13 @@ const OrganisationDashboard: NextPageWithLayout<{
                 <div className="flex flex-col gap-4 md:flex-row">
                   <div className="flex w-full flex-col justify-center overflow-hidden rounded-lg bg-white shadow">
                     {/* COUNTRIES - WORLD MAP */}
-                    {searchResults?.demographics?.countries?.items && (
+                    {dataEngagement?.demographics?.countries?.items && (
                       <WorldMapChart
                         data={[
                           ["Country", "Opportunities"],
                           ...Object.entries(
-                            searchResults?.demographics?.countries?.items || {},
+                            dataEngagement?.demographics?.countries?.items ||
+                              {},
                           ),
                         ]}
                       />
@@ -957,7 +962,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                             style={{ width: "35px", height: "35px" }}
                           />
                           <div className="flex-grow text-3xl font-semibold">
-                            {searchResults?.opportunities.reward.totalAmount.toLocaleString() ??
+                            {dataEngagement?.opportunities.reward.totalAmount.toLocaleString() ??
                               0}
                           </div>
                         </div>
@@ -969,11 +974,11 @@ const OrganisationDashboard: NextPageWithLayout<{
                         </span>
 
                         {/* TOTAL UNIQUE SKILLS */}
-                        <SkillsChart data={searchResults?.skills?.items} />
+                        <SkillsChart data={dataEngagement?.skills?.items} />
                       </div>
                     </div>
                     {/* MOST COMPLETED SKILLS */}
-                    {searchResults?.skills?.topCompleted && (
+                    {dataEngagement?.skills?.topCompleted && (
                       <>
                         <div className="flex h-[176px] w-full flex-col rounded-lg bg-white p-4 shadow md:w-[565px]">
                           <div className="flex flex-row items-center gap-3">
@@ -989,11 +994,11 @@ const OrganisationDashboard: NextPageWithLayout<{
                               />
                             </div>
                             <div className="text-sm font-semibold">
-                              {searchResults?.skills.topCompleted.legend}
+                              {dataEngagement?.skills.topCompleted.legend}
                             </div>
                           </div>
                           <div className="mt-4 flex flex-grow flex-wrap gap-1 overflow-y-auto overflow-x-hidden md:h-[100px]">
-                            {searchResults?.skills.topCompleted.topCompleted.map(
+                            {dataEngagement?.skills.topCompleted.topCompleted.map(
                               (x) => (
                                 <div
                                   key={x.id}
@@ -1004,7 +1009,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                               ),
                             )}
                           </div>
-                          {searchResults?.skills?.topCompleted.topCompleted
+                          {dataEngagement?.skills?.topCompleted.topCompleted
                             .length === 0 && (
                             <div className="mb-8 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-10 text-center text-xs">
                               Not enough data to display
@@ -1031,7 +1036,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     data={[
                       ["Education", "Value"],
                       ...Object.entries(
-                        searchResults?.demographics?.education?.items || {},
+                        dataEngagement?.demographics?.education?.items || {},
                       ),
                     ]}
                   />
@@ -1045,7 +1050,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     data={[
                       ["Gender", "Value"],
                       ...Object.entries(
-                        searchResults?.demographics?.genders?.items || {},
+                        dataEngagement?.demographics?.genders?.items || {},
                       ),
                     ]}
                   />
@@ -1059,7 +1064,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     data={[
                       ["Age", "Value"],
                       ...Object.entries(
-                        searchResults?.demographics?.ages?.items || {},
+                        dataEngagement?.demographics?.ages?.items || {},
                       ),
                     ]}
                   />
@@ -1079,15 +1084,16 @@ const OrganisationDashboard: NextPageWithLayout<{
           <div className="flex flex-col">
             <div className="text-xl font-semibold">Completed by Youth</div>
 
-            {completedYouthIsLoading && <LoadingSkeleton />}
+            {isLoadingCompletedYouth && <LoadingSkeleton />}
 
             {/* COMPLETED YOUTH */}
-            {!completedYouthIsLoading && (
+            {!isLoadingCompletedYouth && (
               <div id="results">
                 <div className="mb-6 flex flex-row items-center justify-end"></div>
                 <div className="rounded-lg bg-transparent p-0 shadow-none md:bg-white md:p-4 md:shadow">
                   {/* NO ROWS */}
-                  {(!completedYouth || completedYouth.items?.length === 0) && (
+                  {(!dataCompletedYouth ||
+                    dataCompletedYouth.items?.length === 0) && (
                     <div className="flex flex-col place-items-center py-16">
                       <NoRowsMessage
                         title={"No completed opportunities found"}
@@ -1099,78 +1105,79 @@ const OrganisationDashboard: NextPageWithLayout<{
                   )}
 
                   {/* GRID */}
-                  {completedYouth && completedYouth.items?.length > 0 && (
-                    <div>
-                      {/* DESKTOP */}
-                      <div className="hidden overflow-x-auto md:block">
-                        <table className="table">
-                          <thead>
-                            <tr className="border-gray-light text-gray-dark">
-                              <th>Student</th>
-                              <th>Opportunity</th>
-                              <th>Date completed</th>
-                              <th className="text-center">Verified</th>
-                              <th className="text-center">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {completedYouth.items.map((opportunity) => (
-                              <tr
-                                key={`completedYouth_${opportunity.opportunityId}_${opportunity.userId}`}
-                                className="border-gray-light"
-                              >
-                                <td>
-                                  <div className="w-max py-2">
-                                    {opportunity.userDisplayName}
-                                  </div>
-                                </td>
-                                <td>
-                                  <Link
-                                    href={`/organisations/${id}/opportunities/${
-                                      opportunity.opportunityId
-                                    }/info?returnUrl=${encodeURIComponent(
-                                      router.asPath,
-                                    )}`}
-                                    className="text-center"
-                                  >
-                                    {opportunity.opportunityTitle}
-                                  </Link>
-                                </td>
-                                <td className="whitespace-nowrap text-center">
-                                  {opportunity.dateCompleted
-                                    ? moment(
-                                        new Date(opportunity.dateCompleted),
-                                      ).format("MMM D YYYY")
-                                    : ""}
-                                </td>
-                                <td className="whitespace-nowrap text-center">
-                                  {opportunity.verified
-                                    ? "Verified"
-                                    : "Not verified"}
-                                </td>
-                                <td className="text-center">
-                                  {opportunity.opportunityStatus}
-                                </td>
+                  {dataCompletedYouth &&
+                    dataCompletedYouth.items?.length > 0 && (
+                      <div>
+                        {/* DESKTOP */}
+                        <div className="hidden overflow-x-auto md:block">
+                          <table className="table">
+                            <thead>
+                              <tr className="border-gray-light text-gray-dark">
+                                <th>Student</th>
+                                <th>Opportunity</th>
+                                <th>Date completed</th>
+                                <th className="text-center">Verified</th>
+                                <th className="text-center">Status</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                            </thead>
+                            <tbody>
+                              {dataCompletedYouth.items.map((opportunity) => (
+                                <tr
+                                  key={`completedYouth_${opportunity.opportunityId}_${opportunity.userId}`}
+                                  className="border-gray-light"
+                                >
+                                  <td>
+                                    <div className="w-max py-2">
+                                      {opportunity.userDisplayName}
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <Link
+                                      href={`/organisations/${id}/opportunities/${
+                                        opportunity.opportunityId
+                                      }/info?returnUrl=${encodeURIComponent(
+                                        router.asPath,
+                                      )}`}
+                                      className="text-center"
+                                    >
+                                      {opportunity.opportunityTitle}
+                                    </Link>
+                                  </td>
+                                  <td className="whitespace-nowrap text-center">
+                                    {opportunity.dateCompleted
+                                      ? moment(
+                                          new Date(opportunity.dateCompleted),
+                                        ).format("MMM D YYYY")
+                                      : ""}
+                                  </td>
+                                  <td className="whitespace-nowrap text-center">
+                                    {opportunity.verified
+                                      ? "Verified"
+                                      : "Not verified"}
+                                  </td>
+                                  <td className="text-center">
+                                    {opportunity.opportunityStatus}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
 
-                      {/* MOBILE */}
-                      <div className="flex flex-col gap-2 md:hidden">
-                        <DashboardCarousel
-                          orgId={id}
-                          slides={completedYouth.items}
-                          totalSildes={completedYouth?.totalCount}
-                          loadData={loadData_Youth}
-                        />
+                        {/* MOBILE */}
+                        <div className="flex flex-col gap-2 md:hidden">
+                          <DashboardCarousel
+                            orgId={id}
+                            slides={dataCompletedYouth.items}
+                            totalSildes={dataCompletedYouth?.totalCount}
+                            loadData={loadData_Youth}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                   {/* PAGINATION */}
-                  {completedYouth && completedYouth.totalCount > 0 && (
+                  {dataCompletedYouth && dataCompletedYouth.totalCount > 0 && (
                     <div className="mt-2 grid place-items-center justify-center">
                       <PaginationButtons
                         currentPage={
@@ -1178,7 +1185,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                             ? parseInt(pageCompletedYouth.toString())
                             : 1
                         }
-                        totalItems={completedYouth.totalCount}
+                        totalItems={dataCompletedYouth.totalCount}
                         pageSize={PAGE_SIZE}
                         showPages={false}
                         showInfo={true}
@@ -1195,7 +1202,8 @@ const OrganisationDashboard: NextPageWithLayout<{
           <div className="border-px mb-2 mt-8 border-t border-gray" />
 
           {/* SELECTED OPPORTUNITIES */}
-          {selectedOpportunities && selectedOpportunities?.items.length > 0 ? (
+          {dataSelectedOpportunities &&
+          dataSelectedOpportunities?.items.length > 0 ? (
             <div className="mt-4 flex flex-col">
               <div>
                 <div className="mb-1 text-3xl font-semibold">Opportunities</div>
@@ -1256,16 +1264,16 @@ const OrganisationDashboard: NextPageWithLayout<{
                 Selected Opportunities
               </div>
 
-              {selectedOpportunitiesIsLoading && <LoadingSkeleton />}
+              {isLoadingSelectedOpportunities && <LoadingSkeleton />}
 
               {/* SELECTED OPPORTUNITIES */}
-              {!selectedOpportunitiesIsLoading && (
+              {!isLoadingSelectedOpportunities && (
                 <div id="results">
                   <div className="mb-6 flex flex-row items-center justify-end"></div>
                   <div className="rounded-lg bg-transparent p-0 shadow-none md:bg-white md:p-4 md:shadow">
                     {/* NO ROWS */}
-                    {(!selectedOpportunities ||
-                      selectedOpportunities.items?.length === 0) && (
+                    {(!dataSelectedOpportunities ||
+                      dataSelectedOpportunities.items?.length === 0) && (
                       <div className="flex flex-col place-items-center py-16">
                         <NoRowsMessage
                           title={"No opportunities found"}
@@ -1275,8 +1283,8 @@ const OrganisationDashboard: NextPageWithLayout<{
                     )}
 
                     {/* GRID */}
-                    {selectedOpportunities &&
-                      selectedOpportunities.items?.length > 0 && (
+                    {dataSelectedOpportunities &&
+                      dataSelectedOpportunities.items?.length > 0 && (
                         <div>
                           {/* DESKTOP */}
                           <div className="hidden overflow-x-auto px-4 md:block">
@@ -1291,7 +1299,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                                 </tr>
                               </thead>
                               <tbody>
-                                {selectedOpportunities.items.map(
+                                {dataSelectedOpportunities.items.map(
                                   (opportunity) => (
                                     <tr
                                       key={opportunity.id}
@@ -1343,17 +1351,19 @@ const OrganisationDashboard: NextPageWithLayout<{
                           <div className="flex flex-col gap-2 md:hidden">
                             <DashboardCarousel
                               orgId={id}
-                              slides={selectedOpportunities.items}
+                              slides={dataSelectedOpportunities.items}
                               loadData={loadData_Opportunities}
-                              totalSildes={selectedOpportunities?.totalCount}
+                              totalSildes={
+                                dataSelectedOpportunities?.totalCount
+                              }
                             />
                           </div>
                         </div>
                       )}
 
                     {/* PAGINATION */}
-                    {selectedOpportunities &&
-                      selectedOpportunities.totalCount > 0 && (
+                    {dataSelectedOpportunities &&
+                      dataSelectedOpportunities.totalCount > 0 && (
                         <div className="mt-2 hidden place-items-center justify-center md:grid">
                           <PaginationButtons
                             currentPage={
@@ -1361,7 +1371,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                                 ? parseInt(pageSelectedOpportunities.toString())
                                 : 1
                             }
-                            totalItems={selectedOpportunities.totalCount}
+                            totalItems={dataSelectedOpportunities.totalCount}
                             pageSize={PAGE_SIZE}
                             showPages={false}
                             showInfo={true}
@@ -1383,7 +1393,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           )}
 
           {/* DIVIDER */}
-          {isAdmin && ssoData && (
+          {isAdmin && dataSSO && (
             <div className="border-px my-8 border-t border-gray" />
           )}
 
@@ -1391,20 +1401,20 @@ const OrganisationDashboard: NextPageWithLayout<{
           {isAdmin && (
             <div className="my-8 flex flex-col gap-4">
               <div className="text-2xl font-semibold">Single Sign On</div>
-              {ssoDataIsLoading && <LoadingSkeleton />}
-              {ssoData && (
+              {isLoadingSSO && <LoadingSkeleton />}
+              {dataSSO && (
                 <div className="grid grid-rows-2 gap-4 md:grid-cols-2">
                   <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
                     <div className="flex items-center gap-2 text-lg font-semibold">
                       <div>Outbound</div>{" "}
                       <IoIosArrowForward className="rounded-lg bg-green-light p-px pl-[2px] text-2xl text-green" />
                     </div>
-                    {ssoData?.outbound?.enabled ? (
+                    {dataSSO?.outbound?.enabled ? (
                       <>
                         <div className="-mb-4 font-semibold">
-                          {ssoData?.outbound?.clientId}
+                          {dataSSO?.outbound?.clientId}
                         </div>
-                        <SsoChart data={ssoData?.outbound?.logins} />
+                        <SsoChart data={dataSSO?.outbound?.logins} />
                       </>
                     ) : (
                       <div>Disabled</div>
@@ -1415,12 +1425,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                       <div>Inbound</div>{" "}
                       <IoIosArrowBack className="rounded-lg bg-green-light p-px pr-[2px] text-2xl text-green" />
                     </div>
-                    {ssoData?.inbound?.enabled ? (
+                    {dataSSO?.inbound?.enabled ? (
                       <>
                         <div className="-mb-4 font-semibold">
-                          {ssoData?.inbound?.clientId}
+                          {dataSSO?.inbound?.clientId}
                         </div>
-                        <SsoChart data={ssoData?.inbound?.logins} />
+                        <SsoChart data={dataSSO?.inbound?.logins} />
                       </>
                     ) : (
                       <div>Disabled</div>
