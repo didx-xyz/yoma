@@ -1,4 +1,6 @@
 using FluentValidation;
+using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
@@ -27,7 +29,7 @@ namespace Yoma.Core.Domain.Entity.Validators
       RuleFor(x => x.FirstName).NotEmpty().Length(1, 320);
       RuleFor(x => x.Surname).NotEmpty().Length(1, 320);
       RuleFor(x => x.PhoneNumber).Length(1, 50).Matches(RegExValidators.PhoneNumber()).WithMessage("'{PropertyName}' is invalid.").When(x => !string.IsNullOrEmpty(x.PhoneNumber));
-      RuleFor(x => x.CountryId).Must(CountryExists).WithMessage($"Specified country is invalid / does not exist.");
+      RuleFor(x => x.CountryId).Must(CountryExists).WithMessage($"Specified country is invalid / does not exist. 'Worldwide' is not allowed as a country selection.");
       RuleFor(x => x.EducationId).Must(EducationExists).WithMessage($"Specified education is invalid / does not exist.");
       RuleFor(x => x.GenderId).Must(GenderExists).WithMessage($"Specified gender is invalid / does not exist.");
       RuleFor(x => x.DateOfBirth).Must(NotInFuture).WithMessage("'{PropertyName}' is in the future.");
@@ -45,7 +47,12 @@ namespace Yoma.Core.Domain.Entity.Validators
     {
       if (!id.HasValue) return true;
       if (id.Value == Guid.Empty) return false;
-      return _countryService.GetByIdOrNull(id.Value) != null;
+
+      var country = _countryService.GetByIdOrNull(id.Value);
+      if (country == null) return false;
+
+      var countryIdWorldwide = _countryService.GetByCodeAplha2(Country.Worldwide.ToDescription());
+      return country.Id != countryIdWorldwide.Id;
     }
 
     private bool EducationExists(Guid? id)

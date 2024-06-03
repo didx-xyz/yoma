@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Analytics.Models
 {
-  public class OpportunitySelected
+  public class OpportunityEngaged
   {
     public string Legend { get; set; }
 

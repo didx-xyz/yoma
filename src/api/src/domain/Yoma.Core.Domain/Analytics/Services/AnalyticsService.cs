@@ -251,8 +251,9 @@ namespace Yoma.Core.Domain.Analytics.Services
       result.Opportunities.ViewedCompleted = new TimeIntervalSummary()
       { Legend = ["Viewed", "Completions"], Data = resultsViewedCompleted, Count = [viewedCount, completedCount] };
 
-      //opportunities selected
-      result.Opportunities.Selected = new OpportunitySelected { Legend = "Opportunities selected", Count = OpportunityQueryBase(filter).Count() };
+      //opportunities engaged
+      var opportunityCountEngaged = queryViewed.Select(o => o.OpportunityId).Union(queryCompleted.Select(o => o.OpportunityId)).Distinct().Count();
+      result.Opportunities.Selected = new OpportunityEngaged { Legend = "Opportunities engaged", Count = opportunityCountEngaged };
 
       //average time
       var dates = queryCompleted
