@@ -278,7 +278,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var results = _opportunityCategoryService.List()
         .Where(o => categoryIds.Contains(o.Id))
-        .OrderBy(o => o.Name == Category.Other.ToString() ? 1 : 0) // Move "Other" to the end
+        .OrderBy(o => o.Name == Category.Other.ToString()) //  Move "Other" to the end
         .ThenBy(o => o.Name).ToList();
 
       foreach (var item in results)
@@ -333,7 +333,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var results = _opportunityCategoryService.List()
         .Where(o => categoryIds.Contains(o.Id))
-        .OrderBy(o => o.Name == Category.Other.ToString() ? 1 : 0) // Move "Other" to the end
+        .OrderBy(o => o.Name == Category.Other.ToString()) //  Move "Other" to the end
         .ThenBy(o => o.Name).ToList();
 
       foreach (var item in results)
