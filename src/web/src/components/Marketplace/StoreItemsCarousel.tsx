@@ -110,13 +110,7 @@ const StoreItemsCarousel: React.FC<{
         if (loadMore) {
           listenForScrollRef.current = false;
 
-          console.warn(
-            `Loading more data... ${lastSlide} lastSlideInView: ${lastSlideInView} nextStartRow: ${
-              emblaApi.slideNodes().length + 1
-            }`,
-          );
-
-          loadData(emblaApi.slideNodes().length + 1).then((data) => {
+          loadData(emblaApi.slideNodes().length).then((data) => {
             if (data.items.length == 0) {
               setHasMoreToLoad(false);
               emblaApi.off("scroll", scrollListenerRef.current);

@@ -467,7 +467,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   );
   const loadData_Opportunities = useCallback(
     async (startRow: number) => {
-      if (startRow >= (dataSelectedOpportunities?.totalCount ?? 0)) {
+      if (startRow > (dataSelectedOpportunities?.totalCount ?? 0)) {
         return {
           items: [],
           totalCount: 0,
@@ -521,7 +521,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   );
   const loadData_Youth = useCallback(
     async (startRow: number) => {
-      if (startRow >= (dataCompletedYouth?.totalCount ?? 0)) {
+      if (startRow > (dataCompletedYouth?.totalCount ?? 0)) {
         return {
           items: [],
           totalCount: 0,
