@@ -515,7 +515,6 @@ const OrganisationDashboard: NextPageWithLayout<{
       opportunities,
       startDate,
       endDate,
-      searchFilter,
       id,
       lookups_categories,
     ],
