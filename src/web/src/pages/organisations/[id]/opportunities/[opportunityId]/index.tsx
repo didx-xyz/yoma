@@ -541,7 +541,6 @@ const OpportunityDetails: NextPageWithLayout<{
     control: controlStep6,
     watch: watchStep6,
     reset: resetStep6,
-    setValue: setValueStep6,
   } = useForm({
     resolver: zodResolver(schemaStep6),
     defaultValues: formData,
@@ -3078,7 +3077,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           </thead>
                           <tbody>
                             {formData.verificationTypes?.map((x) => (
-                              <tr className="border-gray text-gray-dark">
+                              <tr
+                                className="border-gray text-gray-dark"
+                                key={`preview_verificationTypes_${x.type}`}
+                              >
                                 <td> {x.type}</td>
                                 <td>{x.description}</td>
                               </tr>
