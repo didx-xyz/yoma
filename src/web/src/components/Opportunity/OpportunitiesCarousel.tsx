@@ -124,9 +124,6 @@ const OpportunitiesCarousel: React.FC<{
         const lastSlideInView = emblaApi.slidesInView().includes(lastSlide);
         let loadMore = !loadingMore && lastSlideInView;
 
-        // console.warn(
-        //   `onScroll... lastSlide: ${lastSlide} lastSlideInView: ${lastSlideInView} loadMore: ${loadMore}`,
-        // );
         if (emblaApi.slideNodes().length < PAGE_SIZE_MINIMUM) {
           loadMore = false;
         }
@@ -134,14 +131,7 @@ const OpportunitiesCarousel: React.FC<{
         if (loadMore) {
           listenForScrollRef.current = false;
 
-          console.warn(
-            `Loading more data... ${lastSlide} lastSlideInView: ${lastSlideInView} nextStartRow: ${
-              emblaApi.slideNodes().length + 1
-            }`,
-          );
-
           loadData(emblaApi.slideNodes().length).then((data) => {
-            // debugger;
             if (data.items.length == 0) {
               setHasMoreToLoad(false);
               emblaApi.off("scroll", scrollListenerRef.current);

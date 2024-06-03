@@ -769,7 +769,7 @@ const Opportunities: NextPageWithLayout<{
 
   const loadDataTrending = useCallback(
     async (startRow: number) => {
-      if (startRow >= (opportunities_trending?.totalCount ?? 0)) {
+      if (startRow > (opportunities_trending?.totalCount ?? 0)) {
         return {
           items: [],
           totalCount: 0,
@@ -800,7 +800,7 @@ const Opportunities: NextPageWithLayout<{
 
   const loadDataLearning = useCallback(
     async (startRow: number) => {
-      if (startRow >= (opportunities_learning?.totalCount ?? 0)) {
+      if (startRow > (opportunities_learning?.totalCount ?? 0)) {
         return {
           items: [],
           totalCount: 0,
@@ -831,7 +831,7 @@ const Opportunities: NextPageWithLayout<{
 
   const loadDataTasks = useCallback(
     async (startRow: number) => {
-      if (startRow >= (opportunities_tasks?.totalCount ?? 0)) {
+      if (startRow > (opportunities_tasks?.totalCount ?? 0)) {
         return {
           items: [],
           totalCount: 0,
@@ -862,7 +862,7 @@ const Opportunities: NextPageWithLayout<{
 
   const loadDataEvents = useCallback(
     async (startRow: number) => {
-      if (startRow >= (opportunities_events?.totalCount ?? 0)) {
+      if (startRow > (opportunities_events?.totalCount ?? 0)) {
         return {
           items: [],
           totalCount: 0,
@@ -893,7 +893,7 @@ const Opportunities: NextPageWithLayout<{
 
   const loadDataOther = useCallback(
     async (startRow: number) => {
-      if (startRow >= (opportunities_other?.totalCount ?? 0)) {
+      if (startRow > (opportunities_other?.totalCount ?? 0)) {
         return {
           items: [],
           totalCount: 0,
@@ -924,7 +924,7 @@ const Opportunities: NextPageWithLayout<{
 
   const loadDataOpportunities = useCallback(
     async (startRow: number) => {
-      if (startRow >= (opportunities_allOpportunities?.totalCount ?? 0)) {
+      if (startRow > (opportunities_allOpportunities?.totalCount ?? 0)) {
         return {
           items: [],
           totalCount: 0,
@@ -958,7 +958,7 @@ const Opportunities: NextPageWithLayout<{
 
   const loadDataMostCompleted = useCallback(
     async (startRow: number) => {
-      if (startRow >= (opportunities_mostCompleted?.totalCount ?? 0)) {
+      if (startRow > (opportunities_mostCompleted?.totalCount ?? 0)) {
         return {
           items: [],
           totalCount: 0,
@@ -989,7 +989,7 @@ const Opportunities: NextPageWithLayout<{
 
   const loadDataFeatured = useCallback(
     async (startRow: number) => {
-      if (startRow >= (opportunities_featured?.totalCount ?? 0)) {
+      if (startRow > (opportunities_featured?.totalCount ?? 0)) {
         return {
           items: [],
           totalCount: 0,
