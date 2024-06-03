@@ -541,6 +541,7 @@ const OpportunityDetails: NextPageWithLayout<{
     control: controlStep6,
     watch: watchStep6,
     reset: resetStep6,
+    setValue: setValueStep6,
   } = useForm({
     resolver: zodResolver(schemaStep6),
     defaultValues: formData,
@@ -569,7 +570,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const schemaAttributes = useMemo(() => {
     if (watcSSISchemaName) {
       return schemas?.find((x) => x.name === watcSSISchemaName)?.entities ?? [];
-    }
+    } else return [];
   }, [schemas, watcSSISchemaName]);
 
   // memo for dirty fields
@@ -639,7 +640,7 @@ const OpportunityDetails: NextPageWithLayout<{
     1000,
   );
 
-  //* SAVE CHANGE DIALOG
+  //* SAVE CHANGES DIALOG
   const onClick_Menu = useCallback(
     (nextStep: number) => {
       let isDirtyStep = false;
@@ -762,10 +763,17 @@ const OpportunityDetails: NextPageWithLayout<{
           ? moment(data.dateEnd).format(DATE_FORMAT_SYSTEM)
           : null;
 
-        // if verification is disabled, uncheck credential issuance and clear verification method
+        // if verification is disabled, uncheck credential issuance, clear verification method, clear schema
         if (!data.verificationEnabled) {
           data.credentialIssuanceEnabled = false;
           data.verificationMethod = null;
+          data.verificationTypes = null;
+          data.participantLimit = null;
+        }
+
+        // if credential issuance is disabled, clear schema
+        if (!data.credentialIssuanceEnabled) {
+          data.ssiSchemaName = null;
         }
 
         // update api
@@ -923,6 +931,19 @@ const OpportunityDetails: NextPageWithLayout<{
     },
     [opportunityId, queryClient],
   );
+
+  useEffect(() => {
+    // if verification is disabled, uncheck credential issuance, clear verification method, clear schema, clear participantLimit
+    if (!watchVerificationEnabled) {
+      setFormData((prev) => ({
+        ...prev,
+        credentialIssuanceEnabled: false,
+        verificationMethod: null,
+        ssiSchemaName: null,
+        participantLimit: null,
+      }));
+    }
+  }, [watchVerificationEnabled, setFormData]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -2745,7 +2766,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-
                     <div className="form-control">
                       <label className="label">
                         <span className="label-text font-semibold">
@@ -2767,7 +2787,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-
                     <div className="form-control">
                       <label className="label">
                         <span className="label-text font-semibold">
@@ -2785,7 +2804,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-
                     <div className="form-control">
                       <label className="label">
                         <span className="label-text font-semibold">
@@ -2809,7 +2827,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-
                     <div className="form-control">
                       <label className="label">
                         <span className="label-text font-semibold">
@@ -2831,7 +2848,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-
                     <div className="form-control">
                       <label className="label">
                         <h5 className="font-bold">Opportunity languages</h5>
@@ -2851,7 +2867,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-
                     <div className="form-control">
                       <label className="label">
                         <h5 className="font-bold">Opportunity countries</h5>
@@ -2871,7 +2886,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-
                     <div className="flex flex-col">
                       <div className="form-control">
                         <label className="label">
@@ -2978,7 +2992,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div> */}
-
                     <div className="form-control">
                       <label className="label">
                         <h5 className="font-bold">Participants</h5>
@@ -2994,7 +3007,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-
                     <div>
                       <h5 className="font-bold">Rewards</h5>
                       <div className="flex flex-row gap-4">
@@ -3034,10 +3046,9 @@ const OpportunityDetails: NextPageWithLayout<{
                         </div>
                       </div>
                     </div>
-
                     <div className="form-control">
                       <label className="label">
-                        <h5 className="font-bold">Verification Supported</h5>
+                        <h5 className="font-bold">Verification</h5>
                       </label>
                       <label className="label label-text pt-0 text-sm ">
                         {formData.verificationEnabled
@@ -3052,22 +3063,29 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-
                     {formData.verificationEnabled && (
                       <div className="form-control">
                         <label className="label">
                           <h5 className="font-bold">Verification Types</h5>
                         </label>
-                        <label className="label label-text pt-0 text-sm ">
-                          {formData.verificationTypes
-                            ?.map(
-                              (x) =>
-                                verificationTypes?.find((y) => y.id == x.id)
-                                  ?.displayName,
-                            )
-                            .filter((x) => x !== undefined)
-                            .join(", ")}
-                        </label>
+
+                        <table className="table w-full">
+                          <thead>
+                            <tr className="border-gray text-gray-dark">
+                              <th>Type</th>
+                              <th>Description</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {formData.verificationTypes?.map((x) => (
+                              <tr className="border-gray text-gray-dark">
+                                <td> {x.type}</td>
+                                <td>{x.description}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+
                         {formStateStep3.errors.verificationTypes && (
                           <label className="label -mb-5">
                             <span className="label-text-alt italic text-red-500">
@@ -3077,14 +3095,13 @@ const OpportunityDetails: NextPageWithLayout<{
                         )}
                       </div>
                     )}
-
                     <div className="form-control">
                       <label className="label">
                         <h5 className="font-bold">Credential</h5>
                       </label>
                       <label className="label label-text pt-0 text-sm ">
                         {formData.credentialIssuanceEnabled
-                          ? "I want to issue a credential upon completionn"
+                          ? "I want to issue a credential upon completion"
                           : "No credential is required"}
                       </label>
                       {formStateStep6.errors.credentialIssuanceEnabled && (
@@ -3096,25 +3113,25 @@ const OpportunityDetails: NextPageWithLayout<{
                       )}
                     </div>
 
-                    <div className="form-control">
-                      <label className="label">
-                        <h5 className="font-bold">Schema</h5>
-                      </label>
-                      <label className="label label-text pt-0 text-sm ">
-                        {formData.ssiSchemaName}
-                      </label>
-                      {formStateStep6.errors.ssiSchemaName && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep6.errors.ssiSchemaName.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    {/* SCHEMA ATTRIBUTES */}
-                    {watcSSISchemaName && (
+                    {/* SCHEMA */}
+                    {formData.credentialIssuanceEnabled && (
                       <>
+                        <div className="form-control">
+                          <label className="label">
+                            <h5 className="font-bold">Schema</h5>
+                          </label>
+                          <label className="label label-text pt-0 text-sm ">
+                            {formData.ssiSchemaName}
+                          </label>
+                          {formStateStep6.errors.ssiSchemaName && (
+                            <label className="label -mb-5">
+                              <span className="label-text-alt italic text-red-500">
+                                {`${formStateStep6.errors.ssiSchemaName.message}`}
+                              </span>
+                            </label>
+                          )}
+                        </div>
+                        {/* SCHEMA ATTRIBUTES */}
                         <div className="flex flex-col gap-2">
                           <table className="table w-full">
                             <thead>
@@ -3143,7 +3160,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         </div>
                       </>
                     )}
-
                     <div className="form-control">
                       {/* checkbox label */}
                       <label
@@ -3169,7 +3185,6 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       <button
