@@ -28,10 +28,14 @@ namespace Yoma.Core.Domain.Opportunity
     VoiceNote
   }
 
-  public enum OpportunityType
+  public enum Type
   {
-    Task,
-    Learning
+    Other
+  }
+
+  public enum Category
+  {
+    Other
   }
 
   public enum PublishedState

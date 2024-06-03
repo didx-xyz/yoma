@@ -74,7 +74,9 @@ namespace Yoma.Core.Domain.Opportunity.Services.Lookups
       {
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-        return _opportunityCategoryRepository.Query().OrderBy(o => o.Name).ToList();
+        return _opportunityCategoryRepository.Query()
+          .OrderBy(o => o.Name == Category.Other.ToString() ? 1 : 0) // Move "Other" to the end
+          .ThenBy(o => o.Name).ToList();
       }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(OpportunityCategory)}s'");
       return result;
     }

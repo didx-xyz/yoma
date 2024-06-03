@@ -18,7 +18,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     [Name("Student Display Name")]
     public string? UserDisplayName { get; set; }
 
-    [Ignore]
+    [Name("Student Country")]
     public string? UserCountry { get; set; }
 
     [Ignore]
