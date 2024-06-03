@@ -253,7 +253,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
       //opportunities engaged
       var opportunityCountEngaged = queryViewed.Select(o => o.OpportunityId).Union(queryCompleted.Select(o => o.OpportunityId)).Distinct().Count();
-      result.Opportunities.Selected = new OpportunityEngaged { Legend = "Opportunities engaged", Count = opportunityCountEngaged };
+      result.Opportunities.Engaged = new OpportunityEngaged { Legend = "Opportunities engaged", Count = opportunityCountEngaged };
 
       //average time
       var dates = queryCompleted
