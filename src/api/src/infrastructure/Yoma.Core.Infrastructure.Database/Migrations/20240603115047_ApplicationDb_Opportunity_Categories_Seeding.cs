@@ -12,9 +12,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         columns: ["Id", "Name", "ImageURL", "DateCreated"],
         values: new object[,]
         {
-          {"1DC39A5D-E049-4CFE-B708-855FCE97B86E","Data and Analytics","https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/opportunity/category/DataAndAnalytics.svg",DateTimeOffset.UtcNow}
+          {"1DC39A5D-E049-4CFE-B708-855FCE97B86E","AI, Data and Analytics","https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/opportunity/category/AIDataAndAnalytics.svg",DateTimeOffset.UtcNow}
           ,
-          {"7AFB66AD-164E-46A3-933F-A0BAC1CA1923","Arts and Creative Industry","https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/opportunity/category/ArtsAndCreativeIndustry.svg",DateTimeOffset.UtcNow}
+          {"7AFB66AD-164E-46A3-933F-A0BAC1CA1923","Creative Industry and Arts","https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/opportunity/category/CreativeIndustryAndArts.svg",DateTimeOffset.UtcNow}
           ,
           {"B89C5E91-9CBB-4A0E-991F-F987EEBF9B70","Other","https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/opportunity/category/Other.svg",DateTimeOffset.UtcNow}
         },
