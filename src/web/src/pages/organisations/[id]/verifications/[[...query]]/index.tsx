@@ -1075,52 +1075,55 @@ const OpportunityVerifications: NextPageWithLayout<{
             </div>
 
             {/* BUTTONS */}
-            <button
-              type="button"
-              className="btn btn-sm w-[150px] flex-nowrap border-green bg-green text-white hover:bg-green hover:text-white disabled:bg-green disabled:brightness-90"
-              onClick={() => {
-                // show dialog if the result set is too large
-                if ((data?.totalCount ?? 0) > PAGE_SIZE_MAXIMUM) {
-                  setExportDialogOpen(true);
-                  return;
-                }
+            <div className="flex w-full flex-row justify-around gap-2 md:w-fit md:justify-end">
+              <button
+                type="button"
+                className="btn btn-sm w-[150px] flex-nowrap border-green bg-green text-white hover:bg-green hover:text-white disabled:bg-green disabled:brightness-90"
+                onClick={() => {
+                  // show dialog if the result set is too large
+                  if ((data?.totalCount ?? 0) > PAGE_SIZE_MAXIMUM) {
+                    setExportDialogOpen(true);
+                    return;
+                  }
 
-                handleExportToCSV();
-              }}
-              disabled={isExportButtonLoading}
-            >
-              {isExportButtonLoading && (
-                <p className="text-white">Exporting...</p>
-              )}
-              {!isExportButtonLoading && (
-                <>
-                  <IoMdDownload className="h-5 w-5 text-white" />
-                  <p className="text-white">Export to CSV</p>
-                </>
-              )}
-            </button>
+                  handleExportToCSV();
+                }}
+                disabled={isExportButtonLoading}
+              >
+                {isExportButtonLoading && (
+                  <p className="text-white">Exporting...</p>
+                )}
+                {!isExportButtonLoading && (
+                  <>
+                    <IoMdDownload className="h-5 w-5 text-white" />
+                    <p className="text-white">Export to CSV</p>
+                  </>
+                )}
+              </button>
 
-            {(!verificationStatus || verificationStatus === "Pending") &&
-              !isLoadingData &&
-              data &&
-              data.items?.length > 0 && (
-                <div className="flex w-full flex-row justify-around gap-2 md:w-fit md:justify-end">
-                  <button
-                    className="btn btn-sm flex-nowrap border-green bg-white text-green hover:bg-green hover:text-white"
-                    onClick={() => onChangeBulkAction(true)}
-                  >
-                    <IoMdThumbsUp className="h-6 w-6" />
-                    Approve
-                  </button>
-                  <button
-                    className="btn btn-sm flex-nowrap border-red-500 bg-white text-red-500 hover:bg-red-500 hover:text-white"
-                    onClick={() => onChangeBulkAction(false)}
-                  >
-                    <IoMdThumbsDown className="h-6 w-6" />
-                    Reject
-                  </button>
-                </div>
-              )}
+              {/* show approve/reject buttons for 'all' & 'pending' tabs */}
+              {(!verificationStatus || verificationStatus === "Pending") &&
+                !isLoadingData &&
+                data &&
+                data.items?.length > 0 && (
+                  <>
+                    <button
+                      className="btn btn-sm flex-nowrap border-green bg-white text-green hover:bg-green hover:text-white"
+                      onClick={() => onChangeBulkAction(true)}
+                    >
+                      <IoMdThumbsUp className="h-6 w-6" />
+                      Approve
+                    </button>
+                    <button
+                      className="btn btn-sm flex-nowrap border-red-500 bg-white text-red-500 hover:bg-red-500 hover:text-white"
+                      onClick={() => onChangeBulkAction(false)}
+                    >
+                      <IoMdThumbsDown className="h-6 w-6" />
+                      Reject
+                    </button>
+                  </>
+                )}
+            </div>
           </div>
         </div>
 
