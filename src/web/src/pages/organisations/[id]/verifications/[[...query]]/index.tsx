@@ -7,6 +7,7 @@ import {
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { useCallback, type ReactElement, useState, useMemo } from "react";
 import MainLayout from "~/components/Layout/Main";
@@ -20,6 +21,7 @@ import {
   IoMdAlert,
   IoMdCheckmark,
   IoMdClose,
+  IoMdDownload,
   IoMdFlame,
   IoMdThumbsDown,
   IoMdThumbsUp,
@@ -30,9 +32,11 @@ import {
   GA_ACTION_OPPORTUNITY_COMPLETION_VERIFY,
   GA_CATEGORY_OPPORTUNITY,
   PAGE_SIZE,
+  PAGE_SIZE_MAXIMUM,
 } from "~/lib/constants";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import {
+  getMyOpportunitiesExportToCSV,
   getOpportunitiesForVerification,
   performActionVerifyBulk,
   searchMyOpportunitiesAdmin,
@@ -68,6 +72,8 @@ import MobileCard from "~/components/Organisation/Verifications/MobileCard";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import React from "react";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
+import FileSaver from "file-saver";
+import iconBell from "public/images/icon-bell.webp";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -199,6 +205,9 @@ const OpportunityVerifications: NextPageWithLayout<{
     useState(false);
   const [verificationResponse, setVerificationResponse] =
     useState<MyOpportunityResponseVerifyFinalizeBatch | null>(null);
+
+  const [isExportButtonLoading, setIsExportButtonLoading] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   // search filter state
   const searchFilter = useMemo<MyOpportunitySearchFilterAdmin>(
@@ -360,7 +369,8 @@ const OpportunityVerifications: NextPageWithLayout<{
       if (
         searchFilter?.verificationStatuses !== undefined &&
         searchFilter?.verificationStatuses !== null &&
-        searchFilter?.verificationStatuses.length > 0
+        searchFilter?.verificationStatuses.length > 0 &&
+        searchFilter?.verificationStatuses.length !== 3 // hack to prevent all" statuses from being added to the query string
       )
         params.append(
           "verificationStatus",
@@ -533,6 +543,26 @@ const OpportunityVerifications: NextPageWithLayout<{
     },
     [data, setSelectedRows],
   );
+
+  const handleExportToCSV = useCallback(async () => {
+    setIsExportButtonLoading(true);
+
+    try {
+      const searchFilterCopy = JSON.parse(JSON.stringify(searchFilter)); // deep copy
+
+      searchFilterCopy.pageNumber = 1;
+      searchFilterCopy.pageSize = PAGE_SIZE_MAXIMUM;
+
+      const data = await getMyOpportunitiesExportToCSV(searchFilterCopy);
+      if (!data) return;
+
+      FileSaver.saveAs(data);
+
+      setExportDialogOpen(false);
+    } finally {
+      setIsExportButtonLoading(false);
+    }
+  }, [searchFilter, setIsExportButtonLoading, setExportDialogOpen]);
   //#endregion Click Handlers
 
   //#region Filter Handlers
@@ -576,6 +606,7 @@ const OpportunityVerifications: NextPageWithLayout<{
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(modalVerifyVisible);
   useDisableBodyScroll(modalVerificationResultVisible);
+  useDisableBodyScroll(exportDialogOpen);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -770,6 +801,68 @@ const OpportunityVerifications: NextPageWithLayout<{
             >
               Close
             </button>
+          </div>
+        </div>
+      </ReactModal>
+
+      {/* EXPORT DIALOG */}
+      <ReactModal
+        isOpen={exportDialogOpen}
+        shouldCloseOnOverlayClick={true}
+        onRequestClose={() => {
+          setExportDialogOpen(false);
+        }}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[480px] md:w-[600px] md:rounded-3xl`}
+        portalClassName={"fixed z-40"}
+        overlayClassName="fixed inset-0 bg-overlay"
+      >
+        <div className="flex flex-col gap-2">
+          <div className="flex h-20 flex-row bg-blue p-4 shadow-lg"></div>
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+              <Image
+                src={iconBell}
+                alt="Icon Bell"
+                width={28}
+                height={28}
+                sizes="100vw"
+                priority={true}
+                style={{ width: "28px", height: "28px" }}
+              />
+            </div>
+
+            <div className="flex w-96 flex-col gap-4">
+              <h4>
+                Just a heads up, the result set is quite large and we can only
+                return a maximum of {PAGE_SIZE_MAXIMUM.toLocaleString()} rows
+                for each export.
+              </h4>
+              <h5>
+                To help manage this, consider applying search filters. This will
+                narrow down the size of your results and make your data more
+                manageable.
+              </h5>
+              <h5>When you&apos;re ready, click the button to continue.</h5>
+            </div>
+
+            <div className="mt-4 flex flex-grow gap-4">
+              <button
+                type="button"
+                className="btn bg-green normal-case text-white hover:bg-green hover:brightness-110 disabled:border-0 disabled:bg-green disabled:brightness-90 md:w-[250px]"
+                onClick={handleExportToCSV}
+                disabled={isExportButtonLoading}
+              >
+                {isExportButtonLoading && (
+                  <p className="text-white">Exporting...</p>
+                )}
+                {!isExportButtonLoading && (
+                  <>
+                    <IoMdDownload className="h-5 w-5 text-white" />
+                    <p className="text-white">Export to CSV</p>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </ReactModal>
@@ -980,7 +1073,33 @@ const OpportunityVerifications: NextPageWithLayout<{
               them, we encourage selecting from top to bottom, as that is the
               order in which Youth applied.
             </div>
+
             {/* BUTTONS */}
+            <button
+              type="button"
+              className="btn btn-sm w-[150px] flex-nowrap border-green bg-green text-white hover:bg-green hover:text-white disabled:bg-green disabled:brightness-90"
+              onClick={() => {
+                // show dialog if the result set is too large
+                if ((data?.totalCount ?? 0) > PAGE_SIZE_MAXIMUM) {
+                  setExportDialogOpen(true);
+                  return;
+                }
+
+                handleExportToCSV();
+              }}
+              disabled={isExportButtonLoading}
+            >
+              {isExportButtonLoading && (
+                <p className="text-white">Exporting...</p>
+              )}
+              {!isExportButtonLoading && (
+                <>
+                  <IoMdDownload className="h-5 w-5 text-white" />
+                  <p className="text-white">Export to CSV</p>
+                </>
+              )}
+            </button>
+
             {(!verificationStatus || verificationStatus === "Pending") &&
               !isLoadingData &&
               data &&

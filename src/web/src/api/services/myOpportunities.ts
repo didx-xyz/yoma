@@ -12,7 +12,10 @@ import type {
   VerificationStatus,
 } from "../models/myOpportunity";
 import { objectToFormData } from "~/lib/utils";
-import type { GetServerSidePropsContext } from "next/types";
+import type {
+  GetServerSidePropsContext,
+  GetStaticPropsContext,
+} from "next/types";
 import ApiServer from "~/lib/axiosServer";
 
 export const saveMyOpportunity = async (
@@ -153,4 +156,35 @@ export const performActionInstantVerificationManual = async (
 ): Promise<void> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   await instance.put(`/myopportunity/action/link/${linkId}/verify`);
+};
+
+export const getMyOpportunitiesExportToCSV = async (
+  filter: MyOpportunitySearchFilterAdmin,
+
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<File> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.post(
+    `/myopportunity/search/admin/csv`,
+    filter,
+    {
+      responseType: "blob", // set responseType to 'blob' or 'arraybuffer'
+    },
+  );
+
+  // create the file name
+  const date = new Date();
+  const dateString = `${date.getFullYear()}-${
+    date.getMonth() + 1
+  }-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+  const fileName = `Verifications_${dateString}.csv`;
+
+  // create a new Blob object using the data
+  const blob = new Blob([data], { type: "text/csv" });
+
+  // create a new File object from the Blob
+  const file = new File([blob], fileName);
+
+  return file;
 };
