@@ -255,7 +255,20 @@ const OpportunityVerifications: NextPageWithLayout<{
       })),
     enabled: !error,
   });
-
+  //   {
+  //   pageNumber: 1,
+  //   pageSize: 1,
+  //   valueContains: query?.toString() ?? null,
+  //   organizations: [id],
+  //   opportunity: opportunity?.toString() ?? null,
+  //   userId: null,
+  //   action: Action.Verification,
+  //   verificationStatuses: [
+  //     VerificationStatus.Pending,
+  //     VerificationStatus.Completed,
+  //     VerificationStatus.Rejected,
+  //   ],
+  // }
   const { data: totalCountAll } = useQuery<number>({
     queryKey: [
       "Verifications",
@@ -264,21 +277,23 @@ const OpportunityVerifications: NextPageWithLayout<{
       null,
       `${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
     ],
-    queryFn: () =>
-      searchMyOpportunitiesAdmin({
-        pageNumber: 1,
-        pageSize: 1,
-        valueContains: query?.toString() ?? null,
-        organizations: [id],
-        opportunity: opportunity?.toString() ?? null,
-        userId: null,
-        action: Action.Verification,
-        verificationStatuses: [
-          VerificationStatus.Pending,
-          VerificationStatus.Completed,
-          VerificationStatus.Rejected,
-        ],
-      }).then((data) => data.totalCount ?? 0),
+    queryFn: () => {
+      const filter = JSON.parse(
+        JSON.stringify(searchFilter),
+      ) as MyOpportunitySearchFilterAdmin; // deep copy
+
+      filter.pageNumber = 1;
+      filter.pageSize = 1;
+      filter.verificationStatuses = [
+        VerificationStatus.Pending,
+        VerificationStatus.Completed,
+        VerificationStatus.Rejected,
+      ];
+
+      return searchMyOpportunitiesAdmin(filter).then(
+        (data) => data.totalCount ?? 0,
+      );
+    },
     enabled: !error,
   });
   const { data: totalCountPending } = useQuery<number>({
@@ -289,17 +304,19 @@ const OpportunityVerifications: NextPageWithLayout<{
       VerificationStatus.Pending,
       `${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
     ],
-    queryFn: () =>
-      searchMyOpportunitiesAdmin({
-        pageNumber: 1,
-        pageSize: 1,
-        valueContains: query?.toString() ?? null,
-        organizations: [id],
-        opportunity: opportunity?.toString() ?? null,
-        userId: null,
-        action: Action.Verification,
-        verificationStatuses: [VerificationStatus.Pending],
-      }).then((data) => data.totalCount ?? 0),
+    queryFn: () => {
+      const filter = JSON.parse(
+        JSON.stringify(searchFilter),
+      ) as MyOpportunitySearchFilterAdmin; // deep copy
+
+      filter.pageNumber = 1;
+      filter.pageSize = 1;
+      filter.verificationStatuses = [VerificationStatus.Pending];
+
+      return searchMyOpportunitiesAdmin(filter).then(
+        (data) => data.totalCount ?? 0,
+      );
+    },
     enabled: !error,
   });
   const { data: totalCountCompleted } = useQuery<number>({
@@ -310,17 +327,20 @@ const OpportunityVerifications: NextPageWithLayout<{
       VerificationStatus.Completed,
       `${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
     ],
-    queryFn: () =>
-      searchMyOpportunitiesAdmin({
-        pageNumber: 1,
-        pageSize: 1,
-        valueContains: query?.toString() ?? null,
-        organizations: [id],
-        opportunity: opportunity?.toString() ?? null,
-        userId: null,
-        action: Action.Verification,
-        verificationStatuses: [VerificationStatus.Completed],
-      }).then((data) => data.totalCount ?? 0),
+    queryFn: () => {
+      const filter = JSON.parse(
+        JSON.stringify(searchFilter),
+      ) as MyOpportunitySearchFilterAdmin; // deep copy
+
+      filter.pageNumber = 1;
+      filter.pageSize = 1;
+      filter.verificationStatuses = [VerificationStatus.Completed];
+
+      return searchMyOpportunitiesAdmin(filter).then(
+        (data) => data.totalCount ?? 0,
+      );
+    },
+
     enabled: !error,
   });
   const { data: totalCountRejected } = useQuery<number>({
@@ -331,17 +351,20 @@ const OpportunityVerifications: NextPageWithLayout<{
       VerificationStatus.Rejected,
       `${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
     ],
-    queryFn: () =>
-      searchMyOpportunitiesAdmin({
-        pageNumber: 1,
-        pageSize: 1,
-        valueContains: query?.toString() ?? null,
-        organizations: [id],
-        opportunity: opportunity?.toString() ?? null,
-        userId: null,
-        action: Action.Verification,
-        verificationStatuses: [VerificationStatus.Rejected],
-      }).then((data) => data.totalCount ?? 0),
+
+    queryFn: () => {
+      const filter = JSON.parse(
+        JSON.stringify(searchFilter),
+      ) as MyOpportunitySearchFilterAdmin; // deep copy
+
+      filter.pageNumber = 1;
+      filter.pageSize = 1;
+      filter.verificationStatuses = [VerificationStatus.Rejected];
+
+      return searchMyOpportunitiesAdmin(filter).then(
+        (data) => data.totalCount ?? 0,
+      );
+    },
     enabled: !error,
   });
 
@@ -403,7 +426,7 @@ const OpportunityVerifications: NextPageWithLayout<{
     [id, router, getSearchFilterAsQueryString],
   );
 
-  //#region Click Handlers
+  //#region Event Handlers
   const onChangeBulkAction = useCallback(
     (approve: boolean) => {
       setVerifyComments("");
@@ -563,17 +586,16 @@ const OpportunityVerifications: NextPageWithLayout<{
       setIsExportButtonLoading(false);
     }
   }, [searchFilter, setIsExportButtonLoading, setExportDialogOpen]);
-  //#endregion Click Handlers
 
-  //#region Filter Handlers
   const onSearch = useCallback(
     (query: string) => {
       searchFilter.pageNumber = 1;
-      searchFilter.valueContains = query.length > 2 ? query : null;
+      searchFilter.valueContains = query.length > 3 ? query : null;
       redirectWithSearchFilterParams(searchFilter);
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
+
   const onFilterOpportunity = useCallback(
     (opportunityId: string) => {
       searchFilter.pageNumber = 1;
@@ -582,13 +604,13 @@ const OpportunityVerifications: NextPageWithLayout<{
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
+
   const onFilterVerificationStatus = useCallback(
     (verificationStatus: string) => {
       searchFilter.pageNumber = 1;
       searchFilter.verificationStatuses = verificationStatus
         ? verificationStatus.split(",")
         : null;
-      searchFilter.opportunity = null; // reset opportunity filter
       redirectWithSearchFilterParams(searchFilter);
     },
     [searchFilter, redirectWithSearchFilterParams],
@@ -601,7 +623,7 @@ const OpportunityVerifications: NextPageWithLayout<{
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
-  //#endregion Filter Handlers
+  //#endregion Event Handlers
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(modalVerifyVisible);
@@ -873,6 +895,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           <h3 className="flex items-center text-3xl font-semibold tracking-normal text-white">
             Verifications <LimitedFunctionalityBadge />
           </h3>
+
           {/* FILTERS */}
           <div>
             <div className="flex flex-col gap-4 md:flex-row">
@@ -1129,15 +1152,15 @@ const OpportunityVerifications: NextPageWithLayout<{
           </div>
         </div>
 
+        {/* MAIN CONTENT */}
         {isLoadingData && (
           <div className="flex h-fit flex-col items-center rounded-lg bg-white p-8 md:pb-16">
             <LoadingSkeleton />
           </div>
         )}
 
-        {/* MAIN CONTENT */}
         {!isLoadingData && (
-          <div>
+          <>
             {/* NO RESULTS */}
             {data && data.totalCount === 0 && (
               <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
@@ -1277,7 +1300,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                 showInfo={true}
               />
             </div>
-          </div>
+          </>
         )}
       </div>
     </>
