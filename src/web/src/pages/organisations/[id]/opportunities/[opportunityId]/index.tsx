@@ -789,12 +789,12 @@ const OpportunityDetails: NextPageWithLayout<{
         console.log(message); // e2e
 
         // invalidate queries
-        await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-        await queryClient.invalidateQueries({
-          queryKey: ["opportunities", id],
-        });
         await queryClient.invalidateQueries({
           queryKey: ["opportunity", opportunityId],
+        });
+        //NB: this is the query on the opportunities page
+        await queryClient.invalidateQueries({
+          queryKey: ["opportunities", id],
         });
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {

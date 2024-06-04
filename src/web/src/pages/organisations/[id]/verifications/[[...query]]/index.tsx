@@ -105,7 +105,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const theme = getThemeFromRole(session, id);
 
   try {
-    // NB: disabled as we getting 502 bat gateway error on stage
+    // NB: disabled as we getting 502 bad gateway error on stage
     // 👇 prefetch queries on server
     // const dataVerifications = await searchMyOpportunitiesAdmin(
     //   {
@@ -904,6 +904,7 @@ const OpportunityVerifications: NextPageWithLayout<{
               <SearchInput defaultValue={query} onSearch={onSearch} />
             </div>
           </div>
+
           {/* FILTER BADGES */}
           {/* <FilterBadges
             searchFilter={searchFilter}
@@ -922,6 +923,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             //onSubmit={(e) => onSubmitFilter(e)}
             onSubmit={(e) => {}}
           /> */}
+
           {/* TABBED NAVIGATION */}
           <div className="z-10x flex justify-center md:justify-start">
             <div className="flex w-full gap-2">
@@ -959,8 +961,8 @@ const OpportunityVerifications: NextPageWithLayout<{
                 role="tablist"
               >
                 <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
-                  <ul className="-mb-px flex w-full justify-between gap-4 overflow-x-auto md:justify-start md:gap-0">
-                    <li className="w-1/4 md:w-20">
+                  <ul className="-mb-px flex w-full justify-center gap-8 md:justify-start">
+                    <li className="whitespace-nowrap">
                       <button
                         onClick={() => onFilterVerificationStatus("")}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -978,7 +980,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                         )}
                       </button>
                     </li>
-                    <li className="w-1/4 md:w-28">
+                    <li className="whitespace-nowrap">
                       <button
                         onClick={() => onFilterVerificationStatus("Pending")}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -996,7 +998,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                         )}
                       </button>
                     </li>
-                    <li className="w-1/4 md:w-28">
+                    <li className="whitespace-nowrap">
                       <button
                         onClick={() => onFilterVerificationStatus("Completed")}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -1014,7 +1016,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                         )}
                       </button>
                     </li>
-                    <li className="w-1/4 md:w-28">
+                    <li className="whitespace-nowrap">
                       <button
                         onClick={() => onFilterVerificationStatus("Rejected")}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${

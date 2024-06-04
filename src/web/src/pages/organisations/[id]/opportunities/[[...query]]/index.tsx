@@ -97,7 +97,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
     await queryClient.prefetchQuery({
       queryKey: [
-        `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}_${status?.toString()}`,
+        "opportunities",
+        id,
+        `${query?.toString()}_${page?.toString()}_${status?.toString()}`,
       ],
       queryFn: () => data,
     });
@@ -141,15 +143,18 @@ const Opportunities: NextPageWithLayout<{
   );
 
   // 👇 use prefetched queries from server
+  // NB: these queries (with ['opportunities', id]) will be invalidated by create/edit operations on other pages
   const { data: opportunities } = useQuery<OpportunitySearchResults>({
     queryKey: [
-      `OpportunitiesActive_${id}_${query?.toString()}_${page?.toString()}_${status?.toString()}`,
+      "opportunities",
+      id,
+      `_${query?.toString()}_${page?.toString()}_${status?.toString()}`,
     ],
     queryFn: () =>
       getOpportunitiesAdmin({
-        organizations: [id],
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
+        organizations: [id],
         startDate: null,
         endDate: null,
         statuses:
@@ -179,6 +184,148 @@ const Opportunities: NextPageWithLayout<{
     enabled: !error,
   });
 
+  const { data: totalCountAll } = useQuery<number>({
+    queryKey: [
+      "opportunities",
+      id,
+      "totalCount",
+      null,
+      `${query?.toString()}_${page?.toString()}_${status?.toString()}`,
+    ],
+    queryFn: () =>
+      getOpportunitiesAdmin({
+        pageNumber: 1,
+        pageSize: 1,
+        organizations: [id],
+        startDate: null,
+        endDate: null,
+        statuses: [
+          Status.Active,
+          Status.Expired,
+          Status.Inactive,
+          Status.Deleted,
+        ],
+        types: null,
+        categories: null,
+        languages: null,
+        countries: null,
+        valueContains: query?.toString() ?? null,
+        commitmentIntervals: null,
+        zltoRewardRanges: null,
+        featured: null,
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountActive } = useQuery<number>({
+    queryKey: [
+      "opportunities",
+      id,
+      "totalCount",
+      Status.Active,
+      `${query?.toString()}_${page?.toString()}_${status?.toString()}`,
+    ],
+    queryFn: () =>
+      getOpportunitiesAdmin({
+        pageNumber: 1,
+        pageSize: 1,
+        organizations: [id],
+        startDate: null,
+        endDate: null,
+        statuses: [Status.Active],
+        types: null,
+        categories: null,
+        languages: null,
+        countries: null,
+        valueContains: query?.toString() ?? null,
+        commitmentIntervals: null,
+        zltoRewardRanges: null,
+        featured: null,
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountInactive } = useQuery<number>({
+    queryKey: [
+      "opportunities",
+      id,
+      "totalCount",
+      Status.Inactive,
+      `${query?.toString()}_${page?.toString()}_${status?.toString()}`,
+    ],
+    queryFn: () =>
+      getOpportunitiesAdmin({
+        pageNumber: 1,
+        pageSize: 1,
+        organizations: [id],
+        startDate: null,
+        endDate: null,
+        statuses: [Status.Inactive],
+        types: null,
+        categories: null,
+        languages: null,
+        countries: null,
+        valueContains: query?.toString() ?? null,
+        commitmentIntervals: null,
+        zltoRewardRanges: null,
+        featured: null,
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountExpired } = useQuery<number>({
+    queryKey: [
+      "opportunities",
+      id,
+      "totalCount",
+      Status.Expired,
+      `${query?.toString()}_${page?.toString()}_${status?.toString()}`,
+    ],
+    queryFn: () =>
+      getOpportunitiesAdmin({
+        pageNumber: 1,
+        pageSize: 1,
+        organizations: [id],
+        startDate: null,
+        endDate: null,
+        statuses: [Status.Expired],
+        types: null,
+        categories: null,
+        languages: null,
+        countries: null,
+        valueContains: query?.toString() ?? null,
+        commitmentIntervals: null,
+        zltoRewardRanges: null,
+        featured: null,
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountDeleted } = useQuery<number>({
+    queryKey: [
+      "opportunities",
+      id,
+      "totalCount",
+      Status.Deleted,
+      `${query?.toString()}_${page?.toString()}_${status?.toString()}`,
+    ],
+    queryFn: () =>
+      getOpportunitiesAdmin({
+        pageNumber: 1,
+        pageSize: 1,
+        organizations: [id],
+        startDate: null,
+        endDate: null,
+        statuses: [Status.Deleted],
+        types: null,
+        categories: null,
+        languages: null,
+        countries: null,
+        valueContains: query?.toString() ?? null,
+        commitmentIntervals: null,
+        zltoRewardRanges: null,
+        featured: null,
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+
+  // 🔔 event handlers
   const onSearch = useCallback(
     (query: string) => {
       if (query && query.length > 2) {
@@ -201,8 +348,6 @@ const Opportunities: NextPageWithLayout<{
     },
     [router, id, status],
   );
-
-  // 🔔 pager change event
   const handlePagerChange = useCallback(
     (value: number) => {
       // redirect
@@ -225,6 +370,7 @@ const Opportunities: NextPageWithLayout<{
       <Head>
         <title>Yoma | Opportunities</title>
       </Head>
+
       <PageBackground className="h-[14.5rem] md:h-[18rem]" />
 
       <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
@@ -242,8 +388,8 @@ const Opportunities: NextPageWithLayout<{
                 role="tablist"
               >
                 <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
-                  <ul className="overflow-x-hiddem -mb-px flex w-full justify-center gap-0 md:justify-start">
-                    <li className="w-1/5 md:w-20">
+                  <ul className="-mb-px flex w-full justify-center gap-8 md:justify-start">
+                    <li className="whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/opportunities`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -254,9 +400,14 @@ const Opportunities: NextPageWithLayout<{
                         role="tab"
                       >
                         All
+                        {(totalCountAll ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                            {totalCountAll}
+                          </div>
+                        )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-20">
+                    <li className="whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/opportunities?status=active`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -267,9 +418,14 @@ const Opportunities: NextPageWithLayout<{
                         role="tab"
                       >
                         Active
+                        {(totalCountActive ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                            {totalCountActive}
+                          </div>
+                        )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-20">
+                    <li className="whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/opportunities?status=inactive`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -280,9 +436,14 @@ const Opportunities: NextPageWithLayout<{
                         role="tab"
                       >
                         Inactive
+                        {(totalCountInactive ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                            {totalCountInactive}
+                          </div>
+                        )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-20">
+                    <li className="whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/opportunities?status=expired`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -293,9 +454,14 @@ const Opportunities: NextPageWithLayout<{
                         role="tab"
                       >
                         Expired
+                        {(totalCountExpired ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                            {totalCountExpired}
+                          </div>
+                        )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-20">
+                    <li className="whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/opportunities?status=deleted`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -306,6 +472,11 @@ const Opportunities: NextPageWithLayout<{
                         role="tab"
                       >
                         Deleted
+                        {(totalCountDeleted ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                            {totalCountDeleted}
+                          </div>
+                        )}
                       </Link>
                     </li>
                   </ul>

@@ -62,20 +62,20 @@ import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 // It may be called again, on a serverless function, if
 // revalidation is enabled and a new request comes in
 export const getStaticProps: GetStaticProps = async (context) => {
-  const lookups_categories = await getOpportunityCategories(context);
-  const lookups_countries = await getOpportunityCountries(context);
-  const lookups_languages = await getOpportunityLanguages(context);
-  const lookups_organisations = await getOpportunityOrganizations(context);
+  // const lookups_categories = await getOpportunityCategories(context);
+  // const lookups_countries = await getOpportunityCountries(context);
+  // const lookups_languages = await getOpportunityLanguages(context);
+  // const lookups_organisations = await getOpportunityOrganizations(context);
   const lookups_types = await getOpportunityTypes(context);
   const lookups_commitmentIntervals = await getCommitmentIntervals(context);
   const lookups_zltoRewardRanges = await getZltoRewardRanges(context);
 
   return {
     props: {
-      lookups_categories,
-      lookups_countries,
-      lookups_languages,
-      lookups_organisations,
+      // lookups_categories,
+      // lookups_countries,
+      // lookups_languages,
+      // lookups_organisations,
       lookups_types,
       lookups_commitmentIntervals,
       lookups_zltoRewardRanges,
