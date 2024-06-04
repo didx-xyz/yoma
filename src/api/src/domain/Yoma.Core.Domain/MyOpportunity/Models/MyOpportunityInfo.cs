@@ -12,7 +12,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     [Ignore]
     public Guid UserId { get; set; }
 
-    [Name("Student Email")]
+    [Ignore]
     public string UserEmail { get; set; }
 
     [Name("Student Display Name")]
