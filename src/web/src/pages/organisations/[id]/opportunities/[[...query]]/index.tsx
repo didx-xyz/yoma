@@ -8,7 +8,7 @@ import { getOpportunitiesAdmin } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import { authOptions } from "~/server/auth";
 import {
-  OpportunitySearchFilterAdmin,
+  type OpportunitySearchFilterAdmin,
   Status,
   type OpportunitySearchResults,
 } from "~/api/models/opportunity";
@@ -152,21 +152,6 @@ const Opportunities: NextPageWithLayout<{
       organizations: [id],
       startDate: null,
       endDate: null,
-      // statuses:
-      //   status === "active"
-      //     ? [Status.Active]
-      //     : status === "inactive"
-      //       ? [Status.Inactive]
-      //       : status === "expired"
-      //         ? [Status.Expired]
-      //         : status === "deleted"
-      //           ? [Status.Deleted]
-      //           : [
-      //               Status.Active,
-      //               Status.Expired,
-      //               Status.Inactive,
-      //               Status.Deleted,
-      //             ],
       statuses: status
         ? status.toString().split(",")
         : [Status.Active, Status.Expired, Status.Inactive, Status.Deleted],
@@ -178,20 +163,6 @@ const Opportunities: NextPageWithLayout<{
       commitmentIntervals: null,
       zltoRewardRanges: null,
       featured: null,
-      // pageNumber: page ? parseInt(page.toString()) : 1,
-      // pageSize: PAGE_SIZE,
-      // valueContains: query?.toString() ?? null,
-      // organizations: [id],
-      // opportunity: opportunity?.toString() ?? null,
-      // userId: null,
-      // action: Action.Verification,
-      // verificationStatuses: verificationStatus
-      //   ? verificationStatus.toString().split(",")
-      //   : [
-      //       VerificationStatus.Pending,
-      //       VerificationStatus.Completed,
-      //       VerificationStatus.Rejected,
-      //     ],
     }),
     [id, page, query, status],
   );
@@ -232,28 +203,6 @@ const Opportunities: NextPageWithLayout<{
       ];
 
       return getOpportunitiesAdmin(filter).then((data) => data.totalCount ?? 0);
-
-      // return getOpportunitiesAdmin({
-      //   pageNumber: 1,
-      //   pageSize: 1,
-      //   organizations: [id],
-      //   startDate: null,
-      //   endDate: null,
-      //   statuses: [
-      //     Status.Active,
-      //     Status.Expired,
-      //     Status.Inactive,
-      //     Status.Deleted,
-      //   ],
-      //   types: null,
-      //   categories: null,
-      //   languages: null,
-      //   countries: null,
-      //   valueContains: query?.toString() ?? null,
-      //   commitmentIntervals: null,
-      //   zltoRewardRanges: null,
-      //   featured: null,
-      // }).then((data) => data.totalCount ?? 0);
     },
     enabled: !error,
   });

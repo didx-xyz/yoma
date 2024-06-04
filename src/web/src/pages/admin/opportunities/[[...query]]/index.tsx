@@ -27,10 +27,6 @@ import {
   getLanguagesAdmin,
   getOrganisationsAdmin,
   getCountriesAdmin,
-  getOpportunityCategories,
-  getOpportunityCountries,
-  getOpportunityLanguages,
-  getOpportunityOrganizations,
   getOpportunityTypes,
   getZltoRewardRanges,
 } from "~/api/services/opportunities";

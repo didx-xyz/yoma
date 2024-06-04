@@ -226,7 +226,13 @@ const OpportunityDetails: NextPageWithLayout<{
 
       return;
     },
-    [opportunityId, queryClient, setManageOpportunityMenuVisible, modalContext],
+    [
+      id,
+      opportunityId,
+      queryClient,
+      setManageOpportunityMenuVisible,
+      modalContext,
+    ],
   );
 
   const updateFeaturedFlag = useCallback(
