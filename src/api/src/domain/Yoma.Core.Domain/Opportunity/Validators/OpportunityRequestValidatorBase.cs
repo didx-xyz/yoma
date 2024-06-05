@@ -14,6 +14,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
     private readonly IOpportunityTypeService _opportunityTypeService;
     private readonly IOrganizationService _organizationService;
     private readonly IOpportunityDifficultyService _opportunityDifficultyService;
+    private readonly IEngagementTypeService _engagementTypeService;
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
@@ -27,6 +28,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
     public OpportunityRequestValidatorBase(IOpportunityTypeService opportunityTypeService,
         IOrganizationService organizationService,
         IOpportunityDifficultyService opportunityDifficultyService,
+        IEngagementTypeService engagementTypeService,
         ITimeIntervalService timeIntervalService,
         IOpportunityCategoryService opportunityCategoryService,
         ICountryService countryService,
@@ -38,6 +40,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       _opportunityTypeService = opportunityTypeService;
       _organizationService = organizationService;
       _opportunityDifficultyService = opportunityDifficultyService;
+      _engagementTypeService = engagementTypeService;
       _timeIntervalService = timeIntervalService;
       _opportunityCategoryService = opportunityCategoryService;
       _countryService = countryService;
@@ -103,6 +106,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Must(SSISchemaExistsAndOfTypeOpportunity)
           .When(x => !string.IsNullOrEmpty(x.SSISchemaName))
           .WithMessage("SSI schema does not exist.");
+      RuleFor(x => x.EngagementTypeId).Must(EngagementTypeExists).WithMessage($"Specified education is invalid / does not exist.");
       RuleFor(x => x.Categories).Must(categories => categories != null && categories.Count != 0 && categories.All(id => id != Guid.Empty && CategoryExists(id)))
         .WithMessage("Categories are required and must exist.");
       RuleFor(x => x.Countries).Must(countries => countries != null && countries.Count != 0 && countries.All(id => id != Guid.Empty && CountryExists(id)))
@@ -199,6 +203,13 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       var result = _ssiSchemaService.GetByFullNameOrNull(name).Result;
 
       return result != null && result.Type == SSI.Models.SchemaType.Opportunity;
+    }
+
+    private bool EngagementTypeExists(Guid? id)
+    {
+      if (!id.HasValue) return true;
+      if (id.Value == Guid.Empty) return false;
+      return _engagementTypeService.GetByIdOrNull(id.Value) != null;
     }
     #endregion
   }

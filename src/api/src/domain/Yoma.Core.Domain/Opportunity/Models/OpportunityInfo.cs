@@ -94,6 +94,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [BooleanTrueValues("Yes")]
     public bool Featured { get; set; }
 
+    [Name("Engagement Type")]
+    public string? EngagementType { get; set; }
+
     [BooleanFalseValues("No")]
     [BooleanTrueValues("Yes")]
     public bool Published { get; set; }

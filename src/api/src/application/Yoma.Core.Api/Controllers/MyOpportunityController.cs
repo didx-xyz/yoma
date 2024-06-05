@@ -192,6 +192,22 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK);
     }
 
+    [SwaggerOperation(Summary = "Track navigating to the external link of an opportunity (Authenticated User)")]
+    [HttpPut("action/{opportunityId}/navigateExternalLink")]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public async Task<IActionResult> PerformActionNavigatedExternalLink([FromRoute] Guid opportunityId)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(PerformActionNavigatedExternalLink));
+
+      await _myOpportunityService.PerformActionNavigatedExternalLink(opportunityId);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(PerformActionNavigatedExternalLink));
+
+      return StatusCode((int)HttpStatusCode.OK);
+    }
+
     [SwaggerOperation(Summary = "Check if an opportunity is saved (Authenticated User)")]
     [HttpGet("action/{opportunityId}/saved")]
     [ProducesResponseType(typeof(bool), (int)HttpStatusCode.OK)]

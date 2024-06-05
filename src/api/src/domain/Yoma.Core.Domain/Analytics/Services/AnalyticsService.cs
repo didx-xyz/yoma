@@ -164,10 +164,11 @@ namespace Yoma.Core.Domain.Analytics.Services
       var query = _myOpportunityRepository.Query(true).Where(o => o.OrganizationId == organizationId);
 
       var actionIdViewed = _myOpportunityActionService.GetByName(MyOpportunity.Action.Viewed.ToString()).Id;
+      var actionIdNavigatedExternalLink = _myOpportunityActionService.GetByName(MyOpportunity.Action.NavigatedExternalLink.ToString()).Id;
       var actionIdCompleted = _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id;
       var verificationStatusId = _myOpportunityVerificationStatusService.GetByName(MyOpportunity.VerificationStatus.Completed.ToString()).Id;
 
-      query = query.Where(o => o.ActionId == actionIdViewed || (o.ActionId == actionIdCompleted && o.VerificationStatusId == verificationStatusId));
+      query = query.Where(o => o.ActionId == actionIdViewed || o.ActionId == actionIdNavigatedExternalLink || (o.ActionId == actionIdCompleted && o.VerificationStatusId == verificationStatusId));
 
       var countryIds = query.Select(o => o.UserCountryId).Distinct().ToList();
 
@@ -205,7 +206,29 @@ namespace Yoma.Core.Domain.Analytics.Services
           .ToList();
 
       var resultsViewed = new List<TimeValueEntry>();
-      itemsViewed.ForEach(o => { resultsViewed.Add(new TimeValueEntry(o.WeekEnding, o.Count, default(int))); });
+      itemsViewed.ForEach(o => { resultsViewed.Add(new TimeValueEntry(o.WeekEnding, o.Count, default(int), default(int))); });
+
+      //'my' opportunities: navigated external link
+      var queryNavigatedExternalLink = MyOpportunityQueryNavigatedExternalLink(filter, queryBase);
+
+      var itemsNavigatedExternalLink = queryNavigatedExternalLink
+          .Select(opportunity => new { opportunity.DateModified })
+          .ToList() //transition to client-side processing avoiding translation issue : function pg_catalog.timezone(unknown, interval) does not exist
+          .Select(item => new
+          {
+            WeekEnding = item.DateModified.AddDays(-(int)item.DateModified.DayOfWeek).AddDays(7).Date
+          })
+          .GroupBy(x => x.WeekEnding)
+          .Select(group => new
+          {
+            WeekEnding = group.Key,
+            Count = group.Count()
+          })
+          .OrderBy(result => result.WeekEnding)
+          .ToList();
+
+      var resultsNavigatedExternalLink = new List<TimeValueEntry>();
+      itemsNavigatedExternalLink.ForEach(o => { resultsNavigatedExternalLink.Add(new TimeValueEntry(o.WeekEnding, default(int), o.Count, default(int))); });
 
       //'my' opportunities: completed
       var queryCompleted = MyOpportunityQueryCompleted(filter, queryBase);
@@ -227,15 +250,17 @@ namespace Yoma.Core.Domain.Analytics.Services
         .ToList();
 
       var resultsCompleted = new List<TimeValueEntry>();
-      itemsCompleted.ForEach(o => { resultsCompleted.Add(new TimeValueEntry(o.WeekEnding, default(int), o.Count)); });
+      itemsCompleted.ForEach(o => { resultsCompleted.Add(new TimeValueEntry(o.WeekEnding, default(int), default(int), o.Count)); });
 
-      //'my' opportunities: viewed & completed combined
-      var resultsViewedCompleted = resultsViewed.Concat(resultsCompleted)
+      //engagement
+      //'my' opportunity engagements: viewed, navigatedExternalLink & completed combined
+      var resultsEngagements = resultsViewed.Concat(resultsNavigatedExternalLink).Concat(resultsCompleted)
           .GroupBy(e => e.Date)
           .Select(g => new TimeValueEntry(
               g.Key,
-              g.Sum(e => Convert.ToInt32(e.Values[0])),
-              g.Sum(e => Convert.ToInt32(e.Values[1]))
+              g.Sum(e => Convert.ToInt32(e.Values[0])), //viewed
+              g.Sum(e => Convert.ToInt32(e.Values[1])), //navigatedExternalLink
+              g.Sum(e => Convert.ToInt32(e.Values[2]))  //completed
           ))
           .OrderBy(e => e.Date)
           .ToList();
@@ -244,12 +269,12 @@ namespace Yoma.Core.Domain.Analytics.Services
       var result = new OrganizationSearchResultsEngagement { Opportunities = new OrganizationOpportunity() };
 
       var viewedCount = itemsViewed.Sum(o => o.Count);
+      var navigatedExternalLinkCount = itemsNavigatedExternalLink.Sum(o => o.Count);
       var completedCount = itemsCompleted.Sum(o => o.Count);
 
-      //engagement
-      //'my' opportunities: viewed & completed verifications
-      result.Opportunities.ViewedCompleted = new TimeIntervalSummary()
-      { Legend = ["Viewed", "Completions"], Data = resultsViewedCompleted, Count = [viewedCount, completedCount] };
+      //'my' opportunity engagements: viewed, navigatedExternalLink & completed verifications
+      result.Opportunities.Engagements = new TimeIntervalSummary()
+      { Legend = ["Viewed", "Go-To Clicks", "Completions"], Data = resultsEngagements, Count = [viewedCount, navigatedExternalLinkCount, completedCount] };
 
       //opportunities engaged
       var opportunityCountEngaged = queryViewed.Select(o => o.OpportunityId).Union(queryCompleted.Select(o => o.OpportunityId)).Distinct().Count();
@@ -568,6 +593,12 @@ namespace Yoma.Core.Domain.Analytics.Services
                            (!filter.StartDate.HasValue || mo.DateModified >= filter.StartDate.RemoveTime()) &&
                            (!filter.EndDate.HasValue || mo.DateModified <= filter.EndDate.ToEndOfDay()))
               .Count(),
+            NavigatedExternalLinkCount = _myOpportunityRepository.Query()
+              .Where(mo => mo.OpportunityId == opportunity.Id &&
+                           mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.NavigatedExternalLink.ToString()).Id &&
+                           (!filter.StartDate.HasValue || mo.DateModified >= filter.StartDate.RemoveTime()) &&
+                           (!filter.EndDate.HasValue || mo.DateModified <= filter.EndDate.ToEndOfDay()))
+              .Count(),
             CompletedCount = _myOpportunityRepository.Query()
               .Where(mo => mo.OpportunityId == opportunity.Id &&
                            mo.ActionId == _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id &&
@@ -585,6 +616,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             OrganizationLogoStorageType = result.Opportunity.OrganizationLogoStorageType,
             OrganizationLogoKey = result.Opportunity.OrganizationLogoKey,
             ViewedCount = result.ViewedCount,
+            NavigatedExternalLinkCount = result.NavigatedExternalLinkCount,
             CompletedCount = result.CompletedCount,
             ConversionRatioPercentage = (result.ViewedCount > 0) ? Math.Min(100, Math.Round((decimal)result.CompletedCount / result.ViewedCount * 100, 2)) : (result.CompletedCount > 0 ? 100 : 0)
           });
@@ -623,6 +655,28 @@ namespace Yoma.Core.Domain.Analytics.Services
     private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryViewed(IOrganizationSearchFilterBase filter, IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
     {
       var actionId = _myOpportunityActionService.GetByName(MyOpportunity.Action.Viewed.ToString()).Id;
+
+      var query = queryBase.Where(o => o.ActionId == actionId);
+
+      //date range
+      if (filter.StartDate.HasValue)
+      {
+        var startDate = filter.StartDate.Value.RemoveTime();
+        query = query.Where(o => o.DateModified >= startDate);
+      }
+
+      if (filter.EndDate.HasValue)
+      {
+        var endDate = filter.EndDate.Value.ToEndOfDay();
+        query = query.Where(o => o.DateModified <= endDate);
+      }
+
+      return query;
+    }
+
+    private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryNavigatedExternalLink(IOrganizationSearchFilterBase filter, IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
+    {
+      var actionId = _myOpportunityActionService.GetByName(MyOpportunity.Action.NavigatedExternalLink.ToString()).Id;
 
       var query = queryBase.Where(o => o.ActionId == actionId);
 

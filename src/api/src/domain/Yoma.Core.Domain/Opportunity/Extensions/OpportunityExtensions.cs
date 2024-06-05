@@ -140,6 +140,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         DateStart = value.DateStart,
         DateEnd = value.DateEnd,
         Featured = value.Featured ?? false,
+        EngagementType = value.EngagementType,
         Published = value.Published,
         YomaInfoURL = value.YomaInfoURL(appBaseURL),
         Categories = value.Categories,

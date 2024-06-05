@@ -310,6 +310,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         case Action.Saved:
         case Action.Viewed:
+        case Action.NavigatedExternalLink:
           orderInstructions.Add(new() { OrderBy = o => o.DateModified, SortOrder = filter.SortOrder });
 
           //published: relating to active opportunities (irrespective of started) that relates to active organizations
@@ -424,6 +425,32 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var actionViewedId = _myOpportunityActionService.GetByName(Action.Viewed.ToString()).Id;
+
+      var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionViewedId);
+      if (myOpportunity == null)
+      {
+        myOpportunity = new Models.MyOpportunity
+        {
+          UserId = user.Id,
+          OpportunityId = opportunity.Id,
+          ActionId = actionViewedId
+        };
+        await _myOpportunityRepository.Create(myOpportunity);
+      }
+      else
+        await _myOpportunityRepository.Update(myOpportunity); //update DateModified
+    }
+
+    public async Task PerformActionNavigatedExternalLink(Guid opportunityId)
+    {
+      //published opportunities (irrespective of started)
+      var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
+      if (!opportunity.Published)
+        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
+
+      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      var actionViewedId = _myOpportunityActionService.GetByName(Action.NavigatedExternalLink.ToString()).Id;
 
       var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionViewedId);
       if (myOpportunity == null)

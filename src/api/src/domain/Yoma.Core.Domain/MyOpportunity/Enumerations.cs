@@ -4,7 +4,8 @@ namespace Yoma.Core.Domain.MyOpportunity
   {
     Viewed,
     Saved,
-    Verification
+    Verification,
+    NavigatedExternalLink
   }
 
   public enum VerificationStatus

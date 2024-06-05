@@ -89,6 +89,7 @@ namespace Yoma.Core.Domain
       #region Lookups
       services.AddScoped<ICountryService, CountryService>();
       services.AddScoped<IEducationService, EducationService>();
+      services.AddScoped<IEngagementTypeService, EngagementTypeService>();
       services.AddScoped<IGenderService, GenderService>();
       services.AddScoped<ILanguageService, LanguageService>();
       services.AddScoped<ISkillService, SkillService>();

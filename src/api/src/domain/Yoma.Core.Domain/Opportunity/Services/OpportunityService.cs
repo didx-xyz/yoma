@@ -44,6 +44,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
     private readonly IOpportunityDifficultyService _opportunityDifficultyService;
+    private readonly IEngagementTypeService _engagementTypeService;
     private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IBlobService _blobService;
@@ -87,6 +88,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ILanguageService languageService,
         ISkillService skillService,
         IOpportunityDifficultyService opportunityDifficultyService,
+        IEngagementTypeService engagementTypeService,
         IOpportunityVerificationTypeService opportunityVerificationTypeService,
         ITimeIntervalService timeIntervalService,
         IBlobService blobService,
@@ -119,6 +121,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _languageService = languageService;
       _skillService = skillService;
       _opportunityDifficultyService = opportunityDifficultyService;
+      _engagementTypeService = engagementTypeService;
       _opportunityVerificationTypeService = opportunityVerificationTypeService;
       _timeIntervalService = timeIntervalService;
       _blobService = blobService;
@@ -747,6 +750,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.Where(predicate);
       }
 
+      //engagementTypes
+      if (filter.EngagementTypes != null && filter.EngagementTypes.Count != 0)
+      {
+        filter.EngagementTypes = filter.EngagementTypes.Distinct().ToList();
+        query = query.Where(o => o.EngagementTypeId.HasValue && filter.EngagementTypes.Contains(o.EngagementTypeId.Value));
+      }
+
       //statuses
       if (filter.Statuses != null && filter.Statuses.Count != 0)
       {
@@ -915,6 +925,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         DateEnd = !request.DateEnd.HasValue ? null : request.DateEnd.Value,
         CredentialIssuanceEnabled = request.CredentialIssuanceEnabled,
         SSISchemaName = request.SSISchemaName,
+        EngagementTypeId = request.EngagementTypeId,
+        EngagementType = request.EngagementTypeId.HasValue ? _engagementTypeService.GetById(request.EngagementTypeId.Value).Name : null,
         StatusId = _opportunityStatusService.GetByName(status.ToString()).Id,
         Status = status,
         CreatedByUserId = user.Id,
@@ -1025,6 +1037,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.DateEnd = !request.DateEnd.HasValue ? null : request.DateEnd.Value;
       result.CredentialIssuanceEnabled = request.CredentialIssuanceEnabled;
       result.SSISchemaName = request.SSISchemaName;
+      result.EngagementTypeId = request.EngagementTypeId;
+      result.EngagementType = request.EngagementTypeId.HasValue ? _engagementTypeService.GetById(request.EngagementTypeId.Value).Name : null;
       result.ModifiedByUserId = user.Id;
 
       if (result.DateEnd.HasValue)

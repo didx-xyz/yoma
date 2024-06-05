@@ -20,6 +20,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     Task PerformActionSaved(Guid opportunityId);
 
+    Task PerformActionNavigatedExternalLink(Guid opportunityId);
+
     bool ActionedSaved(Guid opportunityId);
 
     Task PerformActionSavedRemove(Guid opportunityId);

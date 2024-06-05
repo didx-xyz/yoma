@@ -68,6 +68,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         CredentialIssuanceEnabled = entity.CredentialIssuanceEnabled,
         SSISchemaName = entity.SSISchemaName,
         Featured = entity.Featured,
+        EngagementTypeId = entity.EngagementTypeId,
+        EngagementType = entity.EngagementType == null ? null : entity.EngagementType.Name,
         DateCreated = entity.DateCreated,
         CreatedByUserId = entity.CreatedByUserId,
         DateModified = entity.DateModified,
@@ -165,6 +167,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         CredentialIssuanceEnabled = item.CredentialIssuanceEnabled,
         SSISchemaName = item.SSISchemaName,
         Featured = item.Featured,
+        EngagementTypeId = item.EngagementTypeId,
         DateCreated = item.DateCreated,
         CreatedByUserId = item.CreatedByUserId,
         DateModified = item.DateModified,
@@ -214,6 +217,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
           CredentialIssuanceEnabled = item.CredentialIssuanceEnabled,
           SSISchemaName = item.SSISchemaName,
           Featured = item.Featured,
+          EngagementTypeId = item.EngagementTypeId,
           DateCreated = DateTimeOffset.UtcNow,
           CreatedByUserId = item.CreatedByUserId,
           DateModified = DateTimeOffset.UtcNow,
@@ -268,6 +272,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       entity.CredentialIssuanceEnabled = item.CredentialIssuanceEnabled;
       entity.SSISchemaName = item.SSISchemaName;
       entity.Featured = item.Featured;
+      entity.EngagementTypeId = item.EngagementTypeId;  
       entity.DateModified = item.DateModified;
       entity.ModifiedByUserId = item.ModifiedByUserId;
 
@@ -317,6 +322,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         entity.CredentialIssuanceEnabled = item.CredentialIssuanceEnabled;
         entity.SSISchemaName = item.SSISchemaName;
         entity.Featured = item.Featured;
+        entity.EngagementTypeId = item.EngagementTypeId;
         entity.DateModified = item.DateModified;
         entity.ModifiedByUserId = item.ModifiedByUserId;
       }

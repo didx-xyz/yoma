@@ -11,7 +11,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
   [Table("Opportunity", Schema = "Opportunity")]
   [Index(nameof(Title), IsUnique = true)]
   [Index(nameof(TypeId), nameof(OrganizationId), nameof(ZltoReward), nameof(DifficultyId), nameof(CommitmentIntervalId), nameof(CommitmentIntervalCount), nameof(StatusId), nameof(Keywords),
-        nameof(DateStart), nameof(DateEnd), nameof(CredentialIssuanceEnabled), nameof(Featured), nameof(DateCreated), nameof(CreatedByUserId), nameof(DateModified), nameof(ModifiedByUserId))]
+        nameof(DateStart), nameof(DateEnd), nameof(CredentialIssuanceEnabled), nameof(Featured), nameof(EngagementTypeId), nameof(DateCreated), nameof(CreatedByUserId), nameof(DateModified), nameof(ModifiedByUserId))]
   public class Opportunity : BaseEntity<Guid>
   {
     //support specials characters like emojis  
@@ -106,6 +106,10 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     public string? SSISchemaName { get; set; }
 
     public bool? Featured { get; set; }
+
+    [ForeignKey("EngagementTypeId")]
+    public Guid? EngagementTypeId { get; set; }
+    public EngagementType? EngagementType { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

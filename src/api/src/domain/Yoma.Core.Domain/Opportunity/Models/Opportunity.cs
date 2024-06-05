@@ -95,6 +95,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public bool? Featured { get; set; }
 
+    public Guid? EngagementTypeId { get; set; }
+
+    public string? EngagementType { get; set; }
+
     public DateTimeOffset DateCreated { get; set; }
 
     public Guid CreatedByUserId { get; set; }

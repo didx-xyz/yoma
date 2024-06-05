@@ -115,6 +115,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         CommitmentIntervals = filter.CommitmentIntervals,
         ZltoRewardRanges = filter.ZltoRewardRanges,
         Featured = filter.Featured,
+        EngagementTypes = filter.EngagementTypes,
         ValueContains = filter.ValueContains,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize,

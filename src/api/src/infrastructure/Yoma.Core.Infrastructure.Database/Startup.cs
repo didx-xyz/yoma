@@ -103,6 +103,7 @@ namespace Yoma.Core.Infrastructure.Database
       #region Lookups
       services.AddScoped<IRepository<Country>, CountryRepository>();
       services.AddScoped<IRepository<Education>, EducationRepository>();
+      services.AddScoped<IRepository<EngagementType>, EngagementTypeRepository>();
       services.AddScoped<IRepository<Gender>, GenderRepository>();
       services.AddScoped<IRepository<Language>, LanguageRepository>();
       services.AddScoped<IRepositoryBatchedValueContains<Skill>, SkillRepository>();

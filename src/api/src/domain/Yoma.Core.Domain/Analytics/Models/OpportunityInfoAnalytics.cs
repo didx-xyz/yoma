@@ -24,6 +24,8 @@ namespace Yoma.Core.Domain.Analytics.Models
 
     public int ViewedCount { get; set; }
 
+    public int NavigatedExternalLinkCount { get; set; }
+
     public int CompletedCount { get; set; }
 
     public decimal ConversionRatioPercentage { get; set; }

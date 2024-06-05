@@ -11,6 +11,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
     public OpportunityRequestValidatorCreate(IOpportunityTypeService opportunityTypeService,
         IOrganizationService organizationService,
         IOpportunityDifficultyService opportunityDifficultyService,
+        IEngagementTypeService engagementTypeService,
         ITimeIntervalService timeIntervalService,
         IOpportunityCategoryService opportunityCategoryService,
         ICountryService countryService,
@@ -18,7 +19,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         ISkillService skillService,
         IOpportunityVerificationTypeService opportunityVerificationTypeService,
         ISSISchemaService ssiSchemaService)
-        : base(opportunityTypeService, organizationService, opportunityDifficultyService, timeIntervalService,
+        : base(opportunityTypeService, organizationService, opportunityDifficultyService, engagementTypeService, timeIntervalService,
               opportunityCategoryService, countryService, languageService, skillService, opportunityVerificationTypeService, ssiSchemaService)
     { }
     #endregion

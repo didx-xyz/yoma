@@ -17,6 +17,7 @@ namespace Yoma.Core.Api.Controllers
     private readonly ILogger<UserController> _logger;
     private readonly ICountryService _countryService;
     private readonly IEducationService _educationService;
+    private readonly IEngagementTypeService _engagementTypeService;
     private readonly IGenderService _genderService;
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
@@ -28,6 +29,7 @@ namespace Yoma.Core.Api.Controllers
         ILogger<UserController> logger,
         ICountryService countryService,
         IEducationService educationService,
+        IEngagementTypeService engagementTypeService,
         IGenderService genderService,
         ILanguageService languageService,
         ISkillService skillService,
@@ -37,6 +39,7 @@ namespace Yoma.Core.Api.Controllers
       _logger = logger;
       _countryService = countryService;
       _educationService = educationService;
+      _engagementTypeService = engagementTypeService;
       _genderService = genderService;
       _languageService = languageService;
       _skillService = skillService;
@@ -70,6 +73,20 @@ namespace Yoma.Core.Api.Controllers
       var result = _educationService.List();
 
       _logger.LogInformation("Request {requestName} handled", nameof(ListEducations));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of engagement types")]
+    [HttpGet("engagement")]
+    [ProducesResponseType(typeof(List<Education>), (int)HttpStatusCode.OK)]
+    public IActionResult ListEngagementTypes()
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(ListEngagementTypes));
+
+      var result = _engagementTypeService.List();
+
+      _logger.LogInformation("Request {requestName} handled", nameof(ListEngagementTypes));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

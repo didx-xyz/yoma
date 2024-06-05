@@ -46,6 +46,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public string? SSISchemaName { get; set; }
 
+    public Guid? EngagementTypeId { get; set; }
+
     public List<Guid> Categories { get; set; }
 
     public List<Guid> Countries { get; set; }
