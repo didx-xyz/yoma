@@ -480,8 +480,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     <IoMdPerson className="h-4 w-4" />
 
                     <span className="ml-1">
-                      {opportunity?.participantCountVerificationCompleted}{" "}
-                      enrolled
+                      {opportunity?.participantCountCompleted} enrolled
                     </span>
                   </div>
 
@@ -625,8 +624,8 @@ const OpportunityDetails: NextPageWithLayout<{
                     <div className="text-3xl font-bold text-gray-dark">
                       {opportunity?.participantCountTotal ?? 0}
                     </div>
-                    {opportunity?.participantCountVerificationPending &&
-                      opportunity?.participantCountVerificationPending > 0 && (
+                    {opportunity?.participantCountPending &&
+                      opportunity?.participantCountPending > 0 && (
                         <Link
                           href={`/organisations/${id}/verifications?opportunity=${opportunityId}&verificationStatus=Pending${
                             returnUrl
@@ -638,7 +637,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         >
                           <div className="flex flex-row items-center gap-2 rounded-lg bg-yellow-light p-1">
                             <div className="badge badge-warning rounded-lg bg-yellow text-white">
-                              {opportunity?.participantCountVerificationPending}
+                              {opportunity?.participantCountPending}
                             </div>
                             <div className="text-xs font-bold text-yellow">
                               to be verified

@@ -21,12 +21,9 @@ const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
   // memo for spots left i.e participantLimit - participantCountTotal
   const spotsLeft = useMemo(() => {
     const participantLimit = opportunity?.participantLimit ?? 0;
-    const participantCountVerificationCompleted =
-      opportunity?.participantCountVerificationCompleted ?? 0;
-    return Math.max(
-      participantLimit - participantCountVerificationCompleted,
-      0,
-    );
+    const participantCountCompleted =
+      opportunity?.participantCountCompleted ?? 0;
+    return Math.max(participantLimit - participantCountCompleted, 0);
   }, [opportunity]);
 
   return (

@@ -255,7 +255,7 @@ const OpportunityDetails: NextPageWithLayout<{
       GA_ACTION_OPPORTUNITY_FOLLOWEXTERNAL,
       opportunityInfo.url,
     );
-  }, [opportunityInfo.url, user]);
+  }, [opportunityInfo.id, opportunityInfo.url, user]);
 
   const onOpportunityCompleted = useCallback(async () => {
     setCompleteOpportunityDialogVisible(false);

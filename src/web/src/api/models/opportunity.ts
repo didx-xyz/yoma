@@ -119,43 +119,6 @@ export interface OpportunityInfo {
   skills: Skill[] | null;
   verificationTypes: OpportunityVerificationType[] | null;
 }
-// export interface OpportunityInfo {
-//   id: string;
-//   title: string;
-//   description: string;
-//   type: string;
-//   organizationId: string;
-//   organizationName: string;
-//   organizationLogoURL: string | null;
-//   instructions: string | null;
-//   url: string | null; //NB:
-//   zltoReward: number | null;
-//   yomaReward: number | null;
-//   difficulty: string;
-//   commitmentInterval: string;
-//   commitmentIntervalCount: number;
-//   commitmentIntervalDescription: string;
-//   participantLimit: number | null;
-//   participantCountVerificationCompleted: number;
-//   participantCountVerificationPending: number;
-//   participantCountTotal: number;
-//   participantLimitReached: boolean;
-//   statusId: string;
-//   status: Status | string; //NB: hack comes back as string
-//   keywords: string[] | null;
-//   dateStart: string;
-//   dateEnd: string | null;
-//   published: boolean;
-//   categories: OpportunityCategory[] | null;
-//   countries: Country[] | null;
-//   languages: Language[] | null;
-//   skills: Skill[] | null;
-//   verificationEnabled: boolean;
-//   verificationMethod: VerificationMethod | string | null; //ISSUE: comes back as string
-//   verificationTypes: OpportunityVerificationType[] | null;
-//   featured: boolean;
-// }
-
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
   publishedStates: PublishedState[] | null | string[]; //NB
   mostViewed: boolean | null;
