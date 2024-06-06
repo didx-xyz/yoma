@@ -33,7 +33,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import iconZlto from "public/images/icon-zlto.svg";
 import Image from "next/image";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
-
+import { toast } from "react-toastify";
 interface IParams extends ParsedUrlQuery {
   id: string;
   query?: string;
@@ -349,6 +349,7 @@ const Opportunities: NextPageWithLayout<{
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
+
   const handlePagerChange = useCallback(
     (value: number) => {
       searchFilter.pageNumber = value;
@@ -356,6 +357,7 @@ const Opportunities: NextPageWithLayout<{
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
+
   const onFilterStatus = useCallback(
     (status: string) => {
       searchFilter.pageNumber = 1;
@@ -363,7 +365,13 @@ const Opportunities: NextPageWithLayout<{
       redirectWithSearchFilterParams(searchFilter);
     },
     [searchFilter, redirectWithSearchFilterParams],
-  ); //#endregion Event Handlers
+  );
+
+  const onClick_CopyToClipboard = useCallback((url: string) => {
+    navigator.clipboard.writeText(url);
+    toast.success("URL copied to clipboard!", { autoClose: 2000 });
+  }, []);
+  //#endregion Event Handlers
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -691,7 +699,7 @@ const Opportunities: NextPageWithLayout<{
                       <th className="border-b-2 border-gray-light">Url</th>
                       <th className="border-b-2 border-gray-light">
                         Participants
-                      </th>{" "}
+                      </th>
                       <th className="border-b-2 border-gray-light">
                         Pending Verifications
                       </th>
@@ -699,8 +707,8 @@ const Opportunities: NextPageWithLayout<{
                   </thead>
                   <tbody>
                     {opportunities.items.map((opportunity) => (
-                      <tr key={opportunity.id} className="">
-                        <td className="max-w-[600px] truncate border-b-2 border-gray-light !py-4">
+                      <tr key={opportunity.id}>
+                        <td className="truncate border-b-2 border-gray-light md:max-w-[270px] lg:max-w-[580px] ">
                           <Link
                             href={`/organisations/${id}/opportunities/${
                               opportunity.id
@@ -737,16 +745,14 @@ const Opportunities: NextPageWithLayout<{
                         </td>
                         <td className="border-b-2 border-gray-light">
                           {opportunity?.url && (
-                            <Link
-                              href={opportunity.url}
+                            <button
+                              onClick={() =>
+                                onClick_CopyToClipboard(opportunity.url!)
+                              }
                               className="badge bg-green-light text-green"
-                              target="_blank"
                             >
                               <IoIosLink className="h-4 w-4" />
-                              <span className="ml-1 text-xs">
-                                {opportunity.url}
-                              </span>
-                            </Link>
+                            </button>
                           )}
                         </td>
                         <td className="border-b-2 border-gray-light">

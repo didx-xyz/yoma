@@ -49,6 +49,8 @@ import { env } from "process";
 import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
 import StoreItemsCarousel from "~/components/Marketplace/StoreItemsCarousel";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { Loading } from "~/components/Status/Loading";
+import Link from "next/link";
 
 interface IParams extends ParsedUrlQuery {
   country: string;
@@ -228,6 +230,15 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   const setUserCountrySelection = useSetAtom(userCountrySelectionAtom);
   const modalContext = useConfirmationModalContext();
   const myRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(
+    loginDialogVisible ||
+      buyDialogVisible ||
+      buyDialogConfirmationVisible ||
+      buyDialogErrorVisible,
+  );
 
   const onFilterCountry = useCallback(
     (value: string) => {
@@ -370,6 +381,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
 
   const onBuyConfirm = useCallback(
     (item: StoreItemCategory) => {
+      setIsLoading(true);
       setBuyDialogVisible(false);
 
       // update api
@@ -388,12 +400,14 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
           // update user profile (zlto balance)
           getUserProfile().then((res) => {
             setUserProfile(res);
+            setIsLoading(false);
           });
         })
         .catch((err) => {
           const customErrors = err.response?.data as ErrorResponseItem[];
           setBuyDialogErrorMessages(customErrors);
           setBuyDialogErrorVisible(true);
+          setIsLoading(false);
         });
     },
     [
@@ -402,14 +416,9 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       setBuyDialogErrorVisible,
       setBuyDialogErrorMessages,
       setUserProfile,
+      setIsLoading,
     ],
   );
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(loginDialogVisible);
-  useDisableBodyScroll(buyDialogVisible);
-  useDisableBodyScroll(buyDialogConfirmationVisible);
-  useDisableBodyScroll(buyDialogErrorVisible);
 
   if (!marketplace_enabled) return <MarketplaceDown />;
 
@@ -420,7 +429,9 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   }
 
   return (
-    <div className="flex w-full flex-col gap-4 md:max-w-7xl">
+    <>
+      {isLoading && <Loading />}
+
       {/* LOGIN DIALOG */}
       <ReactModal
         isOpen={loginDialogVisible}
@@ -528,6 +539,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
               )}
 
               <h3>You are about to purchase:</h3>
+
               <div className="rounded-lg p-2 text-center md:w-[450px]">
                 <strong>{currentItem.name}</strong> voucher for{" "}
                 <strong>{currentItem.amount} Zlto</strong>.
@@ -538,21 +550,21 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
               <div className="-mt-2 flex flex-grow gap-4">
                 <button
                   type="button"
-                  className="btn rounded-full border-purple bg-white normal-case text-purple hover:bg-purple hover:text-white md:w-[150px]"
-                  onClick={() => {
-                    setBuyDialogVisible(false);
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
                   className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
                   onClick={() => {
                     onBuyConfirm(currentItem);
                   }}
                 >
                   Yes
+                </button>
+                <button
+                  type="button"
+                  className="btn rounded-full border-purple bg-white normal-case text-purple hover:bg-purple hover:text-white md:w-[150px]"
+                  onClick={() => {
+                    setBuyDialogVisible(false);
+                  }}
+                >
+                  No
                 </button>
               </div>
             </div>
@@ -567,19 +579,18 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         onRequestClose={() => {
           setBuyDialogConfirmationVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[550px] md:rounded-3xl`}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[520px] md:w-[550px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
         {currentItem && (
-          <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
+          <div className="pb-12x flex h-full flex-col gap-2 overflow-y-auto pb-6">
             <div className="flex flex-row p-4">
               <h1 className="flex-grow"></h1>
               <button
                 type="button"
                 className="btn rounded-full border-0 bg-gray p-3 text-gray-dark hover:bg-gray-light"
                 onClick={() => {
-                  //setBuyDialogConfirmationVisible(false);
                   // reload the page to refresh the data
                   router.reload();
                 }}
@@ -588,36 +599,39 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
               </button>
             </div>
 
-            <h3 className="text-center">Thank you for your purchase</h3>
+            <h3 className="text-center">Purchase Success!</h3>
 
-            <div className="flex flex-col items-center justify-center gap-4">
+            <div className="flex flex-col items-center justify-center gap-4 px-8">
               {currentItem?.imageURL && (
-                <div className="flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-                  <Image
-                    src={currentItem?.imageURL ?? ""}
-                    alt="Icon Zlto"
-                    width={40}
-                    height={40}
-                    sizes="100vw"
-                    priority={true}
-                    style={{ width: "40px", height: "40px" }}
+                <div className="border-green-darkx flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg">
+                  <AvatarImage
+                    icon={currentItem.imageURL}
+                    alt={`Product Image`}
+                    size={40}
                   />
                 </div>
               )}
 
-              <div className="h-[180px] overflow-y-scroll text-ellipsis">
-                <div className="rounded-lg p-4 text-center">
-                  {currentItem.description}
-                </div>
-                <div className="rounded-lg p-4 text-center">
-                  {currentItem.summary}
-                </div>
+              <div className="flex w-full flex-col gap-4 rounded-lg border-2 border-dotted border-gray p-4 text-center">
+                <div>{currentItem.description}</div>
+                <div>{currentItem.summary}</div>
+              </div>
+
+              <div className="p-4 text-center">
+                You will be able to find your instructions within your products!
               </div>
 
               <div className="flex flex-grow gap-4">
+                <Link
+                  href="/marketplace/transactions"
+                  className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
+                >
+                  My Products
+                </Link>
+
                 <button
                   type="button"
-                  className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
+                  className="btn rounded-full border-purple bg-white normal-case text-purple hover:bg-purple hover:text-white md:w-[150px]"
                   onClick={() => {
                     // reload the page to refresh the data
                     router.reload();
@@ -686,83 +700,90 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
-      {/* FILTER: COUNTRY */}
-      <div className="flex flex-row items-center justify-start gap-4">
-        <div className="text-sm font-semibold text-gray-dark">Filter by:</div>
-        <Select
-          instanceId={"country"}
-          classNames={{
-            control: () => "input input-xs w-[200px] !z-50",
-          }}
-          options={countryOptions}
-          onChange={(val) => onFilterCountry(val?.value ?? "")}
-          value={countryOptions?.find(
-            (c) => c.value === (country?.toString() ?? COUNTRY_WW),
+      {/* MAIN CONTENT */}
+      <div className="flex w-full flex-col gap-4 md:max-w-7xl">
+        {/* FILTER: COUNTRY */}
+        <div className="flex flex-row items-center justify-start gap-4">
+          <div className="text-sm font-semibold text-gray-dark">Filter by:</div>
+          <Select
+            instanceId={"country"}
+            classNames={{
+              control: () => "input input-xs w-[200px] !z-50",
+            }}
+            options={countryOptions}
+            onChange={(val) => onFilterCountry(val?.value ?? "")}
+            value={countryOptions?.find(
+              (c) => c.value === (country?.toString() ?? COUNTRY_WW),
+            )}
+            placeholder="Country"
+            // fix menu z-index issue
+            menuPortalTarget={myRef.current}
+            styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+          />
+        </div>
+
+        {/* RESULTS */}
+        <div className="flex flex-col gap-6 px-2 pb-4 md:p-0 md:pb-0">
+          {data_storeItems.length == 0 && (
+            <NoRowsMessage title="No items found" />
           )}
-          placeholder="Country"
-          // fix menu z-index issue
-          menuPortalTarget={myRef.current}
-          styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
-        />
-      </div>
-      <div className="flex flex-col gap-6 px-2 pb-4 md:p-0 md:pb-0">
-        {data_storeItems.length == 0 && (
-          <NoRowsMessage title="No items found" />
-        )}
 
-        {data_storeItems?.map((category_storeItems, index) => (
-          <div
-            key={`category_${category_storeItems.category.id}_${index}`}
-            className="mb-8 md:mb-4"
-          >
-            {/* CATEGORY NAME AND IMAGES */}
-            <div className="flex flex-row items-center justify-start gap-4 pb-4">
-              <h1 className="text-2xl">{category_storeItems.category.name}</h1>
+          {data_storeItems?.map((category_storeItems, index) => (
+            <div
+              key={`category_${category_storeItems.category.id}_${index}`}
+              className="mb-8 md:mb-4"
+            >
+              {/* CATEGORY NAME AND IMAGES */}
+              <div className="flex flex-row items-center justify-start gap-4 pb-4">
+                <h1 className="text-2xl">
+                  {category_storeItems.category.name}
+                </h1>
 
-              <div className="flex flex-grow flex-row items-start overflow-hidden">
-                {category_storeItems.category.storeImageURLs.map(
-                  (storeImage, index2) => (
-                    <div
-                      className="relative -mr-4 overflow-hidden rounded-full shadow"
-                      // style={{
-                      //   zIndex:
-                      //     category_storeItems.category.storeImageURLs.length -
-                      //     index,
-                      // }}
-                      key={`storeItems_${category_storeItems.category.id}_${index}_${index2}`}
-                    >
-                      <span className="z-0">
-                        <AvatarImage
-                          icon={storeImage ?? null}
-                          alt={`Store Image Logo ${index2}`}
-                          size={40}
-                        />
-                      </span>
-                    </div>
-                  ),
-                )}
+                <div className="flex flex-grow flex-row items-start overflow-hidden">
+                  {category_storeItems.category.storeImageURLs.map(
+                    (storeImage, index2) => (
+                      <div
+                        className="relative -mr-4 overflow-hidden rounded-full shadow"
+                        // style={{
+                        //   zIndex:
+                        //     category_storeItems.category.storeImageURLs.length -
+                        //     index,
+                        // }}
+                        key={`storeItems_${category_storeItems.category.id}_${index}_${index2}`}
+                      >
+                        <span className="z-0">
+                          <AvatarImage
+                            icon={storeImage ?? null}
+                            alt={`Store Image Logo ${index2}`}
+                            size={40}
+                          />
+                        </span>
+                      </div>
+                    ),
+                  )}
+                </div>
               </div>
+
+              {category_storeItems?.storeItems?.map((storeItem, index2) => (
+                <div
+                  key={`category_${category_storeItems.category.id}_${index}_${index2}`}
+                >
+                  <StoreItemsCarousel
+                    id={`storeItem_${category_storeItems.category.id}_${index}_${index2}`}
+                    title={storeItem.store?.name}
+                    data={storeItem.items}
+                    loadData={(startRow) =>
+                      loadData(startRow, storeItem.store.id)
+                    }
+                    onClick={onBuyClick}
+                  />
+                </div>
+              ))}
             </div>
-
-            {category_storeItems?.storeItems?.map((storeItem, index2) => (
-              <div
-                key={`category_${category_storeItems.category.id}_${index}_${index2}`}
-              >
-                <StoreItemsCarousel
-                  id={`storeItem_${category_storeItems.category.id}_${index}_${index2}`}
-                  title={storeItem.store?.name}
-                  data={storeItem.items}
-                  loadData={(startRow) =>
-                    loadData(startRow, storeItem.store.id)
-                  }
-                  onClick={onBuyClick}
-                />
-              </div>
-            ))}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
