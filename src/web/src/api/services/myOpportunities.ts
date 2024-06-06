@@ -188,3 +188,13 @@ export const getMyOpportunitiesExportToCSV = async (
 
   return file;
 };
+
+export const performActionNavigateExternalLink = async (
+  opportunityId: string,
+  context?: GetServerSidePropsContext,
+): Promise<any> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  await instance.put(
+    `/myopportunity/action/${opportunityId}/navigateExternalLink`,
+  );
+};

@@ -109,14 +109,7 @@ const DashboardCarousel: React.FC<PropType> = (props: PropType) => {
         if (loadMore) {
           listenForScrollRef.current = false;
 
-          console.warn(
-            `Loading more data... ${lastSlide} lastSlideInView: ${lastSlideInView} nextStartRow: ${
-              emblaApi.slideNodes().length + 1
-            }`,
-          );
-
           loadData(emblaApi.slideNodes().length + 1).then((data) => {
-            // debugger;
             if (data.items.length == 0) {
               setHasMoreToLoad(false);
               emblaApi.off("scroll", scrollListenerRef.current);

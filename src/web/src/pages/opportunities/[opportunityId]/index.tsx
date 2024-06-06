@@ -41,6 +41,7 @@ import {
   saveMyOpportunity,
   isOpportunitySaved,
   removeMySavedOpportunity,
+  performActionNavigateExternalLink,
 } from "~/api/services/myOpportunities";
 import { toast } from "react-toastify";
 import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityCompletionEdit";
@@ -165,12 +166,14 @@ const OpportunityDetails: NextPageWithLayout<{
   const [isOppSaved, setIsOppSaved] = useState(false);
 
   // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(loginDialogVisible);
-  useDisableBodyScroll(gotoOpportunityDialogVisible);
-  useDisableBodyScroll(completeOpportunityDialogVisible);
-  useDisableBodyScroll(completeOpportunitySuccessDialogVisible);
-  useDisableBodyScroll(cancelOpportunityDialogVisible);
-  useDisableBodyScroll(shareOpportunityDialogVisible);
+  useDisableBodyScroll(
+    loginDialogVisible ||
+      gotoOpportunityDialogVisible ||
+      completeOpportunityDialogVisible ||
+      completeOpportunitySuccessDialogVisible ||
+      cancelOpportunityDialogVisible ||
+      shareOpportunityDialogVisible,
+  );
 
   const { data: verificationStatus, isLoading: verificationStatusIsLoading } =
     useQuery<MyOpportunityResponseVerify | null>({
@@ -236,10 +239,15 @@ const OpportunityDetails: NextPageWithLayout<{
     }
   }, [opportunityInfo.id, user, isOppSaved]);
 
-  const onGoToOpportunity = useCallback(() => {
+  const onGoToOpportunity = useCallback(async () => {
     if (!opportunityInfo.url) return;
 
     window.open(opportunityInfo.url, "_blank");
+
+    // record action if user is logged in
+    if (user) {
+      await performActionNavigateExternalLink(opportunityInfo.id);
+    }
 
     // 📊 GOOGLE ANALYTICS: track event
     trackGAEvent(
@@ -247,7 +255,7 @@ const OpportunityDetails: NextPageWithLayout<{
       GA_ACTION_OPPORTUNITY_FOLLOWEXTERNAL,
       opportunityInfo.url,
     );
-  }, [opportunityInfo.url]);
+  }, [opportunityInfo.url, user]);
 
   const onOpportunityCompleted = useCallback(async () => {
     setCompleteOpportunityDialogVisible(false);

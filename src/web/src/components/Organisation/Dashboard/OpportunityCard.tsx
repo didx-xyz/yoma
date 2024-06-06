@@ -9,6 +9,7 @@ import {
   IoIosTrash,
   IoMdBed,
   IoMdCheckmarkCircleOutline,
+  IoMdOpen,
   IoMdPerson,
 } from "react-icons/io";
 import type { OpportunityInfoAnalytics } from "~/api/models/organizationDashboard";
@@ -42,7 +43,7 @@ export const OpportunityCard: React.FC<{
       href={`/organisations/${orgId}/opportunities/${
         opportunity.id
       }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
-      className="flex flex-col gap-2 overflow-hidden overflow-ellipsis rounded-lg bg-white px-2 py-4 text-xs shadow"
+      className="flex w-full flex-col gap-2 overflow-hidden overflow-ellipsis rounded-lg bg-white px-2 py-4 text-xs shadow"
     >
       <div className="mb-1 flex items-center gap-2 text-sm">
         <AvatarImage
@@ -61,15 +62,22 @@ export const OpportunityCard: React.FC<{
       <div className="flex items-center justify-between px-2">
         <div className="tracking-wider">Conversion ratio:</div>
         <div className="badge bg-green-light text-green">
-          <IoIosCalculator className="mr-1 text-sm" />{" "}
-          {opportunity.conversionRatioPercentage}%{" "}
+          <IoIosCalculator className="mr-1 text-sm" />
+          {opportunity.conversionRatioPercentage}%
         </div>
       </div>
       <div className="flex items-center justify-between px-2">
         <div className="tracking-wider">Completions:</div>
         <div className="badge bg-green-light text-green">
-          <IoMdCheckmarkCircleOutline className="mr-1 text-sm" />{" "}
+          <IoMdCheckmarkCircleOutline className="mr-1 text-sm" />
           {opportunity.completedCount}
+        </div>
+      </div>
+      <div className="flex items-center justify-between px-2">
+        <div className="tracking-wider">Go-To Clicks:</div>
+        <div className="badge bg-green-light text-green">
+          <IoMdOpen className="mr-1 text-sm" />
+          {opportunity.navigatedExternalLinkCount}
         </div>
       </div>
       <div className="flex items-center justify-between px-2">

@@ -834,9 +834,9 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 <div className="mt-2 flex flex-col gap-4 md:flex-row">
                   {/* VIEWED COMPLETED */}
-                  {dataEngagement?.opportunities?.viewedCompleted && (
+                  {dataEngagement?.opportunities?.engagements && (
                     <LineChart
-                      data={dataEngagement.opportunities.viewedCompleted}
+                      data={dataEngagement.opportunities.engagements}
                       opportunityCount={
                         dataEngagement?.opportunities?.engaged?.count ?? 0
                       }
@@ -848,7 +848,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                       {/* AVERAGE CONVERSION RATE */}
                       <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow md:w-[333px]">
                         <div className="flex flex-row items-center gap-3">
-                          {/* <IoMdHourglass className="text-green" /> */}
                           <div className="rounded-lg bg-green-light p-1">
                             <Image
                               src={iconBookmark}
@@ -1291,9 +1290,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                               <thead>
                                 <tr className="border-gray-light text-gray-dark">
                                   <th className="!pl-0">Opportunity</th>
-                                  <th>Views</th>
-                                  <th>Conversion ratio</th>
-                                  <th>Completions</th>
+                                  <th className="text-center">Views</th>
+                                  <th className="text-center">
+                                    Conversion ratio
+                                  </th>
+                                  <th className="text-center">Completions</th>
+                                  <th className="text-center">Go-To Clicks</th>
                                   <th className="text-center">Status</th>
                                 </tr>
                               </thead>
@@ -1335,6 +1337,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                                           <IoMdPerson className="mr-1" />
                                           {opportunity.completedCount}
                                         </span>
+                                      </td>
+                                      <td className="text-center">
+                                        {opportunity.navigatedExternalLinkCount}
                                       </td>
                                       <td className="whitespace-nowrap text-center">
                                         {opportunity.status}

@@ -49,7 +49,7 @@ export interface OrganizationSearchResultsSummary {
 }
 
 export interface OrganizationOpportunity {
-  viewedCompleted: TimeIntervalSummary;
+  engagements: TimeIntervalSummary;
   completion: OpportunityCompletion;
   conversionRate: OpportunityConversionRatio;
   reward: OpportunityReward;
@@ -123,6 +123,7 @@ export interface OpportunityInfoAnalytics {
   organizationLogoId: string | null;
   organizationLogoURL: string | null;
   viewedCount: number;
+  navigatedExternalLinkCount: number;
   completedCount: number;
   conversionRatioPercentage: number;
 }
