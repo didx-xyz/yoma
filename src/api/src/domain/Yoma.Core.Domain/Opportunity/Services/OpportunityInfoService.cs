@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
@@ -40,7 +41,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var opportunity = _opportunityService.GetById(id, true, true, ensureOrganizationAuthorization);
 
       var result = opportunity.ToOpportunityInfo(_appSettings.AppBaseURL);
-      SetParticipantCounts(result);
+      SetEngagementCounts(result);
       return result;
     }
 
@@ -62,7 +63,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       var result = opportunity.ToOpportunityInfo(_appSettings.AppBaseURL);
-      SetParticipantCounts(result);
+      SetEngagementCounts(result);
       return result;
     }
 
@@ -80,7 +81,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       var result = opportunity.ToOpportunityInfo(_appSettings.AppBaseURL);
-      SetParticipantCounts(result);
+      SetEngagementCounts(result);
       return result;
     }
 
@@ -94,7 +95,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         Items = searchResult.Items.Select(o => o.ToOpportunityInfo(_appSettings.AppBaseURL)).ToList(),
       };
 
-      results.Items.ForEach(SetParticipantCounts);
+      results.Items.ForEach(SetEngagementCounts);
       return results;
     }
 
@@ -164,7 +165,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         Items = searchResult.Items.Select(o => o.ToOpportunityInfo(_appSettings.AppBaseURL)).ToList(),
       };
 
-      results.Items.ForEach(SetParticipantCounts);
+      results.Items.ForEach(SetEngagementCounts);
       return results;
     }
 
@@ -189,19 +190,31 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #endregion
 
     #region Private Members
-    private void SetParticipantCounts(OpportunityInfo result)
+    private void SetEngagementCounts(OpportunityInfo result)
     {
       var filter = new MyOpportunitySearchFilterAdmin
       {
         TotalCountOnly = true,
         Opportunity = result.Id,
-        Action = MyOpportunity.Action.Verification,
-        VerificationStatuses = [MyOpportunity.VerificationStatus.Pending]
+        Action = MyOpportunity.Action.Viewed,
+        NonActionVerificationPublishedOnly = false
       };
 
+      //viewed
       var searchResult = _myOpportunityService.Search(filter, false);
-      result.ParticipantCountVerificationPending = searchResult.TotalCount ?? default;
-      result.ParticipantCountTotal = result.ParticipantCountVerificationCompleted + result.ParticipantCountVerificationPending;
+      result.CountViewed = searchResult.TotalCount ?? default;
+
+      //NavigatedExternalLink
+      filter.Action = MyOpportunity.Action.NavigatedExternalLink;
+      searchResult = _myOpportunityService.Search(filter, false);
+      result.CountNavigatedExternalLink = searchResult.TotalCount ?? default;
+
+      //participant counts (verifications)
+      filter.Action = MyOpportunity.Action.Verification;
+      filter.VerificationStatuses = [VerificationStatus.Pending];
+      searchResult = _myOpportunityService.Search(filter, false);
+      result.ParticipantCountPending = searchResult.TotalCount ?? default;
+      result.ParticipantCountTotal = result.ParticipantCountCompleted + result.ParticipantCountPending;
     }
     #endregion
   }

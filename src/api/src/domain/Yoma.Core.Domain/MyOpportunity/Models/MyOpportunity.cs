@@ -49,7 +49,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public string OpportunityCommitmentIntervalDescription { get; set; }
 
+    #region Verification Counts
     public int OpportunityParticipantCountTotal { get; set; }
+    #endregion Verification Counts
 
     public DateTimeOffset OpportunityDateStart { get; set; }
 

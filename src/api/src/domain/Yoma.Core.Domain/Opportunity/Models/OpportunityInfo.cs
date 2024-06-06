@@ -55,14 +55,16 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Name("Commitment Interval")]
     public string CommitmentIntervalDescription { get; set; }
 
+    #region Engagement
+    #region Verification Limits and Counts
     [Name("Participant Limit")]
     public int? ParticipantLimit { get; set; }
 
-    [Name("Participant Count Verification Completed")]
-    public int ParticipantCountVerificationCompleted { get; set; }
+    [Name("Participant Count Completed")]
+    public int ParticipantCountCompleted { get; set; }
 
-    [Name("Participant Count Verification Pending")]
-    public int ParticipantCountVerificationPending { get; set; }
+    [Name("Participant Count Pending")]
+    public int ParticipantCountPending { get; set; }
 
     [Name("Participant Count Total")]
     public int ParticipantCountTotal { get; set; }
@@ -71,6 +73,14 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [BooleanFalseValues("No")]
     [BooleanTrueValues("Yes")]
     public bool ParticipantLimitReached { get; set; }
+    #endregion Verification Limits and Counts
+
+    [Name("Count Viewed")]
+    public int CountViewed { get; set; }
+
+    [Name("Count Got-To Clicks")]
+    public int CountNavigatedExternalLink { get; set; }
+    #endregion Engagement
 
     [Ignore]
     public Guid StatusId { get; set; }

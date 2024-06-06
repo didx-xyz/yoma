@@ -277,8 +277,11 @@ namespace Yoma.Core.Domain.Analytics.Services
       { Legend = ["Viewed", "Go-To Clicks", "Completions"], Data = resultsEngagements, Count = [viewedCount, navigatedExternalLinkCount, completedCount] };
 
       //opportunities engaged
-      var opportunityCountEngaged = queryViewed.Select(o => o.OpportunityId).Union(queryCompleted.Select(o => o.OpportunityId)).Distinct().Count();
+      var opportunityCountEngaged =
+        queryViewed.Select(o => o.OpportunityId) //viewed
         .Union(queryNavigatedExternalLink.Select(o => o.OpportunityId)) //navigatedExternalLink
+        .Union(queryCompleted.Select(o => o.OpportunityId)) //completed
+        .Distinct().Count();
       result.Opportunities.Engaged = new OpportunityEngaged { Legend = "Opportunities engaged", Count = opportunityCountEngaged };
 
       //average time
@@ -655,6 +658,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
     private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryViewed(IOrganizationSearchFilterBase filter, IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
     {
+      //historical/admin context; include all irrespective of related opportunity and organization status
       var actionId = _myOpportunityActionService.GetByName(MyOpportunity.Action.Viewed.ToString()).Id;
 
       var query = queryBase.Where(o => o.ActionId == actionId);
@@ -677,6 +681,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
     private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryNavigatedExternalLink(IOrganizationSearchFilterBase filter, IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
     {
+      //historical/admin context; include all irrespective of related opportunity and organization status
       var actionId = _myOpportunityActionService.GetByName(MyOpportunity.Action.NavigatedExternalLink.ToString()).Id;
 
       var query = queryBase.Where(o => o.ActionId == actionId);
@@ -699,6 +704,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
     private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryCompleted(IOrganizationSearchFilterBase filter, IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
     {
+      //historical/admin context; all irrespective of related opportunity and organization status (default behaviour)
       var actionId = _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id;
       var verificationStatusId = _myOpportunityVerificationStatusService.GetByName(MyOpportunity.VerificationStatus.Completed.ToString()).Id;
 

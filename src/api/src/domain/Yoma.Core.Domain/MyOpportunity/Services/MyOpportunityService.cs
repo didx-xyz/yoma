@@ -313,9 +313,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         case Action.NavigatedExternalLink:
           orderInstructions.Add(new() { OrderBy = o => o.DateModified, SortOrder = filter.SortOrder });
 
-          //published: relating to active opportunities (irrespective of started) that relates to active organizations
-          query = query.Where(o => o.OpportunityStatusId == opportunityStatusActiveId);
-          query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
+          if (filter.NonActionVerificationPublishedOnly) //default behaviour
+          {
+            //published: relating to active opportunities (irrespective of started) that relates to active organizations
+            query = query.Where(o => o.OpportunityStatusId == opportunityStatusActiveId);
+            query = query.Where(o => o.OrganizationStatusId == organizationStatusActiveId);
+          }
 
           break;
 
@@ -392,7 +395,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       });
       result.Items = items.Select(o => o.ToInfo()).ToList();
 
-      result.Items.ForEach(o => SetParticipantCounts(o));
+      result.Items.ForEach(o => SetEngagementCounts(o));
       return result;
     }
 
@@ -880,7 +883,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return string.IsNullOrEmpty(currentComment) ? info : $"{currentComment}{System.Environment.NewLine}{info}";
     }
 
-    private void SetParticipantCounts(MyOpportunityInfo result)
+    private void SetEngagementCounts(MyOpportunityInfo result)
     {
       var filter = new MyOpportunitySearchFilterAdmin
       {

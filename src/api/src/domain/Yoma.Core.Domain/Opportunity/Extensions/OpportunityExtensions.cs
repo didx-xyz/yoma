@@ -132,7 +132,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         CommitmentIntervalCount = value.CommitmentIntervalCount,
         CommitmentIntervalDescription = value.CommitmentIntervalDescription,
         ParticipantLimit = value.ParticipantLimit,
-        ParticipantCountVerificationCompleted = value.ParticipantCount ?? default,
+        ParticipantCountCompleted = value.ParticipantCount ?? default,
         ParticipantLimitReached = value.ParticipantCount.HasValue && value.ParticipantLimit.HasValue && value.ParticipantCount.Value >= value.ParticipantLimit.Value,
         StatusId = value.StatusId,
         Status = value.Status,

@@ -47,7 +47,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Opportunity_TypeId_OrganizationId_ZltoReward_DifficultyId_C~",
           schema: "Opportunity",
           table: "Opportunity",
-          columns: new[] { "TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "Featured", "EngagementTypeId", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId" });
+          columns: ["TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "Featured", "EngagementTypeId", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_EngagementType_Name",
@@ -99,7 +99,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Opportunity_TypeId_OrganizationId_ZltoReward_DifficultyId_C~",
           schema: "Opportunity",
           table: "Opportunity",
-          columns: new[] { "TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "Featured", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId" });
+          columns: ["TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "Featured", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId"]);
     }
   }
 }
