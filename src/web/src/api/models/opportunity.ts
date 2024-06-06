@@ -37,7 +37,7 @@ export interface Opportunity {
   organizationStatus: OrganizationStatus;
   summary: string | null;
   instructions: string | null;
-  uRL: string | null;
+  url: string | null;
   zltoReward: number | null;
   zltoRewardPool: number | null;
   zltoRewardCumulative: number | null;
@@ -60,7 +60,7 @@ export interface Opportunity {
   dateStart: string;
   dateEnd: string | null;
   credentialIssuanceEnabled: boolean;
-  sSISchemaName: string | null;
+  ssiSchemaName: string | null;
   featured: boolean | null;
   engagementTypeId: string | null;
   engagementType: string | null;
@@ -84,34 +84,77 @@ export interface OpportunityInfo {
   organizationId: string;
   organizationName: string;
   organizationLogoURL: string | null;
+  summary: string | null;
   instructions: string | null;
-  url: string | null; //NB:
+  url: string | null;
   zltoReward: number | null;
+  zltoRewardCumulative: number | null;
   yomaReward: number | null;
+  yomaRewardCumulative: number | null;
+  verificationEnabled: boolean;
+  verificationMethod: VerificationMethod | null | string; //NB: comes back as string
   difficulty: string;
   commitmentInterval: string;
   commitmentIntervalCount: number;
   commitmentIntervalDescription: string;
   participantLimit: number | null;
-  participantCountVerificationCompleted: number;
-  participantCountVerificationPending: number;
+  participantCountCompleted: number;
+  participantCountPending: number;
   participantCountTotal: number;
   participantLimitReached: boolean;
+  countViewed: number;
+  countNavigatedExternalLink: number;
   statusId: string;
-  status: Status | string; //NB: hack comes back as string
+  status: Status | string; //NB: comes back as string
   keywords: string[] | null;
   dateStart: string;
   dateEnd: string | null;
+  featured: boolean;
+  engagementType: string | null;
   published: boolean;
+  yomaInfoURL: string;
   categories: OpportunityCategory[] | null;
   countries: Country[] | null;
   languages: Language[] | null;
   skills: Skill[] | null;
-  verificationEnabled: boolean;
-  verificationMethod: VerificationMethod | string | null; //ISSUE: comes back as string
   verificationTypes: OpportunityVerificationType[] | null;
-  featured: boolean;
 }
+// export interface OpportunityInfo {
+//   id: string;
+//   title: string;
+//   description: string;
+//   type: string;
+//   organizationId: string;
+//   organizationName: string;
+//   organizationLogoURL: string | null;
+//   instructions: string | null;
+//   url: string | null; //NB:
+//   zltoReward: number | null;
+//   yomaReward: number | null;
+//   difficulty: string;
+//   commitmentInterval: string;
+//   commitmentIntervalCount: number;
+//   commitmentIntervalDescription: string;
+//   participantLimit: number | null;
+//   participantCountVerificationCompleted: number;
+//   participantCountVerificationPending: number;
+//   participantCountTotal: number;
+//   participantLimitReached: boolean;
+//   statusId: string;
+//   status: Status | string; //NB: hack comes back as string
+//   keywords: string[] | null;
+//   dateStart: string;
+//   dateEnd: string | null;
+//   published: boolean;
+//   categories: OpportunityCategory[] | null;
+//   countries: Country[] | null;
+//   languages: Language[] | null;
+//   skills: Skill[] | null;
+//   verificationEnabled: boolean;
+//   verificationMethod: VerificationMethod | string | null; //ISSUE: comes back as string
+//   verificationTypes: OpportunityVerificationType[] | null;
+//   featured: boolean;
+// }
 
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
   publishedStates: PublishedState[] | null | string[]; //NB

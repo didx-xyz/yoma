@@ -91,6 +91,6 @@ export const getEngagementTypes = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<EngagementType[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.get<TimeInterval[]>("/lookup/TimeInterval");
+  const { data } = await instance.get<TimeInterval[]>("/lookup/engagement");
   return data;
 };
