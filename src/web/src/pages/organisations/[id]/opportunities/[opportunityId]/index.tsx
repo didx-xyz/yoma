@@ -42,6 +42,7 @@ import {
   getLanguages,
   getSkills,
   getTimeIntervals,
+  getEngagementTypes,
 } from "~/api/services/lookups";
 import {
   updateOpportunity,
@@ -190,8 +191,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const [isLoading, setIsLoading] = useState(false);
 
   // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(oppExpiredModalVisible);
-  useDisableBodyScroll(saveChangesDialogVisible);
+  useDisableBodyScroll(oppExpiredModalVisible || saveChangesDialogVisible);
 
   // 👇 use prefetched queries from server
   const { data: categories } = useQuery<SelectOption[]>({
@@ -253,12 +253,20 @@ const OpportunityDetails: NextPageWithLayout<{
       })),
     enabled: !error,
   });
+  const { data: engagementTypes } = useQuery<SelectOption[]>({
+    queryKey: ["engagementTypes", "selectOptions"],
+    queryFn: async () =>
+      (await getEngagementTypes()).map((c) => ({
+        value: c.id,
+        label: c.name,
+      })),
+    enabled: !error,
+  });
   const { data: schemas } = useQuery({
     queryKey: ["schemas"],
     queryFn: async () => getSchemas(SchemaType.Opportunity),
     enabled: !error,
   });
-
   const schemasOptions = useMemo<SelectOption[]>(
     () =>
       schemas?.map((c) => ({
@@ -281,7 +289,6 @@ const OpportunityDetails: NextPageWithLayout<{
     typeId: opportunity?.typeId ?? "",
     categories: opportunity?.categories?.map((x) => x.id) ?? [],
     uRL: opportunity?.url ?? "",
-
     languages: opportunity?.languages?.map((x) => x.id) ?? [],
     countries: opportunity?.countries?.map((x) => x.id) ?? [],
     difficultyId: opportunity?.difficultyId ?? "",
@@ -290,24 +297,20 @@ const OpportunityDetails: NextPageWithLayout<{
     dateStart: opportunity?.dateStart ?? null,
     dateEnd: opportunity?.dateEnd ?? null,
     participantLimit: opportunity?.participantLimit ?? null,
-
     zltoReward: opportunity?.zltoReward ?? null,
     zltoRewardPool: opportunity?.zltoRewardPool ?? null,
     yomaReward: opportunity?.yomaReward ?? null,
     yomaRewardPool: opportunity?.yomaRewardPool ?? null,
     skills: opportunity?.skills?.map((x) => x.id) ?? [],
     keywords: opportunity?.keywords ?? [],
-
     verificationEnabled: opportunity?.verificationEnabled ?? null,
-    // enum value comes as string from server, convert to number
     verificationMethod: opportunity?.verificationMethod
       ? VerificationMethod[opportunity.verificationMethod]
       : null,
     verificationTypes: opportunity?.verificationTypes ?? [],
-
     credentialIssuanceEnabled: opportunity?.credentialIssuanceEnabled ?? false,
     ssiSchemaName: opportunity?.ssiSchemaName ?? null,
-
+    engagementTypeId: opportunity?.engagementTypeId ?? null,
     organizationId: id,
     postAsActive: opportunity?.published ?? false,
     instructions: opportunity?.instructions ?? "",

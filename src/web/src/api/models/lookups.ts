@@ -47,3 +47,8 @@ export interface Education {
   id: string;
   name: string;
 }
+
+export interface EngagementType {
+  id: string;
+  name: string;
+}

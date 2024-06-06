@@ -37,7 +37,7 @@ export interface Opportunity {
   organizationStatus: OrganizationStatus;
   summary: string | null;
   instructions: string | null;
-  url: string | null;
+  uRL: string | null;
   zltoReward: number | null;
   zltoRewardPool: number | null;
   zltoRewardCumulative: number | null;
@@ -60,11 +60,14 @@ export interface Opportunity {
   dateStart: string;
   dateEnd: string | null;
   credentialIssuanceEnabled: boolean;
-  ssiSchemaName: string | null;
+  sSISchemaName: string | null;
+  featured: boolean | null;
+  engagementTypeId: string | null;
+  engagementType: string | null;
   dateCreated: string;
-  createdBy: string;
+  createdByUserId: string;
   dateModified: string;
-  modifiedBy: string;
+  modifiedByUserId: string;
   published: boolean;
   categories: OpportunityCategory[] | null;
   countries: Country[] | null;
@@ -105,7 +108,7 @@ export interface OpportunityInfo {
   languages: Language[] | null;
   skills: Skill[] | null;
   verificationEnabled: boolean;
-  verificationMethod: /*VerificationMethod*/ string | null; //ISSUE: comes back as string
+  verificationMethod: VerificationMethod | string | null; //ISSUE: comes back as string
   verificationTypes: OpportunityVerificationType[] | null;
   featured: boolean;
 }
@@ -224,6 +227,7 @@ export interface OpportunityRequestBase {
   dateEnd: string | null;
   credentialIssuanceEnabled: boolean;
   ssiSchemaName: string | null;
+  engagementTypeId: string | null;
   categories: string[];
   countries: string[];
   languages: string[];

@@ -79,7 +79,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Return a list of engagement types")]
     [HttpGet("engagement")]
-    [ProducesResponseType(typeof(List<Education>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(List<EngagementType>), (int)HttpStatusCode.OK)]
     public IActionResult ListEngagementTypes()
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ListEngagementTypes));
