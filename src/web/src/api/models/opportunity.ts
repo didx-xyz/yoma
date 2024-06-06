@@ -1,11 +1,6 @@
 import type { PaginationFilter } from "./common";
 import type { Country, Language, Skill } from "./lookups";
 
-// NB: this is a combined model for re-uasability
-export interface OpportunitySearchFilterCombined
-  extends OpportunitySearchFilter,
-    OpportunitySearchFilterAdmin {}
-
 export interface OpportunitySearchFilterAdmin
   extends OpportunitySearchFilterBase {
   startDate: string | null;

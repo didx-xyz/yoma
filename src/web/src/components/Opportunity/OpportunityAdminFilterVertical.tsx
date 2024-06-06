@@ -1,27 +1,27 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
-import { Controller, type FieldValues, useForm } from "react-hook-form";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { Controller, useForm, type FieldValues } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
+import Select from "react-select";
 import zod from "zod";
+import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import {
+  OpportunityFilterOptions,
   type OpportunityCategory,
   type OpportunitySearchCriteriaCommitmentInterval,
   type OpportunitySearchCriteriaZltoReward,
+  type OpportunitySearchFilterAdmin,
   type OpportunityType,
-  OpportunityFilterOptions,
-  type OpportunitySearchFilter,
 } from "~/api/models/opportunity";
-import type { Country, Language, SelectOption } from "~/api/models/lookups";
-import Select from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
 import { AvatarImage } from "../AvatarImage";
 
-export const OpportunityFilterVertical: React.FC<{
+export const OpportunityAdminFilterVertical: React.FC<{
   htmlRef: HTMLDivElement;
-  opportunitySearchFilter: OpportunitySearchFilter | null;
+  opportunitySearchFilter: OpportunitySearchFilterAdmin | null;
   lookups_categories: OpportunityCategory[];
   lookups_countries: Country[];
   lookups_languages: Language[];
@@ -31,7 +31,7 @@ export const OpportunityFilterVertical: React.FC<{
   lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
   lookups_publishedStates: SelectOption[];
   lookups_statuses: SelectOption[];
-  onSubmit?: (fieldValues: OpportunitySearchFilter) => void;
+  onSubmit?: (fieldValues: OpportunitySearchFilterAdmin) => void;
   onCancel?: () => void;
   clearButtonText?: string;
   submitButtonText?: string;
@@ -90,7 +90,7 @@ export const OpportunityFilterVertical: React.FC<{
   // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      if (onSubmit) onSubmit(data as OpportunitySearchFilter);
+      if (onSubmit) onSubmit(data as OpportunitySearchFilterAdmin);
     },
     [onSubmit],
   );

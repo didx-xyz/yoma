@@ -1,26 +1,28 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
-import type { GetStaticProps, GetStaticPaths } from "next";
+import type { GetStaticPaths, GetStaticProps } from "next";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import React, {
-  type ReactElement,
+import {
   useCallback,
-  useState,
   useEffect,
-  useRef,
   useMemo,
+  useRef,
+  useState,
+  type ReactElement,
 } from "react";
 import ReactModal from "react-modal";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import {
+  OpportunityFilterOptions,
   PublishedState,
   type OpportunityCategory,
   type OpportunitySearchCriteriaCommitmentInterval,
   type OpportunitySearchCriteriaZltoReward,
-  type OpportunitySearchFilterCombined,
+  type OpportunitySearchFilter,
   type OpportunitySearchResultsInfo,
   type OpportunityType,
-  type OpportunitySearchFilter,
 } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import {
@@ -33,32 +35,29 @@ import {
   getZltoRewardRanges,
   searchOpportunities,
 } from "~/api/services/opportunities";
+import FilterBadges from "~/components/FilterBadges";
 import MainLayout from "~/components/Layout/Main";
+import NoRowsMessage from "~/components/NoRowsMessage";
+import OpportunitiesCarousel from "~/components/Opportunity/OpportunitiesCarousel";
 import { OpportunitiesGrid } from "~/components/Opportunity/OpportunitiesGrid";
-import { PageBackground } from "~/components/PageBackground";
-import { SearchInputLarge } from "~/components/SearchInputLarge";
-import { screenWidthAtom } from "~/lib/store";
-import { type NextPageWithLayout } from "~/pages/_app";
+import OpportunityCategoriesHorizontalFilter from "~/components/Opportunity/OpportunityCategoriesHorizontalFilter";
 import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
+import { PageBackground } from "~/components/PageBackground";
+import { PaginationButtons } from "~/components/PaginationButtons";
+import { SearchInputLarge } from "~/components/SearchInputLarge";
+import { Loading } from "~/components/Status/Loading";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
-  PAGE_SIZE,
+  OPPORTUNITY_TYPES_EVENT,
   OPPORTUNITY_TYPES_LEARNING,
+  OPPORTUNITY_TYPES_OTHER,
   OPPORTUNITY_TYPES_TASK,
+  PAGE_SIZE,
   PAGE_SIZE_MINIMUM,
   VIEWPORT_SIZE,
-  OPPORTUNITY_TYPES_EVENT,
-  OPPORTUNITY_TYPES_OTHER,
 } from "~/lib/constants";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import NoRowsMessage from "~/components/NoRowsMessage";
-import { OpportunityFilterHorizontal } from "~/components/Opportunity/OpportunityFilterHorizontal";
-import { Loading } from "~/components/Status/Loading";
-import { PaginationButtons } from "~/components/PaginationButtons";
-import { useSession } from "next-auth/react";
-import { OpportunityFilterOptions } from "~/api/models/opportunity";
-import OpportunitiesCarousel from "~/components/Opportunity/OpportunitiesCarousel";
-import FilterBadges from "~/components/FilterBadges";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { screenWidthAtom } from "~/lib/store";
+import { type NextPageWithLayout } from "~/pages/_app";
 
 // 👇 SSG
 // This page is statically generated at build time on server-side
@@ -306,6 +305,7 @@ const Opportunities: NextPageWithLayout<{
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
   const screenWidth = useAtomValue(screenWidthAtom);
   const queryClient = useQueryClient();
+  useDisableBodyScroll(filterFullWindowVisible);
 
   const lookups_publishedStates: SelectOption[] = [
     { value: "0", label: "Not started" },
@@ -313,6 +313,7 @@ const Opportunities: NextPageWithLayout<{
     ...(session ? [{ value: "2", label: "Expired / Upload Only" }] : []), // logged in users can see expired
   ];
 
+  //#region filters
   // get filter parameters from route
   const {
     query,
@@ -481,7 +482,7 @@ const Opportunities: NextPageWithLayout<{
 
   // search filter state
   const [opportunitySearchFilter, setOpportunitySearchFilter] =
-    useState<OpportunitySearchFilterCombined>({
+    useState<OpportunitySearchFilter>({
       pageNumber: page ? parseInt(page.toString()) : 1,
       pageSize: PAGE_SIZE,
       categories: null,
@@ -496,9 +497,6 @@ const Opportunities: NextPageWithLayout<{
       organizations: null,
       zltoRewardRanges: null,
       publishedStates: null,
-      startDate: null,
-      endDate: null,
-      statuses: null,
     });
 
   // sets the filter values from the querystring to the filter state
@@ -536,9 +534,6 @@ const Opportunities: NextPageWithLayout<{
           publishedStates != undefined
             ? publishedStates?.toString().split(",")
             : null,
-        startDate: null,
-        endDate: null,
-        statuses: null,
       });
   }, [
     setOpportunitySearchFilter,
@@ -562,30 +557,11 @@ const Opportunities: NextPageWithLayout<{
   useEffect(() => {
     if (screenWidth < VIEWPORT_SIZE.MD) setFilterFullWindowVisible(false);
   }, [screenWidth]);
+  //#endregion filters
 
-  // 📜 scroll to results when search is executed
-  // useEffect(() => {
-  //   if (searchResults && !isLoading) {
-  //     setTimeout(() => {
-  //       const element = document.getElementById("results");
-
-  //       if (element) {
-  //         window.scrollTo({
-  //           top: element.offsetTop - 55,
-  //           behavior: "smooth",
-  //         });
-  //       }
-  //     }, 500);
-  //   }
-  // }, [searchResults, isLoading]);
-
-  const currentPage = useMemo(() => {
-    return page ? parseInt(page as string) : 1;
-  }, [page]);
-
-  // 🎈 FUNCTIONS
+  //#region functions
   const getSearchFilterAsQueryString = useCallback(
-    (opportunitySearchFilter: OpportunitySearchFilterCombined) => {
+    (opportunitySearchFilter: OpportunitySearchFilter) => {
       if (!opportunitySearchFilter) return null;
 
       // construct querystring parameters from filter
@@ -693,7 +669,7 @@ const Opportunities: NextPageWithLayout<{
     [],
   );
   const redirectWithSearchFilterParams = useCallback(
-    (filter: OpportunitySearchFilterCombined) => {
+    (filter: OpportunitySearchFilter) => {
       let url = "/opportunities";
       const params = getSearchFilterAsQueryString(filter);
       if (params != null && params.size > 0)
@@ -704,8 +680,9 @@ const Opportunities: NextPageWithLayout<{
     },
     [router, getSearchFilterAsQueryString],
   );
+  //#endregion functions
 
-  // 🔔 CHANGE EVENTS
+  //#region events
   const handlePagerChange = useCallback(
     (value: number) => {
       opportunitySearchFilter.pageNumber = value;
@@ -728,13 +705,12 @@ const Opportunities: NextPageWithLayout<{
     [opportunitySearchFilter, redirectWithSearchFilterParams],
   );
 
-  // filter popup handlers
   const onCloseFilter = useCallback(() => {
     setFilterFullWindowVisible(false);
   }, [setFilterFullWindowVisible]);
 
   const onSubmitFilter = useCallback(
-    (val: OpportunitySearchFilterCombined) => {
+    (val: OpportunitySearchFilter) => {
       val.pageNumber = null; // clear paging when changing filters
       redirectWithSearchFilterParams(val);
     },
@@ -745,7 +721,26 @@ const Opportunities: NextPageWithLayout<{
     void router.push("/opportunities", undefined, { scroll: true });
   }, [router]);
 
-  // 🎠 CAROUSEL: data fetching
+  const onClickCategoryFilter = useCallback(
+    (cat: OpportunityCategory) => {
+      if (!opportunitySearchFilter) return;
+
+      const prev = { ...opportunitySearchFilter };
+      prev.categories = prev.categories ?? [];
+
+      if (prev.categories.includes(cat.name)) {
+        prev.categories = prev.categories.filter((x) => x !== cat.name);
+      } else {
+        prev.categories.push(cat.name);
+      }
+
+      onSubmitFilter(prev);
+    },
+    [opportunitySearchFilter, onSubmitFilter],
+  );
+  //#endregion events
+
+  //#region carousels
   const fetchDataAndUpdateCache = useCallback(
     async (
       queryKey: string[],
@@ -1017,9 +1012,7 @@ const Opportunities: NextPageWithLayout<{
     },
     [opportunities_featured, fetchDataAndUpdateCache],
   );
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(filterFullWindowVisible);
+  //#endregion carousels
 
   return (
     <>
@@ -1100,7 +1093,7 @@ const Opportunities: NextPageWithLayout<{
         </div>
 
         {/* FILTER ROW: CATEGORIES DROPDOWN FILTERS (SELECT) FOR COUNTRIES, LANGUAGES, TYPE, ORGANISATIONS ETC  */}
-        <OpportunityFilterHorizontal
+        {/* <OpportunityAdminFilterHorizontal
           htmlRef={myRef.current!}
           opportunitySearchFilter={opportunitySearchFilter}
           lookups_categories={lookups_categories}
@@ -1129,9 +1122,16 @@ const Opportunities: NextPageWithLayout<{
             OpportunityFilterOptions.PUBLISHEDSTATES,
           ]}
           totalCount={isSearchPerformed ? searchResults?.totalCount ?? 0 : 0}
+        /> */}
+
+        {/* FILTER: CATEGORIES */}
+        <OpportunityCategoriesHorizontalFilter
+          lookups_categories={lookups_categories}
+          selected_categories={opportunitySearchFilter?.categories}
+          onClick={onClickCategoryFilter}
         />
 
-        {/* FILTER BADGES */}
+        {/* FILTER: BADGES */}
         <FilterBadges
           searchFilter={opportunitySearchFilter}
           excludeKeys={["pageNumber", "pageSize"]}
@@ -1287,7 +1287,7 @@ const Opportunities: NextPageWithLayout<{
               {searchResults && (searchResults.totalCount as number) > 0 && (
                 <div className="mt-2 grid place-items-center justify-center">
                   <PaginationButtons
-                    currentPage={currentPage}
+                    currentPage={page ? parseInt(page.toString()) : 1}
                     totalItems={searchResults.totalCount as number}
                     pageSize={PAGE_SIZE}
                     showPages={false}

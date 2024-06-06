@@ -1,22 +1,22 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
-import { type FieldValues, Controller, useForm } from "react-hook-form";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { Controller, useForm, type FieldValues } from "react-hook-form";
+import Select, { components, type ValueContainerProps } from "react-select";
 import zod from "zod";
+import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
   OpportunitySearchCriteriaCommitmentInterval,
   OpportunitySearchCriteriaZltoReward,
+  OpportunitySearchFilterAdmin,
   OpportunityType,
-  OpportunitySearchFilterCombined,
 } from "~/api/models/opportunity";
 import { OpportunityFilterOptions } from "~/api/models/opportunity";
-import type { Country, Language, SelectOption } from "~/api/models/lookups";
-import Select, { components, type ValueContainerProps } from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
-import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizontalCard";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
+import OpportunityCategoriesHorizontalFilter from "./OpportunityCategoriesHorizontalFilter";
 
 const ValueContainer = ({
   children,
@@ -55,9 +55,9 @@ const ValueContainer = ({
   );
 };
 
-export const OpportunityFilterHorizontal: React.FC<{
+export const OpportunityAdminFilterHorizontal: React.FC<{
   htmlRef: HTMLDivElement;
-  opportunitySearchFilter: OpportunitySearchFilterCombined | null;
+  opportunitySearchFilter: OpportunitySearchFilterAdmin | null;
   lookups_categories: OpportunityCategory[];
   lookups_countries: Country[];
   lookups_languages: Language[];
@@ -67,7 +67,7 @@ export const OpportunityFilterHorizontal: React.FC<{
   lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
   lookups_publishedStates: SelectOption[];
   lookups_statuses: SelectOption[];
-  onSubmit?: (fieldValues: OpportunitySearchFilterCombined) => void;
+  onSubmit?: (fieldValues: OpportunitySearchFilterAdmin) => void;
   onClear?: () => void;
   onOpenFilterFullWindow?: () => void;
   clearButtonText?: string;
@@ -132,7 +132,7 @@ export const OpportunityFilterHorizontal: React.FC<{
   // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      if (onSubmit) onSubmit(data as OpportunitySearchFilterCombined);
+      if (onSubmit) onSubmit(data as OpportunitySearchFilterAdmin);
     },
     [onSubmit],
   );
@@ -170,18 +170,23 @@ export const OpportunityFilterHorizontal: React.FC<{
             <div className="flex justify-center gap-2">
               {/* CATEGORIES */}
               {filterOptions?.includes(OpportunityFilterOptions.CATEGORIES) && (
-                <div className="flex justify-center gap-4 md:w-full">
-                  {lookups_categories.map((item) => (
-                    <OpportunityCategoryHorizontalCard
-                      key={`categories_${item.id}`}
-                      data={item}
-                      selected={opportunitySearchFilter?.categories?.includes(
-                        item.name,
-                      )}
-                      onClick={onClickCategoryFilter}
-                    />
-                  ))}
-                </div>
+                <OpportunityCategoriesHorizontalFilter
+                  lookups_categories={lookups_categories}
+                  selected_categories={opportunitySearchFilter?.categories}
+                  onClick={onClickCategoryFilter}
+                />
+                // <div className="flex justify-center gap-4 md:w-full">
+                //   {lookups_categories.map((item) => (
+                //     <OpportunityCategoryHorizontalCard
+                //       key={`categories_${item.id}`}
+                //       data={item}
+                //       selected={opportunitySearchFilter?.categories?.includes(
+                //         item.name,
+                //       )}
+                //       onClick={onClickCategoryFilter}
+                //     />
+                //   ))}
+                // </div>
               )}
             </div>
           </div>

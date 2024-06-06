@@ -40,7 +40,7 @@ export const SearchInputLarge: React.FC<{
         {openFilter && (
           <button
             type="button"
-            className="bg-theme btn join-item inline-flex items-center justify-center rounded-l-full border-none p-3 text-white brightness-[1.12] hover:brightness-95 lg:hidden"
+            className="bg-theme btn join-item inline-flex items-center justify-center rounded-l-full border-none p-3 text-white brightness-[1.12] hover:brightness-95"
             onClick={() => openFilter(true)}
           >
             <IoMdOptions className="h-5 w-5" />

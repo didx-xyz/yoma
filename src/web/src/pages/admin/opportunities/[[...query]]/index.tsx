@@ -1,57 +1,57 @@
 import { useQuery } from "@tanstack/react-query";
+import FileSaver from "file-saver";
+import { useAtomValue } from "jotai";
 import type { GetStaticPaths, GetStaticProps } from "next";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import React, {
-  type ReactElement,
-  useCallback,
-  useState,
-  useRef,
-  useMemo,
-  useEffect,
-} from "react";
-import { OpportunityFilterOptions } from "~/api/models/opportunity";
-import type { OrganizationInfo } from "~/api/models/organisation";
-import MainLayout from "~/components/Layout/Main";
-import NoRowsMessage from "~/components/NoRowsMessage";
-import { SearchInputLarge } from "~/components/SearchInputLarge";
-import { PAGE_SIZE, PAGE_SIZE_MAXIMUM, THEME_BLUE } from "~/lib/constants";
-import { type NextPageWithLayout } from "~/pages/_app";
+import iconBell from "public/images/icon-bell.webp";
+import iconZlto from "public/images/icon-zlto.svg";
 import {
-  getCommitmentIntervals,
-  getOpportunitiesAdmin,
-  getOpportunitiesAdminExportToCSV,
-  getCategoriesAdmin,
-  getLanguagesAdmin,
-  getOrganisationsAdmin,
-  getCountriesAdmin,
-  getOpportunityTypes,
-  getZltoRewardRanges,
-} from "~/api/services/opportunities";
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+} from "react";
+import { IoMdDownload, IoMdPerson } from "react-icons/io";
+import ReactModal from "react-modal";
+import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
   OpportunitySearchCriteriaCommitmentInterval,
   OpportunitySearchCriteriaZltoReward,
-  OpportunitySearchFilterCombined,
+  OpportunitySearchFilterAdmin,
   OpportunitySearchResultsInfo,
   OpportunityType,
 } from "~/api/models/opportunity";
+import { OpportunityFilterOptions } from "~/api/models/opportunity";
+import type { OrganizationInfo } from "~/api/models/organisation";
+import {
+  getCategoriesAdmin,
+  getCommitmentIntervals,
+  getCountriesAdmin,
+  getLanguagesAdmin,
+  getOpportunitiesAdmin,
+  getOpportunitiesAdminExportToCSV,
+  getOpportunityTypes,
+  getOrganisationsAdmin,
+  getZltoRewardRanges,
+} from "~/api/services/opportunities";
+import MainLayout from "~/components/Layout/Main";
+import NoRowsMessage from "~/components/NoRowsMessage";
+import { OpportunityAdminFilterHorizontal } from "~/components/Opportunity/OpportunityAdminFilterHorizontal";
+import { OpportunityAdminFilterVertical } from "~/components/Opportunity/OpportunityAdminFilterVertical";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
-import { OpportunityFilterHorizontal } from "~/components/Opportunity/OpportunityFilterHorizontal";
-import type { Country, Language, SelectOption } from "~/api/models/lookups";
+import { SearchInputLarge } from "~/components/SearchInputLarge";
 import { Loading } from "~/components/Status/Loading";
-import FileSaver from "file-saver";
-import { useAtomValue } from "jotai";
-import { screenWidthAtom } from "~/lib/store";
-import ReactModal from "react-modal";
-import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
-import iconBell from "public/images/icon-bell.webp";
-import { IoMdDownload, IoMdPerson } from "react-icons/io";
-import iconZlto from "public/images/icon-zlto.svg";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { PAGE_SIZE, PAGE_SIZE_MAXIMUM, THEME_BLUE } from "~/lib/constants";
+import { screenWidthAtom } from "~/lib/store";
+import { type NextPageWithLayout } from "~/pages/_app";
 
 // 👇 SSG
 // This function gets called at build time on server-side.
@@ -294,7 +294,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
   // search filter state
   const [opportunitySearchFilter, setOpportunitySearchFilter] =
-    useState<OpportunitySearchFilterCombined>({
+    useState<OpportunitySearchFilterAdmin>({
       pageNumber: page ? parseInt(page.toString()) : 1,
       pageSize: PAGE_SIZE,
       categories: null,
@@ -303,12 +303,9 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       types: null,
       valueContains: null,
       commitmentIntervals: null,
-      mostViewed: null,
-      mostCompleted: null,
       featured: null,
       organizations: null,
       zltoRewardRanges: null,
-      publishedStates: null,
       startDate: null,
       endDate: null,
       statuses: null,
@@ -321,8 +318,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
         valueContains: query ? decodeURIComponent(query.toString()) : null,
-        mostViewed: null,
-        mostCompleted: null,
         featured: null,
         types: types != undefined ? types?.toString().split(",") : null,
         categories:
@@ -345,7 +340,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           zltoRewardRanges != undefined
             ? zltoRewardRanges?.toString().split(",")
             : null,
-        publishedStates: null,
         startDate: startDate != undefined ? startDate.toString() : null,
         endDate: endDate != undefined ? endDate.toString() : null,
         statuses:
@@ -375,7 +369,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
-    (opportunitySearchFilter: OpportunitySearchFilterCombined) => {
+    (opportunitySearchFilter: OpportunitySearchFilterAdmin) => {
       if (!opportunitySearchFilter) return null;
 
       // construct querystring parameters from filter
@@ -467,7 +461,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   );
 
   const redirectWithSearchFilterParams = useCallback(
-    (filter: OpportunitySearchFilterCombined) => {
+    (filter: OpportunitySearchFilterAdmin) => {
       let url = "/admin/opportunities";
       const params = getSearchFilterAsQueryString(filter);
       if (params != null && params.size > 0)
@@ -508,7 +502,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   }, [setFilterFullWindowVisible]);
 
   const onSubmitFilter = useCallback(
-    (val: OpportunitySearchFilterCombined) => {
+    (val: OpportunitySearchFilterAdmin) => {
       redirectWithSearchFilterParams(val);
     },
     [redirectWithSearchFilterParams],
@@ -564,7 +558,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           lookups_countries &&
           lookups_languages &&
           lookups_organisations && (
-            <OpportunityFilterVertical
+            <OpportunityAdminFilterVertical
               htmlRef={myRef.current!}
               opportunitySearchFilter={opportunitySearchFilter}
               lookups_categories={lookups_categories}
@@ -701,7 +695,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             lookups_countries &&
             lookups_languages &&
             lookups_organisations && (
-              <OpportunityFilterHorizontal
+              <OpportunityAdminFilterHorizontal
                 htmlRef={myRef.current!}
                 opportunitySearchFilter={opportunitySearchFilter}
                 lookups_categories={lookups_categories}
