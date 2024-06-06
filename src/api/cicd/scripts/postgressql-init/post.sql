@@ -208,7 +208,7 @@ BEGIN
 	        "Id", "Title", "Description", "TypeId", "OrganizationId", "Summary", "Instructions", "URL", "ZltoReward", "ZltoRewardPool",
 	        "ZltoRewardCumulative", "YomaReward", "YomaRewardPool", "YomaRewardCumulative", "VerificationEnabled", "VerificationMethod",
 	        "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "ParticipantLimit", "ParticipantCount", "StatusId",
-	        "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "SSISchemaName", "DateCreated", "CreatedByUserId",
+	        "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "SSISchemaName", "Featured", "EngagementTypeId", "DateCreated", "CreatedByUserId",
 	        "DateModified", "ModifiedByUserId"
 	    )
 	    SELECT
@@ -279,6 +279,8 @@ BEGIN
                 FALSE
             END as "CredentialIssuanceEnabled",
 	        NULL as "SSISchemaName",
+            CAST(CASE WHEN RANDOM() < 0.5 THEN 1 ELSE 0 END AS BOOLEAN) as "Featured",
+            (SELECT "Id" FROM "Lookup"."EngagementType" ORDER BY RANDOM() LIMIT 1) as "EngagementTypeId",
 	        V_DateCreated as "DateCreated",
 	        (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testorgadminuser@gmail.com') as "CreatedByUserId",
 	        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') as "DateModified",
@@ -398,6 +400,26 @@ SELECT
 	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
 	O."Id",
 	(SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Viewed'),
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
+	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+FROM "Opportunity"."Opportunity" O
+WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" = 'Active');
+
+-- NavigatedExternalLink
+INSERT INTO "Opportunity"."MyOpportunity"("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
+           "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified")
+SELECT
+	gen_random_uuid(),
+	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
+	O."Id",
+	(SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'NavigatedExternalLink'),
 	NULL,
 	NULL,
 	NULL,
