@@ -272,7 +272,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       entity.CredentialIssuanceEnabled = item.CredentialIssuanceEnabled;
       entity.SSISchemaName = item.SSISchemaName;
       entity.Featured = item.Featured;
-      entity.EngagementTypeId = item.EngagementTypeId;  
+      entity.EngagementTypeId = item.EngagementTypeId;
       entity.DateModified = item.DateModified;
       entity.ModifiedByUserId = item.ModifiedByUserId;
 

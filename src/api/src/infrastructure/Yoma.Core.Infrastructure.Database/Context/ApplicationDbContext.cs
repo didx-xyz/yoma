@@ -62,7 +62,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
     public DbSet<Education> Education { get; set; }
 
-    public DbSet<EngagementType> EngagementType { get; set; } 
+    public DbSet<EngagementType> EngagementType { get; set; }
 
     public DbSet<Gender> Gender { get; set; }
 
