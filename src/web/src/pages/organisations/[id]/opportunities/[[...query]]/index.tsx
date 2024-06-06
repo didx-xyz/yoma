@@ -764,17 +764,14 @@ const Opportunities: NextPageWithLayout<{
                           </span>
                         </td>
                         <td className="border-b-2 border-gray-light">
-                          {opportunity.participantCountVerificationPending >
-                            0 && (
+                          {opportunity.participantCountPending > 0 && (
                             <Link
                               href={`/organisations/${id}/verifications?opportunity=${opportunity.id}&verificationStatus=Pending`}
                               className="badge bg-orange-light text-orange"
                             >
                               <IoIosWarning className="h-4 w-4" />
                               <span className="ml-1 text-xs">
-                                {
-                                  opportunity.participantCountVerificationPending
-                                }
+                                {opportunity.participantCountPending}
                               </span>
                             </Link>
                           )}
