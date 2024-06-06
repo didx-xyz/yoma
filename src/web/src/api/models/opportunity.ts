@@ -123,6 +123,7 @@ export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
 
 export interface OpportunitySearchFilterBase extends PaginationFilter {
   types: string[] | null;
+  engagementTypes: string[] | null;
   categories: string[] | null;
   languages: string[] | null;
   countries: string[] | null;
@@ -193,6 +194,7 @@ export interface OpportunityVerificationType {
 export enum OpportunityFilterOptions {
   CATEGORIES = "categories",
   TYPES = "types",
+  ENGAGEMENT_TYPES = "engagementTypes",
   COUNTRIES = "countries",
   LANGUAGES = "languages",
   COMMITMENTINTERVALS = "commitmentIntervals",

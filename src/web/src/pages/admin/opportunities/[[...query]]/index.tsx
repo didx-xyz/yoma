@@ -221,6 +221,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   })
                   .filter((x) => x != "")
               : null,
+          engagementTypes: null,
           categories:
             categories != undefined
               ? categories
@@ -293,7 +294,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     });
 
   // search filter state
-  const [opportunitySearchFilter, setOpportunitySearchFilter] =
+  const [searchFilter, setOpportunitySearchFilter] =
     useState<OpportunitySearchFilterAdmin>({
       pageNumber: page ? parseInt(page.toString()) : 1,
       pageSize: PAGE_SIZE,
@@ -301,6 +302,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       countries: null,
       languages: null,
       types: null,
+      engagementTypes: null,
       valueContains: null,
       commitmentIntervals: null,
       featured: null,
@@ -320,6 +322,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         valueContains: query ? decodeURIComponent(query.toString()) : null,
         featured: null,
         types: types != undefined ? types?.toString().split(",") : null,
+        engagementTypes: null,
         categories:
           categories != undefined ? categories?.toString().split(",") : null,
         countries:
@@ -369,90 +372,81 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
-    (opportunitySearchFilter: OpportunitySearchFilterAdmin) => {
-      if (!opportunitySearchFilter) return null;
+    (searchFilter: OpportunitySearchFilterAdmin) => {
+      if (!searchFilter) return null;
 
       // construct querystring parameters from filter
       const params = new URLSearchParams();
       if (
-        opportunitySearchFilter.valueContains !== undefined &&
-        opportunitySearchFilter.valueContains !== null &&
-        opportunitySearchFilter.valueContains.length > 0
+        searchFilter.valueContains !== undefined &&
+        searchFilter.valueContains !== null &&
+        searchFilter.valueContains.length > 0
       )
-        params.append("query", opportunitySearchFilter.valueContains);
+        params.append("query", searchFilter.valueContains);
       if (
-        opportunitySearchFilter?.categories?.length !== undefined &&
-        opportunitySearchFilter.categories.length > 0
+        searchFilter?.categories?.length !== undefined &&
+        searchFilter.categories.length > 0
       )
-        params.append(
-          "categories",
-          opportunitySearchFilter.categories.join(","),
-        );
+        params.append("categories", searchFilter.categories.join(","));
       if (
-        opportunitySearchFilter?.countries?.length !== undefined &&
-        opportunitySearchFilter.countries.length > 0
+        searchFilter?.countries?.length !== undefined &&
+        searchFilter.countries.length > 0
       )
-        params.append("countries", opportunitySearchFilter.countries.join(","));
+        params.append("countries", searchFilter.countries.join(","));
       if (
-        opportunitySearchFilter?.languages?.length !== undefined &&
-        opportunitySearchFilter.languages.length > 0
+        searchFilter?.languages?.length !== undefined &&
+        searchFilter.languages.length > 0
       )
-        params.append("languages", opportunitySearchFilter.languages.join("|")); // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
+        params.append("languages", searchFilter.languages.join("|")); // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
       if (
-        opportunitySearchFilter?.types?.length !== undefined &&
-        opportunitySearchFilter.types.length > 0
+        searchFilter?.types?.length !== undefined &&
+        searchFilter.types.length > 0
       )
-        params.append("types", opportunitySearchFilter.types.join(","));
+        params.append("types", searchFilter.types.join(","));
       if (
-        opportunitySearchFilter?.commitmentIntervals?.length !== undefined &&
-        opportunitySearchFilter.commitmentIntervals.length > 0
+        searchFilter?.commitmentIntervals?.length !== undefined &&
+        searchFilter.commitmentIntervals.length > 0
       )
         params.append(
           "commitmentIntervals",
-          opportunitySearchFilter.commitmentIntervals.join(","),
+          searchFilter.commitmentIntervals.join(","),
         );
       if (
-        opportunitySearchFilter?.organizations?.length !== undefined &&
-        opportunitySearchFilter.organizations.length > 0
+        searchFilter?.organizations?.length !== undefined &&
+        searchFilter.organizations.length > 0
       )
-        params.append(
-          "organizations",
-          opportunitySearchFilter.organizations.join(","),
-        );
+        params.append("organizations", searchFilter.organizations.join(","));
       if (
-        opportunitySearchFilter?.zltoRewardRanges?.length !== undefined &&
-        opportunitySearchFilter.zltoRewardRanges.length > 0
+        searchFilter?.zltoRewardRanges?.length !== undefined &&
+        searchFilter.zltoRewardRanges.length > 0
       )
         params.append(
           "zltoRewardRanges",
-          opportunitySearchFilter.zltoRewardRanges.join(","),
+          searchFilter.zltoRewardRanges.join(","),
         );
 
       if (
-        opportunitySearchFilter?.statuses !== undefined &&
-        opportunitySearchFilter?.statuses !== null &&
-        opportunitySearchFilter?.statuses.length > 0
+        searchFilter?.statuses !== undefined &&
+        searchFilter?.statuses !== null &&
+        searchFilter?.statuses.length > 0
       )
-        params.append("statuses", opportunitySearchFilter?.statuses.join(","));
+        params.append("statuses", searchFilter?.statuses.join(","));
 
       if (
-        opportunitySearchFilter.startDate !== undefined &&
-        opportunitySearchFilter.startDate !== null
+        searchFilter.startDate !== undefined &&
+        searchFilter.startDate !== null
       )
-        params.append("startDate", opportunitySearchFilter.startDate);
+        params.append("startDate", searchFilter.startDate);
+
+      if (searchFilter.endDate !== undefined && searchFilter.endDate !== null)
+        params.append("endDate", searchFilter.endDate);
 
       if (
-        opportunitySearchFilter.endDate !== undefined &&
-        opportunitySearchFilter.endDate !== null
+        searchFilter.pageNumber !== null &&
+        searchFilter.pageNumber !== undefined &&
+        searchFilter.pageNumber !== 1
       )
-        params.append("endDate", opportunitySearchFilter.endDate);
-
-      if (
-        opportunitySearchFilter.pageNumber !== null &&
-        opportunitySearchFilter.pageNumber !== undefined &&
-        opportunitySearchFilter.pageNumber !== 1
-      )
-        params.append("page", opportunitySearchFilter.pageNumber.toString());
+        params.append("page", searchFilter.pageNumber.toString());
 
       if (params.size === 0) return null;
       return params;
@@ -476,10 +470,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   // 🔔 CHANGE EVENTS
   const handlePagerChange = useCallback(
     (value: number) => {
-      opportunitySearchFilter.pageNumber = value;
-      redirectWithSearchFilterParams(opportunitySearchFilter);
+      searchFilter.pageNumber = value;
+      redirectWithSearchFilterParams(searchFilter);
     },
-    [opportunitySearchFilter, redirectWithSearchFilterParams],
+    [searchFilter, redirectWithSearchFilterParams],
   );
 
   const onSearchInputSubmit = useCallback(
@@ -490,10 +484,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         query = searchValueEncoded;
       }
 
-      opportunitySearchFilter.valueContains = query;
-      redirectWithSearchFilterParams(opportunitySearchFilter);
+      searchFilter.valueContains = query;
+      redirectWithSearchFilterParams(searchFilter);
     },
-    [opportunitySearchFilter, redirectWithSearchFilterParams],
+    [searchFilter, redirectWithSearchFilterParams],
   );
 
   // filter popup handlers
@@ -516,10 +510,8 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     setIsExportButtonLoading(true);
 
     try {
-      opportunitySearchFilter.pageSize = PAGE_SIZE_MAXIMUM;
-      const data = await getOpportunitiesAdminExportToCSV(
-        opportunitySearchFilter,
-      );
+      searchFilter.pageSize = PAGE_SIZE_MAXIMUM;
+      const data = await getOpportunitiesAdminExportToCSV(searchFilter);
       if (!data) return;
 
       FileSaver.saveAs(data);
@@ -528,7 +520,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     } finally {
       setIsExportButtonLoading(false);
     }
-  }, [opportunitySearchFilter, setIsExportButtonLoading, setExportDialogOpen]);
+  }, [searchFilter, setIsExportButtonLoading, setExportDialogOpen]);
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(filterFullWindowVisible || exportDialogOpen);
@@ -560,7 +552,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           lookups_organisations && (
             <OpportunityAdminFilterVertical
               htmlRef={myRef.current!}
-              opportunitySearchFilter={opportunitySearchFilter}
+              searchFilter={searchFilter}
               lookups_categories={lookups_categories}
               lookups_countries={lookups_countries}
               lookups_languages={lookups_languages}
@@ -697,7 +689,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             lookups_organisations && (
               <OpportunityAdminFilterHorizontal
                 htmlRef={myRef.current!}
-                opportunitySearchFilter={opportunitySearchFilter}
+                searchFilter={searchFilter}
                 lookups_categories={lookups_categories}
                 lookups_countries={lookups_countries}
                 lookups_languages={lookups_languages}

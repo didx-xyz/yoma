@@ -57,7 +57,7 @@ const ValueContainer = ({
 
 export const OpportunityAdminFilterHorizontal: React.FC<{
   htmlRef: HTMLDivElement;
-  opportunitySearchFilter: OpportunitySearchFilterAdmin | null;
+  searchFilter: OpportunitySearchFilterAdmin | null;
   lookups_categories: OpportunityCategory[];
   lookups_countries: Country[];
   lookups_languages: Language[];
@@ -76,7 +76,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
   exportToCsv?: (arg0: boolean) => void;
 }> = ({
   htmlRef,
-  opportunitySearchFilter,
+  searchFilter,
   lookups_categories,
   lookups_countries,
   lookups_languages,
@@ -117,17 +117,16 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
 
   // set default values
   useEffect(() => {
-    if (opportunitySearchFilter == null || opportunitySearchFilter == undefined)
-      return;
+    if (searchFilter == null || searchFilter == undefined) return;
 
     // reset form
     // setTimeout is needed to prevent the form from being reset before the default values are set
     setTimeout(() => {
       reset({
-        ...opportunitySearchFilter,
+        ...searchFilter,
       });
     }, 100);
-  }, [reset, opportunitySearchFilter]);
+  }, [reset, searchFilter]);
 
   // form submission handler
   const onSubmitHandler = useCallback(
@@ -139,9 +138,9 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
 
   const onClickCategoryFilter = useCallback(
     (cat: OpportunityCategory) => {
-      if (!opportunitySearchFilter || !onSubmit) return;
+      if (!searchFilter || !onSubmit) return;
 
-      const prev = { ...opportunitySearchFilter };
+      const prev = { ...searchFilter };
       prev.categories = prev.categories ?? [];
 
       if (prev.categories.includes(cat.name)) {
@@ -152,7 +151,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
 
       onSubmit(prev);
     },
-    [opportunitySearchFilter, onSubmit],
+    [searchFilter, onSubmit],
   );
 
   const resultText = totalCount === 1 ? "result" : "results";
@@ -172,7 +171,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
               {filterOptions?.includes(OpportunityFilterOptions.CATEGORIES) && (
                 <OpportunityCategoriesHorizontalFilter
                   lookups_categories={lookups_categories}
-                  selected_categories={opportunitySearchFilter?.categories}
+                  selected_categories={searchFilter?.categories}
                   onClick={onClickCategoryFilter}
                 />
                 // <div className="flex justify-center gap-4 md:w-full">
@@ -180,7 +179,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                 //     <OpportunityCategoryHorizontalCard
                 //       key={`categories_${item.id}`}
                 //       data={item}
-                //       selected={opportunitySearchFilter?.categories?.includes(
+                //       selected={searchFilter?.categories?.includes(
                 //         item.name,
                 //       )}
                 //       onClick={onClickCategoryFilter}
@@ -212,7 +211,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                 <input
                   type="hidden"
                   {...form.register("valueContains")}
-                  value={opportunitySearchFilter?.valueContains ?? ""}
+                  value={searchFilter?.valueContains ?? ""}
                 />
 
                 {/* TYPES */}
@@ -221,7 +220,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                     <Controller
                       name="types"
                       control={form.control}
-                      defaultValue={opportunitySearchFilter?.types}
+                      defaultValue={searchFilter?.types}
                       render={({ field: { onChange, value } }) => (
                         <Select
                           instanceId="types"
@@ -271,7 +270,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                     <Controller
                       name="countries"
                       control={form.control}
-                      defaultValue={opportunitySearchFilter?.countries}
+                      defaultValue={searchFilter?.countries}
                       render={({ field: { onChange, value } }) => (
                         <Select
                           instanceId="countries"
@@ -320,7 +319,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                     <Controller
                       name="languages"
                       control={form.control}
-                      defaultValue={opportunitySearchFilter?.languages}
+                      defaultValue={searchFilter?.languages}
                       render={({ field: { onChange, value } }) => (
                         <Select
                           instanceId="languages"
@@ -370,7 +369,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                     <Controller
                       name="organizations"
                       control={form.control}
-                      defaultValue={opportunitySearchFilter?.organizations}
+                      defaultValue={searchFilter?.organizations}
                       render={({ field: { onChange, value } }) => (
                         <Select
                           instanceId="organizations"
@@ -420,9 +419,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                     <Controller
                       name="commitmentIntervals"
                       control={form.control}
-                      defaultValue={
-                        opportunitySearchFilter?.commitmentIntervals
-                      }
+                      defaultValue={searchFilter?.commitmentIntervals}
                       render={({ field: { onChange, value } }) => (
                         <Select
                           instanceId="commitmentIntervals"
@@ -471,7 +468,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                     <Controller
                       name="zltoRewardRanges"
                       control={form.control}
-                      defaultValue={opportunitySearchFilter?.zltoRewardRanges}
+                      defaultValue={searchFilter?.zltoRewardRanges}
                       render={({ field: { onChange, value } }) => (
                         <Select
                           instanceId="zltoRewardRanges"

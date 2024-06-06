@@ -21,7 +21,7 @@ import { AvatarImage } from "../AvatarImage";
 
 export const OpportunityAdminFilterVertical: React.FC<{
   htmlRef: HTMLDivElement;
-  opportunitySearchFilter: OpportunitySearchFilterAdmin | null;
+  searchFilter: OpportunitySearchFilterAdmin | null;
   lookups_categories: OpportunityCategory[];
   lookups_countries: Country[];
   lookups_languages: Language[];
@@ -39,7 +39,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
   onClear?: () => void;
 }> = ({
   htmlRef,
-  opportunitySearchFilter,
+  searchFilter,
   lookups_categories,
   lookups_countries,
   lookups_languages,
@@ -82,10 +82,10 @@ export const OpportunityAdminFilterVertical: React.FC<{
     // setTimeout is needed to prevent the form from being reset before the default values are set
     setTimeout(() => {
       reset({
-        ...opportunitySearchFilter,
+        ...searchFilter,
       });
     }, 100);
-  }, [reset, opportunitySearchFilter]);
+  }, [reset, searchFilter]);
 
   // form submission handler
   const onSubmitHandler = useCallback(
@@ -186,7 +186,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
             <input
               type="hidden"
               {...form.register("valueContains")}
-              value={opportunitySearchFilter?.valueContains ?? ""}
+              value={searchFilter?.valueContains ?? ""}
             />
 
             {/* TYPES */}
@@ -200,7 +200,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                   <Controller
                     name="types"
                     control={form.control}
-                    defaultValue={opportunitySearchFilter?.types}
+                    defaultValue={searchFilter?.types}
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
@@ -246,7 +246,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                   <Controller
                     name="countries"
                     control={form.control}
-                    defaultValue={opportunitySearchFilter?.countries}
+                    defaultValue={searchFilter?.countries}
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
@@ -293,7 +293,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                   <Controller
                     name="languages"
                     control={form.control}
-                    defaultValue={opportunitySearchFilter?.languages}
+                    defaultValue={searchFilter?.languages}
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
@@ -341,7 +341,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                   <Controller
                     name="organizations"
                     control={form.control}
-                    defaultValue={opportunitySearchFilter?.organizations}
+                    defaultValue={searchFilter?.organizations}
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
@@ -387,7 +387,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                   <Controller
                     name="commitmentIntervals"
                     control={form.control}
-                    defaultValue={opportunitySearchFilter?.commitmentIntervals}
+                    defaultValue={searchFilter?.commitmentIntervals}
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
@@ -433,7 +433,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                   <Controller
                     name="zltoRewardRanges"
                     control={form.control}
-                    defaultValue={opportunitySearchFilter?.zltoRewardRanges}
+                    defaultValue={searchFilter?.zltoRewardRanges}
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
