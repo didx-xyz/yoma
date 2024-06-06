@@ -626,9 +626,9 @@ const OpportunityVerifications: NextPageWithLayout<{
   //#endregion Event Handlers
 
   // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(modalVerifyVisible);
-  useDisableBodyScroll(modalVerificationResultVisible);
-  useDisableBodyScroll(exportDialogOpen);
+  useDisableBodyScroll(
+    modalVerifyVisible || modalVerificationResultVisible || exportDialogOpen,
+  );
 
   if (error) {
     if (error === 401) return <Unauthenticated />;

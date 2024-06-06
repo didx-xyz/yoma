@@ -537,8 +537,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   }, [opportunitySearchFilter, setIsExportButtonLoading, setExportDialogOpen]);
 
   // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(filterFullWindowVisible);
-  useDisableBodyScroll(exportDialogOpen);
+  useDisableBodyScroll(filterFullWindowVisible || exportDialogOpen);
 
   return (
     <>
