@@ -47,7 +47,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
                        zr.RangesParsed.Count == 0 ||
                        zr.RangesParsed.All(item => item.From >= 0 && item.To > item.From))
            .WithMessage("{PropertyName} is empty, contains invalid reward ranges (the 'To' value must be greater than the 'From' value and the 'From' value must be greater or equal to 0.");
-    
+
       RuleFor(x => x.OrderInstructions)
           .NotNull().WithMessage("{PropertyName} is required")
           .Must(x => x != null && x.Count > 0).WithMessage("{PropertyName} must contain at least one item.");
