@@ -19,6 +19,7 @@ using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.IdentityProvider.Helpers;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
+using Yoma.Core.Domain.Lookups.Helpers;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
@@ -518,7 +519,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return _organizationService.Search(filter, false).Items;
     }
 
-    public List<OpportunitySearchCriteriaCommitmentInterval> ListOpportunitySearchCriteriaCommitmentInterval(List<PublishedState>? publishedStates)
+    public List<OpportunitySearchCriteriaCommitmentIntervalOption> ListOpportunitySearchCriteriaCommitmentIntervalOptions(List<PublishedState>? publishedStates)
     {
       publishedStates = publishedStates == null || publishedStates.Count == 0 ?
          [PublishedState.NotStarted, PublishedState.Active] : publishedStates;
@@ -568,7 +569,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           if (!Enum.TryParse<TimeInterval>(item.Interval, true, out var interval))
             throw new InvalidOperationException($"{nameof(item.Interval)} of '{item.Interval}' is not supported");
 
-          return new OpportunitySearchCriteriaCommitmentInterval
+          return new OpportunitySearchCriteriaCommitmentIntervalOption
           {
             Id = $"{item.Count}|{item.Id}",
             Name = $"{item.Count} {item.Interval}{(item.Count > 1 ? "s" : string.Empty)}",
@@ -591,7 +592,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return results;
     }
 
-    public List<OpportunitySearchCriteriaZltoReward> ListOpportunitySearchCriteriaZltoReward(List<PublishedState>? publishedStates)
+    public List<OpportunitySearchCriteriaZltoRewardRange> ListOpportunitySearchCriteriaZltoRewardRanges(List<PublishedState>? publishedStates)
     {
       publishedStates = publishedStates == null || publishedStates.Count == 0 ?
           [PublishedState.NotStarted, PublishedState.Active] : publishedStates;
@@ -631,7 +632,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var roundedMinValue = Math.Floor((minValue ?? 0) / increment) * increment;
       var roundedMaxValue = Math.Ceiling((maxValue ?? 0) / increment) * increment;
 
-      var results = new List<OpportunitySearchCriteriaZltoReward>();
+      var results = new List<OpportunitySearchCriteriaZltoRewardRange>();
       for (decimal i = roundedMinValue; i < roundedMaxValue; i += increment)
       {
         var from = i;
@@ -639,7 +640,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         var id = $"{from}|{to}";
         var description = $"Z{from} - Z{to}";
 
-        results.Add(new OpportunitySearchCriteriaZltoReward
+        results.Add(new OpportunitySearchCriteriaZltoRewardRange
         {
           Id = id,
           Name = description
@@ -653,8 +654,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      ParseOpportunitySearchFilterCommitmentIntervals(filter);
-      ParseOpportunitySearchFilterZltoRewardRanges(filter);
+      ParseOpportunitySearchFilterCommitmentInterval(filter);
+      ParseOpportunitySearchFilterZltoReward(filter);
 
       _opportunitySearchFilterValidator.ValidateAndThrow(filter);
 
@@ -772,29 +773,62 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.Where(o => filter.Opportunities.Contains(o.Id));
       }
 
-      //commitmentIntervals
-      if (filter.CommitmentIntervalsParsed != null && filter.CommitmentIntervalsParsed.Count != 0)
+      //commitmentInterval
+      if (filter.CommitmentInterval != null)
       {
-        var intervalIds = filter.CommitmentIntervalsParsed.Select(item => item.Id).Distinct().ToList();
-        var intervalCounts = filter.CommitmentIntervalsParsed.Select(item => item.Count).Distinct().ToList();
-        query = query.Where(o => intervalIds.Contains(o.CommitmentIntervalId) && intervalCounts.Contains(o.CommitmentIntervalCount));
+        //options
+        if (filter.CommitmentInterval.OptionsParsed != null && filter.CommitmentInterval.OptionsParsed.Count != 0)
+        {
+          var intervalIds = filter.CommitmentInterval.OptionsParsed.Select(item => item.Id).Distinct().ToList();
+          var intervalCounts = filter.CommitmentInterval.OptionsParsed.Select(item => item.Count).Distinct().ToList();
+          query = query.Where(o => intervalIds.Contains(o.CommitmentIntervalId) && intervalCounts.Contains(o.CommitmentIntervalCount));
+        }
+
+        //Interval
+        if (filter.CommitmentInterval.Interval != null)
+        {
+          var filterIntervalName = _timeIntervalService.GetById(filter.CommitmentInterval.Interval.Id).Name;
+          var filterCountInMinutes = TimeIntervalHelper.ConvertToMinutes(filterIntervalName, filter.CommitmentInterval.Interval.Count);
+
+          var minuteIntervalId = _timeIntervalService.GetByName(TimeInterval.Minute.ToString()).Id;
+          var hourIntervalId = _timeIntervalService.GetByName(TimeInterval.Hour.ToString()).Id;
+          var dayIntervalId = _timeIntervalService.GetByName(TimeInterval.Day.ToString()).Id;
+          var weekIntervalId = _timeIntervalService.GetByName(TimeInterval.Week.ToString()).Id;
+          var monthIntervalId = _timeIntervalService.GetByName(TimeInterval.Month.ToString()).Id;
+
+          query = query.Where(o =>
+              (o.CommitmentIntervalId == minuteIntervalId && o.CommitmentIntervalCount <= filterCountInMinutes) ||
+              (o.CommitmentIntervalId == hourIntervalId && (long)o.CommitmentIntervalCount * 60 <= filterCountInMinutes) ||
+              (o.CommitmentIntervalId == dayIntervalId && (long)o.CommitmentIntervalCount * 60 * 24 <= filterCountInMinutes) ||
+              (o.CommitmentIntervalId == weekIntervalId && (long)o.CommitmentIntervalCount * 60 * 24 * 7 <= filterCountInMinutes) ||
+              (o.CommitmentIntervalId == monthIntervalId && (long)o.CommitmentIntervalCount * 60 * 24 * 30 <= filterCountInMinutes)
+          );
+        }
       }
 
-      //zltoRewardRanges
-      if (filter.ZltoRewardRangesParsed != null && filter.ZltoRewardRangesParsed.Count != 0)
+      //zltoReward
+      if (filter.ZltoReward != null)
       {
-        var distinctItems = filter.ZltoRewardRangesParsed
-            .Select(item => new { item.From, item.To })
-            .Distinct()
-            .ToList();
+        //ranges
+        if (filter.ZltoReward.RangesParsed != null && filter.ZltoReward.RangesParsed.Count != 0)
+        {
+          var distinctItems = filter.ZltoReward.RangesParsed
+             .Select(item => new { item.From, item.To })
+             .Distinct()
+             .ToList();
 
-        query = query.Where(o => o.ZltoReward.HasValue);
+          query = query.Where(o => o.ZltoReward.HasValue);
 
-        var predicate = PredicateBuilder.False<Models.Opportunity>();
-        foreach (var item in distinctItems)
-          predicate = predicate.Or(o => o.ZltoReward >= item.From && o.ZltoReward <= item.To);
+          var predicate = PredicateBuilder.False<Models.Opportunity>();
+          foreach (var item in distinctItems)
+            predicate = predicate.Or(o => o.ZltoReward >= item.From && o.ZltoReward <= item.To);
 
-        query = query.Where(predicate);
+          query = query.Where(predicate);
+        }
+
+        //hasReward: when true, only opportunities with zlto rewards are included; otherwise, both rewarded and non-rewarded opportunities are included
+        if (filter.ZltoReward.HasReward == true)
+          query = query.Where(o => o.ZltoReward > 0);
       }
 
       //featured
@@ -1512,39 +1546,39 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return _organizationService.GetById(organizationId.Value, false, false, ensureOrganizationAuthorization);
     }
 
-    private static void ParseOpportunitySearchFilterCommitmentIntervals(OpportunitySearchFilterAdmin filter)
+    private static void ParseOpportunitySearchFilterCommitmentInterval(OpportunitySearchFilterAdmin filter)
     {
-      if (filter.CommitmentIntervals == null || filter.CommitmentIntervals.Count == 0)
+      if (filter.CommitmentInterval == null || filter.CommitmentInterval.Options == null || filter.CommitmentInterval.Options.Count == 0)
         return;
-      filter.CommitmentIntervals = filter.CommitmentIntervals.Distinct().ToList();
+      filter.CommitmentInterval.Options = filter.CommitmentInterval.Options.Distinct().ToList();
 
-      filter.CommitmentIntervalsParsed = [];
+      filter.CommitmentInterval.OptionsParsed = [];
 
-      foreach (var item in filter.CommitmentIntervals)
+      foreach (var item in filter.CommitmentInterval.Options)
       {
         var parts = item?.Split('|');
         if (parts?.Length != 2 || !short.TryParse(parts[0], out var count) || !Guid.TryParse(parts[1], out var id))
           throw new ArgumentException($"Commitment interval id of '{item}' does not match the expected format", nameof(filter));
 
-        filter.CommitmentIntervalsParsed.Add(new OpportunitySearchFilterCommitmentInterval { Id = id, Count = count });
+        filter.CommitmentInterval.OptionsParsed.Add(new OpportunitySearchFilterCommitmentIntervalItem { Id = id, Count = count });
       }
     }
 
-    private static void ParseOpportunitySearchFilterZltoRewardRanges(OpportunitySearchFilterAdmin filter)
+    private static void ParseOpportunitySearchFilterZltoReward(OpportunitySearchFilterAdmin filter)
     {
-      if (filter.ZltoRewardRanges == null || filter.ZltoRewardRanges.Count == 0)
+      if (filter.ZltoReward == null || filter.ZltoReward.Ranges == null || filter.ZltoReward.Ranges.Count == 0)
         return;
-      filter.ZltoRewardRanges = filter.ZltoRewardRanges.Distinct().ToList();
+      filter.ZltoReward.Ranges = filter.ZltoReward.Ranges.Distinct().ToList();
 
-      filter.ZltoRewardRangesParsed = [];
+      filter.ZltoReward.RangesParsed = [];
 
-      foreach (var item in filter.ZltoRewardRanges)
+      foreach (var item in filter.ZltoReward.Ranges)
       {
         var parts = item?.Split('|');
         if (parts?.Length != 2 || !decimal.TryParse(parts[0], out var from) || !decimal.TryParse(parts[1], out var to))
           throw new ArgumentException($"Commitment interval id of '{item}' does not match the expected format", nameof(filter));
 
-        filter.ZltoRewardRangesParsed.Add(new OpportunitySearchFilterZltoReward { From = from, To = to });
+        filter.ZltoReward.RangesParsed.Add(new OpportunitySearchFilterZltoRewardRange { From = from, To = to });
       }
     }
 

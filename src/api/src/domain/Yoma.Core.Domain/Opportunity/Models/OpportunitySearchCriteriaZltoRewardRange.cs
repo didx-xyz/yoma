@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Opportunity.Models
 {
-  public class OpportunitySearchCriteriaZltoReward
+  public class OpportunitySearchCriteriaZltoRewardRange
   {
     public string Id { get; set; }
 

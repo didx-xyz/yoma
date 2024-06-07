@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
-  public class OpportunitySearchCriteriaCommitmentInterval
+  public class OpportunitySearchCriteriaCommitmentIntervalOption
   {
     public string Id { get; set; }
 

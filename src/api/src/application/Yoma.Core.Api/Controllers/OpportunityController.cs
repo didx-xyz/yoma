@@ -177,18 +177,18 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Return a list of commitment intervals associated with published opportunities (Anonymous)",
+    [SwaggerOperation(Summary = "Return a list of commitment interval options associated with published opportunities (Anonymous)",
         Description = "Results are always associated with an active organization. By default published opportunities are included, thus active opportunities, irrespective of whether they started (includes both NotStarted and Active states). This default behavior is overridable")]
     [HttpGet("search/filter/commitmentInterval")]
-    [ProducesResponseType(typeof(List<OpportunitySearchCriteriaCommitmentInterval>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(List<OpportunitySearchCriteriaCommitmentIntervalOption>), (int)HttpStatusCode.OK)]
     [AllowAnonymous]
-    public IActionResult ListOpportunitySearchCriteriaCommitmentInterval([FromQuery] List<PublishedState>? publishedStates)
+    public IActionResult ListOpportunitySearchCriteriaCommitmentIntervalOptions([FromQuery] List<PublishedState>? publishedStates)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCommitmentInterval));
+      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCommitmentIntervalOptions));
 
-      var result = _opportunityService.ListOpportunitySearchCriteriaCommitmentInterval(publishedStates);
+      var result = _opportunityService.ListOpportunitySearchCriteriaCommitmentIntervalOptions(publishedStates);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCommitmentInterval));
+      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCommitmentIntervalOptions));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -196,15 +196,15 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Retrieve a list of Zlto reward ranges associated with published opportunities (Anonymous)",
         Description = "Results are always associated with an active organization. By default published opportunities are included, thus active opportunities, irrespective of whether they started (includes both NotStarted and Active states). This default behavior is overridable")]
     [HttpGet("search/filter/zltoReward")]
-    [ProducesResponseType(typeof(List<OpportunitySearchCriteriaZltoReward>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(List<OpportunitySearchCriteriaZltoRewardRange>), (int)HttpStatusCode.OK)]
     [AllowAnonymous]
-    public IActionResult ListOpportunitySearchCriteriaZltoReward([FromQuery] List<PublishedState>? publishedStates)
+    public IActionResult ListOpportunitySearchCriteriaZltoRewardRanges([FromQuery] List<PublishedState>? publishedStates)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaZltoReward));
+      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaZltoRewardRanges));
 
-      var result = _opportunityService.ListOpportunitySearchCriteriaZltoReward(publishedStates);
+      var result = _opportunityService.ListOpportunitySearchCriteriaZltoRewardRanges(publishedStates);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaZltoReward));
+      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaZltoRewardRanges));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

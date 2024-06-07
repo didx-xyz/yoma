@@ -31,9 +31,9 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizations(List<PublishedState>? publishedStates);
 
-    List<OpportunitySearchCriteriaCommitmentInterval> ListOpportunitySearchCriteriaCommitmentInterval(List<PublishedState>? publishedStates);
+    List<OpportunitySearchCriteriaCommitmentIntervalOption> ListOpportunitySearchCriteriaCommitmentIntervalOptions(List<PublishedState>? publishedStates);
 
-    List<OpportunitySearchCriteriaZltoReward> ListOpportunitySearchCriteriaZltoReward(List<PublishedState>? publishedStates);
+    List<OpportunitySearchCriteriaZltoRewardRange> ListOpportunitySearchCriteriaZltoRewardRanges(List<PublishedState>? publishedStates);
 
     OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 

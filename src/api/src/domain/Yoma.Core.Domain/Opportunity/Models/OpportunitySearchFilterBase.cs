@@ -17,16 +17,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public List<Guid>? EngagementTypes { get; set; }
 
-    public List<string>? CommitmentIntervals { get; set; }
-
-    public List<string>? ZltoRewardRanges { get; set; }
-
-    [JsonIgnore]
-    internal List<OpportunitySearchFilterCommitmentInterval>? CommitmentIntervalsParsed { get; set; }
-
-    [JsonIgnore]
-    internal List<OpportunitySearchFilterZltoReward>? ZltoRewardRangesParsed { get; set; }
-
     public bool? Featured { get; set; }
 
     /// <summary>
@@ -42,11 +32,28 @@ namespace Yoma.Core.Domain.Opportunity.Models
     internal List<PublishedState>? PublishedStates { get; set; }
 
     /// <summary>
+    /// Filtering based on commitment intervals
+    /// This includes:
+    /// - `IntervalOptions`: A list of Id's representing available commitment interval criteria (dropdown selection), such as 10 minutes, 100 hours, or 1 day
+    /// - `Interval`: A specific commitment interval and range, starting from 1 up to the count (slider selection)
+    /// </summary>
+    [JsonIgnore]
+    internal OpportunitySearchFilterCommitmentInterval? CommitmentInterval { get; set; }
+
+    /// <summary>
+    /// Filtering based on Zlto reward criteria
+    /// This includes:
+    /// - `Ranges`: A list of Ids representing available Zlto reward range criteria, such as 0-100, 100-500, or 500-1000
+    /// - `HasReward`: A boolean indicating whether to filter for opportunities that offer a Zlto rewards
+    /// </summary>
+    [JsonIgnore]
+    internal OpportunitySearchFilterZltoReward? ZltoReward { get; set; }
+
+    /// <summary>
     /// Filter based on the supplied list of opportunities. Explicit internal filter; if specified and empty no results will be returned
     /// </summary>
     [JsonIgnore]
     internal List<Guid>? Opportunities { get; set; }
-
 
     [JsonIgnore]
     internal bool TotalCountOnly { get; set; }
