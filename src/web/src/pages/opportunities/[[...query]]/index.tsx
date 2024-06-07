@@ -384,6 +384,45 @@ const Opportunities: NextPageWithLayout<{
     publishedStates,
   ]);
 
+  // search filter state
+  // this is the current filter state based on the querystring parameters
+  // it contains human-readable values (e.g. category name, country name) instead of id's
+  // these values are mapped to the corresponding id's when executing the search query (see below)
+  const searchFilter: OpportunitySearchFilter = {
+    pageNumber: page ? parseInt(page.toString()) : 1,
+    pageSize: PAGE_SIZE,
+    valueContains: query ? decodeURIComponent(query.toString()) : null,
+    mostViewed: mostViewed ? Boolean(mostViewed) : null,
+    mostCompleted: mostCompleted ? Boolean(mostCompleted) : null,
+    featured: featured ? Boolean(featured) : null,
+    types: types != undefined ? types?.toString().split("|") : null,
+    engagementTypes:
+      engagementTypes != undefined
+        ? engagementTypes?.toString().split("|")
+        : null,
+    categories:
+      categories != undefined ? categories?.toString().split("|") : null,
+    countries:
+      countries != undefined && countries != null
+        ? countries?.toString().split("|")
+        : null,
+    languages: languages != undefined ? languages?.toString().split("|") : null,
+    organizations:
+      organizations != undefined ? organizations?.toString().split("|") : null,
+    commitmentIntervals:
+      commitmentIntervals != undefined
+        ? commitmentIntervals?.toString().split("|")
+        : null,
+    zltoRewardRanges:
+      zltoRewardRanges != undefined
+        ? zltoRewardRanges?.toString().split("|")
+        : null,
+    publishedStates:
+      publishedStates != undefined
+        ? publishedStates?.toString().split("|")
+        : null,
+  };
+
   // QUERY: SEARCH RESULTS
   // the filter values from the querystring are mapped to it's corresponding id
   const { data: searchResults, isLoading } =
@@ -406,18 +445,18 @@ const Opportunities: NextPageWithLayout<{
       ],
       queryFn: async () =>
         await searchOpportunities({
-          pageNumber: page ? parseInt(page.toString()) : 1,
-          pageSize: PAGE_SIZE,
-          valueContains: query ? decodeURIComponent(query.toString()) : null,
-          mostViewed: mostViewed ? Boolean(mostViewed) : null,
-          mostCompleted: mostCompleted ? Boolean(mostCompleted) : null,
-          featured: featured ? Boolean(featured) : null,
+          pageNumber: searchFilter.pageNumber,
+          pageSize: searchFilter.pageSize,
+          valueContains: searchFilter.valueContains,
+          mostViewed: searchFilter.mostViewed,
+          mostCompleted: searchFilter.mostCompleted,
+          featured: searchFilter.featured,
           publishedStates:
             publishedStates != undefined
               ? // if set, map to id
                 publishedStates
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_publishedStates.find(
                       (y) => y.label === x,
@@ -435,7 +474,7 @@ const Opportunities: NextPageWithLayout<{
             types != undefined
               ? types
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_types.find((y) => y.name === x);
                     return item ? item?.id : "";
@@ -446,7 +485,7 @@ const Opportunities: NextPageWithLayout<{
             engagementTypes != undefined
               ? engagementTypes
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_engagementTypes.find(
                       (y) => y.name === x,
@@ -459,7 +498,7 @@ const Opportunities: NextPageWithLayout<{
             categories != undefined
               ? categories
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_categories.find((y) => y.name === x);
                     return item ? item?.id : "";
@@ -470,7 +509,7 @@ const Opportunities: NextPageWithLayout<{
             countries != undefined
               ? countries
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_countries.find((y) => y.name === x);
                     return item ? item?.id : "";
@@ -492,7 +531,7 @@ const Opportunities: NextPageWithLayout<{
             organizations != undefined
               ? organizations
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_organisations.find(
                       (y) => y.name === x,
@@ -503,93 +542,15 @@ const Opportunities: NextPageWithLayout<{
               : null,
           commitmentIntervals:
             commitmentIntervals != undefined
-              ? commitmentIntervals?.toString().split(",")
+              ? commitmentIntervals?.toString().split("|")
               : null,
           zltoRewardRanges:
             zltoRewardRanges != undefined
-              ? zltoRewardRanges?.toString().split(",")
+              ? zltoRewardRanges?.toString().split("|")
               : null,
         }),
       enabled: isSearchPerformed, // only run query if search is executed
     });
-
-  // search filter state
-  const [searchFilter, setSearchFilter] = useState<OpportunitySearchFilter>({
-    pageNumber: page ? parseInt(page.toString()) : 1,
-    pageSize: PAGE_SIZE,
-    categories: null,
-    countries: null,
-    languages: null,
-    types: null,
-    engagementTypes: null,
-    valueContains: null,
-    commitmentIntervals: null,
-    mostViewed: null,
-    mostCompleted: null,
-    featured: null,
-    organizations: null,
-    zltoRewardRanges: null,
-    publishedStates: null,
-  });
-
-  // sets the filter values from the querystring to the filter state
-  useEffect(() => {
-    if (isSearchPerformed)
-      setSearchFilter({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        valueContains: query ? decodeURIComponent(query.toString()) : null,
-        mostViewed: mostViewed ? Boolean(mostViewed) : null,
-        mostCompleted: mostCompleted ? Boolean(mostCompleted) : null,
-        featured: featured ? Boolean(featured) : null,
-        types: types != undefined ? types?.toString().split(",") : null,
-        engagementTypes:
-          engagementTypes != undefined
-            ? engagementTypes?.toString().split(",")
-            : null,
-        categories:
-          categories != undefined ? categories?.toString().split(",") : null,
-        countries:
-          countries != undefined && countries != null
-            ? countries?.toString().split(",")
-            : null,
-        languages:
-          languages != undefined ? languages?.toString().split("|") : null, // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
-        organizations:
-          organizations != undefined
-            ? organizations?.toString().split(",")
-            : null,
-        commitmentIntervals:
-          commitmentIntervals != undefined
-            ? commitmentIntervals?.toString().split(",")
-            : null,
-        zltoRewardRanges:
-          zltoRewardRanges != undefined
-            ? zltoRewardRanges?.toString().split(",")
-            : null,
-        publishedStates:
-          publishedStates != undefined
-            ? publishedStates?.toString().split(",")
-            : null,
-      });
-  }, [
-    setSearchFilter,
-    isSearchPerformed,
-    query,
-    page,
-    categories,
-    countries,
-    languages,
-    types,
-    engagementTypes,
-    commitmentIntervals,
-    organizations,
-    zltoRewardRanges,
-    mostViewed,
-    mostCompleted,
-    featured,
-    publishedStates,
-  ]);
   //#endregion filters
 
   //#region functions
@@ -610,25 +571,25 @@ const Opportunities: NextPageWithLayout<{
         searchFilter?.categories?.length !== undefined &&
         searchFilter.categories.length > 0
       )
-        params.append("categories", searchFilter.categories.join(","));
+        params.append("categories", searchFilter.categories.join("|"));
 
       if (
         searchFilter?.countries?.length !== undefined &&
         searchFilter.countries.length > 0
       )
-        params.append("countries", searchFilter.countries.join(","));
+        params.append("countries", searchFilter.countries.join("|"));
 
       if (
         searchFilter?.languages?.length !== undefined &&
         searchFilter.languages.length > 0
       )
-        params.append("languages", searchFilter.languages.join("|")); // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
+        params.append("languages", searchFilter.languages.join("|"));
 
       if (
         searchFilter?.types?.length !== undefined &&
         searchFilter.types.length > 0
       )
-        params.append("types", searchFilter.types.join(","));
+        params.append("types", searchFilter.types.join("|"));
 
       if (
         searchFilter?.engagementTypes?.length !== undefined &&
@@ -636,7 +597,7 @@ const Opportunities: NextPageWithLayout<{
       )
         params.append(
           "engagementTypes",
-          searchFilter.engagementTypes.join(","),
+          searchFilter.engagementTypes.join("|"),
         );
 
       if (
@@ -645,14 +606,14 @@ const Opportunities: NextPageWithLayout<{
       )
         params.append(
           "commitmentIntervals",
-          searchFilter.commitmentIntervals.join(","),
+          searchFilter.commitmentIntervals.join("|"),
         );
 
       if (
         searchFilter?.organizations?.length !== undefined &&
         searchFilter.organizations.length > 0
       )
-        params.append("organizations", searchFilter.organizations.join(","));
+        params.append("organizations", searchFilter.organizations.join("|"));
 
       if (
         searchFilter?.zltoRewardRanges?.length !== undefined &&
@@ -660,7 +621,7 @@ const Opportunities: NextPageWithLayout<{
       )
         params.append(
           "zltoRewardRanges",
-          searchFilter.zltoRewardRanges.join(","),
+          searchFilter.zltoRewardRanges.join("|"),
         );
 
       if (
@@ -694,7 +655,7 @@ const Opportunities: NextPageWithLayout<{
       )
         params.append(
           "publishedStates",
-          searchFilter?.publishedStates.join(","),
+          searchFilter?.publishedStates.join("|"),
         );
 
       if (
@@ -718,8 +679,9 @@ const Opportunities: NextPageWithLayout<{
 
       if (url != router.asPath)
         void router.push(url, undefined, { scroll: false });
+      else setFilterFullWindowVisible(false);
     },
-    [router, getSearchFilterAsQueryString],
+    [router, getSearchFilterAsQueryString, setFilterFullWindowVisible],
   );
   //#endregion functions
 

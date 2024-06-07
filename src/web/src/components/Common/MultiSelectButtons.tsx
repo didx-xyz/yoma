@@ -7,11 +7,13 @@ interface Button {
 }
 
 interface MultiSelectButtonsProps {
+  id: string;
   buttons: Button[];
   onChange: (buttons: Button[]) => void;
 }
 
 const MultiSelectButtons: React.FC<MultiSelectButtonsProps> = ({
+  id,
   buttons,
   onChange,
 }) => {
@@ -28,10 +30,11 @@ const MultiSelectButtons: React.FC<MultiSelectButtonsProps> = ({
   };
 
   return (
-    <div className="flex flex-row gap-2">
+    <div className="flex flex-row flex-wrap gap-2">
       {buttonState.map((bt) => (
         <button
-          key={bt.id}
+          key={`${id}_${bt.id}`}
+          type="button"
           onClick={() => handleButton(bt.id)}
           className={`btn btn-sm ${
             bt.selected ? "btn-secondary" : "border-gray hover:border-gray-dark"

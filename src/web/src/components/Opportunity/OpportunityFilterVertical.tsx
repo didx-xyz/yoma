@@ -27,7 +27,7 @@ import MultiSelectButtons from "../Common/MultiSelectButtons";
 
 export const OpportunityFilterVertical: React.FC<{
   htmlRef: HTMLDivElement;
-  searchFilter: OpportunitySearchFilter | null;
+  searchFilter: OpportunitySearchFilter;
   lookups_categories: OpportunityCategory[];
   lookups_countries: Country[];
   lookups_languages: Language[];
@@ -75,26 +75,24 @@ export const OpportunityFilterVertical: React.FC<{
     zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
     publishedStates: zod.array(zod.string()).optional().nullable(),
     valueContains: zod.string().optional().nullable(),
-    startDate: zod.string().optional().nullable(),
-    endDate: zod.string().optional().nullable(),
-    statuses: zod.array(zod.string()).optional().nullable(),
   });
   const form = useForm({
     mode: "all",
     resolver: zodResolver(schema),
+    defaultValues: searchFilter,
   });
-  const { register, handleSubmit, formState, reset } = form;
+  const { handleSubmit, formState, reset } = form;
 
   // set default values
-  useEffect(() => {
-    // reset form
-    // setTimeout is needed to prevent the form from being reset before the default values are set
-    setTimeout(() => {
-      reset({
-        ...searchFilter,
-      });
-    }, 100);
-  }, [reset, searchFilter]);
+  // useEffect(() => {
+  //   // reset form
+  //   // setTimeout is needed to prevent the form from being reset before the default values are set
+  //   setTimeout(() => {
+  //     reset({
+  //       ...searchFilter,
+  //     });
+  //   }, 100);
+  // }, [reset, searchFilter]);
 
   // form submission handler
   const onSubmitHandler = useCallback(
@@ -212,36 +210,20 @@ export const OpportunityFilterVertical: React.FC<{
                 defaultValue={searchFilter?.types}
                 render={({ field: { onChange, value } }) => (
                   <MultiSelectButtons
+                    id="multiSelectButtons_types"
                     buttons={lookups_types.map((x) => ({
                       id: x.id,
                       title: x.name,
                       selected: value?.includes(x.name) ?? false,
                     }))}
-                    onChange={(val) => onChange(val.map((c) => c.title))}
+                    onChange={(val) => {
+                      const selectedButtons = val.filter((btn) => btn.selected);
+                      onChange(selectedButtons.map((c) => c.title));
+                    }}
                   />
-
-                  // <Select
-                  //   classNames={{
-                  //     control: () => "input input-bordered h-fit py-1",
-                  //   }}
-                  //   isMulti={true}
-                  //   options={lookups_types.map((c) => ({
-                  //     value: c.name,
-                  //     label: c.name,
-                  //   }))}
-                  //   // fix menu z-index issue
-                  //   menuPortalTarget={htmlRef}
-                  //   styles={{
-                  //     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                  //   }}
-                  //   onChange={(val) => onChange(val.map((c) => c.value))}
-                  //   value={lookups_types
-                  //     .filter((c) => value?.includes(c.name))
-                  //     .map((c) => ({ value: c.name, label: c.name }))}
-                  // />
                 )}
               />
-              {JSON.stringify(formState.errors)}
+
               {formState.errors.types && (
                 <label className="label font-bold">
                   <span className="label-text-alt italic text-red-500">
@@ -268,24 +250,17 @@ export const OpportunityFilterVertical: React.FC<{
                 control={form.control}
                 defaultValue={searchFilter?.engagementTypes}
                 render={({ field: { onChange, value } }) => (
-                  <Select
-                    classNames={{
-                      control: () => "input input-bordered h-fit py-1",
-                    }}
-                    isMulti={true}
-                    options={lookups_engagementTypes.map((c) => ({
-                      value: c.name,
-                      label: c.name,
+                  <MultiSelectButtons
+                    id="multiSelectButtons_engagementTypes"
+                    buttons={lookups_engagementTypes.map((x) => ({
+                      id: x.id,
+                      title: x.name,
+                      selected: value?.includes(x.name) ?? false,
                     }))}
-                    // fix menu z-index issue
-                    menuPortalTarget={htmlRef}
-                    styles={{
-                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                    onChange={(val) => {
+                      const selectedButtons = val.filter((btn) => btn.selected);
+                      onChange(selectedButtons.map((c) => c.title));
                     }}
-                    onChange={(val) => onChange(val.map((c) => c.value))}
-                    value={lookups_engagementTypes
-                      .filter((c) => value?.includes(c.name))
-                      .map((c) => ({ value: c.name, label: c.name }))}
                   />
                 )}
               />
@@ -398,7 +373,7 @@ export const OpportunityFilterVertical: React.FC<{
           {filterOptions?.includes(OpportunityFilterOptions.COUNTRIES) && (
             <div className="form-control">
               <label className="label">
-                <span className="label-text font-semibold">Countries</span>
+                <span className="label-text font-semibold">Country</span>
               </label>
 
               <Controller
@@ -406,25 +381,17 @@ export const OpportunityFilterVertical: React.FC<{
                 control={form.control}
                 defaultValue={searchFilter?.countries}
                 render={({ field: { onChange, value } }) => (
-                  <Select
-                    classNames={{
-                      control: () => "input input-bordered h-fit py-1",
-                    }}
-                    isMulti={true}
-                    options={lookups_countries.map((c) => ({
-                      value: c.name,
-                      label: c.name,
+                  <MultiSelectButtons
+                    id="multiSelectButtons_countries"
+                    buttons={lookups_countries.map((x) => ({
+                      id: x.id,
+                      title: x.name,
+                      selected: value?.includes(x.name) ?? false,
                     }))}
-                    // fix menu z-index issue
-                    menuPortalTarget={htmlRef}
-                    styles={{
-                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                    onChange={(val) => {
+                      const selectedButtons = val.filter((btn) => btn.selected);
+                      onChange(selectedButtons.map((c) => c.title));
                     }}
-                    onChange={(val) => onChange(val.map((c) => c.value))}
-                    value={lookups_countries
-                      .filter((c) => value?.includes(c.name))
-                      .map((c) => ({ value: c.name, label: c.name }))}
-                    placeholder="Select Countries..."
                   />
                 )}
               />
@@ -451,24 +418,17 @@ export const OpportunityFilterVertical: React.FC<{
                 control={form.control}
                 defaultValue={searchFilter?.languages}
                 render={({ field: { onChange, value } }) => (
-                  <Select
-                    classNames={{
-                      control: () => "input input-bordered h-fit py-1",
-                    }}
-                    isMulti={true}
-                    options={lookups_languages.map((c) => ({
-                      value: c.name,
-                      label: c.name,
+                  <MultiSelectButtons
+                    id="multiSelectButtons_languages"
+                    buttons={lookups_languages.map((x) => ({
+                      id: x.id,
+                      title: x.name,
+                      selected: value?.includes(x.name) ?? false,
                     }))}
-                    // fix menu z-index issue
-                    menuPortalTarget={htmlRef}
-                    styles={{
-                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                    onChange={(val) => {
+                      const selectedButtons = val.filter((btn) => btn.selected);
+                      onChange(selectedButtons.map((c) => c.title));
                     }}
-                    onChange={(val) => onChange(val.map((c) => c.value))}
-                    value={lookups_languages
-                      .filter((c) => value?.includes(c.name))
-                      .map((c) => ({ value: c.name, label: c.name }))}
                   />
                 )}
               />
@@ -495,24 +455,17 @@ export const OpportunityFilterVertical: React.FC<{
                 control={form.control}
                 defaultValue={searchFilter?.organizations}
                 render={({ field: { onChange, value } }) => (
-                  <Select
-                    classNames={{
-                      control: () => "input input-bordered h-fit py-1",
-                    }}
-                    isMulti={true}
-                    options={lookups_organisations.map((c) => ({
-                      value: c.name,
-                      label: c.name,
+                  <MultiSelectButtons
+                    id="multiSelectButtons_organizations"
+                    buttons={lookups_organisations.map((x) => ({
+                      id: x.id,
+                      title: x.name,
+                      selected: value?.includes(x.name) ?? false,
                     }))}
-                    // fix menu z-index issue
-                    menuPortalTarget={htmlRef}
-                    styles={{
-                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                    onChange={(val) => {
+                      const selectedButtons = val.filter((btn) => btn.selected);
+                      onChange(selectedButtons.map((c) => c.title));
                     }}
-                    onChange={(val) => onChange(val.map((c) => c.value))}
-                    value={lookups_organisations
-                      .filter((c) => value?.includes(c.name))
-                      .map((c) => ({ value: c.name, label: c.name }))}
                   />
                 )}
               />
@@ -541,23 +494,17 @@ export const OpportunityFilterVertical: React.FC<{
                 name="publishedStates"
                 control={form.control}
                 render={({ field: { onChange, value } }) => (
-                  <Select
-                    instanceId="publishedStates"
-                    classNames={{
-                      control: () => "input h-fit py-1",
+                  <MultiSelectButtons
+                    id="multiSelectButtons_publishedStates"
+                    buttons={lookups_publishedStates.map((x) => ({
+                      id: x.value,
+                      title: x.label,
+                      selected: value?.includes(x.label as never) ?? false,
+                    }))}
+                    onChange={(val) => {
+                      const selectedButtons = val.filter((btn) => btn.selected);
+                      onChange(selectedButtons.map((c) => c.title));
                     }}
-                    isMulti={true}
-                    options={lookups_publishedStates}
-                    // fix menu z-index issue
-                    menuPortalTarget={htmlRef}
-                    styles={{
-                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                    }}
-                    onChange={(val) => onChange(val.map((c) => c.label))}
-                    value={lookups_publishedStates.filter(
-                      (c) => value?.includes(c.label),
-                    )}
-                    placeholder="Status"
                   />
                 )}
               />
