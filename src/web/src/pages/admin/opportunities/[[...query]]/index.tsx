@@ -21,8 +21,8 @@ import ReactModal from "react-modal";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
-  OpportunitySearchCriteriaCommitmentInterval,
-  OpportunitySearchCriteriaZltoReward,
+  OpportunitySearchCriteriaCommitmentIntervalOption,
+  OpportunitySearchCriteriaZltoRewardRange,
   OpportunitySearchFilterAdmin,
   OpportunitySearchResultsInfo,
   OpportunityType,
@@ -93,8 +93,8 @@ export const getStaticPaths: GetStaticPaths = () => {
 
 const OpportunitiesAdmin: NextPageWithLayout<{
   lookups_types: OpportunityType[];
-  lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
-  lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
+  lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentIntervalOption[];
+  lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoRewardRange[];
 }> = ({
   lookups_types,
   lookups_commitmentIntervals,
@@ -268,14 +268,14 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   })
                   .filter((x) => x != "")
               : null,
-          commitmentIntervals:
-            commitmentIntervals != undefined
-              ? commitmentIntervals?.toString().split(",")
-              : null,
-          zltoRewardRanges:
-            zltoRewardRanges != undefined
-              ? zltoRewardRanges?.toString().split(",")
-              : null,
+          // commitmentIntervals:
+          //   commitmentIntervals != undefined
+          //     ? commitmentIntervals?.toString().split(",")
+          //     : null,
+          // zltoRewardRanges:
+          //   zltoRewardRanges != undefined
+          //     ? zltoRewardRanges?.toString().split(",")
+          //     : null,
           startDate: startDate != undefined ? startDate.toString() : null,
           endDate: endDate != undefined ? endDate.toString() : null,
           statuses:
@@ -304,10 +304,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       types: null,
       engagementTypes: null,
       valueContains: null,
-      commitmentIntervals: null,
+      //commitmentIntervals: null,
       featured: null,
       organizations: null,
-      zltoRewardRanges: null,
+      //zltoRewardRanges: null,
       startDate: null,
       endDate: null,
       statuses: null,
@@ -335,14 +335,14 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           organizations != undefined
             ? organizations?.toString().split(",")
             : null,
-        commitmentIntervals:
-          commitmentIntervals != undefined
-            ? commitmentIntervals?.toString().split(",")
-            : null,
-        zltoRewardRanges:
-          zltoRewardRanges != undefined
-            ? zltoRewardRanges?.toString().split(",")
-            : null,
+        // commitmentIntervals:
+        //   commitmentIntervals != undefined
+        //     ? commitmentIntervals?.toString().split(",")
+        //     : null,
+        // zltoRewardRanges:
+        //   zltoRewardRanges != undefined
+        //     ? zltoRewardRanges?.toString().split(",")
+        //     : null,
         startDate: startDate != undefined ? startDate.toString() : null,
         endDate: endDate != undefined ? endDate.toString() : null,
         statuses:
@@ -383,47 +383,54 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         searchFilter.valueContains.length > 0
       )
         params.append("query", searchFilter.valueContains);
+
       if (
         searchFilter?.categories?.length !== undefined &&
         searchFilter.categories.length > 0
       )
         params.append("categories", searchFilter.categories.join(","));
+
       if (
         searchFilter?.countries?.length !== undefined &&
         searchFilter.countries.length > 0
       )
         params.append("countries", searchFilter.countries.join(","));
+
       if (
         searchFilter?.languages?.length !== undefined &&
         searchFilter.languages.length > 0
       )
         params.append("languages", searchFilter.languages.join("|")); // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
+
       if (
         searchFilter?.types?.length !== undefined &&
         searchFilter.types.length > 0
       )
         params.append("types", searchFilter.types.join(","));
-      if (
-        searchFilter?.commitmentIntervals?.length !== undefined &&
-        searchFilter.commitmentIntervals.length > 0
-      )
-        params.append(
-          "commitmentIntervals",
-          searchFilter.commitmentIntervals.join(","),
-        );
+
+      // if (
+      //   searchFilter?.commitmentIntervals?.length !== undefined &&
+      //   searchFilter.commitmentIntervals.length > 0
+      // )
+      //   params.append(
+      //     "commitmentIntervals",
+      //     searchFilter.commitmentIntervals.join(","),
+      //   );
+
       if (
         searchFilter?.organizations?.length !== undefined &&
         searchFilter.organizations.length > 0
       )
         params.append("organizations", searchFilter.organizations.join(","));
-      if (
-        searchFilter?.zltoRewardRanges?.length !== undefined &&
-        searchFilter.zltoRewardRanges.length > 0
-      )
-        params.append(
-          "zltoRewardRanges",
-          searchFilter.zltoRewardRanges.join(","),
-        );
+
+      // if (
+      //   searchFilter?.zltoRewardRanges?.length !== undefined &&
+      //   searchFilter.zltoRewardRanges.length > 0
+      // )
+      //   params.append(
+      //     "zltoRewardRanges",
+      //     searchFilter.zltoRewardRanges.join(","),
+      //   );
 
       if (
         searchFilter?.statuses !== undefined &&

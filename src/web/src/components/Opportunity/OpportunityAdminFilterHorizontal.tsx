@@ -8,8 +8,8 @@ import zod from "zod";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
-  OpportunitySearchCriteriaCommitmentInterval,
-  OpportunitySearchCriteriaZltoReward,
+  OpportunitySearchCriteriaCommitmentIntervalOption,
+  OpportunitySearchCriteriaZltoRewardRange,
   OpportunitySearchFilterAdmin,
   OpportunityType,
 } from "~/api/models/opportunity";
@@ -63,8 +63,8 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
   lookups_languages: Language[];
   lookups_types: OpportunityType[];
   lookups_organisations: OrganizationInfo[];
-  lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
-  lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
+  lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentIntervalOption[];
+  lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoRewardRange[];
   lookups_publishedStates: SelectOption[];
   lookups_statuses: SelectOption[];
   onSubmit?: (fieldValues: OpportunitySearchFilterAdmin) => void;

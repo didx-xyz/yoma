@@ -5,9 +5,7 @@ export interface OpportunitySearchFilterAdmin
   extends OpportunitySearchFilterBase {
   startDate: string | null;
   endDate: string | null;
-  organizations: string[] | null;
-  statuses: Status[] | null | string[];
-  featured: boolean | null;
+  statuses: Status[] | null | string[]; //NB
 }
 
 export interface OpportunitySearchResults extends OpportunitySearchResultsBase {
@@ -114,22 +112,41 @@ export interface OpportunityInfo {
   skills: Skill[] | null;
   verificationTypes: OpportunityVerificationType[] | null;
 }
+// export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
+//   publishedStates: PublishedState[] | null | string[]; //NB
+//   mostViewed: boolean | null;
+//   mostCompleted: boolean | null;
+//   featured: boolean | null;
+// }
+
+// export interface OpportunitySearchFilterBase extends PaginationFilter {
+//   types: string[] | null;
+//   engagementTypes: string[] | null;
+//   categories: string[] | null;
+//   languages: string[] | null;
+//   countries: string[] | null;
+//   organizations: string[] | null;
+//   commitmentIntervals: string[] | null;
+//   zltoRewardRanges: string[] | null;
+//   valueContains: string | null;
+// }
+
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
   publishedStates: PublishedState[] | null | string[]; //NB
+  commitmentInterval: OpportunitySearchFilterCommitmentInterval | null;
+  zltoReward: OpportunitySearchFilterZltoReward | null;
   mostViewed: boolean | null;
   mostCompleted: boolean | null;
-  featured: boolean | null;
 }
 
 export interface OpportunitySearchFilterBase extends PaginationFilter {
   types: string[] | null;
-  engagementTypes: string[] | null;
   categories: string[] | null;
   languages: string[] | null;
   countries: string[] | null;
   organizations: string[] | null;
-  commitmentIntervals: string[] | null;
-  zltoRewardRanges: string[] | null;
+  engagementTypes: string[] | null;
+  featured: boolean | null;
   valueContains: string | null;
 }
 
@@ -275,21 +292,31 @@ export interface OpportunityType {
 }
 
 export interface OpportunitySearchFilterCommitmentInterval {
+  options: string[] | null;
+  interval: OpportunitySearchFilterCommitmentIntervalItem | null;
+}
+
+export interface OpportunitySearchFilterCommitmentIntervalItem {
   id: string;
   count: number;
 }
 
 export interface OpportunitySearchFilterZltoReward {
+  ranges: string[] | null;
+  hasReward: boolean | null;
+}
+
+export interface OpportunitySearchFilterZltoRewardRange {
   from: number;
   to: number;
 }
 
-export interface OpportunitySearchCriteriaZltoReward {
+export interface OpportunitySearchCriteriaZltoRewardRange {
   id: string;
   name: string;
 }
 
-export interface OpportunitySearchCriteriaCommitmentInterval {
+export interface OpportunitySearchCriteriaCommitmentIntervalOption {
   id: string;
   name: string;
 }

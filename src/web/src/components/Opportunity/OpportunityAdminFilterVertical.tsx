@@ -10,8 +10,8 @@ import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import {
   OpportunityFilterOptions,
   type OpportunityCategory,
-  type OpportunitySearchCriteriaCommitmentInterval,
-  type OpportunitySearchCriteriaZltoReward,
+  type OpportunitySearchCriteriaCommitmentIntervalOption,
+  type OpportunitySearchCriteriaZltoRewardRange,
   type OpportunitySearchFilterAdmin,
   type OpportunityType,
 } from "~/api/models/opportunity";
@@ -27,8 +27,8 @@ export const OpportunityAdminFilterVertical: React.FC<{
   lookups_languages: Language[];
   lookups_types: OpportunityType[];
   lookups_organisations: OrganizationInfo[];
-  lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
-  lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
+  lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentIntervalOption[];
+  lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoRewardRange[];
   lookups_publishedStates: SelectOption[];
   lookups_statuses: SelectOption[];
   onSubmit?: (fieldValues: OpportunitySearchFilterAdmin) => void;

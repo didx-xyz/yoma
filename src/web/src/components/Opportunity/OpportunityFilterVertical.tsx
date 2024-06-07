@@ -1,12 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Controller, type FieldValues, useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import zod from "zod";
 import {
   type OpportunityCategory,
-  type OpportunitySearchCriteriaCommitmentInterval,
-  type OpportunitySearchCriteriaZltoReward,
+  type OpportunitySearchCriteriaCommitmentIntervalOption,
+  type OpportunitySearchCriteriaZltoRewardRange,
   type OpportunityType,
   OpportunityFilterOptions,
   type OpportunitySearchFilter,
@@ -16,6 +16,7 @@ import type {
   EngagementType,
   Language,
   SelectOption,
+  TimeInterval,
 } from "~/api/models/lookups";
 import Select from "react-select";
 import type { OrganizationInfo } from "~/api/models/organisation";
@@ -23,7 +24,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
 import { AvatarImage } from "../AvatarImage";
-import MultiSelectButtons from "../Common/MultiSelectButtons";
+import SelectButtons from "../Common/SelectButtons";
 
 export const OpportunityFilterVertical: React.FC<{
   htmlRef: HTMLDivElement;
@@ -34,8 +35,8 @@ export const OpportunityFilterVertical: React.FC<{
   lookups_types: OpportunityType[];
   lookups_engagementTypes: EngagementType[];
   lookups_organisations: OrganizationInfo[];
-  lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
-  lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
+  lookups_timeIntervals: TimeInterval[];
+  lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoRewardRange[];
   lookups_publishedStates: SelectOption[];
   lookups_statuses: SelectOption[];
   onSubmit?: (fieldValues: OpportunitySearchFilter) => void;
@@ -53,7 +54,7 @@ export const OpportunityFilterVertical: React.FC<{
   lookups_types,
   lookups_engagementTypes,
   lookups_organisations,
-  lookups_commitmentIntervals,
+  lookups_timeIntervals,
   lookups_zltoRewardRanges,
   lookups_publishedStates,
   lookups_statuses,
@@ -71,7 +72,26 @@ export const OpportunityFilterVertical: React.FC<{
     languages: zod.array(zod.string()).optional().nullable(),
     countries: zod.array(zod.string()).optional().nullable(),
     organizations: zod.array(zod.string()).optional().nullable(),
-    commitmentIntervals: zod.array(zod.string()).optional().nullable(),
+    commitmentInterval: zod
+      .object({
+        options: zod.array(zod.string()).optional().nullable(),
+        interval: zod
+          .object({
+            id: zod
+              .any()
+              .optional()
+              .nullable()
+              .transform((value) => (value ? value[0] : null)), // SelectButtons returns an array, get the first item
+            // .transform((value) => (value === null ? "Day" : value)), // default to 'Month' if not selected
+            count: zod.any().optional().nullable().transform(Number),
+          })
+          .optional()
+          .nullable()
+          .transform((value) => (value?.count === 0 ? null : value)), // if 'count' is 0, return null for 'interval'
+      })
+      .nullable()
+      .transform((value) => (value?.interval === null ? null : value)), // if interval is null, return null for 'commitmentInterval'
+
     zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
     publishedStates: zod.array(zod.string()).optional().nullable(),
     valueContains: zod.string().optional().nullable(),
@@ -81,23 +101,51 @@ export const OpportunityFilterVertical: React.FC<{
     resolver: zodResolver(schema),
     defaultValues: searchFilter,
   });
-  const { handleSubmit, formState, reset } = form;
 
-  // set default values
-  // useEffect(() => {
-  //   // reset form
-  //   // setTimeout is needed to prevent the form from being reset before the default values are set
-  //   setTimeout(() => {
-  //     reset({
-  //       ...searchFilter,
-  //     });
-  //   }, 100);
-  // }, [reset, searchFilter]);
+  const { handleSubmit, formState, reset, watch, setValue } = form;
+  const watchIntervalId = watch("commitmentInterval.interval.id");
+  const watchIntervalCount = watch("commitmentInterval.interval.count");
+
+  const [timeIntervalMax, setTimeIntervalMax] = useState(100);
+
+  // set the maximum based on the selected time interval
+  useEffect(() => {
+    const watchInterval =
+      (watchIntervalId?.length ?? 0) > 0 ? watchIntervalId[0] : "Month";
+
+    let max = 0;
+    switch (watchInterval) {
+      case "Minute":
+        max = 60;
+        break;
+      case "Hour":
+        max = 24;
+        break;
+      case "Day":
+        max = 30;
+        break;
+      case "Week":
+        max = 12;
+        break;
+      case "Month":
+        max = 60;
+        break;
+    }
+
+    setTimeIntervalMax(max);
+
+    if (watchIntervalCount > max) {
+      setValue("commitmentInterval.interval.count", max);
+    }
+  }, [watchIntervalId, watchIntervalCount, setTimeIntervalMax, setValue]);
 
   // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      if (onSubmit) onSubmit(data as OpportunitySearchFilter);
+      // if (onSubmit) onSubmit(data as OpportunitySearchFilter);
+
+      console.table(data);
+      return;
     },
     [onSubmit],
   );
@@ -209,8 +257,9 @@ export const OpportunityFilterVertical: React.FC<{
                 control={form.control}
                 defaultValue={searchFilter?.types}
                 render={({ field: { onChange, value } }) => (
-                  <MultiSelectButtons
-                    id="multiSelectButtons_types"
+                  <SelectButtons
+                    id="selectButtons_types"
+                    isMulti={true}
                     buttons={lookups_types.map((x) => ({
                       id: x.id,
                       title: x.name,
@@ -250,8 +299,9 @@ export const OpportunityFilterVertical: React.FC<{
                 control={form.control}
                 defaultValue={searchFilter?.engagementTypes}
                 render={({ field: { onChange, value } }) => (
-                  <MultiSelectButtons
-                    id="multiSelectButtons_engagementTypes"
+                  <SelectButtons
+                    id="selectButtons_engagementTypes"
+                    isMulti={true}
                     buttons={lookups_engagementTypes.map((x) => ({
                       id: x.id,
                       title: x.name,
@@ -275,7 +325,6 @@ export const OpportunityFilterVertical: React.FC<{
             </div>
           )}
 
-          {/* TODO: time to invest & ZLTO Reward */}
           {/* COMMITMENT INTERVALS */}
           {filterOptions?.includes(
             OpportunityFilterOptions.COMMITMENTINTERVALS,
@@ -286,38 +335,74 @@ export const OpportunityFilterVertical: React.FC<{
                   How much time would you like to invest?
                 </span>
               </label>
+              <div className="flex w-full flex-row justify-center gap-4">
+                <span>0</span>
 
-              <Controller
-                name="commitmentIntervals"
-                control={form.control}
-                defaultValue={searchFilter?.commitmentIntervals}
-                render={({ field: { onChange, value } }) => (
-                  <Select
-                    classNames={{
-                      control: () => "input input-bordered h-fit py-1",
-                    }}
-                    isMulti={true}
-                    options={lookups_commitmentIntervals.map((c) => ({
-                      value: c.id,
-                      label: c.name,
-                    }))}
-                    // fix menu z-index issue
-                    menuPortalTarget={htmlRef}
-                    styles={{
-                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                    }}
-                    onChange={(val) => onChange(val.map((c) => c.value))}
-                    value={lookups_commitmentIntervals
-                      .filter((c) => value?.includes(c.id))
-                      .map((c) => ({ value: c.id, label: c.name }))}
-                  />
-                )}
-              />
+                <Controller
+                  name="commitmentInterval.interval.count"
+                  control={form.control}
+                  // defaultValue={
+                  //   searchFilter?.commitmentInterval?.interval?.count ?? 0
+                  // }
+                  render={({ field: { onChange, value } }) => (
+                    <div className="flex w-full flex-col justify-center text-center md:w-64">
+                      <input
+                        type="range"
+                        className="range range-secondary bg-gray"
+                        min="0"
+                        max={timeIntervalMax}
+                        value={value ?? 0} // default to 0 if not selected
+                        onChange={(val) => onChange(val)}
+                      />
+                      <span className="h-8">
+                        {value > 0 && watchIntervalId != null && (
+                          <>
+                            {`${value} ${
+                              value > 1
+                                ? `${watchIntervalId}s`
+                                : watchIntervalId
+                            }`}
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  )}
+                />
 
-              {formState.errors.commitmentIntervals && (
+                <span>{timeIntervalMax}</span>
+              </div>
+              <div className="flex w-full flex-row justify-center gap-4">
+                <Controller
+                  name="commitmentInterval.interval.id"
+                  control={form.control}
+                  // defaultValue={
+                  //   searchFilter?.commitmentInterval?.interval?.id ?? "Month"
+                  // }
+                  render={({ field: { onChange, value } }) => (
+                    <SelectButtons
+                      id="selectButtons_commitmentIntervals"
+                      buttons={lookups_timeIntervals.map((x) => ({
+                        id: x.id,
+                        title: x.name,
+                        selected:
+                          (!value && x.name === "Day") ||
+                          (value?.includes(x.name) ?? false), // default to 'Day' if not selected
+                      }))}
+                      onChange={(val) => {
+                        const selectedButtons = val.filter(
+                          (btn) => btn.selected,
+                        );
+                        onChange(selectedButtons.map((c) => c.title));
+                      }}
+                    />
+                  )}
+                />
+              </div>
+              ERROR: {JSON.stringify(formState.errors)}
+              {formState.errors.commitmentInterval?.interval?.count && (
                 <label className="label font-bold">
                   <span className="label-text-alt italic text-red-500">
-                    {`${formState.errors.commitmentIntervals.message}`}
+                    {`${formState.errors.commitmentInterval.interval.count.message}`}
                   </span>
                 </label>
               )}
@@ -325,7 +410,7 @@ export const OpportunityFilterVertical: React.FC<{
           )}
 
           {/* ZLTO REWARD RANGES */}
-          {filterOptions?.includes(
+          {/* {filterOptions?.includes(
             OpportunityFilterOptions.ZLTOREWARDRANGES,
           ) && (
             <div className="form-control">
@@ -367,7 +452,7 @@ export const OpportunityFilterVertical: React.FC<{
                 </label>
               )}
             </div>
-          )}
+          )} */}
 
           {/* COUNTRIES */}
           {filterOptions?.includes(OpportunityFilterOptions.COUNTRIES) && (
@@ -381,8 +466,9 @@ export const OpportunityFilterVertical: React.FC<{
                 control={form.control}
                 defaultValue={searchFilter?.countries}
                 render={({ field: { onChange, value } }) => (
-                  <MultiSelectButtons
-                    id="multiSelectButtons_countries"
+                  <SelectButtons
+                    id="selectButtons_countries"
+                    isMulti={true}
                     buttons={lookups_countries.map((x) => ({
                       id: x.id,
                       title: x.name,
@@ -418,8 +504,9 @@ export const OpportunityFilterVertical: React.FC<{
                 control={form.control}
                 defaultValue={searchFilter?.languages}
                 render={({ field: { onChange, value } }) => (
-                  <MultiSelectButtons
-                    id="multiSelectButtons_languages"
+                  <SelectButtons
+                    id="selectButtons_languages"
+                    isMulti={true}
                     buttons={lookups_languages.map((x) => ({
                       id: x.id,
                       title: x.name,
@@ -455,8 +542,9 @@ export const OpportunityFilterVertical: React.FC<{
                 control={form.control}
                 defaultValue={searchFilter?.organizations}
                 render={({ field: { onChange, value } }) => (
-                  <MultiSelectButtons
-                    id="multiSelectButtons_organizations"
+                  <SelectButtons
+                    id="selectButtons_organizations"
+                    isMulti={true}
                     buttons={lookups_organisations.map((x) => ({
                       id: x.id,
                       title: x.name,
@@ -494,8 +582,9 @@ export const OpportunityFilterVertical: React.FC<{
                 name="publishedStates"
                 control={form.control}
                 render={({ field: { onChange, value } }) => (
-                  <MultiSelectButtons
-                    id="multiSelectButtons_publishedStates"
+                  <SelectButtons
+                    id="selectButtons_publishedStates"
+                    isMulti={true}
                     buttons={lookups_publishedStates.map((x) => ({
                       id: x.value,
                       title: x.label,

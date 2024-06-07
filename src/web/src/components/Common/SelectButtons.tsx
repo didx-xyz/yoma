@@ -6,24 +6,33 @@ interface Button {
   selected: boolean;
 }
 
-interface MultiSelectButtonsProps {
+interface SelectButtonsProps {
   id: string;
   buttons: Button[];
+  isMulti?: boolean;
   onChange: (buttons: Button[]) => void;
 }
 
-const MultiSelectButtons: React.FC<MultiSelectButtonsProps> = ({
+const SelectButtons: React.FC<SelectButtonsProps> = ({
   id,
   buttons,
+  isMulti,
   onChange,
 }) => {
   const [buttonState, setButtonState] = useState<Button[]>(buttons);
 
   const handleButton = (buttonId: string) => {
     const newButtons = buttonState.map((btn) => {
-      if (btn.id !== buttonId) return btn;
-      btn.selected = !btn.selected;
-      return btn;
+      if (isMulti) {
+        if (btn.id !== buttonId) return btn;
+        btn.selected = !btn.selected;
+        return btn;
+      } else {
+        return {
+          ...btn,
+          selected: btn.id === buttonId ? true : false,
+        };
+      }
     });
     setButtonState(newButtons);
     onChange(newButtons);
@@ -47,4 +56,4 @@ const MultiSelectButtons: React.FC<MultiSelectButtonsProps> = ({
   );
 };
 
-export default MultiSelectButtons;
+export default SelectButtons;

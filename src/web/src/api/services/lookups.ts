@@ -57,7 +57,7 @@ export const getTimeIntervals = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<TimeInterval[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.get<TimeInterval[]>("/lookup/TimeInterval");
+  const { data } = await instance.get<TimeInterval[]>("/lookup/timeInterval");
   return data;
 };
 
@@ -91,6 +91,6 @@ export const getEngagementTypes = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<EngagementType[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.get<TimeInterval[]>("/lookup/engagement");
+  const { data } = await instance.get<EngagementType[]>("/lookup/engagement");
   return data;
 };

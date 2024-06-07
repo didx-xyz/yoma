@@ -18,19 +18,20 @@ import type {
   EngagementType,
   Language,
   SelectOption,
+  TimeInterval,
 } from "~/api/models/lookups";
 import {
   OpportunityFilterOptions,
   PublishedState,
   type OpportunityCategory,
-  type OpportunitySearchCriteriaCommitmentInterval,
-  type OpportunitySearchCriteriaZltoReward,
+  type OpportunitySearchCriteriaCommitmentIntervalOption,
+  type OpportunitySearchCriteriaZltoRewardRange,
   type OpportunitySearchFilter,
   type OpportunitySearchResultsInfo,
   type OpportunityType,
 } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
-import { getEngagementTypes } from "~/api/services/lookups";
+import { getEngagementTypes, getTimeIntervals } from "~/api/services/lookups";
 import {
   getCommitmentIntervals,
   getOpportunityCategories,
@@ -80,11 +81,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
       types: null,
       engagementTypes: null,
       valueContains: null,
-      commitmentIntervals: null,
+      commitmentInterval: null,
       mostViewed: null,
       mostCompleted: null,
       organizations: null,
-      zltoRewardRanges: null,
+      zltoReward: null,
       publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       featured: true,
     },
@@ -101,11 +102,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
       types: null,
       engagementTypes: null,
       valueContains: null,
-      commitmentIntervals: null,
+      commitmentInterval: null,
       mostViewed: true,
       mostCompleted: false,
       organizations: null,
-      zltoRewardRanges: null,
+      zltoReward: null,
       publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       featured: null,
     },
@@ -122,11 +123,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
       types: null,
       engagementTypes: null,
       valueContains: null,
-      commitmentIntervals: null,
+      commitmentInterval: null,
       mostViewed: null,
       mostCompleted: true,
       organizations: null,
-      zltoRewardRanges: null,
+      zltoReward: null,
       publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       featured: null,
     },
@@ -143,11 +144,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
       types: OPPORTUNITY_TYPES_LEARNING,
       engagementTypes: null,
       valueContains: null,
-      commitmentIntervals: null,
+      commitmentInterval: null,
       mostViewed: null,
       mostCompleted: false,
       organizations: null,
-      zltoRewardRanges: null,
+      zltoReward: null,
       publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       featured: null,
     },
@@ -164,11 +165,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
       types: OPPORTUNITY_TYPES_TASK,
       engagementTypes: null,
       valueContains: null,
-      commitmentIntervals: null,
+      commitmentInterval: null,
       mostViewed: null,
       mostCompleted: false,
       organizations: null,
-      zltoRewardRanges: null,
+      zltoReward: null,
       publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       featured: null,
     },
@@ -185,11 +186,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
       types: OPPORTUNITY_TYPES_EVENT,
       engagementTypes: null,
       valueContains: null,
-      commitmentIntervals: null,
+      commitmentInterval: null,
       mostViewed: null,
       mostCompleted: false,
       organizations: null,
-      zltoRewardRanges: null,
+      zltoReward: null,
       publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       featured: null,
     },
@@ -206,11 +207,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
       types: OPPORTUNITY_TYPES_OTHER,
       engagementTypes: null,
       valueContains: null,
-      commitmentIntervals: null,
+      commitmentInterval: null,
       mostViewed: null,
       mostCompleted: false,
       organizations: null,
-      zltoRewardRanges: null,
+      zltoReward: null,
       publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       featured: null,
     },
@@ -227,11 +228,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
       types: null,
       engagementTypes: null,
       valueContains: null,
-      commitmentIntervals: null,
+      commitmentInterval: null,
       mostViewed: null,
       mostCompleted: false,
       organizations: null,
-      zltoRewardRanges: null,
+      zltoReward: null,
       publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       featured: null,
     },
@@ -244,7 +245,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const lookups_organisations = await getOpportunityOrganizations(context);
   const lookups_types = await getOpportunityTypes(context);
   const lookups_engagementTypes = await getEngagementTypes(context);
-  const lookups_commitmentIntervals = await getCommitmentIntervals(context);
+  const lookups_timeIntervals = await getTimeIntervals(context);
   const lookups_zltoRewardRanges = await getZltoRewardRanges(context);
 
   return {
@@ -263,7 +264,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       lookups_organisations,
       lookups_types,
       lookups_engagementTypes,
-      lookups_commitmentIntervals,
+      lookups_timeIntervals,
       lookups_zltoRewardRanges,
     },
 
@@ -296,8 +297,8 @@ const Opportunities: NextPageWithLayout<{
   lookups_organisations: OrganizationInfo[];
   lookups_types: OpportunityType[];
   lookups_engagementTypes: EngagementType[];
-  lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
-  lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
+  lookups_timeIntervals: TimeInterval[];
+  lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoRewardRange[];
 }> = ({
   opportunities_featured,
   opportunities_trending,
@@ -313,7 +314,7 @@ const Opportunities: NextPageWithLayout<{
   lookups_organisations,
   lookups_types,
   lookups_engagementTypes,
-  lookups_commitmentIntervals,
+  lookups_timeIntervals,
   lookups_zltoRewardRanges,
 }) => {
   const router = useRouter();
@@ -409,14 +410,16 @@ const Opportunities: NextPageWithLayout<{
     languages: languages != undefined ? languages?.toString().split("|") : null,
     organizations:
       organizations != undefined ? organizations?.toString().split("|") : null,
-    commitmentIntervals:
-      commitmentIntervals != undefined
-        ? commitmentIntervals?.toString().split("|")
-        : null,
-    zltoRewardRanges:
-      zltoRewardRanges != undefined
-        ? zltoRewardRanges?.toString().split("|")
-        : null,
+    // commitmentIntervals:
+    //   commitmentIntervals != undefined
+    //     ? commitmentIntervals?.toString().split("|")
+    //     : null,
+    // zltoRewardRanges:
+    //   zltoRewardRanges != undefined
+    //     ? zltoRewardRanges?.toString().split("|")
+    //     : null,
+    commitmentInterval: null,
+    zltoReward: null,
     publishedStates:
       publishedStates != undefined
         ? publishedStates?.toString().split("|")
@@ -540,14 +543,16 @@ const Opportunities: NextPageWithLayout<{
                   })
                   .filter((x) => x != "")
               : null,
-          commitmentIntervals:
-            commitmentIntervals != undefined
-              ? commitmentIntervals?.toString().split("|")
-              : null,
-          zltoRewardRanges:
-            zltoRewardRanges != undefined
-              ? zltoRewardRanges?.toString().split("|")
-              : null,
+          // commitmentIntervals:
+          //   commitmentIntervals != undefined
+          //     ? commitmentIntervals?.toString().split("|")
+          //     : null,
+          // zltoRewardRanges:
+          //   zltoRewardRanges != undefined
+          //     ? zltoRewardRanges?.toString().split("|")
+          //     : null,
+          commitmentInterval: null,
+          zltoReward: null,
         }),
       enabled: isSearchPerformed, // only run query if search is executed
     });
@@ -600,14 +605,14 @@ const Opportunities: NextPageWithLayout<{
           searchFilter.engagementTypes.join("|"),
         );
 
-      if (
-        searchFilter?.commitmentIntervals?.length !== undefined &&
-        searchFilter.commitmentIntervals.length > 0
-      )
-        params.append(
-          "commitmentIntervals",
-          searchFilter.commitmentIntervals.join("|"),
-        );
+      // if (
+      //   searchFilter?.commitmentIntervals?.length !== undefined &&
+      //   searchFilter.commitmentIntervals.length > 0
+      // )
+      //   params.append(
+      //     "commitmentIntervals",
+      //     searchFilter.commitmentIntervals.join("|"),
+      //   );
 
       if (
         searchFilter?.organizations?.length !== undefined &&
@@ -615,14 +620,14 @@ const Opportunities: NextPageWithLayout<{
       )
         params.append("organizations", searchFilter.organizations.join("|"));
 
-      if (
-        searchFilter?.zltoRewardRanges?.length !== undefined &&
-        searchFilter.zltoRewardRanges.length > 0
-      )
-        params.append(
-          "zltoRewardRanges",
-          searchFilter.zltoRewardRanges.join("|"),
-        );
+      // if (
+      //   searchFilter?.zltoRewardRanges?.length !== undefined &&
+      //   searchFilter.zltoRewardRanges.length > 0
+      // )
+      //   params.append(
+      //     "zltoRewardRanges",
+      //     searchFilter.zltoRewardRanges.join("|"),
+      //   );
 
       if (
         searchFilter?.mostViewed !== undefined &&
@@ -785,12 +790,12 @@ const Opportunities: NextPageWithLayout<{
         types: null,
         engagementTypes: null,
         valueContains: null,
-        commitmentIntervals: null,
+        commitmentInterval: null,
         mostViewed: true,
         mostCompleted: null,
         featured: null,
         organizations: null,
-        zltoRewardRanges: null,
+        zltoReward: null,
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       });
     },
@@ -817,12 +822,12 @@ const Opportunities: NextPageWithLayout<{
         types: OPPORTUNITY_TYPES_LEARNING,
         engagementTypes: null,
         valueContains: null,
-        commitmentIntervals: null,
+        commitmentInterval: null,
         mostViewed: null,
         mostCompleted: null,
         featured: null,
         organizations: null,
-        zltoRewardRanges: null,
+        zltoReward: null,
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       });
     },
@@ -849,12 +854,12 @@ const Opportunities: NextPageWithLayout<{
         types: OPPORTUNITY_TYPES_TASK,
         engagementTypes: null,
         valueContains: null,
-        commitmentIntervals: null,
+        commitmentInterval: null,
         mostViewed: null,
         mostCompleted: null,
         featured: null,
         organizations: null,
-        zltoRewardRanges: null,
+        zltoReward: null,
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       });
     },
@@ -881,12 +886,12 @@ const Opportunities: NextPageWithLayout<{
         types: OPPORTUNITY_TYPES_EVENT,
         engagementTypes: null,
         valueContains: null,
-        commitmentIntervals: null,
+        commitmentInterval: null,
         mostViewed: null,
         mostCompleted: null,
         featured: null,
         organizations: null,
-        zltoRewardRanges: null,
+        zltoReward: null,
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       });
     },
@@ -913,12 +918,12 @@ const Opportunities: NextPageWithLayout<{
         types: OPPORTUNITY_TYPES_OTHER,
         engagementTypes: null,
         valueContains: null,
-        commitmentIntervals: null,
+        commitmentInterval: null,
         mostViewed: null,
         mostCompleted: null,
         featured: null,
         organizations: null,
-        zltoRewardRanges: null,
+        zltoReward: null,
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       });
     },
@@ -947,12 +952,12 @@ const Opportunities: NextPageWithLayout<{
           types: null,
           engagementTypes: null,
           valueContains: null,
-          commitmentIntervals: null,
+          commitmentInterval: null,
           mostViewed: null,
           mostCompleted: null,
           featured: null,
           organizations: null,
-          zltoRewardRanges: null,
+          zltoReward: null,
           publishedStates: [PublishedState.Active, PublishedState.NotStarted],
         },
       );
@@ -980,12 +985,12 @@ const Opportunities: NextPageWithLayout<{
         types: null,
         engagementTypes: null,
         valueContains: null,
-        commitmentIntervals: null,
+        commitmentInterval: null,
         mostViewed: null,
         mostCompleted: true,
         featured: null,
         organizations: null,
-        zltoRewardRanges: null,
+        zltoReward: null,
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       });
     },
@@ -1012,12 +1017,12 @@ const Opportunities: NextPageWithLayout<{
         types: null,
         engagementTypes: null,
         valueContains: null,
-        commitmentIntervals: null,
+        commitmentInterval: null,
         mostViewed: null,
         mostCompleted: null,
         featured: true,
         organizations: null,
-        zltoRewardRanges: null,
+        zltoReward: null,
         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
       });
     },
@@ -1045,9 +1050,6 @@ const Opportunities: NextPageWithLayout<{
         onRequestClose={() => {
           setFilterFullWindowVisible(false);
         }}
-        // className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px]`}
-        // portalClassName={"fixed z-40"}
-        // overlayClassName="fixed inset-0 bg-overlay"
         className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
@@ -1062,7 +1064,7 @@ const Opportunities: NextPageWithLayout<{
             lookups_types={lookups_types}
             lookups_engagementTypes={lookups_engagementTypes}
             lookups_organisations={lookups_organisations}
-            lookups_commitmentIntervals={lookups_commitmentIntervals}
+            lookups_timeIntervals={lookups_timeIntervals}
             lookups_zltoRewardRanges={lookups_zltoRewardRanges}
             lookups_publishedStates={lookups_publishedStates}
             lookups_statuses={[]}
@@ -1154,8 +1156,9 @@ const Opportunities: NextPageWithLayout<{
           searchFilter={searchFilter}
           excludeKeys={["pageNumber", "pageSize"]}
           resolveValue={(key, value) => {
+            //TODO:
             if (key === "commitmentIntervals") {
-              const lookup = lookups_commitmentIntervals.find(
+              const lookup = lookups_timeIntervals.find(
                 (interval) => interval.id === value,
               );
               return lookup?.name;
