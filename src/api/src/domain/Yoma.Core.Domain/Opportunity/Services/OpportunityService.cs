@@ -556,6 +556,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var results = organizations
         .OrderByDescending(o => organizationOpportunities.FirstOrDefault(oo => oo.OrganizationId == o.Id)?.OpportunityCount ?? 0)
+        .ThenBy(o => o.Name)
         .ToList();
 
       return results;
