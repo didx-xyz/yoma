@@ -17,6 +17,12 @@ ingress:
           - path: /auth/realms/yoma
           - path: /auth/resources
           - path: /auth/js
+      # Required for Vercel Rewrite
+      - host: keycloak.stage.yoma.world
+        paths:
+          - path: /auth/realms/yoma
+          - path: /auth/resources
+          - path: /auth/js
 
 postInstallHook:
   enabled: false
