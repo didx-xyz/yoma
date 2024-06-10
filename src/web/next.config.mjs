@@ -77,6 +77,16 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
+
+  // async rewrites() {
+  //   return [
+  //     {
+  //       source: '/auth/:path*',
+  //       // TODO: Make this an environment variable:
+  //       destination: 'https://keycloak.stage.yoma.world/auth/:path*',
+  //     },
+  //   ]
+  // },
 };
 
 //TODO: sentry removed for now, as it is not working with the current setup

@@ -9,7 +9,7 @@ export async function fetchClientEnv() {
       let resp: Response;
       if (typeof window === "undefined") {
         // Running on the server
-        resp = await fetch("http://127.0.0.1:3000/api/config/client-env");
+        resp = await fetch(`${process.env.NEXTAUTH_URL}/api/config/client-env`);
       } else {
         // Running in the browser
         resp = await fetch("/api/config/client-env");
