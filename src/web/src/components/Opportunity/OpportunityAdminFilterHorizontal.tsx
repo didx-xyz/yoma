@@ -412,7 +412,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                 )}
 
                 {/* COMMITMENT INTERVALS */}
-                {filterOptions?.includes(
+                {/* {filterOptions?.includes(
                   OpportunityFilterOptions.COMMITMENTINTERVALS,
                 ) && (
                   <>
@@ -458,10 +458,10 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                       </label>
                     )}
                   </>
-                )}
+                )} */}
 
                 {/* ZLTO REWARD RANGES */}
-                {filterOptions?.includes(
+                {/* {filterOptions?.includes(
                   OpportunityFilterOptions.ZLTOREWARDRANGES,
                 ) && (
                   <>
@@ -508,7 +508,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                       </label>
                     )}
                   </>
-                )}
+                )} */}
 
                 {/* PUBLISHED STATES */}
                 {filterOptions?.includes(

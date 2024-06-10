@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import { Controller, type FieldValues, useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import zod from "zod";
@@ -25,6 +25,9 @@ import "react-datepicker/dist/react-datepicker.css";
 import { toISOStringForTimezone } from "~/lib/utils";
 import { AvatarImage } from "../AvatarImage";
 import SelectButtons from "../Common/SelectButtons";
+import { useQuery } from "@tanstack/react-query";
+import { getUserProfile } from "~/api/services/user";
+import { Session } from "next-auth";
 
 export const OpportunityFilterVertical: React.FC<{
   htmlRef: HTMLDivElement;
@@ -45,6 +48,7 @@ export const OpportunityFilterVertical: React.FC<{
   submitButtonText?: string;
   filterOptions: OpportunityFilterOptions[];
   onClear?: () => void;
+  session: Session;
 }> = ({
   htmlRef,
   searchFilter,
@@ -64,7 +68,20 @@ export const OpportunityFilterVertical: React.FC<{
   filterOptions,
   onClear,
   clearButtonText,
+  session,
 }) => {
+  // let searchFilterDefaults = {
+  //   ...searchFilter,
+  //   commitmentInterval: {
+  //     ...searchFilter.commitmentInterval,
+  //     interval: {
+  //       ...searchFilter.commitmentInterval?.interval,
+  //       id: searchFilter.commitmentInterval?.interval?.id || "Day",
+  //       count: searchFilter.commitmentInterval?.interval?.count || 0,
+  //     },
+  //   },
+  // };
+
   const schema = zod.object({
     types: zod.array(zod.string()).optional().nullable(),
     engagementTypes: zod.array(zod.string()).optional().nullable(),
@@ -99,7 +116,7 @@ export const OpportunityFilterVertical: React.FC<{
   const form = useForm({
     mode: "all",
     resolver: zodResolver(schema),
-    defaultValues: searchFilter,
+    //defaultValues: searchFilterDefaults,
   });
 
   const { handleSubmit, formState, reset, watch, setValue } = form;
@@ -111,7 +128,7 @@ export const OpportunityFilterVertical: React.FC<{
   // set the maximum based on the selected time interval
   useEffect(() => {
     const watchInterval =
-      (watchIntervalId?.length ?? 0) > 0 ? watchIntervalId[0] : "Month";
+      (watchIntervalId?.length ?? 0) > 0 ? watchIntervalId[0] : "Day";
 
     let max = 0;
     switch (watchInterval) {
@@ -144,11 +161,71 @@ export const OpportunityFilterVertical: React.FC<{
     (data: FieldValues) => {
       // if (onSubmit) onSubmit(data as OpportunitySearchFilter);
 
+      //TODO:
       console.table(data);
       return;
     },
     [onSubmit],
   );
+
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile"],
+    queryFn: async () => await getUserProfile(),
+    enabled: session != null,
+  });
+
+  // useEffect(() => {
+  //   if (!userProfile) return;
+
+  //   console.log(userProfile);
+  // }, [userProfile]);
+
+  // set default values
+  // useEffect(() => {
+  //   if (!searchFilter) return;
+
+  //   let searchFilterDefaults = {
+  //     ...searchFilter,
+  //     commitmentInterval: {
+  //       ...searchFilter.commitmentInterval,
+  //       interval: {
+  //         ...searchFilter.commitmentInterval?.interval,
+  //         id: searchFilter.commitmentInterval?.interval?.id || "Day",
+  //         count: searchFilter.commitmentInterval?.interval?.count || 0,
+  //       },
+  //     },
+  //   };
+  //   debugger;
+  //   if (
+  //     userProfile?.countryId &&
+  //     searchFilterDefaults?.countries?.length === 0
+  //   ) {
+  //     searchFilterDefaults.countries = [userProfile.countryId];
+  //   }
+
+  //   //debugger;
+  //   // reset form
+  //   // setTimeout is needed to prevent the form from being reset before the default values are set
+  //   setTimeout(() => {
+  //     reset({
+  //       ...searchFilterDefaults,
+  //     });
+  //   }, 1000);
+  // }, [reset, /*searchFilter,*/ userProfile?.countryId]);
+
+  useEffect(() => {
+    if (searchFilter == null || searchFilter == undefined) return;
+    debugger;
+    if (searchFilter.commitmentInterval?.interval?.id === null)
+      setValue("commitmentInterval.interval.id", "Day");
+  }, [setValue, searchFilter]);
+
+  useEffect(() => {
+    if (searchFilter == null || searchFilter == undefined) return;
+    debugger;
+    if ((searchFilter.countries?.length ?? 0) == 0 && userProfile?.countryId)
+      setValue("countries", [userProfile?.countryId]);
+  }, [setValue, userProfile?.countryId, searchFilter]);
 
   return (
     <>
@@ -351,8 +428,13 @@ export const OpportunityFilterVertical: React.FC<{
                         className="range range-secondary bg-gray"
                         min="0"
                         max={timeIntervalMax}
-                        value={value ?? 0} // default to 0 if not selected
-                        onChange={(val) => onChange(val)}
+                        value={value} // default to 0 if not selected
+                        // value={value ?? 0} // default to 0 if not selected
+                        //onChange={(val) => onChange(val)}
+                        onChange={(val) => {
+                          debugger;
+                          onChange(val);
+                        }}
                       />
                       <span className="h-8">
                         {value > 0 && watchIntervalId != null && (
@@ -376,7 +458,7 @@ export const OpportunityFilterVertical: React.FC<{
                   name="commitmentInterval.interval.id"
                   control={form.control}
                   // defaultValue={
-                  //   searchFilter?.commitmentInterval?.interval?.id ?? "Month"
+                  //   searchFilter?.commitmentInterval?.interval?.id ?? "Day"
                   // }
                   render={({ field: { onChange, value } }) => (
                     <SelectButtons
@@ -384,9 +466,10 @@ export const OpportunityFilterVertical: React.FC<{
                       buttons={lookups_timeIntervals.map((x) => ({
                         id: x.id,
                         title: x.name,
-                        selected:
-                          (!value && x.name === "Day") ||
-                          (value?.includes(x.name) ?? false), // default to 'Day' if not selected
+                        selected: value?.includes(x.name) ?? false,
+                        // selected:
+                        //   (!value && x.name === "Day") ||
+                        //   (value?.includes(x.name) ?? false), // default to 'Day' if not selected
                       }))}
                       onChange={(val) => {
                         const selectedButtons = val.filter(
@@ -399,13 +482,13 @@ export const OpportunityFilterVertical: React.FC<{
                 />
               </div>
               ERROR: {JSON.stringify(formState.errors)}
-              {formState.errors.commitmentInterval?.interval?.count && (
+              {/* {formState.errors.commitmentInterval?.interval?.count && (
                 <label className="label font-bold">
                   <span className="label-text-alt italic text-red-500">
                     {`${formState.errors.commitmentInterval.interval.count.message}`}
                   </span>
                 </label>
-              )}
+              )} */}
             </div>
           )}
 

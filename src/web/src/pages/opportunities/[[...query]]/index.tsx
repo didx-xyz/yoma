@@ -1084,6 +1084,7 @@ const Opportunities: NextPageWithLayout<{
               OpportunityFilterOptions.ORGANIZATIONS,
               OpportunityFilterOptions.PUBLISHEDSTATES,
             ]}
+            session={session}
           />
         </div>
       </ReactModal>

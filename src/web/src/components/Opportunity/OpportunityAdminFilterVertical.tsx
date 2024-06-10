@@ -377,7 +377,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
             )}
 
             {/* COMMITMENT INTERVALS */}
-            {filterOptions?.includes(
+            {/* {filterOptions?.includes(
               OpportunityFilterOptions.COMMITMENTINTERVALS,
             ) && (
               <div className="collapse join-item collapse-arrow">
@@ -420,10 +420,10 @@ export const OpportunityAdminFilterVertical: React.FC<{
                   )}
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* ZLTO REWARD RANGES */}
-            {filterOptions?.includes(
+            {/* {filterOptions?.includes(
               OpportunityFilterOptions.ZLTOREWARDRANGES,
             ) && (
               <div className="collapse join-item collapse-arrow">
@@ -466,7 +466,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                   )}
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* PUBLISHED STATES */}
             {filterOptions?.includes(
