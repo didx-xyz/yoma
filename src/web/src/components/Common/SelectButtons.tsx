@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface Button {
   id: string;
@@ -19,7 +19,12 @@ const SelectButtons: React.FC<SelectButtonsProps> = ({
   isMulti,
   onChange,
 }) => {
+  //const [buttonState, setButtonState] = useState<Button[]>(buttons);
   const [buttonState, setButtonState] = useState<Button[]>(buttons);
+
+  useEffect(() => {
+    setButtonState(buttons);
+  }, [buttons]);
 
   const handleButton = (buttonId: string) => {
     const newButtons = buttonState.map((btn) => {

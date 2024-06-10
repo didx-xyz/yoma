@@ -6,7 +6,6 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import {
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -24,7 +23,6 @@ import {
   OpportunityFilterOptions,
   PublishedState,
   type OpportunityCategory,
-  type OpportunitySearchCriteriaCommitmentIntervalOption,
   type OpportunitySearchCriteriaZltoRewardRange,
   type OpportunitySearchFilter,
   type OpportunitySearchResultsInfo,
@@ -33,7 +31,6 @@ import {
 import type { OrganizationInfo } from "~/api/models/organisation";
 import { getEngagementTypes, getTimeIntervals } from "~/api/services/lookups";
 import {
-  getCommitmentIntervals,
   getOpportunityCategories,
   getOpportunityCountries,
   getOpportunityLanguages,
@@ -321,7 +318,6 @@ const Opportunities: NextPageWithLayout<{
   const { data: session } = useSession();
   const myRef = useRef<HTMLDivElement>(null);
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
-  const screenWidth = useAtomValue(screenWidthAtom);
   const queryClient = useQueryClient();
   useDisableBodyScroll(filterFullWindowVisible);
 
@@ -341,7 +337,8 @@ const Opportunities: NextPageWithLayout<{
     languages,
     types,
     engagementTypes,
-    commitmentIntervals,
+    intervalCount,
+    intervalType,
     organizations,
     zltoRewardRanges,
     mostViewed,
@@ -360,7 +357,8 @@ const Opportunities: NextPageWithLayout<{
       languages != undefined ||
       types != undefined ||
       engagementTypes != undefined ||
-      commitmentIntervals != undefined ||
+      intervalCount != undefined ||
+      intervalType != undefined ||
       organizations != undefined ||
       zltoRewardRanges != undefined ||
       mostViewed != undefined ||
@@ -376,7 +374,8 @@ const Opportunities: NextPageWithLayout<{
     languages,
     types,
     engagementTypes,
-    commitmentIntervals,
+    intervalCount,
+    intervalType,
     organizations,
     zltoRewardRanges,
     mostViewed,
@@ -389,42 +388,70 @@ const Opportunities: NextPageWithLayout<{
   // this is the current filter state based on the querystring parameters
   // it contains human-readable values (e.g. category name, country name) instead of id's
   // these values are mapped to the corresponding id's when executing the search query (see below)
-  const searchFilter: OpportunitySearchFilter = {
-    pageNumber: page ? parseInt(page.toString()) : 1,
-    pageSize: PAGE_SIZE,
-    valueContains: query ? decodeURIComponent(query.toString()) : null,
-    mostViewed: mostViewed ? Boolean(mostViewed) : null,
-    mostCompleted: mostCompleted ? Boolean(mostCompleted) : null,
-    featured: featured ? Boolean(featured) : null,
-    types: types != undefined ? types?.toString().split("|") : null,
-    engagementTypes:
-      engagementTypes != undefined
-        ? engagementTypes?.toString().split("|")
-        : null,
-    categories:
-      categories != undefined ? categories?.toString().split("|") : null,
-    countries:
-      countries != undefined && countries != null
-        ? countries?.toString().split("|")
-        : null,
-    languages: languages != undefined ? languages?.toString().split("|") : null,
-    organizations:
-      organizations != undefined ? organizations?.toString().split("|") : null,
-    // commitmentIntervals:
-    //   commitmentIntervals != undefined
-    //     ? commitmentIntervals?.toString().split("|")
-    //     : null,
-    // zltoRewardRanges:
-    //   zltoRewardRanges != undefined
-    //     ? zltoRewardRanges?.toString().split("|")
-    //     : null,
-    commitmentInterval: null,
-    zltoReward: null,
-    publishedStates:
-      publishedStates != undefined
-        ? publishedStates?.toString().split("|")
-        : null,
-  };
+  const searchFilter: OpportunitySearchFilter = useMemo(() => {
+    let commitmentInterval = null;
+    if (intervalCount != undefined && intervalType != undefined) {
+      var lookup = lookups_timeIntervals.find(
+        (interval) => interval.name === intervalType.toString(),
+      );
+
+      if (lookup != undefined)
+        commitmentInterval = {
+          options: null,
+          interval: {
+            count: parseInt(intervalCount.toString()),
+            id: lookup.id,
+          },
+        };
+    }
+
+    return {
+      pageNumber: page ? parseInt(page.toString()) : 1,
+      pageSize: PAGE_SIZE,
+      valueContains: query ? decodeURIComponent(query.toString()) : null,
+      mostViewed: mostViewed ? Boolean(mostViewed) : null,
+      mostCompleted: mostCompleted ? Boolean(mostCompleted) : null,
+      featured: featured ? Boolean(featured) : null,
+      types: types != undefined ? types?.toString().split("|") : null,
+      engagementTypes:
+        engagementTypes != undefined
+          ? engagementTypes?.toString().split("|")
+          : null,
+      categories:
+        categories != undefined ? categories?.toString().split("|") : null,
+      countries:
+        countries != undefined && countries != null
+          ? countries?.toString().split("|")
+          : null,
+      languages:
+        languages != undefined ? languages?.toString().split("|") : null,
+      organizations:
+        organizations != undefined
+          ? organizations?.toString().split("|")
+          : null,
+      commitmentInterval: commitmentInterval,
+      zltoReward: null,
+      publishedStates:
+        publishedStates != undefined
+          ? publishedStates?.toString().split("|")
+          : null,
+    };
+  }, [
+    page,
+    query,
+    mostViewed,
+    mostCompleted,
+    featured,
+    types,
+    engagementTypes,
+    intervalCount,
+    intervalType,
+    categories,
+    countries,
+    languages,
+    organizations,
+    publishedStates,
+  ]);
 
   // QUERY: SEARCH RESULTS
   // the filter values from the querystring are mapped to it's corresponding id
@@ -438,7 +465,8 @@ const Opportunities: NextPageWithLayout<{
         countries,
         languages,
         types,
-        commitmentIntervals,
+        intervalCount,
+        intervalType,
         organizations,
         zltoRewardRanges,
         mostViewed,
@@ -543,15 +571,11 @@ const Opportunities: NextPageWithLayout<{
                   })
                   .filter((x) => x != "")
               : null,
-          // commitmentIntervals:
-          //   commitmentIntervals != undefined
-          //     ? commitmentIntervals?.toString().split("|")
-          //     : null,
           // zltoRewardRanges:
           //   zltoRewardRanges != undefined
           //     ? zltoRewardRanges?.toString().split("|")
           //     : null,
-          commitmentInterval: null,
+          commitmentInterval: searchFilter.commitmentInterval,
           zltoReward: null,
         }),
       enabled: isSearchPerformed, // only run query if search is executed
@@ -605,14 +629,20 @@ const Opportunities: NextPageWithLayout<{
           searchFilter.engagementTypes.join("|"),
         );
 
-      // if (
-      //   searchFilter?.commitmentIntervals?.length !== undefined &&
-      //   searchFilter.commitmentIntervals.length > 0
-      // )
-      //   params.append(
-      //     "commitmentIntervals",
-      //     searchFilter.commitmentIntervals.join("|"),
-      //   );
+      if (
+        searchFilter?.commitmentInterval?.interval?.count !== undefined &&
+        searchFilter.commitmentInterval.interval.count > 0
+      )
+        params.append(
+          "intervalCount",
+          searchFilter.commitmentInterval.interval.count.toString(),
+        );
+
+      if (searchFilter?.commitmentInterval?.interval?.id !== undefined)
+        params.append(
+          "intervalType",
+          searchFilter.commitmentInterval.interval.id.toString(),
+        );
 
       if (
         searchFilter?.organizations?.length !== undefined &&
@@ -1056,34 +1086,19 @@ const Opportunities: NextPageWithLayout<{
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
           <OpportunityFilterVertical
-            htmlRef={myRef.current!}
             searchFilter={searchFilter}
-            lookups_categories={lookups_categories}
             lookups_countries={lookups_countries}
             lookups_languages={lookups_languages}
             lookups_types={lookups_types}
             lookups_engagementTypes={lookups_engagementTypes}
             lookups_organisations={lookups_organisations}
             lookups_timeIntervals={lookups_timeIntervals}
-            lookups_zltoRewardRanges={lookups_zltoRewardRanges}
             lookups_publishedStates={lookups_publishedStates}
-            lookups_statuses={[]}
             submitButtonText="Apply Filters"
             onCancel={onCloseFilter}
             onSubmit={(e) => onSubmitFilter(e)}
             onClear={onClearFilter}
             clearButtonText="Clear All Filters"
-            filterOptions={[
-              OpportunityFilterOptions.CATEGORIES,
-              OpportunityFilterOptions.TYPES,
-              OpportunityFilterOptions.ENGAGEMENT_TYPES,
-              OpportunityFilterOptions.COUNTRIES,
-              OpportunityFilterOptions.LANGUAGES,
-              OpportunityFilterOptions.COMMITMENTINTERVALS,
-              OpportunityFilterOptions.ZLTOREWARDRANGES,
-              OpportunityFilterOptions.ORGANIZATIONS,
-              OpportunityFilterOptions.PUBLISHEDSTATES,
-            ]}
             session={session}
           />
         </div>
@@ -1113,38 +1128,6 @@ const Opportunities: NextPageWithLayout<{
           </div>
         </div>
 
-        {/* FILTER ROW: CATEGORIES DROPDOWN FILTERS (SELECT) FOR COUNTRIES, LANGUAGES, TYPE, ORGANISATIONS ETC  */}
-        {/* <OpportunityAdminFilterHorizontal
-          htmlRef={myRef.current!}
-          searchFilter={searchFilter}
-          lookups_categories={lookups_categories}
-          lookups_countries={lookups_countries}
-          lookups_languages={lookups_languages}
-          lookups_types={lookups_types}
-          lookups_organisations={lookups_organisations}
-          lookups_commitmentIntervals={lookups_commitmentIntervals}
-          lookups_zltoRewardRanges={lookups_zltoRewardRanges}
-          lookups_publishedStates={lookups_publishedStates}
-          lookups_statuses={[]}
-          clearButtonText="Clear"
-          onClear={onClearFilter}
-          onSubmit={(e) => onSubmitFilter(e)}
-          onOpenFilterFullWindow={() => {
-            setFilterFullWindowVisible(!filterFullWindowVisible);
-          }}
-          filterOptions={[
-            OpportunityFilterOptions.CATEGORIES,
-            OpportunityFilterOptions.TYPES,
-            OpportunityFilterOptions.COUNTRIES,
-            OpportunityFilterOptions.LANGUAGES,
-            OpportunityFilterOptions.COMMITMENTINTERVALS,
-            OpportunityFilterOptions.ZLTOREWARDRANGES,
-            OpportunityFilterOptions.ORGANIZATIONS,
-            OpportunityFilterOptions.PUBLISHEDSTATES,
-          ]}
-          totalCount={isSearchPerformed ? searchResults?.totalCount ?? 0 : 0}
-        /> */}
-
         {/* FILTER: CATEGORIES */}
         <OpportunityCategoriesHorizontalFilter
           lookups_categories={lookups_categories}
@@ -1157,12 +1140,13 @@ const Opportunities: NextPageWithLayout<{
           searchFilter={searchFilter}
           excludeKeys={["pageNumber", "pageSize"]}
           resolveValue={(key, value) => {
-            //TODO:
-            if (key === "commitmentIntervals") {
+            if (key === "commitmentInterval") {
               const lookup = lookups_timeIntervals.find(
-                (interval) => interval.id === value,
+                (interval) => interval.id === value.interval.id,
               );
-              return lookup?.name;
+              return `${value.interval.count} ${
+                value.interval.count > 1 ? lookup?.name + "s" : lookup?.name
+              }`;
             } else if (key === "zltoRewardRanges") {
               const lookup = lookups_zltoRewardRanges.find(
                 (interval) => interval.id === value,
@@ -1182,12 +1166,12 @@ const Opportunities: NextPageWithLayout<{
 
         {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
         {!isSearchPerformed && (
-          <div className="-mt-4 gap-6 px-2 pb-4 md:p-0 md:pb-0">
+          <div className="mt-4 gap-6 px-2 pb-4 md:p-0 md:pb-0">
             {/* FEATURED */}
             {(opportunities_featured?.totalCount ?? 0) > 0 && (
               <OpportunitiesCarousel
                 id={`opportunities_featured`}
-                title="Featured"
+                title="Featured 🌟"
                 description="Explore our featured opportunities"
                 data={opportunities_featured}
                 loadData={loadDataFeatured}
@@ -1211,7 +1195,7 @@ const Opportunities: NextPageWithLayout<{
             {(opportunities_mostCompleted?.totalCount ?? 0) > 0 && (
               <OpportunitiesCarousel
                 id={`opportunities_mostCompleted`}
-                title="Most completed"
+                title="Most completed 🏆"
                 description="The most completed opportunities"
                 data={opportunities_mostCompleted}
                 loadData={loadDataMostCompleted}
@@ -1271,7 +1255,7 @@ const Opportunities: NextPageWithLayout<{
             {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
               <OpportunitiesCarousel
                 id={`opportunities_allOpportunities`}
-                title="All Opportunities"
+                title="All Opportunities 🌍"
                 description="Explore all available opportunities"
                 data={opportunities_allOpportunities}
                 loadData={loadDataOpportunities}
