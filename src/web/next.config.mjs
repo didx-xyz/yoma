@@ -78,15 +78,15 @@ const config = {
     defaultLocale: "en",
   },
 
-  // async rewrites() {
-  //   return [
-  //     {
-  //       source: '/auth/:path*',
-  //       // TODO: Make this an environment variable:
-  //       destination: 'https://keycloak.stage.yoma.world/auth/:path*',
-  //     },
-  //   ]
-  // },
+  async rewrites() {
+    return [
+      {
+        source: '/auth/:path*',
+        // TODO: Make this an environment variable:
+        destination: `https://${process.env.KEYCLOAK_HOSTNAME}/auth/:path*`,
+      },
+    ]
+  },
 };
 
 //TODO: sentry removed for now, as it is not working with the current setup
