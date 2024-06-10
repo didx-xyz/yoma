@@ -82,7 +82,6 @@ const config = {
     return [
       {
         source: '/auth/:path*',
-        // TODO: Make this an environment variable:
         destination: `https://${process.env.KEYCLOAK_HOSTNAME}/auth/:path*`,
       },
     ]

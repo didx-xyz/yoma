@@ -48,5 +48,3 @@ This project uses [husky](https://typicode.github.io/husky/#/) to manage git hoo
 Once you've got `mise` and `yarn` installed (`npm install -g yarn`) run `yarn install --frozen-lockfile` in the root of the project.
 
 This will bootstrap `husky` and install the configured git hooks.
-
-Trigger
