@@ -381,6 +381,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
 
+      Guid? userCountryId = null;
+      if (HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
+      {
+        var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+        userCountryId = user.CountryId;
+      }
+
       var predicate = PredicateBuilder.False<OpportunityCountry>();
       foreach (var state in publishedStates)
       {
@@ -388,7 +395,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           case PublishedState.NotStarted:
             predicate = predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow);
-
             break;
 
           case PublishedState.Active:
@@ -403,10 +409,23 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       query = query.Where(predicate);
 
-      var countryIds = query.Select(o => o.CountryId).Distinct().ToList();
+      var countryOpportunities = query
+        .GroupBy(o => o.CountryId)
+        .Select(g => new { CountryId = g.Key, OpportunityCount = g.Count() })
+        .ToList();
 
-      return [.. _countryService.List().Where(o => countryIds.Contains(o.Id))
-                .OrderBy(o => o.CodeAlpha2 != Country.Worldwide.ToDescription()).ThenBy(o => o.Name)]; //ensure Worldwide appears first
+      var countries = _countryService.List()
+        .Where(o => countryOpportunities.Select(co => co.CountryId).Contains(o.Id))
+        .ToList();
+
+      var results = countries
+        .OrderByDescending(c => c.CodeAlpha2 == Country.Worldwide.ToDescription()) //ensure Worldwide appears first
+        .ThenByDescending(c => userCountryId != null && c.Id == userCountryId) //followed by the user's country if available and has one or more opportunities mapped
+        .ThenByDescending(c => countryOpportunities.FirstOrDefault(co => co.CountryId == c.Id)?.OpportunityCount ?? 0)
+        .ThenBy(o => o.Name)
+        .ToList();
+
+      return results;
     }
 
     public List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguagesAdmin(Guid? organizationId, bool ensureOrganizationAuthorization)
@@ -456,9 +475,21 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       query = query.Where(predicate);
 
-      var languageIds = query.Select(o => o.LanguageId).Distinct().ToList();
+      var languageOpportunities = query
+        .GroupBy(o => o.LanguageId)
+        .Select(g => new { LanguageId = g.Key, OpportunityCount = g.Count() })
+        .ToList();
 
-      return [.. _languageService.List().Where(o => languageIds.Contains(o.Id)).OrderBy(o => o.Name)];
+      var languages = _languageService.List()
+        .Where(o => languageOpportunities.Select(lo => lo.LanguageId).Contains(o.Id))
+        .ToList();
+
+      var results = languages
+        .OrderByDescending(l => languageOpportunities.FirstOrDefault(lo => lo.LanguageId == l.Id)?.OpportunityCount ?? 0)
+        .ThenBy(l => l.Name)
+        .ToList();
+
+      return results;
     }
 
     public List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizationsAdmin()
@@ -507,7 +538,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       query = query.Where(predicate);
 
-      var organizationIds = query.Select(o => o.OrganizationId).Distinct().ToList();
+      var organizationOpportunities = query
+        .GroupBy(o => o.OrganizationId)
+        .Select(g => new { OrganizationId = g.Key, OpportunityCount = g.Count() })
+        .ToList();
+
+      var organizationIds = organizationOpportunities.Select(oo => oo.OrganizationId).ToList();
 
       var filter = new OrganizationSearchFilter
       {
@@ -516,7 +552,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
         InternalUse = true
       };
 
-      return _organizationService.Search(filter, false).Items;
+      var organizations = _organizationService.Search(filter, false).Items;
+
+      var results = organizations
+        .OrderByDescending(o => organizationOpportunities.FirstOrDefault(oo => oo.OrganizationId == o.Id)?.OpportunityCount ?? 0)
+        .ThenBy(o => o.Name)
+        .ToList();
+
+      return results;
     }
 
     public List<OpportunitySearchCriteriaCommitmentIntervalOption> ListOpportunitySearchCriteriaCommitmentIntervalOptions(List<PublishedState>? publishedStates)
