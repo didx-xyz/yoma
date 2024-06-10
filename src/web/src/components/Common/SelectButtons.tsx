@@ -19,7 +19,6 @@ const SelectButtons: React.FC<SelectButtonsProps> = ({
   isMulti,
   onChange,
 }) => {
-  //const [buttonState, setButtonState] = useState<Button[]>(buttons);
   const [buttonState, setButtonState] = useState<Button[]>(buttons);
 
   useEffect(() => {
@@ -50,8 +49,10 @@ const SelectButtons: React.FC<SelectButtonsProps> = ({
           key={`${id}_${bt.id}`}
           type="button"
           onClick={() => handleButton(bt.id)}
-          className={`btn btn-sm ${
-            bt.selected ? "btn-secondary" : "border-gray hover:border-gray-dark"
+          className={`btn btn-sm text-xs text-gray-dark ${
+            bt.selected
+              ? "btn-secondary text-white"
+              : "border-gray hover:border-gray-dark"
           }`}
         >
           {bt.title}

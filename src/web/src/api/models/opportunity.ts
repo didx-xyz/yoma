@@ -112,24 +112,6 @@ export interface OpportunityInfo {
   skills: Skill[] | null;
   verificationTypes: OpportunityVerificationType[] | null;
 }
-// export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
-//   publishedStates: PublishedState[] | null | string[]; //NB
-//   mostViewed: boolean | null;
-//   mostCompleted: boolean | null;
-//   featured: boolean | null;
-// }
-
-// export interface OpportunitySearchFilterBase extends PaginationFilter {
-//   types: string[] | null;
-//   engagementTypes: string[] | null;
-//   categories: string[] | null;
-//   languages: string[] | null;
-//   countries: string[] | null;
-//   organizations: string[] | null;
-//   commitmentIntervals: string[] | null;
-//   zltoRewardRanges: string[] | null;
-//   valueContains: string | null;
-// }
 
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
   publishedStates: PublishedState[] | null | string[]; //NB

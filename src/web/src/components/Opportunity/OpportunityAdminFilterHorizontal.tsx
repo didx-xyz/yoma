@@ -8,8 +8,6 @@ import zod from "zod";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
-  OpportunitySearchCriteriaCommitmentIntervalOption,
-  OpportunitySearchCriteriaZltoRewardRange,
   OpportunitySearchFilterAdmin,
   OpportunityType,
 } from "~/api/models/opportunity";
@@ -63,8 +61,6 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
   lookups_languages: Language[];
   lookups_types: OpportunityType[];
   lookups_organisations: OrganizationInfo[];
-  lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentIntervalOption[];
-  lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoRewardRange[];
   lookups_publishedStates: SelectOption[];
   lookups_statuses: SelectOption[];
   onSubmit?: (fieldValues: OpportunitySearchFilterAdmin) => void;
@@ -82,8 +78,6 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
   lookups_languages,
   lookups_types,
   lookups_organisations,
-  lookups_commitmentIntervals,
-  lookups_zltoRewardRanges,
   lookups_publishedStates,
   lookups_statuses,
   onSubmit,
@@ -410,105 +404,6 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                     )}
                   </>
                 )}
-
-                {/* COMMITMENT INTERVALS */}
-                {/* {filterOptions?.includes(
-                  OpportunityFilterOptions.COMMITMENTINTERVALS,
-                ) && (
-                  <>
-                    <Controller
-                      name="commitmentIntervals"
-                      control={form.control}
-                      defaultValue={searchFilter?.commitmentIntervals}
-                      render={({ field: { onChange, value } }) => (
-                        <Select
-                          instanceId="commitmentIntervals"
-                          classNames={{
-                            control: () => "input input-xs h-fit !border-none",
-                          }}
-                          isMulti={true}
-                          options={lookups_commitmentIntervals.map((c) => ({
-                            value: c.id,
-                            label: c.name,
-                          }))}
-                          // fix menu z-index issue
-                          menuPortalTarget={htmlRef}
-                          styles={{
-                            menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                          }}
-                          onChange={(val) => {
-                            onChange(val.map((c) => c.value));
-                            void handleSubmit(onSubmitHandler)();
-                          }}
-                          value={lookups_commitmentIntervals
-                            .filter((c) => value?.includes(c.id))
-                            .map((c) => ({ value: c.id, label: c.name }))}
-                          placeholder="Time to invest"
-                          components={{
-                            ValueContainer,
-                          }}
-                        />
-                      )}
-                    />
-                    {formState.errors.commitmentIntervals && (
-                      <label className="label font-bold">
-                        <span className="label-text-alt italic text-red-500">
-                          {`${formState.errors.commitmentIntervals.message}`}
-                        </span>
-                      </label>
-                    )}
-                  </>
-                )} */}
-
-                {/* ZLTO REWARD RANGES */}
-                {/* {filterOptions?.includes(
-                  OpportunityFilterOptions.ZLTOREWARDRANGES,
-                ) && (
-                  <>
-                    <Controller
-                      name="zltoRewardRanges"
-                      control={form.control}
-                      defaultValue={searchFilter?.zltoRewardRanges}
-                      render={({ field: { onChange, value } }) => (
-                        <Select
-                          instanceId="zltoRewardRanges"
-                          classNames={{
-                            control: () => "input input-xs h-fit !border-none",
-                          }}
-                          isMulti={true}
-                          options={lookups_zltoRewardRanges.map((c) => ({
-                            value: c.id,
-                            label: c.name,
-                          }))}
-                          // fix menu z-index issue
-                          menuPortalTarget={htmlRef}
-                          styles={{
-                            menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                          }}
-                          onChange={(val) => {
-                            onChange(val.map((c) => c.value));
-                            void handleSubmit(onSubmitHandler)();
-                          }}
-                          value={lookups_zltoRewardRanges
-                            .filter((c) => value?.includes(c.id))
-                            .map((c) => ({ value: c.id, label: c.name }))}
-                          placeholder="Reward"
-                          components={{
-                            ValueContainer,
-                          }}
-                        />
-                      )}
-                    />
-
-                    {formState.errors.zltoRewardRanges && (
-                      <label className="label font-bold">
-                        <span className="label-text-alt italic text-red-500">
-                          {`${formState.errors.zltoRewardRanges.message}`}
-                        </span>
-                      </label>
-                    )}
-                  </>
-                )} */}
 
                 {/* PUBLISHED STATES */}
                 {filterOptions?.includes(

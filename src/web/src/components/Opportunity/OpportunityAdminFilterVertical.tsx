@@ -10,8 +10,6 @@ import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import {
   OpportunityFilterOptions,
   type OpportunityCategory,
-  type OpportunitySearchCriteriaCommitmentIntervalOption,
-  type OpportunitySearchCriteriaZltoRewardRange,
   type OpportunitySearchFilterAdmin,
   type OpportunityType,
 } from "~/api/models/opportunity";
@@ -27,8 +25,6 @@ export const OpportunityAdminFilterVertical: React.FC<{
   lookups_languages: Language[];
   lookups_types: OpportunityType[];
   lookups_organisations: OrganizationInfo[];
-  lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentIntervalOption[];
-  lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoRewardRange[];
   lookups_publishedStates: SelectOption[];
   lookups_statuses: SelectOption[];
   onSubmit?: (fieldValues: OpportunitySearchFilterAdmin) => void;
@@ -45,8 +41,6 @@ export const OpportunityAdminFilterVertical: React.FC<{
   lookups_languages,
   lookups_types,
   lookups_organisations,
-  lookups_commitmentIntervals,
-  lookups_zltoRewardRanges,
   lookups_publishedStates,
   lookups_statuses,
   onSubmit,
@@ -99,7 +93,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
     <>
       <form
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
-        className="flex flex-col gap-2"
+        className="flex flex-col"
       >
         <div className="flex flex-row p-4">
           <h1 className="my-auto flex-grow text-2xl font-bold">Filter</h1>
@@ -375,98 +369,6 @@ export const OpportunityAdminFilterVertical: React.FC<{
                 </div>
               </div>
             )}
-
-            {/* COMMITMENT INTERVALS */}
-            {/* {filterOptions?.includes(
-              OpportunityFilterOptions.COMMITMENTINTERVALS,
-            ) && (
-              <div className="collapse join-item collapse-arrow">
-                <input type="checkbox" name="my-accordion-6" />
-                <div className="collapse-title text-xl font-medium">Effort</div>
-                <div className="collapse-content overflow-hidden">
-                  <Controller
-                    name="commitmentIntervals"
-                    control={form.control}
-                    defaultValue={searchFilter?.commitmentIntervals}
-                    render={({ field: { onChange, value } }) => (
-                      <Select
-                        classNames={{
-                          control: () => "input input-bordered h-fit py-1",
-                        }}
-                        isMulti={true}
-                        options={lookups_commitmentIntervals.map((c) => ({
-                          value: c.id,
-                          label: c.name,
-                        }))}
-                        // fix menu z-index issue
-                        menuPortalTarget={htmlRef}
-                        styles={{
-                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                        }}
-                        onChange={(val) => onChange(val.map((c) => c.value))}
-                        value={lookups_commitmentIntervals
-                          .filter((c) => value?.includes(c.id))
-                          .map((c) => ({ value: c.id, label: c.name }))}
-                      />
-                    )}
-                  />
-
-                  {formState.errors.commitmentIntervals && (
-                    <label className="label font-bold">
-                      <span className="label-text-alt italic text-red-500">
-                        {`${formState.errors.commitmentIntervals.message}`}
-                      </span>
-                    </label>
-                  )}
-                </div>
-              </div>
-            )} */}
-
-            {/* ZLTO REWARD RANGES */}
-            {/* {filterOptions?.includes(
-              OpportunityFilterOptions.ZLTOREWARDRANGES,
-            ) && (
-              <div className="collapse join-item collapse-arrow">
-                <input type="checkbox" name="my-accordion-7" />
-                <div className="collapse-title text-xl font-medium">Reward</div>
-                <div className="collapse-content overflow-hidden">
-                  <Controller
-                    name="zltoRewardRanges"
-                    control={form.control}
-                    defaultValue={searchFilter?.zltoRewardRanges}
-                    render={({ field: { onChange, value } }) => (
-                      <Select
-                        classNames={{
-                          control: () => "input input-bordered h-fit py-1",
-                        }}
-                        isMulti={true}
-                        options={lookups_zltoRewardRanges.map((c) => ({
-                          value: c.id,
-                          label: c.name,
-                        }))}
-                        // fix menu z-index issue
-                        menuPortalTarget={htmlRef}
-                        styles={{
-                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                        }}
-                        onChange={(val) => onChange(val.map((c) => c.value))}
-                        value={lookups_zltoRewardRanges
-                          .filter((c) => value?.includes(c.id))
-                          .map((c) => ({ value: c.id, label: c.name }))}
-                      />
-                    )}
-                  />
-
-                  {formState.errors.zltoRewardRanges && (
-                    <label className="label font-bold">
-                      <span className="label-text-alt italic text-red-500">
-                        {`${formState.errors.zltoRewardRanges.message}`}
-                      </span>
-                    </label>
-                  )}
-                </div>
-              </div>
-            )} */}
 
             {/* PUBLISHED STATES */}
             {filterOptions?.includes(

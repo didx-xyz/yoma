@@ -1,5 +1,4 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
 import type { GetStaticPaths, GetStaticProps } from "next";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
@@ -20,10 +19,8 @@ import type {
   TimeInterval,
 } from "~/api/models/lookups";
 import {
-  OpportunityFilterOptions,
   PublishedState,
   type OpportunityCategory,
-  type OpportunitySearchCriteriaZltoRewardRange,
   type OpportunitySearchFilter,
   type OpportunitySearchResultsInfo,
   type OpportunityType,
@@ -36,7 +33,6 @@ import {
   getOpportunityLanguages,
   getOpportunityOrganizations,
   getOpportunityTypes,
-  getZltoRewardRanges,
   searchOpportunities,
 } from "~/api/services/opportunities";
 import FilterBadges from "~/components/FilterBadges";
@@ -59,7 +55,6 @@ import {
   PAGE_SIZE,
   PAGE_SIZE_MINIMUM,
 } from "~/lib/constants";
-import { screenWidthAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
 
 // 👇 SSG
@@ -243,7 +238,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const lookups_types = await getOpportunityTypes(context);
   const lookups_engagementTypes = await getEngagementTypes(context);
   const lookups_timeIntervals = await getTimeIntervals(context);
-  const lookups_zltoRewardRanges = await getZltoRewardRanges(context);
 
   return {
     props: {
@@ -262,7 +256,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
       lookups_types,
       lookups_engagementTypes,
       lookups_timeIntervals,
-      lookups_zltoRewardRanges,
     },
 
     // Next.js will attempt to re-generate the page:
@@ -295,7 +288,6 @@ const Opportunities: NextPageWithLayout<{
   lookups_types: OpportunityType[];
   lookups_engagementTypes: EngagementType[];
   lookups_timeIntervals: TimeInterval[];
-  lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoRewardRange[];
 }> = ({
   opportunities_featured,
   opportunities_trending,
@@ -312,7 +304,6 @@ const Opportunities: NextPageWithLayout<{
   lookups_types,
   lookups_engagementTypes,
   lookups_timeIntervals,
-  lookups_zltoRewardRanges,
 }) => {
   const router = useRouter();
   const { data: session } = useSession();
@@ -340,7 +331,7 @@ const Opportunities: NextPageWithLayout<{
     intervalCount,
     intervalType,
     organizations,
-    zltoRewardRanges,
+    zltoReward,
     mostViewed,
     mostCompleted,
     featured,
@@ -360,7 +351,7 @@ const Opportunities: NextPageWithLayout<{
       intervalCount != undefined ||
       intervalType != undefined ||
       organizations != undefined ||
-      zltoRewardRanges != undefined ||
+      zltoReward != undefined ||
       mostViewed != undefined ||
       mostCompleted != undefined ||
       featured != undefined ||
@@ -377,7 +368,7 @@ const Opportunities: NextPageWithLayout<{
     intervalCount,
     intervalType,
     organizations,
-    zltoRewardRanges,
+    zltoReward,
     mostViewed,
     mostCompleted,
     featured,
@@ -391,7 +382,7 @@ const Opportunities: NextPageWithLayout<{
   const searchFilter: OpportunitySearchFilter = useMemo(() => {
     let commitmentInterval = null;
     if (intervalCount != undefined && intervalType != undefined) {
-      var lookup = lookups_timeIntervals.find(
+      const lookup = lookups_timeIntervals.find(
         (interval) => interval.name === intervalType.toString(),
       );
 
@@ -403,6 +394,14 @@ const Opportunities: NextPageWithLayout<{
             id: lookup.id,
           },
         };
+    }
+
+    let zltoReward2 = null;
+    if (zltoReward != undefined) {
+      zltoReward2 = {
+        ranges: null,
+        hasReward: Boolean(zltoReward),
+      };
     }
 
     return {
@@ -430,7 +429,7 @@ const Opportunities: NextPageWithLayout<{
           ? organizations?.toString().split("|")
           : null,
       commitmentInterval: commitmentInterval,
-      zltoReward: null,
+      zltoReward: zltoReward2,
       publishedStates:
         publishedStates != undefined
           ? publishedStates?.toString().split("|")
@@ -446,11 +445,13 @@ const Opportunities: NextPageWithLayout<{
     engagementTypes,
     intervalCount,
     intervalType,
+    zltoReward,
     categories,
     countries,
     languages,
     organizations,
     publishedStates,
+    lookups_timeIntervals,
   ]);
 
   // QUERY: SEARCH RESULTS
@@ -468,7 +469,7 @@ const Opportunities: NextPageWithLayout<{
         intervalCount,
         intervalType,
         organizations,
-        zltoRewardRanges,
+        zltoReward,
         mostViewed,
         mostCompleted,
         featured,
@@ -571,12 +572,11 @@ const Opportunities: NextPageWithLayout<{
                   })
                   .filter((x) => x != "")
               : null,
-          // zltoRewardRanges:
-          //   zltoRewardRanges != undefined
-          //     ? zltoRewardRanges?.toString().split("|")
-          //     : null,
           commitmentInterval: searchFilter.commitmentInterval,
-          zltoReward: null,
+          zltoReward:
+            zltoReward != undefined
+              ? { ranges: null, hasReward: Boolean(zltoReward) }
+              : null,
         }),
       enabled: isSearchPerformed, // only run query if search is executed
     });
@@ -650,14 +650,8 @@ const Opportunities: NextPageWithLayout<{
       )
         params.append("organizations", searchFilter.organizations.join("|"));
 
-      // if (
-      //   searchFilter?.zltoRewardRanges?.length !== undefined &&
-      //   searchFilter.zltoRewardRanges.length > 0
-      // )
-      //   params.append(
-      //     "zltoRewardRanges",
-      //     searchFilter.zltoRewardRanges.join("|"),
-      //   );
+      if (searchFilter?.zltoReward?.hasReward)
+        params.append("zltoReward", true.toString());
 
       if (
         searchFilter?.mostViewed !== undefined &&
@@ -1084,7 +1078,7 @@ const Opportunities: NextPageWithLayout<{
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
+        <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <OpportunityFilterVertical
             searchFilter={searchFilter}
             lookups_countries={lookups_countries}
@@ -1147,11 +1141,8 @@ const Opportunities: NextPageWithLayout<{
               return `${value.interval.count} ${
                 value.interval.count > 1 ? lookup?.name + "s" : lookup?.name
               }`;
-            } else if (key === "zltoRewardRanges") {
-              const lookup = lookups_zltoRewardRanges.find(
-                (interval) => interval.id === value,
-              );
-              return lookup?.name;
+            } else if (key === "zltoReward") {
+              return "ZLTO Reward";
             } else if (key === "mostViewed") {
               return "Trending";
             } else if (key === "mostCompleted") {

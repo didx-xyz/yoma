@@ -13,9 +13,6 @@ import type {
   TimeInterval,
 } from "~/api/models/lookups";
 import {
-  OpportunityFilterOptions,
-  type OpportunityCategory,
-  type OpportunitySearchCriteriaZltoRewardRange,
   type OpportunitySearchFilter,
   type OpportunityType,
 } from "~/api/models/opportunity";
@@ -80,7 +77,14 @@ export const OpportunityFilterVertical: React.FC<{
       .nullable()
       .transform((value) => (value?.interval === null ? null : value)), // if interval is null, return null for 'commitmentInterval'
 
-    zltoRewardRanges: zod.array(zod.string()).optional().nullable(),
+    zltoReward: zod
+      .object({
+        ranges: zod.array(zod.string()).optional().nullable(),
+        hasReward: zod.boolean().optional().nullable(),
+      })
+      .optional()
+      .nullable()
+      .transform((value) => (value?.hasReward == false ? null : value)), // if hasReward is false, return null for 'zltoReward'
     publishedStates: zod.array(zod.string()).optional().nullable(),
     valueContains: zod.string().optional().nullable(),
   });
@@ -146,7 +150,7 @@ export const OpportunityFilterVertical: React.FC<{
 
     // commitment interval type
     if (searchFilter.commitmentInterval?.interval?.id) {
-      let lookup = lookups_timeIntervals.find(
+      const lookup = lookups_timeIntervals.find(
         (x) => x.id == searchFilter.commitmentInterval?.interval?.id,
       );
       setValue("commitmentInterval.interval.id", lookup?.name ?? "Day");
@@ -157,7 +161,7 @@ export const OpportunityFilterVertical: React.FC<{
     if ((countries?.length ?? 0) == 0 && session) {
       getUserProfile().then((data) => {
         if (data.countryId) {
-          var countryLookup = lookups_countries.find(
+          const countryLookup = lookups_countries.find(
             (country) => country.id === data.countryId,
           );
           if (countryLookup) {
@@ -169,13 +173,19 @@ export const OpportunityFilterVertical: React.FC<{
     } else {
       setValue("countries", countries);
     }
-  }, [searchFilter, session, setValue]);
+  }, [
+    searchFilter,
+    session,
+    setValue,
+    lookups_countries,
+    lookups_timeIntervals,
+  ]);
 
   return (
     <>
       <form
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
-        className="flex flex-col gap-2"
+        className="flex flex-col"
       >
         <div className="flex flex-row px-8 py-4">
           <h1 className="my-auto flex-grow text-2xl font-bold">Filter</h1>
@@ -196,7 +206,6 @@ export const OpportunityFilterVertical: React.FC<{
           />
 
           {/* TYPES */}
-
           <div className="form-control">
             <label className="label">
               <span className="label-text font-semibold">
@@ -235,7 +244,6 @@ export const OpportunityFilterVertical: React.FC<{
           </div>
 
           {/* ENGAGEMENT TYPES */}
-
           <div className="form-control">
             <label className="label">
               <span className="label-text font-semibold">
@@ -274,7 +282,6 @@ export const OpportunityFilterVertical: React.FC<{
           </div>
 
           {/* COMMITMENT INTERVALS */}
-
           <div className="form-control">
             <label className="label">
               <span className="label-text font-semibold">
@@ -282,7 +289,7 @@ export const OpportunityFilterVertical: React.FC<{
               </span>
             </label>
             <div className="flex w-full flex-row justify-center gap-4">
-              <span>0</span>
+              <span className="mt-1 text-xs">0</span>
 
               <Controller
                 name="commitmentInterval.interval.count"
@@ -297,11 +304,10 @@ export const OpportunityFilterVertical: React.FC<{
                       className="range range-secondary bg-gray"
                       min="0"
                       max={timeIntervalMax}
-                      //value={value}
-                      value={value ?? 0} // default to 0 if not selected
+                      value={value}
                       onChange={(val) => onChange(val)}
                     />
-                    <span className="h-8">
+                    <span className="h-8 text-xs">
                       {value > 0 && watchIntervalId != null && (
                         <>
                           {`${value} ${
@@ -314,7 +320,7 @@ export const OpportunityFilterVertical: React.FC<{
                 )}
               />
 
-              <span>{timeIntervalMax}</span>
+              <span className="mt-1 text-xs">{timeIntervalMax}</span>
             </div>
             <div className="flex w-full flex-row justify-center gap-4">
               <Controller
@@ -339,48 +345,32 @@ export const OpportunityFilterVertical: React.FC<{
           </div>
 
           {/* ZLTO REWARD RANGES */}
-          {/* {filterOptions?.includes(
-            OpportunityFilterOptions.ZLTOREWARDRANGES,
-          ) && (
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-semibold">ZLTO Reward</span>
-              </label>
-              <Controller
-                name="zltoRewardRanges"
-                control={form.control}
-                render={({ field: { onChange, value } }) => (
-                  <Select
-                    classNames={{
-                      control: () => "input input-bordered h-fit py-1",
-                    }}
-                    isMulti={true}
-                    options={lookups_zltoRewardRanges.map((c) => ({
-                      value: c.id,
-                      label: c.name,
-                    }))}
-                    // fix menu z-index issue
-                    menuPortalTarget={htmlRef}
-                    styles={{
-                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                    }}
-                    onChange={(val) => onChange(val.map((c) => c.value))}
-                    value={lookups_zltoRewardRanges
-                      .filter((c) => value?.includes(c.id))
-                      .map((c) => ({ value: c.id, label: c.name }))}
-                  />
-                )}
-              />
-
-              {formState.errors.zltoRewardRanges && (
-                <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {`${formState.errors.zltoRewardRanges.message}`}
-                  </span>
-                </label>
+          <div className="form-control flex flex-row items-center gap-4">
+            <label className="label">
+              <span className="label-text font-semibold">ZLTO Reward</span>
+            </label>
+            <Controller
+              name="zltoReward.hasReward"
+              control={form.control}
+              defaultValue={searchFilter?.zltoReward?.hasReward ?? false}
+              render={({ field: { onChange, value } }) => (
+                <input
+                  type="checkbox"
+                  className="toggle toggle-secondary border-gray bg-gray"
+                  checked={value}
+                  onChange={(val) => onChange(val)}
+                />
               )}
-            </div>
-          )} */}
+            />
+
+            {formState.errors.zltoRewardRanges && (
+              <label className="label font-bold">
+                <span className="label-text-alt italic text-red-500">
+                  {`${formState.errors.zltoRewardRanges.message}`}
+                </span>
+              </label>
+            )}
+          </div>
 
           {/* COUNTRIES */}
 
