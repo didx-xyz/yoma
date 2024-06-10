@@ -1,18 +1,11 @@
 import type { PaginationFilter } from "./common";
 import type { Country, Language, Skill } from "./lookups";
 
-// NB: this is a combined model for re-uasability
-export interface OpportunitySearchFilterCombined
-  extends OpportunitySearchFilter,
-    OpportunitySearchFilterAdmin {}
-
 export interface OpportunitySearchFilterAdmin
   extends OpportunitySearchFilterBase {
   startDate: string | null;
   endDate: string | null;
-  organizations: string[] | null;
-  statuses: Status[] | null | string[];
-  featured: boolean | null;
+  statuses: Status[] | null | string[]; //NB
 }
 
 export interface OpportunitySearchResults extends OpportunitySearchResultsBase {
@@ -119,11 +112,13 @@ export interface OpportunityInfo {
   skills: Skill[] | null;
   verificationTypes: OpportunityVerificationType[] | null;
 }
+
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
   publishedStates: PublishedState[] | null | string[]; //NB
+  commitmentInterval: OpportunitySearchFilterCommitmentInterval | null;
+  zltoReward: OpportunitySearchFilterZltoReward | null;
   mostViewed: boolean | null;
   mostCompleted: boolean | null;
-  featured: boolean | null;
 }
 
 export interface OpportunitySearchFilterBase extends PaginationFilter {
@@ -132,8 +127,8 @@ export interface OpportunitySearchFilterBase extends PaginationFilter {
   languages: string[] | null;
   countries: string[] | null;
   organizations: string[] | null;
-  commitmentIntervals: string[] | null;
-  zltoRewardRanges: string[] | null;
+  engagementTypes: string[] | null;
+  featured: boolean | null;
   valueContains: string | null;
 }
 
@@ -198,6 +193,7 @@ export interface OpportunityVerificationType {
 export enum OpportunityFilterOptions {
   CATEGORIES = "categories",
   TYPES = "types",
+  ENGAGEMENT_TYPES = "engagementTypes",
   COUNTRIES = "countries",
   LANGUAGES = "languages",
   COMMITMENTINTERVALS = "commitmentIntervals",
@@ -278,21 +274,31 @@ export interface OpportunityType {
 }
 
 export interface OpportunitySearchFilterCommitmentInterval {
+  options: string[] | null;
+  interval: OpportunitySearchFilterCommitmentIntervalItem | null;
+}
+
+export interface OpportunitySearchFilterCommitmentIntervalItem {
   id: string;
   count: number;
 }
 
 export interface OpportunitySearchFilterZltoReward {
+  ranges: string[] | null;
+  hasReward: boolean | null;
+}
+
+export interface OpportunitySearchFilterZltoRewardRange {
   from: number;
   to: number;
 }
 
-export interface OpportunitySearchCriteriaZltoReward {
+export interface OpportunitySearchCriteriaZltoRewardRange {
   id: string;
   name: string;
 }
 
-export interface OpportunitySearchCriteriaCommitmentInterval {
+export interface OpportunitySearchCriteriaCommitmentIntervalOption {
   id: string;
   name: string;
 }

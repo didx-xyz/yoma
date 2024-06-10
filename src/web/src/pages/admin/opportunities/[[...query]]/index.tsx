@@ -1,80 +1,64 @@
 import { useQuery } from "@tanstack/react-query";
+import FileSaver from "file-saver";
+import { useAtomValue } from "jotai";
 import type { GetStaticPaths, GetStaticProps } from "next";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import React, {
-  type ReactElement,
-  useCallback,
-  useState,
-  useRef,
-  useMemo,
-  useEffect,
-} from "react";
-import { OpportunityFilterOptions } from "~/api/models/opportunity";
-import type { OrganizationInfo } from "~/api/models/organisation";
-import MainLayout from "~/components/Layout/Main";
-import NoRowsMessage from "~/components/NoRowsMessage";
-import { SearchInputLarge } from "~/components/SearchInputLarge";
-import { PAGE_SIZE, PAGE_SIZE_MAXIMUM, THEME_BLUE } from "~/lib/constants";
-import { type NextPageWithLayout } from "~/pages/_app";
+import iconBell from "public/images/icon-bell.webp";
+import iconZlto from "public/images/icon-zlto.svg";
 import {
-  getCommitmentIntervals,
-  getOpportunitiesAdmin,
-  getOpportunitiesAdminExportToCSV,
-  getCategoriesAdmin,
-  getLanguagesAdmin,
-  getOrganisationsAdmin,
-  getCountriesAdmin,
-  getOpportunityTypes,
-  getZltoRewardRanges,
-} from "~/api/services/opportunities";
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+} from "react";
+import { IoMdDownload, IoMdPerson } from "react-icons/io";
+import ReactModal from "react-modal";
+import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
-  OpportunitySearchCriteriaCommitmentInterval,
-  OpportunitySearchCriteriaZltoReward,
-  OpportunitySearchFilterCombined,
+  OpportunitySearchFilterAdmin,
   OpportunitySearchResultsInfo,
   OpportunityType,
 } from "~/api/models/opportunity";
+import { OpportunityFilterOptions } from "~/api/models/opportunity";
+import type { OrganizationInfo } from "~/api/models/organisation";
+import {
+  getCategoriesAdmin,
+  getCountriesAdmin,
+  getLanguagesAdmin,
+  getOpportunitiesAdmin,
+  getOpportunitiesAdminExportToCSV,
+  getOpportunityTypes,
+  getOrganisationsAdmin,
+} from "~/api/services/opportunities";
+import MainLayout from "~/components/Layout/Main";
+import NoRowsMessage from "~/components/NoRowsMessage";
+import { OpportunityAdminFilterHorizontal } from "~/components/Opportunity/OpportunityAdminFilterHorizontal";
+import { OpportunityAdminFilterVertical } from "~/components/Opportunity/OpportunityAdminFilterVertical";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
-import { OpportunityFilterHorizontal } from "~/components/Opportunity/OpportunityFilterHorizontal";
-import type { Country, Language, SelectOption } from "~/api/models/lookups";
+import { SearchInputLarge } from "~/components/SearchInputLarge";
 import { Loading } from "~/components/Status/Loading";
-import FileSaver from "file-saver";
-import { useAtomValue } from "jotai";
-import { screenWidthAtom } from "~/lib/store";
-import ReactModal from "react-modal";
-import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
-import iconBell from "public/images/icon-bell.webp";
-import { IoMdDownload, IoMdPerson } from "react-icons/io";
-import iconZlto from "public/images/icon-zlto.svg";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { PAGE_SIZE, PAGE_SIZE_MAXIMUM, THEME_BLUE } from "~/lib/constants";
+import { screenWidthAtom } from "~/lib/store";
+import { type NextPageWithLayout } from "~/pages/_app";
 
 // 👇 SSG
 // This function gets called at build time on server-side.
 // It may be called again, on a serverless function, if
 // revalidation is enabled and a new request comes in
 export const getStaticProps: GetStaticProps = async (context) => {
-  // const lookups_categories = await getOpportunityCategories(context);
-  // const lookups_countries = await getOpportunityCountries(context);
-  // const lookups_languages = await getOpportunityLanguages(context);
-  // const lookups_organisations = await getOpportunityOrganizations(context);
   const lookups_types = await getOpportunityTypes(context);
-  const lookups_commitmentIntervals = await getCommitmentIntervals(context);
-  const lookups_zltoRewardRanges = await getZltoRewardRanges(context);
 
   return {
     props: {
-      // lookups_categories,
-      // lookups_countries,
-      // lookups_languages,
-      // lookups_organisations,
       lookups_types,
-      lookups_commitmentIntervals,
-      lookups_zltoRewardRanges,
     },
 
     // Next.js will attempt to re-generate the page:
@@ -93,13 +77,7 @@ export const getStaticPaths: GetStaticPaths = () => {
 
 const OpportunitiesAdmin: NextPageWithLayout<{
   lookups_types: OpportunityType[];
-  lookups_commitmentIntervals: OpportunitySearchCriteriaCommitmentInterval[];
-  lookups_zltoRewardRanges: OpportunitySearchCriteriaZltoReward[];
-}> = ({
-  lookups_types,
-  lookups_commitmentIntervals,
-  lookups_zltoRewardRanges,
-}) => {
+}> = ({ lookups_types }) => {
   const router = useRouter();
   const [isExportButtonLoading, setIsExportButtonLoading] = useState(false);
   const myRef = useRef<HTMLDivElement>(null);
@@ -221,6 +199,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   })
                   .filter((x) => x != "")
               : null,
+          engagementTypes: null,
           categories:
             categories != undefined
               ? categories
@@ -267,14 +246,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   })
                   .filter((x) => x != "")
               : null,
-          commitmentIntervals:
-            commitmentIntervals != undefined
-              ? commitmentIntervals?.toString().split(",")
-              : null,
-          zltoRewardRanges:
-            zltoRewardRanges != undefined
-              ? zltoRewardRanges?.toString().split(",")
-              : null,
           startDate: startDate != undefined ? startDate.toString() : null,
           endDate: endDate != undefined ? endDate.toString() : null,
           statuses:
@@ -293,22 +264,18 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     });
 
   // search filter state
-  const [opportunitySearchFilter, setOpportunitySearchFilter] =
-    useState<OpportunitySearchFilterCombined>({
+  const [searchFilter, setOpportunitySearchFilter] =
+    useState<OpportunitySearchFilterAdmin>({
       pageNumber: page ? parseInt(page.toString()) : 1,
       pageSize: PAGE_SIZE,
       categories: null,
       countries: null,
       languages: null,
       types: null,
+      engagementTypes: null,
       valueContains: null,
-      commitmentIntervals: null,
-      mostViewed: null,
-      mostCompleted: null,
       featured: null,
       organizations: null,
-      zltoRewardRanges: null,
-      publishedStates: null,
       startDate: null,
       endDate: null,
       statuses: null,
@@ -321,10 +288,9 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
         valueContains: query ? decodeURIComponent(query.toString()) : null,
-        mostViewed: null,
-        mostCompleted: null,
         featured: null,
         types: types != undefined ? types?.toString().split(",") : null,
+        engagementTypes: null,
         categories:
           categories != undefined ? categories?.toString().split(",") : null,
         countries:
@@ -337,15 +303,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           organizations != undefined
             ? organizations?.toString().split(",")
             : null,
-        commitmentIntervals:
-          commitmentIntervals != undefined
-            ? commitmentIntervals?.toString().split(",")
-            : null,
-        zltoRewardRanges:
-          zltoRewardRanges != undefined
-            ? zltoRewardRanges?.toString().split(",")
-            : null,
-        publishedStates: null,
         startDate: startDate != undefined ? startDate.toString() : null,
         endDate: endDate != undefined ? endDate.toString() : null,
         statuses:
@@ -375,90 +332,70 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
-    (opportunitySearchFilter: OpportunitySearchFilterCombined) => {
-      if (!opportunitySearchFilter) return null;
+    (searchFilter: OpportunitySearchFilterAdmin) => {
+      if (!searchFilter) return null;
 
       // construct querystring parameters from filter
       const params = new URLSearchParams();
       if (
-        opportunitySearchFilter.valueContains !== undefined &&
-        opportunitySearchFilter.valueContains !== null &&
-        opportunitySearchFilter.valueContains.length > 0
+        searchFilter.valueContains !== undefined &&
+        searchFilter.valueContains !== null &&
+        searchFilter.valueContains.length > 0
       )
-        params.append("query", opportunitySearchFilter.valueContains);
-      if (
-        opportunitySearchFilter?.categories?.length !== undefined &&
-        opportunitySearchFilter.categories.length > 0
-      )
-        params.append(
-          "categories",
-          opportunitySearchFilter.categories.join(","),
-        );
-      if (
-        opportunitySearchFilter?.countries?.length !== undefined &&
-        opportunitySearchFilter.countries.length > 0
-      )
-        params.append("countries", opportunitySearchFilter.countries.join(","));
-      if (
-        opportunitySearchFilter?.languages?.length !== undefined &&
-        opportunitySearchFilter.languages.length > 0
-      )
-        params.append("languages", opportunitySearchFilter.languages.join("|")); // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
-      if (
-        opportunitySearchFilter?.types?.length !== undefined &&
-        opportunitySearchFilter.types.length > 0
-      )
-        params.append("types", opportunitySearchFilter.types.join(","));
-      if (
-        opportunitySearchFilter?.commitmentIntervals?.length !== undefined &&
-        opportunitySearchFilter.commitmentIntervals.length > 0
-      )
-        params.append(
-          "commitmentIntervals",
-          opportunitySearchFilter.commitmentIntervals.join(","),
-        );
-      if (
-        opportunitySearchFilter?.organizations?.length !== undefined &&
-        opportunitySearchFilter.organizations.length > 0
-      )
-        params.append(
-          "organizations",
-          opportunitySearchFilter.organizations.join(","),
-        );
-      if (
-        opportunitySearchFilter?.zltoRewardRanges?.length !== undefined &&
-        opportunitySearchFilter.zltoRewardRanges.length > 0
-      )
-        params.append(
-          "zltoRewardRanges",
-          opportunitySearchFilter.zltoRewardRanges.join(","),
-        );
+        params.append("query", searchFilter.valueContains);
 
       if (
-        opportunitySearchFilter?.statuses !== undefined &&
-        opportunitySearchFilter?.statuses !== null &&
-        opportunitySearchFilter?.statuses.length > 0
+        searchFilter?.categories?.length !== undefined &&
+        searchFilter.categories.length > 0
       )
-        params.append("statuses", opportunitySearchFilter?.statuses.join(","));
+        params.append("categories", searchFilter.categories.join(","));
 
       if (
-        opportunitySearchFilter.startDate !== undefined &&
-        opportunitySearchFilter.startDate !== null
+        searchFilter?.countries?.length !== undefined &&
+        searchFilter.countries.length > 0
       )
-        params.append("startDate", opportunitySearchFilter.startDate);
+        params.append("countries", searchFilter.countries.join(","));
 
       if (
-        opportunitySearchFilter.endDate !== undefined &&
-        opportunitySearchFilter.endDate !== null
+        searchFilter?.languages?.length !== undefined &&
+        searchFilter.languages.length > 0
       )
-        params.append("endDate", opportunitySearchFilter.endDate);
+        params.append("languages", searchFilter.languages.join("|")); // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
 
       if (
-        opportunitySearchFilter.pageNumber !== null &&
-        opportunitySearchFilter.pageNumber !== undefined &&
-        opportunitySearchFilter.pageNumber !== 1
+        searchFilter?.types?.length !== undefined &&
+        searchFilter.types.length > 0
       )
-        params.append("page", opportunitySearchFilter.pageNumber.toString());
+        params.append("types", searchFilter.types.join(","));
+
+      if (
+        searchFilter?.organizations?.length !== undefined &&
+        searchFilter.organizations.length > 0
+      )
+        params.append("organizations", searchFilter.organizations.join(","));
+
+      if (
+        searchFilter?.statuses !== undefined &&
+        searchFilter?.statuses !== null &&
+        searchFilter?.statuses.length > 0
+      )
+        params.append("statuses", searchFilter?.statuses.join(","));
+
+      if (
+        searchFilter.startDate !== undefined &&
+        searchFilter.startDate !== null
+      )
+        params.append("startDate", searchFilter.startDate);
+
+      if (searchFilter.endDate !== undefined && searchFilter.endDate !== null)
+        params.append("endDate", searchFilter.endDate);
+
+      if (
+        searchFilter.pageNumber !== null &&
+        searchFilter.pageNumber !== undefined &&
+        searchFilter.pageNumber !== 1
+      )
+        params.append("page", searchFilter.pageNumber.toString());
 
       if (params.size === 0) return null;
       return params;
@@ -467,7 +404,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   );
 
   const redirectWithSearchFilterParams = useCallback(
-    (filter: OpportunitySearchFilterCombined) => {
+    (filter: OpportunitySearchFilterAdmin) => {
       let url = "/admin/opportunities";
       const params = getSearchFilterAsQueryString(filter);
       if (params != null && params.size > 0)
@@ -482,10 +419,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   // 🔔 CHANGE EVENTS
   const handlePagerChange = useCallback(
     (value: number) => {
-      opportunitySearchFilter.pageNumber = value;
-      redirectWithSearchFilterParams(opportunitySearchFilter);
+      searchFilter.pageNumber = value;
+      redirectWithSearchFilterParams(searchFilter);
     },
-    [opportunitySearchFilter, redirectWithSearchFilterParams],
+    [searchFilter, redirectWithSearchFilterParams],
   );
 
   const onSearchInputSubmit = useCallback(
@@ -496,10 +433,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         query = searchValueEncoded;
       }
 
-      opportunitySearchFilter.valueContains = query;
-      redirectWithSearchFilterParams(opportunitySearchFilter);
+      searchFilter.valueContains = query;
+      redirectWithSearchFilterParams(searchFilter);
     },
-    [opportunitySearchFilter, redirectWithSearchFilterParams],
+    [searchFilter, redirectWithSearchFilterParams],
   );
 
   // filter popup handlers
@@ -508,7 +445,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   }, [setFilterFullWindowVisible]);
 
   const onSubmitFilter = useCallback(
-    (val: OpportunitySearchFilterCombined) => {
+    (val: OpportunitySearchFilterAdmin) => {
       redirectWithSearchFilterParams(val);
     },
     [redirectWithSearchFilterParams],
@@ -522,10 +459,8 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     setIsExportButtonLoading(true);
 
     try {
-      opportunitySearchFilter.pageSize = PAGE_SIZE_MAXIMUM;
-      const data = await getOpportunitiesAdminExportToCSV(
-        opportunitySearchFilter,
-      );
+      searchFilter.pageSize = PAGE_SIZE_MAXIMUM;
+      const data = await getOpportunitiesAdminExportToCSV(searchFilter);
       if (!data) return;
 
       FileSaver.saveAs(data);
@@ -534,11 +469,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     } finally {
       setIsExportButtonLoading(false);
     }
-  }, [opportunitySearchFilter, setIsExportButtonLoading, setExportDialogOpen]);
+  }, [searchFilter, setIsExportButtonLoading, setExportDialogOpen]);
 
   // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(filterFullWindowVisible);
-  useDisableBodyScroll(exportDialogOpen);
+  useDisableBodyScroll(filterFullWindowVisible || exportDialogOpen);
 
   return (
     <>
@@ -557,7 +491,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         onRequestClose={() => {
           setFilterFullWindowVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll rounded-lg bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px]`}
+        // className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll rounded-lg bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px]`}
+        // portalClassName={"fixed z-40"}
+        // overlayClassName="fixed inset-0 bg-overlay"
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
@@ -565,34 +502,31 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           lookups_countries &&
           lookups_languages &&
           lookups_organisations && (
-            <OpportunityFilterVertical
-              htmlRef={myRef.current!}
-              opportunitySearchFilter={opportunitySearchFilter}
-              lookups_categories={lookups_categories}
-              lookups_countries={lookups_countries}
-              lookups_languages={lookups_languages}
-              lookups_types={lookups_types}
-              lookups_organisations={lookups_organisations}
-              lookups_commitmentIntervals={lookups_commitmentIntervals}
-              lookups_zltoRewardRanges={lookups_zltoRewardRanges}
-              lookups_publishedStates={lookups_publishedStates}
-              lookups_statuses={[]}
-              submitButtonText="Apply Filters"
-              onCancel={onCloseFilter}
-              onSubmit={(e) => onSubmitFilter(e)}
-              onClear={onClearFilter}
-              clearButtonText="Clear All Filters"
-              filterOptions={[
-                OpportunityFilterOptions.CATEGORIES,
-                OpportunityFilterOptions.TYPES,
-                OpportunityFilterOptions.COUNTRIES,
-                OpportunityFilterOptions.LANGUAGES,
-                OpportunityFilterOptions.COMMITMENTINTERVALS,
-                OpportunityFilterOptions.ZLTOREWARDRANGES,
-                OpportunityFilterOptions.ORGANIZATIONS,
-                OpportunityFilterOptions.PUBLISHEDSTATES,
-              ]}
-            />
+            <div className="flex h-full flex-col gap-2 overflow-y-auto">
+              <OpportunityAdminFilterVertical
+                htmlRef={myRef.current!}
+                searchFilter={searchFilter}
+                lookups_categories={lookups_categories}
+                lookups_countries={lookups_countries}
+                lookups_languages={lookups_languages}
+                lookups_types={lookups_types}
+                lookups_organisations={lookups_organisations}
+                lookups_publishedStates={lookups_publishedStates}
+                lookups_statuses={[]}
+                submitButtonText="Apply Filters"
+                onCancel={onCloseFilter}
+                onSubmit={(e) => onSubmitFilter(e)}
+                onClear={onClearFilter}
+                clearButtonText="Clear All Filters"
+                filterOptions={[
+                  OpportunityFilterOptions.CATEGORIES,
+                  OpportunityFilterOptions.TYPES,
+                  OpportunityFilterOptions.COUNTRIES,
+                  OpportunityFilterOptions.LANGUAGES,
+                  OpportunityFilterOptions.ORGANIZATIONS,
+                ]}
+              />
+            </div>
           )}
       </ReactModal>
 
@@ -702,16 +636,14 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             lookups_countries &&
             lookups_languages &&
             lookups_organisations && (
-              <OpportunityFilterHorizontal
+              <OpportunityAdminFilterHorizontal
                 htmlRef={myRef.current!}
-                opportunitySearchFilter={opportunitySearchFilter}
+                searchFilter={searchFilter}
                 lookups_categories={lookups_categories}
                 lookups_countries={lookups_countries}
                 lookups_languages={lookups_languages}
                 lookups_types={lookups_types}
                 lookups_organisations={lookups_organisations}
-                lookups_commitmentIntervals={lookups_commitmentIntervals}
-                lookups_zltoRewardRanges={lookups_zltoRewardRanges}
                 lookups_publishedStates={lookups_publishedStates}
                 lookups_statuses={lookups_statuses}
                 clearButtonText="Clear"

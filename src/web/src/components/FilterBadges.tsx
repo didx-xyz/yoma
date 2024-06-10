@@ -4,7 +4,7 @@ import { IoIosClose } from "react-icons/io";
 const FilterBadges: React.FC<{
   searchFilter: any;
   excludeKeys: string[];
-  resolveValue: (key: string, item: string) => any;
+  resolveValue: (key: string, item: any) => any;
   onSubmit: (filter: any) => void;
 }> = ({ searchFilter, excludeKeys, resolveValue, onSubmit }) => {
   // function to handle removing an item from an array in the filter object

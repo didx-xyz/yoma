@@ -27,14 +27,7 @@
     "**/*.ts",
     "**/*.tsx",
     "**/*.cjs",
-    "**/*.mjs",
-    "next.config.js",
-    "next.config.mjs",
-    "src/components/Organisation/Upsert/OrgRolesEdit.tsx",
-    "src/pages/opportunities/opportunity/[id].remtsx",
-    "src/pages/organisations/[id]/opportunities/[opportunityId]/verify.remtsx",
-    "prettier.ignore",
-    "src/pages/admin/opportunities/index.atsx"
+    "**/*.mjs"
   ],
   "exclude": ["node_modules"]
 }

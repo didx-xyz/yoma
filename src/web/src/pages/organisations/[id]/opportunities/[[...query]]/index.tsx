@@ -90,9 +90,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         languages: null,
         countries: null,
         valueContains: query?.toString() ?? null,
-        commitmentIntervals: null,
-        zltoRewardRanges: null,
         featured: null,
+        engagementTypes: null,
       },
       context,
     );
@@ -160,9 +159,8 @@ const Opportunities: NextPageWithLayout<{
       languages: null,
       countries: null,
       valueContains: query?.toString() ?? null,
-      commitmentIntervals: null,
-      zltoRewardRanges: null,
       featured: null,
+      engagementTypes: null,
     }),
     [id, page, query, status],
   );

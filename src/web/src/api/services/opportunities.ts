@@ -13,8 +13,8 @@ import type {
   OpportunityInfo,
   OpportunitySearchResultsInfo,
   OpportunitySearchFilter,
-  OpportunitySearchCriteriaZltoReward,
-  OpportunitySearchCriteriaCommitmentInterval,
+  OpportunitySearchCriteriaZltoRewardRange,
+  OpportunitySearchCriteriaCommitmentIntervalOption,
   Status,
   OpportunitySearchFilterCriteria,
 } from "../models/opportunity";
@@ -255,23 +255,23 @@ export const getOpportunityTypes = async (
 
 export const getCommitmentIntervals = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
-): Promise<OpportunitySearchCriteriaCommitmentInterval[]> => {
+): Promise<OpportunitySearchCriteriaCommitmentIntervalOption[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.get<
-    OpportunitySearchCriteriaCommitmentInterval[]
+    OpportunitySearchCriteriaCommitmentIntervalOption[]
   >(`/opportunity/search/filter/commitmentInterval`);
   return data;
 };
 
 export const getZltoRewardRanges = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
-): Promise<OpportunitySearchCriteriaZltoReward[]> => {
+): Promise<OpportunitySearchCriteriaZltoRewardRange[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
-  const { data } = await instance.get<OpportunitySearchCriteriaZltoReward[]>(
-    `/opportunity/search/filter/zltoReward`,
-  );
+  const { data } = await instance.get<
+    OpportunitySearchCriteriaZltoRewardRange[]
+  >(`/opportunity/search/filter/zltoReward`);
   return data;
 };
 
