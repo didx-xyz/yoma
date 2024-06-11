@@ -15,7 +15,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3
 
     public static void ConfigureServices_InfrastructureBlobProvider(this IServiceCollection services)
     {
-      services.AddSingleton<IBlobProviderClientFactory, AmazonS3ClientFactory>();
+      services.AddScoped<IBlobProviderClientFactory, AmazonS3ClientFactory>();
     }
   }
 }

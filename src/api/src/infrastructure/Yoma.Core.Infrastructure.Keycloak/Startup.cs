@@ -22,7 +22,7 @@ namespace Yoma.Core.Infrastructure.Keycloak
 
     public static void ConfigureServices_InfrastructureIdentityProvider(this IServiceCollection services)
     {
-      services.AddSingleton<IIdentityProviderClientFactory, KeycloakClientFactory>();
+      services.AddScoped<IIdentityProviderClientFactory, KeycloakClientFactory>();
     }
 
     public static void ConfigureServices_AuthenticationIdentityProvider(this IServiceCollection services, IConfiguration configuration)
