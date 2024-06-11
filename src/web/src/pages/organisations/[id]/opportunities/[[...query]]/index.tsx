@@ -1,39 +1,40 @@
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/router";
+import iconZlto from "public/images/icon-zlto.svg";
+import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useMemo, type ReactElement } from "react";
-import { getOpportunitiesAdmin } from "~/api/services/opportunities";
-import MainLayout from "~/components/Layout/Main";
-import { authOptions } from "~/server/auth";
+import { IoIosAdd, IoIosLink, IoIosWarning } from "react-icons/io";
+import { toast } from "react-toastify";
 import {
-  type OpportunitySearchFilterAdmin,
   Status,
+  type OpportunitySearchFilterAdmin,
   type OpportunitySearchResults,
 } from "~/api/models/opportunity";
-import { type NextPageWithLayout } from "~/pages/_app";
-import { type ParsedUrlQuery } from "querystring";
-import Link from "next/link";
-import { PageBackground } from "~/components/PageBackground";
-import { IoIosAdd, IoMdPerson, IoIosLink, IoIosWarning } from "react-icons/io";
-import { SearchInput } from "~/components/SearchInput";
+import { getOpportunitiesAdmin } from "~/api/services/opportunities";
+import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { PAGE_SIZE } from "~/lib/constants";
+import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
+import { SearchInput } from "~/components/SearchInput";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
+import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { PAGE_SIZE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
-import { useAtomValue } from "jotai";
-import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
-import axios from "axios";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import iconZlto from "public/images/icon-zlto.svg";
-import Image from "next/image";
-import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
-import { toast } from "react-toastify";
+import { type NextPageWithLayout } from "~/pages/_app";
+import { authOptions } from "~/server/auth";
+
 interface IParams extends ParsedUrlQuery {
   id: string;
   query?: string;
@@ -436,7 +437,6 @@ const Opportunities: NextPageWithLayout<{
                     <li className="whitespace-nowrap">
                       <button
                         onClick={() => onFilterStatus("")}
-                        //href={`/organisations/${id}/opportunities`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           !status
                             ? "active border-orange"
@@ -455,7 +455,6 @@ const Opportunities: NextPageWithLayout<{
                     <li className="whitespace-nowrap">
                       <button
                         onClick={() => onFilterStatus("Active")}
-                        //href={`/organisations/${id}/opportunities?status=active`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "Active"
                             ? "active border-orange"
@@ -474,7 +473,6 @@ const Opportunities: NextPageWithLayout<{
                     <li className="whitespace-nowrap">
                       <button
                         onClick={() => onFilterStatus("Inactive")}
-                        //href={`/organisations/${id}/opportunities?status=inactive`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "Inactive"
                             ? "active border-orange"
@@ -493,7 +491,6 @@ const Opportunities: NextPageWithLayout<{
                     <li className="whitespace-nowrap">
                       <button
                         onClick={() => onFilterStatus("Expired")}
-                        //href={`/organisations/${id}/opportunities?status=expired`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "Expired"
                             ? "active border-orange"
@@ -512,7 +509,6 @@ const Opportunities: NextPageWithLayout<{
                     <li className="whitespace-nowrap">
                       <button
                         onClick={() => onFilterStatus("Deleted")}
-                        //href={`/organisations/${id}/opportunities?status=deleted`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "Deleted"
                             ? "active border-orange"
@@ -600,30 +596,53 @@ const Opportunities: NextPageWithLayout<{
               </div>
             )}
 
-            {/* GRID */}
+            {/* RESULTS */}
             {opportunities && opportunities.items?.length > 0 && (
               <div className="md:overflow-x-auto">
                 {/* MOBIlE */}
                 <div className="flex flex-col gap-4 md:hidden">
                   {opportunities.items.map((opportunity) => (
-                    <Link
-                      key={opportunity.id}
+                    <div
+                      key={`sm_${opportunity.id}`}
                       className="rounded-lg bg-white p-4 shadow-custom"
-                      href={`/organisations/${id}/opportunities/${
-                        opportunity.id
-                      }/info${`?returnUrl=${encodeURIComponent(
-                        getSafeUrl(returnUrl?.toString(), router.asPath),
-                      )}`}`}
                     >
                       <div className="flex flex-col gap-1">
-                        <span className="mb-4 line-clamp-2 font-semibold text-gray-dark">
+                        <Link
+                          className="mb-4 line-clamp-2 font-semibold text-gray-dark"
+                          href={`/organisations/${id}/opportunities/${
+                            opportunity.id
+                          }/info${`?returnUrl=${encodeURIComponent(
+                            getSafeUrl(returnUrl?.toString(), router.asPath),
+                          )}`}`}
+                        >
                           {opportunity.title}
-                        </span>
+                        </Link>
                       </div>
 
                       <div className="flex flex-col gap-2 text-gray-dark">
                         <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">Reward</p>
+                          <p className="text-sm tracking-wider">URL</p>
+                          {opportunity.url && (
+                            <button
+                              onClick={() =>
+                                onClick_CopyToClipboard(opportunity.url!)
+                              }
+                              className="badge bg-green-light text-green"
+                            >
+                              <IoIosLink className="h-4 w-4" />
+                            </button>
+                          )}
+                          {opportunity.yomaReward && (
+                            <span className="badge bg-orange-light text-orange">
+                              <span className="ml-1 text-xs">
+                                {opportunity.yomaReward} Yoma
+                              </span>
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex justify-between">
+                          <p className="text-sm tracking-wider">ZLTO</p>
                           {opportunity.zltoReward && (
                             <span className="badge bg-orange-light text-orange">
                               <Image
@@ -647,16 +666,57 @@ const Opportunities: NextPageWithLayout<{
                         </div>
 
                         <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">Participants</p>
+                          <p className="text-sm tracking-wider">Views</p>
                           <span className="badge bg-green-light text-green">
-                            <IoMdPerson className="h-4 w-4" />
-                            <span className="ml-1 text-xs">
-                              {opportunity.participantCountTotal}
+                            <span className="text-xs">
+                              {opportunity.countViewed}
                             </span>
                           </span>
                         </div>
 
                         <div className="flex justify-between">
+                          <p className="text-sm tracking-wider">Clicks</p>
+                          <span className="badge bg-green-light text-green">
+                            <span className="text-xs">
+                              {opportunity.countNavigatedExternalLink}
+                            </span>
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <p className="text-sm tracking-wider">Completions</p>
+                          <span className="badge bg-green-light text-green">
+                            <span className="text-xs">
+                              {opportunity.participantCountCompleted}
+                            </span>
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <p className="text-sm tracking-wider">Pending</p>
+
+                          {opportunity.participantCountPending > 0 && (
+                            <Link
+                              href={`/organisations/${id}/verifications?opportunity=${opportunity.id}&verificationStatus=Pending`}
+                              className="badge bg-orange-light text-orange"
+                            >
+                              <IoIosWarning className="h-4 w-4" />
+                              <span className="ml-1 text-xs">
+                                {opportunity.participantCountPending}
+                              </span>
+                            </Link>
+                          )}
+
+                          {opportunity.participantCountPending == 0 && (
+                            <span className="badge bg-green-light text-green">
+                              <span className="text-xs">
+                                {opportunity.participantCountPending}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* <div className="flex justify-between">
                           <p className="text-sm tracking-wider">Status</p>
                           {opportunity.status == "Active" && (
                             <>
@@ -680,9 +740,9 @@ const Opportunities: NextPageWithLayout<{
                               Deleted
                             </span>
                           )}
-                        </div>
+                        </div> */}
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
 
@@ -691,21 +751,21 @@ const Opportunities: NextPageWithLayout<{
                   <thead>
                     <tr className="border-gray text-gray-dark">
                       <th className="border-b-2 border-gray-light !py-4">
-                        Opportunity title
+                        Title
                       </th>
-                      <th className="border-b-2 border-gray-light">Reward</th>
                       <th className="border-b-2 border-gray-light">Url</th>
+                      <th className="border-b-2 border-gray-light">ZLTO</th>
+                      <th className="border-b-2 border-gray-light">Views</th>
+                      <th className="border-b-2 border-gray-light">Clicks</th>
                       <th className="border-b-2 border-gray-light">
-                        Participants
+                        Completions
                       </th>
-                      <th className="border-b-2 border-gray-light">
-                        Pending Verifications
-                      </th>
+                      <th className="border-b-2 border-gray-light">Pending</th>
                     </tr>
                   </thead>
                   <tbody>
                     {opportunities.items.map((opportunity) => (
-                      <tr key={opportunity.id}>
+                      <tr key={`md_${opportunity.id}`}>
                         <td className="truncate border-b-2 border-gray-light md:max-w-[270px] lg:max-w-[580px] ">
                           <Link
                             href={`/organisations/${id}/opportunities/${
@@ -717,7 +777,19 @@ const Opportunities: NextPageWithLayout<{
                             {opportunity.title}
                           </Link>
                         </td>
-                        <td className="w-28 border-b-2 border-gray-light">
+                        <td className="border-b-2 border-gray-light text-center">
+                          {opportunity?.url && (
+                            <button
+                              onClick={() =>
+                                onClick_CopyToClipboard(opportunity.url!)
+                              }
+                              className="badge bg-green-light text-green"
+                            >
+                              <IoIosLink className="h-4 w-4" />
+                            </button>
+                          )}
+                        </td>
+                        <td className="w-28 border-b-2 border-gray-light text-center">
                           <div className="flex flex-col">
                             {opportunity.zltoReward && (
                               <span className="badge bg-orange-light px-4 text-orange">
@@ -742,26 +814,27 @@ const Opportunities: NextPageWithLayout<{
                           </div>
                         </td>
                         <td className="border-b-2 border-gray-light">
-                          {opportunity?.url && (
-                            <button
-                              onClick={() =>
-                                onClick_CopyToClipboard(opportunity.url!)
-                              }
-                              className="badge bg-green-light text-green"
-                            >
-                              <IoIosLink className="h-4 w-4" />
-                            </button>
-                          )}
-                        </td>
-                        <td className="border-b-2 border-gray-light">
                           <span className="badge bg-green-light text-green">
-                            <IoMdPerson className="h-4 w-4" />
-                            <span className="ml-1 text-xs">
-                              {opportunity.participantCountTotal}
+                            <span className="text-xs">
+                              {opportunity.countViewed}
                             </span>
                           </span>
                         </td>
-                        <td className="border-b-2 border-gray-light">
+                        <td className="border-b-2 border-gray-light text-center">
+                          <span className="badge bg-green-light text-green">
+                            <span className="text-xs">
+                              {opportunity.countNavigatedExternalLink}
+                            </span>
+                          </span>
+                        </td>
+                        <td className="border-b-2 border-gray-light text-center">
+                          <span className="badge bg-green-light text-green">
+                            <span className="text-xs">
+                              {opportunity.participantCountCompleted}
+                            </span>
+                          </span>
+                        </td>
+                        <td className="border-b-2 border-gray-light text-center">
                           {opportunity.participantCountPending > 0 && (
                             <Link
                               href={`/organisations/${id}/verifications?opportunity=${opportunity.id}&verificationStatus=Pending`}
