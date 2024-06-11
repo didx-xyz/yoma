@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
@@ -61,7 +62,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services.Lookups
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
         return [.. _myOpportunityVerificationStatusRepository.Query().OrderBy(o => o.Name)];
 
-      var result = _memoryCache.GetOrCreate(nameof(MyOpportunityVerificationStatus), entry =>
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<MyOpportunityVerificationStatus>(), entry =>
       {
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);

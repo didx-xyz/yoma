@@ -89,7 +89,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Analytics))
         return ListSearchCriteriaCountriesEngagedInternal(organizationId);
 
-      var result = _memoryCache.GetOrCreate($"{nameof(ListSearchCriteriaCountriesEngaged)}:{organizationId}", entry =>
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<Lookups.Models.Country>(organizationId), entry =>
       {
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
         return ListSearchCriteriaCountriesEngagedInternal(organizationId);
@@ -102,7 +102,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Analytics))
         return SearchOrganizationEngagementInternal(filter);
 
-      var result = _memoryCache.GetOrCreate($"{nameof(OrganizationSearchResultsEngagement)}:{HashHelper.ComputeSHA256Hash(filter)}", entry =>
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<OrganizationSearchResultsEngagement>(HashHelper.ComputeSHA256Hash(filter)), entry =>
       {
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
         return SearchOrganizationEngagementInternal(filter);
@@ -115,7 +115,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Analytics))
         return SearchOrganizationOpportunitiesInternal(filter);
 
-      var result = _memoryCache.GetOrCreate($"{nameof(OrganizationSearchResultsOpportunity)}:{HashHelper.ComputeSHA256Hash(filter)}", entry =>
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<OrganizationSearchResultsOpportunity>(HashHelper.ComputeSHA256Hash(filter)), entry =>
       {
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
         return SearchOrganizationOpportunitiesInternal(filter);
@@ -128,7 +128,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Analytics))
         return SearchOrganizationYouthInternal(filter);
 
-      var result = _memoryCache.GetOrCreate($"{nameof(OrganizationSearchResultsYouth)}:{HashHelper.ComputeSHA256Hash(filter)}", entry =>
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<OrganizationSearchResultsYouth>(HashHelper.ComputeSHA256Hash(filter)), entry =>
       {
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
         return SearchOrganizationYouthInternal(filter);
@@ -141,7 +141,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Analytics))
         return SearchOrganizationSSOInternal(filter);
 
-      var result = _memoryCache.GetOrCreate($"{nameof(OrganizationSearchResultsSSO)}:{HashHelper.ComputeSHA256Hash(filter)}", entry =>
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<OrganizationSearchResultsSSO>(HashHelper.ComputeSHA256Hash(filter)), entry =>
       {
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
         return SearchOrganizationSSOInternal(filter);
