@@ -19,6 +19,8 @@ import {
 import type { OrganizationInfo } from "~/api/models/organisation";
 import { getUserProfile } from "~/api/services/user";
 import SelectButtons from "../Common/SelectButtons";
+import { useAtomValue } from "jotai";
+import { currentLanguageAtom } from "~/lib/store";
 
 export const OpportunityFilterVertical: React.FC<{
   searchFilter: OpportunitySearchFilter;
@@ -51,6 +53,8 @@ export const OpportunityFilterVertical: React.FC<{
   clearButtonText,
   session,
 }) => {
+  const currentLanguage = useAtomValue(currentLanguageAtom);
+
   const schema = zod.object({
     types: zod.array(zod.string()).optional().nullable(),
     engagementTypes: zod.array(zod.string()).optional().nullable(),
@@ -169,11 +173,27 @@ export const OpportunityFilterVertical: React.FC<{
     } else {
       setValue("countries", countries);
     }
+
+    // default to current language
+    let languages = searchFilter?.languages;
+    if ((languages?.length ?? 0) == 0 && currentLanguage) {
+      const languageLookup = lookups_languages.find(
+        (x) => x.codeAlpha2 === currentLanguage,
+      );
+      if (languageLookup) {
+        languages = [languageLookup.name];
+      }
+      setValue("languages", languages);
+    } else {
+      setValue("languages", languages);
+    }
   }, [
     searchFilter,
     session,
+    currentLanguage,
     setValue,
     lookups_countries,
+    lookups_languages,
     lookups_timeIntervals,
   ]);
 
@@ -413,7 +433,6 @@ export const OpportunityFilterVertical: React.FC<{
             <Controller
               name="languages"
               control={form.control}
-              defaultValue={searchFilter?.languages ?? []}
               render={({ field: { onChange, value } }) => (
                 <SelectButtons
                   id="selectButtons_languages"
