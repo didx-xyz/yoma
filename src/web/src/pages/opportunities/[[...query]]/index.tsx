@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
 import type { GetStaticPaths, GetStaticProps } from "next";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
@@ -54,6 +55,7 @@ import {
   PAGE_SIZE,
   PAGE_SIZE_MINIMUM,
 } from "~/lib/constants";
+import { currentLanguageAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
 
 // 👇 SSG
@@ -230,9 +232,18 @@ export const getStaticProps: GetStaticProps = async (context) => {
     context,
   );
 
-  const lookups_categories = await getOpportunityCategories(context);
-  const lookups_languages = await getOpportunityLanguages(context);
-  const lookups_organisations = await getOpportunityOrganizations(context);
+  const lookups_categories = await getOpportunityCategories(
+    [PublishedState.Active, PublishedState.NotStarted, PublishedState.Expired],
+    context,
+  );
+  // const lookups_languages = await getOpportunityLanguages(
+  //   [PublishedState.Active, PublishedState.NotStarted, PublishedState.Expired],
+  //   context,
+  // );
+  const lookups_organisations = await getOpportunityOrganizations(
+    [PublishedState.Active, PublishedState.NotStarted, PublishedState.Expired],
+    context,
+  );
   const lookups_types = await getOpportunityTypes(context);
   const lookups_engagementTypes = await getEngagementTypes(context);
   const lookups_timeIntervals = await getTimeIntervals(context);
@@ -248,7 +259,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       opportunities_other,
       opportunities_allOpportunities,
       lookups_categories,
-      lookups_languages,
+      //lookups_languages,
       lookups_organisations,
       lookups_types,
       lookups_engagementTypes,
@@ -279,7 +290,7 @@ const Opportunities: NextPageWithLayout<{
   opportunities_other: OpportunitySearchResultsInfo;
   opportunities_allOpportunities: OpportunitySearchResultsInfo;
   lookups_categories: OpportunityCategory[];
-  lookups_languages: Language[];
+  //lookups_languages: Language[];
   lookups_organisations: OrganizationInfo[];
   lookups_types: OpportunityType[];
   lookups_engagementTypes: EngagementType[];
@@ -294,7 +305,7 @@ const Opportunities: NextPageWithLayout<{
   opportunities_other,
   opportunities_allOpportunities,
   lookups_categories,
-  lookups_languages,
+  //lookups_languages,
   lookups_organisations,
   lookups_types,
   lookups_engagementTypes,
@@ -306,10 +317,30 @@ const Opportunities: NextPageWithLayout<{
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
   const queryClient = useQueryClient();
   useDisableBodyScroll(filterFullWindowVisible);
+  const currentLanguage = useAtomValue(currentLanguageAtom);
 
   const { data: lookups_countries } = useQuery({
-    queryKey: ["opportunities", "countries"],
-    queryFn: async () => await getOpportunityCountries(),
+    queryKey: ["opportunities", "countries", session?.user?.id],
+    queryFn: async () => {
+      const states = [PublishedState.Active, PublishedState.NotStarted];
+      if (session !== null) states.push(PublishedState.Expired);
+
+      return await getOpportunityCountries(states);
+    },
+  });
+  const { data: lookups_languages } = useQuery({
+    queryKey: [
+      "opportunities",
+      "languages",
+      session?.user?.id,
+      currentLanguage,
+    ],
+    queryFn: async () => {
+      const states = [PublishedState.Active, PublishedState.NotStarted];
+      if (session !== null) states.push(PublishedState.Expired);
+
+      return await getOpportunityLanguages(states, currentLanguage);
+    },
   });
   const lookups_publishedStates: SelectOption[] = [
     { value: "0", label: "Not started" },
@@ -381,17 +412,11 @@ const Opportunities: NextPageWithLayout<{
   const searchFilter: OpportunitySearchFilter = useMemo(() => {
     let commitmentInterval = null;
     if (intervalCount != undefined && intervalType != undefined) {
-      // const lookup = lookups_timeIntervals.find(
-      //   (interval) => interval.name === intervalType.toString(),
-      // );
-
-      // if (lookup != undefined)
       commitmentInterval = {
         options: null,
         interval: {
           count: parseInt(intervalCount.toString()),
           id: intervalType.toString(),
-          //id: lookup.id,
         },
       };
     }
@@ -451,7 +476,6 @@ const Opportunities: NextPageWithLayout<{
     languages,
     organizations,
     publishedStates,
-    lookups_timeIntervals,
   ]);
 
   // QUERY: SEARCH RESULTS
@@ -474,7 +498,6 @@ const Opportunities: NextPageWithLayout<{
         mostCompleted,
         featured,
         publishedStates,
-        lookups_countries,
       ],
       queryFn: async () => {
         if (searchFilter?.commitmentInterval?.interval?.id) {
@@ -562,9 +585,9 @@ const Opportunities: NextPageWithLayout<{
             languages != undefined
               ? languages
                   ?.toString()
-                  .split("|") // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
+                  .split("|")
                   .map((x) => {
-                    const item = lookups_languages.find((y) => y.name === x);
+                    const item = lookups_languages!.find((y) => y.name === x);
                     return item ? item?.id : "";
                   })
                   .filter((x) => x != "")
@@ -589,7 +612,10 @@ const Opportunities: NextPageWithLayout<{
               : null,
         });
       },
-      enabled: isSearchPerformed && lookups_countries !== null, // only run query if search is executed and data is available
+      enabled:
+        isSearchPerformed &&
+        lookups_countries !== undefined &&
+        lookups_languages !== undefined, // only run query if search is executed and data is available
     });
   //#endregion filters
 
@@ -1090,7 +1116,7 @@ const Opportunities: NextPageWithLayout<{
         overlayClassName="fixed inset-0 bg-overlay"
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
-          {lookups_countries && (
+          {lookups_countries != undefined && lookups_languages != undefined && (
             <OpportunityFilterVertical
               searchFilter={searchFilter}
               lookups_countries={lookups_countries}

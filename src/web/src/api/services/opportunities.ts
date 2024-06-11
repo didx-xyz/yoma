@@ -18,6 +18,7 @@ import type {
   Status,
   OpportunitySearchFilterCriteria,
   OpportunityCountry,
+  PublishedState,
 } from "../models/opportunity";
 import type { Country, Language } from "../models/lookups";
 import type { OrganizationInfo } from "../models/organisation";
@@ -202,45 +203,68 @@ export const searchOpportunities = async (
 };
 
 export const getOpportunityCategories = async (
+  publishedStates?: PublishedState[],
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityCategory[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
+  const params = new URLSearchParams();
+  if (publishedStates && publishedStates.length > 0)
+    params.append("publishedStates", publishedStates.join(","));
+
   const { data } = await instance.get<OpportunityCategory[]>(
-    `/opportunity/search/filter/category`,
+    `/opportunity/search/filter/category?${params.toString()}`,
   );
   return data;
 };
 
 export const getOpportunityCountries = async (
+  publishedStates?: PublishedState[],
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Country[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
+  const params = new URLSearchParams();
+  if (publishedStates && publishedStates.length > 0)
+    params.append("publishedStates", publishedStates.join(","));
+
   const { data } = await instance.get<Country[]>(
-    `/opportunity/search/filter/country`,
+    `/opportunity/search/filter/country?${params.toString()}`,
   );
   return data;
 };
 
 export const getOpportunityLanguages = async (
+  publishedStates?: PublishedState[],
+  languageCodeAlpha2Site?: string,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Language[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
+  const params = new URLSearchParams();
+  if (publishedStates && publishedStates.length > 0)
+    params.append("publishedStates", publishedStates.join(","));
+  if (languageCodeAlpha2Site)
+    params.append("languageCodeAlpha2Site", languageCodeAlpha2Site);
+
   const { data } = await instance.get<Language[]>(
-    `/opportunity/search/filter/language`,
+    `/opportunity/search/filter/language?${params.toString()}`,
   );
   return data;
 };
 
 export const getOpportunityOrganizations = async (
+  publishedStates?: PublishedState[],
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OrganizationInfo[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
+  const params = new URLSearchParams();
+  if (publishedStates && publishedStates.length > 0)
+    params.append("publishedStates", publishedStates.join(","));
+
   const { data } = await instance.get<OrganizationInfo[]>(
-    `/opportunity/search/filter/organization`,
+    `/opportunity/search/filter/organization?${params.toString()}`,
   );
   return data;
 };
@@ -255,24 +279,34 @@ export const getOpportunityTypes = async (
 };
 
 export const getCommitmentIntervals = async (
+  publishedStates?: PublishedState[],
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunitySearchCriteriaCommitmentIntervalOption[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
+  const params = new URLSearchParams();
+  if (publishedStates && publishedStates.length > 0)
+    params.append("publishedStates", publishedStates.join(","));
+
   const { data } = await instance.get<
     OpportunitySearchCriteriaCommitmentIntervalOption[]
-  >(`/opportunity/search/filter/commitmentInterval`);
+  >(`/opportunity/search/filter/commitmentInterval?${params.toString()}`);
   return data;
 };
 
 export const getZltoRewardRanges = async (
+  publishedStates?: PublishedState[],
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunitySearchCriteriaZltoRewardRange[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
+  const params = new URLSearchParams();
+  if (publishedStates && publishedStates.length > 0)
+    params.append("publishedStates", publishedStates.join(","));
+
   const { data } = await instance.get<
     OpportunitySearchCriteriaZltoRewardRange[]
-  >(`/opportunity/search/filter/zltoReward`);
+  >(`/opportunity/search/filter/zltoReward?${params.toString()}`);
   return data;
 };
 
