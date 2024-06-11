@@ -175,7 +175,7 @@ namespace Yoma.Core.Domain
 
     public static void ConfigureServices_DomainServicesCompositionFactory(this IServiceCollection services, Func<IServiceProvider, IDictionary<Partner, ISharingProviderClientFactory>> factoriesResolver)
     {
-      services.AddSingleton<ISharingProviderClientFactoryPartner>(sp => new SharingProviderClientFactoryPartner(factoriesResolver(sp)));
+      services.AddScoped<ISharingProviderClientFactoryPartner>(sp => new SharingProviderClientFactoryPartner(factoriesResolver(sp)));
     }
 
     public static void Configure_RecurringJobs(this IConfiguration configuration, AppSettings appSettings, Core.Environment environment)

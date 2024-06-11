@@ -15,7 +15,7 @@ namespace Yoma.Core.Infrastructure.SAYouth
 
     public static void ConfigureServices_InfrastructureSharingProvider(this IServiceCollection services)
     {
-      services.AddSingleton<ISharingProviderClientFactory, SAYouthClientFactory>();
+      services.AddScoped<ISharingProviderClientFactory, SAYouthClientFactory>();
     }
   }
 }
