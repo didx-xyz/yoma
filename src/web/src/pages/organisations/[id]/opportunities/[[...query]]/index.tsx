@@ -753,14 +753,24 @@ const Opportunities: NextPageWithLayout<{
                       <th className="border-b-2 border-gray-light !py-4">
                         Title
                       </th>
-                      <th className="border-b-2 border-gray-light">Url</th>
-                      <th className="border-b-2 border-gray-light">ZLTO</th>
-                      <th className="border-b-2 border-gray-light">Views</th>
-                      <th className="border-b-2 border-gray-light">Clicks</th>
-                      <th className="border-b-2 border-gray-light">
+                      <th className="border-b-2 border-gray-light text-center">
+                        Url
+                      </th>
+                      <th className="border-b-2 border-gray-light text-center">
+                        ZLTO
+                      </th>
+                      <th className="border-b-2 border-gray-light text-center">
+                        Views
+                      </th>
+                      <th className="border-b-2 border-gray-light text-center">
+                        Clicks
+                      </th>
+                      <th className="border-b-2 border-gray-light text-center">
                         Completions
                       </th>
-                      <th className="border-b-2 border-gray-light">Pending</th>
+                      <th className="border-b-2 border-gray-light text-center">
+                        Pending
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -813,7 +823,7 @@ const Opportunities: NextPageWithLayout<{
                             )}
                           </div>
                         </td>
-                        <td className="border-b-2 border-gray-light">
+                        <td className="border-b-2 border-gray-light text-center">
                           <span className="badge bg-green-light text-green">
                             <span className="text-xs">
                               {opportunity.countViewed}
