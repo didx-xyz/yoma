@@ -14,7 +14,6 @@ import {
 import ReactModal from "react-modal";
 import type {
   EngagementType,
-  Language,
   SelectOption,
   TimeInterval,
 } from "~/api/models/lookups";
@@ -233,10 +232,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   );
 
   const lookups_categories = await getOpportunityCategories(
-    [
-      PublishedState.Active,
-      PublishedState.NotStarted  ,
-    ],
+    [PublishedState.Active, PublishedState.NotStarted],
     context,
   );
   // const lookups_languages = await getOpportunityLanguages(
@@ -244,10 +240,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   //   context,
   // );
   const lookups_organisations = await getOpportunityOrganizations(
-    [
-      PublishedState.Active,
-      PublishedState.NotStarted  ,
-    ],
+    [PublishedState.Active, PublishedState.NotStarted],
     context,
   );
   const lookups_types = await getOpportunityTypes(context);

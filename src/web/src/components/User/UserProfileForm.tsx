@@ -227,6 +227,7 @@ export const UserProfileForm: React.FC<{
       setIsLoading,
       setUserProfileAtom,
       queryClient,
+      formData.countryId,
     ],
   );
 
