@@ -69,9 +69,9 @@ export const Global: React.FC = () => {
   const [loginMessage, setLoginMessage] = useState("");
 
   // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(loginDialogVisible);
-  useDisableBodyScroll(onboardingDialogVisible);
-  useDisableBodyScroll(updateProfileDialogVisible);
+  useDisableBodyScroll(
+    loginDialogVisible || onboardingDialogVisible || updateProfileDialogVisible,
+  );
 
   // SESSION
   useEffect(() => {
