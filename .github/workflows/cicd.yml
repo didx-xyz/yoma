@@ -330,7 +330,7 @@ jobs:
     name: Deploy
     permissions:
       id-token: write
-      contents: read
+      contents: write
       packages: read
     needs: [test-e2e, build]
     runs-on: ubuntu-latest
