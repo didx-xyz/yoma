@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Exceptions;
@@ -80,7 +81,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
       }
       else
       {
-        results = _memoryCache.GetOrCreate(nameof(SSISchemaEntity), entry =>
+        results = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<SSISchemaEntity>(), entry =>
         {
           entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
           entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);

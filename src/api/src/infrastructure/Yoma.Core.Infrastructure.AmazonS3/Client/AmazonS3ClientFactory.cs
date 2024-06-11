@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Infrastructure.AmazonS3.Models;
 
@@ -34,7 +35,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.AmazonS3Client))
         return new AmazonS3Client(storageType, optionsBucket);
 
-      var result = _memoryCache.GetOrCreate($"{nameof(AmazonS3Client)}:{storageType}", entry =>
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<AmazonS3Client>(storageType), entry =>
       {
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
