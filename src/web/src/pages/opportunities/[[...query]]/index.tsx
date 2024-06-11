@@ -233,7 +233,10 @@ export const getStaticProps: GetStaticProps = async (context) => {
   );
 
   const lookups_categories = await getOpportunityCategories(
-    [PublishedState.Active, PublishedState.NotStarted, PublishedState.Expired],
+    [
+      PublishedState.Active,
+      PublishedState.NotStarted  ,
+    ],
     context,
   );
   // const lookups_languages = await getOpportunityLanguages(
@@ -241,7 +244,10 @@ export const getStaticProps: GetStaticProps = async (context) => {
   //   context,
   // );
   const lookups_organisations = await getOpportunityOrganizations(
-    [PublishedState.Active, PublishedState.NotStarted, PublishedState.Expired],
+    [
+      PublishedState.Active,
+      PublishedState.NotStarted  ,
+    ],
     context,
   );
   const lookups_types = await getOpportunityTypes(context);
@@ -1193,6 +1199,7 @@ const Opportunities: NextPageWithLayout<{
           }}
           onSubmit={(e) => onSubmitFilter(e)}
         />
+
         {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
         {!isSearchPerformed && (
           <div className="mt-4 gap-6 px-2 pb-4 md:p-0 md:pb-0">

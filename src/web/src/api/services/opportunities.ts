@@ -210,7 +210,9 @@ export const getOpportunityCategories = async (
 
   const params = new URLSearchParams();
   if (publishedStates && publishedStates.length > 0)
-    params.append("publishedStates", publishedStates.join(","));
+    publishedStates.forEach((state) =>
+      params.append("publishedStates", state.toString()),
+    );
 
   const { data } = await instance.get<OpportunityCategory[]>(
     `/opportunity/search/filter/category?${params.toString()}`,
@@ -226,7 +228,9 @@ export const getOpportunityCountries = async (
 
   const params = new URLSearchParams();
   if (publishedStates && publishedStates.length > 0)
-    params.append("publishedStates", publishedStates.join(","));
+    publishedStates.forEach((state) =>
+      params.append("publishedStates", state.toString()),
+    );
 
   const { data } = await instance.get<Country[]>(
     `/opportunity/search/filter/country?${params.toString()}`,
@@ -243,7 +247,9 @@ export const getOpportunityLanguages = async (
 
   const params = new URLSearchParams();
   if (publishedStates && publishedStates.length > 0)
-    params.append("publishedStates", publishedStates.join(","));
+    publishedStates.forEach((state) =>
+      params.append("publishedStates", state.toString()),
+    );
   if (languageCodeAlpha2Site)
     params.append("languageCodeAlpha2Site", languageCodeAlpha2Site);
 
@@ -261,7 +267,9 @@ export const getOpportunityOrganizations = async (
 
   const params = new URLSearchParams();
   if (publishedStates && publishedStates.length > 0)
-    params.append("publishedStates", publishedStates.join(","));
+    publishedStates.forEach((state) =>
+      params.append("publishedStates", state.toString()),
+    );
 
   const { data } = await instance.get<OrganizationInfo[]>(
     `/opportunity/search/filter/organization?${params.toString()}`,

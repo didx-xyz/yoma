@@ -76,12 +76,12 @@ const SelectButtons: React.FC<SelectButtonsProps> = ({
           {showMore ? (
             <>
               <IoMdArrowUp />
-              Show Less
+              <span>Show Less</span>
             </>
           ) : (
             <>
               <IoMdArrowDown />
-              Show More
+              <span>Show More</span>
             </>
           )}
         </button>
