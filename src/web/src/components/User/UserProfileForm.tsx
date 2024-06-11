@@ -6,7 +6,7 @@ import {
   GA_ACTION_USER_PROFILE_UPDATE,
   GA_CATEGORY_USER,
 } from "~/lib/constants";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getCountries,
   getEducations,
@@ -69,6 +69,7 @@ export const UserProfileForm: React.FC<{
     dateOfBirth: userProfile?.dateOfBirth ?? "",
     resetPassword: false,
   });
+  const queryClient = useQueryClient();
 
   // 👇 use prefetched queries from server (if available)
   const { data: genders } = useQuery({
@@ -185,6 +186,17 @@ export const UserProfileForm: React.FC<{
         // update userProfile Atom (used by NavBar/UserMenu.tsx, refresh profile picture)
         setUserProfileAtom(userProfile);
 
+        // invalidate queries
+        await queryClient.invalidateQueries({
+          queryKey: ["userProfile"],
+        });
+        // (user countries on the oportunity search page)
+        if (formData.countryId != data.countryId) {
+          await queryClient.invalidateQueries({
+            queryKey: ["opportunities", "countries"],
+          });
+        }
+
         toast("Your profile has been updated", {
           type: "success",
           toastId: "patchUserProfile",
@@ -207,7 +219,16 @@ export const UserProfileForm: React.FC<{
 
       setIsLoading(false);
     },
-    [onSubmit, update, logoFiles, session, setIsLoading, setUserProfileAtom],
+    [
+      onSubmit,
+      update,
+      logoFiles,
+      session,
+      setIsLoading,
+      setUserProfileAtom,
+      queryClient,
+      formData.countryId,
+    ],
   );
 
   return (

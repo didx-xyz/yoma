@@ -249,8 +249,11 @@ export interface OpportunityCountry {
   id: string;
   opportunityId: string;
   opportunityStatusId: string;
+  opportunityDateStart: string;
+  organizationId: string;
   organizationStatusId: string;
   countryId: string;
+  countryName: string;
   dateCreated: string;
 }
 

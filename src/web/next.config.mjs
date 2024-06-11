@@ -81,10 +81,10 @@ const config = {
   async rewrites() {
     return [
       {
-        source: '/auth/:path*',
+        source: "/auth/:path*",
         destination: `https://${process.env.KEYCLOAK_HOSTNAME}/auth/:path*`,
       },
-    ]
+    ];
   },
 };
 
