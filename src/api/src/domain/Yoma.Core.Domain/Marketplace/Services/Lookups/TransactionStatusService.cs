@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Marketplace.Interfaces.Lookups;
@@ -60,7 +61,7 @@ namespace Yoma.Core.Domain.Marketplace.Services.Lookups
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
         return [.. _transactionStatusRepository.Query().OrderBy(o => o.Name)];
 
-      var result = _memoryCache.GetOrCreate(nameof(Models.Lookups.TransactionStatus), entry =>
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<Models.Lookups.TransactionStatus>(), entry =>
       {
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);

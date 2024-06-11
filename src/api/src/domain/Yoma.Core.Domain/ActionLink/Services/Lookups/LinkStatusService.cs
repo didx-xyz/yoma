@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.ActionLink.Interfaces.Lookups;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 
@@ -60,7 +61,7 @@ namespace Yoma.Core.Domain.ActionLink.Services.Lookups
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
         return [.. _linkStatusRepository.Query().OrderBy(o => o.Name)];
 
-      var result = _memoryCache.GetOrCreate(nameof(Models.Lookups.LinkStatus), entry =>
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<Models.Lookups.LinkStatus>(), entry =>
       {
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);

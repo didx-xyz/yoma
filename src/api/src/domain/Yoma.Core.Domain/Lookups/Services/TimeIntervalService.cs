@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Helpers;
@@ -65,7 +66,7 @@ namespace Yoma.Core.Domain.Lookups.Services
         return [.. items.OrderBy(o => TimeIntervalHelper.GetOrder(o.Name))];
       }
 
-      var result = _memoryCache.GetOrCreate(nameof(TimeInterval), entry =>
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<TimeInterval>(), entry =>
       {
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
