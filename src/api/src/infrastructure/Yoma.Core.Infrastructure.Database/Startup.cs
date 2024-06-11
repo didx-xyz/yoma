@@ -116,9 +116,9 @@ namespace Yoma.Core.Infrastructure.Database
       #endregion Lookups
 
       services.AddScoped<IRepository<Domain.Marketplace.Models.TransactionLog>, TransactionLogRepository>();
-      #endregion
+      #endregion Marketplace
 
-      #region My Opportunity
+      #region MyOpportunity
       #region Lookups
       services.AddScoped<IRepository<Domain.MyOpportunity.Models.Lookups.MyOpportunityAction>, MyOpportunity.Repositories.Lookups.MyOpportunityActionRepository>();
       services.AddScoped<IRepository<Domain.MyOpportunity.Models.Lookups.MyOpportunityVerificationStatus>, MyOpportunity.Repositories.Lookups.MyOpportunityVerificationStatusRepository>();
@@ -126,7 +126,7 @@ namespace Yoma.Core.Infrastructure.Database
 
       services.AddScoped<IRepositoryBatchedWithNavigation<Domain.MyOpportunity.Models.MyOpportunity>, MyOpportunityRepository>();
       services.AddScoped<IRepository<Domain.MyOpportunity.Models.MyOpportunityVerification>, MyOpportunityVerificationRepository>();
-      #endregion My Opportunity
+      #endregion MyOpportunity
 
       #region Opportunity
       #region Lookups
@@ -135,7 +135,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityStatus>, Opportunity.Repositories.Lookups.OpportunityStatusRepository>();
       services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityType>, Opportunity.Repositories.Lookups.OpportunityTypeRepository>();
       services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityVerificationType>, Opportunity.Repositories.Lookups.OpportunityVerificationTypeRepository>();
-      #endregion
+      #endregion Lookups
 
       services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Opportunity.Models.Opportunity>, OpportunityRepository>();
       services.AddScoped<IRepository<OpportunityCategory>, OpportunityCategoryRepository>();
@@ -143,7 +143,16 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<OpportunityLanguage>, OpportunityLanguageRepository>();
       services.AddScoped<IRepository<OpportunitySkill>, OpportunitySkillRepository>();
       services.AddScoped<IRepository<OpportunityVerificationType>, OpportunityVerificationTypeRepository>();
-      #endregion
+      #endregion Opportunity
+
+      #region PartnerSharing
+      #region Lookups
+      services.AddScoped<IRepository<Domain.PartnerSharing.Models.Lookups.Partner>, PartnerSharing.Repositories.Lookups.PartnerRepository>();
+      services.AddScoped<IRepository<Domain.PartnerSharing.Models.Lookups.ProcessingStatus>, PartnerSharing.Repositories.Lookups.ProcessingStatusRepository>();
+      #endregion Lookups
+
+      services.AddScoped<IRepository<Domain.PartnerSharing.Models.ProcessingLog>, PartnerSharing.Repositories.ProcessingLogRepository>();
+      #endregion PartnerSharing
 
       #region Reward
       #region Lookups
@@ -155,7 +164,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepositoryBatched<Domain.Reward.Models.RewardTransaction>, RewardTransactionRepository>();
 
       services.AddScoped<IRepository<Domain.Reward.Models.WalletCreation>, WalletCreationRepository>();
-      #endregion
+      #endregion Reward
 
       #region SSI
       #region Lookups
@@ -167,7 +176,7 @@ namespace Yoma.Core.Infrastructure.Database
 
       services.AddScoped<IRepository<SSICredentialIssuance>, SSICredentialIssuanceRepository>();
       services.AddScoped<IRepository<SSITenantCreation>, SSITenantCreationRepository>();
-      #endregion
+      #endregion SSI
     }
 
     public static void Configure_InfrastructureDatabase(this IServiceProvider serviceProvider)

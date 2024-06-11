@@ -421,8 +421,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var results = countries
         .OrderByDescending(c => c.CodeAlpha2 == Country.Worldwide.ToDescription()) //ensure Worldwide appears first
         .ThenByDescending(c => userCountryId != null && c.Id == userCountryId) //followed by the user's country if available and has one or more opportunities mapped
-        .ThenByDescending(c => countryOpportunities.FirstOrDefault(co => co.CountryId == c.Id)?.OpportunityCount ?? 0)
-        .ThenBy(o => o.Name)
+        .ThenByDescending(c => countryOpportunities.FirstOrDefault(co => co.CountryId == c.Id)?.OpportunityCount ?? 0) //followed by the remaining countries with opportunities, ordered by opportunity counts descending
+        .ThenBy(o => o.Name) //lastly alphabetically by name
         .ToList();
 
       return results;

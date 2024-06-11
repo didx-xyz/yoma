@@ -15,7 +15,7 @@ namespace Yoma.Core.Infrastructure.Bitly
 
     public static void ConfigureServices_InfrastructureShortLinkProvider(this IServiceCollection services)
     {
-      services.AddScoped<IShortLinkProviderClientFactory, BitlyClientFactory>();
+      services.AddSingleton<IShortLinkProviderClientFactory, BitlyClientFactory>();
     }
   }
 }

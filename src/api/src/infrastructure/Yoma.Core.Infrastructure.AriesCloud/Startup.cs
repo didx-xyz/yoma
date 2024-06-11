@@ -51,7 +51,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud
 
       //sdk
       services.AddAriesCloudAPI();
-      services.AddScoped<ISSIProviderClientFactory, AriesCloudClientFactory>();
+      services.AddSingleton<ISSIProviderClientFactory, AriesCloudClientFactory>();
 
       //service
       services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
