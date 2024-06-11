@@ -120,6 +120,15 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<OpportunityVerificationType> OpportunityVerificationTypes { get; set; }
     #endregion Opportunity
 
+    #region PartnerSharing
+    #region Lookups
+    public DbSet<PartnerSharing.Entities.Lookups.Partner> PartnerSharingPartner { get; set; }
+    public DbSet<PartnerSharing.Entities.Lookups.ProcessingStatus> PartnerSharingProcessingStatus { get; set; }
+    #endregion Lookups 
+
+    public DbSet<PartnerSharing.Entities.ProcessingLog> PartnerSharingProcessingLog { get; set; } 
+    #endregion PartnerSharing
+
     #region Reward
     #region Lookups
     public DbSet<RewardTransactionStatus> RewardTransactionStatus { get; set; }

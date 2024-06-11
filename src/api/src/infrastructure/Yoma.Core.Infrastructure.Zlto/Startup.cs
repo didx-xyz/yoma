@@ -16,8 +16,8 @@ namespace Yoma.Core.Infrastructure.Zlto
 
     public static void ConfigureServices_InfrastructureRewardProvider(this IServiceCollection services)
     {
-      services.AddScoped<IMarketplaceProviderClientFactory, ZltoClientFactory>();
-      services.AddScoped<IRewardProviderClientFactory, ZltoClientFactory>();
+      services.AddSingleton<IMarketplaceProviderClientFactory, ZltoClientFactory>();
+      services.AddSingleton<IRewardProviderClientFactory, ZltoClientFactory>();
     }
   }
 }

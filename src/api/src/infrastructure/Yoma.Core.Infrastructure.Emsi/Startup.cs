@@ -15,7 +15,7 @@ namespace Yoma.Core.Infrastructure.Emsi
 
     public static void ConfigureServices_InfrastructureLaborMarketProvider(this IServiceCollection services)
     {
-      services.AddScoped<ILaborMarketProviderClientFactory, EmsiClientFactory>();
+      services.AddSingleton<ILaborMarketProviderClientFactory, EmsiClientFactory>();
     }
   }
 }

@@ -35,6 +35,7 @@
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Database\Yoma.Core.Infrastructure.Database.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Emsi\Yoma.Core.Infrastructure.Emsi.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Keycloak\Yoma.Core.Infrastructure.Keycloak.csproj" />
+    <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.SAYouth\Yoma.Core.Infrastructure.SAYouth.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.SendGrid\Yoma.Core.Infrastructure.SendGrid.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Zlto\Yoma.Core.Infrastructure.Zlto.csproj" />
   </ItemGroup>
