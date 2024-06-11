@@ -373,7 +373,6 @@ export const OpportunityFilterVertical: React.FC<{
           </div>
 
           {/* COUNTRIES */}
-
           <div className="form-control">
             <label className="label">
               <span className="label-text font-semibold">Country</span>

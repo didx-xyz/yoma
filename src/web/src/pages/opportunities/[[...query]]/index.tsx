@@ -12,7 +12,6 @@ import {
 } from "react";
 import ReactModal from "react-modal";
 import type {
-  Country,
   EngagementType,
   Language,
   SelectOption,
@@ -232,7 +231,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
   );
 
   const lookups_categories = await getOpportunityCategories(context);
-  const lookups_countries = await getOpportunityCountries(context);
   const lookups_languages = await getOpportunityLanguages(context);
   const lookups_organisations = await getOpportunityOrganizations(context);
   const lookups_types = await getOpportunityTypes(context);
@@ -250,7 +248,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
       opportunities_other,
       opportunities_allOpportunities,
       lookups_categories,
-      lookups_countries,
       lookups_languages,
       lookups_organisations,
       lookups_types,
@@ -282,7 +279,6 @@ const Opportunities: NextPageWithLayout<{
   opportunities_other: OpportunitySearchResultsInfo;
   opportunities_allOpportunities: OpportunitySearchResultsInfo;
   lookups_categories: OpportunityCategory[];
-  lookups_countries: Country[];
   lookups_languages: Language[];
   lookups_organisations: OrganizationInfo[];
   lookups_types: OpportunityType[];
@@ -298,7 +294,6 @@ const Opportunities: NextPageWithLayout<{
   opportunities_other,
   opportunities_allOpportunities,
   lookups_categories,
-  lookups_countries,
   lookups_languages,
   lookups_organisations,
   lookups_types,
@@ -312,6 +307,10 @@ const Opportunities: NextPageWithLayout<{
   const queryClient = useQueryClient();
   useDisableBodyScroll(filterFullWindowVisible);
 
+  const { data: lookups_countries } = useQuery({
+    queryKey: ["opportunities", "countries"],
+    queryFn: async () => await getOpportunityCountries(),
+  });
   const lookups_publishedStates: SelectOption[] = [
     { value: "0", label: "Not started" },
     { value: "1", label: "Ongoing" },
@@ -382,18 +381,19 @@ const Opportunities: NextPageWithLayout<{
   const searchFilter: OpportunitySearchFilter = useMemo(() => {
     let commitmentInterval = null;
     if (intervalCount != undefined && intervalType != undefined) {
-      const lookup = lookups_timeIntervals.find(
-        (interval) => interval.name === intervalType.toString(),
-      );
+      // const lookup = lookups_timeIntervals.find(
+      //   (interval) => interval.name === intervalType.toString(),
+      // );
 
-      if (lookup != undefined)
-        commitmentInterval = {
-          options: null,
-          interval: {
-            count: parseInt(intervalCount.toString()),
-            id: lookup.id,
-          },
-        };
+      // if (lookup != undefined)
+      commitmentInterval = {
+        options: null,
+        interval: {
+          count: parseInt(intervalCount.toString()),
+          id: intervalType.toString(),
+          //id: lookup.id,
+        },
+      };
     }
 
     let zltoReward2 = null;
@@ -474,9 +474,19 @@ const Opportunities: NextPageWithLayout<{
         mostCompleted,
         featured,
         publishedStates,
+        lookups_countries,
       ],
-      queryFn: async () =>
-        await searchOpportunities({
+      queryFn: async () => {
+        if (searchFilter?.commitmentInterval?.interval?.id) {
+          const lookup = lookups_timeIntervals.find(
+            (interval) =>
+              interval.name === searchFilter.commitmentInterval?.interval?.id,
+          );
+          if (lookup != undefined)
+            searchFilter.commitmentInterval.interval.id = lookup.id;
+        }
+
+        return await searchOpportunities({
           pageNumber: searchFilter.pageNumber,
           pageSize: searchFilter.pageSize,
           valueContains: searchFilter.valueContains,
@@ -543,7 +553,7 @@ const Opportunities: NextPageWithLayout<{
                   ?.toString()
                   .split("|")
                   .map((x) => {
-                    const item = lookups_countries.find((y) => y.name === x);
+                    const item = lookups_countries!.find((y) => y.name === x);
                     return item ? item?.id : "";
                   })
                   .filter((x) => x != "")
@@ -577,8 +587,9 @@ const Opportunities: NextPageWithLayout<{
             zltoReward != undefined
               ? { ranges: null, hasReward: Boolean(zltoReward) }
               : null,
-        }),
-      enabled: isSearchPerformed, // only run query if search is executed
+        });
+      },
+      enabled: isSearchPerformed && lookups_countries !== null, // only run query if search is executed and data is available
     });
   //#endregion filters
 
@@ -1079,22 +1090,24 @@ const Opportunities: NextPageWithLayout<{
         overlayClassName="fixed inset-0 bg-overlay"
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
-          <OpportunityFilterVertical
-            searchFilter={searchFilter}
-            lookups_countries={lookups_countries}
-            lookups_languages={lookups_languages}
-            lookups_types={lookups_types}
-            lookups_engagementTypes={lookups_engagementTypes}
-            lookups_organisations={lookups_organisations}
-            lookups_timeIntervals={lookups_timeIntervals}
-            lookups_publishedStates={lookups_publishedStates}
-            submitButtonText="Apply Filters"
-            onCancel={onCloseFilter}
-            onSubmit={(e) => onSubmitFilter(e)}
-            onClear={onClearFilter}
-            clearButtonText="Clear All Filters"
-            session={session}
-          />
+          {lookups_countries && (
+            <OpportunityFilterVertical
+              searchFilter={searchFilter}
+              lookups_countries={lookups_countries}
+              lookups_languages={lookups_languages}
+              lookups_types={lookups_types}
+              lookups_engagementTypes={lookups_engagementTypes}
+              lookups_organisations={lookups_organisations}
+              lookups_timeIntervals={lookups_timeIntervals}
+              lookups_publishedStates={lookups_publishedStates}
+              submitButtonText="Apply Filters"
+              onCancel={onCloseFilter}
+              onSubmit={(e) => onSubmitFilter(e)}
+              onClear={onClearFilter}
+              clearButtonText="Clear All Filters"
+              session={session}
+            />
+          )}
         </div>
       </ReactModal>
 
@@ -1154,7 +1167,6 @@ const Opportunities: NextPageWithLayout<{
           }}
           onSubmit={(e) => onSubmitFilter(e)}
         />
-
         {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
         {!isSearchPerformed && (
           <div className="mt-4 gap-6 px-2 pb-4 md:p-0 md:pb-0">
@@ -1255,7 +1267,6 @@ const Opportunities: NextPageWithLayout<{
             )}
           </div>
         )}
-
         {/* SEARCH PERFORMED, SHOW RESULTS */}
         {isSearchPerformed && (
           <div id="results" className="flex flex-col items-center rounded-lg">

@@ -17,6 +17,7 @@ import type {
   OpportunitySearchCriteriaCommitmentIntervalOption,
   Status,
   OpportunitySearchFilterCriteria,
+  OpportunityCountry,
 } from "../models/opportunity";
 import type { Country, Language } from "../models/lookups";
 import type { OrganizationInfo } from "../models/organisation";
