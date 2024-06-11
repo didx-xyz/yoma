@@ -442,7 +442,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return [.. _languageService.List().Where(o => languageIds.Contains(o.Id)).OrderBy(o => o.Name)];
     }
 
-    public List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(List<PublishedState>? publishedStates)
+    public List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(List<PublishedState>? publishedStates, string? languageCodeAlpha2Site)
     {
       publishedStates = publishedStates == null || publishedStates.Count == 0 ?
              [PublishedState.NotStarted, PublishedState.Active] : publishedStates;
@@ -452,6 +452,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+
+      var languageSiteId = string.IsNullOrEmpty(languageCodeAlpha2Site) ? null : (Guid?)_languageService.GetByCodeAplha2(languageCodeAlpha2Site).Id;
 
       var predicate = PredicateBuilder.False<OpportunityLanguage>();
       foreach (var state in publishedStates)
@@ -485,7 +487,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         .ToList();
 
       var results = languages
-        .OrderByDescending(l => languageOpportunities.FirstOrDefault(lo => lo.LanguageId == l.Id)?.OpportunityCount ?? 0)
+        .OrderByDescending(l => languageSiteId != null && l.Id == languageSiteId)
+        .ThenByDescending(l => languageOpportunities.FirstOrDefault(lo => lo.LanguageId == l.Id)?.OpportunityCount ?? 0)
         .ThenBy(l => l.Name)
         .ToList();
 
