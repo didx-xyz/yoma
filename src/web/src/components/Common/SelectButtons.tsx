@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { IoMdArrowDown, IoMdArrowUp } from "react-icons/io";
 
 interface Button {
   id: string;
@@ -10,6 +11,7 @@ interface SelectButtonsProps {
   id: string;
   buttons: Button[];
   isMulti?: boolean;
+  maxRows?: number;
   onChange: (buttons: Button[]) => void;
 }
 
@@ -17,9 +19,11 @@ const SelectButtons: React.FC<SelectButtonsProps> = ({
   id,
   buttons,
   isMulti,
+  maxRows,
   onChange,
 }) => {
   const [buttonState, setButtonState] = useState<Button[]>(buttons);
+  const [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
     setButtonState(buttons);
@@ -42,9 +46,13 @@ const SelectButtons: React.FC<SelectButtonsProps> = ({
     onChange(newButtons);
   };
 
+  const displayedButtons = showMore
+    ? buttonState
+    : buttonState.slice(0, maxRows);
+
   return (
     <div className="flex flex-row flex-wrap gap-2">
-      {buttonState.map((bt) => (
+      {displayedButtons.map((bt) => (
         <button
           key={`${id}_${bt.id}`}
           type="button"
@@ -58,6 +66,26 @@ const SelectButtons: React.FC<SelectButtonsProps> = ({
           {bt.title}
         </button>
       ))}
+
+      {maxRows && buttonState.length > maxRows && (
+        <button
+          type="button"
+          className="btn btn-sm border-gray text-xs text-gray-dark hover:border-gray-dark"
+          onClick={() => setShowMore(!showMore)}
+        >
+          {showMore ? (
+            <>
+              <IoMdArrowUp />
+              <span>Show Less</span>
+            </>
+          ) : (
+            <>
+              <IoMdArrowDown />
+              <span>Show More</span>
+            </>
+          )}
+        </button>
+      )}
     </div>
   );
 };

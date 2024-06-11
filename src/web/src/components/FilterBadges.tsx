@@ -7,6 +7,10 @@ const FilterBadges: React.FC<{
   resolveValue: (key: string, item: any) => any;
   onSubmit: (filter: any) => void;
 }> = ({ searchFilter, excludeKeys, resolveValue, onSubmit }) => {
+  const filteredKeys = Object.entries(searchFilter).filter(
+    ([key, value]) => !excludeKeys.includes(key) && value != null,
+  );
+
   // function to handle removing an item from an array in the filter object
   const removeFromArray = useCallback(
     (key: string, item: string) => {
@@ -39,53 +43,60 @@ const FilterBadges: React.FC<{
 
   return (
     <div className="flex flex-wrap gap-2">
-      {searchFilter &&
-        Object.entries(searchFilter).map(([key, value]) =>
-          !excludeKeys.includes(key) &&
-          value != null &&
-          (Array.isArray(value) ? value.length > 0 : true) ? (
-            <div
-              key={`searchFilter_filter_badge_${key}`}
-              className="flex flex-wrap gap-1"
-            >
-              {Array.isArray(value) ? (
-                value.map((item: string) => {
-                  const lookup = resolveValue(key, item);
-                  return (
-                    <span
-                      key={`searchFilter_filter_badge_${key}_${item}`}
-                      className="badge h-6 max-w-[200px] rounded-md border-none bg-green-light p-2 text-green"
-                    >
-                      <p className="truncate text-center text-xs font-semibold">
-                        {lookup ?? ""}
-                      </p>
-                      <button
-                        className="btn h-fit w-fit border-none p-0 shadow-none"
-                        onClick={() => removeFromArray(key, item)}
-                      >
-                        <IoIosClose className="-mr-2 h-6 w-6" />
-                      </button>
-                    </span>
-                  );
-                })
-              ) : resolveValue(key, value as string) ?? (value as string) ? (
-                <span className="badge h-6 max-w-[200px] rounded-md border-none bg-green-light p-2 text-green">
-                  <p className="truncate text-center text-xs font-semibold">
-                    {resolveValue(key, value as string) ?? (value as string)}
-                  </p>
-                  <button
-                    className="btn h-fit w-fit border-none p-0 shadow-none"
-                    onClick={() => removeValue(key)}
+      {filteredKeys.map(([key, value]) =>
+        (Array.isArray(value) ? value.length > 0 : true) ? (
+          <div
+            key={`searchFilter_filter_badge_${key}`}
+            className="flex flex-wrap gap-1"
+          >
+            {Array.isArray(value) ? (
+              value.map((item: string) => {
+                const lookup = resolveValue(key, item);
+                return (
+                  <span
+                    key={`searchFilter_filter_badge_${key}_${item}`}
+                    className="badge h-6 max-w-[200px] rounded-md border-none bg-green-light p-2 text-green"
                   >
-                    <IoIosClose className="-mr-2 h-6 w-6" />
-                  </button>
-                </span>
-              ) : (
-                <> </>
-              )}
-            </div>
-          ) : null,
-        )}
+                    <p className="truncate text-center text-xs font-semibold">
+                      {lookup ?? ""}
+                    </p>
+                    <button
+                      className="btn h-fit w-fit border-none p-0 shadow-none"
+                      onClick={() => removeFromArray(key, item)}
+                    >
+                      <IoIosClose className="-mr-2 h-6 w-6" />
+                    </button>
+                  </span>
+                );
+              })
+            ) : resolveValue(key, value as string) ?? (value as string) ? (
+              <span className="badge h-6 max-w-[200px] rounded-md border-none bg-green-light p-2 text-green">
+                <p className="truncate text-center text-xs font-semibold">
+                  {resolveValue(key, value as string) ?? (value as string)}
+                </p>
+                <button
+                  className="btn h-fit w-fit border-none p-0 shadow-none"
+                  onClick={() => removeValue(key)}
+                >
+                  <IoIosClose className="-mr-2 h-6 w-6" />
+                </button>
+              </span>
+            ) : (
+              <></>
+            )}
+          </div>
+        ) : null,
+      )}
+
+      {/* clear all button */}
+      {filteredKeys.length > 0 && (
+        <button
+          className="badge h-6 max-w-[200px] rounded-md border-none bg-gray p-2 text-gray-dark"
+          onClick={() => onSubmit({})}
+        >
+          Clear All <IoIosClose className="-mr-2 h-6 w-6" />
+        </button>
+      )}
     </div>
   );
 };
