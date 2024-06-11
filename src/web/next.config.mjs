@@ -77,6 +77,15 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
+
+  async rewrites() {
+    return [
+      {
+        source: '/auth/:path*',
+        destination: `https://${process.env.KEYCLOAK_HOSTNAME}/auth/:path*`,
+      },
+    ]
+  },
 };
 
 //TODO: sentry removed for now, as it is not working with the current setup

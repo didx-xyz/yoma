@@ -178,6 +178,7 @@ const Marketplace: NextPageWithLayout<{
                     (c) => c.value === selectedCountry,
                   )}
                   placeholder="Country"
+                  inputId="input_country" // e2e
                   // fix menu z-index issue
                   // menuPortalTarget={myRef.current!}
                   // styles={{
@@ -187,6 +188,7 @@ const Marketplace: NextPageWithLayout<{
 
                 <div className="mt-4 flex w-full flex-grow justify-center gap-4">
                   <button
+                    id="letsGoButton"
                     type="button"
                     className="btn w-3/4 max-w-[300px] rounded-full border-purple bg-purple normal-case text-white hover:bg-purple disabled:bg-gray disabled:text-gray-dark disabled:brightness-90"
                     onClick={() => {
