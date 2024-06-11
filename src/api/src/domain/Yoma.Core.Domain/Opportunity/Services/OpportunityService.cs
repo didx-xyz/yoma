@@ -26,7 +26,6 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Validators;
-using static Pipelines.Sockets.Unofficial.SocketConnection;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
