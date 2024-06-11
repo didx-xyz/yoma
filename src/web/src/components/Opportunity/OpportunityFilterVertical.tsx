@@ -136,10 +136,6 @@ export const OpportunityFilterVertical: React.FC<{
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
       if (onSubmit) onSubmit(data as OpportunitySearchFilter);
-
-      //TODO:
-      // console.table(data);
-      // return;
     },
     [onSubmit],
   );
@@ -385,6 +381,7 @@ export const OpportunityFilterVertical: React.FC<{
                 <SelectButtons
                   id="selectButtons_countries"
                   isMulti={true}
+                  maxRows={8}
                   buttons={lookups_countries.map((x) => ({
                     id: x.id,
                     title: x.name,
@@ -421,6 +418,7 @@ export const OpportunityFilterVertical: React.FC<{
                 <SelectButtons
                   id="selectButtons_languages"
                   isMulti={true}
+                  maxRows={8}
                   buttons={lookups_languages.map((x) => ({
                     id: x.id,
                     title: x.name,
@@ -457,6 +455,7 @@ export const OpportunityFilterVertical: React.FC<{
                 <SelectButtons
                   id="selectButtons_organizations"
                   isMulti={true}
+                  maxRows={4}
                   buttons={lookups_organisations.map((x) => ({
                     id: x.id,
                     title: x.name,
