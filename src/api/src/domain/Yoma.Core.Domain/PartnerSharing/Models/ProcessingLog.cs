@@ -14,7 +14,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Models
 
     public Guid StatusId { get; set; }
 
-    public ProcessingStatus Status { get; set; }  
+    public ProcessingStatus Status { get; set; }
 
     public string? EntityExternalId { get; set; }
 
