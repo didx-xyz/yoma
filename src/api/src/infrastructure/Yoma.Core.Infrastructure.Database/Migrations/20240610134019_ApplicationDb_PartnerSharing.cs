@@ -8,10 +8,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
   public partial class ApplicationDb_PartnerSharing : Migration
   {
     /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.EnsureSchema(
-                name: "PartnerSharing");
+    protected override void Up(MigrationBuilder migrationBuilder)
+    {
+      migrationBuilder.EnsureSchema(
+          name: "PartnerSharing");
 
       migrationBuilder.CreateTable(
           name: "Partner",
