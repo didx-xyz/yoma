@@ -126,7 +126,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<PartnerSharing.Entities.Lookups.ProcessingStatus> PartnerSharingProcessingStatus { get; set; }
     #endregion Lookups 
 
-    public DbSet<PartnerSharing.Entities.ProcessingLog> PartnerSharingProcessingLog { get; set; } 
+    public DbSet<PartnerSharing.Entities.ProcessingLog> PartnerSharingProcessingLog { get; set; }
     #endregion PartnerSharing
 
     #region Reward
