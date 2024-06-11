@@ -3,6 +3,7 @@ using Hangfire;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Yoma.Core.Domain.ActionLink.Interfaces;
+using Yoma.Core.Domain.ActionLink.Interfaces.Lookups;
 using Yoma.Core.Domain.ActionLink.Services;
 using Yoma.Core.Domain.ActionLink.Services.Lookups;
 using Yoma.Core.Domain.Analytics.Interfaces;
@@ -32,6 +33,13 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.Opportunity.Services.Lookups;
+using Yoma.Core.Domain.PartnerSharing;
+using Yoma.Core.Domain.PartnerSharing.Interfaces;
+using Yoma.Core.Domain.PartnerSharing.Interfaces.Lookups;
+using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
+using Yoma.Core.Domain.PartnerSharing.Services;
+using Yoma.Core.Domain.PartnerSharing.Services.Lookups;
+using Yoma.Core.Domain.PartnerSharing.Services.Provider;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces.Lookups;
 using Yoma.Core.Domain.Reward.Services;
@@ -128,6 +136,16 @@ namespace Yoma.Core.Domain
       services.AddScoped<IOpportunityBackgroundService, OpportunityBackgroundService>();
       #endregion Opportunity
 
+      #region PartnerSharing
+      #region Lookups
+      services.AddScoped<IPartnerService, PartnerService>();
+      services.AddScoped<IProcessingStatusService, ProcessingStatusService>();
+      #endregion Lookups
+
+      services.AddScoped<ISharingService, SharingService>();
+      services.AddScoped<ISharingBackgroundService, SharingBackgroundService>();
+      #endregion PartnerSharing
+
       #region Reward
       #region Lookups
       services.AddScoped<IRewardTransactionStatusService, RewardTransactionStatusService>();
@@ -155,6 +173,11 @@ namespace Yoma.Core.Domain
       #endregion SSI
     }
 
+    public static void ConfigureServices_DomainServicesCompositionFactory(this IServiceCollection services, Func<IServiceProvider, IDictionary<Partner, ISharingProviderClientFactory>> factoriesResolver)
+    {
+      services.AddScoped<ISharingProviderClientFactoryPartner>(sp => new SharingProviderClientFactoryPartner(factoriesResolver(sp)));
+    }
+
     public static void Configure_RecurringJobs(this IConfiguration configuration, AppSettings appSettings, Core.Environment environment)
     {
       var options = configuration.GetSection(ScheduleJobOptions.Section).Get<ScheduleJobOptions>() ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{ScheduleJobOptions.Section}'");
@@ -173,6 +196,8 @@ namespace Yoma.Core.Domain
           s => s.ProcessExpirationNotifications(), options.OpportunityExpirationNotificationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Deletion ({Status.Inactive} or {Status.Expired} for more than {options.OpportunityDeletionIntervalInDays} days)",
           s => s.ProcessDeletion(), options.OpportunityDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+      //TODO: ISharingBackgroundService.ProcessSharing
 
       //my opportunity
       RecurringJob.AddOrUpdate<IMyOpportunityBackgroundService>($"'My' Opportunity Verification Rejection ({VerificationStatus.Pending} for more than {options.MyOpportunityRejectionIntervalInDays} days)",

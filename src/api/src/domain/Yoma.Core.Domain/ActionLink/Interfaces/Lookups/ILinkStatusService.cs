@@ -1,4 +1,4 @@
-namespace Yoma.Core.Domain.ActionLink.Interfaces
+namespace Yoma.Core.Domain.ActionLink.Interfaces.Lookups
 {
   public interface ILinkStatusService
   {

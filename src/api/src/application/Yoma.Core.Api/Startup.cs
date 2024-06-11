@@ -27,6 +27,10 @@ using Yoma.Core.Infrastructure.Emsi;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.SendGrid;
 using Yoma.Core.Infrastructure.Zlto;
+using Yoma.Core.Infrastructure.SAYouth;
+using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
+using Yoma.Core.Infrastructure.SAYouth.Client;
+using Yoma.Core.Domain.PartnerSharing;
 
 namespace Yoma.Core.Api
 {
@@ -99,14 +103,25 @@ namespace Yoma.Core.Api
 
       #region Services & Infrastructure
       services.ConfigureServices_DomainServices();
+
       services.ConfigureServices_InfrastructureBlobProvider();
       services.ConfigureServices_InfrastructureSSIProvider(_configuration, _configuration.Configuration_ConnectionString(), _appSettings);
       services.ConfigureServices_InfrastructureShortLinkProvider();
       services.ConfigureServices_InfrastructureDatabase(_configuration, _appSettings);
       services.ConfigureServices_InfrastructureLaborMarketProvider();
       services.ConfigureServices_InfrastructureIdentityProvider();
+      services.ConfigureServices_InfrastructureSharingProvider();
       services.ConfigureServices_InfrastructureEmailProvider(_configuration);
       services.ConfigureServices_InfrastructureRewardProvider();
+
+      services.ConfigureServices_DomainServicesCompositionFactory(sp =>
+      {
+        var factories = new Dictionary<Partner, ISharingProviderClientFactory>
+            {
+                { Partner.SAYouth, sp.GetRequiredService<SAYouthClientFactory>() }
+            };
+        return factories;
+      });
       #endregion Services & Infrastructure
 
       #region 3rd Party (post ConfigureServices_InfrastructureDatabase)

@@ -158,7 +158,7 @@ DECLARE
     V_RandomLengthOther INT := ABS(FLOOR(RANDOM() * 101) + 100);
     V_DateCreated TIMESTAMP := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC');
     V_DateStartRunning TIMESTAMP := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '2 day';
-    V_Iterations INT := 50000;
+    V_Iterations INT := 5000;
     V_RowCount INT := 0;
     V_VerificationEnabled BOOLEAN := false;
     V_CommitmentIntervalId UUID;
