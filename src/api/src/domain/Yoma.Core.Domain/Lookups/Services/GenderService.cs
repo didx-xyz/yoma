@@ -63,7 +63,7 @@ namespace Yoma.Core.Domain.Lookups.Services
         return [.. _genderRepository.Query().OrderBy(o => o.Name)];
 
       var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<Gender>(), entry =>
-      
+
       {
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
