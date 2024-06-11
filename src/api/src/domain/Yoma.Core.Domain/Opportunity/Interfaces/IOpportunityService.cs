@@ -25,7 +25,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguagesAdmin(Guid? organizationId, bool ensureOrganizationAuthorization);
 
-    List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(List<PublishedState>? publishedStates);
+    List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(List<PublishedState>? publishedStates, string? languageCodeAlpha2Site);
 
     List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizationsAdmin();
 

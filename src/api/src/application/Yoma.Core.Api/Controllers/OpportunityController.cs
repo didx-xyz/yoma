@@ -150,11 +150,11 @@ namespace Yoma.Core.Api.Controllers
     [HttpGet("search/filter/language")]
     [ProducesResponseType(typeof(List<Domain.Lookups.Models.Language>), (int)HttpStatusCode.OK)]
     [AllowAnonymous]
-    public IActionResult ListOpportunitySearchCriteriaLanguages([FromQuery] List<PublishedState>? publishedStates)
+    public IActionResult ListOpportunitySearchCriteriaLanguages([FromQuery] List<PublishedState>? publishedStates, [FromQuery] string? languageCodeAlpha2Site)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaLanguages));
 
-      var result = _opportunityService.ListOpportunitySearchCriteriaLanguages(publishedStates);
+      var result = _opportunityService.ListOpportunitySearchCriteriaLanguages(publishedStates, languageCodeAlpha2Site);
 
       _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaLanguages));
 
