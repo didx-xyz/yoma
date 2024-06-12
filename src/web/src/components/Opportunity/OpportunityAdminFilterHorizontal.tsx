@@ -149,7 +149,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
   );
 
   const resultText = totalCount === 1 ? "result" : "results";
-  const countText = `${totalCount?.toLocaleString()} ${resultText} for:`;
+  const countText = `${totalCount?.toLocaleString()} ${resultText}`;
 
   return (
     <div className="flex flex-grow flex-col">
@@ -168,18 +168,6 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                   selected_categories={searchFilter?.categories}
                   onClick={onClickCategoryFilter}
                 />
-                // <div className="flex justify-center gap-4 md:w-full">
-                //   {lookups_categories.map((item) => (
-                //     <OpportunityCategoryHorizontalCard
-                //       key={`categories_${item.id}`}
-                //       data={item}
-                //       selected={searchFilter?.categories?.includes(
-                //         item.name,
-                //       )}
-                //       onClick={onClickCategoryFilter}
-                //     />
-                //   ))}
-                // </div>
               )}
             </div>
           </div>
@@ -199,7 +187,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
               Filter by:
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex flex-wrap justify-between">
               <div className="flex flex-wrap justify-start gap-2">
                 {/* VALUECONTAINS: hidden input */}
                 <input
@@ -387,7 +375,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                           value={lookups_organisations
                             .filter((c) => value?.includes(c.name))
                             .map((c) => ({ value: c.name, label: c.name }))}
-                          placeholder="Opportunity provider"
+                          placeholder="Organisation"
                           components={{
                             ValueContainer,
                           }}
@@ -592,6 +580,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                 <span>{countText}</span>
               ) : null}
             </div>
+
             {/* EXPORT TO CSV */}
             {exportToCsv && (
               <div className="flex flex-row items-center justify-end">

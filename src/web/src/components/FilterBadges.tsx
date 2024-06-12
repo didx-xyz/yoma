@@ -89,7 +89,7 @@ const FilterBadges: React.FC<{
       )}
 
       {/* clear all button */}
-      {filteredKeys.length > 0 && (
+      {filteredKeys.length > 1 && (
         <button
           className="badge h-6 max-w-[200px] rounded-md border-none bg-gray p-2 text-gray-dark"
           onClick={() => onSubmit({})}

@@ -776,7 +776,7 @@ const Opportunities: NextPageWithLayout<{
                   <tbody>
                     {opportunities.items.map((opportunity) => (
                       <tr key={`md_${opportunity.id}`}>
-                        <td className="truncate border-b-2 border-gray-light md:max-w-[270px] lg:max-w-[580px] ">
+                        <td className="truncate border-b-2 border-gray-light md:max-w-[270px] lg:max-w-[580px]">
                           <Link
                             href={`/organisations/${id}/opportunities/${
                               opportunity.id

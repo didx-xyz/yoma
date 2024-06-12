@@ -306,7 +306,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 />
               </div>
             </div>
-            <div className="flex flex-grow flex-col gap-4 overflow-y-auto px-4 md:max-h-[480px] md:min-h-[350px] md:px-10">
+            <div className="flex flex-col gap-4 px-4">
               <div className="mb-8 flex flex-col items-center gap-1 text-center">
                 <h4 className="font-semibold tracking-wide">
                   Well done for completing this opportunity!
@@ -536,7 +536,17 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 )}
               </div>
 
-              <div className="mb-6 mt-4 flex flex-grow gap-4">
+              {!isValid && (
+                <div className="flex-growx flex justify-center">
+                  <label className="label">
+                    <span className="label-text-alt px-4 text-center text-base italic text-red-500">
+                      Please fill out the required information above.
+                    </span>
+                  </label>
+                </div>
+              )}
+
+              <div className="mb-10 mt-4 flex flex-grow gap-4">
                 <button
                   type="button"
                   className="btn btn-outline btn-primary w-1/2 flex-shrink rounded-full border-purple bg-white normal-case text-purple"
@@ -551,16 +561,6 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                   Submit
                 </button>
               </div>
-
-              {!isValid && (
-                <div className="mb-10 mt-0 flex flex-grow justify-center gap-4">
-                  <label className="label">
-                    <span className="label-text-alt px-4 text-center text-base italic text-red-500">
-                      Please fill out the required information above.
-                    </span>
-                  </label>
-                </div>
-              )}
             </div>
           </div>
         </div>

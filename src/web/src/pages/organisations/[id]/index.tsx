@@ -1102,7 +1102,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     </div>
                   )}
 
-                  {/* GRID */}
+                  {/* RESULTS */}
                   {dataCompletedYouth &&
                     dataCompletedYouth.items?.length > 0 && (
                       <div>
