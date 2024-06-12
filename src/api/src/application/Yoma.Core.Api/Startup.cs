@@ -31,6 +31,8 @@ using Yoma.Core.Infrastructure.SAYouth;
 using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
 using Yoma.Core.Infrastructure.SAYouth.Client;
 using Yoma.Core.Domain.PartnerSharing;
+using Microsoft.AspNetCore.Mvc;
+using System.Net.Mime;
 
 namespace Yoma.Core.Api
 {
@@ -80,9 +82,17 @@ namespace Yoma.Core.Api
       #endregion Configuration
 
       #region System
-      services.AddControllers(options => options.InputFormatters.Add(new ByteArrayInputFormatter()))
-          .AddNewtonsoftJson(options => options.SerializerSettings.Converters.Add(new StringEnumConverter()))
-          .AddNewtonsoftJson(options => options.SerializerSettings.Converters.Add(new StringTrimmingConverter()));
+      services.AddControllers(options =>
+      {
+        // Add the global Produces filter
+        options.Filters.Add(new ProducesAttribute(MediaTypeNames.Application.Json));
+        options.InputFormatters.Add(new ByteArrayInputFormatter());
+      })
+      .AddNewtonsoftJson(options =>
+      {
+        options.SerializerSettings.Converters.Add(new StringEnumConverter());
+        options.SerializerSettings.Converters.Add(new StringTrimmingConverter());
+      });
 
       services.AddMvc(options =>
       {
