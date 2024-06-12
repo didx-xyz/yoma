@@ -18,6 +18,7 @@ import {
 } from "react";
 import { IoIosLink, IoMdDownload, IoMdPerson } from "react-icons/io";
 import ReactModal from "react-modal";
+import { toast } from "react-toastify";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
@@ -40,6 +41,7 @@ import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { OpportunityAdminFilterHorizontal } from "~/components/Opportunity/OpportunityAdminFilterHorizontal";
 import { OpportunityAdminFilterVertical } from "~/components/Opportunity/OpportunityAdminFilterVertical";
+import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { SearchInputLarge } from "~/components/SearchInputLarge";
@@ -48,7 +50,6 @@ import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { PAGE_SIZE, PAGE_SIZE_MAXIMUM, THEME_BLUE } from "~/lib/constants";
 import { screenWidthAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { toast } from "react-toastify";
 
 // 👇 SSG
 // This function gets called at build time on server-side.
@@ -870,28 +871,9 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             </span>
                           </td>
                           <td className="border-b-2 border-gray-light text-center">
-                            {opportunity.status == "Active" && (
-                              <>
-                                <span className="badge bg-blue-light text-blue">
-                                  Active
-                                </span>
-                              </>
-                            )}
-                            {opportunity?.status == "Expired" && (
-                              <span className="badge bg-green-light text-yellow ">
-                                Expired
-                              </span>
-                            )}
-                            {opportunity?.status == "Inactive" && (
-                              <span className="badge bg-yellow-tint text-yellow ">
-                                Inactive
-                              </span>
-                            )}
-                            {opportunity?.status == "Deleted" && (
-                              <span className="badge bg-green-light  text-red-400">
-                                Deleted
-                              </span>
-                            )}
+                            <OpportunityStatus
+                              status={opportunity?.status?.toString()}
+                            />
                           </td>
                         </tr>
                       ))}

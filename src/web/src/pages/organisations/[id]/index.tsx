@@ -4,56 +4,33 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import Head from "next/head";
-import { type ParsedUrlQuery } from "querystring";
-import {
-  useRef,
-  type ReactElement,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
-import "react-datepicker/dist/react-datepicker.css";
-import { getOrganisationById } from "~/api/services/organisations";
-import MainLayout from "~/components/Layout/Main";
-import { authOptions } from "~/server/auth";
-import { Unauthorized } from "~/components/Status/Unauthorized";
-import type { NextPageWithLayout } from "~/pages/_app";
-import { config } from "~/lib/react-query-config";
-import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
-import { PageBackground } from "~/components/PageBackground";
-import { IoMdPerson } from "react-icons/io";
-import { useRouter } from "next/router";
-import {
-  searchOrganizationEngagement,
-  searchOrganizationOpportunities,
-  searchOrganizationYouth,
-  searchOrganizationSso,
-  getCountries,
-} from "~/api/services/organizationDashboard";
+import axios from "axios";
+import moment from "moment";
 import type { GetServerSidePropsContext } from "next";
-import type {
-  OpportunitySearchResultsInfo,
-  OpportunityCategory,
-} from "~/api/models/opportunity";
 import { getServerSession } from "next-auth";
-import { Loading } from "~/components/Status/Loading";
-import { OrganisationRowFilter } from "~/components/Organisation/Dashboard/OrganisationRowFilter";
-import Link from "next/link";
-import { getThemeFromRole } from "~/lib/utils";
+import Head from "next/head";
 import Image from "next/image";
-import iconZlto from "public/images/icon-zlto-green.svg";
+import Link from "next/link";
+import { useRouter } from "next/router";
 import iconBookmark from "public/images/icon-completions-green.svg";
 import iconSkills from "public/images/icon-skills-green.svg";
+import iconZlto from "public/images/icon-zlto-green.svg";
+import { type ParsedUrlQuery } from "querystring";
 import {
-  CHART_COLORS,
-  DATETIME_FORMAT_HUMAN,
-  PAGE_SIZE,
-  PAGE_SIZE_MINIMUM,
-  ROLE_ADMIN,
-} from "~/lib/constants";
-import NoRowsMessage from "~/components/NoRowsMessage";
-import { PaginationButtons } from "~/components/PaginationButtons";
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactElement,
+} from "react";
+import "react-datepicker/dist/react-datepicker.css";
+import { IoIosArrowBack, IoIosArrowForward, IoMdPerson } from "react-icons/io";
+import type { Country } from "~/api/models/lookups";
+import type {
+  OpportunityCategory,
+  OpportunitySearchResultsInfo,
+} from "~/api/models/opportunity";
+import type { Organization } from "~/api/models/organisation";
 import type {
   OrganizationSearchFilterOpportunity,
   OrganizationSearchFilterYouth,
@@ -62,26 +39,49 @@ import type {
   OrganizationSearchResultsYouth,
   OrganizationSearchSso,
 } from "~/api/models/organizationDashboard";
-import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
-import moment from "moment";
 import {
   getCategoriesAdmin,
   searchCriteriaOpportunities,
 } from "~/api/services/opportunities";
-import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
-import { SkillsChart } from "~/components/Organisation/Dashboard/SkillsChart";
-import { PieChart } from "~/components/Organisation/Dashboard/PieChart";
-import axios from "axios";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { getOrganisationById } from "~/api/services/organisations";
+import {
+  getCountries,
+  searchOrganizationEngagement,
+  searchOrganizationOpportunities,
+  searchOrganizationSso,
+  searchOrganizationYouth,
+} from "~/api/services/organizationDashboard";
 import { AvatarImage } from "~/components/AvatarImage";
+import MainLayout from "~/components/Layout/Main";
+import NoRowsMessage from "~/components/NoRowsMessage";
+import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import DashboardCarousel from "~/components/Organisation/Dashboard/DashboardCarousel";
-import { WorldMapChart } from "~/components/Organisation/Dashboard/WorldMapChart";
-import type { Organization } from "~/api/models/organisation";
-import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
-import { SsoChart } from "~/components/Organisation/Dashboard/SsoChart";
-import type { Country } from "~/api/models/lookups";
 import { EngagementRowFilter } from "~/components/Organisation/Dashboard/EngagementRowFilter";
+import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
+import { OrganisationRowFilter } from "~/components/Organisation/Dashboard/OrganisationRowFilter";
+import { PieChart } from "~/components/Organisation/Dashboard/PieChart";
+import { SkillsChart } from "~/components/Organisation/Dashboard/SkillsChart";
+import { SsoChart } from "~/components/Organisation/Dashboard/SsoChart";
+import { WorldMapChart } from "~/components/Organisation/Dashboard/WorldMapChart";
+import { PageBackground } from "~/components/PageBackground";
+import { PaginationButtons } from "~/components/PaginationButtons";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
+import { Loading } from "~/components/Status/Loading";
+import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  CHART_COLORS,
+  DATETIME_FORMAT_HUMAN,
+  PAGE_SIZE,
+  PAGE_SIZE_MINIMUM,
+  ROLE_ADMIN,
+} from "~/lib/constants";
+import { config } from "~/lib/react-query-config";
+import { getThemeFromRole } from "~/lib/utils";
+import type { NextPageWithLayout } from "~/pages/_app";
+import { authOptions } from "~/server/auth";
 
 export interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
@@ -1342,7 +1342,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                                         {opportunity.navigatedExternalLinkCount}
                                       </td>
                                       <td className="whitespace-nowrap text-center">
-                                        {opportunity.status}
+                                        <OpportunityStatus
+                                          status={opportunity?.status?.toString()}
+                                        />
                                       </td>
                                     </tr>
                                   ),
