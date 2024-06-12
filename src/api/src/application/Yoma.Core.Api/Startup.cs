@@ -46,6 +46,7 @@ namespace Yoma.Core.Api
     private readonly IIdentityProviderAuthOptions _identityProviderAuthOptions;
     private const string OAuth_Scope_Separator = " ";
     private const string ConnectionStrings_RedisConnection = "RedisConnection";
+    private const string Swagger_JsonUrl = $"/swagger/{Constants.Api_Version}/swagger.json";
     #endregion
 
     #region Constructors
@@ -146,11 +147,18 @@ namespace Yoma.Core.Api
       app.UseSwagger();
       app.UseSwaggerUI(s =>
       {
-        s.SwaggerEndpoint($"/swagger/{Constants.Api_Version}/swagger.json", $"Yoma Core Api ({_environment.ToDescription()} {Constants.Api_Version})");
+        s.SwaggerEndpoint(Swagger_JsonUrl, $"Yoma Core Api ({_environment.ToDescription()} {Constants.Api_Version})");
         s.RoutePrefix = "";
         s.OAuthClientId(_identityProviderAuthOptions.ClientId);
         s.OAuthClientSecret(_identityProviderAuthOptions.ClientSecret);
         s.OAuthScopeSeparator(OAuth_Scope_Separator);
+      });
+
+      app.UseReDoc(c =>
+      {
+        c.SpecUrl = Swagger_JsonUrl;
+        c.RoutePrefix = "docs";
+        c.DocumentTitle = $"Yoma Core Api ({_environment.ToDescription()}) ({Constants.Api_Version})";
       });
       #endregion 3rd Party
 
@@ -398,6 +406,7 @@ namespace Yoma.Core.Api
         //    }
         //});
       });
+
       services.AddSwaggerGenNewtonsoftSupport();
     }
     #endregion
