@@ -762,28 +762,9 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
                           <div className="flex justify-between">
                             <p className="text-sm tracking-wider">Status</p>
-                            {opportunity.status == "Active" && (
-                              <>
-                                <span className="badge bg-blue-light text-blue">
-                                  Active
-                                </span>
-                              </>
-                            )}
-                            {opportunity?.status == "Expired" && (
-                              <span className="badge bg-green-light text-yellow ">
-                                Expired
-                              </span>
-                            )}
-                            {opportunity?.status == "Inactive" && (
-                              <span className="badge bg-yellow-tint text-yellow ">
-                                Inactive
-                              </span>
-                            )}
-                            {opportunity?.status == "Deleted" && (
-                              <span className="badge bg-green-light text-red-400">
-                                Deleted
-                              </span>
-                            )}
+                            <OpportunityStatus
+                              status={opportunity?.status?.toString()}
+                            />
                           </div>
                         </div>
                       </Link>
