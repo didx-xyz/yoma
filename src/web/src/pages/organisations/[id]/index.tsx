@@ -1115,7 +1115,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                                 <th>Opportunity</th>
                                 <th>Date completed</th>
                                 <th className="text-center">Verified</th>
-                                <th className="text-center">Status</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1152,9 +1151,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                                     {opportunity.verified
                                       ? "Verified"
                                       : "Not verified"}
-                                  </td>
-                                  <td className="text-center">
-                                    {opportunity.opportunityStatus}
                                   </td>
                                 </tr>
                               ))}
@@ -1280,7 +1276,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                       </div>
                     )}
 
-                    {/* GRID */}
+                    {/* RESULTS */}
                     {dataSelectedOpportunities &&
                       dataSelectedOpportunities.items?.length > 0 && (
                         <div>

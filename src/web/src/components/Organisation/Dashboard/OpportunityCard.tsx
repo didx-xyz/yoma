@@ -1,42 +1,20 @@
-import { useRouter } from "next/router";
 import Link from "next/link";
-import { AvatarImage } from "~/components/AvatarImage";
+import { useRouter } from "next/router";
 import {
-  IoIosBatteryDead,
-  IoIosBicycle,
   IoIosCalculator,
-  IoIosMegaphone,
-  IoIosTrash,
-  IoMdBed,
   IoMdCheckmarkCircleOutline,
   IoMdOpen,
   IoMdPerson,
 } from "react-icons/io";
 import type { OpportunityInfoAnalytics } from "~/api/models/organizationDashboard";
-import type { Status } from "~/api/models/opportunity";
+import { AvatarImage } from "~/components/AvatarImage";
+import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 
 export const OpportunityCard: React.FC<{
   opportunity: OpportunityInfoAnalytics;
   orgId: string;
 }> = ({ opportunity, orgId }) => {
   const router = useRouter();
-
-  const handleStatusIcon = (status: Status) => {
-    switch (status as any) {
-      case "Inactive":
-        return <IoMdBed className="mr-1 text-sm" />;
-      case "Active":
-        return <IoIosBicycle className="mr-1 text-sm" />;
-      case "Expired":
-        return <IoIosBatteryDead className="mr-1 text-sm" />;
-      case "Deleted":
-        return <IoIosTrash className="mr-1 text-sm" />;
-      default:
-        return <IoIosMegaphone className="mr-1 text-sm" />;
-    }
-  };
-
-  const statusIcon = handleStatusIcon(opportunity.status);
 
   return (
     <Link
@@ -82,9 +60,7 @@ export const OpportunityCard: React.FC<{
       </div>
       <div className="flex items-center justify-between px-2">
         <div className="tracking-wider">Status:</div>
-        <div className="badge bg-green-light text-green">
-          {statusIcon} {opportunity.status}
-        </div>
+        <OpportunityStatus status={opportunity?.status?.toString()} />
       </div>
     </Link>
   );
