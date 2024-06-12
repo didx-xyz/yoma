@@ -192,7 +192,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             types != undefined
               ? types
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_types.find((y) => y.name === x);
                     return item ? item?.id : "";
@@ -204,7 +204,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             categories != undefined
               ? categories
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_categories?.find((y) => y.name === x);
                     return item ? item?.id : "";
@@ -215,7 +215,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             countries != undefined
               ? countries
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_countries?.find((y) => y.name === x);
                     return item ? item?.id : "";
@@ -237,7 +237,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             organizations != undefined
               ? organizations
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_organisations?.find(
                       (y) => y.name === x,
@@ -252,7 +252,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             statuses != undefined
               ? statuses
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_statuses.find((y) => y.label === x);
                     return item ? item?.value : "";
@@ -289,24 +289,24 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         valueContains: query ? decodeURIComponent(query.toString()) : null,
         featured: null,
-        types: types != undefined ? types?.toString().split(",") : null,
+        types: types != undefined ? types?.toString().split("|") : null,
         engagementTypes: null,
         categories:
-          categories != undefined ? categories?.toString().split(",") : null,
+          categories != undefined ? categories?.toString().split("|") : null,
         countries:
           countries != undefined && countries != null
-            ? countries?.toString().split(",")
+            ? countries?.toString().split("|")
             : null,
         languages:
           languages != undefined ? languages?.toString().split("|") : null, // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
         organizations:
           organizations != undefined
-            ? organizations?.toString().split(",")
+            ? organizations?.toString().split("|")
             : null,
         startDate: startDate != undefined ? startDate.toString() : null,
         endDate: endDate != undefined ? endDate.toString() : null,
         statuses:
-          statuses != undefined ? statuses?.toString().split(",") : null,
+          statuses != undefined ? statuses?.toString().split("|") : null,
       });
   }, [
     setOpportunitySearchFilter,
@@ -348,38 +348,38 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         searchFilter?.categories?.length !== undefined &&
         searchFilter.categories.length > 0
       )
-        params.append("categories", searchFilter.categories.join(","));
+        params.append("categories", searchFilter.categories.join("|"));
 
       if (
         searchFilter?.countries?.length !== undefined &&
         searchFilter.countries.length > 0
       )
-        params.append("countries", searchFilter.countries.join(","));
+        params.append("countries", searchFilter.countries.join("|"));
 
       if (
         searchFilter?.languages?.length !== undefined &&
         searchFilter.languages.length > 0
       )
-        params.append("languages", searchFilter.languages.join("|")); // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
+        params.append("languages", searchFilter.languages.join("|"));
 
       if (
         searchFilter?.types?.length !== undefined &&
         searchFilter.types.length > 0
       )
-        params.append("types", searchFilter.types.join(","));
+        params.append("types", searchFilter.types.join("|"));
 
       if (
         searchFilter?.organizations?.length !== undefined &&
         searchFilter.organizations.length > 0
       )
-        params.append("organizations", searchFilter.organizations.join(","));
+        params.append("organizations", searchFilter.organizations.join("|"));
 
       if (
         searchFilter?.statuses !== undefined &&
         searchFilter?.statuses !== null &&
         searchFilter?.statuses.length > 0
       )
-        params.append("statuses", searchFilter?.statuses.join(","));
+        params.append("statuses", searchFilter?.statuses.join("|"));
 
       if (
         searchFilter.startDate !== undefined &&

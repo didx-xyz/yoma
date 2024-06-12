@@ -292,7 +292,7 @@ const Organisations: NextPageWithLayout<{
               (status) =>
                 lookups_statuses.find((item) => item.value === status)?.label,
             )
-            .join(","),
+            .join("|"),
         );
 
       if (

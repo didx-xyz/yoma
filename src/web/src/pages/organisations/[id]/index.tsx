@@ -145,7 +145,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     if (opportunities) {
       lookups_selectedOpportunities = await searchCriteriaOpportunities(
         {
-          opportunities: opportunities.toString().split(",") ?? [],
+          opportunities: opportunities.toString().split("|") ?? [],
           organization: id,
           titleContains: null,
           published: null,
@@ -241,7 +241,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             categories != undefined
               ? categories
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_categories?.find((y) => y.name === x);
                     return item ? item?.id : "";
@@ -249,7 +249,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   .filter((x) => x != "")
               : null,
           opportunities: opportunities
-            ? opportunities?.toString().split(",")
+            ? opportunities?.toString().split("|")
             : null,
           startDate: startDate ? startDate.toString() : "",
           endDate: endDate ? endDate.toString() : "",
@@ -289,7 +289,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             categories != undefined
               ? categories
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_categories?.find((y) => y.name === x);
                     return item ? item?.id : "";
@@ -297,7 +297,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   .filter((x) => x != "")
               : null,
           opportunities: opportunities
-            ? opportunities?.toString().split(",")
+            ? opportunities?.toString().split("|")
             : null,
           startDate: startDate ? startDate.toString() : "",
           endDate: endDate ? endDate.toString() : "",
@@ -340,7 +340,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           categories != undefined
             ? categories
                 ?.toString()
-                .split(",")
+                .split("|")
                 .map((x) => {
                   const item = lookups_categories?.find((y) => y.name === x);
                   return item ? item?.id : "";
@@ -348,7 +348,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 .filter((x) => x != "")
             : null,
         opportunities: opportunities
-          ? opportunities?.toString().split(",")
+          ? opportunities?.toString().split("|")
           : null,
         startDate: startDate ? startDate.toString() : "",
         endDate: endDate ? endDate.toString() : "",
@@ -400,10 +400,10 @@ const OrganisationDashboard: NextPageWithLayout<{
         : 1,
       organization: id,
       categories:
-        categories != undefined ? categories?.toString().split(",") : null,
+        categories != undefined ? categories?.toString().split("|") : null,
       opportunities:
         opportunities != undefined && opportunities != null
-          ? opportunities?.toString().split(",")
+          ? opportunities?.toString().split("|")
           : null,
       startDate: startDate != undefined ? startDate.toString() : "",
       endDate: endDate != undefined ? endDate.toString() : "",
@@ -493,7 +493,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             categories != undefined
               ? categories
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_categories?.find((y) => y.name === x);
                     return item ? item?.id : "";
@@ -501,7 +501,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   .filter((x) => x != "")
               : null,
           opportunities: opportunities
-            ? opportunities?.toString().split(",")
+            ? opportunities?.toString().split("|")
             : null,
           startDate: startDate ? startDate.toString() : "",
           endDate: endDate ? endDate.toString() : "",
@@ -548,7 +548,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             categories != undefined
               ? categories
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_categories?.find((y) => y.name === x);
                     return item ? item?.id : "";
@@ -556,7 +556,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   .filter((x) => x != "")
               : null,
           opportunities: opportunities
-            ? opportunities?.toString().split(",")
+            ? opportunities?.toString().split("|")
             : null,
           startDate: startDate ? startDate.toString() : "",
           endDate: endDate ? endDate.toString() : "",
@@ -617,7 +617,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       )
         params.append(
           "categories",
-          opportunitySearchFilter.categories.join(","),
+          opportunitySearchFilter.categories.join("|"),
         );
 
       if (
@@ -626,7 +626,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       )
         params.append(
           "opportunities",
-          opportunitySearchFilter.opportunities.join(","),
+          opportunitySearchFilter.opportunities.join("|"),
         );
 
       if (opportunitySearchFilter.startDate)

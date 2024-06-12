@@ -153,7 +153,7 @@ const Opportunities: NextPageWithLayout<{
       startDate: null,
       endDate: null,
       statuses: status
-        ? status.toString().split(",")
+        ? status.toString().split("|")
         : [Status.Active, Status.Expired, Status.Inactive, Status.Deleted],
       types: null,
       categories: null,
@@ -311,7 +311,7 @@ const Opportunities: NextPageWithLayout<{
         searchFilter?.statuses.length > 0 &&
         searchFilter?.statuses.length !== 4 // hack to prevent all" statuses from being added to the query string
       )
-        params.append("status", searchFilter?.statuses.join(","));
+        params.append("status", searchFilter?.statuses.join("|"));
 
       if (
         searchFilter.pageNumber !== null &&
@@ -360,7 +360,7 @@ const Opportunities: NextPageWithLayout<{
   const onFilterStatus = useCallback(
     (status: string) => {
       searchFilter.pageNumber = 1;
-      searchFilter.statuses = status ? status.split(",") : null;
+      searchFilter.statuses = status ? status.split("|") : null;
       redirectWithSearchFilterParams(searchFilter);
     },
     [searchFilter, redirectWithSearchFilterParams],

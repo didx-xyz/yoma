@@ -220,7 +220,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       userId: null,
       action: Action.Verification,
       verificationStatuses: verificationStatus
-        ? verificationStatus.toString().split(",")
+        ? verificationStatus.toString().split("|")
         : [
             VerificationStatus.Pending,
             VerificationStatus.Completed,
@@ -247,7 +247,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       (
         await getOpportunitiesForVerification(
           [id],
-          verificationStatus ? verificationStatus.split(",") : null,
+          verificationStatus ? verificationStatus.split("|") : null,
         )
       ).map((x) => ({
         value: x.id,
@@ -397,7 +397,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       )
         params.append(
           "verificationStatus",
-          searchFilter?.verificationStatuses.join(","),
+          searchFilter?.verificationStatuses.join("|"),
         );
 
       if (
@@ -609,7 +609,7 @@ const OpportunityVerifications: NextPageWithLayout<{
     (verificationStatus: string) => {
       searchFilter.pageNumber = 1;
       searchFilter.verificationStatuses = verificationStatus
-        ? verificationStatus.split(",")
+        ? verificationStatus.split("|")
         : null;
       redirectWithSearchFilterParams(searchFilter);
     },
