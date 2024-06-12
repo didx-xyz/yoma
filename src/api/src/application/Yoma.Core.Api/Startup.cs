@@ -326,6 +326,8 @@ namespace Yoma.Core.Api
           }
         });
 
+        c.OperationFilter<ProducesResponseTypesErrorFilter>();
+
         c.AddSecurityDefinition(Constants.AuthenticationScheme_ClientCredentials, new OpenApiSecurityScheme
         {
           Description = "Client Credentials flow using the client_id and client_secret",
